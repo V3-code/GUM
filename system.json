@@ -7,15 +7,15 @@
   "description": "Adaptação não oficial do sistema GURPS para uso no Foundry VTT. Criado por fãs, sem fins lucrativos.",
   "compatibility": {
     "minimum": "11",
-    "verified": "12"
+    "verified": "13"
   },
   "esmodules": ["scripts/main.js"],
   "styles": [
     "styles/styles.css"
   ],
   "license": "CC BY-NC-ND 4.0",
-  "url": "https://github.com/seuusuario/gurps-gum", 
-  "manifest": "https://raw.githubusercontent.com/seuusuario/gurps-gum/main/system.json",
-  "readme": "https://raw.githubusercontent.com/seuusuario/gurps-gum/main/README.md",
-  "bugs": "https://github.com/seuusuario/gurps-gum/issues"
+  "url": "https://github.com/V3-code/GUM", 
+  "manifest": "https://github.com/V3-code/GUM/blob/master/system.json",
+  "readme": "https://github.com/V3-code/GUM/blob/master/README.md"
+
 }
