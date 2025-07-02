@@ -1,0 +1,2553 @@
+/* =================================================================== */
+/* GUM - TEMA "ÉBANO E OURO" - VERSÃO CONSOLIDADA E REFINADA           */
+/* =================================================================== */
+
+/* --- 1. IMPORTAÇÃO DAS FONTES --- */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@300;400;500;700&display=swap');
+
+/* --- 2. PALETA DE CORES, FONTES E TAMANHO BASE --- */
+.gum.sheet.actor {
+  /* Paleta de Cores */
+  --c-fundo-principal: #1a1a1a;
+  --c-fundo-painel: rgba(26, 26, 26, 0.75);
+  --c-fundo-input: rgba(0,0,0,0.3);
+  --c-texto-principal: #dcdcdc;
+  --c-texto-secundario: #a0a0a0;
+  --c-acento-dourado: #c5a56a;
+  --c-borda-dourada: rgba(197, 165, 106, 0.4);
+  --c-borda-escura: #111;
+
+  /* Novas Cores */
+   --c-fundo-papiro: #f1e8e7;
+  --c-fundo-card-claro: #f8f4f1;
+  --c-fundo-cabecalho: #34161b;
+  --c-fundo-sidebar: #313131;
+  --c-texto-escuro: #352425;
+  --c-texto-claro: #f8f4f1;
+  --c-texto-subtitulo: #977c63;
+  --c-acento-principal: #9f9275;
+  --c-borda: #dacdca;
+  --c-sombra: rgba(53,36,37,0.4);
+  --c-hp-bar: #3b7d3b;
+  --c-pf-bar: #3b5a7d;
+  --c-fundo-input: rgba(0,0,0,0.05); /* Fundo sutil para inputs em tema claro */
+  
+  --c-texto-escuro: #352425;
+  --c-texto-claro: #f8f4f1;
+  --c-texto-subtitulo: #977c63;
+
+  --c-acento: #9f9275; /* O "dourado/bronze" principal */
+
+  --c-sombra: rgba(53,36,37,0.4);
+
+  /* Cores de Destaque Adicionais */
+  --c-acento-vermelho: #72252e;  /* Cor para o medidor de carga ativo */
+  --c-acento-verde: #389c68;   /* Cor para PV */
+  --c-acento-azul: #56819c;    /* Cor para PF */
+
+  /* Famílias de Fontes */
+  --f-titulos: 'Cinzel', serif;
+  --f-corpo: 'Roboto', sans-serif;
+  
+  
+  /* Tamanho Base da Fonte */
+  font-size: 13px; 
+}
+
+/* --- 3. ESTRUTURA E FUNDO GERAL --- */
+.gum.sheet.actor .sheet-grid {
+  display: grid;
+  position: relative;
+  grid-template-columns: 250px 1fr; /* 2 colunas: sidebar e principal */
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  height: 100%;
+  background: var(--c-fundo-papiro);
+  color: var(--c-texto-escuro);
+  font-family: var(--f-corpo);
+  /* O 'gap' e 'padding' foram removidos daqui para um controle mais fino */
+}
+
+/* AUMENTO DO BANNER DA FICHA - DEPENTE DO POSITION:RELATIVE em cada outra área para ficar acima do banne */
+.gum.sheet.actor .sheet-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  
+  /* ESTA É A ALTURA DO SEU BANNER - MUDE ESTE VALOR COMO QUISER */
+  height: 125px; 
+  
+  background: var(--c-fundo-cabecalho); /* Usa a cor do cabeçalho */
+  z-index: 0; /* Garante que ele fique na camada mais baixa */
+}
+
+/* 3.1 Atribuição das áreas do grid */
+.sheet-header { grid-area: header; }
+.sheet-sidebar { grid-area: sidebar; }
+.sheet-main-area { grid-area: main; }
+
+/* 3.1.1 CABEÇALHO */
+.sheet-header {
+  position: relative;
+  background: var(--c-fundo-cabecalho);
+  color: var(--c-texto-claro);
+  padding: 0.5rem 1.5rem;
+ 
+}
+
+/* 3.1.1 SIDEBAR */
+.sheet-sidebar {
+  position: relative;
+  background: var(--c-fundo-sidebar);
+  color: var(--c-texto-claro);
+  padding: 1rem 1rem;
+  border-radius: 3px;
+  margin-top: 10px;
+  height: 41.4rem;
+}
+
+/* 3.1.1 ÁREA PRINCIPAL */
+.sheet-main-area {
+  display: grid;
+  grid-template-rows: auto auto 1fr; /* Atributos, Abas, Conteúdo */
+  gap: 1rem;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+
+
+/* --- 4. ESTILO UNIFICADO PARA BLOCOS/CARDS FLUTUANTES --- */
+
+
+.block-header, .column-header, .block-title, .equipment-header h3 {
+  font-family: var(--f-titulos);
+  color: var(--c-acento-dourado);
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+  padding-bottom: 0.1rem;
+  border-bottom: 1px solid var(--c-borda-dourada);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+input, textarea {
+  color: var(--c-texto-principal);
+  background: var(--c-fundo-input);
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 0.3rem;
+  font-family: var(--f-corpo);
+}
+.item-row, .attack-item, .bond-row, .meter-card, .table-row, .detail-item, .social-block > .item-list > .item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.15rem;
+  border-bottom: 1px solid var(--c-borda);
+}
+.item-row:last-child, .attack-item:last-child, .meter-card:last-child, .table-row:last-child, .detail-item:last-child, .social-block > .item-list > .item:last-child {
+  border-bottom: none;
+}
+.item-name { flex-grow: 1; }
+.item-controls { display: flex; gap: 0.5rem; margin-left: auto; }
+a { color: var(--c-acento-dourado); text-decoration: none; }
+a:hover { text-decoration: underline; color: #fff; }
+
+/* =================================================================== */
+/* ESTILOS ESPECÍFICOS (AJUSTES FINOS)                                 */
+/* =================================================================== */
+
+/* --- CABEÇALHO PRINCIPAL --- */
+.sheet-header { padding: 0.75rem 1rem; }
+.header-grid { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+.char-name-input { margin-bottom: 10px; color: var(--c-acento-dourado); font-family: var(--f-titulos); font-size: 1.8rem; border: none !important; background: transparent !important; }
+.char-concept-input { font-size: 0.9rem; font-style: italic; color: var(--c-texto-secundario); border: none !important; background: transparent !important; margin-top: -5px; }
+.points-cluster { display: flex; gap: 1rem; }
+.points-display { flex-direction: column; text-align: center; }
+.points-display.total-points { padding-right: 1rem; border-right: 1px solid var(--c-borda-dourada); }
+.points-display label { font-family: var(--f-titulos); font-size: 0.6rem; text-transform: uppercase; color: var(--c-texto-secundario); }
+.points-display input { font-size: 0.8rem; font-weight: 600; width: 60px; border: none !important; background: transparent !important; }
+
+
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PAINEL DE ATRIBUTOS (VERSÃO BRASÃO)     */
+/* =================================================================== */
+
+/* O container principal agora é apenas um espaçador, sem visual próprio */
+.sheet-mini-header {
+  padding: 0.5rem 0;
+  
+}
+
+/* O container que alinha os brasões horizontalmente */
+.primary-attributes-container {
+  display: flex;
+  /* MUDANÇA: Usamos flex com gap para um espaçamento preciso */
+  justify-content: center; /* Centraliza o grupo de brasões */
+  align-items: center;
+  gap: 1.5rem; /* <<< Distância mínima entre os brasões. Altere este valor se desejar. */
+}
+
+/* O "brasão" de cada atributo individual (sem alterações) */
+.attribute-box {
+  position: relative;
+  background: var(--c-fundo-principal);
+  border: 1px solid var(--c-acento-dourado);
+  width: 80px;
+  height: 80px;
+  padding: 0.3rem 0.5rem 0.7rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* O rótulo do atributo (ST, DX, etc.) */
+.attribute-box label {
+  font-family: 'Roboto';
+  font-size: 1.3rem;
+  font-weight: 700;
+  
+  color: var(--c-acento-dourado)
+}
+
+/* O valor principal do atributo */
+.attribute-box .attribute-value {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.4rem; 
+  font-weight: 700;
+  color: var(--c-texto-principal);
+  border: none !important;
+  background: transparent !important;
+  text-align: center;
+  line-height: 1.2;
+  width: 100%;
+}
+
+/* O modificador temporário */
+.attribute-box .attribute-modifier {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+
+  font-size: 0.8rem;
+  width: 75%;
+  max-width: 50px;
+  border-radius: 10px;
+  border: 1px solid #444 !important;
+  background-color: var(--c-fundo-sidebar) !important;
+  margin-top: 0.25rem;
+  padding: 2px;
+  color: var(--c-texto-principal)
+}
+
+/* =================================================================== */
+/* DESIGN DAS ABAS DE NAVEGAÇÃO (HORIZONTAL COM ÍCONES)                */
+/* =================================================================== */
+
+
+/* O container da navegação das abas */
+nav.sheet-tabs {
+  grid-row: 2; /* Garante que fique na segunda linha da área principal */
+  display: flex;
+  justify-content: space-between; /* Alinha as abas à esquerda */
+  gap: 0.5rem;
+  border: 1px solid var(--c-borda-dourada);
+  padding: 0;
+  
+}
+
+/* Cada ícone de aba */
+.sheet-tabs .item {
+  flex: 0 0 auto;
+  color: var(--c-fundo-cabecalho);
+  padding: 0;
+  width: 42px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-bottom: 3px solid transparent;
+  border-radius: 3px 3px 0 0;
+  transition: all 0.2s ease;
+}
+
+.sheet-tabs .item i {
+  font-size: 1rem;
+}
+
+.sheet-tabs .item:hover {
+  color: #fff;
+  background: var(--c-fundo-input);
+}
+
+/* Estilo da aba ativa */
+.sheet-tabs .item.active {
+  color: var(--c-acento-dourado);
+  border-bottom-color: var(--c-acento-dourado);
+  background: var(--c-fundo-painel);
+}
+
+
+/* --- "TAGS" DE STATUS --- */
+.attack-details-row .stat,
+.spell-details-row .stat,
+.equipment-row .item-stats .stat {
+  background: var(--c-fundo-input);
+  border: 1px solid #444;
+  border-left: 3px solid var(--c-acento-dourado);
+  color: var(--c-texto-principal);
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+.attack-details-row .stat label,
+.spell-details-row .stat label {
+  color: var(--c-texto-secundario);
+  margin-right: 0.3rem;
+}
+
+/* --- ABA SOCIAL --- */
+.social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.social-block-fullwidth { margin-top: 1rem; }
+
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.1: ESTRUTURA DA NOVA SIDEBAR              */
+/* =================================================================== */
+
+.sheet-sidebar {
+  padding: 0; /* Removemos o padding antigo para o container preencher a área */
+}
+
+.sidebar-design-container {
+  background: var(--c-fundo-painel);
+  border: 1px solid var(--c-borda-dourada);
+  border-radius: 5px;
+  padding: 1rem;
+  height: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.sidebar-block {
+  /* Removemos o estilo individual dos blocos para um visual integrado */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+/* --- Estilos base para os novos componentes (serão detalhados nos próximos passos) --- */
+
+.profile-block {
+  position: relative; /* Essencial para posicionar o escudo depois */
+  margin-bottom: 2rem; /* Espaço para o escudo não sobrepor os hexágonos */
+}
+.profile-block .profile-img {
+  width: 100%;
+  height: 180px;
+}
+
+.hex-block {
+  display: flex;
+  justify-content: space-between;
+}
+
+.bars-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.2: ESTILO DO SELO CIRCULAR (FINAL)        */
+/* =================================================================== */
+
+.profile-container {
+  position: relative;
+  margin-bottom: 3rem; /* Espaço para o selo e o rótulo */
+}
+
+/* O container principal que posiciona o conjunto */
+.dodge-badge-container {
+  position: absolute;
+  bottom: -45px; /* Metade da nova altura (56px) */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* O wrapper que define o tamanho do brasão */
+.badge-wrapper {
+  position: relative;
+  /* MUDANÇA: Tamanho geral reduzido */
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+/* O SVG e suas partes */
+.dodge-badge-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  filter: drop-shadow(0 2px 2px var(--c-sombra));
+}
+
+.dodge-badge-svg .badge-center {
+  /* Fundo escuro do círculo */
+  fill: var(--c-borda-escura);
+}
+.dodge-badge-svg .badge-ring {
+  /* Circunferência dourada interna */
+  fill: none;
+  stroke: var(--c-acento-dourado);
+  stroke-width: 5;
+}
+
+/* O valor numérico da Esquiva */
+.dodge-value {
+  position: relative;
+  z-index: 2;
+  font-family: 'Roboto', sans-serif;
+  /* MUDANÇA: Fonte reduzida para caber no novo tamanho */
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--c-texto-principal);
+  text-shadow: 1px 1px 2px #000;
+}
+.dodge-value:hover {
+  text-decoration: none;
+  color: #fff;
+}
+
+/* O rótulo "ESQUIVA" */
+.badge-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--c-texto-secundario);
+}
+
+.dodge-value:active {
+  /* No momento do clique, o texto fica mais branco e ganha um brilho vermelho */
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 50, 50, 0.9), 1px 1px 2px #000;
+}
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.3: ESTILO DOS HEXÁGONOS (LAYOUT DE ENCAIXE) */
+/* =================================================================== */
+
+/* MUDANÇA: O bloco agora é uma 'tela' com posição relativa e altura fixa */
+.hex-block {
+  position: relative;
+  width: 100%;
+  height: 85px; /* Altura total da área dos hexágonos */
+  padding: 0.5rem 0;
+}
+
+/* MUDANÇA: Cada 'stat' agora é posicionado de forma absoluta na 'tela' */
+.hex-stat {
+  position: absolute;
+  top: 0; /* Todos começam alinhados no topo por padrão */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Posições exatas de cada hexágono */
+.hex-velocidade { 
+  left: 0;
+}
+.hex-deslocamento { 
+  /* O pulo do gato: posicionamos a partir do topo para controlar o encaixe */
+  top: 35px; 
+  left: 50%;
+  transform: translateX(-50%); /* Centraliza horizontalmente */
+}
+.hex-mt { 
+  right: 0;
+}
+
+/* Wrapper que segura o SVG e o valor */
+.hex-wrapper {
+  position: relative;
+  width: 80px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.hex-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  filter: drop-shadow(0 2px 2px var(--c-sombra));
+}
+
+.hex-svg .hex-border {
+  fill: var(--c-acento-dourado);
+}
+.hex-svg .hex-fill {
+  fill: var(--c-acento-dourado); 
+  stroke: var(--c-borda-escura);
+  stroke-width: 2;
+}
+
+/* O valor numérico dentro do hexágono */
+.hex-value {
+  position: relative;
+  z-index: 2;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--c-borda-escura);
+  width: 80%;
+  text-align: center;
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+}
+
+/* O rótulo abaixo do hexágono */
+.hex-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-texto-secundario);
+}
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.4: BARRAS DE RECURSOS (PV/PF)             */
+/* =================================================================== */
+
+.bars-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bar-group .bar-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--c-texto-secundario);
+  text-align: left;
+  margin-bottom: 0.2rem;
+}
+
+/* O container principal da barra */
+.resource-bar {
+  position: relative; /* Define o contexto de posicionamento */
+  height: 30px;
+  background-color: var(--c-fundo-input);
+  border-radius: 3px;
+  border: 1px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+/* A barra de preenchimento colorida */
+.resource-bar .bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 2px;
+  /* A largura é controlada pelo style="..." no HTML */
+  transition: width 0.3s ease-out; /* Animação suave */
+}
+.resource-bar .bar-fill.hp {
+  background-color: #3b7d3b; /* Verde escuro para vida */
+}
+.resource-bar .bar-fill.fp {
+  background-color: #3b5a7d; /* Azul escuro para fadiga */
+}
+
+/* Os inputs de texto, que ficam sobre a barra */
+.resource-bar .bar-inputs,
+.resource-bar .bar-temp {
+  position: relative;
+  z-index: 2; /* Garante que fiquem na frente do preenchimento */
+}
+
+.resource-bar .bar-inputs {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.resource-bar input {
+  width: 40px;
+  text-align: center;
+  border: none !important;
+  background: transparent !important;
+  font-weight: 700;
+}
+
+.resource-bar .bar-inputs input {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.resource-bar .bar-temp input {
+  width: 50px;
+  background-color: rgba(0,0,0,0.4) !important;
+  border: 1px solid #555 !important;
+  border-radius: 5px;
+  font-size: 0.8rem;
+}
+
+/* Adiciona um espaço extra no topo do bloco das barras de PV/PF */
+.bars-block {
+  margin-top: 2rem; /* Aumente este valor para mais espaço, diminua para menos */
+}
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.6: BLOCO COLAPSÁVEL DE SOBREVIVÊNCIA      */
+/* =================================================================== */
+
+.collapsible-block {
+  /* MUDANÇA: Removemos o fundo, borda e padding para um visual limpo */
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  
+  /* Adicionamos uma borda inferior para separar do próximo bloco */
+  border-bottom: 1px solid var(--c-borda-dourada);
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.35rem;
+  margin-top: 5px;
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.collapsible-header .block-title {
+  border: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem; /* Fonte menor para o título "Sobrevivência" */
+}
+
+.collapsible-header .expand-icon {
+  color: var(--c-texto-secundario);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* O conteúdo que abre e fecha */
+.collapsible-content {
+  max-height: 0; /* Começa fechado */
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, padding-top 0.4s ease-out;
+}
+
+/* --- ESTADOS QUANDO O BLOCO ESTÁ ATIVO/ABERTO --- */
+.collapsible-block.active .collapsible-content {
+  max-height: 200px; /* Altura máxima para a animação */
+  padding-top: 0.75rem; /* Adiciona espaço quando aberto */
+}
+
+.collapsible-block.active .expand-icon {
+  transform: rotate(180deg); /* Gira a seta para cima */
+}
+
+
+/* --- Estilos para os marcadores DENTRO do bloco colapsável --- */
+.collapsible-content .trackers-container {
+  display: flex;
+  flex-direction: column; /* Organiza em coluna */
+  align-items: stretch;    /* Ocupa toda a largura */
+  gap: 0.6rem;
+}
+
+.collapsible-content .vitals-tracker {
+  display: flex;
+  justify-content: space-between; /* Nome à esquerda, pontos à direita */
+  align-items: center;
+}
+
+.collapsible-content .tracker-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--c-texto-secundario);
+}
+
+.collapsible-content .tracker-dots {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  flex-wrap: wrap; /* Permite que os círculos quebrem a linha */
+  justify-content: flex-end; /* Alinha os círculos à direita */
+
+}
+
+.collapsible-content .tracker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--c-texto-secundario);
+  cursor: pointer;
+}
+
+.collapsible-content .tracker-dot.filled {
+  background-color: var(--c-acento-dourado);
+  border-color: var(--c-acento-dourado);
+}
+
+.survival-block .collapsible-header .block-title {
+  /* MUDANÇA: Fonte alterada para Roboto */
+  font-family: 'Roboto', sans-serif;
+  /* MUDANÇA: Tamanho igual ao dos rótulos de PV/PF */
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* MUDANÇA: Cor dourada, como solicitado */
+  color: var(--c-acento-dourado);
+  /* O alinhamento à esquerda já é garantido pelo layout do container pai */
+}
+
+/* =================================================================== */
+/* ETAPA DE DESIGN - PASSO 3.7: BLOCO DE CARGA                         */
+/* =================================================================== */
+
+.encumbrance-display-block {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  background: var(--c-fundo-input); /* Fundo escuro sutil */
+  padding: 0.5rem;
+  border-radius: 3px;
+  margin-top: 15px; /* Mantém o bloco ancorado na parte de baixo */
+}
+
+.encumbrance-stat .encumbrance-value {
+  font-family: var(--f-corpo);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-texto-principal);
+}
+
+.encumbrance-stat .encumbrance-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-texto-secundario);
+}
+
+/* Garante que o link da Base de Carga pareça um texto normal, mas seja clicável */
+.encumbrance-label a {
+  color: inherit; /* Herda a cor do rótulo */
+  text-decoration: none;
+  border-bottom: 1px dotted var(--c-texto-secundario); /* Adiciona um sublinhado pontilhado para indicar interatividade */
+}
+.encumbrance-label a:hover {
+  color: var(--c-acento-dourado);
+  border-bottom-color: var(--c-acento-dourado);
+}
+
+/* =================================================================== */
+/* AJUSTE DE LAYOUT FINAL: ESTRUTURA DA ÁREA PRINCIPAL                 */
+/* =================================================================== */
+
+/* Garante que o container do corpo da ficha preencha a 2ª linha do grid */
+.sheet-body-content {
+  font-weight: 300;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Controla o overflow para a rolagem acontecer no lugar certo */
+}
+
+/* Garante que o conteúdo da aba possa rolar independentemente */
+.sheet-body {
+  height: 100%;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* =================================================================== */
+/* DESIGN DA ABA DE COMBATE (TEMA CRÔNICAS DO AVENTUREIRO)              */
+/* =================================================================== */
+
+/* Garante que os elementos na aba de combate tenham a cor de texto escura correta */
+.tab[data-tab="combat"] {
+  font-weight: 400; /* Peso normal do Roboto */
+}
+
+/* Os 5 cards de status no topo da aba */
+.combat-header-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem; /* Aumenta um pouco a distância para o conteúdo abaixo */
+}
+.stat-card {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.6rem;
+  text-align: center;
+  
+  /* MUDANÇA: Usando flexbox para melhor alinhamento */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+
+  /* MUDANÇA: Adicionando sombreamento e uma leve transição */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+  transition: all 0.2s ease-in-out;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.stat-card label {
+  font-family: var(--f-titulos);
+  font-size: 0.65rem;
+  color: var(--c-texto-subtitulo);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.stat-card input, .stat-card .value {
+  text-align: center;
+  /* MUDANÇA: Fonte reduzida */
+  font-size: 1rem; 
+  font-weight: 700;
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+  color: var(--c-texto-escuro);
+  height: auto; /* Altura automática para melhor ajuste */
+}
+/* Estilos específicos para os cards interativos */
+.stat-card.rd-card .value { font-size: 1.5rem; }
+.stat-card.rd-card label, .stat-card.meters-card label { display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
+.stat-card.rd-card a, .stat-card.meters-card a { font-size: 0.8rem; color: var(--c-texto-subtitulo); }
+.meters-card .value-summary { font-size: 0.8rem; height: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meters-card .manage-meters { font-size: 0.7rem; font-family: var(--f-titulos); cursor: pointer; }
+
+/* O layout principal de 2 colunas da aba */
+.combat-main-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1rem;
+  align-items: start;
+}
+.combat-left-column, .combat-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Estilo unificado para os blocos/cards dentro das abas */
+.sheet-body .gum-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  padding: 0.75rem;
+  margin-top: 10px;
+}
+.sheet-body .block-header {
+  color: var(--c-texto-escuro);
+  border-bottom-color: var(--c-borda);
+}
+.sheet-body .block-header h4 {
+  color: var(--c-texto-escuro);
+  font-family: var(--f-titulos);
+}
+
+
+
+/* Inputs gerais dentro das abas */
+.sheet-body input, .sheet-body textarea {
+  color: var(--c-texto-escuro);
+  background: rgba(0,0,0,0.05);
+  border-color: #ccc;
+}
+
+/* =================================================================== */
+/* DESIGN: CARD DE RD HÍBRIDO (LAYOUT CORRIGIDO)                       */
+/* =================================================================== */
+
+/* O container principal do novo card */
+.stat-card.rd-hybrid-card {
+  /* MUDANÇA: Usamos flex para alinhar os itens lado a lado */
+  display: flex;
+  flex-direction: row; /* Garante o alinhamento horizontal */
+  align-items: center; /* Centraliza as duas seções verticalmente */
+  
+  padding: 0; /* Removemos o padding do container principal */
+  grid-column: span 2; /* Faz este card ocupar o espaço de dois cards normais */
+}
+
+/* A seção principal à esquerda (RD Torso) */
+.rd-main-display {
+  position: relative;
+  flex-basis: 75px; /* Largura fixa para a parte principal */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-right: 1px solid var(--c-borda);
+  height: 100%; /* Ocupa toda a altura do card pai */
+}
+.rd-main-display .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--c-texto-escuro);
+  line-height: 1.2;
+}
+.rd-main-display label {
+  position: relative;
+  width: 100%;
+  text-align: center;
+}
+.rd-main-display .view-hit-locations {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  font-size: 0.7rem;
+  color: var(--c-texto-subtitulo);
+}
+
+/* A lista de detalhes à direita */
+.rd-details-list {
+  flex-grow: 0.5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 0.3rem 0.3rem 0.3rem; /* Adiciona espaçamento interno */
+  font-size: 0.6rem;
+  color: var(--c-texto-subtitulo);
+}
+.rd-detail-row {
+  display: flex;
+  justify-content: flex;
+  gap: 0.5rem; /* Adiciona espaço entre os itens da mesma linha */
+}
+.rd-detail-row strong {
+  color: var(--c-texto-escuro);
+  font-weight: 700;
+}
+
+/* =================================================================== */
+/* DESIGN: JANELA DE DIÁLOGO DA TABELA DE RD                           */
+/* =================================================================== */
+
+/* Define a largura da janela de diálogo de RD */
+.gurps-rd-dialog .dialog-content {
+    padding: 0; /* Remove padding padrão para nosso design tomar conta */
+}
+
+/* Container principal da tabela, com o estilo dos nossos cards */
+.gurps-rd-table {
+    font-family: 'Roboto', sans-serif;
+    color: #352425;
+    background: #fdfaf8;
+}
+
+/* Define a grade de 4 colunas */
+.gurps-rd-table .table-header,
+.gurps-rd-table .table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr; /* Localização tem mais espaço */
+    align-items: center;
+    padding: 0 10px;
+}
+
+/* Estilo do cabeçalho da tabela */
+.gurps-rd-table .table-header {
+    background: #34161b;
+    font-weight: bold;
+    font-family: 'Cinzel', serif;
+    border-bottom: 1px solid #c9b9b4;
+}
+
+.gurps-rd-table .table-header > div {
+    padding: 8px 5px;
+    text-align: center;
+    color: #f8f4f1;
+}
+
+/* Corpo da tabela onde as linhas ficarão */
+.gurps-rd-table .table-body {
+    padding: 5px 0;
+}
+
+/* Estilo de cada célula da tabela */
+.gurps-rd-table .table-row > div {
+    padding: 6px 5px;
+    text-align: center;
+    border-bottom: 1px solid #f0ebe8;
+}
+.gurps-rd-table .table-row .loc-label {
+    text-align: left;
+    font-weight: bold;
+}
+
+/* Efeito "zebrado" para melhor legibilidade */
+.gurps-rd-table .table-row:nth-child(even) {
+    background-color: #f8f4f1;
+}
+
+/* Estilo para o campo de input */
+.gurps-rd-table input[type="number"] {
+    width: 80%;
+    padding: 4px;
+    border: 1px solid #c9b9b4;
+    border-radius: 3px;
+    background: #fff;
+    text-align: center;
+    font-size: 1em;
+    font-family: 'Roboto', sans-serif;
+}
+.gurps-rd-table input[type="number"]:focus {
+    outline: none;
+    border-color: #3a506b;
+    box-shadow: 0 0 3px rgba(58, 80, 107, 0.5);
+}
+
+/* Destaque para a coluna do total */
+.gurps-rd-table .loc-rd-total strong {
+    font-size: 1.2em;
+    color: #a53541; /* Mesma cor do dano para destaque */
+}
+
+/* =================================================================== */
+/* DESIGN: REGISTROS DE COMBATE (CARDS HORIZONTAIS)                    */
+/* =================================================================== */
+
+/* MUDANÇA: A lista agora usa flexbox para alinhar os cards lado a lado */
+.meter-list {
+  display: flex;
+  flex-wrap: wrap; /* Permite que os cards quebrem a linha */
+  gap: 0.5rem;     /* Espaço entre os cards */
+}
+
+/* MUDANÇA: Cada card agora tem um tamanho flexível para caber na linha */
+.meter-card {
+  flex: 1 1 150px; /* Permite crescer, encolher, com base de 150px */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  padding: 0.4rem 0.6rem;
+}
+
+.meter-card .item-name {
+  font-family: var(--f-corpo);
+  font-size: 0.8rem;
+  font-weight: 400;
+  flex-grow: 1; /* Faz o nome ocupar o espaço disponível */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adiciona "..." se o nome for muito longo */
+}
+
+.meter-card .meter-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0; /* Impede que os inputs encolham */
+}
+
+.meter-card input {
+  width: 35px; /* Inputs menores */
+  font-size: 0.9rem;
+  padding: 2px;
+  text-align: center;
+}
+
+/* =================================================================== */
+/* DESIGN: LISTA DE ATAQUES ANINHADA (VERSÃO REFINADA)                 */
+/* =================================================================== */
+
+.attacks-list-box .block-header a {
+  font-size: 0.8rem;
+  font-family: var(--f-corpo);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.attack-group-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attack-group-card {
+  background: rgba(0,0,0,0.02);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.5rem 0.75rem;
+}
+
+.attack-group-card .group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--c-borda);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* MUDANÇA: Tamanho do título do grupo reduzido */
+.attack-group-card .group-name {
+  font-family: var(--f-titulos);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.attacks-in-group {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Linha de cada ataque individual */
+.attack-item .attack-type-icon {
+  color: var(--c-texto-subtitulo);
+}
+
+.attack-item .attack-main-info {
+  flex-grow: 1;
+}
+
+.attack-item .attack-name-row {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.attack-item .attack-name-row small {
+  color: var(--c-texto-subtitulo);
+  font-size: 0.8em;
+  margin-left: 0.5rem;
+}
+
+/* MUDANÇA: Container das tags agora quebra a linha */
+.attack-details-row {
+  display: flex;
+  flex-wrap: wrap; /* Impede a sobreposição */
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+/* MUDANÇA: Novo design para as "tags" no tema claro */
+.attack-details-row .stat {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--c-texto-escuro);
+  border-left: 3px solid var(--c-texto-subtitulo);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+.attack-details-row .stat label {
+  color: var(--c-texto-subtitulo);
+  margin-right: 0.3rem;
+  font-weight: 700;
+}
+
+.add-attack-footer {
+  text-align: right;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--c-borda);
+}
+.add-attack-footer a {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+ 
+/* =================================================================== */
+/* DESIGN: ABA DE PERÍCIAS (LAYOUT FINAL E REFINADO)                   */
+/* =================================================================== */
+
+/* Layout de 2 colunas com proporção ajustada */
+.skills-layout-container {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr; /* Coluna da esquerda ~60%, Direita ~40% */
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Coluna da direita com blocos e espaçamento reduzido */
+.skill-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* MUDANÇA: Distância entre os blocos diminuída */
+}
+
+/* Estilo padrão para todos os blocos de perícia */
+.tab[data-tab="skills"] .gum-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  padding: 0.75rem;
+}
+
+/* Cabeçalhos de bloco menores, especialmente na coluna da direita */
+.skill-side-column .block-header input {
+  font-size: 0.9rem !important;
+}
+
+.tab[data-tab="skills"] .item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Espaço entre cada linha de perícia */
+}
+
+/* Estilo para cada linha de perícia */
+.tab[data-tab="skills"] .skill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  font-size: 12px
+}
+
+/* A "tag" do nome da perícia */
+.tab[data-tab="skills"] .skill-name-tag {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--c-borda);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  flex-grow: 1; /* Faz o nome ocupar o espaço disponível */
+}
+
+/* O container para as tags de detalhes (Atributo e NH) */
+.tab[data-tab="skills"] .skill-details {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0; /* Impede que encolham */
+  
+}
+
+/* Estilo de "tag" para Atributo e NH */
+.tab[data-tab="skills"] .skill-details .stat {
+  display: inline-block;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--c-borda);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: var(--c-texto-subtitulo);
+}
+.tab[data-tab="skills"] .skill-details a.stat {
+  font-weight: 700;
+  color: var(--c-texto-escuro);
+  font-size: 10px
+}
+.tab[data-tab="skills"] .skill-details a.stat:hover {
+  border-color: var(--c-texto-subtitulo);
+  text-decoration: none;
+}
+
+/* Ícones de controle menores */
+.tab[data-tab="skills"] .item-control {
+  font-size: 10px;
+}
+
+
+/* =================================================================== */
+/* ESTILO CORRIGIDO PARA O MENU DE CONTEXTO                            */
+/* =================================================================== */
+.custom-context-menu {
+  display: none;
+  position: fixed;
+  z-index: 100;
+  background-color: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  padding: 5px 0;
+  width: 200px;
+}
+.custom-context-menu .context-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--c-texto-escuro);
+}
+.custom-context-menu .context-item:hover {
+  background-color: rgba(0,0,0,0.05);
+  color: var(--c-acento-vermelho);
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE CONJURAÇÕES (REFINAMENTO FINAL)                      */
+/* =================================================================== */
+
+.tab[data-tab="spells"] .skill-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.75rem;
+}
+.tab[data-tab="spells"] .block-header h4 {
+  color: var(--c-texto-escuro);
+}
+.tab[data-tab="spells"] .block-header a {
+  color: var(--c-texto-subtitulo);
+}
+.tab[data-tab="spells"] .item-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* MUDANÇA: O 'gap' foi reduzido para aproximar as colunas */
+.tab[data-tab="spells"] .item-row.spell-row {
+  border-bottom: 1px solid var(--c-borda);
+  padding: 0.5rem 0.25rem;
+  gap: 0.5rem;
+}
+.tab[data-tab="spells"] .item-row.spell-row:last-child {
+  border-bottom: none;
+}
+
+.tab[data-tab="spells"] .spell-main-info {
+  flex-basis: 140px;
+  flex-shrink: 0;
+}
+
+/* MUDANÇA: Novo estilo de "tag" para o nome da magia */
+.tab[data-tab="spells"] .spell-main-info .spell-name {
+  background: rgba(142, 68, 173, 0.08); /* Fundo roxo mágico e sutil */
+  border: 1px solid rgba(142, 68, 173, 0.2);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.tab[data-tab="spells"] .spell-main-info .spell-subtitle {
+  color: var(--c-texto-subtitulo);
+  margin-left: 0.25rem;
+}
+
+/* Container para as tags e ações */
+.spell-stats-and-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  flex-grow: 1;
+}
+/* Estilo das tags e botões */
+.spell-stats-and-actions .stat,
+.spell-stats-and-actions .action-button {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--c-texto-escuro);
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.spell-stats-and-actions .stat label {
+  color: var(--c-texto-subtitulo);
+  margin-right: 0.3rem;
+  font-weight: 700;
+}
+.spell-stats-and-actions .stat {
+  border-left: 3px solid #8e44ad;
+}
+.spell-stats-and-actions .action-button {
+  font-weight: 700;
+}
+.spell-stats-and-actions .action-button:hover {
+  border-color: var(--c-texto-subtitulo);
+  background: rgba(0,0,0,0.07);
+  text-decoration: none;
+}
+
+/* =================================================================== */
+/* DESIGN: RESERVAS DE ENERGIA (ESTILO CORRIGIDO)                      */
+/* =================================================================== */
+
+/* O container que lista todas as reservas */
+.energy-reserves-list {
+  display: flex;
+  flex-direction: row; 
+  flex-wrap: wrap;
+  gap: 0.5rem; 
+}
+
+.energy-reserves-box {
+ margin-bottom: 10px;
+}
+/* O card de cada reserva individual, agora idêntico ao .meter-card */
+.reserve-card {
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: row; /* Alinha os elementos internos na horizontal */
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background-color: rgba(0,0,0,0.05); /* Fundo sutil */
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+}
+
+/* Garante que o nome ocupe o espaço disponível */
+.reserve-card .item-name {
+  flex-grow: 1;
+  font-weight: 700;
+}
+.reserve-card .item-name small {
+  font-weight: 400;
+  color: var(--c-texto-subtitulo);
+}
+
+/* O container para os inputs de valor */
+.reserve-card .meter-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.reserve-card .meter-inputs input {
+  width: 40px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE CONJURAÇÕES (CABEÇALHO CORRIGIDO)                    */
+/* =================================================================== */
+
+/* O card principal da Habilidade de Conjuração */
+.tab[data-tab="spells"] .casting-ability-box {
+  padding: 0; /* Removemos o padding para o banner preencher as bordas */
+  overflow: hidden; /* Garante que o banner não vaze para fora dos cantos arredondados */
+  margin-bottom: 10px;
+}
+
+/* O header agora é o nosso banner vermelho */
+.tab[data-tab="spells"] .casting-ability-box .header {
+  position: relative; /* Cria o contexto para posicionar o ícone de editar */
+  background: var(--c-fundo-cabecalho);
+  color: var(--c-text-light);
+  padding: 0.5rem 0.25rem;
+  margin: 0;
+  text-align: center; /* MUDANÇA: Centraliza todo o texto por padrão */
+}
+
+/* O título H3 dentro do banner */
+.tab[data-tab="spells"] .casting-ability-box .header h3 {
+  font-family: var(--f-titulos);
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+  margin: 0;
+  border-bottom: none;
+}
+
+/* MUDANÇA: Posicionamento do ícone de editar */
+.tab[data-tab="spells"] .casting-ability-box .header .edit-casting-ability {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+}
+.tab[data-tab="spells"] .casting-ability-box .header .edit-casting-ability:hover {
+  color: #fff;
+}
+
+
+/* O conteúdo abaixo do banner */
+.tab[data-tab="spells"] .casting-ability-box .source {
+  background: var(--c-fundo-cabecalho);
+  padding: 0 1rem 1rem 1rem;
+  text-align: center; /* MUDANÇA: Centraliza o subtítulo */
+  font-size: 0.8rem;
+  color: var(--c-texto-subtitulo);
+  font-weight: 700;
+}
+
+.tab[data-tab="spells"] .casting-ability-box .description {
+  padding: 0.25rem 1rem 0.75rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: justify;
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE PODERES (ESPELHO DA ABA DE CONJURAÇÕES)              */
+/* =================================================================== */
+
+/* Garante que os blocos nesta aba sejam "ilhas flutuantes" */
+.tab[data-tab="powers"] .skill-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.75rem;
+}
+.tab[data-tab="powers"] .block-header h4 {
+  color: var(--c-texto-escuro);
+}
+.tab[data-tab="powers"] .block-header a {
+  color: var(--c-texto-subtitulo);
+}
+.tab[data-tab="powers"] .item-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* --- ESTILO DO CABEÇALHO "FONTE DE PODER" --- */
+
+.tab[data-tab="powers"] .casting-ability-box {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+.tab[data-tab="powers"] .casting-ability-box .header {
+  position: relative; /* Cria o contexto para posicionar o ícone de editar */
+  background: var(--c-fundo-cabecalho);
+  color: var(--c-text-light);
+  padding: 0.5rem 0.25rem;
+  margin: 0;
+  text-align: center; /* MUDANÇA: Centraliza todo o texto por padrão */
+}
+.tab[data-tab="powers"] .casting-ability-box .header h3 {
+  font-family: var(--f-titulos);
+  color: #fff;
+  border-bottom: none;
+}
+.tab[data-tab="powers"] .casting-ability-box .header .edit-power-source {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+}
+.tab[data-tab="powers"] .casting-ability-box .header .edit-power-source:hover {
+  color: #fff;
+}
+.tab[data-tab="powers"] .casting-ability-box .source,
+.tab[data-tab="powers"] .casting-ability-box .description {
+  padding: 0 1rem;
+  color: var(--c-texto-escuro);
+}
+.tab[data-tab="powers"] .casting-ability-box .source {
+ background: var(--c-fundo-cabecalho);
+  padding: 0 1rem 1rem 1rem;
+  text-align: center; /* MUDANÇA: Centraliza o subtítulo */
+  font-size: 0.8rem;
+  color: var(--c-texto-subtitulo);
+  font-weight: 700;
+}
+.tab[data-tab="powers"] .casting-ability-box .description {
+  padding-bottom: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+
+/* --- ESTILO DA LISTA DE PODERES --- */
+
+/* Espaçamento da linha de cada poder */
+.tab[data-tab="powers"] .item-row.spell-row {
+  border-bottom: 1px solid var(--c-borda);
+  padding: 0.5rem 0.25rem;
+  gap: 0.25rem;
+  align-items: baseline;
+}
+.tab[data-tab="powers"] .item-row.spell-row:last-child {
+  border-bottom: none;
+}
+
+/* Coluna do nome do poder */
+.tab[data-tab="powers"] .spell-main-info {
+  flex-basis: 140px;
+  flex-shrink: 0;
+}
+
+/* Estilo de "tag" para o nome do poder */
+.tab[data-tab="powers"] .spell-main-info .spell-name {
+  display: inline-block;
+  /* MUDANÇA: Usando a cor verde dos PVs como acento */
+  background: rgba(56, 156, 104, 0.08); 
+  border: 1px solid rgba(56, 156, 104, 0.2);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  color: var(--c-texto-escuro);
+}
+
+.tab[data-tab="powers"] .spell-main-info .spell-subtitle {
+  color: var(--c-texto-subtitulo);
+}
+
+/* Container de tags e ações */
+.tab[data-tab="powers"] .spell-stats-and-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  flex-grow: 1;
+}
+
+/* MUDANÇA: Estilo unificado e refinado para as tags e botões de Poderes */
+.tab[data-tab="powers"] .spell-stats-and-actions .stat,
+.tab[data-tab="powers"] .spell-stats-and-actions .action-button {
+ background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--c-texto-escuro);
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.tab[data-tab="powers"] .spell-stats-and-actions .stat label {
+  color: var(--c-texto-subtitulo);
+  margin-right: 0.3rem;
+  font-weight: 400;
+}
+/* Borda de acento verde para as tags de Poder, como na tag de nome */
+.tab[data-tab="powers"] .spell-stats-and-actions .stat {
+  border-left: 3px solid var(--c-hp-bar); 
+}
+.tab[data-tab="powers"] .spell-stats-and-actions .action-button {
+  font-weight: 700;
+}
+.tab[data-tab="powers"] .spell-stats-and-actions .action-button:hover {
+    border-color: var(--c-texto-subtitulo);
+    background: rgba(0,0,0,0.07);
+    text-decoration: none;
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE EQUIPAMENTOS (REFINADO)                              */
+/* =================================================================== */
+
+/* MUDANÇA: Estilo mais limpo e compacto para os títulos das colunas */
+.equipment-column .column-header {
+  font-size: 0.9rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--c-texto-subtitulo);
+  border-bottom: none; /* Remove a borda/sublinhado */
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.tab[data-tab="equipment"] .equipment-column {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.75rem;
+  margin-top: 10px;
+}
+.tab[data-tab="equipment"] .block-header h4,
+.tab[data-tab="equipment"] .equipment-header h3 {
+    color: var(--c-texto-escuro);
+}
+
+/* MUDANÇA: Estilo do checkbox revertido para o padrão do navegador */
+.ignore-weight-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--c-texto-subtitulo);
+}
+.ignore-weight-label input[type="checkbox"] {
+  /* Deixa o navegador controlar a aparência */
+  all: revert;
+}
+
+
+/* Lista de Equipamentos */
+.tab[data-tab="equipment"] .item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tab[data-tab="equipment"] .equipment-row {
+  border-bottom: 1px solid var(--c-borda);
+  padding: 0.5rem 0.25rem;
+}
+.tab[data-tab="equipment"] .equipment-row:last-child {
+  border-bottom: none;
+}
+.equipment-row .item-name {
+  display: inline-block;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--c-borda);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* MUDANÇA: O container das tags agora permite quebra de linha */
+.equipment-row .item-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end; /* Alinha as tags à direita */
+  gap: 0.4rem;
+}
+
+/* Estilo para TODAS as tags de status, incluindo as novas */
+.equipment-row .item-stats .stat {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--c-texto-escuro);
+  border-left: 3px solid var(--c-borda-escura);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* =================================================================== */
+/* DESIGN: BLOCO DE SUMÁRIO DE CARGA                                   */
+/* =================================================================== */
+
+.encumbrance-block .encumbrance-total-weight {
+  font-size: 0.8rem;
+  color: var(--c-texto-subtitulo);
+}
+
+/* O container do medidor */
+.encumbrance-meter {
+  display: flex;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+/* Cada segmento do medidor */
+.encumbrance-level-box {
+  flex: 1;
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  background-color: rgba(0,0,0,0.05);
+  border-top: 1px solid var(--c-borda);
+  border-bottom: 1px solid var(--c-borda);
+  border-right: 1px solid var(--c-borda);
+  transition: all 0.2s ease;
+}
+.encumbrance-level-box:first-child {
+  border-left: 1px solid var(--c-borda);
+  border-radius: 5px 0 0 5px;
+}
+.encumbrance-level-box:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.encumbrance-level-box .level-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.encumbrance-level-box .level-weight {
+  font-size: 0.7rem;
+  color: var(--c-texto-subtitulo);
+  
+}
+
+/* Estilo do segmento ATIVO */
+.encumbrance-level-box.active {
+  background: var(--c-acento-vermelho);
+  color: var(--c-texto-principal);
+  font-weight: 600;
+  border-color: var(--c-acento-vermelho);
+}
+.encumbrance-level-box.active .level-weight {
+  color: var(--c-texto-principal);
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Rodapé com o checkbox */
+.encumbrance-footer {
+  margin-top: 0.75rem;
+  text-align: right;
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE CARACTERÍSTICAS                                      */
+/* =================================================================== */
+
+/* Layout de 2 colunas da aba */
+.characteristics-layout-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.char-sub-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Garante que os blocos nesta aba sejam "ilhas flutuantes" */
+.tab[data-tab="characteristics"] .skill-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.75rem;
+}
+
+/* Garante que o cabeçalho dos blocos use as cores do tema claro */
+.tab[data-tab="characteristics"] .block-header {
+  border-bottom-color: var(--c-borda);
+}
+.tab[data-tab="characteristics"] .block-header input {
+  font-family: var(--f-titulos);
+  color: var(--c-texto-escuro);
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+}
+.tab[data-tab="characteristics"] .block-header a {
+  color: var(--c-texto-subtitulo);
+}
+
+/* Remove o padding da lista para alinhar com a borda do card */
+.tab[data-tab="characteristics"] .item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Estilo para cada linha de característica */
+.tab[data-tab="characteristics"] .char-item-row {
+  border-bottom: 1px solid var(--c-borda);
+  padding: 0.5rem 0.25rem;
+}
+.tab[data-tab="characteristics"] .char-item-row:last-child {
+  border-bottom: none;
+}
+.tab[data-tab="characteristics"] .char-item-row .item-name {
+  font-weight: 500;
+}
+.tab[data-tab="characteristics"] .char-item-row .item-points {
+  color: var(--c-texto-subtitulo);
+  font-weight: 700;
+  font-size: 0.9em;
+}
+/* Estilo base para as tags de nome na aba de características */
+.tab[data-tab="characteristics"] .item-name {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* Estilo para Traços Raciais e Constituição (bloco 1 e 4) */
+.tab[data-tab="characteristics"] [data-block-id="block1"] .item-name,
+.tab[data-tab="characteristics"] [data-block-id="block4"] .item-name {
+  /* Fundo com a cor de acento "bronze" */
+  background: rgba(159, 146, 117, 0.1); 
+  border: 1px solid rgba(159, 146, 117, 0.2);
+}
+
+/* MUDANÇA: Novo estilo azulado para VANTAGENS (bloco 2) */
+.tab[data-tab="characteristics"] [data-block-id="block2"] .item-name {
+  background: rgba(86, 129, 156, 0.1); /* Fundo com a cor de acento azul */
+  border: 1px solid rgba(86, 129, 156, 0.2);
+}
+
+/* Estilo para DESVANTAGENS (bloco 3) */
+.tab[data-tab="characteristics"] [data-block-id="block3"] .item-name {
+  /* Fundo com a cor de acento vermelho */
+  background: rgba(114, 37, 46, 0.1); 
+  border: 1px solid rgba(114, 37, 46, 0.2);
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE ASPECTOS SOCIAIS (LAYOUT DE 2 LINHAS)                */
+/* =================================================================== */
+
+.tab[data-tab="social"] .social-block,
+.tab[data-tab="social"] .social-block-fullwidth {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.tab[data-tab="social"] .social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.tab[data-tab="social"] .social-block-fullwidth {
+  grid-column: 1 / -1;
+}
+.tab[data-tab="social"] .block-header h4 {
+    color: var(--c-texto-escuro);
+}
+
+/* MUDANÇA: O novo container que empilha o conteúdo */
+.item-content-wrapper {
+  flex-grow: 1;
+}
+
+/* O nome principal com destaque de tag */
+.tab[data-tab="social"] .item-name {
+  display: inline-block;
+  background: rgba(151, 124, 99, 0.1);
+  border: 1px solid rgba(151, 124, 99, 0.2);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* Os detalhes que aparecem na linha de baixo */
+.tab[data-tab="social"] .item-details {
+  font-size: 0.85em;
+  color: var(--c-texto-subtitulo);
+  display: block; /* Garante que ele ocupe sua própria linha */
+  margin-top: 2px;
+}
+.tab[data-tab="social"] .item-row {
+  border-bottom: 1px solid var(--c-borda);
+  padding: 0.6rem 0.25rem;
+}
+
+/* Remove o padding padrão da lista para alinhar os itens à esquerda */
+.tab[data-tab="social"] .item-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* =================================================================== */
+/* DESIGN: ABA DE BIOGRAFIA                                            */
+/* =================================================================== */
+
+.tab[data-tab="biography"] {
+  padding-top: 0.5rem;
+}
+
+/* Layout da biografia em coluna única */
+.biography-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+/* Estilo de "card flutuante" para as duas colunas */
+.biography-story,
+.biography-details .skill-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  padding: 0.75rem;
+  height: 100%;
+}
+
+.biography-story .block-title,
+.biography-details .block-header {
+  color: var(--c-texto-escuro);
+  border-bottom: 1px solid var(--c-borda);
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+/* MUDANÇA: Regras mais robustas para o editor de texto */
+.biography-story .editor {
+  /* Removemos a altura fixa que estava causando o bug */
+  min-height: 150px; /* Apenas uma altura mínima para começar */
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.03);
+  border-radius: 3px;
+}
+
+/* Lista de detalhes no card de Perfil */
+.details-display-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}
+.detail-item {
+  border-bottom: 1px solid var(--c-borda);
+  padding-bottom: 3px;
+}
+.detail-label {
+  font-size: 0.7rem;
+  color: var(--c-texto-subtitulo);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.detail-value {
+  font-size: 0.9rem;
+}
+
+/* Estilo para o novo botão de opções e o menu de contexto aprimorado */
+.item-controls .item-options-btn {
+  font-size: 1rem;
+}
+
+.context-divider {
+  border-top: 1px solid var(--c-borda);
+  margin: 4px 0;
+}
+
+.context-submenu {
+  position: relative;
+}
+
+.context-submenu .submenu-items {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 100%; /* Posiciona o submenu à esquerda do item pai */
+  background-color: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  border-radius: 3px;
+  box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+  width: 200px;
+  padding: 5px 0;
+}
+
+.context-submenu:hover .submenu-items {
+  display: block; /* Mostra o submenu ao passar o mouse */
+}
+
+
+/*card de dano*/
+.stat-card a.rollable-basic-damage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  gap: 0.3rem;
+}
+.stat-card a.rollable-basic-damage .value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--c-texto-escuro);
+}
+
+/* Garante que o card de status seja um contexto de posicionamento */
+.stat-card {
+  position: relative;
+}
+
+/* Posiciona o ícone de editar dentro do card */
+.stat-card .edit-basic-damage {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  font-size: 0.7rem;
+  color: var(--c-texto-subtitulo);
+}
+.stat-card .edit-basic-damage:hover {
+  color: var(--c-texto-escuro);
+}
+
+/* =================================================================== */
+/* DESIGN: FICHA DE ITEM ("MINI-FICHA")                                */
+/* =================================================================== */
+
+/* Área de descrição maior */
+.gum.sheet.item textarea[name="system.description"] {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+
+.gum.sheet.item .sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #34161b;
+  color: var(--c-texto-principal);
+  padding: 0.75rem;
+}
+.gum.sheet.item .sheet-header .profile-img {
+  width: 90px; height: 90px; border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.4); flex-shrink: 0;
+}
+.gum.sheet.item .sheet-header input[name="name"] {
+  font-family: var(--f-corpo); font-size: 1.4rem; color: #fff;
+  border: none; background: transparent !important; 
+}
+
+.gum.sheet.item .sheet-body { 
+  padding: 1rem;
+  background: #f1e8e7; 
+}
+
+/* =================================================================== */
+/* DESIGN: MENSAGENS DE ROLAGEM NO CHAT (v12 - Polimento Final)        */
+/* =================================================================== */
+
+.chat-message .gurps-roll-card {
+    background: #fdfaf8;
+    border: 1px solid #c9b9b4;
+    border-radius: 5px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #352425;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 8px;
+    margin-top: 5px; /* Espaçamento superior */
+}
+
+.gurps-roll-card .card-header {
+    background: #e9e3e0;
+    padding: 6px 10px;
+    border-bottom: 1px solid #d1c8c4;
+    text-align: center;
+}
+
+.gurps-roll-card .card-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    color: #313131;
+    font-weight: 700;
+}
+
+.gurps-roll-card .card-content {
+    padding: 10px;
+}
+
+.gurps-roll-card .card-main-flex {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.gurps-roll-card .roll-column, .gurps-roll-card .target-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-basis: 45%;
+    min-height: 90px;
+}
+
+.gurps-roll-card .column-separator {
+    display: block;
+    width: 1px;
+    background-color: #d1c8c4;
+    align-self: stretch;
+}
+
+/* --- MUDANÇA: Diminuindo o dado do resultado para dar destaque ao alvo --- */
+.gurps-roll-card .roll-total-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;   /* Diminuído */
+    height: 54px;  /* Diminuído */
+    background-color: #f8f4f1;
+    border: 1px solid #c9b9b4;
+    border-radius: 6px;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+    font-size: 2em; /* Diminuído */
+    font-weight: bold;
+    color: #313131;
+    line-height: 1;
+}
+
+/* --- MUDANÇA: Destaque sutil com borda inferior para o valor alvo --- */
+.gurps-roll-card .roll-target-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #313131;
+    text-shadow: 0px 2px 3px rgba(0,0,0,0.2);
+    line-height: 1;
+    border-bottom: 2px solid #e0d9d6; /* Linha de ênfase sutil */
+    padding-bottom: 3px; /* Espaço para a linha respirar */
+}
+
+.gurps-roll-card .individual-dice {
+    display: flex;
+    gap: 5px;
+}
+
+.gurps-roll-card .die {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #f8f4f1;
+    border: 1px solid #c9b9b4;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.gurps-roll-card .roll-breakdown-pill {
+    font-size: 0.9em;
+    color: #6d6666;
+    background: #f8f4f1;
+    border: 1px solid #e9e3e0;
+    border-radius: 15px;
+    padding: 4px 10px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.gurps-roll-card .card-footer {
+    padding: 8px 10px;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-align: center;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+.gurps-roll-card .card-footer.success { background-color: #389c68; }
+.gurps-roll-card .card-footer.failure { background-color: #a53541; }
+
+/* =================================================================== */
+/* DESIGN: JANELA DE DIÁLOGO DE MODIFICADORES                          */
+/* =================================================================== */
+
+.modifier-dialog {
+    text-align: center;
+}
+
+/* Container principal da grade de botões */
+.modifier-grid {
+    display: flex;
+    flex-direction: column; /* Organiza as linhas uma em cima da outra */
+    gap: 8px; /* Espaço entre as linhas de botões */
+    margin-bottom: 12px;
+}
+
+/* Estilo de cada linha de botões */
+.mod-row {
+    display: flex;
+    justify-content: space-between; /* Distribui os botões igualmente */
+    gap: 5px; /* Espaço entre os botões na mesma linha */
+}
+
+/* Estilo de cada botão de modificador */
+.mod-button {
+    flex: 1; /* Faz com que todos os botões ocupem o mesmo espaço na linha */
+    padding: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #b3a8a8;
+    background: #e9e3e0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mod-button:hover {
+    background-color: #d1c8c4;
+    border-color: #797171;
+}
+
+/* Estilo do botão de limpar */
+.mod-clear-button {
+    width: 100%; /* Ocupa toda a largura */
+    padding: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #b3a8a8;
+    background: #72252e;
+    color: #f8f4f1;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mod-clear-button:hover {
+    background-color: #c9b9b4;
+}
+
+/* Garante que o input do número também tenha uma boa aparência */
+.modifier-dialog input[type="number"] {
+    width: 80px;
+    padding: 5px;
+    font-size: 1.2em;
+    border: 1px solid #b3a8a8;
+}
+
+/* =================================================================== */
+/* DESIGN: MENSAGENS DE ROLAGEM DE DANO (v4 - Layout Corrigido)        */
+/* =================================================================== */
+
+.gurps-damage-card {
+    background: #fdfaf8;
+    border: 1px solid #c9b9b4;
+    border-radius: 5px;
+    font-family: 'Roboto', sans-serif;
+    color: #352425;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-top: 5px;
+}
+
+/* --- MUDANÇA: Restaurando o cabeçalho como um bloco distinto --- */
+.gurps-damage-card .card-header {
+    background: #e9e3e0;
+    padding: 6px 10px;
+    border-bottom: 1px solid #d1c8c4; /* Borda inferior restaurada */
+    text-align: center;
+}
+
+.gurps-damage-card .card-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    color: #313131;
+    font-weight: 700;
+}
+
+/* --- MUDANÇA: Posicionando a pílula fora do cabeçalho --- */
+.gurps-damage-card .card-formula-container {
+    background: transparent; /* Fundo removido para ficar na área de conteúdo */
+    text-align: center;
+    padding: 8px 0 4px 0; /* Espaçamento para respirar abaixo do header */
+}
+
+.gurps-damage-card .formula-pill {
+    font-size: 0.9em;
+    color: #6d6666;
+    background: #f8f4f1;
+    border: 1px solid #e9e3e0;
+    border-radius: 15px;
+    padding: 4px 10px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* A borda inferior do card-content foi removida pois não há mais necessidade */
+.gurps-damage-card .card-content {
+    padding: 4px 10px 10px 10px; /* Ajuste no padding superior */
+}
+
+.gurps-damage-card .card-main-flex {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 8px;
+    border-top: 1px solid #e9e3e0;
+}
+
+.gurps-damage-card .roll-column, .gurps-damage-card .target-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 45%;
+    min-height: 70px;
+}
+
+.gurps-damage-card .column-separator {
+    display: block;
+    width: 1px;
+    background-color: #d1c8c4;
+    align-self: stretch;
+}
+
+.gurps-damage-card .column-label {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #6d6666;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.gurps-damage-card .individual-dice-damage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    background-color: #f0ebe8;
+    border-radius: 4px;
+    padding: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.gurps-damage-card .die-damage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background-color: #fdfaf8;
+    border: 1px solid #d1c8c4;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.gurps-damage-card .damage-total {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 8px;
+    line-height: 1;
+  
+}
+
+.gurps-damage-card .damage-value {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: #a53541;
+}
+
+.gurps-damage-card .damage-type {
+    font-size: 1em;
+    font-weight: bold;
+    color: #313131;
+    background-color: #e9e3e0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* =================================================================== */
+/* DESIGN: JANELA DE DIÁLOGO DE EDIÇÃO DE STATS                        */
+/* =================================================================== */
+
+
+.gurps-dialog .dialog-content {
+    background: #fdfaf8;
+    padding: 15px;
+}
+
+.gurps-stat-editor-dialog .dialog-description {
+    font-family: 'Roboto', sans-serif;
+    background: #352425;
+    color:#f8f4f1;
+    text-align: center;
+    margin-bottom: 0;
+    padding: 5px 5px 5px 5px;
+}
+
+.gurps-stat-editor-dialog .form-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    background-color: #f0ebe8;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e0d9d6;
+    margin-bottom: 5px;
+}
+
+.gurps-stat-editor-dialog .form-group label {
+    font-weight: bold;
+    font-family: 'Cinzel', serif;
+    color: #313131;
+    font-size: 1.1em;
+}
+
+.gurps-stat-editor-dialog .form-group input[type="number"] {
+    width: 80px;
+    height: 40px;
+    padding: 5px;
+    border: 1px solid #c9b9b4;
+    border-radius: 3px;
+    background: #fff;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+.gurps-stat-editor-dialog .form-group input[type="number"]:focus {
+    outline: none;
+    border-color: #3a506b;
+    box-shadow: 0 0 5px rgba(58, 80, 107, 0.5);
+}
+
+/* Estilo para os botões do diálogo */
+.gurps-dialog .dialog-buttons {
+    padding: 10px;
+    background: #e9e3e0;
+    border-top: 1px solid #d1c8c4;
+}
+
+.gurps-dialog .dialog-button {
+    background: #389c68; /* Cor de sucesso para o botão 'Salvar' */
+    color: #fff;
+    border: none;
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    margin-top: 5px;
+}
+.gurps-dialog .dialog-button:hover {
+    background: #2f8357;
+}
