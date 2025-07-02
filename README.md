@@ -1,7 +1,7 @@
 # GURPS GUM – Sistema não oficial para Foundry VTT
 
 **Autor:** Victor Valim Valentim  
-**Versão:** 23.2 • 02/Julho de 2025  
+**Versão:** 24 • 02/Julho de 2025  
 **Plataforma:** Foundry VTT v12+
 
 ---
