@@ -106,7 +106,7 @@
         <div class="bar-group">
           <div class="bar-label">PONTOS DE VIDA</div>
           <div class="resource-bar">
-            {{!-- A mágica acontece aqui: 'style' é calculado pelo nosso ajudante --}}
+            {{!-- 'style' é calculado pelo nosso ajudante --}}
             <div class="bar-fill hp" style="{{#bar_width actor.system.attributes.hp.value actor.system.attributes.hp.max}}{{/bar_width}}"></div>
             <div class="bar-inputs">
               <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
@@ -183,14 +183,14 @@
         {{! --- Bloco 5: Carga (Layout do Rótulo Ajustado) --- }}
         <div class="sidebar-block encumbrance-display-block">
           <div class="encumbrance-stat">
-            {{!-- MUDANÇA: O rótulo agora vem ANTES do valor --}}
+            {{!-- O rótulo agora vem ANTES do valor --}}
             <div class="encumbrance-label">
               <a class="edit-lifting-st" title="Editar ST de Carga">Base de Carga</a>
             </div>
             <div class="encumbrance-value">{{actor.system.attributes.basic_lift.value}} kg</div>
           </div>
           <div class="encumbrance-stat">
-            {{!-- MUDANÇA: O rótulo agora vem ANTES do valor --}}
+            {{!-- O rótulo agora vem ANTES do valor --}}
             <div class="encumbrance-label">Nível de Carga</div>
             <div class="encumbrance-value">{{actor.system.encumbrance.level_name}}</div>
           </div>
@@ -764,7 +764,7 @@
               <small class="spell-subtitle">(<span class="uppercase">{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</small>
             </div>
 
-            {{!-- NOVO: Container único para todas as tags e ações --}}
+            {{!-- Container único para todas as tags e ações --}}
             <div class="spell-stats-and-actions">
               <span class="stat"><label>Escola:</label> {{this.system.spell_school}}</span>
               <span class="stat"><label>Classe:</label> {{this.system.spell_class}}</span>
@@ -774,7 +774,7 @@
               <a class="rollable action-button" data-roll-value="{{this.system.final_nh}}" data-label="{{this.name}}" title="Rolar NH {{this.system.final_nh}}">NH: {{this.system.final_nh}}</a>
               
               {{#if this.system.damage.formula}}
-                {{!-- O ícone de dado foi removido daqui --}}
+               
                 <a class="rollable-damage action-button" data-roll-formula="{{this.system.damage.formula}}" data-damage-type="{{this.system.damage.damage_type}}" data-label="{{this.name}}" title="Rolar Dano: {{this.system.damage.formula}}">Dano: {{this.system.damage.formula}} {{this.system.damage.damage_type}}</a>
               {{/if}}
             </div>
@@ -933,7 +933,7 @@
             </div>
 
             <div class="item-stats">
-              {{!-- MUDANÇA: As informações de Dano e RD agora são "tags" aqui --}}
+              {{!-- As informações de Dano e RD agora são "tags" aqui --}}
               {{#if this.system.dr}}
                 <span class="stat" title="Resistência a Dano">RD {{this.system.dr}}</span>
               {{/if}}
@@ -976,7 +976,7 @@
             </div>
 
             <div class="item-stats">
-              {{!-- MUDANÇA: As informações de Dano e RD agora são "tags" aqui --}}
+              {{!-- As informações de Dano e RD agora são "tags" aqui --}}
               {{#if this.system.dr}}
                 <span class="stat" title="Resistência a Dano">RD {{this.system.dr}}</span>
               {{/if}}
@@ -1099,7 +1099,7 @@
 {{! --- CARD DE DANO GdP---}}
 <div class="stat-card">
     <a class="edit-basic-damage" data-damage-type="thrust" title="Editar Dano"><i class="fas fa-edit"></i></a>
-    {{! --- MUDANÇAS APLICADAS ABAIXO --- }}
+    
     <a class="rollable-damage" 
        data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
        data-label="Dano de Golpe de Ponta"
@@ -1112,7 +1112,7 @@
 {{! --- CARD DE DANO GeB ---}}
 <div class="stat-card">
     <a class="edit-basic-damage" data-damage-type="swing" title="Editar Dano"><i class="fas fa-edit"></i></a>
-    {{! --- MUDANÇAS APLICADAS ABAIXO --- }}
+    
     <a class="rollable-damage" 
        data-roll-formula="{{actor.system.attributes.swing_damage}}" 
        data-label="Dano de Golpe em Balanço"
@@ -1169,7 +1169,7 @@
                   </span>
 
                   <div class="attack-main-info">
-                    {{!-- MUDANÇA: O nome agora é "Modo de Uso (Perícia)" --}}
+                    {{!-- O nome agora é "Modo de Uso (Perícia)" --}}
                     <div class="attack-name-row">
                       <strong>{{this.name}}</strong>
                       <small>({{this.skill_name}})</small>
@@ -1185,7 +1185,7 @@
                         <span class="stat melee-stat"><label>Alcance:</label> {{this.reach}}</span>
                       {{/if}}
 
-                      {{!-- MUDANÇA: Ataques à Distância agora mostram todos os campos --}}
+                      {{!-- Ataques à Distância agora mostram todos os campos --}}
                       {{#if (eq this.attack_type "ranged")}}
                         <span class="stat ranged-stat"><label>Prec:</label> {{this.accuracy}}</span>
                         <span class="stat ranged-stat"><label>Alcance:</label> {{this.range}}</span>
@@ -1222,7 +1222,7 @@
 
     {{!-- Coluna Lateral: Perfil do Personagem --}}
     <div class="biography-details">
-      {{!-- A classe .skill-block será nosso "card" padrão no novo design --}}
+      {{!-- A classe .skill-block será o "card" padrão no novo design --}}
       <div class="skill-block">
         <div class="block-header">
           <h4>Perfil</h4>
@@ -1230,7 +1230,7 @@
         </div>
         <div class="details-display-list">
 
-          {{!-- MUDANÇA: Adicionamos a classe .item-row para padronização futura --}}
+          {{!-- a classe .item-row para padronização futura --}}
           <div class="item-row detail-item">
             <span class="detail-label">Gênero</span>
             <span class="detail-value">{{actor.system.details.gender}}</span>

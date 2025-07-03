@@ -9,8 +9,8 @@ export const registerSystemSettings = function() {
         type: String,
         
         // --- CORREÇÃO 1: Usando o caminho mais provável com '.value' ---
-        // Verifique com o console se o seu sistema usa '.value' ou não e ajuste se necessário.
-        default: "(@attributes.basic_speed.value * 100) + (@attributes.dx.value / 100) + (1d6 / 1000)",
+      
+        default: "(@attributes.basic_speed.value*100) + ((@attributes.dx.value+@attributes.dx.temp)/100) + (1d6/1000)",
 
         // --- CORREÇÃO 2: Adicionando o pop-up de recarregamento ---
         // Esta função é executada toda vez que o valor no menu de configurações é salvo.

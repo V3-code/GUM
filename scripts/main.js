@@ -27,10 +27,6 @@ Hooks.once('init', async function() {
 Hooks.once('ready', async function() {
     console.log("GUM | Fase 'ready': Aplicando configurações.");
 
-    // Tarefas que dependem de dados do mundo (como configurações salvas):
-
-    // Agora sim, LÊ a configuração de iniciativa (que já está carregada)
-    // e a aplica ao sistema de combate.
     CONFIG.Combat.initiative = {
         formula: game.settings.get("gum", "initiativeFormula"),
         decimals: 4 
@@ -125,9 +121,9 @@ Hooks.once('ready', async function() {
                     return (a.system.spell_school || '').localeCompare(b.system.spell_school || '');
                 case 'points':
                     return (b.system.points || 0) - (a.system.points || 0);
-                case 'weight': // <-- NOVO
+                case 'weight': 
                     return (b.system.total_weight || 0) - (a.system.total_weight || 0);
-                case 'cost': // <-- NOVO
+                case 'cost': 
                     return (b.system.total_cost || 0) - (a.system.total_cost || 0);
                 case 'group': return (a.system.group || 'Geral').localeCompare(b.system.group || 'Geral');
                 default:
@@ -343,9 +339,7 @@ Hooks.once('ready', async function() {
             formData[key] = formData[key].replace(',', '.');
           }
         }
-        
-        // Em vez de chamar o 'super' método que estava causando conflitos,
-        // nós atualizamos o ator diretamente com os dados do formulário.
+
         return this.actor.update(formData);
       }
 
@@ -389,7 +383,7 @@ Hooks.once('ready', async function() {
           ev.preventDefault();
           new Dialog({
             title: "Novo Grupo de Ataque",
-            content: `<div class="form-group"><label>Nome do Grupo (ex: Espada Longa, Karatê):</label><input type="text" name="name" placeholder="Nova Arma"/></div>`,
+            content: `<div class="form-group"><label>Nome do Grupo (ex: Espada Longa, Desarmado):</label><input type="text" name="name" placeholder="Nova Arma"/></div>`,
             buttons: { create: { icon: '<i class="fas fa-check"></i>', label: "Criar", callback: (html) => {
               const name = html.find('input[name="name"]').val();
               if (name) {

@@ -78,7 +78,7 @@
   left: 0;
   width: 100%;
   
-  /* ESTA É A ALTURA DO SEU BANNER - MUDE ESTE VALOR COMO QUISER */
+  /* ESTA É A ALTURA DO BANNER */
   height: 125px; 
   
   background: var(--c-fundo-cabecalho); /* Usa a cor do cabeçalho */
@@ -192,7 +192,7 @@ a:hover { text-decoration: underline; color: #fff; }
   /* MUDANÇA: Usamos flex com gap para um espaçamento preciso */
   justify-content: center; /* Centraliza o grupo de brasões */
   align-items: center;
-  gap: 1.5rem; /* <<< Distância mínima entre os brasões. Altere este valor se desejar. */
+  gap: 1.5rem; /* <<< Distância mínima entre os brasões. */
 }
 
 /* O "brasão" de cada atributo individual (sem alterações) */
