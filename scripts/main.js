@@ -349,30 +349,25 @@ Hooks.once('ready', async function() {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
-            // ================================================================== //
-            //     Listener de VISUALIZAÇÃO RÁPIDA dos items foundry      
-            // ================================================================== //  
+// Dentro de: class GurpsActorSheet extends ActorSheet { ...
+// Dentro de: activateListeners(html) { ...
+
 html.on('click', '.item-quick-view', async (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
 
     const itemId = $(ev.currentTarget).closest('.item').data('itemId');
     if (!itemId) return;
-    
+
     const item = this.actor.items.get(itemId);
     if (!item) return;
 
     const getTypeName = (type) => {
         const typeMap = {
-            equipment: "Equipamento",
-            melee_weapon: "Arma Corpo a Corpo",
-            ranged_weapon: "Arma à Distância",
-            armor: "Armadura",
-            advantage: "Vantagem",
-            disadvantage: "Desvantagem",
-            skill: "Perícia",
-            spell: "Magia",
-            power: "Poder"
+            equipment: "Equipamento", melee_weapon: "Arma C. a C.",
+            ranged_weapon: "Arma à Dist.", armor: "Armadura",
+            advantage: "Vantagem", disadvantage: "Desvantagem",
+            skill: "Perícia", spell: "Magia", power: "Poder"
         };
         return typeMap[type] || type;
     };
@@ -385,7 +380,6 @@ html.on('click', '.item-quick-view', async (ev) => {
 
     let mechanicalTagsHtml = '';
     const s = data.system;
-
     const createTag = (label, value) => {
         if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
             return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
@@ -398,7 +392,7 @@ html.on('click', '.item-quick-view', async (ev) => {
             mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
             mechanicalTagsHtml += createTag('Alcance', s.reach);
             mechanicalTagsHtml += createTag('Aparar', s.parry);
-            mechanicalTagsHtml += createTag('ST Mín.', s.min_strength);
+            mechanicalTagsHtml += createTag('ST', s.min_strength);
             break;
         case 'ranged_weapon':
             mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
@@ -407,20 +401,19 @@ html.on('click', '.item-quick-view', async (ev) => {
             mechanicalTagsHtml += createTag('CdT', s.rof);
             mechanicalTagsHtml += createTag('Tiros', s.shots);
             mechanicalTagsHtml += createTag('RCO', s.rcl);
-            mechanicalTagsHtml += createTag('ST Mín.', s.min_strength);
+            mechanicalTagsHtml += createTag('ST', s.min_strength);
             break;
         case 'armor':
              mechanicalTagsHtml += createTag('RD', s.dr);
              mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
             break;
         case 'skill':
-            mechanicalTagsHtml += createTag('Atributo', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
-            mechanicalTagsHtml += createTag('Nível Rel.', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
+            mechanicalTagsHtml += createTag('Attr.', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
+            mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
             mechanicalTagsHtml += createTag('Grupo', s.group);
             break;
         case 'spell':
             mechanicalTagsHtml += createTag('Classe', s.spell_class);
-            mechanicalTagsHtml += createTag('Escola', s.spell_school);
             mechanicalTagsHtml += createTag('Tempo', s.casting_time);
             mechanicalTagsHtml += createTag('Duração', s.duration);
             mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
@@ -428,25 +421,32 @@ html.on('click', '.item-quick-view', async (ev) => {
     }
 
     const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
-    
-    // --- MUDANÇA: Simplificado o container da descrição ---
-    const content = `
-        <div class="gurps-item-preview-card">
-            <header class="preview-header">
-                <h3>${data.name}</h3>
-                <span class="preview-item-type">${data.type}</span>
-            </header>
-            
-            <div class="preview-content">
-                <div class="preview-properties">
-                    ${createTag('Pontos', s.points)}
-                    ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
-                    ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
-                    ${mechanicalTagsHtml}
-                </div>
 
-                <div class="preview-description">
-                    ${description}
+    // Estrutura HTML final para o design "Clássico e Compacto"
+    const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card" data-item-id="${item.id}">
+                <header class="preview-header">
+                    <h3>${data.name}</h3>
+                    <div class="header-controls">
+                        <span class="preview-item-type">${data.type}</span>
+                        <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                    </div>
+                </header>
+                
+                <div class="preview-content">
+                    <div class="preview-properties">
+                        ${createTag('Pontos', s.points)}
+                        ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
+                        ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
+                        ${mechanicalTagsHtml}
+                    </div>
+
+                    ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
+
+                    <div class="preview-description">
+                        ${description}
+                    </div>
                 </div>
             </div>
         </div>
@@ -456,10 +456,27 @@ html.on('click', '.item-quick-view', async (ev) => {
         content: content,
         buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
         default: "close",
-        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 450, height: "auto" }
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" }, // Largura reduzida
+        render: (html) => {
+            html.on('click', '.send-to-chat', (event) => {
+                event.preventDefault();
+                const card = $(event.currentTarget).closest('.gurps-item-preview-card');
+                const chatItemId = card.data('itemId');
+                const chatItem = this.actor.items.get(chatItemId);
+                if (chatItem) {
+                    const cardHTML = card.html();
+                    const chatDataType = getTypeName(chatItem.type);
+                    const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
+                    ChatMessage.create({
+                        user: game.user.id,
+                        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                        content: chatContent
+                    });
+                }
+            });
+        }
     }).render(true);
 });
-
             // ================================================================== //
             //     Listener para EDITAR a fórmula de dano básico (GdP/GeB)        //
             // ================================================================== //  
@@ -1825,8 +1842,7 @@ html.on('click', '.item-quick-view', async (ev) => {
     });
 
     // Listener para as ações DENTRO do menu (este listener precisa ser ATUALIZADO)
-    // Encontre seu listener para '.custom-context-menu .context-item' e substitua-o por este:
-    html.on('click', '.custom-context-menu .context-item', async ev => {
+       html.on('click', '.custom-context-menu .context-item', async ev => {
         const button = ev.currentTarget;
         const customMenu = this.element.find(".custom-context-menu");
         const itemId = customMenu.data("itemId");

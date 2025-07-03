@@ -985,7 +985,7 @@ nav.sheet-tabs {
 
 /* Define a largura da janela de diálogo de RD */
 .gurps-rd-dialog .dialog-content {
-    padding: 0; /* Remove padding padrão para nosso design tomar conta */
+    padding: 0; 
 }
 
 /* Container principal da tabela, com o estilo dos nossos cards */
@@ -2553,103 +2553,124 @@ nav.sheet-tabs {
 }
 
 /* =================================================================== */
-/* DESIGN: JANELA DE VISUALIZAÇÃO RÁPIDA DE ITEM (v9 - Correção Final) */
+/* DESIGN FINAL: CLÁSSICO SOBRE PAPIRO (COMPACTO)                      */
 /* =================================================================== */
 
+/* Estilo do link na ficha: sutil e funcional */
 .item-name a.item-quick-view {
     text-decoration: none !important;
     color: inherit;
-    border-bottom: none !important;
-    cursor: help;
-    transition: color 0.2s;
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.2);
+    transition: color 0.2s, border-bottom-color 0.2s;
 }
 .item-name a.item-quick-view:hover {
     color: #a53541;
+    border-bottom-color: transparent;
 }
 
-/* --- MUDANÇA: Regra mais específica para o fundo do diálogo --- */
-/* A adição de 'body.system-gum' garante que nossa regra tenha prioridade */
-body.system-gum .dialog.gurps-item-preview-dialog .dialog-content {
-    padding: 0;
-    background: #e9e3e0; /* Fundo cinza claro */
+/* 1. O fundo de papiro para a janela inteira */
+.gurps-item-preview-dialog .dialog-content {
+    background-color: #f5f1e8;
+    background-image: linear-gradient(rgba(180, 160, 130, 0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(180, 160, 130, 0.04) 1px, transparent 1px);
+    background-size: 2px 2px;
+    padding: 10px; /* Cria uma "moldura" de papiro */
+    overflow: hidden;
 }
 
+/* 2. O nosso "cartão de papel" que flutua sobre o papiro */
 .gurps-item-preview-card {
     font-family: 'Roboto', sans-serif;
+    background: #fdfaf8; /* Fundo branco/off-white para o cartão */
+    border: 1px solid #dcd3d0;
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* 3. Cabeçalho limpo, integrado ao cartão, com fonte reduzida */
 .gurps-item-preview-card .preview-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #313131;
-    color: #f8f4f1;
-    padding: 10px 15px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e9e3e0;
 }
 .gurps-item-preview-card .preview-header h3 {
     font-family: 'Cinzel', serif;
-    font-size: 1.4em;
+    font-size: 1.25em; /* Fonte do título reduzida */
     margin: 0;
-    padding: 0;
-    color: #dacdca;
-    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    color: #313131;
+    text-shadow: none;
     border-bottom: none !important;
 }
+.gurps-item-preview-card .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 .gurps-item-preview-card .preview-item-type {
-    font-size: 0.8em;
+    font-size: 0.75em;
     text-transform: capitalize;
     font-weight: bold;
-    background: rgba(255,255,255,0.1);
-    padding: 3px 6px;
+    color: #6d6666;
+    background: #e9e3e0;
+    padding: 2px 5px;
     border-radius: 3px;
 }
-
-.gurps-item-preview-card .preview-content {
-    padding: 5px;
-    /* Adicionamos um padding-bottom para garantir o espaço antes do botão fechar */
-    padding-bottom: 10px;
+.gurps-item-preview-card .send-to-chat {
+    color: #6d6666;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.gurps-item-preview-card .send-to-chat:hover {
+    color: #a53541;
 }
 
+/* Corpo principal do cartão */
+.gurps-item-preview-card .preview-content {
+    padding: 12px;
+}
+
+/* 4. Tags alinhadas à esquerda, compactas e com espaçamento inferior */
 .gurps-item-preview-card .preview-properties {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    background: #fdfaf8;
-    padding: 12px;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom: 5px;
+    gap: 6px;
+    justify-content: flex-start; /* Alinhamento clássico à esquerda */
+    margin-bottom: 12px; /* Espaçamento entre as tags e a divisória */
 }
 .gurps-item-preview-card .property-tag {
     display: flex;
     align-items: baseline;
     gap: 5px;
-    background: #e9e3e0;
-    border-radius: 10px;
-    padding: 3px 9px;
-    border: 1px solid #dcd3d0;
-    font-size: 12px;
+    background: #f0ebe8;
+    border-radius: 4px;
+    padding: 2px 7px;
+    border: 1px solid #e0d9d6;
+    font-size: 11px; /* Fonte das tags bem pequena e sutil */
 }
 .gurps-item-preview-card .property-tag label {
     font-weight: bold;
     color: #6d6666;
-    font-size: 0.9em;
 }
 .gurps-item-preview-card .property-tag span {
     font-weight: 500;
     color: #313131;
 }
 
-/* --- MUDANÇA: Estilos do 'bloco elevado' aplicados diretamente aqui --- */
+/* Divisória sutil */
+.gurps-item-preview-card .preview-divider {
+    border: none;
+    border-top: 1px solid #e9e3e0;
+    margin: 0 0 12px 0; /* Margem ajustada para espaçar a descrição */
+}
+
+/* 5. Descrição com fonte reduzida */
 .gurps-item-preview-card .preview-description {
     font-size: 13px;
-    line-height: 1.6;
-    background: #fdfaf8; /* Fundo branco do cartão */
-    border: 1px solid #dcd3d0;
-    border-radius: 4px;
-    padding: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra para o efeito "elevado" */
+    line-height: 1.5;
+    user-select: text;
 }
 .gurps-item-preview-card .preview-description p:first-child { margin-top: 0; }
 .gurps-item-preview-card .preview-description p:last-child { margin-bottom: 0; }
