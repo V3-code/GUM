@@ -783,7 +783,7 @@
               <span class="item-name spell-name">
     <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
 </span>
-              <small class="spell-subtitle">(<span class="uppercase">{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</small>
+              
             </div>
 
             {{!-- Container único para todas as tags e ações --}}
@@ -792,7 +792,7 @@
               <span class="stat"><label>Classe:</label> {{this.system.spell_class}}</span>
               <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
               <span class="stat"><label>Custo:</label> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
-              
+              <span class="stat"><label>Nível:</label><span>{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}}</span>
               <a class="rollable action-button" data-roll-value="{{this.system.final_nh}}" data-label="{{this.name}}" title="Rolar NH {{this.system.final_nh}}">NH: {{this.system.final_nh}}</a>
               
               {{#if this.system.damage.formula}}
@@ -873,7 +873,7 @@
           <span class="item-name spell-name">
               <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
           </span>
-          <small class="spell-subtitle">(<span class="uppercase">{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</small>
+          
         </div>
 
         {{!-- Container único para todas as tags e ações --}}
@@ -881,7 +881,7 @@
           <span class="stat"><label>Classe:</label> {{this.system.spell_class}}</span>
           <span class="stat"><label>Ativação:</label> {{this.system.activation_time}}</span>
           <span class="stat"><label>Custo:</label> {{this.system.activation_cost}} PF</span>
-
+          <span class="stat"><label>Nível:</label><span>{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}}</span>
           <a class="rollable action-button" data-roll-value="{{this.system.final_nh}}" data-label="{{this.name}}" title="Rolar NH {{this.system.final_nh}}">NH: {{this.system.final_nh}}</a>
           
           {{#if this.system.damage.formula}}
