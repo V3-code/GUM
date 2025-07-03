@@ -1,21 +1,33 @@
 {
-  "name": "gum",
   "title": "GURPS GUM (Não Oficial)",
   "id": "gum",
   "version": "1.0.0",
-  "author": "Victor Valim Valentim",
   "description": "Adaptação não oficial do sistema GURPS para uso no Foundry VTT. Criado por fãs, sem fins lucrativos.",
+
+  "authors": [
+    {
+      "name": "Victor Valentim",
+      "url": "https://github.com/V3-code"
+    }
+  ],
+
   "compatibility": {
     "minimum": "11",
     "verified": "13"
   },
-  "esmodules": ["scripts/main.js"],
+  "esmodules": [
+    "scripts/main.js"
+  ],
   "styles": [
     "styles/styles.css"
   ],
   "license": "CC BY-NC-ND 4.0",
-  "url": "https://github.com/V3-code/GUM", 
+  "url": "https://github.com/V3-code/GUM",
   "manifest": "https://github.com/V3-code/GUM/blob/master/system.json",
-  "readme": "https://github.com/V3-code/GUM/blob/master/README.md"
-
+  "readme": "https://github.com/V3-code/GUM/blob/master/README.md",
+  "bugs": "https://github.com/V3-code/GUM/issues"
 }
+
+
+
+
