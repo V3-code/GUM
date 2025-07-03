@@ -310,9 +310,26 @@ Hooks.once('ready', async function() {
           if (['skill', 'spell', 'power'].includes(i.type)) {
             try {
                 const defaultAttr = (i.type === 'skill') ? 'dx' : 'iq';
-                const baseAttr = (i.system.base_attribute || defaultAttr).toLowerCase();
-                // CORREÇÃO: Pega o valor final (com temp mod) do atributo
-                const baseAttrValue = attributes[baseAttr]?.final || 10;
+                let baseAttrInput = (i.system.base_attribute || defaultAttr).toLowerCase();
+                let baseAttrValue = 10; // valor padrão
+
+                // 1. Verifica se é um atributo conhecido
+                if (attributes[baseAttrInput]?.final !== undefined) {
+                  baseAttrValue = attributes[baseAttrInput].final;
+                }
+                // 2. Se não for, tenta converter para número
+                else if (!isNaN(Number(baseAttrInput))) {
+                  baseAttrValue = Number(baseAttrInput);
+                }
+                // 3. Senão, mantém o valor padrão (10)
+                else {
+                    const refSkill = sheetData.actor.items.find(
+                      s => s.type === 'skill' && s.name?.toLowerCase() === baseAttrInput
+                    );
+                    if (refSkill && refSkill.system?.final_nh !== undefined) {
+                      baseAttrValue = refSkill.system.final_nh;
+                    }
+                  }
                 i.system.final_nh = baseAttrValue + (i.system.skill_level || 0) + (i.system.other_mods || 0);
             } catch (e) {
                 console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);

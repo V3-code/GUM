@@ -2668,9 +2668,16 @@ nav.sheet-tabs {
 
 /* 5. Descrição com fonte reduzida */
 .gurps-item-preview-card .preview-description {
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1.5;
     user-select: text;
+    text-align: justify;
 }
+
+.gurps-item-preview-card .preview-description p {
+    margin-top: 0;
+    margin-bottom: 1em; /* Adiciona um espaço (do tamanho de uma linha) abaixo de cada parágrafo */
+}
+
 .gurps-item-preview-card .preview-description p:first-child { margin-top: 0; }
 .gurps-item-preview-card .preview-description p:last-child { margin-bottom: 0; }
