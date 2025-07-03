@@ -350,6 +350,117 @@ Hooks.once('ready', async function() {
         if (!this.isEditable) return;
 
             // ================================================================== //
+            //     Listener de VISUALIZAÇÃO RÁPIDA dos items foundry      
+            // ================================================================== //  
+html.on('click', '.item-quick-view', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const itemId = $(ev.currentTarget).closest('.item').data('itemId');
+    if (!itemId) return;
+    
+    const item = this.actor.items.get(itemId);
+    if (!item) return;
+
+    const getTypeName = (type) => {
+        const typeMap = {
+            equipment: "Equipamento",
+            melee_weapon: "Arma Corpo a Corpo",
+            ranged_weapon: "Arma à Distância",
+            armor: "Armadura",
+            advantage: "Vantagem",
+            disadvantage: "Desvantagem",
+            skill: "Perícia",
+            spell: "Magia",
+            power: "Poder"
+        };
+        return typeMap[type] || type;
+    };
+
+    const data = {
+        name: item.name,
+        type: getTypeName(item.type),
+        system: item.system
+    };
+
+    let mechanicalTagsHtml = '';
+    const s = data.system;
+
+    const createTag = (label, value) => {
+        if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+            return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+        }
+        return '';
+    };
+
+    switch (item.type) {
+        case 'melee_weapon':
+            mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+            mechanicalTagsHtml += createTag('Alcance', s.reach);
+            mechanicalTagsHtml += createTag('Aparar', s.parry);
+            mechanicalTagsHtml += createTag('ST Mín.', s.min_strength);
+            break;
+        case 'ranged_weapon':
+            mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+            mechanicalTagsHtml += createTag('Prec.', s.accuracy);
+            mechanicalTagsHtml += createTag('Alcance', s.range);
+            mechanicalTagsHtml += createTag('CdT', s.rof);
+            mechanicalTagsHtml += createTag('Tiros', s.shots);
+            mechanicalTagsHtml += createTag('RCO', s.rcl);
+            mechanicalTagsHtml += createTag('ST Mín.', s.min_strength);
+            break;
+        case 'armor':
+             mechanicalTagsHtml += createTag('RD', s.dr);
+             mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
+            break;
+        case 'skill':
+            mechanicalTagsHtml += createTag('Atributo', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
+            mechanicalTagsHtml += createTag('Nível Rel.', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
+            mechanicalTagsHtml += createTag('Grupo', s.group);
+            break;
+        case 'spell':
+            mechanicalTagsHtml += createTag('Classe', s.spell_class);
+            mechanicalTagsHtml += createTag('Escola', s.spell_school);
+            mechanicalTagsHtml += createTag('Tempo', s.casting_time);
+            mechanicalTagsHtml += createTag('Duração', s.duration);
+            mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+            break;
+    }
+
+    const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
+    
+    // --- MUDANÇA: Simplificado o container da descrição ---
+    const content = `
+        <div class="gurps-item-preview-card">
+            <header class="preview-header">
+                <h3>${data.name}</h3>
+                <span class="preview-item-type">${data.type}</span>
+            </header>
+            
+            <div class="preview-content">
+                <div class="preview-properties">
+                    ${createTag('Pontos', s.points)}
+                    ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
+                    ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
+                    ${mechanicalTagsHtml}
+                </div>
+
+                <div class="preview-description">
+                    ${description}
+                </div>
+            </div>
+        </div>
+    `;
+
+    new Dialog({
+        content: content,
+        buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
+        default: "close",
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 450, height: "auto" }
+    }).render(true);
+});
+
+            // ================================================================== //
             //     Listener para EDITAR a fórmula de dano básico (GdP/GeB)        //
             // ================================================================== //  
             html.on('click', '.edit-basic-damage', ev => {

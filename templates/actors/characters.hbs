@@ -445,7 +445,9 @@
           {{#each (lookup characteristicsByBlock 'block4')}}
             {{!-- CORREÇÃO: A classe ".item" foi adicionada de volta --}}
             <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               <span class="item-points">[{{this.system.points}} pts]</span>
               <div class="item-controls">
                 <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
@@ -465,7 +467,9 @@
         <ol class="item-list" data-item-type="characteristic">
           {{#each (lookup characteristicsByBlock 'block1')}}
             <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               <span class="item-points">[{{this.system.points}} pts]</span>
               <div class="item-controls">
                 <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
@@ -488,7 +492,9 @@
         <ol class="item-list" data-item-type="characteristic">
           {{#each (lookup characteristicsByBlock 'block2')}}
             <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               <span class="item-points">[{{this.system.points}} pts]</span>
               <div class="item-controls">
                 <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
@@ -508,7 +514,9 @@
         <ol class="item-list" data-item-type="characteristic">
           {{#each (lookup characteristicsByBlock 'block3')}}
             <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               <span class="item-points">[{{this.system.points}} pts]</span>
               <div class="item-controls">
                 <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
@@ -542,7 +550,9 @@
             <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+              <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -573,7 +583,9 @@
             <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+              <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -600,7 +612,9 @@
              <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+                            <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -627,7 +641,9 @@
              <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+                            <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -654,7 +670,9 @@
               <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+                            <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -682,7 +700,9 @@
               <li class="item item-row skill-row" data-item-id="{{this.id}}" draggable="true">
   
               {{!-- O nome da perícia como a tag principal --}}
-              <span class="item-name skill-name-tag">{{this.name}}</span>
+                <span class="item-name skill-name-tag">
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                </span>
 
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
@@ -760,7 +780,9 @@
             
             {{!-- Coluna principal com Nome e subtítulo --}}
             <div class="spell-main-info">
-              <span class="item-name spell-name">{{this.name}}</span>
+              <span class="item-name spell-name">
+    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+</span>
               <small class="spell-subtitle">(<span class="uppercase">{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</small>
             </div>
 
@@ -848,7 +870,9 @@
 
         {{!-- Coluna principal com Nome e subtítulo --}}
         <div class="spell-main-info">
-          <span class="item-name spell-name">{{this.name}}</span>
+          <span class="item-name spell-name">
+              <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+          </span>
           <small class="spell-subtitle">(<span class="uppercase">{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</small>
         </div>
 
@@ -928,7 +952,9 @@
         <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
             <div class="item-main-info">
               {{!-- A "tag" de nome que já funciona --}}
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
             </div>
 
@@ -971,7 +997,9 @@
         <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
             <div class="item-main-info">
               {{!-- A "tag" de nome que já funciona --}}
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
             </div>
 
@@ -1014,7 +1042,9 @@
         <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
             <div class="item-main-info">
               {{!-- A "tag" de nome que já funciona --}}
-              <span class="item-name">{{this.name}}</span>
+              <span class="item-name">
+                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+              </span>
               {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
             </div>
 

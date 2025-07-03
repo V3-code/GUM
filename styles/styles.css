@@ -2551,3 +2551,105 @@ nav.sheet-tabs {
 .gurps-dialog .dialog-button:hover {
     background: #2f8357;
 }
+
+/* =================================================================== */
+/* DESIGN: JANELA DE VISUALIZAÇÃO RÁPIDA DE ITEM (v9 - Correção Final) */
+/* =================================================================== */
+
+.item-name a.item-quick-view {
+    text-decoration: none !important;
+    color: inherit;
+    border-bottom: none !important;
+    cursor: help;
+    transition: color 0.2s;
+}
+.item-name a.item-quick-view:hover {
+    color: #a53541;
+}
+
+/* --- MUDANÇA: Regra mais específica para o fundo do diálogo --- */
+/* A adição de 'body.system-gum' garante que nossa regra tenha prioridade */
+body.system-gum .dialog.gurps-item-preview-dialog .dialog-content {
+    padding: 0;
+    background: #e9e3e0; /* Fundo cinza claro */
+}
+
+.gurps-item-preview-card {
+    font-family: 'Roboto', sans-serif;
+}
+
+.gurps-item-preview-card .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #313131;
+    color: #f8f4f1;
+    padding: 10px 15px;
+}
+.gurps-item-preview-card .preview-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4em;
+    margin: 0;
+    padding: 0;
+    color: #dacdca;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border-bottom: none !important;
+}
+.gurps-item-preview-card .preview-item-type {
+    font-size: 0.8em;
+    text-transform: capitalize;
+    font-weight: bold;
+    background: rgba(255,255,255,0.1);
+    padding: 3px 6px;
+    border-radius: 3px;
+}
+
+.gurps-item-preview-card .preview-content {
+    padding: 5px;
+    /* Adicionamos um padding-bottom para garantir o espaço antes do botão fechar */
+    padding-bottom: 10px;
+}
+
+.gurps-item-preview-card .preview-properties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    background: #fdfaf8;
+    padding: 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 5px;
+}
+.gurps-item-preview-card .property-tag {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    background: #e9e3e0;
+    border-radius: 10px;
+    padding: 3px 9px;
+    border: 1px solid #dcd3d0;
+    font-size: 12px;
+}
+.gurps-item-preview-card .property-tag label {
+    font-weight: bold;
+    color: #6d6666;
+    font-size: 0.9em;
+}
+.gurps-item-preview-card .property-tag span {
+    font-weight: 500;
+    color: #313131;
+}
+
+/* --- MUDANÇA: Estilos do 'bloco elevado' aplicados diretamente aqui --- */
+.gurps-item-preview-card .preview-description {
+    font-size: 13px;
+    line-height: 1.6;
+    background: #fdfaf8; /* Fundo branco do cartão */
+    border: 1px solid #dcd3d0;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra para o efeito "elevado" */
+}
+.gurps-item-preview-card .preview-description p:first-child { margin-top: 0; }
+.gurps-item-preview-card .preview-description p:last-child { margin-bottom: 0; }

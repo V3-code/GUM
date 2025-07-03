@@ -44,7 +44,7 @@
       },
       "spell_reserves": {},
       "power_reserves": {},
-      "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" }, "block7": { "name": "Outras Perícias"} },
+      "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" } },
       "characteristic_blocks": {
         "block1": { "name": "Traços Raciais" },
         "block2": { "name": "Vantagens" },
