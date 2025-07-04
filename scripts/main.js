@@ -36,6 +36,22 @@ Hooks.once('ready', async function() {
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
+Handlebars.registerHelper('includes', function(array, value) {
+  return Array.isArray(array) && array.includes(value);
+});
+
+Handlebars.registerHelper('array', function(...args) {
+  return args.slice(0, -1);
+});
+
+Handlebars.registerHelper('capitalize', function(str) {
+  if (typeof str !== 'string') return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+});
+
+Handlebars.registerHelper('eq', function (a, b) {
+  return a === b;
+});
     // Ajudante para transformar um objeto em um array de seus valores
     Handlebars.registerHelper('objectValues', function(obj) { return obj ? Object.values(obj) : []; });
     // Ajudante para pegar o primeiro elemento de um array
@@ -178,9 +194,6 @@ Hooks.once('ready', async function() {
         context.equipmentCarried = allEquipment.filter(i => i.system.location === 'carried').sort(carriedSortFn);
         context.equipmentStored = allEquipment.filter(i => i.system.location === 'stored').sort(storedSortFn);
 
-
-
-
         // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS                       //
         // ================================================================== //
@@ -200,14 +213,17 @@ Hooks.once('ready', async function() {
             context.characteristicsByBlock[blockId].sort(getSortFunction(charSortPref));
         }
 
+
           // ================================================================== //
-        //    NOVO: ENRIQUECIMENTO DE TEXTO PARA A BIOGRAFIA                   //
+        //    ENRIQUECIMENTO DE TEXTO PARA BIOGRAFIA E DESCRIÇÃO DE ITEM
         // ================================================================== //
           // Prepara o campo de biografia, garantindo que funcione mesmo se estiver vazio
           context.enrichedBackstory = await TextEditor.enrichHTML(this.actor.system.details.backstory || "", {
               secrets: this.actor.isOwner,
               async: true
           });
+
+        
         context.survivalBlockWasOpen = this._survivalBlockOpen || false;
         
         return context;
@@ -289,12 +305,17 @@ Hooks.once('ready', async function() {
         // ========= CÁLCULO DE RD =============
         const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
           for (let i of sheetData.actor.items) {
-            if (i.type === 'armor' && i.system.location === 'equipped' && i.system.worn_location) {
-              const loc = i.system.worn_location.toLowerCase();
-              if (drFromArmor.hasOwnProperty(loc)) {
-                drFromArmor[loc] += i.system.dr || 0;
-              }
+           if (i.type === 'armor' && i.system.location === 'equipped') {
+          const wornLocs = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
+          for (const loc of wornLocs) {
+            if (typeof loc !== "string") continue;
+            const locLower = loc.toLowerCase();
+            if (drFromArmor.hasOwnProperty(locLower)) {
+              drFromArmor[locLower] += i.system.dr || 0;
             }
+          }
+
+          }
           }
           // Adiciona os modificadores manuais para o total
           const totalDr = {};

@@ -2110,39 +2110,6 @@ nav.sheet-tabs {
   color: var(--c-texto-escuro);
 }
 
-/* =================================================================== */
-/* DESIGN: FICHA DE ITEM ("MINI-FICHA")                                */
-/* =================================================================== */
-
-/* Área de descrição maior */
-.gum.sheet.item textarea[name="system.description"] {
-  min-height: 150px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-
-.gum.sheet.item .sheet-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: #34161b;
-  color: var(--c-texto-principal);
-  padding: 0.75rem;
-}
-.gum.sheet.item .sheet-header .profile-img {
-  width: 90px; height: 90px; border-radius: 3px;
-  border: 1px solid rgba(0,0,0,0.4); flex-shrink: 0;
-}
-.gum.sheet.item .sheet-header input[name="name"] {
-  font-family: var(--f-corpo); font-size: 1.4rem; color: #fff;
-  border: none; background: transparent !important; 
-}
-
-.gum.sheet.item .sheet-body { 
-  padding: 1rem;
-  background: #f1e8e7; 
-}
 
 /* =================================================================== */
 /* DESIGN: MENSAGENS DE ROLAGEM NO CHAT (v12 - Polimento Final)        */
@@ -2671,7 +2638,8 @@ nav.sheet-tabs {
     font-size: 11px;
     line-height: 1.5;
     user-select: text;
-    text-align: justify;
+    text-align: start;
+    white-space: pre-wrap;
 }
 
 .gurps-item-preview-card .preview-description p {
@@ -2681,3 +2649,150 @@ nav.sheet-tabs {
 
 .gurps-item-preview-card .preview-description p:first-child { margin-top: 0; }
 .gurps-item-preview-card .preview-description p:last-child { margin-bottom: 0; }
+
+/* =================================================================== */
+/* DESIGN: FICHA DE ITEM (v2 - REFORMA)                                */
+/* =================================================================== */
+
+/* --- CABEÇALHO GLOBAL (COMPACTO) --- */
+.gum.sheet.item .sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #313131; /* Tom escuro e profissional */
+  color: #f0f0f0;
+  padding: 8px 10px; /* Padding reduzido */
+  border-bottom: 2px solid #a53541; /* Borda de destaque */
+}
+.gum.sheet.item .sheet-header .profile-img {
+  width: 50px; /* Imagem menor */
+  height: 50px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+.gum.sheet.item .sheet-header .header-info {
+  flex-grow: 1;
+}
+.gum.sheet.item .sheet-header .header-main-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.gum.sheet.item .sheet-header input[name="name"] {
+  font-family: 'Cinzel', serif; /* Fonte de título */
+  font-size: 1.5em; /* Fonte reduzida */
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  background: transparent !important;
+  flex-grow: 1;
+}
+.item-tag.small-tag {
+  font-size: 0.7em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #313131;
+  background: #dacdca; /* Cor da tag mais sutil */
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex-shrink: 0; /* Impede que a tag seja espremida */
+}
+
+/* --- CORPO DA FICHA --- */
+.gum.sheet.item .sheet-body { 
+  padding: 15px;
+  background: #f1e8e7; 
+}
+
+
+/* --- DESCRIÇÃO DOS ITEMS --- */
+
+.gum-item-sheet .item-section textarea[name="system.description"] {
+   min-height: 150px; 
+   resize: vertical; 
+   line-height: 1.5;   
+}
+
+/* ============================ */
+/* LAYOUT FICHA DE ARMADURA     */
+/* ============================ */
+.gum-armor-sheet-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espaço entre as seções */
+}
+.armor-group .group-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #313131;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #c9b9b4;
+}
+
+/* --- MUDANÇA: Informações Gerais agora em grade --- */
+.armor-group.general-info {
+  display: grid;
+  /* Cria colunas responsivas, cada uma com no mínimo 140px */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 15px; /* Espaçamento vertical e horizontal */
+}
+.armor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.armor-field label {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #6d6666;
+}
+.armor-field input[type="text"],
+.armor-field input[type="number"] {
+  width: 100%;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #c9b9b4;
+}
+
+/* --- Seção de Proteção --- */
+.armor-group.protection-info .protection-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Coluna da RD e coluna dos locais */
+  gap: 20px;
+  align-items: flex-start;
+}
+.armor-body-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Locais agora em 2 colunas */
+  gap: 6px 15px;
+  padding: 5px;
+  background: #e9e3e0;
+  border-radius: 4px;
+}
+.body-part-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+  gap: 6px;
+}
+
+/* Garante que todas as seções de descrição tenham um bom espaçamento */
+.item-section {
+  margin-top: 15px;
+}
+
+/* Estilo padrão para os títulos de cada seção na ficha de item */
+.item-section .group-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #313131;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #c9b9b4;
+}
+

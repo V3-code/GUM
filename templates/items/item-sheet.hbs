@@ -1,145 +1,155 @@
 <form class="{{cssClass}} gum-item-sheet" autocomplete="off">
 
-  {{!-- Cabeçalho da Ficha de Item com Nome e Imagem --}}
-  <header class="sheet-header">
-    <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-    <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Item"/></h1>
-  </header>
+  {{!-- Cole este código DENTRO do seu <form>...</form> no item-sheet.hbs --}}
 
-  <div class="sheet-body" style="padding: 10px;">
-    {{!-- Equipamento Genérico --}}
-    {{#if (eq item.type "equipment")}}
+{{!-- Cabeçalho global da ficha de item --}}
+<header class="sheet-header">
+  <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+  <div class="header-info">
+    <div class="header-main-line">
+      <input name="name" type="text" value="{{item.name}}" placeholder="Nome do Item" />
+      <span class="item-tag small-tag">{{lookup (object 
+        armor="Armadura" melee_weapon="Arma C. a C." ranged_weapon="Arma à Dist." 
+        equipment="Equipamento" skill="Perícia" spell="Magia" 
+        advantage="Vantagem" disadvantage="Desvantagem" power="Poder"
+      ) item.type}}</span>
+    </div>
+  </div>
+</header>
+
+{{!-- Corpo da Ficha --}}
+<div class="sheet-body">
+
+  {{!-- Equipamento Genérico --}}
+  {{#if (eq item.type "equipment")}}
+    <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
+    <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
+    <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
+  {{/if}}
+
+  {{!-- Arma Corpo a Corpo --}}
+  {{#if (eq item.type "melee_weapon")}}
+    <h4 class="section-title">Geral</h4>
+    <div class="form-grid-3">
       <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
       <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
       <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
-    {{/if}}
-
-    {{!-- Arma Corpo a Corpo --}}
-    {{#if (eq item.type "melee_weapon")}}
-      <h4>Geral</h4>
-      <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
-      <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
-      <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
-      <hr/><h4>Combate</h4>
+    </div>
+    <hr/><h4 class="section-title">Combate</h4>
+    <div class="form-grid-2">
       <div class="form-group"><label>Dano</label><input type="text" name="system.damage_formula" value="{{item.system.damage_formula}}"/></div>
       <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.damage_type" value="{{item.system.damage_type}}"/></div>
       <div class="form-group"><label>Alcance</label><input type="text" name="system.reach" value="{{item.system.reach}}"/></div>
       <div class="form-group"><label>Aparar</label><input type="text" name="system.parry" value="{{item.system.parry}}"/></div>
       <div class="form-group"><label>Força Mínima</label><input type="number" name="system.min_strength" value="{{item.system.min_strength}}"/></div>
-    {{/if}}
+    </div>
+  {{/if}}
 
-    {{!-- Arma a Distância --}}
-    {{#if (eq item.type "ranged_weapon")}}
-      <h4>Geral</h4>
-      <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
-      <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
-      <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
-      <hr/><h4>Combate</h4>
+  {{!-- Arma a Distância --}}
+  {{#if (eq item.type "ranged_weapon")}}
+    <h4 class="section-title">Geral</h4>
+    <div class="form-grid-3">
+        <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
+        <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
+        <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
+    </div>
+    <hr/><h4 class="section-title">Combate</h4>
+    <div class="form-grid-2">
       <div class="form-group"><label>Dano</label><input type="text" name="system.damage_formula" value="{{item.system.damage_formula}}"/></div>
       <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.damage_type" value="{{item.system.damage_type}}"/></div>
       <div class="form-group"><label>Precisão (Prec)</label><input type="text" name="system.accuracy" value="{{item.system.accuracy}}"/></div>
-      <div class="form-group"><label>Distância (1/2D, Max)</label><input type="text" name="system.range" value="{{item.system.range}}"/></div>
-      <div class="form-group"><label>Cadência de Tiro (CdT)</label><input type="text" name="system.rof" value="{{item.system.rof}}"/></div>
+      <div class="form-group"><label>Distância</label><input type="text" name="system.range" value="{{item.system.range}}"/></div>
+      <div class="form-group"><label>CdT</label><input type="text" name="system.rof" value="{{item.system.rof}}"/></div>
       <div class="form-group"><label>Tiros</label><input type="text" name="system.shots" value="{{item.system.shots}}"/></div>
-      <div class="form-group"><label>Recuo (RCO)</label><input type="text" name="system.rcl" value="{{item.system.rcl}}"/></div>
+      <div class="form-group"><label>RCO</label><input type="text" name="system.rcl" value="{{item.system.rcl}}"/></div>
       <div class="form-group"><label>Força Mínima</label><input type="number" name="system.min_strength" value="{{item.system.min_strength}}"/></div>
-    {{/if}}
-    
-    {{!-- Armadura --}}
-    {{#if (eq item.type "armor")}}
-      <h4>Geral</h4>
-      <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
-      <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
-      <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}"/></div>
-      <hr/><h4>Proteção</h4>
-      <div class="form-group"><label>Resistência a Dano (RD)</label><input type="number" name="system.dr" value="{{item.system.dr}}"/></div>
-      
-      {{!-- O campo de texto foi trocado por uma caixa de seleção --}}
-      <div class="form-group">
-        <label>Local do Corpo</label>
-        <select name="system.worn_location">
-          {{#select item.system.worn_location}}
-            <option value="torso">Torso</option>
-            <option value="head">Cabeça</option>
-            <option value="face">Rosto</option>
-            <option value="eyes">Olhos</option>
-            <option value="neck">Pescoço</option>
-            <option value="vitals">Órgãos Vitais</option>
-            <option value="groin">Virilha</option>
-            <option value="arms">Braços</option>
-            <option value="hands">Mãos</option>
-            <option value="legs">Pernas</option>
-            <option value="feet">Pés</option>
-            <option value="other">Outro</option>
-          {{/select}}
-        </select>
+    </div>
+  {{/if}}
+  
+  {{!-- Armadura --}}
+  {{#if (eq item.type "armor")}}
+    <div class="gum-armor-sheet-layout">
+      <div class="armor-group general-info">
+        <div class="armor-field"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}" /></div>
+        <div class="armor-field"><label>Preço</label><input type="number" name="system.cost" value="{{item.system.cost}}" /></div>
+        <div class="armor-field"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{item.system.weight}}" /></div>
+        <div class="armor-field"><label>Qualidade</label><input type="text" name="system.quality" value="{{item.system.quality}}" /></div>
+        <div class="armor-field"><label>Material</label><input type="text" name="system.material" value="{{item.system.material}}" /></div>
       </div>
-    {{/if}}
+      <div class="armor-group protection-info">
+        <h4 class="group-title">Proteção</h4>
+        <div class="protection-grid">
+          <div class="armor-field dr-field"><label>RD</label><input type="number" name="system.dr" value="{{item.system.dr}}" /></div>
+          <div class="armor-body-grid">{{#each (array "torso" "head" "face" "eyes" "neck" "vitals" "groin" "arms" "hands" "legs" "feet") as |loc|}}<label class="body-part-checkbox"><input type="checkbox" name="system.worn_locations" value="{{loc}}" {{#if (includes ../item.system.worn_locations loc)}}checked{{/if}} /> {{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}</label>{{/each}}</div>
+        </div>
+      </div>
+     
+    </div>
+  {{/if}}
 
-   {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
-      <div class="form-group">
-        <label>Bloco de Característica</label>
-        <select name="system.block_id">
-          {{selectOptions characteristic_blocks selected=system.block_id}}
-        </select>
-      </div>
-      <div class="form-group"><label>Custo em Pontos</label><input type="number" name="system.points" value="{{system.points}}"/></div>
-    {{/if}}
-    
-        {{#if (eq item.type "skill")}} 
-        <div class="form-group">
-          <label>Grupo</label>
-          <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Sociais, Conhecimento"/>
-        </div>
-        <div class="form-group">
-        <label>Atributo Base</label>
-        <input type="text" name="system.base_attribute" value="{{item.system.base_attribute}}"/>
-        </div>
-        <div class="form-group"><label>Nível da Perícia</label>
-        <input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/>
-        </div>
-        <div class="form-group">
-          <label>Modificadores</label>
-          <input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
-        <div class="form-group">
-            <label>Pontos</label>
-            <input type="number" name="system.points" value="{{item.system.points}}"/>
-        </div> 
-    {{/if}}
-    
-    {{#if (eq item.type "spell")}}
+  {{!-- Vantagens e Desvantagens --}}
+  {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+    <div class="form-group"><label>Bloco</label><select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select></div>
+    <div class="form-group"><label>Custo em Pontos</label><input type="number" name="system.points" value="{{system.points}}"/></div>
+  {{/if}}
+  
+  {{!-- Perícia --}}
+  {{#if (eq item.type "skill")}} 
+    <div class="form-grid-2">
+      <div class="form-group"><label>Grupo</label><input type="text" name="system.group" value="{{system.group}}"/></div>
+      <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
       <div class="form-group"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{item.system.base_attribute}}"/></div>
-      <div class="form-group"><label>Nível (relativo ao atributo)</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
-      <div class="form-group"><label>Outros Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
+      <div class="form-group"><label>Nível da Perícia</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
+      <div class="form-group"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
+    </div>
+  {{/if}}
+  
+  {{!-- Magia --}}
+  {{#if (eq item.type "spell")}}
+    <div class="form-grid-2">
       <div class="form-group"><label>Classe</label><input type="text" name="system.spell_class" value="{{item.system.spell_class}}"/></div>
       <div class="form-group"><label>Escola</label><input type="text" name="system.spell_school" value="{{item.system.spell_school}}"/></div>
-      <div class="form-group"><label>Tempo de Conjuração</label><input type="text" name="system.casting_time" value="{{item.system.casting_time}}"/></div>
+      <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
+      <div class="form-group"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{item.system.base_attribute}}"/></div>
+      <div class="form-group"><label>Nível</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
+      <div class="form-group"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
+      <div class="form-group"><label>Tempo</label><input type="text" name="system.casting_time" value="{{item.system.casting_time}}"/></div>
       <div class="form-group"><label>Duração</label><input type="text" name="system.duration" value="{{item.system.duration}}"/></div>
       <div class="form-group"><label>Custo de Mana</label><input type="text" name="system.mana_cost" value="{{item.system.mana_cost}}"/></div>
-      <div class="form-group"><label>Custo de Manutenção</label><input type="text" name="system.mana_maint" value="{{item.system.mana_maint}}"/></div>
-      <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
-      <hr/><h4>Dano da Magia</h4>
+      <div class="form-group"><label>Manutenção</label><input type="text" name="system.mana_maint" value="{{item.system.mana_maint}}"/></div>
+    </div>
+    <hr/><h4 class="section-title">Dano da Magia</h4>
+    <div class="form-grid-2">
       <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{item.system.damage.formula}}"/></div>
       <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.damage.damage_type" value="{{item.system.damage.damage_type}}"/></div>
-    {{/if}}
-    
-    {{#if (eq item.type "power")}}
+    </div>
+  {{/if}}
+  
+  {{!-- Poder --}}
+  {{#if (eq item.type "power")}}
+    <div class="form-grid-2">
+      <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
       <div class="form-group"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{item.system.base_attribute}}"/></div>
-      <div class="form-group"><label>Nível (relativo ao atributo)</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
-      <div class="form-group"><label>Outros Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
+      <div class="form-group"><label>Nível</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
+      <div class="form-group"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
       <div class="form-group"><label>Classe do Poder</label><input type="text" name="system.spell_class" value="{{item.system.spell_class}}"/></div>
       <div class="form-group"><label>Tempo de Ativação</label><input type="text" name="system.activation_time" value="{{item.system.activation_time}}"/></div>
       <div class="form-group"><label>Duração</label><input type="text" name="system.duration" value="{{item.system.duration}}"/></div>
       <div class="form-group"><label>Custo de Ativação (FP)</label><input type="text" name="system.activation_cost" value="{{item.system.activation_cost}}"/></div>
-      <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
-      <hr/><h4>Dano do Poder</h4>
+    </div>
+    <hr/><h4 class="section-title">Dano do Poder</h4>
+    <div class="form-grid-2">
       <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{item.system.damage.formula}}"/></div>
       <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.damage.damage_type" value="{{item.system.damage.damage_type}}"/></div>
-    {{/if}}
-    
-    <div class="form-group">
-      <label>Descrição</label>
-      <textarea name="system.description">{{item.system.description}}</textarea>
     </div>
-  </div>
+  {{/if}}
+  
+
+<div class="item-section">
+  <h4 class="group-title">Descrição</h4>
+  <textarea name="system.description">{{system.description}}</textarea>
+</div>
+
+</div>
+
 </form>
