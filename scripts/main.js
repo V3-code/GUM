@@ -458,8 +458,10 @@ html.on('click', '.item-quick-view', async (ev) => {
             break;
     }
 
-    const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
-
+    const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
+        secrets: this.actor.isOwner,
+        async: true
+    });
     // Estrutura HTML final para o design "Clássico e Compacto"
     const content = `
         <div class="gurps-dialog-canvas">
@@ -2564,58 +2566,90 @@ html.on('click', '.item-quick-view', async (ev) => {
 //  5. CLASSE DA FICHA DO ITEM (GurpsItemSheet)
 // ================================================================== //
       class GurpsItemSheet extends ItemSheet {
-          static get defaultOptions() { 
-            return foundry.utils.mergeObject(super.defaultOptions, { 
-              // Suas classes e tamanho (ajustei a largura como tínhamos planejado)
-              classes: ["gum", "sheet", "item"], 
-              width: 560,
-              height: 400,
-
-              // A linha crucial que eu esqueci de incluir de volta. Ela diz ao Foundry qual arquivo usar.
-              template: "systems/gum/templates/items/item-sheet.hbs",
-
-              // A nova configuração de abas que estávamos adicionando.
-              tabs: [{ 
+    static get defaultOptions() {
+        return foundry.utils.mergeObject(super.defaultOptions, {
+            classes: ["gum", "sheet", "item"],
+            width: 560,
+            height: 400,
+            template: "systems/gum/templates/items/item-sheet.hbs",
+            tabs: [{
                 navSelector: ".sheet-tabs",
                 contentSelector: ".sheet-body-content",
-                initial: "description" // Mudei para 'details' ser a aba inicial, faz mais sentido para edição.
-              }]
-            }); 
-          }
-        async getData(options) { 
-          const context = await super.getData(options); 
-          context.system = this.item.system;  
-          context.characteristic_blocks = { 
-            "block1": "Traços Raciais", 
-            "block2": "Vantagens", 
-            "block3": "Desvantagens", 
-            "block4": "Constituição Física" }; 
+                initial: "description"
+            }]
+        });
+    }
+
+    async getData(options) {
+    const context = await super.getData(options);
+    context.system = this.item.system;
+    context.characteristic_blocks = {
+      "block1": "Traços Raciais",
+      "block2": "Vantagens",
+      "block3": "Desvantagens",
+      "block4": "Constituição Física" };
+
+    context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, {
+        secrets: this.item.isOwner,
+        async: true
+    });
+    context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, {
+        secrets: this.item.isOwner,
+        async: true
+    });
+    
+    return context;
+}
+
+    activateListeners(html) {
+        super.activateListeners(html);
+        if (!this.isEditable) return;
+
+        // Removemos toda a lógica complexa do editor anterior.
+        // Agora, só temos um listener para os nossos botões de edição.
+        html.find('.edit-text-btn').on('click', event => {
+            event.preventDefault();
+            const button = event.currentTarget;
+            const fieldName = button.dataset.target; // Pega o campo a editar, ex: "system.description"
             
-              context.descriptionHTML = await TextEditor.enrichHTML(this.item.system.description || "", {
-                  secrets: this.item.isOwner,
-                  async: true
-              });  
+            // Pega o conteúdo *bruto* (sem HTML) do item.
+            const currentContent = getProperty(this.item, fieldName) || "";
             
-            return context; 
-          }
+            const title = button.title || "Editar Texto";
 
-          activateListeners(html) {
-            super.activateListeners(html);
-            if (!this.isEditable) return;
-
-            // Ativa os editores de texto enriquecido
-            html.find(".editor").each((i, div) => {
-              const field = div.dataset.edit;
-              const content = getProperty(this.item.system, field);
-              TextEditor.create({
-                content,
-                target: div,
-                name: `system.description`, 
-                button: true,
-                editable: this.options.editable
-              });
-            });
-          }
-
-      }
+            // Cria uma janela de Diálogo (pop-up) do Foundry.
+            new Dialog({
+                title: title,
+                // O conteúdo do pop-up é um simples <textarea>.
+                content: `
+                    <form>
+                        <textarea name="textContent" style="width: 100%; height: 280px;">${currentContent}</textarea>
+                    </form>
+                `,
+                buttons: {
+                    save: {
+                        icon: '<i class="fas fa-save"></i>',
+                        label: 'Salvar',
+                        callback: (html) => {
+                            // Ao clicar em "Salvar", pegamos o novo texto do textarea.
+                            const newContent = html.find('textarea[name="textContent"]').val();
+                            
+                            // E atualizamos o item com o novo conteúdo. É simples assim.
+                            this.item.update({ [fieldName]: newContent });
+                        }
+                    },
+                    cancel: {
+                        icon: '<i class="fas fa-times"></i>',
+                        label: 'Cancelar'
+                    }
+                },
+                default: 'save'
+            }, {
+                width: 400,
+                height: 360,
+                resizable: true
+            }).render(true);
+        });
+    }
+}
 

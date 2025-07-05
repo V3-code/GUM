@@ -283,21 +283,38 @@
     </div>
 
     {{!-- Conteúdo da Aba "Descrição" --}}
-    <div class="tab" data-tab="description">
-        <div class="placeholder-text">
-            <div class="item-section">
-              <h4 class="group-title">Descrição</h4>
-      <div class="editor" data-edit="system.description">{{{system.description}}}</div>
+   {{!-- Conteúdo da Aba "Descrição" --}}
+<div class="tab" data-tab="description">
+
+    {{!-- Campo de Descrição Geral --}}
+    <div class="item-section">
+        <h4 class="group-title">Descrição</h4>
+        <div class="editable-text-container">
+            {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
+            <div class="rendered-text">{{{enrichedDescription}}}</div>
+            {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
+            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                <i class="fas fa-edit"></i>
+            </a>
         </div>
-
-        
-          <div class="item-section">
-              <h4 class="group-title">Descrição para o Chat</h4>
-              <div class="editor" data-edit="system.chat_description">{{{system.chat_description}}}</div>
-          </div>
-
-       </div>
     </div>
+
+    {{!-- Campo de Descrição para o Chat --}}
+    <div class="item-section">
+        <h4 class="group-title">Descrição para o Chat</h4>
+        <div class="editable-text-container">
+            {{!-- Área para o texto do chat --}}
+            <div class="rendered-text">{{{enrichedChatDescription}}}</div>
+            {{!-- Botão para editar o texto do chat --}}
+            <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                <i class="fas fa-edit"></i>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+
       
   </section>
 </section>

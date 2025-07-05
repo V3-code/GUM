@@ -2520,10 +2520,9 @@ nav.sheet-tabs {
 }
 
 /* =================================================================== */
-/* DESIGN FINAL: CLÁSSICO SOBRE PAPIRO (COMPACTO)                      */
+/* DESIGN FINAL: CLÁSSICO SOBRE PAPIRO (v2 - Ajuste Fino)              */
 /* =================================================================== */
 
-/* Estilo do link na ficha: sutil e funcional */
 .item-name a.item-quick-view {
     text-decoration: none !important;
     color: inherit;
@@ -2535,26 +2534,23 @@ nav.sheet-tabs {
     border-bottom-color: transparent;
 }
 
-/* 1. O fundo de papiro para a janela inteira */
 .gurps-item-preview-dialog .dialog-content {
     background-color: #f5f1e8;
     background-image: linear-gradient(rgba(180, 160, 130, 0.04) 1px, transparent 1px),
                       linear-gradient(90deg, rgba(180, 160, 130, 0.04) 1px, transparent 1px);
     background-size: 2px 2px;
-    padding: 10px; /* Cria uma "moldura" de papiro */
+    padding: 10px;
     overflow: hidden;
 }
 
-/* 2. O nosso "cartão de papel" que flutua sobre o papiro */
 .gurps-item-preview-card {
     font-family: 'Roboto', sans-serif;
-    background: #fdfaf8; /* Fundo branco/off-white para o cartão */
+    background: #fdfaf8;
     border: 1px solid #dcd3d0;
     border-radius: 3px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* 3. Cabeçalho limpo, integrado ao cartão, com fonte reduzida */
 .gurps-item-preview-card .preview-header {
     display: flex;
     justify-content: space-between;
@@ -2564,12 +2560,70 @@ nav.sheet-tabs {
 }
 .gurps-item-preview-card .preview-header h3 {
     font-family: 'Cinzel', serif;
-    font-size: 1.25em; /* Fonte do título reduzida */
+    font-size: 1.2em;
     margin: 0;
     color: #313131;
     text-shadow: none;
     border-bottom: none !important;
 }
+
+.gurps-item-preview-card .preview-content {
+    padding: 12px;
+    padding-bottom: 15px; 
+}
+
+/* Propriedades como tags compactas e alinhadas à esquerda */
+.gurps-item-preview-card .preview-properties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+    
+}
+.gurps-item-preview-card .property-tag {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    background: #f0ebe8;
+    border-radius: 4px;
+    padding: 2px 7px;
+    border: 1px solid #e0d9d6;
+    font-size: 11px;
+}
+.gurps-item-preview-card .property-tag label {
+    font-weight: bold;
+    color: #6d6666;
+}
+.gurps-item-preview-card .property-tag span {
+    font-weight: 500;
+    color: #313131;
+}
+
+/* Linha divisória sutil */
+.gurps-item-preview-card .preview-divider {
+    border: none;
+    border-top: 1px solid #e9e3e0;
+    margin: 5px 0;
+}
+
+/* Descrição com fonte reduzida */
+.gurps-item-preview-card .preview-description {
+    font-size: 13px;
+    line-height: 1.5;
+    user-select: text;
+    padding-top: 4px;
+    
+}
+/* MUDANÇA: Garante que os parágrafos não tenham margem/recuo inicial */
+.gurps-item-preview-card .preview-description p {
+    padding: 0;
+    margin: 0 0 0.5em 0; /* Adiciona apenas um pequeno espaço ABAIXO de cada parágrafo */
+    text-indent: 0; /* Remove a indentação da primeira linha */
+}
+.gurps-item-preview-card .preview-description p:last-child {
+    margin-bottom: 0;
+}
+
 .gurps-item-preview-card .header-controls {
     display: flex;
     align-items: center;
@@ -2593,62 +2647,6 @@ nav.sheet-tabs {
 .gurps-item-preview-card .send-to-chat:hover {
     color: #a53541;
 }
-
-/* Corpo principal do cartão */
-.gurps-item-preview-card .preview-content {
-    padding: 12px;
-}
-
-/* 4. Tags alinhadas à esquerda, compactas e com espaçamento inferior */
-.gurps-item-preview-card .preview-properties {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: flex-start; /* Alinhamento clássico à esquerda */
-    margin-bottom: 12px; /* Espaçamento entre as tags e a divisória */
-}
-.gurps-item-preview-card .property-tag {
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-    background: #f0ebe8;
-    border-radius: 4px;
-    padding: 2px 7px;
-    border: 1px solid #e0d9d6;
-    font-size: 11px; /* Fonte das tags bem pequena e sutil */
-}
-.gurps-item-preview-card .property-tag label {
-    font-weight: bold;
-    color: #6d6666;
-}
-.gurps-item-preview-card .property-tag span {
-    font-weight: 500;
-    color: #313131;
-}
-
-/* Divisória sutil */
-.gurps-item-preview-card .preview-divider {
-    border: none;
-    border-top: 1px solid #e9e3e0;
-    margin: 0 0 12px 0; /* Margem ajustada para espaçar a descrição */
-}
-
-/* 5. Descrição com fonte reduzida */
-.gurps-item-preview-card .preview-description {
-    font-size: 11px;
-    line-height: 1.5;
-    user-select: text;
-    text-align: start;
-    white-space: pre-wrap;
-}
-
-.gurps-item-preview-card .preview-description p {
-    margin-top: 0;
-    margin-bottom: 1em; /* Adiciona um espaço (do tamanho de uma linha) abaixo de cada parágrafo */
-}
-
-.gurps-item-preview-card .preview-description p:first-child { margin-top: 0; }
-.gurps-item-preview-card .preview-description p:last-child { margin-bottom: 0; }
 
 /* =================================================================== */
 /* DESIGN: FICHA DE ITEM (v2 - REFORMA)                                */
@@ -2797,44 +2795,53 @@ nav.sheet-tabs {
 }
 
 /* =================================================================== */
-/* LAYOUT DE GRADE PARA FICHAS DE ITEM                                 */
+/* ESTILOS PARA O CONTAINER DE TEXTO EDITÁVEL                        */
 /* =================================================================== */
 
-.form-grid-2, .form-grid-3, .form-grid-4 {
-  display: grid;
-  gap: 10px 15px; /* Espaçamento vertical e horizontal */
-  margin-bottom: 10px;
+/* Container que envolve o texto e o botão de edição */
+.editable-text-container {
+    position: relative; /* Necessário para posicionar o botão de edição */
+    width: 100%;
+    margin-bottom: 10px; /* Espaço abaixo de cada bloco de texto */
 }
 
-.form-grid-2 {
-  grid-template-columns: repeat(2, 1fr);
+/* A área onde o texto é exibido de forma limpa */
+.rendered-text {
+    background-color: rgba(0, 0, 0, 0.04); /* Fundo sutil */
+    border: 1px solid #c9b9b4;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 80px; /* Altura mínima para não ficar achatado se vazio */
+    width: 100%;
+    box-sizing: border-box; /* Garante que padding não aumente a largura total */
+    line-height: 1.5;
+    color: #313131;
+    white-space: pre-wrap; 
 }
 
-.form-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
+/* O conteúdo dentro da área de texto (parágrafos, etc) */
+.rendered-text > *:first-child {
+    margin-top: 0;
+}
+.rendered-text > *:last-child {
+    margin-bottom: 0;
 }
 
-.form-grid-4 {
-  grid-template-columns: repeat(4, 1fr);
+/* O botão de edição (ícone) */
+.edit-text-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #6d6666;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.2s ease-in-out;
 }
 
-/* Títulos de seção para organizar a ficha */
-.section-title {
-  font-family: 'Cinzel', serif;
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #313131;
-  padding-bottom: 5px;
-  margin-top: 10px;
-  border-bottom: 1px solid #c9b9b4;
+.edit-text-btn:hover {
+    opacity: 1;
+    color: #a53541; /* Cor de destaque ao passar o mouse */
 }
 
-.gum.sheet.item .sheet-tabs {
-  display: flex;
-  justify-content: center;
-  border-bottom: 1px solid #c9b9b4;
-  margin: 0 -10px 10px -10px;
-  padding: 0 10px;
-  gap: 35px; /* <-- ADICIONE ESTA LINHA */
-}
+
 
