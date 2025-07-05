@@ -2564,7 +2564,58 @@ html.on('click', '.item-quick-view', async (ev) => {
 //  5. CLASSE DA FICHA DO ITEM (GurpsItemSheet)
 // ================================================================== //
       class GurpsItemSheet extends ItemSheet {
-        static get defaultOptions() { return foundry.utils.mergeObject(super.defaultOptions, { classes: ["gum", "sheet", "item"], width: 520, height: 480, template: "systems/gum/templates/items/item-sheet.hbs" }); }
-        async getData(options) { const context = await super.getData(options); context.system = this.item.system;  context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Constituição Física" }; return context; }
+          static get defaultOptions() { 
+            return foundry.utils.mergeObject(super.defaultOptions, { 
+              // Suas classes e tamanho (ajustei a largura como tínhamos planejado)
+              classes: ["gum", "sheet", "item"], 
+              width: 560,
+              height: 400,
+
+              // A linha crucial que eu esqueci de incluir de volta. Ela diz ao Foundry qual arquivo usar.
+              template: "systems/gum/templates/items/item-sheet.hbs",
+
+              // A nova configuração de abas que estávamos adicionando.
+              tabs: [{ 
+                navSelector: ".sheet-tabs",
+                contentSelector: ".sheet-body-content",
+                initial: "description" // Mudei para 'details' ser a aba inicial, faz mais sentido para edição.
+              }]
+            }); 
+          }
+        async getData(options) { 
+          const context = await super.getData(options); 
+          context.system = this.item.system;  
+          context.characteristic_blocks = { 
+            "block1": "Traços Raciais", 
+            "block2": "Vantagens", 
+            "block3": "Desvantagens", 
+            "block4": "Constituição Física" }; 
+            
+              context.descriptionHTML = await TextEditor.enrichHTML(this.item.system.description || "", {
+                  secrets: this.item.isOwner,
+                  async: true
+              });  
+            
+            return context; 
+          }
+
+          activateListeners(html) {
+            super.activateListeners(html);
+            if (!this.isEditable) return;
+
+            // Ativa os editores de texto enriquecido
+            html.find(".editor").each((i, div) => {
+              const field = div.dataset.edit;
+              const content = getProperty(this.item.system, field);
+              TextEditor.create({
+                content,
+                target: div,
+                name: `system.description`, 
+                button: true,
+                editable: this.options.editable
+              });
+            });
+          }
+
       }
 

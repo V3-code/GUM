@@ -1,8 +1,6 @@
 <form class="{{cssClass}} gum-item-sheet" autocomplete="off">
 
-  {{!-- Cole este código DENTRO do seu <form>...</form> no item-sheet.hbs --}}
-
-{{!-- Cabeçalho global da ficha de item --}}
+{{!-- Cabeçalho da Ficha --}}
 <header class="sheet-header">
   <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
   <div class="header-info">
@@ -17,10 +15,21 @@
   </div>
 </header>
 
-{{!-- Corpo da Ficha --}}
-<div class="sheet-body">
+{{!-- NOVA ESTRUTURA COM ABAS --}}
+<section class="sheet-content">
 
-  {{!-- Equipamento Genérico --}}
+  {{!-- 1. Navegação das Abas --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="description">Descrição</a>
+    <a class="item active" data-tab="details">Detalhes</a>
+  </nav>
+
+  {{!-- 2. Corpo das Abas --}}
+  <section class="sheet-body-content">
+
+    {{!-- Aba "Detalhes" --}}
+    <div class="tab active" data-tab="details">
+       {{!-- Equipamento Genérico --}}
   {{#if (eq item.type "equipment")}}
     <div class="armor-field"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
     <div class="armor-field"><label>Custo</label><input type="number" name="system.cost" value="{{item.system.cost}}"/></div>
@@ -271,13 +280,25 @@
       <div class="armor-field"><label>Tipo de Dano</label><input type="text" name="system.damage.damage_type" value="{{item.system.damage.damage_type}}"/></div>
     </div>
   {{/if}}
-  
+    </div>
 
-<div class="item-section">
-  <h4 class="group-title">Descrição</h4>
-  <textarea name="system.description">{{system.description}}</textarea>
-</div>
+    {{!-- Conteúdo da Aba "Descrição" --}}
+    <div class="tab" data-tab="description">
+        <div class="placeholder-text">
+            <div class="item-section">
+              <h4 class="group-title">Descrição</h4>
+      <div class="editor" data-edit="system.description">{{{system.description}}}</div>
+        </div>
 
-</div>
+        
+          <div class="item-section">
+              <h4 class="group-title">Descrição para o Chat</h4>
+              <div class="editor" data-edit="system.chat_description">{{{system.chat_description}}}</div>
+          </div>
 
-</form>
+       </div>
+    </div>
+      
+  </section>
+</section>
+

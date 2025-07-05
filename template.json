@@ -4,197 +4,125 @@
     "character": {
       "attributes": { "st": { "value": 10, "temp": 0 }, "dx": { "value": 10, "temp": 0 }, "iq": { "value": 10, "temp": 0 }, "ht": { "value": 10, "temp": 0 }, "vont": { "value": 10, "temp": 0 }, "per": { "value": 10, "temp": 0 }, "hp": { "value": 10, "max": 10, "temp": 0 }, "fp": { "value": 10, "max": 10, "temp": 0 }, "fome": { "value": 0 }, "sede": { "value": 0 }, "sono": { "value": 0 }, "mt": { "value": 0 }, "basic_speed": { "value": 5.00 }, "basic_move": { "value": 5 }, "lifting_st": { "value": 10 }, "thrust_damage": "1d6-2", "swing_damage": "1d6" },
       "points": { "total": 100, "unspent": 100 },
-      "details": {
-          "concept": "",
-          "alignment": "",
-          "belief": "",
-          "gender": "",
-          "eyes": "",
-          "hair": "",
-          "skin": "",
-          "age": "",
-          "height": "",
-          "weight": "",
-          "backstory": ""
-      }, 
+      "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "backstory": "" },
       "money": { "value": 0 },
       "encumbrance": { "ignore_carried_weight": false },
-      "combat": { 
-        "dodge_mod": 0, 
-        "defense_bonus": 0,
-         "dr_mods": {}, 
-         "attacks_groups": {}, 
-         "combat_meters": {}
-         },
+      "combat": { "dodge_mod": 0, "defense_bonus": 0, "dr_mods": {}, "attacks_groups": {}, "combat_meters": {} },
       "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
-      "casting_ability": {
-        "name": "Habilidade de Conjuração",
-        "points": 0,
-        "level": 10,
-        "source": "Fonte Mágica",
-        "description": "Descreva aqui a habilidade de conjuração."
-      },
-      "power_source": {
-        "name": "Fonte de Poder",
-        "level": 10,
-        "points": 0,
-        "source": "Psiônico",
-        "description": "Descreva aqui a fonte de poder.",
-        "power_talent": 0
-      },
+      "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
+      "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "description": "Descreva aqui a fonte de poder.", "power_talent": 0 },
       "spell_reserves": {},
       "power_reserves": {},
       "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" } },
-      "characteristic_blocks": {
-        "block1": { "name": "Traços Raciais" },
-        "block2": { "name": "Vantagens" },
-        "block3": { "name": "Desvantagens" },
-        "block4": { "name": "Constituição Física" }
-      },
+      "characteristic_blocks": { "block1": { "name": "Traços Raciais" }, "block2": { "name": "Vantagens" }, "block3": { "name": "Desvantagens" }, "block4": { "name": "Constituição Física" } },
       "skill_group_order": [],
-      
-      "social_status_entries": {},
-      "organization_entries": {},
-      "culture_entries": {},
-      "language_entries": {},
-      "reputation_entries": {},
-      "wealth_entries": {},
-      "bond_entries": {},
-            "sorting": {
-        "spells": "manual",
-        "powers": "manual",
-        "skills": "manual",
-        "characteristics": "manual",
-        "equipment": {
-            "equipped": "manual",
-            "carried": "manual",
-            "stored": "manual"
-          }
-      }
+      "social_status_entries": {}, "organization_entries": {}, "culture_entries": {}, "language_entries": {}, "reputation_entries": {}, "wealth_entries": {}, "bond_entries": {},
+      "sorting": { "spells": "manual", "powers": "manual", "skills": "manual", "characteristics": "manual", "equipment": { "equipped": "manual", "carried": "manual", "stored": "manual" } }
     }
   },
   "Item": {
-    "types": [
-      "advantage",
-      "disadvantage",
-      "skill",
-      "equipment",
-      "melee_weapon",
-      "ranged_weapon",
-      "armor",
-      "spell",
-      "power"
-    ],
-    "advantage": { 
-  "templates": ["base"], "ref":"",
-  "points": 10,
-  "block_id": "block2",
-  "self_control_roll": "", 
-  "level": ""  
-},
-"disadvantage": { 
-  "templates": ["base"], "ref":"",
-  "points": -10,
-  "block_id": "block3",
-  "self_control_roll": "", 
-  "level": ""  
-},
-    "skill": { "templates": ["base"], "ref":"",
-    "points": 1, 
-    "group": "Geral",
-     "base_attribute": "DX",
-      "skill_level": 0, 
-      "other_mods": 0, 
+    "types": ["advantage", "disadvantage", "skill", "equipment", "melee_weapon", "ranged_weapon", "armor", "spell", "power"],
+    
+    "templates": {
+      "base": {
+        "description": "",
+        "chat_description": "",
+        "ref": ""
+      },
+      "equipment_base": {
+        "quantity": 1,
+        "cost": 0,
+        "weight": 0,
+        "location": "carried",
+        "tech_level": "8",
+        "legality_class": "4",
+        "material": "",
+        "quality": ""
+      }
+    },
+
+    "advantage": {
+      "templates": ["base"],
+      "points": 10,
+      "block_id": "block2",
+      "self_control_roll": "",
+      "level": ""
+    },
+    "disadvantage": {
+      "templates": ["base"],
+      "points": -10,
+      "block_id": "block3",
+      "self_control_roll": "",
+      "level": ""
+    },
+    "skill": {
+      "templates": ["base"],
+      "points": 1,
+      "group": "Geral",
+      "base_attribute": "DX",
+      "skill_level": 0,
+      "other_mods": 0,
       "block_id": "block1",
       "difficulty": "M"
     },
-    "equipment": { 
-      "templates": ["base"], "ref":"",
-      "quantity": 1, 
-      "cost": 0, 
-      "weight": 0.5, 
-      "location": "carried",
-      "tech_level": "4", 
-      "legality_class": "4", 
-      "material": "", 
-      "quality": "" 
-     },
-    "melee_weapon": { "templates": ["base"], "ref":"",
-     "quantity": 1, 
-     "cost": 0, 
-     "weight": 0, 
-     "location": "equipped", 
-     "damage_formula": "1d6", 
-     "damage_type": "cr", 
-     "reach": "1", 
-     "parry": "0", 
-     "min_strength": "10",
-     "tech_level": "4", 
-      "legality_class": "4", 
-      "material": "", 
-      "quality": ""  
+    "equipment": {
+      "templates": ["base", "equipment_base"]
     },
-    "ranged_weapon": { 
-      "templates": ["base"], "ref":"",
-      "quantity": 1, 
-      "cost": 0, 
-      "weight": 0, 
-      "location": "carried", 
-      "damage_formula": "1d6", 
-      "damage_type": "pi", 
-      "accuracy": "1", 
-      "range": "100/150", 
-      "rof": "1", 
-      "shots": "1(3)", 
-      "rcl": "2", 
-      "min_strength": "10",
-      "tech_level": "4", 
-      "legality_class": "4", 
-      "material": "", 
-      "quality": "" 
-     },
-"armor": {
-  "templates": ["base"],"ref":"",
-  "quantity": 1,
-  "cost": 0,
-  "weight": 0,
-  "location": "equipped",
-  "dr": 1,
-  "worn_locations": ["torso"],
-  "tech_level": "4", 
-  "legality_class": "4", 
-  "material": "", 
-  "quality": "" 
-},
-    "spell": { "templates": ["base"], "ref":"",
-    "points": 0, 
-    "base_attribute": "IQ", 
-    "skill_level": -4, 
-    "other_mods": 0, 
-    "casting_time": "1s", 
-    "duration": "1 min", 
-    "mana_cost": "1", 
-    "mana_maint": "1", 
-    "spell_class": "Regular", 
-    "spell_school": "Magia Geral",
-     "damage": { "formula": "", "damage_type": "" },
-      "difficulty": "D", 
-    "source": "Arcana", 
-    "resistance": ""
-    
+    "melee_weapon": {
+      "templates": ["base", "equipment_base"],
+      "damage_formula": "1d6",
+      "damage_type": "cr",
+      "reach": "1",
+      "parry": "0",
+      "min_strength": "10"
     },
-    "power": { "templates": ["base"], "ref":"",
-     "points": 1, 
-     "base_attribute": "IQ", 
-     "skill_level": 0, 
-     "other_mods": 0, 
-     "activation_time": "1s", 
-     "duration": "1 min", 
-     "activation_cost": "2", 
-     "spell_class": "Regular", "damage": { "formula": "", "damage_type": "" },
-     "source": "Arcana", 
-     "resistance": ""
+    "ranged_weapon": {
+      "templates": ["base", "equipment_base"],
+      "damage_formula": "1d6",
+      "damage_type": "pi",
+      "accuracy": "1",
+      "range": "100/150",
+      "rof": "1",
+      "shots": "1(3)",
+      "rcl": "2",
+      "min_strength": "10"
+    },
+    "armor": {
+      "templates": ["base", "equipment_base"],
+      "dr": 1,
+      "worn_locations": ["torso"]
+    },
+    "spell": {
+      "templates": ["base"],
+      "points": 0,
+      "base_attribute": "IQ",
+      "skill_level": -4,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 min",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Regular",
+      "spell_school": "Magia Geral",
+      "damage": { "formula": "", "damage_type": "" },
+      "difficulty": "D",
+      "source": "Mana",
+      "resistance": ""
+    },
+    "power": {
+      "templates": ["base"],
+      "points": 1,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "activation_time": "1s",
+      "duration": "1 min",
+      "activation_cost": "2",
+      "spell_class": "Regular",
+      "damage": { "formula": "", "damage_type": "" },
+      "source": "FP",
+      "resistance": ""
     }
-
-    }
+  }
 }
+
