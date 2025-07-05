@@ -2710,7 +2710,7 @@ nav.sheet-tabs {
 /* --- DESCRIÇÃO DOS ITEMS --- */
 
 .gum-item-sheet .item-section textarea[name="system.description"] {
-   min-height: 150px; 
+   min-height: 200px; 
    resize: vertical; 
    line-height: 1.5;   
 }
@@ -2796,3 +2796,35 @@ nav.sheet-tabs {
   border-bottom: 1px solid #c9b9b4;
 }
 
+/* =================================================================== */
+/* LAYOUT DE GRADE PARA FICHAS DE ITEM                                 */
+/* =================================================================== */
+
+.form-grid-2, .form-grid-3, .form-grid-4 {
+  display: grid;
+  gap: 10px 15px; /* Espaçamento vertical e horizontal */
+  margin-bottom: 10px;
+}
+
+.form-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.form-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.form-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Títulos de seção para organizar a ficha */
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #313131;
+  padding-bottom: 5px;
+  margin-top: 10px;
+  border-bottom: 1px solid #c9b9b4;
+}
