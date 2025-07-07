@@ -354,30 +354,37 @@
 
 </div>
 
-      {{!-- MUDANÇA: O painel de conteúdo para a nova aba, também condicional --}}
-      {{!-- Conteúdo da Aba "Modificadores" --}}
+   
+{{!-- Conteúdo da Aba "Modificadores" com o design de Tags --}}
 {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-   <div class="tab" data-tab="modifiers">
+  <div class="tab" data-tab="modifiers">
 
     <div class="modifiers-toolbar">
-      <h3>Modificadores Aplicados</h3>
-      {{!-- O novo botão para adicionar a partir da biblioteca --}}
       <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
     </div>
 
+    {{!-- A lista agora usa a classe 'modifier-list' para alinhar as tags --}}
     <ol class="modifier-list">
-      {{#each system.modifiers as |modifier key|}}
-        <li class="modifier-item" data-modifier-id="{{key}}">
-          <span class="modifier-name">{{modifier.name}}</span>
-          <span class="modifier-cost" data-cost="{{modifier.cost}}">{{modifier.cost}}</span>
+      {{#each sortedModifiers as |modifier|}}
+        {{!-- MUDANÇA: A classe do item agora é 'modifier-tag' --}}
+        <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
+          
+          <a class="modifier-info view-modifier" title="Visualizar Detalhes">
+            <span class="modifier-name">{{modifier.name}}</span>
+            {{#if modifier.applied_effect}}
+              <span class="modifier-divider">|</span>
+              <span class="modifier-effect">{{modifier.applied_effect}}</span>
+            {{/if}}
+          </a>
+
           <div class="modifier-controls">
-            {{!-- Futuramente podemos adicionar um botão de editar aqui --}}
-            <a class="delete-modifier" title="Remover Modificador"><i class="fas fa-trash"></i></a>
+            <span class="modifier-cost">{{modifier.cost}}</span>
+            <a class="delete-modifier" title="Remover"><i class="fas fa-trash"></i></a>
           </div>
         </li>
       {{else}}
         <li class="placeholder-text">
-          Nenhum modificador aplicado. Clique em "Adicionar Modificador" para escolher da sua biblioteca.
+          Nenhum modificador aplicado.
         </li>
       {{/each}}
     </ol>

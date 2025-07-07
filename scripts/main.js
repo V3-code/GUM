@@ -2568,44 +2568,24 @@ html.on('click', '.item-quick-view', async (ev) => {
       }
 
 // ================================================================== //
-//  5. CLASSE DA FICHA DO ITEM (GurpsItemSheet)
+//  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO FINAL CORRIGIDA //
 // ================================================================== //
-      class GurpsItemSheet extends ItemSheet {
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["gum", "sheet", "item"],
-            width: 560,
-            height: 400,
-            template: "systems/gum/templates/items/item-sheet.hbs",
-            tabs: [{
-                navSelector: ".sheet-tabs",
-                contentSelector: ".sheet-body-content",
-                initial: "description"
-            }]
-        });
-    }
+class GurpsItemSheet extends ItemSheet {
+  static get defaultOptions() { 
+    return foundry.utils.mergeObject(super.defaultOptions, { 
+      classes: ["gum", "sheet", "item"], 
+      width: 560, height: "auto",
+      template: "systems/gum/templates/items/item-sheet.hbs",
+      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body-content", initial: "details" }]
+    }); 
+  }
 
-    async getData(options) {
-    const context = await super.getData(options);
-    context.system = this.item.system;
-    context.characteristic_blocks = {
-      "block1": "Traços Raciais",
-      "block2": "Vantagens",
-      "block3": "Desvantagens",
-      "block4": "Constituição Física" };
-
-    context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, {
-        secrets: this.item.isOwner,
-        async: true
-    });
-    context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, {
-        secrets: this.item.isOwner,
-        async: true
-    });
+  async getData(options) { 
+    const context = await super.getData(options); 
+    context.system = this.item.system;  
+    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Constituição Física" };
     
-    // --- INÍCIO DA NOVA LÓGICA DE CÁLCULO DE CUSTO ---
-
-    const validTypes = ['advantage', 'disadvantage', 'power'];
+        const validTypes = ['advantage', 'disadvantage', 'power'];
     if (validTypes.includes(this.item.type)) {
 
       // 1. Pega o custo base em pontos do item.
@@ -2642,9 +2622,23 @@ html.on('click', '.item-quick-view', async (ev) => {
       };
     }
 
-    return context;
-}
- async _updateObject(event, formData) {
+    // Lógica de cálculo e ordenação de modificadores (já funcional)
+    const modifiersObj = this.item.system.modifiers || {};
+    const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
+      const isLimitation = (data.cost || "").includes('-');
+      return { id, ...data, isLimitation: isLimitation };
+    });
+    modifiersArray.sort((a, b) => {
+      const costA = parseInt(a.cost) || 0; const costB = parseInt(b.cost) || 0;
+      if (costB !== costA) return costB - costA;
+      return a.name.localeCompare(b.name);
+    });
+    context.sortedModifiers = modifiersArray;
+
+    return context; 
+  }
+
+  async _updateObject(event, formData) {
     const fullFormData = new FormDataExtended(this.form).object;
     for (const key in fullFormData) {
       if (typeof fullFormData[key] === 'string' && fullFormData[key].includes(',')) {
@@ -2654,94 +2648,55 @@ html.on('click', '.item-quick-view', async (ev) => {
     return this.object.update(fullFormData);
   }
 
-    /**
+  /**
    * @override
-   * Ativa os listeners da ficha.
+   * Ativa todos os listeners de interatividade da ficha de item.
    */
-    activateListeners(html) {
-        super.activateListeners(html);
-        if (!this.isEditable) return;
+  activateListeners(html) {
+    super.activateListeners(html);
+    if (!this.isEditable) return;
 
-        // listener para os nossos botões de edição.
-        html.find('.edit-text-btn').on('click', event => {
-            event.preventDefault();
-            const button = event.currentTarget;
-            const fieldName = button.dataset.target; // Pega o campo a editar, ex: "system.description"
-            
-            // Pega o conteúdo *bruto* (sem HTML) do item.
-            const currentContent = getProperty(this.item, fieldName) || "";
-            
-            const title = button.title || "Editar Texto";
+    // Listener para abrir o Navegador de Modificadores
+    html.on('click', '.add-modifier', (ev) => {
+      ev.preventDefault();
+      new ModifierBrowser(this.item).render(true);
+    });
 
-            // Cria uma janela de Diálogo (pop-up) do Foundry.
-            new Dialog({
-                title: title,
-                // O conteúdo do pop-up é um simples <textarea>.
-                content: `
-                    <form>
-                        <textarea name="textContent" style="width: 100%; height: 280px;">${currentContent}</textarea>
-                    </form>
-                `,
-                buttons: {
-                    save: {
-                        icon: '<i class="fas fa-save"></i>',
-                        label: 'Salvar',
-                        callback: (html) => {
-                            // Ao clicar em "Salvar", pegamos o novo texto do textarea.
-                            const newContent = html.find('textarea[name="textContent"]').val();
-                            
-                            // E atualizamos o item com o novo conteúdo. É simples assim.
-                            this.item.update({ [fieldName]: newContent });
-                        }
-                    },
-                    cancel: {
-                        icon: '<i class="fas fa-times"></i>',
-                        label: 'Cancelar'
-                    }
-                },
-                default: 'save'
-            }, {
-                width: 400,
-                height: 360,
-                resizable: true
-            }).render(true);
+    // Listener para DELETAR um modificador
+    html.on('click', '.delete-modifier', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      // CORREÇÃO: Usando a classe correta '.modifier-tag'
+      const modifierId = $(ev.currentTarget).closest('.modifier-tag').data('modifierId');
+      if (modifierId) {
+        Dialog.confirm({
+          title: "Remover Modificador",
+          content: "<p>Você tem certeza?</p>",
+          yes: () => { this.item.update({ [`system.modifiers.-=${modifierId}`]: null }); },
+          no: () => {}
         });
-         // --- NOVO LISTENER PARA ABRIR O COMPÊNDIO DE MODIFICADORES ---
-       html.on('click', '.browse-modifiers', (ev) => {
-        const packName = "gum.modifiers"; 
+      }
+    });
 
-        const pack = game.packs.get(packName);
-        if (pack) {
-          pack.render(true);
-        } else {
-          ui.notifications.error(`Compêndio '${packName}' não encontrado.`);
-        }
-      });
-       
-      html.on('click', '.add-modifier', (ev) => {
-        ev.preventDefault();
-        // Cria uma nova instância do nosso Navegador de Modificadores,
-        // passando o item atual (this.item) como alvo.
-        new ModifierBrowser(this.item).render(true);
-      });
-
-      // Listener para o botão de DELETAR um modificador aplicado
-      html.on('click', '.delete-modifier', ev => {
-            ev.preventDefault();
-            const modifierId = $(ev.currentTarget).closest('.modifier-item').data('modifierId');
-            if (modifierId) {
-              Dialog.confirm({
-                title: "Remover Modificador",
-                content: "<p>Você tem certeza que quer remover este modificador?</p>",
-                yes: () => {
-                  this.item.update({ [`system.modifiers.-=${modifierId}`]: null });
-                },
-                no: () => {}, defaultYes: false
-              });
-            }
-      });
-
+    // Listener para VISUALIZAR um modificador
+    html.on('click', '.view-modifier', async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      // CORREÇÃO: Usando a classe correta '.modifier-tag'
+      const modifierId = $(ev.currentTarget).closest('.modifier-tag').data('modifierId');
+      const modifierData = this.item.system.modifiers[modifierId];
+      if (!modifierData) return;
       
+      const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
+      const content = `<div class="gurps-dialog-canvas"><div class="gurps-item-preview-card"><header class="preview-header"><h3>${modifierData.name}</h3></header><div class="preview-content"><div class="preview-properties"><div class="property-tag"><label>Custo</label><span>${modifierData.cost}</span></div>${modifierData.ref ? `<div class="property-tag"><label>Ref.</label><span>${modifierData.ref}</span></div>` : ''}</div><hr class="preview-divider"><div class="preview-description">${description}</div></div></div></div>`;
+      new Dialog({ title: `Visualizar: ${modifierData.name}`, content: content, buttons: { close: { label: "Fechar" } }, options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420, height: "auto" } }).render(true);
+    });
+    
+    // Listener para EDITAR (ação futura)
+    html.on('click', '.edit-modifier', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ui.notifications.info("A funcionalidade de editar o modificador diretamente da lista será implementada no futuro.");
+    });
   }
 }
-

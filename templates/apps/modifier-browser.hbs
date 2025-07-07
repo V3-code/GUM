@@ -20,31 +20,42 @@
     </aside>
 
     {{!-- Coluna da Direita (Resultados) --}}
-    <main class="browser-content">
-      <ol class="results-list">
-    
-    {{!-- MUDANÇA: Substituímos o placeholder por um loop que itera sobre cada modificador --}}
-    {{#each modifiers as |mod|}}
-      <li class="result-item">
-        {{!-- A informação principal do item --}}
-        <div class="item-main">
-          <label class="item-label" for="mod-{{mod.id}}">
+   <main class="browser-content">
+  <ol class="results-list">
+  {{#each modifiers as |mod|}}
+    <li class="result-item" data-item-id="{{mod.id}}">
+      
+      <div class="item-icon">
+        {{!-- A lógica de imagem agora deve funcionar corretamente com o JS atualizado --}}
+        {{#if mod.displayImg}}
+          <img src="{{mod.displayImg}}" alt="{{mod.name}}"/>
+        {{/if}}
+      </div>
+
+      <div class="item-info">
+        <label class="item-label" for="mod-{{mod.id}}">
+          {{!-- MUDANÇA: Nome e Custo agora estão juntos --}}
+          <div class="info-line-1">
             <span class="item-name">{{mod.name}}</span>
-            <span class="item-detail">{{mod.system.cost}} | {{mod.system.applied_effect}}</span>
-          </label>
-        </div>
-        {{!-- O controle com a caixa de seleção --}}
-        <div class="item-controls">
-          <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
-        </div>
-      </li>
-    {{else}}
-      {{!-- Esta parte só é mostrada se a lista de modificadores estiver vazia --}}
-      <li class="placeholder-text">Nenhum modificador encontrado no compêndio "GURPS - Modificadores".</li>
-    {{/each}}
-    
-  </ol>
-    </main>
+            <span class="item-cost">({{mod.system.cost}})</span>
+          </div>
+          {{#if mod.system.applied_effect}}
+            <div class="info-line-2">
+              <span class="item-details">{{mod.system.applied_effect}}</span>
+            </div>
+          {{/if}}
+        </label>
+      </div>
+
+      <div class="item-controls">
+        <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
+      </div>
+    </li>
+  {{else}}
+    <li class="placeholder-text">Nenhum modificador encontrado.</li>
+  {{/each}}
+</ol>
+</main>
 
   </div>
 

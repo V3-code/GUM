@@ -4,8 +4,8 @@ export class ModifierBrowser extends FormApplication {
 
   constructor(targetItem, options) {
     super(options);
-    this.targetItem = targetItem;
-    this.allModifiers = []; // Vamos guardar nossa lista completa de modificadores aqui
+    this.targetItem = targetItem; // A Vantagem/Poder que estamos modificando
+    this.allModifiers = []; // Um array para guardar a lista completa de modificadores do compêndio
   }
 
   static get defaultOptions() {
@@ -27,30 +27,29 @@ export class ModifierBrowser extends FormApplication {
     const pack = game.packs.get(packName);
     
     if (pack) {
-        // MUDANÇA: Salvamos os modificadores na nossa variável de instância
+        // Carregamos os modificadores e os salvamos na nossa variável de instância
         this.allModifiers = await pack.getDocuments();
         this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
     } else {
         console.error(`Compêndio de Modificadores '${packName}' não encontrado!`);
     }
     
-    // Passamos a lista para o template como antes
+    // Passamos a lista completa para o template renderizar
     context.modifiers = this.allModifiers; 
     return context;
   }
 
   /**
    * @override
+   * Ativa os listeners para os filtros e busca.
    */
   activateListeners(html) {
     super.activateListeners(html);
     
-    // Listener para a busca. Usamos 'keyup' para ser em tempo real.
-    html.find('input[name="search"]').on('keyup', this._onFilterResults.bind(this));
-    // Listener para as checkboxes
-    html.find('input[type="checkbox"]').on('change', this._onFilterResults.bind(this));
+    // Ouve por qualquer mudança nos filtros (busca ou checkboxes)
+    html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
     
-    // MUDANÇA: Impede que a tecla "Enter" na busca feche a janela
+    // Impede que a tecla "Enter" na busca feche a janela
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -59,12 +58,12 @@ export class ModifierBrowser extends FormApplication {
   }
 
   /**
-   * @override - Função de filtro corrigida
+   * @override
+   * Filtra a lista de resultados com base nos inputs do usuário.
    */
   _onFilterResults(event) {
     const form = this.form;
     const resultsList = form.querySelector(".results-list");
-
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
     const showEnhancements = form.querySelector('[name="filter-enhancements"]').checked;
     const showLimitations = form.querySelector('[name="filter-limitations"]').checked;
@@ -73,40 +72,31 @@ export class ModifierBrowser extends FormApplication {
       if (li.classList.contains("placeholder-text")) continue;
 
       const modId = li.querySelector('input[type="checkbox"]').name;
-      // MUDANÇA: Procuramos na nossa lista salva 'this.allModifiers'
+      // CORREÇÃO: Procuramos na nossa lista salva 'this.allModifiers'
       const mod = this.allModifiers.find(m => m.id === modId);
       if (!mod) continue;
 
       let isVisible = true;
-
-      if (searchQuery && !mod.name.toLowerCase().includes(searchQuery)) {
-        isVisible = false;
-      }
-
-      // A lógica de custo agora deve funcionar corretamente
+      if (searchQuery && !mod.name.toLowerCase().includes(searchQuery)) isVisible = false;
+      
       const costString = mod.system.cost || "";
       const isLimitation = costString.includes('-');
-      const isEnhancement = costString && !isLimitation; // É uma ampliação se tiver um custo E não for uma limitação
+      const isEnhancement = costString && !isLimitation;
 
-      if (showEnhancements && !showLimitations && !isEnhancement) {
-        isVisible = false;
-      }
-      if (showLimitations && !showEnhancements && !isLimitation) {
-        isVisible = false;
-      }
-      if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) {
-        isVisible = false;
-      }
+      if (showEnhancements && !showLimitations && !isEnhancement) isVisible = false;
+      if (showLimitations && !showEnhancements && !isLimitation) isVisible = false;
+      if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVisible = false;
       
-      li.style.display = isVisible ? "flex" : "none";
+      li.style.display = isVisible ? "grid" : "none";
     }
   }
 
   /**
-   * @override - A função de salvar continua a mesma, pois já estava funcionando.
+   * @override
+   * Executado quando o botão "Adicionar Selecionados" é clicado.
    */
   async _updateObject(event, formData) {
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true);
+    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
 
     if (selectedIds.length === 0) {
       return ui.notifications.warn("Nenhum modificador foi selecionado.");
@@ -116,18 +106,20 @@ export class ModifierBrowser extends FormApplication {
     for (const id of selectedIds) {
       const sourceModifier = this.allModifiers.find(m => m.id === id);
       if (sourceModifier) {
-        const newModifier = {
+        const newKey = foundry.utils.randomID();
+        newModifiersData[`system.modifiers.${newKey}`] = {
           name: sourceModifier.name,
           cost: sourceModifier.system.cost,
           ref: sourceModifier.system.ref,
-          source_id: sourceModifier.uuid
+          applied_effect: sourceModifier.system.applied_effect,
+          source_id: sourceModifier.uuid,
+          description: sourceModifier.system.description
         };
-        const newKey = foundry.utils.randomID();
-        newModifiersData[`system.modifiers.${newKey}`] = newModifier;
       }
     }
     
+    // Atualiza o item alvo (a Vantagem) com todos os novos modificadores
     await this.targetItem.update(newModifiersData);
-    ui.notifications.info(`${selectedIds.length} modificador(es) adicionado(s) a "${this.targetItem.name}".`);
+    ui.notifications.info(`${selectedIds.length} modificador(es) adicionado(s).`);
   }
 }

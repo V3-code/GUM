@@ -6,6 +6,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@300;400;500;700&display=swap');
 
 /* --- 2. PALETA DE CORES, FONTES E TAMANHO BASE --- */
+
+/* =================================================================== */
+/* TEMA VISUAL GLOBAL DO SISTEMA GUM                                   */
+/* =================================================================== */
+:root {
+  /* Fontes Globais */
+  --font-primary: 'Roboto', sans-serif;
+  --font-secondary: 'Cinzel', serif;
+
+  /* Paleta de Cores Principal (Tema Escuro) */
+  --c-bg-darkest: #191813;
+  --c-bg-dark: #2b2a29;
+  --c-bg-medium: #3a3836;
+  --c-text-lightest: #f0f0e8;
+  --c-text-medium: #a9a6a0;
+  --c-border-light: #4a4846;
+
+  /* Paleta de Cores de Destaque (Acento) */
+  --c-accent-gold: #c5a05b;
+  --c-accent-red: #a53541;
+  --c-accent-green: #389c68;
+  --c-accent-blue: #56819c;
+  --c-border-accent: var(--c-accent-gold); /* Usa a cor dourada como borda de destaque */
+  --c-text-accent: var(--c-accent-gold);
+}
+
 .gum.sheet.actor {
   /* Paleta de Cores */
   --c-fundo-principal: #1a1a1a;
@@ -2844,25 +2870,15 @@ nav.sheet-tabs {
 }
 
 /* =================================================================== */
-/* FASE 2: ESTILOS PARA A ABA DE MODIFICADORES                         */
+/* ABA DE MODIFICADORES (DESIGN DE TAGS ELEVADAS)                      */
 /* =================================================================== */
 
 .modifiers-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
+  justify-content: flex-end; /* Alinha o botão "Adicionar" à direita */
   margin-bottom: 10px;
-  border-bottom: 1px solid var(--c-border-light);
 }
-
-.modifiers-toolbar h3 {
-  font-family: var(--font-secondary);
-  font-size: 1.2em;
-  margin: 0;
-}
-
-.modifiers-toolbar .browse-modifiers.button {
+.modifiers-toolbar .button {
   background: var(--c-bg-medium);
   color: var(--c-text-lightest);
   border: 1px solid var(--c-border-light);
@@ -2870,62 +2886,105 @@ nav.sheet-tabs {
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.9em;
+  text-decoration: none;
 }
-.modifiers-toolbar .browse-modifiers.button:hover {
-  background: var(--c-border-light);
-  box-shadow: 0 0 5px var(--c-border-accent);
+.modifiers-toolbar .button:hover {
+  border-color: var(--c-border-accent);
 }
 
+/* O container que alinha as tags */
 .modifier-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  flex-wrap: wrap; /* Permite que as tags quebrem a linha */
+  gap: 8px;      /* Espaço entre as tags */
 }
 
-.modifier-item {
+/* O design da "Tag" do modificador */
+.modifier-tag {
+  display: inline-flex; /* Faz o tamanho se ajustar ao conteúdo */
+  align-items: center;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5); /* Sombra para o efeito "elevado" */
+  border: 1px solid var(--c-border-light);
+  overflow: hidden;
+}
+
+/* Cores de fundo sólidas e mais fortes */
+.modifier-tag.is-enhancement {
+  background-color: var(--c-accent-green);
+  border-color: rgba(179, 255, 179, 0.4);
+}
+.modifier-tag.is-limitation {
+  background-color: var(--c-accent-red);
+  border-color: rgba(245, 150, 150, 0.4);
+}
+
+/* Informações principais (clicáveis) */
+.modifier-tag .modifier-info {
+  padding: 5px 10px;
+  cursor: help;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--c-bg-darkest);
-  padding: 8px 10px;
-  border-radius: 3px;
-  border: 1px solid var(--c-border-light);
+  gap: 6px;
+  color: #fff; /* Texto principal branco para contraste */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-decoration: none;
+  transition: background-color 0.2s;
 }
+.modifier-tag .modifier-info:hover {
+  background: rgba(255,255,255,0.1);
+}
+.modifier-tag .modifier-name { font-weight: bold; }
+.modifier-tag .modifier-divider { opacity: 0.6; }
+.modifier-tag .modifier-effect { font-style: italic; opacity: 0.8; }
 
-.modifier-item .modifier-name {
-  flex-grow: 1;
+/* Controles à direita */
+.modifier-tag .modifier-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.3); /* Fundo escuro para separar */
+}
+.modifier-tag .modifier-cost {
   font-weight: bold;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
-
-.modifier-item .modifier-cost {
-  flex-shrink: 0;
-  font-weight: bold;
-  font-size: 0.9em;
-  background: var(--c-bg-medium);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* Colore o custo baseado se é positivo ou negativo */
-.modifier-item .modifier-cost:not([data-cost*="-"]) {
-  color: #8aff8a; /* Verde para custos positivos */
-}
-.modifier-item .modifier-cost[data-cost*="-"] {
-  color: #ff8a8a; /* Vermelho para custos negativos */
-}
-
-
-.modifier-item .delete-modifier {
-  flex-shrink: 0;
-  color: var(--c-text-medium);
+.modifier-tag .delete-modifier {
+  color: rgba(255,255,255,0.7);
   cursor: pointer;
+  transition: color 0.2s;
 }
-.modifier-item .delete-modifier:hover {
-  color: #ff6b6b;
+.modifier-tag .delete-modifier:hover {
+  color: #fff;
 }
 
-
-
+/* Estilo para o campo de custo final calculado na ficha de item */
+.calculated-cost {
+  background-color: var(--c-bg-dark);
+  padding: 8px;
+  border-radius: 3px;
+  margin-top: 5px;
+}
+.calculated-cost label {
+  color: var(--c-text-accent) !important;
+  font-family: var(--font-secondary);
+}
+.calculated-cost .value {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: var(--c-text-lightest);
+  text-align: right;
+  padding-top: 5px;
+}
+.calculated-cost .value small {
+  font-size: 0.6em;
+  font-weight: normal;
+  color: var(--c-text-medium);
+}
