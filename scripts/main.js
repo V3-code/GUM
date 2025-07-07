@@ -1,6 +1,7 @@
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //
+import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 
 // ================================================================== //
@@ -51,6 +52,10 @@ Handlebars.registerHelper('capitalize', function(str) {
 
 Handlebars.registerHelper('eq', function (a, b) {
   return a === b;
+});
+Handlebars.registerHelper('or', function() {
+    const args = Array.prototype.slice.call(arguments, 0, -1);
+    return args.some(Boolean);
 });
     // Ajudante para transformar um objeto em um array de seus valores
     Handlebars.registerHelper('objectValues', function(obj) { return obj ? Object.values(obj) : []; });
@@ -2598,15 +2603,66 @@ html.on('click', '.item-quick-view', async (ev) => {
         async: true
     });
     
+    // --- INÍCIO DA NOVA LÓGICA DE CÁLCULO DE CUSTO ---
+
+    const validTypes = ['advantage', 'disadvantage', 'power'];
+    if (validTypes.includes(this.item.type)) {
+
+      // 1. Pega o custo base em pontos do item.
+      const basePoints = Number(this.item.system.points) || 0;
+      const modifiers = this.item.system.modifiers || {};
+      let totalModPercent = 0;
+
+      // 2. Itera sobre todos os modificadores aplicados e soma suas porcentagens.
+      for (const modifier of Object.values(modifiers)) {
+        // parseInt é inteligente e extrai o número de strings como "+10%" ou "-20".
+        const costValue = parseInt(modifier.cost, 10) || 0;
+        totalModPercent += costValue;
+      }
+
+      // 3. Aplica o limite de -80% ao MODIFICADOR LÍQUIDO, como no livro.
+      const cappedModPercent = Math.max(-80, totalModPercent);
+
+      // 4. Calcula o custo final.
+      const multiplier = 1 + (cappedModPercent / 100);
+      let finalCost = Math.round(basePoints * multiplier);
+
+      // 5. Aplica a regra de custo mínimo (1 para vantagens, -1 para desvantagens).
+      if (basePoints > 0 && finalCost < 1) {
+        finalCost = 1;
+      }
+      if (basePoints < 0 && finalCost > -1) {
+        finalCost = -1;
+      }
+      
+      // 6. Adiciona os resultados ao contexto para que o HTML possa usá-los.
+      context.calculatedCost = {
+        totalModifier: cappedModPercent,
+        finalPoints: finalCost
+      };
+    }
+
     return context;
 }
+ async _updateObject(event, formData) {
+    const fullFormData = new FormDataExtended(this.form).object;
+    for (const key in fullFormData) {
+      if (typeof fullFormData[key] === 'string' && fullFormData[key].includes(',')) {
+        fullFormData[key] = fullFormData[key].replace(',', '.');
+      }
+    }
+    return this.object.update(fullFormData);
+  }
 
+    /**
+   * @override
+   * Ativa os listeners da ficha.
+   */
     activateListeners(html) {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
-        // Removemos toda a lógica complexa do editor anterior.
-        // Agora, só temos um listener para os nossos botões de edição.
+        // listener para os nossos botões de edição.
         html.find('.edit-text-btn').on('click', event => {
             event.preventDefault();
             const button = event.currentTarget;
@@ -2650,6 +2706,42 @@ html.on('click', '.item-quick-view', async (ev) => {
                 resizable: true
             }).render(true);
         });
-    }
+         // --- NOVO LISTENER PARA ABRIR O COMPÊNDIO DE MODIFICADORES ---
+       html.on('click', '.browse-modifiers', (ev) => {
+        const packName = "gum.modifiers"; 
+
+        const pack = game.packs.get(packName);
+        if (pack) {
+          pack.render(true);
+        } else {
+          ui.notifications.error(`Compêndio '${packName}' não encontrado.`);
+        }
+      });
+       
+      html.on('click', '.add-modifier', (ev) => {
+        ev.preventDefault();
+        // Cria uma nova instância do nosso Navegador de Modificadores,
+        // passando o item atual (this.item) como alvo.
+        new ModifierBrowser(this.item).render(true);
+      });
+
+      // Listener para o botão de DELETAR um modificador aplicado
+      html.on('click', '.delete-modifier', ev => {
+            ev.preventDefault();
+            const modifierId = $(ev.currentTarget).closest('.modifier-item').data('modifierId');
+            if (modifierId) {
+              Dialog.confirm({
+                title: "Remover Modificador",
+                content: "<p>Você tem certeza que quer remover este modificador?</p>",
+                yes: () => {
+                  this.item.update({ [`system.modifiers.-=${modifierId}`]: null });
+                },
+                no: () => {}, defaultYes: false
+              });
+            }
+      });
+
+      
+  }
 }
 

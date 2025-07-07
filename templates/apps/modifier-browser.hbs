@@ -1,0 +1,58 @@
+<form class="modifier-browser-form">
+
+  {{!-- Container principal de 2 colunas --}}
+  <div class="browser-container">
+
+    {{!-- Coluna da Esquerda (Sidebar de Filtros) --}}
+    <aside class="browser-sidebar">
+      <div class="filter-group">
+        <h4 class="filter-title">Buscar por Nome</h4>
+        <div class="search-box">
+          <input type="text" name="search" placeholder="Buscar modificador..."/>
+          <i class="fas fa-search"></i>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4 class="filter-title">Filtrar por Custo</h4>
+        <label><input type="checkbox" name="filter-enhancements"/> Ampliações (+)</label>
+        <label><input type="checkbox" name="filter-limitations"/> Limitações (-)</label>
+      </div>
+    </aside>
+
+    {{!-- Coluna da Direita (Resultados) --}}
+    <main class="browser-content">
+      <ol class="results-list">
+    
+    {{!-- MUDANÇA: Substituímos o placeholder por um loop que itera sobre cada modificador --}}
+    {{#each modifiers as |mod|}}
+      <li class="result-item">
+        {{!-- A informação principal do item --}}
+        <div class="item-main">
+          <label class="item-label" for="mod-{{mod.id}}">
+            <span class="item-name">{{mod.name}}</span>
+            <span class="item-detail">{{mod.system.cost}} | {{mod.system.applied_effect}}</span>
+          </label>
+        </div>
+        {{!-- O controle com a caixa de seleção --}}
+        <div class="item-controls">
+          <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
+        </div>
+      </li>
+    {{else}}
+      {{!-- Esta parte só é mostrada se a lista de modificadores estiver vazia --}}
+      <li class="placeholder-text">Nenhum modificador encontrado no compêndio "GURPS - Modificadores".</li>
+    {{/each}}
+    
+  </ol>
+    </main>
+
+  </div>
+
+  {{!-- Rodapé com o botão de seleção --}}
+  <footer class="browser-footer">
+    <button type="submit">
+      <i class="fas fa-check"></i> Adicionar Selecionados
+    </button>
+  </footer>
+
+</form>

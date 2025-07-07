@@ -21,7 +21,7 @@
     }
   },
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "melee_weapon", "ranged_weapon", "armor", "spell", "power"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "melee_weapon", "ranged_weapon", "armor", "spell", "power", "modifier"],
     
     "templates": {
       "base": {
@@ -46,14 +46,16 @@
       "points": 10,
       "block_id": "block2",
       "self_control_roll": "",
-      "level": ""
+      "level": "",
+      "modifiers": {}
     },
     "disadvantage": {
       "templates": ["base"],
       "points": -10,
       "block_id": "block3",
       "self_control_roll": "",
-      "level": ""
+      "level": "",
+      "modifiers": {}
     },
     "skill": {
       "templates": ["base"],
@@ -121,8 +123,14 @@
       "spell_class": "Regular",
       "damage": { "formula": "", "damage_type": "" },
       "source": "FP",
-      "resistance": ""
+      "resistance": "",
+      "modifiers": {}
+    },
+    "modifier": {
+      "templates": ["base"],
+      "cost": "0%",
+      "level": 0,
+      "applied_effect": ""
     }
   }
 }
-

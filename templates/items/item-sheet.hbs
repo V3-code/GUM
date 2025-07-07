@@ -22,6 +22,9 @@
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item" data-tab="description">Descrição</a>
     <a class="item active" data-tab="details">Detalhes</a>
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+        <a class="item" data-tab="modifiers">Modificadores</a>
+      {{/if}}
   </nav>
 
   {{!-- 2. Corpo das Abas --}}
@@ -173,7 +176,14 @@
   {{!-- Vantagens e Desvantagens --}}
   {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
     <div class="armor-field"><label>Bloco</label><select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select></div>
-    <div class="armor-field"><label>Custo em Pontos</label><input type="number" name="system.points" value="{{system.points}}"/></div>
+          <div class="armor-field"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
+            <div class="form-group calculated-cost">
+        <label>Custo Final (com Modificadores)</label>
+        <div class="value">
+          <span>{{calculatedCost.finalPoints}}</span>
+          <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
+        </div>
+      </div>
     <div class="armor-field">
       <label>Nível</label>
       <input type="text" name="system.level" value="{{system.level}}"/>
@@ -253,6 +263,13 @@
   {{#if (eq item.type "power")}}
     <div class="form-grid-2">
       <div class="armor-field"><label>Pontos</label><input type="number" name="system.points" value="{{item.system.points}}"/></div>
+            <div class="form-group calculated-cost">
+        <label>Custo Final (com Modificadores)</label>
+        <div class="value">
+          <span>{{calculatedCost.finalPoints}}</span>
+          <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
+        </div>
+      </div>
       <div class="armor-field"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{item.system.base_attribute}}"/></div>
       <div class="armor-field"><label>Nível</label><input type="number" name="system.skill_level" value="{{item.system.skill_level}}"/></div>
       <div class="armor-field"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
@@ -280,9 +297,32 @@
       <div class="armor-field"><label>Tipo de Dano</label><input type="text" name="system.damage.damage_type" value="{{item.system.damage.damage_type}}"/></div>
     </div>
   {{/if}}
+
+  {{!-- NOVO: Ficha de Edição para o Item "Modificador" --}}
+{{#if (eq item.type "modifier")}}
+  <h4 class="section-title">Dados do Modificador</h4>
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Custo do Modificador (%)</label>
+      <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%..."/>
+    </div>
+    <div class="form-group">
+      <label>Nível (se aplicável)</label>
+      <input type="number" name="system.level" value="{{system.level}}"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Efeito Aplicado (Resumo)</label>
+    <input type="text" name="system.applied_effect" value="{{system.applied_effect}}" placeholder="Ex: Aura, Ataque de Projétil"/>
+  </div>
+  <div class="form-group">
+    <label>Ref. Página</label>
+    <input type="text" name="system.ref" value="{{system.ref}}"/>
+  </div>
+{{/if}}
     </div>
 
-    {{!-- Conteúdo da Aba "Descrição" --}}
+
    {{!-- Conteúdo da Aba "Descrição" --}}
 <div class="tab" data-tab="description">
 
@@ -314,7 +354,36 @@
 
 </div>
 
+      {{!-- MUDANÇA: O painel de conteúdo para a nova aba, também condicional --}}
+      {{!-- Conteúdo da Aba "Modificadores" --}}
+{{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+   <div class="tab" data-tab="modifiers">
 
+    <div class="modifiers-toolbar">
+      <h3>Modificadores Aplicados</h3>
+      {{!-- O novo botão para adicionar a partir da biblioteca --}}
+      <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+    </div>
+
+    <ol class="modifier-list">
+      {{#each system.modifiers as |modifier key|}}
+        <li class="modifier-item" data-modifier-id="{{key}}">
+          <span class="modifier-name">{{modifier.name}}</span>
+          <span class="modifier-cost" data-cost="{{modifier.cost}}">{{modifier.cost}}</span>
+          <div class="modifier-controls">
+            {{!-- Futuramente podemos adicionar um botão de editar aqui --}}
+            <a class="delete-modifier" title="Remover Modificador"><i class="fas fa-trash"></i></a>
+          </div>
+        </li>
+      {{else}}
+        <li class="placeholder-text">
+          Nenhum modificador aplicado. Clique em "Adicionar Modificador" para escolher da sua biblioteca.
+        </li>
+      {{/each}}
+    </ol>
+
+  </div>
+{{/if}}
       
   </section>
 </section>

@@ -2843,5 +2843,89 @@ nav.sheet-tabs {
     color: #a53541; /* Cor de destaque ao passar o mouse */
 }
 
+/* =================================================================== */
+/* FASE 2: ESTILOS PARA A ABA DE MODIFICADORES                         */
+/* =================================================================== */
+
+.modifiers-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--c-border-light);
+}
+
+.modifiers-toolbar h3 {
+  font-family: var(--font-secondary);
+  font-size: 1.2em;
+  margin: 0;
+}
+
+.modifiers-toolbar .browse-modifiers.button {
+  background: var(--c-bg-medium);
+  color: var(--c-text-lightest);
+  border: 1px solid var(--c-border-light);
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.modifiers-toolbar .browse-modifiers.button:hover {
+  background: var(--c-border-light);
+  box-shadow: 0 0 5px var(--c-border-accent);
+}
+
+.modifier-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.modifier-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--c-bg-darkest);
+  padding: 8px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--c-border-light);
+}
+
+.modifier-item .modifier-name {
+  flex-grow: 1;
+  font-weight: bold;
+}
+
+.modifier-item .modifier-cost {
+  flex-shrink: 0;
+  font-weight: bold;
+  font-size: 0.9em;
+  background: var(--c-bg-medium);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Colore o custo baseado se é positivo ou negativo */
+.modifier-item .modifier-cost:not([data-cost*="-"]) {
+  color: #8aff8a; /* Verde para custos positivos */
+}
+.modifier-item .modifier-cost[data-cost*="-"] {
+  color: #ff8a8a; /* Vermelho para custos negativos */
+}
+
+
+.modifier-item .delete-modifier {
+  flex-shrink: 0;
+  color: var(--c-text-medium);
+  cursor: pointer;
+}
+.modifier-item .delete-modifier:hover {
+  color: #ff6b6b;
+}
+
 
 
