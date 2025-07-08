@@ -2638,12 +2638,13 @@ nav.sheet-tabs {
     line-height: 1.5;
     user-select: text;
     padding-top: 4px;
+   
     
 }
 /* MUDANÇA: Garante que os parágrafos não tenham margem/recuo inicial */
 .gurps-item-preview-card .preview-description p {
     padding: 0;
-    margin: 0 0 0 0; /* Adiciona apenas um pequeno espaço ABAIXO de cada parágrafo */
+    margin: 0 0 0.25em 0; /* Adiciona apenas um pequeno espaço ABAIXO de cada parágrafo */
     text-indent: 0; /* Remove a indentação da primeira linha */
 }
 .gurps-item-preview-card .preview-description p:last-child {
