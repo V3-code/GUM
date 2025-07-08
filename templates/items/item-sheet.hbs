@@ -20,8 +20,9 @@
 
   {{!-- 1. Navegação das Abas --}}
   <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item active" data-tab="summary">Sumário</a>
     <a class="item" data-tab="description">Descrição</a>
-    <a class="item active" data-tab="details">Detalhes</a>
+    <a class="item" data-tab="details">Detalhes</a>
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
         <a class="item" data-tab="modifiers">Modificadores</a>
       {{/if}}
@@ -30,8 +31,108 @@
   {{!-- 2. Corpo das Abas --}}
   <section class="sheet-body-content">
 
-    {{!-- Aba "Detalhes" --}}
-    <div class="tab active" data-tab="details">
+    {{!-- ✅ INÍCIO DA NOVA ABA: SUMÁRIO ✅ --}}
+    <div class="tab active" data-tab="summary">
+        <div class="summary-grid">
+
+            {{!-- Sumário para Equipamento, Armas e Armaduras (Campos Comuns) --}}
+            {{#if (or (eq item.type "equipment") (eq item.type "melee_weapon") (eq item.type "ranged_weapon") (eq item.type "armor"))}}
+                <div><strong>Custo:</strong> <span>{{system.cost}}</span></div>
+                <div><strong>Peso:</strong> <span>{{system.weight}}</span></div>
+                <div><strong>NT:</strong> <span>{{system.tech_level}}</span></div>
+                <div><strong>CL:</strong> <span>{{system.legality_class}}</span></div>
+                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
+            {{/if}}
+
+            {{!-- Sumário Específico para Armas --}}
+            {{#if (or (eq item.type "melee_weapon") (eq item.type "ranged_weapon"))}}
+                <div><strong>Dano:</strong> <span>{{system.damage_formula}} {{system.damage_type}}</span></div>
+                <div><strong>For Mín.:</strong> <span>{{system.min_strength}}</span></div>
+            {{/if}}
+            {{#if (eq item.type "melee_weapon")}}
+                <div><strong>Alcance:</strong> <span>{{system.reach}}</span></div>
+                <div><strong>Aparar:</strong> <span>{{system.parry}}</span></div>
+            {{/if}}
+            {{#if (eq item.type "ranged_weapon")}}
+                 <div><strong>Prec.:</strong> <span>{{system.accuracy}}</span></div>
+                 <div><strong>Distância:</strong> <span>{{system.range}}</span></div>
+                 <div><strong>CdT:</strong> <span>{{system.rof}}</span></div>
+                 <div><strong>Tiros:</strong> <span>{{system.shots}}</span></div>
+                 <div><strong>RCO:</strong> <span>{{system.rcl}}</span></div>
+            {{/if}}
+
+            {{!-- Sumário Específico para Armadura --}}
+            {{#if (eq item.type "armor")}}
+                <div><strong>RD:</strong> <span>{{system.dr}}</span></div>
+                <div class="locations"><strong>Locais:</strong> 
+                    <span>
+                        {{#each system.worn_locations as |loc index|}}
+                            {{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}{{#unless @last}}, {{/unless}}
+                        {{/each}}
+                    </span>
+                </div>
+            {{/if}}
+
+            {{!-- Sumário para Vantagens, Desvantagens e Poderes --}}
+            {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+                <div><strong>Custo Base:</strong> <span>{{system.points}} pontos</span></div>
+                <div class="final-cost"><strong>Custo Final:</strong> <span>{{calculatedCost.finalPoints}} (Mod: {{calculatedCost.totalModifier}}%)</span></div>
+                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
+                 {{#if system.level}}<div><strong>Nível:</strong> <span>{{system.level}}</span></div>{{/if}}
+                 {{#if system.self_control_roll}}<div><strong>Auto-Controle:</strong> <span>{{system.self_control_roll}}</span></div>{{/if}}
+            {{/if}}
+
+            {{!-- Sumário para Perícias e Magias --}}
+            {{#if (or (eq item.type "skill") (eq item.type "spell"))}}
+                <div><strong>Pontos:</strong> <span>{{system.points}}</span></div>
+                <div><strong>Atributo:</strong> <span>{{system.base_attribute}}</span></div>
+                <div><strong>Dificuldade:</strong> <span>{{system.difficulty}}</span></div>
+                <div><strong>Nível:</strong> <span>{{system.skill_level}}</span></div>
+                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
+            {{/if}}
+            {{#if (eq item.type "spell")}}
+                <div><strong>Custo (Mana):</strong> <span>{{system.mana_cost}}</span></div>
+                <div><strong>Duração:</strong> <span>{{system.duration}}</span></div>
+                <div><strong>Tempo:</strong> <span>{{system.casting_time}}</span></div>
+            {{/if}}
+        </div>
+    </div>
+
+   {{!-- Conteúdo da Aba "Descrição" --}}
+<div class="tab" data-tab="description">
+
+    {{!-- Campo de Descrição Geral --}}
+    <div class="item-section">
+        <h4 class="group-title">Descrição</h4>
+        <div class="editable-text-container">
+            {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
+            <div class="rendered-text">{{{enrichedDescription}}}</div>
+            {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
+            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                <i class="fas fa-edit"></i>
+            </a>
+        </div>
+    </div>
+
+    {{!-- Campo de Descrição para o Chat --}}
+    <div class="item-section">
+        <h4 class="group-title">Descrição para o Chat</h4>
+        <div class="editable-text-container">
+            {{!-- Área para o texto do chat --}}
+            <div class="rendered-text">{{{enrichedChatDescription}}}</div>
+            {{!-- Botão para editar o texto do chat --}}
+            <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                <i class="fas fa-edit"></i>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+     {{!-- Aba "Detalhes" --}}
+    <div class="tab" data-tab="details">
        {{!-- Equipamento Genérico --}}
   {{#if (eq item.type "equipment")}}
     <div class="armor-field"><label>Quantidade</label><input type="number" name="system.quantity" value="{{item.system.quantity}}"/></div>
@@ -322,38 +423,6 @@
 {{/if}}
     </div>
 
-
-   {{!-- Conteúdo da Aba "Descrição" --}}
-<div class="tab" data-tab="description">
-
-    {{!-- Campo de Descrição Geral --}}
-    <div class="item-section">
-        <h4 class="group-title">Descrição</h4>
-        <div class="editable-text-container">
-            {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
-            <div class="rendered-text">{{{enrichedDescription}}}</div>
-            {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
-            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
-                <i class="fas fa-edit"></i>
-            </a>
-        </div>
-    </div>
-
-    {{!-- Campo de Descrição para o Chat --}}
-    <div class="item-section">
-        <h4 class="group-title">Descrição para o Chat</h4>
-        <div class="editable-text-container">
-            {{!-- Área para o texto do chat --}}
-            <div class="rendered-text">{{{enrichedChatDescription}}}</div>
-            {{!-- Botão para editar o texto do chat --}}
-            <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
-                <i class="fas fa-edit"></i>
-            </a>
-        </div>
-    </div>
-
-</div>
-
    
 {{!-- Conteúdo da Aba "Modificadores" com o design de Tags --}}
 {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
@@ -369,7 +438,7 @@
         {{!-- MUDANÇA: A classe do item agora é 'modifier-tag' --}}
         <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
           
-          <a class="modifier-info view-modifier" title="Visualizar Detalhes">
+          <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
             <span class="modifier-name">{{modifier.name}}</span>
             {{#if modifier.applied_effect}}
               <span class="modifier-divider">|</span>
@@ -379,7 +448,7 @@
 
           <div class="modifier-controls">
             <span class="modifier-cost">{{modifier.cost}}</span>
-            <a class="delete-modifier" title="Remover"><i class="fas fa-trash"></i></a>
+            <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
           </div>
         </li>
       {{else}}

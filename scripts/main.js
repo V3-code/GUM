@@ -2568,15 +2568,20 @@ html.on('click', '.item-quick-view', async (ev) => {
       }
 
 // ================================================================== //
-//  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO FINAL CORRIGIDA //
+//  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO FINAL COMPLETA  //
 // ================================================================== //
 class GurpsItemSheet extends ItemSheet {
   static get defaultOptions() { 
     return foundry.utils.mergeObject(super.defaultOptions, { 
-      classes: ["gum", "sheet", "item"], 
-      width: 560, height: "auto",
+      classes: ["gum", "sheet", "item", "theme-dark"],
+      width: 560,
+      height: "auto",
       template: "systems/gum/templates/items/item-sheet.hbs",
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body-content", initial: "details" }]
+      tabs: [{ 
+        navSelector: ".sheet-tabs",
+        contentSelector: ".sheet-body-content",
+        initial: "details"
+      }]
     }); 
   }
 
@@ -2585,44 +2590,24 @@ class GurpsItemSheet extends ItemSheet {
     context.system = this.item.system;  
     context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Constituição Física" };
     
-        const validTypes = ['advantage', 'disadvantage', 'power'];
+    // Lógica de cálculo de custo final
+    const validTypes = ['advantage', 'disadvantage', 'power'];
     if (validTypes.includes(this.item.type)) {
-
-      // 1. Pega o custo base em pontos do item.
       const basePoints = Number(this.item.system.points) || 0;
       const modifiers = this.item.system.modifiers || {};
       let totalModPercent = 0;
-
-      // 2. Itera sobre todos os modificadores aplicados e soma suas porcentagens.
       for (const modifier of Object.values(modifiers)) {
-        // parseInt é inteligente e extrai o número de strings como "+10%" ou "-20".
-        const costValue = parseInt(modifier.cost, 10) || 0;
-        totalModPercent += costValue;
+        totalModPercent += parseInt(modifier.cost, 10) || 0;
       }
-
-      // 3. Aplica o limite de -80% ao MODIFICADOR LÍQUIDO, como no livro.
       const cappedModPercent = Math.max(-80, totalModPercent);
-
-      // 4. Calcula o custo final.
       const multiplier = 1 + (cappedModPercent / 100);
       let finalCost = Math.round(basePoints * multiplier);
-
-      // 5. Aplica a regra de custo mínimo (1 para vantagens, -1 para desvantagens).
-      if (basePoints > 0 && finalCost < 1) {
-        finalCost = 1;
-      }
-      if (basePoints < 0 && finalCost > -1) {
-        finalCost = -1;
-      }
-      
-      // 6. Adiciona os resultados ao contexto para que o HTML possa usá-los.
-      context.calculatedCost = {
-        totalModifier: cappedModPercent,
-        finalPoints: finalCost
-      };
+      if (basePoints > 0 && finalCost < 1) finalCost = 1;
+      if (basePoints < 0 && finalCost > -1) finalCost = -1;
+      context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
     }
 
-    // Lógica de cálculo e ordenação de modificadores (já funcional)
+    // Lógica de ordenação e preparação dos modificadores
     const modifiersObj = this.item.system.modifiers || {};
     const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
       const isLimitation = (data.cost || "").includes('-');
@@ -2634,6 +2619,16 @@ class GurpsItemSheet extends ItemSheet {
       return a.name.localeCompare(b.name);
     });
     context.sortedModifiers = modifiersArray;
+
+    // Lógica de preparação da descrição para o template
+        context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, {
+            secrets: this.item.isOwner,
+            async: true
+        });
+        context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, {
+            secrets: this.item.isOwner,
+            async: true
+        });
 
     return context; 
   }
@@ -2656,18 +2651,19 @@ class GurpsItemSheet extends ItemSheet {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
-    // Listener para abrir o Navegador de Modificadores
+    // Listener para abrir o Navegador de Modificadores (já funcional)
     html.on('click', '.add-modifier', (ev) => {
       ev.preventDefault();
       new ModifierBrowser(this.item).render(true);
     });
 
+    // --- LÓGICA CORRIGIDA PARA OS BOTÕES ---
+
     // Listener para DELETAR um modificador
     html.on('click', '.delete-modifier', (ev) => {
       ev.preventDefault();
-      ev.stopPropagation();
-      // CORREÇÃO: Usando a classe correta '.modifier-tag'
-      const modifierId = $(ev.currentTarget).closest('.modifier-tag').data('modifierId');
+      // Pega o ID diretamente do botão clicado
+      const modifierId = $(ev.currentTarget).data('modifierId');
       if (modifierId) {
         Dialog.confirm({
           title: "Remover Modificador",
@@ -2681,9 +2677,8 @@ class GurpsItemSheet extends ItemSheet {
     // Listener para VISUALIZAR um modificador
     html.on('click', '.view-modifier', async (ev) => {
       ev.preventDefault();
-      ev.stopPropagation();
-      // CORREÇÃO: Usando a classe correta '.modifier-tag'
-      const modifierId = $(ev.currentTarget).closest('.modifier-tag').data('modifierId');
+      // Pega o ID diretamente do link clicado
+      const modifierId = $(ev.currentTarget).data('modifierId');
       const modifierData = this.item.system.modifiers[modifierId];
       if (!modifierData) return;
       
@@ -2691,12 +2686,52 @@ class GurpsItemSheet extends ItemSheet {
       const content = `<div class="gurps-dialog-canvas"><div class="gurps-item-preview-card"><header class="preview-header"><h3>${modifierData.name}</h3></header><div class="preview-content"><div class="preview-properties"><div class="property-tag"><label>Custo</label><span>${modifierData.cost}</span></div>${modifierData.ref ? `<div class="property-tag"><label>Ref.</label><span>${modifierData.ref}</span></div>` : ''}</div><hr class="preview-divider"><div class="preview-description">${description}</div></div></div></div>`;
       new Dialog({ title: `Visualizar: ${modifierData.name}`, content: content, buttons: { close: { label: "Fechar" } }, options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420, height: "auto" } }).render(true);
     });
-    
-    // Listener para EDITAR (ação futura)
-    html.on('click', '.edit-modifier', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      ui.notifications.info("A funcionalidade de editar o modificador diretamente da lista será implementada no futuro.");
-    });
+
+    // Listener para o botão de EDITAR DESCRIÇÃO
+     html.find('.edit-text-btn').on('click', event => {
+            event.preventDefault();
+            const button = event.currentTarget;
+            const fieldName = button.dataset.target; // Pega o campo a editar, ex: "system.description"
+            
+            // Pega o conteúdo *bruto* (sem HTML) do item.
+            const currentContent = getProperty(this.item, fieldName) || "";
+            
+            const title = button.title || "Editar Texto";
+
+            // Cria uma janela de Diálogo (pop-up) do Foundry.
+            new Dialog({
+                title: title,
+                // O conteúdo do pop-up é um simples <textarea>.
+                content: `
+                    <form>
+                        <textarea name="textContent" style="width: 100%; height: 280px;">${currentContent}</textarea>
+                    </form>
+                `,
+                buttons: {
+                    save: {
+                        icon: '<i class="fas fa-save"></i>',
+                        label: 'Salvar',
+                        callback: (html) => {
+                            // Ao clicar em "Salvar", pegamos o novo texto do textarea.
+                            const newContent = html.find('textarea[name="textContent"]').val();
+                            
+                            // E atualizamos o item com o novo conteúdo. É simples assim.
+                            this.item.update({ [fieldName]: newContent });
+                        }
+                    },
+                    cancel: {
+                        icon: '<i class="fas fa-times"></i>',
+                        label: 'Cancelar'
+                    }
+                },
+                default: 'save'
+            }, {
+                width: 400,
+                height: 360,
+                resizable: true
+            }).render(true);
+        });
   }
+
+
 }

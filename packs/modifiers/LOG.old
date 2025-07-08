@@ -1,8 +1,5 @@
-2025/07/07-15:21:14.435 5c6c Log #17: 1 ops saved to Table #18 OK
-2025/07/07-15:21:14.435 5c6c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/000017.log: OK
-2025/07/07-15:21:14.440 5c6c Table #9: 1 entries OK
-2025/07/07-15:21:14.451 5c6c Table #13: 1 entries OK
-2025/07/07-15:21:14.459 5c6c Table #16: 10 entries OK
-2025/07/07-15:21:14.459 5c6c Table #18: 1 entries OK
-2025/07/07-15:21:14.459 5c6c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/MANIFEST-000015: OK
-2025/07/07-15:21:14.459 5c6c **** Repaired leveldb C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers; recovered 4 files; 3462 bytes. Some data may have been lost. ****
+2025/07/07-20:35:52.863 6e7c Recovering log #20
+2025/07/07-20:35:52.863 6e7c Level-0 table #23: started
+2025/07/07-20:35:52.873 6e7c Level-0 table #23: 663 bytes OK
+2025/07/07-20:35:52.878 6e7c Delete type=0 #20
+2025/07/07-20:35:52.879 6e7c Delete type=3 #19

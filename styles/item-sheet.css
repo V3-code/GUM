@@ -1,0 +1,426 @@
+/* =================================================================== */
+/* GUM - ARQUIVO DE ESTILO UNIFICADO PARA FICHA DE ITEM (ITEM SHEET) */
+/* =================================================================== */
+
+/* --- 1. ESTILO GLOBAL DA FICHA DE ITEM --- */
+.gum.sheet.item {
+  font-size: 13px; /* Tamanho de fonte base para uma ficha compacta */
+}
+
+/* --- 2. CABEÇALHO DA FICHA (COMPACTO E ELEGANTE) --- */
+.gum.sheet.item .sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--c-bg-darkest, #191813); /* Tom mais escuro para o cabeçalho */
+  color: var(--c-text-lightest, #f0f0f0);
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--c-accent-red, #a53541);
+}
+.gum.sheet.item .sheet-header .profile-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+.gum.sheet.item .sheet-header .header-info {
+  flex-grow: 1;
+}
+.gum.sheet.item .sheet-header .header-main-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.gum.sheet.item .sheet-header input[name="name"] {
+  font-family: var(--font-secondary, 'Cinzel', serif);
+  font-size: 1.6em; /* Um pouco maior para destaque */
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  background: transparent !important;
+  flex-grow: 1;
+  padding: 0;
+}
+.gum.sheet.item .item-tag.small-tag {
+  font-size: 0.7em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #313131;
+  background: #dacdca;
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* --- 3. NAVEGAÇÃO DAS ABAS (TABS) --- */
+.gum.sheet.item .sheet-tabs {
+  background: var(--c-bg-dark, #2b2a29);
+  padding: 5px 10px 0 10px;
+  border-bottom: 1px solid var(--c-border-light, #4a4846);
+}
+.gum.sheet.item .sheet-tabs .item {
+  color: var(--c-text-medium, #a9a6a0);
+  padding: 6px 12px;
+  border-radius: 4px 4px 0 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+.gum.sheet.item .sheet-tabs .item:hover {
+  background: var(--c-bg-medium, #3a3836);
+  color: var(--c-text-lightest, #f0f0e8);
+}
+.gum.sheet.item .sheet-tabs .item.active {
+  background: var(--c-bg-darkest, #191813);
+  color: var(--c-text-lightest, #f0f0e8);
+  font-weight: bold;
+  border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
+  text-shadow: none;
+}
+
+/* --- 4. CORPO DA FICHA (ÁREA DE CONTEÚDO DAS ABAS) --- */
+.gum.sheet.item .sheet-body-content {
+  background: var(--c-bg-dark, #2b2a29); /* Fundo escuro para abas de dados */
+}
+/* Fundo claro para a aba de detalhes, conforme seu layout */
+.gum.sheet.item .tab[data-tab="details"],
+.gum.sheet.item .tab[data-tab="description"] {
+    background: #f1e8e7;
+    color: var(--c-texto-escuro, #352425);
+}
+
+/* =================================================================== */
+/* 5. ESTILOS DAS ABAS ESPECÍFICAS                                   */
+/* =================================================================== */
+
+/* --- 5.1. ABA DE SUMÁRIO --- */
+.gum.sheet.item .tab[data-tab="summary"] {
+  padding: 10px;
+}
+.gum.sheet.item .summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.gum.sheet.item .summary-grid > div {
+  background-color: var(--c-bg-medium, #3a3836);
+  padding: 8px 12px;
+  border-radius: 5px;
+  border-left: 4px solid var(--c-accent-gold, #c5a05b);
+  font-family: var(--font-primary, 'Roboto', sans-serif);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.gum.sheet.item .summary-grid > div:hover {
+  background-color: var(--c-border-light, #4a4846);
+  transform: translateY(-2px);
+}
+.gum.sheet.item .summary-grid strong {
+  font-weight: 700;
+  color: var(--c-text-accent, #c5a05b);
+  margin-right: 8px;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+.gum.sheet.item .summary-grid span {
+  color: var(--c-text-lightest, #f0f0e8);
+  flex-grow: 1;
+  text-align: right;
+}
+.gum.sheet.item .summary-grid .locations,
+.gum.sheet.item .summary-grid .final-cost {
+  grid-column: 1 / -1;
+}
+.gum.sheet.item .summary-grid .locations span {
+  text-align: left;
+  margin-top: 5px;
+  width: 100%;
+}
+
+
+/* --- 5.2. ABA DE DETALHES --- */
+.gum.sheet.item .tab[data-tab="details"] {
+    padding: 15px;
+}
+.gum.sheet.item .section-title {
+  font-family: var(--font-secondary, 'Cinzel', serif);
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #313131;
+  padding-bottom: 5px;
+  margin: 15px 0 10px 0;
+  border-bottom: 1px solid #c9b9b4;
+}
+
+/* Layouts de Grid Genéricos para consistência */
+.form-grid-2, .form-grid-3 {
+    display: grid;
+    gap: 10px 15px;
+    margin-bottom: 10px;
+}
+.form-grid-2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+
+/* Campos de formulário e seus rótulos */
+.armor-field { /* Usando a classe que você já tem para todos os campos */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.armor-field label, .form-group label {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #6d6666;
+  text-transform: uppercase;
+}
+.armor-field input[type="text"],
+.armor-field input[type="number"],
+.form-group input[type="text"],
+.form-group input[type="number"],
+.armor-field select {
+  width: 100%;
+  padding: 6px;
+  border-radius: 3px;
+  border: 1px solid #c9b9b4;
+  background: rgba(0,0,0,0.03);
+  color: #313131;
+}
+.armor-field input:focus, .form-group input:focus, .armor-field select:focus {
+    border-color: var(--c-accent-red, #a53541);
+    box-shadow: 0 0 5px rgba(165, 53, 65, 0.5);
+    outline: none;
+}
+
+/* Layout específico da Armadura */
+.gum-armor-sheet-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.protection-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+.armor-body-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 15px;
+  padding: 10px;
+  background: #e9e3e0;
+  border-radius: 4px;
+}
+.body-part-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+  gap: 6px;
+}
+
+/* --- 5.3. ABA DE DESCRIÇÃO --- */
+.gum.sheet.item .tab[data-tab="description"] {
+    padding: 15px;
+}
+.item-section .group-title {
+  font-family: var(--font-secondary, 'Cinzel', serif);
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #313131;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #c9b9b4;
+}
+.editable-text-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.rendered-text {
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid #c9b9b4;
+  border-radius: 4px;
+  padding: 10px;
+  min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.5;
+  color: #313131;
+  white-space: pre-wrap; 
+}
+.rendered-text > *:first-child { margin-top: 0; }
+.rendered-text > *:last-child { margin-bottom: 0; }
+.edit-text-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #6d6666;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: all 0.2s ease-in-out;
+}
+.edit-text-btn:hover {
+  opacity: 1;
+  color: var(--c-accent-red, #a53541);
+}
+
+/* --- 5.4. ABA DE MODIFICADORES (ESTILO ORIGINAL PRESERVADO) --- */
+.gum.sheet.item .tab[data-tab="modifiers"] {
+    padding: 15px;
+}
+.modifiers-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.modifiers-toolbar .button {
+  background: var(--c-bg-medium);
+  color: var(--c-text-lightest);
+  border: 1px solid var(--c-border-light);
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9em;
+  text-decoration: none;
+}
+.modifiers-toolbar .button:hover {
+  border-color: var(--c-border-accent);
+}
+.modifier-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.modifier-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  border: 1px solid var(--c-border-light);
+  overflow: hidden;
+}
+.modifier-tag.is-enhancement {
+  background-color: var(--c-accent-green);
+  border-color: rgba(179, 255, 179, 0.4);
+}
+.modifier-tag.is-limitation {
+  background-color: var(--c-accent-red);
+  border-color: rgba(245, 150, 150, 0.4);
+}
+.modifier-tag .modifier-info {
+  padding: 5px 10px;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+.modifier-tag .modifier-info:hover {
+  background: rgba(255,255,255,0.1);
+}
+.modifier-tag .modifier-name { font-weight: bold; }
+.modifier-tag .modifier-divider { opacity: 0.6; }
+.modifier-tag .modifier-effect { font-style: italic; opacity: 0.8; }
+.modifier-tag .modifier-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.3);
+}
+.modifier-tag .modifier-cost {
+  font-weight: bold;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+.modifier-tag .delete-modifier {
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.modifier-tag .delete-modifier:hover {
+  color: #fff;
+}
+
+/* --- 6. COMPONENTES REUTILIZÁVEIS --- */
+.calculated-cost {
+  background-color: var(--c-bg-dark);
+  padding: 8px;
+  border-radius: 3px;
+  margin-top: 5px;
+}
+.calculated-cost label {
+  color: var(--c-text-accent) !important;
+  font-family: var(--font-secondary);
+}
+.calculated-cost .value {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: var(--c-text-lightest);
+  text-align: right;
+  padding-top: 5px;
+}
+.calculated-cost .value small {
+  font-size: 0.6em;
+  font-weight: normal;
+  color: var(--c-text-medium);
+}
+/* =================================================================== */
+/* ESTILOS PARA O CONTAINER DE TEXTO EDITÁVEL                        */
+/* =================================================================== */
+
+/* Container que envolve o texto e o botão de edição */
+.editable-text-container {
+    position: relative; /* Necessário para posicionar o botão de edição */
+    width: 100%;
+    margin-bottom: 10px; /* Espaço abaixo de cada bloco de texto */
+}
+
+/* A área onde o texto é exibido de forma limpa */
+.rendered-text {
+    background-color: rgba(0, 0, 0, 0.04); /* Fundo sutil */
+    border: 1px solid #c9b9b4;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 80px; /* Altura mínima para não ficar achatado se vazio */
+    width: 100%;
+    box-sizing: border-box; /* Garante que padding não aumente a largura total */
+    line-height: 1.5;
+    color: #313131;
+}
+
+/* O conteúdo dentro da área de texto (parágrafos, etc) */
+.rendered-text > *:first-child {
+    margin-top: 0;
+}
+.rendered-text > *:last-child {
+    margin-bottom: 0;
+}
+
+/* O botão de edição (ícone) */
+.edit-text-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #6d6666;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.2s ease-in-out;
+}
+
+.edit-text-btn:hover {
+    opacity: 1;
+    color: #a53541; /* Cor de destaque ao passar o mouse */
+}

@@ -20,7 +20,8 @@
   ],
   "styles": [
     "styles/styles.css",
-    "styles/modifier-browser.css"
+    "styles/modifier-browser.css",
+    "styles/item-sheet.css"
   ],
     "packs": [
     {
