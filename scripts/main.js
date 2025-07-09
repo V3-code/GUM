@@ -2644,94 +2644,121 @@ class GurpsItemSheet extends ItemSheet {
   }
 
   /**
-   * @override
-   * Ativa todos os listeners de interatividade da ficha de item.
-   */
-  activateListeners(html) {
+ * @override
+ * Ativa todos os listeners de interatividade da ficha de item.
+ * ESTA É A VERSÃO FINAL E COMPLETA.
+ */
+activateListeners(html) {
     super.activateListeners(html);
+
+    // Impede a ativação de listeners se o usuário não tiver permissão para editar.
     if (!this.isEditable) return;
 
-    // Listener para abrir o Navegador de Modificadores (já funcional)
-    html.on('click', '.add-modifier', (ev) => {
-      ev.preventDefault();
-      new ModifierBrowser(this.item).render(true);
-    });
+    // --- Listener para o botão de EDITAR DESCRIÇÃO ---
+    html.find('.edit-text-btn').on('click', (ev) => {
+        // Encontra o nome do campo a ser editado (ex: "system.description")
+        const fieldName = $(ev.currentTarget).data('target');
+        const title = $(ev.currentTarget).attr('title');
+        
+        // Pega o conteúdo bruto atual do item
+        const currentContent = getProperty(this.item.system, fieldName.replace('system.', '')) || "";
 
-    // --- LÓGICA CORRIGIDA PARA OS BOTÕES ---
-
-    // Listener para DELETAR um modificador
-    html.on('click', '.delete-modifier', (ev) => {
-      ev.preventDefault();
-      // Pega o ID diretamente do botão clicado
-      const modifierId = $(ev.currentTarget).data('modifierId');
-      if (modifierId) {
-        Dialog.confirm({
-          title: "Remover Modificador",
-          content: "<p>Você tem certeza?</p>",
-          yes: () => { this.item.update({ [`system.modifiers.-=${modifierId}`]: null }); },
-          no: () => {}
-        });
-      }
-    });
-
-    // Listener para VISUALIZAR um modificador
-    html.on('click', '.view-modifier', async (ev) => {
-      ev.preventDefault();
-      // Pega o ID diretamente do link clicado
-      const modifierId = $(ev.currentTarget).data('modifierId');
-      const modifierData = this.item.system.modifiers[modifierId];
-      if (!modifierData) return;
-      
-      const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
-      const content = `<div class="gurps-dialog-canvas"><div class="gurps-item-preview-card"><header class="preview-header"><h3>${modifierData.name}</h3></header><div class="preview-content"><div class="preview-properties"><div class="property-tag"><label>Custo</label><span>${modifierData.cost}</span></div>${modifierData.ref ? `<div class="property-tag"><label>Ref.</label><span>${modifierData.ref}</span></div>` : ''}</div><hr class="preview-divider"><div class="preview-description">${description}</div></div></div></div>`;
-      new Dialog({ title: `Visualizar: ${modifierData.name}`, content: content, buttons: { close: { label: "Fechar" } }, options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420, height: "auto" } }).render(true);
-    });
-
-    // Listener para o botão de EDITAR DESCRIÇÃO
-     html.find('.edit-text-btn').on('click', event => {
-            event.preventDefault();
-            const button = event.currentTarget;
-            const fieldName = button.dataset.target; // Pega o campo a editar, ex: "system.description"
-            
-            // Pega o conteúdo *bruto* (sem HTML) do item.
-            const currentContent = getProperty(this.item, fieldName) || "";
-            
-            const title = button.title || "Editar Texto";
-
-            // Cria uma janela de Diálogo (pop-up) do Foundry.
-            new Dialog({
-                title: title,
-                // O conteúdo do pop-up é um simples <textarea>.
-                content: `
-                    <form>
-                        <textarea name="textContent" style="width: 100%; height: 280px;">${currentContent}</textarea>
-                    </form>
-                `,
-                buttons: {
-                    save: {
-                        icon: '<i class="fas fa-save"></i>',
-                        label: 'Salvar',
-                        callback: (html) => {
-                            // Ao clicar em "Salvar", pegamos o novo texto do textarea.
-                            const newContent = html.find('textarea[name="textContent"]').val();
-                            
-                            // E atualizamos o item com o novo conteúdo. É simples assim.
-                            this.item.update({ [fieldName]: newContent });
-                        }
-                    },
-                    cancel: {
-                        icon: '<i class="fas fa-times"></i>',
-                        label: 'Cancelar'
+        // Abre o pop-up de edição
+        new Dialog({
+            title: title,
+            content: `<form><textarea name="content" style="width: 100%; height: 300px;">${currentContent}</textarea></form>`,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const newContent = html.find('textarea[name="content"]').val();
+                        this.item.update({ [fieldName]: newContent });
                     }
+                }
+            },
+            default: "save"
+        }, { width: 500, height: 400, resizable: true }).render(true);
+    });
+
+    // --- Listener para ADICIONAR um modificador ---
+    html.find('.add-modifier').on('click', (ev) => {
+        ev.preventDefault();
+        // Assumindo que você tem uma classe 'ModifierBrowser' definida em outro lugar
+        new ModifierBrowser(this.item).render(true);
+    });
+
+    // --- Listener para DELETAR um modificador ---
+    html.find('.delete-modifier').on('click', (ev) => {
+        ev.preventDefault();
+        const modifierId = $(ev.currentTarget).data('modifier-id');
+        if (modifierId) {
+            Dialog.confirm({
+                title: "Remover Modificador",
+                content: "<p>Você tem certeza que deseja remover este modificador?</p>",
+                yes: () => {
+                    this.item.update({ [`system.modifiers.-=${modifierId}`]: null });
                 },
-                default: 'save'
-            }, {
-                width: 400,
-                height: 360,
-                resizable: true
-            }).render(true);
-        });
-  }
+                no: () => {}
+            });
+        }
+    });
+
+    // --- Listener para VISUALIZAR os detalhes de um modificador ---
+   html.find('.view-modifier').on('click', async (ev) => {
+    ev.preventDefault();
+    const modifierId = $(ev.currentTarget).data('modifier-id');
+    const modifierData = this.item.system.modifiers[modifierId];
+    if (!modifierData) return;
+
+    // Enriquece a descrição do modificador para exibir corretamente
+    const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
+
+    // ✅ Monta o conteúdo usando nossas classes de design já existentes ✅
+    const content = `
+        <div class="sheet-body-content">
+            <div class="form-section">
+                <h4 class="section-title">Detalhes do Modificador</h4>
+                <div class="summary-list">
+                    <div class="summary-item">
+                        <label>Custo:</label>
+                        <span class="summary-dots"></span>
+                        <span class="value">${modifierData.cost}</span>
+                    </div>
+                    <div class="summary-item">
+                        <label>Referência:</label>
+                        <span class="summary-dots"></span>
+                        <span class="value">${modifierData.ref || 'N/A'}</span>
+                    </div>
+                </div>
+                <hr class="summary-divider">
+                <div class="summary-description rendered-text">
+                    ${description}
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Cria e renderiza o diálogo
+    new Dialog({
+        title: `Detalhes: ${modifierData.name}`,
+        content: content,
+        buttons: {
+            close: {
+                label: "Fechar",
+                icon: '<i class="fas fa-times"></i>'
+            }
+        },
+        default: "close",
+       }, {
+        // Define um tamanho padrão para a janela
+        width: 420,
+        height: "auto",
+        resizable: true,
+        classes: ["dialog", "modifier-preview-dialog"]
+    }).render(true);
+});
+}
 
 
 }

@@ -1,17 +1,24 @@
 {{!-- Definindo o partial 'inline' no topo do arquivo --}}
 {{#*inline "itemDetailsGeneral"}}
 {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
-<h4 class="section-title">Informações Gerais</h4>
-<div class="form-grid-3">
-    <div class="form-group"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
-    <div class="form-group"><label>Custo</label><input type="number" name="system.cost" value="{{system.cost}}"/></div>
-    <div class="form-group"><label>Peso</label><input type="number" step="0.1" name="system.weight" value="{{system.weight}}"/></div>
-    <div class="form-group"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}"/></div>
-    <div class="form-group"><label>Material</label><input type="text" name="system.material" value="{{system.material}}"/></div>
-    <div class="form-group"><label>Nível Tecnológico (NT)</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
-    <div class="form-group"><label>Classe de Legalidade (CL)</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
-    <div class="form-group"><label>Ref. Página</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+<div class="form-section"><h4 class="section-title">Geral</h4>
+    <div class="form-grid-3">
+            <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
+            <div class="form-group input-narrow"><label>Peso (kg)</label><input type="number" step="0.1" name="system.weight" value="{{system.weight}}"/></div>
+            <div class="form-group input-narrow"><label>Custo ($)</label><input type="number" name="system.cost" value="{{system.cost}}"/></div>
+    </div>
+    <div class="form-grid-3">
+            <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
+            <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
+            <div class="form-group input-narrow"><label title="Livro e Página de Referência">REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+    </div>
 </div>
+<div class="form-section"><h4 class="section-title"> Característica </h4>
+        <div class="form-group layout-inline"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}"/></div>
+        <div class="form-group layout-inline"><label>Material</label><input type="text" name="system.material" value="{{system.material}}"/></div>
+</div>
+
+
 {{/inline}}
 
 <form class="{{cssClass}} gum-item-sheet" autocomplete="off">
@@ -37,7 +44,6 @@
   {{!-- 1. Navegação das Abas --}}
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item active" data-tab="summary">Sumário</a>
-    <a class="item" data-tab="description">Descrição</a>
     <a class="item" data-tab="details">Detalhes</a>
     {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
       <a class="item" data-tab="modifiers">Modificadores</a>
@@ -47,180 +53,143 @@
   {{!-- 2. Corpo das Abas --}}
   <section class="sheet-body-content">
 
-    {{!-- ✅ INÍCIO DA NOVA ABA: SUMÁRIO ✅ --}}
-    <div class="tab active" data-tab="summary">
-        <div class="summary-grid">
-
-            {{!-- Sumário para Equipamento, Armas e Armaduras (Campos Comuns) --}}
+{{!-- ABA DE SUMÁRIO (DESIGN FINAL) --}}
+<div class="tab active" data-tab="summary">
+    <div class="form-section">
+        
+        <div class="summary-list">
+            
+            {{!-- Para cada item, agora temos label, os pontos e o valor --}}
             {{#if (or (eq item.type "equipment") (eq item.type "melee_weapon") (eq item.type "ranged_weapon") (eq item.type "armor"))}}
-                <div><strong>Custo:</strong> <span>{{system.cost}}</span></div>
-                <div><strong>Peso:</strong> <span>{{system.weight}}</span></div>
-                <div><strong>NT:</strong> <span>{{system.tech_level}}</span></div>
-                <div><strong>CL:</strong> <span>{{system.legality_class}}</span></div>
-                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
+                <div class="summary-item"><label>Custo:</label><span class="summary-dots"></span><span class="value">{{system.cost}}</span></div>
+                <div class="summary-item"><label>Peso:</label><span class="summary-dots"></span><span class="value">{{system.weight}}</span></div>
             {{/if}}
 
-            {{!-- Sumário Específico para Armas --}}
             {{#if (or (eq item.type "melee_weapon") (eq item.type "ranged_weapon"))}}
-                <div><strong>Dano:</strong> <span>{{system.damage_formula}} {{system.damage_type}}</span></div>
-                <div><strong>For Mín.:</strong> <span>{{system.min_strength}}</span></div>
+                <div class="summary-item"><label>Dano:</label><span class="summary-dots"></span><span class="value">{{system.damage_formula}} {{system.damage_type}}</span></div>
             {{/if}}
             {{#if (eq item.type "melee_weapon")}}
-                <div><strong>Alcance:</strong> <span>{{system.reach}}</span></div>
-                <div><strong>Aparar:</strong> <span>{{system.parry}}</span></div>
+                <div class="summary-item"><label>Alcance:</label><span class="summary-dots"></span><span class="value">{{system.reach}}</span></div>
+                <div class="summary-item"><label>Aparar:</label><span class="summary-dots"></span><span class="value">{{system.parry}}</span></div>
             {{/if}}
             {{#if (eq item.type "ranged_weapon")}}
-                 <div><strong>Prec.:</strong> <span>{{system.accuracy}}</span></div>
-                 <div><strong>Distância:</strong> <span>{{system.range}}</span></div>
-                 <div><strong>CdT:</strong> <span>{{system.rof}}</span></div>
-                 <div><strong>Tiros:</strong> <span>{{system.shots}}</span></div>
-                 <div><strong>RCO:</strong> <span>{{system.rcl}}</span></div>
+                <div class="summary-item"><label>Prec.:</label><span class="summary-dots"></span><span class="value">{{system.accuracy}}</span></div>
+                <div class="summary-item"><label>Distância:</label><span class="summary-dots"></span><span class="value">{{system.range}}</span></div>
+                <div class="summary-item"><label>CdT:</label><span class="summary-dots"></span><span class="value">{{system.rof}}</span></div>
             {{/if}}
 
-            {{!-- Sumário Específico para Armadura --}}
             {{#if (eq item.type "armor")}}
-                <div><strong>RD:</strong> <span>{{system.dr}}</span></div>
-                <div class="locations"><strong>Locais:</strong> 
-                    <span>
-                        {{#each system.worn_locations as |loc index|}}
-                            {{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}{{#unless @last}}  {{/unless}}
-                        {{/each}}
+                <div class="summary-item"><label>RD:</label><span class="summary-dots"></span><span class="value">{{system.dr}}</span></div>
+                <div class="summary-item locations"><label>Locais:</label><span class="summary-dots"></span> 
+                    <span class="value">
+                        {{#each system.worn_locations as |loc index|}}{{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}{{#unless @last}}, {{/unless}}{{/each}}
                     </span>
                 </div>
             {{/if}}
-
-            {{!-- Sumário para Vantagens, Desvantagens e Poderes --}}
+            
             {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-                <div><strong>Custo Base:</strong> <span>{{system.points}} pontos</span></div>
-                <div class="final-cost"><strong>Custo Final:</strong> <span>{{calculatedCost.finalPoints}} (Mod: {{calculatedCost.totalModifier}}%)</span></div>
-                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
-                 {{#if system.level}}<div><strong>Nível:</strong> <span>{{system.level}}</span></div>{{/if}}
-                 {{#if system.self_control_roll}}<div><strong>Auto-Controle:</strong> <span>{{system.self_control_roll}}</span></div>{{/if}}
+                <div class="summary-item"><label>Custo Base:</label><span class="summary-dots"></span><span class="value">{{system.points}}</span></div>
+                <div class="summary-item final-cost"><label>Custo Final:</label><span class="summary-dots"></span><span class="value">{{calculatedCost.finalPoints}} <small>(Mod: {{calculatedCost.totalModifier}}%)</small></span></div>
             {{/if}}
 
-            {{!-- Sumário para Perícias e Magias --}}
             {{#if (or (eq item.type "skill") (eq item.type "spell"))}}
-                <div><strong>Pontos:</strong> <span>{{system.points}}</span></div>
-                <div><strong>Atributo:</strong> <span>{{system.base_attribute}}</span></div>
-                <div><strong>Dificuldade:</strong> <span>{{system.difficulty}}</span></div>
-                <div><strong>Nível:</strong> <span>{{system.skill_level}}</span></div>
-                <div><strong>Ref.:</strong> <span>{{system.ref}}</span></div>
-            {{/if}}
-            {{#if (eq item.type "spell")}}
-                <div><strong>Custo (Mana):</strong> <span>{{system.mana_cost}}</span></div>
-                <div><strong>Duração:</strong> <span>{{system.duration}}</span></div>
-                <div><strong>Tempo:</strong> <span>{{system.casting_time}}</span></div>
+                <div class="summary-item"><label>Pontos:</label><span class="summary-dots"></span><span class="value">{{system.points}}</span></div>
+                <div class="summary-item"><label>Nível:</label><span class="summary-dots"></span><span class="value">{{system.skill_level}}</span></div>
             {{/if}}
         </div>
-            {{!-- Campo de Descrição para o Chat --}}
-    <div class="item-section">
 
-        <div class="editable-text-container">
-            {{!-- Área para o texto do chat --}}
-            <div class="rendered-text">{{{enrichedChatDescription}}}</div>
-            {{!-- Botão para editar o texto do chat --}}
-            <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
-                <i class="fas fa-edit"></i>
-            </a>
-        </div>
+         <hr class="summary-divider">
+
+              {{!-- Container que permite o posicionamento do botão de editar --}}
+          <div class="editable-text-container">
+             {{!-- O botão de editar, com a classe e o data-target corretos --}}
+              <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                  <i class="fas fa-edit"></i>
+              </a>
+              {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
+              <div class="summary-description rendered-text">
+                  {{{enrichedChatDescription}}}
+              </div>
+              
+             
+          </div>
     </div>
-    </div>
-
-   {{!-- Conteúdo da Aba "Descrição" --}}
-<div class="tab" data-tab="description">
-
-    {{!-- Campo de Descrição Geral --}}
-    <div class="item-section">
-        <h4 class="group-title">Descrição Completa</h4>
-        <div class="editable-text-container">
-            {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
-            <div class="rendered-text">{{{enrichedDescription}}}</div>
-            {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
-            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
-                <i class="fas fa-edit"></i>
-            </a>
-        </div>
-    </div>
-
-
 </div>
-
-
 
      {{!-- Aba "Detalhes" --}}
     <div class="tab" data-tab="details">
        
       {{!-- Equipamento Genérico --}}
       {{#if (eq item.type "equipment")}}
-       <div class="form-section">
+       
         {{!-- Chamando o partial 'inline' que definimos acima --}}
         {{> itemDetailsGeneral}}
-        </div>
+       
       {{/if}}
 
       {{!-- Arma Corpo a Corpo --}}
       {{#if (eq item.type "melee_weapon")}}
-       <div class="form-section">
+      
         {{!-- Chamando o partial 'inline' que definimos acima --}}
         {{> itemDetailsGeneral}}
-        </div>
+       
         <div class="form-section">
-          <h4 class="section-title">Combate</h4>
-          <div class="form-grid-3">
-            <div class="form-group"><label>Dano</label><input type="text" name="system.damage_formula" value="{{item.system.damage_formula}}"/></div>
-            <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.damage_type" value="{{item.system.damage_type}}"/></div>
-            <div class="form-group"><label>Alcance</label><input type="text" name="system.reach" value="{{item.system.reach}}"/></div>
-            <div class="form-group"><label>Aparar</label><input type="text" name="system.parry" value="{{item.system.parry}}"/></div>
-            <div class="form-group"><label>Força Mínima</label><input type="number" name="system.min_strength" value="{{item.system.min_strength}}"/></div>
-          </div>
-        </div>
+                <h4 class="section-title">Atributos de Combate</h4>
+                <div class="stat-block">
+                    {{!-- Cabeçalhos das colunas --}}
+                    <label>Dano</label>
+                    <label>Tipo</label>
+                    <label>Alcance</label>
+                    <label>Aparar</label>
+                    <label>ST Mín.</label>
+
+                    {{!-- Inputs correspondentes --}}
+                    <input type="text" name="system.damage_formula" value="{{system.damage_formula}}"/>
+                    <input type="text" name="system.damage_type" value="{{system.damage_type}}"/>
+                    <input type="text" name="system.reach" value="{{system.reach}}"/>
+                    <input type="text" name="system.parry" value="{{system.parry}}"/>
+                    <input type="number" name="system.min_strength" value="{{system.min_strength}}"/>
+                </div>
+            </div>
       {{/if}}
 
       {{!-- Arma a Distância (Reorganizada) --}}
 {{#if (eq item.type "ranged_weapon")}}
-       <div class="form-section">
+       
         {{!-- Chamando o partial 'inline' que definimos acima --}}
         {{> itemDetailsGeneral}}
-        </div>
+      
     
-    <div class="form-section"><h4 class="section-title">Atributos de Combate</h4>
-    
-    {{!-- Grid 1: Performance da Arma --}}
-    <div class="form-grid-3">
-        <div class="form-group">
-            <label>Dano</label>
-            <input type="text" name="system.damage_formula" value="{{system.damage_formula}}"/>
-        </div>
-        <div class="form-group">
-            <label>Tipo de Dano</label>
-            <input type="text" name="system.damage_type" value="{{system.damage_type}}"/>
-        </div>
-        <div class="form-group">
-            <label>Precisão (Acc)</label>
-            <input type="text" name="system.accuracy" value="{{system.accuracy}}"/>
-        </div>
-        <div class="form-group">
-            <label>Distância</label>
-            <input type="text" name="system.range" value="{{system.range}}"/>
-        </div>
-        <div class="form-group">
-            <label>Força Mínima (ST)</label>
-            <input type="number" name="system.min_strength" value="{{system.min_strength}}"/>
-        </div>
-        <div class="form-group">
-            <label>CdT (RoF)</label>
-            <input type="text" name="system.rof" value="{{system.rof}}"/>
-        </div>
-        <div class="form-group">
-            <label>Tiros (Shots)</label>
-            <input type="text" name="system.shots" value="{{system.shots}}"/>
-        </div>
-        <div class="form-group">
-            <label>Recuo (Rcl)</label>
-            <input type="text" name="system.rcl" value="{{system.rcl}}"/>
-        </div>
+    {{!-- Arma a Distância - Seção de Combate com layout 4x4 --}}
+<div class="form-section">
+    <h4 class="section-title">Combate</h4>
+
+    {{!-- Primeiro Bloco de Stats: Performance da Bala --}}
+    <div class="stat-block">
+        <label>Dano</label>
+        <label>Tipo</label>
+        <label>PREC</label>
+        <label>Distância</label>
+
+        <input type="text" name="system.damage_formula" value="{{system.damage_formula}}"/>
+        <input type="text" name="system.damage_type" value="{{system.damage_type}}"/>
+        <input type="text" name="system.accuracy" value="{{system.accuracy}}"/>
+        <input type="text" name="system.range" value="{{system.range}}"/>
     </div>
+
+    {{!-- Segundo Bloco de Stats: Performance da Arma --}}
+    <div class="stat-block">
+        <label>CdT</label>
+        <label>Tiros</label>
+        <label>RCO</label>
+        <label>ST Mín.</label>
+
+        <input type="text" name="system.rof" value="{{system.rof}}"/>
+        <input type="text" name="system.shots" value="{{system.shots}}"/>
+        <input type="text" name="system.rcl" value="{{system.rcl}}"/>
+        <input type="number" name="system.min_strength" value="{{system.min_strength}}"/>
     </div>
+</div>
 {{/if}}
 
       {{!-- Armadura (Versão Reorganizada) --}}
@@ -324,25 +293,27 @@
           </div>
       {{/if}}
       
-{{!-- Magia (Versão Reorganizada) --}}
+{{!-- Magia --}}
 {{#if (eq item.type "spell")}}
 
     {{!-- Grupo 1: Classificação da Magia --}}
     <div class="form-section"><h4 class="section-title">Classificação</h4>
     <div class="form-grid-2">
-        <div class="form-group"><label>Classe</label><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
-        <div class="form-group"><label>Escola</label><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
+        <div class="form-group input-medium"><label>Classe</label><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
+        <div class="form-group input-medium"><label>Escola</label><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
     </div>
     </div>
     {{!-- Grupo 2: Mecânica da Magia --}}
     <div class="form-section"><h4 class="section-title">Mecânica</h4>
-    <div class="form-grid-2">
-        <div class="form-group"><label>Pontos</label><input type="number" name="system.points" value="{{system.points}}"/></div>
-        <div class="form-group"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/></div>
-        <div class="form-group"><label>Dificuldade</label><input type="text" name="system.difficulty" value="{{system.difficulty}}"/></div>
-        <div class="form-group"><label>Nível</label><input type="number" name="system.skill_level" value="{{system.skill_level}}"/></div>
+        <div class="form-grid-2">
+        <div class="form-group input-narrow"><label>Pontos</label><input type="number" name="system.points" value="{{system.points}}"/></div>
+        <div class="form-group input-narrow"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/></div>
+        <div class="form-group input-narrow"><label>Dificuldade</label><input type="text" name="system.difficulty" value="{{system.difficulty}}"/></div>
+        <div class="form-group input-narrow"><label>Nível</label><input type="number" name="system.skill_level" value="{{system.skill_level}}"/></div>
+        <div class="form-group input-narrow"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
     </div>
     </div>
+   
     {{!-- Grupo 3: Execução e Custo --}}
     <div class="form-section"><h4 class="section-title">Execução e Custo</h4>
     <div class="form-grid-2">
@@ -369,23 +340,24 @@
     </div>
 {{/if}}
       
-{{!-- Poder (Versão Reorganizada) --}}
+{{!-- Poder  --}}
 {{#if (eq item.type "power")}}
 
     {{!-- Grupo 1: Custo e Pontos --}}
-    <div class="form-section"></div><h4 class="section-title">Custo e Pontos</h4>
-    <div class="form-grid-2">
-        <div class="form-group">
+    <div class="form-section"><h4 class="section-title">Custo e Pontos</h4>
+    <div class="form-group">
+        <div class="form-group layout-inline">
             <label>Pontos Base</label>
             <input type="number" name="system.points" value="{{system.points}}"/>
         </div>
-        <div class="form-group calculated-cost">
+        <div class="form-group calculated-cost layout-inline">
             <label>Custo Final (c/ Modificadores)</label>
             <div class="value">
                 <span>{{calculatedCost.finalPoints}}</span>
                 <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
             </div>
         </div>
+    </div>
     </div>
 
     {{!-- Grupo 2: Mecânica do Poder --}}
@@ -403,6 +375,7 @@
             <label>Nível</label>
             <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
         </div>
+        <div class="form-group input-narrow layout-inline"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{item.system.other_mods}}"/></div>
     </div>
     </div>
     {{!-- Grupo 3: Uso e Ativação --}}
@@ -478,48 +451,64 @@
       
       </div>
     {{/if}}
+
+ 
+      <div class="item-section">
+        <div class="form-section"><h4 class="section-title">Descrição Completa
+                    {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
+            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                <i class="fas fa-edit"></i>
+            </a></h4>
+        <div class="editable-text-container">
+            {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
+            <div class="summary-description rendered-text">{{{enrichedDescription}}}</div>
+
+        </div>
+    </div>
 </div>
 
-   
-{{!-- Conteúdo da Aba "Modificadores" com o design de Tags --}}
+</div>
+
+{{!-- Conteúdo da Aba "Modificadores" com o design "Fieldset" --}}
 {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-  <div class="tab" data-tab="modifiers">
-    
-    <div class="modifiers-toolbar">
-      <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+    <div class="tab" data-tab="modifiers">
+        
+        {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
+        <div class="modifiers-toolbar">
+            <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+        </div>
+
+        {{!-- ✅ Envolvemos a lista com a estrutura .form-section ✅ --}}
+        <div class="form-section">
+                       
+            <ol class="modifier-list">
+                {{#each sortedModifiers as |modifier|}}
+                    <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
+                        
+                        <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
+                            <span class="modifier-name">{{modifier.name}}</span>
+                            {{#if modifier.applied_effect}}
+                                <span class="modifier-divider">|</span>
+                                <span class="modifier-effect">{{modifier.applied_effect}}</span>
+                            {{/if}}
+                        </a>
+
+                        <div class="modifier-controls">
+                            <span class="modifier-cost">{{modifier.cost}}</span>
+                            <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                {{else}}
+                    <li class="placeholder-text">
+                        <p>Nenhum modificador aplicado.</p>
+                    </li>
+                {{/each}}
+            </ol>
+        </div>
+        
     </div>
-
-    <div class="form-section">
-    {{!-- A lista agora usa a classe 'modifier-list' para alinhar as tags --}}
-    <ol class="modifier-list">
-      {{#each sortedModifiers as |modifier|}}
-        {{!-- MUDANÇA: A classe do item agora é 'modifier-tag' --}}
-        <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
-          
-          <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
-            <span class="modifier-name">{{modifier.name}}</span>
-            {{#if modifier.applied_effect}}
-              <span class="modifier-divider">|</span>
-              <span class="modifier-effect">{{modifier.applied_effect}}</span>
-            {{/if}}
-          </a>
-
-          <div class="modifier-controls">
-            <span class="modifier-cost">{{modifier.cost}}</span>
-            <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-      {{else}}
-        <li class="placeholder-text">
-          <label>Nenhum modificador aplicado.</label>
-        </li>
-      {{/each}}
-    </ol>
-
-  </div>
-  </div>
 {{/if}}
-      
+
   </section>
 </section>
 
