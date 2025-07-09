@@ -2758,6 +2758,44 @@ activateListeners(html) {
         classes: ["dialog", "modifier-preview-dialog"]
     }).render(true);
 });
+
+// --- Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged) ---
+html.find('.add-attack').on('click', (ev) => {
+    const attackType = $(ev.currentTarget).data('type');
+    const newAttackId = foundry.utils.randomID(16);
+    let newAttackData;
+    let path;
+
+    if (attackType === 'melee') {
+        path = `system.melee_attacks.${newAttackId}`;
+        newAttackData = { mode: "Novo Modo C.C.", damage_formula: "", reach: "", parry: "", min_strength: 0 };
+    } else {
+        path = `system.ranged_attacks.${newAttackId}`;
+        newAttackData = { mode: "Novo Modo L.D.", damage_formula: "", accuracy: "", range: "", rof: "", shots: "", rcl: "", min_strength: 0 };
+    }
+
+    this.item.update({ [path]: newAttackData });
+});
+
+// --- Listener para DELETAR um Modo de Ataque (Melee ou Ranged) ---
+html.find('.delete-attack').on('click', (ev) => {
+    const target = $(ev.currentTarget);
+    const attackId = target.closest('.attack-item').data('attack-id');
+    const listName = target.data('list'); // 'melee_attacks' ou 'ranged_attacks'
+    const attack = this.item.system[listName][attackId];
+
+    if (!attackId || !attack) return;
+
+    Dialog.confirm({
+        title: `Deletar Modo de Ataque "${attack.mode}"`,
+        content: "<p>Você tem certeza?</p>",
+        yes: () => {
+            this.item.update({ [`system.${listName}.-=${attackId}`]: null });
+        },
+        no: () => {},
+        defaultYes: false
+    });
+});
 }
 
 

@@ -127,69 +127,100 @@
        
       {{/if}}
 
-      {{!-- Arma Corpo a Corpo --}}
-      {{#if (eq item.type "melee_weapon")}}
-      
-        {{!-- Chamando o partial 'inline' que definimos acima --}}
-        {{> itemDetailsGeneral}}
-       
-        <div class="form-section">
-                <h4 class="section-title">Atributos de Combate</h4>
-                <div class="stat-block">
-                    {{!-- Cabeçalhos das colunas --}}
-                    <label>Dano</label>
-                    <label>Tipo</label>
-                    <label>Alcance</label>
-                    <label>Aparar</label>
-                    <label>ST Mín.</label>
+{{!-- O Novo Bloco Unificado para o Item "Arma" --}}
+{{#if (eq item.type "weapon")}}
 
-                    {{!-- Inputs correspondentes --}}
-                    <input type="text" name="system.damage_formula" value="{{system.damage_formula}}"/>
-                    <input type="text" name="system.damage_type" value="{{system.damage_type}}"/>
-                    <input type="text" name="system.reach" value="{{system.reach}}"/>
-                    <input type="text" name="system.parry" value="{{system.parry}}"/>
-                    <input type="number" name="system.min_strength" value="{{system.min_strength}}"/>
-                </div>
-            </div>
-      {{/if}}
+    {{!-- Informações Gerais (do partial 'inline') --}}
+    {{> itemDetailsGeneral}}
 
-      {{!-- Arma a Distância (Reorganizada) --}}
-{{#if (eq item.type "ranged_weapon")}}
-       
-        {{!-- Chamando o partial 'inline' que definimos acima --}}
-        {{> itemDetailsGeneral}}
-      
-    
-    {{!-- Arma a Distância - Seção de Combate com layout 4x4 --}}
+    {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (VERSÃO FINAL E CORRETA) --}}
 <div class="form-section">
-    <h4 class="section-title">Combate</h4>
+    <h4 class="section-title">Ataques Corpo a Corpo</h4>
+    
+    {{!-- Não precisamos mais do cabeçalho antigo, pois cada campo terá seu próprio rótulo --}}
 
-    {{!-- Primeiro Bloco de Stats: Performance da Bala --}}
-    <div class="stat-block">
-        <label>Dano</label>
-        <label>Tipo</label>
-        <label>PREC</label>
-        <label>Distância</label>
+    <ol class="attack-list">
+        {{#each system.melee_attacks as |attack key|}}
+            <li class="attack-item melee-attack-item" data-attack-id="{{key}}">
 
-        <input type="text" name="system.damage_formula" value="{{system.damage_formula}}"/>
-        <input type="text" name="system.damage_type" value="{{system.damage_type}}"/>
-        <input type="text" name="system.accuracy" value="{{system.accuracy}}"/>
-        <input type="text" name="system.range" value="{{system.range}}"/>
-    </div>
-
-    {{!-- Segundo Bloco de Stats: Performance da Arma --}}
-    <div class="stat-block">
-        <label>CdT</label>
-        <label>Tiros</label>
-        <label>RCO</label>
-        <label>ST Mín.</label>
-
-        <input type="text" name="system.rof" value="{{system.rof}}"/>
-        <input type="text" name="system.shots" value="{{system.shots}}"/>
-        <input type="text" name="system.rcl" value="{{system.rcl}}"/>
-        <input type="number" name="system.min_strength" value="{{system.min_strength}}"/>
+                {{!-- Usamos a mesma estrutura .stat-row, mas com apenas uma linha --}}
+                <div class="attack-stat-rows">
+                    <div class="stat-row">
+                        <div class="form-group">
+                            <label>Modo</label>
+                            <input type="text" name="system.melee_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                        </div>
+                        <div class="form-group input-medium">
+                            <label>Dano</label>
+                            <input type="text" name="system.melee_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                        </div>
+                        <div class="form-group input-narrow">
+                            <label>Alcance</label>
+                            <input type="text" name="system.melee_attacks.{{key}}.reach" value="{{attack.reach}}"/>
+                        </div>
+                        <div class="form-group input-narrow">
+                            <label>Aparar</label>
+                            <input type="text" name="system.melee_attacks.{{key}}.parry" value="{{attack.parry}}"/>
+                        </div>
+                        <div class="form-group input-narrow">
+                            <label>STmín.</label>
+                            <input type="number" name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="attack-controls">
+                    <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                </div>
+            </li>
+        {{/each}}
+    </ol>
+    <div class="attack-toolbar">
+        <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
     </div>
 </div>
+
+{{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (VERSÃO FINAL E CORRETA) --}}
+<div class="form-section">
+    <h4 class="section-title">Ataques à Distância</h4>
+    
+    {{!-- Não precisamos mais de um cabeçalho separado aqui --}}
+
+    <ol class="attack-list">
+        {{#each system.ranged_attacks as |attack key|}}
+            {{!-- Cada item da lista agora contém a estrutura completa --}}
+            <li class="attack-item" data-attack-id="{{key}}">
+                
+                {{!-- A estrutura de duas linhas que desenhamos --}}
+                <div class="attack-stat-rows">
+                    {{!-- LINHA 1: MODO E PERFORMANCE DO DISPARO --}}
+                    <div class="stat-row">
+                        <div class="form-group"><label>Modo</label><input type="text" name="system.ranged_attacks.{{key}}.mode" value="{{attack.mode}}"/></div>
+                        <div class="form-group input-medium"><label>Dano</label><input type="text" name="system.ranged_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Prec.</label><input type="text" name="system.ranged_attacks.{{key}}.accuracy" value="{{attack.accuracy}}"/></div>
+                        <div class="form-group input-medium"><label>Distância</label><input type="text" name="system.ranged_attacks.{{key}}.range" value="{{attack.range}}"/></div>
+                    </div>
+                    {{!-- LINHA 2: PERFORMANCE DA ARMA --}}
+                    <div class="stat-row">
+                        <div class="form-group input-narrow"><label>CdT</label><input type="text" name="system.ranged_attacks.{{key}}.rof" value="{{attack.rof}}"/></div>
+                        <div class="form-group input-narrow"><label>Tiros</label><input type="text" name="system.ranged_attacks.{{key}}.shots" value="{{attack.shots}}"/></div>
+                        <div class="form-group input-narrow"><label>Recuo</label><input type="text" name="system.ranged_attacks.{{key}}.rcl" value="{{attack.rcl}}"/></div>
+                        <div class="form-group input-narrow"><label>STmín.</label><input type="number" name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/></div>
+                    </div>
+                </div>
+                
+                {{!-- O botão de deletar agora fica na sua própria coluna --}}
+                <div class="attack-controls">
+                    <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                </div>
+            </li>
+        {{/each}}
+    </ol>
+    <div class="attack-toolbar">
+        <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
+    </div>
+</div>
+
 {{/if}}
 
       {{!-- Armadura (Versão Reorganizada) --}}

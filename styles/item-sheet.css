@@ -612,3 +612,82 @@
 .gum.sheet.item .stat-block:has(input[name="system.parry"]) {
     grid-template-columns: 3fr 1fr 1fr 1fr 1.5fr; /* Dano maior, ST um pouco maior, resto menor */
 }
+
+/* =================================================================== */
+/* 17. LISTA DE ATAQUES DINÂMICOS (COM DELETE FLUTUANTE)             */
+/* =================================================================== */
+
+.gum.sheet.item .attack-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+}
+
+/* --- Layout de cada MODO DE ATAQUE (a linha inteira) --- */
+.gum.sheet.item .attack-item {
+    position: relative; /* Essencial para posicionar o botão de deletar */
+    display: block; /* Mudamos de grid para block */
+    background: rgba(0,0,0,0.15);
+    padding: 10px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.3);
+}
+
+/* O container para as duas linhas de stats (nenhuma mudança aqui) */
+.gum.sheet.item .attack-stat-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* A grid para cada linha de stats (nenhuma mudança aqui) */
+.gum.sheet.item .stat-row {
+    display: grid;
+    gap: 10px;
+    align-items: end;
+    grid-template-columns: repeat(4, 1fr);
+}
+/* Ajuste para a linha de stats Corpo a Corpo (5 colunas) */
+.gum.sheet.item .melee-attack-item .stat-row {
+    grid-template-columns: 2fr 3fr 1fr 1fr 1.5fr;
+}
+
+
+/* --- A MÁGICA DO BOTÃO DE DELETAR FLUTUANTE --- */
+
+/* O container do botão agora não faz parte da grid */
+.gum.sheet.item .attack-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.gum.sheet.item .delete-attack {
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    
+    /* Por padrão, o botão é invisível e não pode ser clicado */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* QUANDO passar o mouse sobre QUALQUER LUGAR do item de ataque... */
+.gum.sheet.item .attack-item:hover .delete-attack {
+    /* ...o botão se torna visível e clicável */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.gum.sheet.item .delete-attack:hover {
+    color: var(--c-accent-red, #a53541);
+}
+
+/* A barra de ferramentas com o botão de Adicionar (nenhuma mudança aqui) */
+.attack-toolbar {
+    margin-top: 15px;
+    text-align: right;
+}
