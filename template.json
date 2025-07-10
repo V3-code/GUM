@@ -21,7 +21,7 @@
     }
   },
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "weapon", "armor", "spell", "power", "modifier"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier"],
     
     "templates": {
       "base": {
@@ -68,11 +68,8 @@
       "difficulty": "M"
     },
     "equipment": {
-      "templates": ["base", "equipment_base"]
-    },
-    "weapon": {
-        "templates": ["base", "equipment_base"],
-        "melee_attacks": {},
+      "templates": ["base", "equipment_base"],
+       "melee_attacks": {},
         "ranged_attacks": {}
     },
     "armor": {

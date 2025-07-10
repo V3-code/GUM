@@ -119,16 +119,8 @@
      {{!-- Aba "Detalhes" --}}
     <div class="tab" data-tab="details">
        
-      {{!-- Equipamento Genérico --}}
-      {{#if (eq item.type "equipment")}}
-       
-        {{!-- Chamando o partial 'inline' que definimos acima --}}
-        {{> itemDetailsGeneral}}
-       
-      {{/if}}
-
-{{!-- O Novo Bloco Unificado para o Item "Arma" --}}
-{{#if (eq item.type "weapon")}}
+{{!-- Equipamento --}}
+{{#if (eq item.type "equipment")}}
 
     {{!-- Informações Gerais (do partial 'inline') --}}
     {{> itemDetailsGeneral}}
