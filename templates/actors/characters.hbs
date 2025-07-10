@@ -776,38 +776,44 @@
     </div>
     <ol class="item-list" data-item-type="spell">
       {{#each itemsByType.spell}}
-          <li class="item item-row spell-row" data-item-id="{{this.id}}" draggable="true">
-            
-            {{!-- Coluna principal com Nome e subtítulo --}}
-            <div class="spell-main-info">
-              <span class="item-name spell-name">
-    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-</span>
-              
-            </div>
+<li class="item item-row spell-row" data-item-id="{{this.id}}" draggable="true">
+    
+    <div class="item-name spell-name">
+        <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+    </div>
 
-            {{!-- Container único para todas as tags e ações --}}
-            <div class="spell-stats-and-actions">
-              <span class="stat"><label>Escola:</label> {{this.system.spell_school}}</span>
-              <span class="stat"><label>Classe:</label> {{this.system.spell_class}}</span>
-              <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
-              <span class="stat"><label>Custo:</label> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
-              <span class="stat"><label>Nível:</label><span>{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}}</span>
-              <a class="rollable action-button" data-roll-value="{{this.system.final_nh}}" data-label="{{this.name}}" title="Rolar NH {{this.system.final_nh}}">NH: {{this.system.final_nh}}</a>
-              
-              {{#if this.system.damage.formula}}
-               
-                <a class="rollable-damage action-button" data-roll-formula="{{this.system.damage.formula}}" data-damage-type="{{this.system.damage.damage_type}}" data-label="{{this.name}}" title="Rolar Dano: {{this.system.damage.formula}}">Dano: {{this.system.damage.formula}} {{this.system.damage.damage_type}}</a>
-              {{/if}}
-            </div>
-            
-            {{!-- Controles de edição e exclusão --}}
-            <div class="item-controls">
-              <a class="item-control item-edit" title="Editar Magia"><i class="fas fa-edit"></i></a>
-              <a class="item-control item-delete" title="Deletar Magia"><i class="fas fa-trash"></i></a>
-            </div>
+    {{!-- ✅ NOVA ESTRUTURA PARA AS TAGS DE STATS ✅ --}}
+    <div class="spell-stats-and-actions">
+        {{!-- Primeira Linha de Stats --}}
+        <div class="stats-row">
+            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}">{{this.system.final_nh}}</a></span>
+            {{#if this.system.damage.formula}}
+                <span class="stat">
+                    <label>Dano:</label>
+                    <a class="rollable-damage" title="Clique para rolar o dano">
+                        {{this.system.damage.formula}}{{#if (gt this.system.damage.armor_divisor 1)}}({{this.system.damage.armor_divisor}}){{/if}} {{this.system.damage.type}}
+                        {{#with this.system.damage.follow_up_damage}}{{#if this.formula}} + {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
+                        {{#with this.system.damage.fragmentation_damage}}{{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
+                    </a>
+                </span>
+            {{/if}}
+        </div>
+        {{!-- Segunda Linha de Stats --}}
+        <div class="stats-row">
+            <span class="stat"><label>Custo:</label> {{this.system.mana_cost}}/{{this.system.mana_maint}}</span>
+            <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
+            <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
+            {{#if this.system.resistance}}<span class="stat"><label>Resistido por:</label> {{this.system.resistance}}</span>{{/if}}
+            {{#if this.system.effect}}<span class="stat effect-stat" title="{{this.system.effect}}"><label>Efeito:</label> {{this.system.effect}}</span>{{/if}}
+        </div>
+    </div>
+    
+    <div class="item-controls">
+        <a class="item-control item-edit" title="Editar Magia"><i class="fas fa-edit"></i></a>
+        <a class="item-control item-delete" title="Deletar Magia"><i class="fas fa-trash"></i></a>
+    </div>
 
-          </li>
+</li>
       {{/each}}
     </ol>
   </div>
@@ -867,35 +873,43 @@
       {{#each itemsByType.power}}
       {{!-- Reutilizando a classe .spell-row, mas adicionando a base .item-row --}}
       <li class="item item-row spell-row" data-item-id="{{this.id}}" draggable="true">
+    
+    <div class="item-name spell-name">
+        <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+    </div>
 
-        {{!-- Coluna principal com Nome e subtítulo --}}
-        <div class="spell-main-info">
-          <span class="item-name spell-name">
-              <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-          </span>
-          
+    {{!-- ✅ NOVA ESTRUTURA PARA AS TAGS DE STATS ✅ --}}
+    <div class="spell-stats-and-actions">
+        {{!-- Primeira Linha de Stats --}}
+        <div class="stats-row">
+            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}">{{this.system.final_nh}}</a></span>
+            {{#if this.system.damage.formula}}
+                <span class="stat">
+                    <label>Dano:</label>
+                    <a class="rollable-damage" title="Clique para rolar o dano">
+                        {{this.system.damage.formula}}{{#if (gt this.system.damage.armor_divisor 1)}}({{this.system.damage.armor_divisor}}){{/if}} {{this.system.damage.type}}
+                        {{#with this.system.damage.follow_up_damage}}{{#if this.formula}} + {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
+                        {{#with this.system.damage.fragmentation_damage}}{{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
+                    </a>
+                </span>
+            {{/if}}
         </div>
+        {{!-- Segunda Linha de Stats --}}
+        <div class="stats-row">
+            <span class="stat"><label>Custo:</label> {{this.system.activation_cost}}/{{this.system.maint_cost}}</span>
+            <span class="stat"><label>Tempo:</label> {{this.system.activation_time}}</span>
+            <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
+            {{#if this.system.resistance}}<span class="stat"><label>Resistido por:</label> {{this.system.resistance}}</span>{{/if}}
+            {{#if this.system.effect}}<span class="stat effect-stat" title="{{this.system.effect}}"><label>Efeito:</label> {{this.system.effect}}</span>{{/if}}
+        </div>
+    </div>
+    
+    <div class="item-controls">
+        <a class="item-control item-edit" title="Editar Magia"><i class="fas fa-edit"></i></a>
+        <a class="item-control item-delete" title="Deletar Magia"><i class="fas fa-trash"></i></a>
+    </div>
 
-        {{!-- Container único para todas as tags e ações --}}
-        <div class="spell-stats-and-actions">
-          <span class="stat"><label>Classe:</label> {{this.system.spell_class}}</span>
-          <span class="stat"><label>Ativação:</label> {{this.system.activation_time}}</span>
-          <span class="stat"><label>Custo:</label> {{this.system.activation_cost}} PF</span>
-          <span class="stat"><label>Nível:</label><span>{{this.system.base_attribute}}</span>{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}}</span>
-          <a class="rollable action-button" data-roll-value="{{this.system.final_nh}}" data-label="{{this.name}}" title="Rolar NH {{this.system.final_nh}}">NH: {{this.system.final_nh}}</a>
-          
-          {{#if this.system.damage.formula}}
-            <a class="rollable-damage action-button" data-roll-formula="{{this.system.damage.formula}}" data-damage-type="{{this.system.damage.damage_type}}" data-label="{{this.name}}" title="Rolar Dano: {{this.system.damage.formula}}">Dano: {{this.system.damage.formula}} {{this.system.damage.damage_type}}</a>
-          {{/if}}
-        </div>
-
-        {{!-- Controles de edição e exclusão --}}
-        <div class="item-controls">
-          <a class="item-control item-edit" title="Editar Poder"><i class="fas fa-edit"></i></a>
-          <a class="item-control item-delete" title="Deletar Poder"><i class="fas fa-trash"></i></a>
-        </div>
-        
-      </li>
+</li>
       {{/each}}
     </ol>
   </div>

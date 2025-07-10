@@ -1398,7 +1398,7 @@ nav.sheet-tabs {
 }
 
 /* MUDANÇA: Novo estilo de "tag" para o nome da magia */
-.tab[data-tab="spells"] .spell-main-info .spell-name {
+.tab[data-tab="spells"] .item-name .spell-name {
   background: rgba(142, 68, 173, 0.08); /* Fundo roxo mágico e sutil */
   border: 1px solid rgba(142, 68, 173, 0.2);
   padding: 4px 8px;
@@ -1446,7 +1446,46 @@ nav.sheet-tabs {
   border-color: var(--c-texto-subtitulo);
   background: rgba(0,0,0,0.07);
   text-decoration: none;
+}/* Garante que as linhas de stats da magia se empilhem */
+.spell-stats-and-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Espaço entre as duas linhas de stats */
+    align-items: flex-start;
 }
+.stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px; /* Espaço vertical e horizontal entre as tags */
+}
+/* Estilo para a tag de efeito, para não ficar muito grande */
+.effect-stat {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gum.sheet.actor .spells-list-box .item-name.spell-name a {
+    display: inline-block;
+    background: rgba(106, 0, 173, 0.1); /* Fundo roxo mágico e sutil */
+    border: 1px solid rgba(106, 0, 173, 0.25);
+    border-left: 3px solid var(--c-accent-purple, #6a0dad); /* Borda de destaque roxa */
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #191813; 
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.gum.sheet.actor .spells-list-box .item-name.spell-name a:hover {
+    background: rgba(106, 0, 173, 0.2);
+    border-color: rgba(106, 0, 173, 0.5);
+    color: #fff;
+}
+
+
 
 /* =================================================================== */
 /* DESIGN: RESERVAS DE ENERGIA (ESTILO CORRIGIDO)                      */
@@ -1657,15 +1696,17 @@ nav.sheet-tabs {
 }
 
 /* Estilo de "tag" para o nome do poder */
-.tab[data-tab="powers"] .spell-main-info .spell-name {
+.tab[data-tab="powers"] .item-name.spell-name a {
   display: inline-block;
   /* MUDANÇA: Usando a cor verde dos PVs como acento */
   background: rgba(56, 156, 104, 0.08); 
   border: 1px solid rgba(56, 156, 104, 0.2);
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-weight: 700;
-  color: var(--c-texto-escuro);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #191813; 
+    text-decoration: none;
+    transition: all 0.2s ease;
 }
 
 .tab[data-tab="powers"] .spell-main-info .spell-subtitle {
@@ -1710,6 +1751,7 @@ nav.sheet-tabs {
     background: rgba(0,0,0,0.07);
     text-decoration: none;
 }
+
 
 /* =================================================================== */
 /* DESIGN: ABA DE EQUIPAMENTOS (REFINADO)                              */

@@ -237,6 +237,44 @@ Handlebars.registerHelper('gt', function (a, b) {
         return context;
       }
 
+_getSubmitData(updateData) {
+        // Encontra todos os <details> na ficha
+        const details = this.form.querySelectorAll('details');
+        const openDetails = [];
+        details.forEach((d, i) => {
+            // Se o <details> estiver aberto, guarda seu "caminho"
+            if (d.open) {
+                const parentSection = d.closest('.form-section');
+                const title = parentSection ? parentSection.querySelector('.section-title')?.innerText : `details-${i}`;
+                openDetails.push(title);
+            }
+        });
+        // Armazena a lista de seções abertas temporariamente
+        this._openDetails = openDetails;
+        
+        return super._getSubmitData(updateData);
+    }
+    
+    // ✅ MÉTODO 2: Restaura o estado depois que a ficha é redesenhada ✅
+    async _render(force, options) {
+        await super._render(force, options);
+        // Se tínhamos uma lista de seções abertas...
+        if (this._openDetails) {
+            // Encontra todos os títulos de seção
+            const titles = this.form.querySelectorAll('.section-title');
+            titles.forEach(t => {
+                // Se o texto do título estiver na nossa lista de abertos...
+                if (this._openDetails.includes(t.innerText)) {
+                    // ...encontra o <details> pai e o abre.
+                    const details = t.closest('.form-section').querySelector('details');
+                    if (details) details.open = true;
+                }
+            });
+            // Limpa a lista para a próxima vez
+            this._openDetails = null;
+        }
+    }
+
       _prepareCharacterItems(sheetData) {
         const actorData = sheetData.actor;
         const attributes = actorData.system.attributes;
@@ -2207,83 +2245,123 @@ html.on('click', '.edit-attack', ev => {
 //   LISTENER PARA ROLAGEM DE DANO (VERSÃO FINAL COM DANOS AVANÇADOS) //
 // ================================================================== //
 
+// ================================================================== //
+//   LISTENER DE ROLAGEM DE DANO (VERSÃO FINAL E UNIFICADA)           //
+// ================================================================== //
+
 html.on('click', '.rollable-damage', async (ev) => {
-        ev.preventDefault();
-        const element = ev.currentTarget;
+    ev.preventDefault();
+    const element = ev.currentTarget;
+    let normalizedAttack; // Objeto padronizado para guardar os dados do ataque/magia
+
+    // --- ✅ INÍCIO DA LÓGICA DE NORMALIZAÇÃO DE DADOS ✅ ---
+    const itemId = $(element).closest(".item-row").data("itemId");
+
+    if (itemId) { // O clique veio de um item da lista (Magia)
+        const item = this.actor.items.get(itemId);
+        if (!item || !item.system.damage?.formula) {
+            return ui.notifications.warn("Esta magia não possui uma fórmula de dano válida.");
+        }
+        // Traduz os dados da magia para o nosso formato padronizado
+        normalizedAttack = {
+            name: item.name,
+            formula: item.system.damage.formula,
+            type: item.system.damage.type,
+            armor_divisor: item.system.damage.armor_divisor,
+            follow_up_damage: item.system.damage.follow_up_damage,
+            fragmentation_damage: item.system.damage.fragmentation_damage
+        };
+
+    } else { // O clique veio da Lista de Ataques manuais
         const attackId = $(element).closest(".attack-item").data("attackId");
         const groupId = $(element).closest('.attack-group-card').data('groupId');
         const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
-
         if (!attack || !attack.damage_formula) {
             return ui.notifications.warn("Este ataque não possui uma fórmula de dano válida.");
         }
+        // Traduz os dados do ataque manual para o nosso formato padronizado
+        normalizedAttack = {
+            name: attack.name,
+            formula: attack.damage_formula, // A única diferença de nome real está aqui
+            type: attack.damage_type,
+            armor_divisor: attack.armor_divisor,
+            follow_up_damage: attack.follow_up_damage,
+            fragmentation_damage: attack.fragmentation_damage
+        };
+    }
+    // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
+
+
+    // A partir daqui, a função só usa o objeto 'normalizedAttack', que sempre terá a mesma estrutura.
+    const performDamageRoll = async (modifier = 0) => {
+        let totalRolls = [];
         
-        const { name, damage_formula, damage_type, armor_divisor, follow_up_damage, fragmentation_damage } = attack;
+        // Agora usamos 'normalizedAttack.formula', que sempre estará correto.
+        const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
+        const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
+        const mainRoll = new Roll(mainRollFormula);
+        await mainRoll.evaluate();
+        totalRolls.push(mainRoll);
+        
+        const formulaPill = `
+            ${mainRoll.formula} ${normalizedAttack.type || ''} 
+            ${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''}
+        `;
 
-        const performDamageRoll = async (modifier = 0) => {
-            let totalRolls = [];
-            const cleanedFormula = (damage_formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
-            const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
-            const mainRoll = new Roll(mainRollFormula, attack);
-            await mainRoll.evaluate();
-            totalRolls.push(mainRoll);
-            
-            const formulaPill = `${mainRoll.formula} ${damage_type || ''} ${armor_divisor && armor_divisor != 1 ? `(${armor_divisor})` : ''}`;
-
-            let flavor = `
-                <div class="gurps-damage-card">
-                    <header class="card-header"><h3>${name || 'Rolagem de Dano'}</h3></header>
-                    <div class="card-formula-container"><span class="formula-pill">${formulaPill}</span></div>
-                    <div class="card-content">
-                        <div class="card-main-flex">
-                            <div class="roll-column">
-                                <span class="column-label">Dados</span>
-                                <div class="individual-dice-damage">
-                                    ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
-                                </div>
+        let flavor = `
+            <div class="gurps-damage-card">
+                <header class="card-header"><h3>${normalizedAttack.name || 'Dano'}</h3></header>
+                <div class="card-formula-container"><span class="formula-pill">${formulaPill}</span></div>
+                <div class="card-content">
+                    <div class="card-main-flex">
+                        <div class="roll-column">
+                            <span class="column-label">Dados</span>
+                            <div class="individual-dice-damage">
+                                ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
                             </div>
-                            <div class="column-separator"></div>
-                            <div class="target-column">
-                                <span class="column-label">Dano Total</span>
-                                <div class="damage-total">
-                                    <span class="damage-value">${mainRoll.total}</span>
-                                    <span class="damage-type">${damage_type || ''}</span>
-                                </div>
+                        </div>
+                        <div class="column-separator"></div>
+                        <div class="target-column">
+                            <span class="column-label">Dano Total</span>
+                            <div class="damage-total">
+                                <span class="damage-value">${mainRoll.total}</span>
+                                <span class="damage-type">${normalizedAttack.type || ''}</span>
                             </div>
                         </div>
                     </div>
-            `;
+                </div>
+        `;
 
-            const hasExtraDamage = (follow_up_damage?.formula) || (fragmentation_damage?.formula);
-            if (hasExtraDamage) {
-                flavor += `<footer class="card-footer">`;
-                if (follow_up_damage?.formula) {
-                    const followUpRoll = new Roll(follow_up_damage.formula, attack);
-                    await followUpRoll.evaluate();
-                    totalRolls.push(followUpRoll);
-                    let followUpText = `<strong>Acompanhamento:</strong> ${followUpRoll.total} [${followUpRoll.formula}] ${follow_up_damage.type || ''}`;
-                    if (follow_up_damage.armor_divisor && follow_up_damage.armor_divisor != 1) followUpText += ` (${follow_up_damage.armor_divisor})`;
-                    flavor += `<div class="extra-damage">${followUpText}</div>`;
-                }
-                if (fragmentation_damage?.formula) {
-                    const fragRoll = new Roll(fragmentation_damage.formula, attack);
-                    await fragRoll.evaluate();
-                    totalRolls.push(fragRoll);
-                    let fragText = `<strong>Fragmentação:</strong> ${fragRoll.total} [${fragRoll.formula}] ${fragmentation_damage.type || ''}`;
-                    if (fragmentation_damage.armor_divisor && fragmentation_damage.armor_divisor != 1) fragText += ` (${fragmentation_damage.armor_divisor})`;
-                    flavor += `<div class="extra-damage">${fragText}</div>`;
-                }
-                flavor += `</footer>`;
+        const hasExtraDamage = (normalizedAttack.follow_up_damage?.formula) || (normalizedAttack.fragmentation_damage?.formula);
+        if (hasExtraDamage) {
+            flavor += `<footer class="card-footer">`;
+            if (normalizedAttack.follow_up_damage?.formula) {
+                const followUpRoll = new Roll(normalizedAttack.follow_up_damage.formula);
+                await followUpRoll.evaluate();
+                totalRolls.push(followUpRoll);
+                let text = `<strong>Acompanhamento:</strong> ${followUpRoll.total} (${followUpRoll.formula}) ${normalizedAttack.follow_up_damage.type || ''}`;
+                if (normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1) text += ` (${normalizedAttack.follow_up_damage.armor_divisor})`;
+                flavor += `<div class="extra-damage">${text}</div>`;
             }
-            flavor += `</div>`;
+            if (normalizedAttack.fragmentation_damage?.formula) {
+                const fragRoll = new Roll(normalizedAttack.fragmentation_damage.formula);
+                await fragRoll.evaluate();
+                totalRolls.push(fragRoll);
+                let text = `<strong>Fragmentação:</strong> ${fragRoll.total} (${fragRoll.formula}) ${normalizedAttack.fragmentation_damage.type || ''}`;
+                if (normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1) text += ` (${normalizedAttack.fragmentation_damage.armor_divisor})`;
+                flavor += `<div class="extra-damage">${text}</div>`;
+            }
+            flavor += `</footer>`;
+        }
+        flavor += `</div>`;
 
-            ChatMessage.create({
-                speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                content: flavor,
-                rolls: totalRolls,
-                type: CONST.CHAT_MESSAGE_TYPES.ROLL
-            });
-        };
+        ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            content: flavor,
+            rolls: totalRolls,
+            type: CONST.CHAT_MESSAGE_TYPES.ROLL
+        });
+    };
     
         // A sua lógica para abrir o diálogo de modificador com Shift+Click permanece a mesma
         if (ev.shiftKey) {
@@ -2738,6 +2816,46 @@ class GurpsItemSheet extends ItemSheet {
     return this.object.update(fullFormData);
   }
 
+ _getSubmitData(updateData) {
+        // Primeiro, chama o método original
+        const data = super._getSubmitData(updateData);
+        
+        // Agora, encontra todas as seções <details> e anota quais estão abertas
+        const openDetails = [];
+        this.form.querySelectorAll('details').forEach((detailsEl, index) => {
+            if (detailsEl.open) {
+                // Usamos o texto do <summary> ou um índice como identificador único
+                const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
+                openDetails.push(summaryText);
+            }
+        });
+        // Armazena essa informação temporariamente na própria ficha
+        this._openDetailsState = openDetails;
+
+        return data;
+    }
+
+    /**
+     * ✅ NOVO MÉTODO 2: Restaura o estado da UI após a ficha ser redesenhada.
+     * Este método é chamado automaticamente pelo Foundry após a renderização.
+     */
+    async _render(force, options) {
+        await super._render(force, options);
+        
+        // Se temos um estado de seções abertas salvo...
+        if (this._openDetailsState) {
+            // ...procuramos por todas as seções <details> na ficha recém-renderizada.
+            this.form.querySelectorAll('details').forEach((detailsEl, index) => {
+                const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
+                // Se o identificador desta seção estiver na nossa lista...
+                if (this._openDetailsState.includes(summaryText)) {
+                    // ...nós a abrimos.
+                    detailsEl.open = true;
+                }
+            });
+        }
+    }
+  
   /**
  * @override
  * Ativa todos os listeners de interatividade da ficha de item.

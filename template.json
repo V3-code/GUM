@@ -59,7 +59,7 @@
     },
     "skill": {
       "templates": ["base"],
-      "points": 1,
+      "points": 2,
       "group": "Geral",
       "base_attribute": "DX",
       "skill_level": 0,
@@ -79,9 +79,9 @@
     },
     "spell": {
       "templates": ["base"],
-      "points": 0,
+      "points": 4,
       "base_attribute": "IQ",
-      "skill_level": -4,
+      "skill_level": 0,
       "other_mods": 0,
       "casting_time": "1s",
       "duration": "1 min",
@@ -89,25 +89,57 @@
       "mana_maint": "1",
       "spell_class": "Regular",
       "spell_school": "Magia Geral",
-      "damage": { "formula": "", "damage_type": "" },
       "difficulty": "D",
-      "source": "Mana",
-      "resistance": ""
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+            "formula": "",
+            "type": "",
+            "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+            "formula": "",
+            "type": "",
+            "armor_divisor": 1
+        }
+    }
     },
     "power": {
       "templates": ["base"],
-      "points": 1,
+      "points": 10,
       "base_attribute": "IQ",
       "skill_level": 0,
       "other_mods": 0,
       "activation_time": "1s",
       "duration": "1 min",
       "activation_cost": "2",
+      "maint_cost":"1",
       "spell_class": "Regular",
-      "damage": { "formula": "", "damage_type": "" },
-      "source": "FP",
+      "difficulty": "D",
+      "source": "Biológico",
       "resistance": "",
-      "modifiers": {}
+      "effect": "",
+      "modifiers": {},
+       "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+            "formula": "",
+            "type": "",
+            "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+            "formula": "",
+            "type": "",
+            "armor_divisor": 1
+        }
+    }
     },
     "modifier": {
       "templates": ["base"],

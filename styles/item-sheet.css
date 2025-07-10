@@ -246,7 +246,7 @@
 .gum.sheet.item .form-grid-4 {
     display: grid;
     row-gap: 12px;    
-    column-gap: 8px;
+    column-gap: 4px;
 }
 .gum.sheet.item .form-grid-2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .gum.sheet.item .form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); }
@@ -271,7 +271,7 @@
   background-color: rgba(0,0,0,0.2);
   border: 1px solid rgba(255,255,255,0.1);
   color: #e1e1e1;
-  padding: 6px;
+  padding: 3px;
   border-radius: 3px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   text-align: center;
@@ -690,4 +690,89 @@
 .attack-toolbar {
     margin-top: 15px;
     text-align: right;
+}
+
+/* =================================================================== */
+/* 19. ESTILOS FINAIS PARA SEÇÕES DE DANO                            */
+/* =================================================================== */
+
+/* Estilo para o separador horizontal */
+.gum.sheet.item .section-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 15px 0;
+}
+
+/* Estilizando a seção "sanfonada" <details> */
+.gum.sheet.item details.advanced-options {
+    margin-top: 15px;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid rgba(0,0,0,0.3);
+    border-radius: 3px;
+    padding: 8px 12px;
+}
+
+/* Estilizando o título clicável <summary> */
+.gum.sheet.item details.advanced-options summary {
+    font-weight: bold;
+    color: #c0c0c0;
+    cursor: pointer;
+    outline: none; /* Remove o contorno de foco padrão */
+}
+/* Remove a seta padrão do navegador */
+.gum.sheet.item details.advanced-options summary::-webkit-details-marker {
+  display:none;
+}
+.gum.sheet.item details.advanced-options summary::marker {
+  display:none;
+}
+/* Adiciona um ícone de seta customizado */
+.gum.sheet.item details.advanced-options summary::before {
+    content: '▶';
+    font-size: 0.8em;
+    margin-right: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+.gum.sheet.item details.advanced-options[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+/* Estilo para os subtítulos (h5) dentro da seção avançada */
+.gum.sheet.item .advanced-damage-fields .subheader {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #a0a0a0;
+    margin: 10px 0 8px 0;
+    padding-bottom: 3px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* =================================================================== */
+/* 20. LAYOUT DA SEÇÃO DE HABILIDADE (COM DESTAQUE NA ESQUERDA)      */
+/* =================================================================== */
+
+.gum.sheet.item .ability-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; 
+    gap: 25px;
+    align-items: start;
+}
+
+/* Coluna da esquerda (AGORA COM O DESTAQUE) */
+.gum.sheet.item .ability-col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    
+    background: rgba(0,0,0,0.1);
+    padding: 10px;
+    border-radius: 3px;
+}
+
+/* Coluna da direita (AGORA COM O FUNDO PADRÃO) */
+.gum.sheet.item .ability-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    
 }
