@@ -1207,8 +1207,30 @@
 
                     <div class="attack-details-row">
                       <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.skill_level}}" data-label="Ataque com {{../name}} ({{this.name}})">{{this.skill_level}}</a></span>
-                      <span class="stat"><label>Dano:</label> <a class="rollable-damage" data-roll-formula="{{this.damage_formula}}" data-damage-type="{{this.damage_type}}" data-label="Dano de {{../name}}">{{this.damage_formula}} {{this.damage_type}}</a></span>
-                      
+                    {{!-- NOVO BLOCO DE EXIBIÇÃO DE DANO (COM DIVISOR REPOSICIONADO) --}}
+                    <span class="stat">
+                        <label>Dano:</label>
+                        <a class="rollable-damage" title="Clique para rolar o dano">
+                            
+                            {{!-- Dano Principal --}}
+                            {{this.damage_formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.damage_type}}
+                            
+                            {{!-- Adiciona o Dano de Acompanhamento, se existir --}}
+                            {{#with this.follow_up_damage}}
+                                {{#if this.formula}}
+                                    + {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}
+                                {{/if}}
+                            {{/with}}
+
+                            {{!-- ✅ Adiciona o Dano de Fragmentação (AGORA EM COLCHETES) ✅ --}}
+                            {{#with this.fragmentation_damage}}
+                                {{#if this.formula}}
+                                    [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]
+                                {{/if}}
+                            {{/with}}
+
+                        </a>
+                    </span>                   
                       {{!-- Ataques Corpo a Corpo --}}
                       {{#if (eq this.attack_type "melee")}}
                         <span class="stat melee-stat"><label>Aparar:</label> <a class="rollable" data-roll-value="{{this.defense}}" data-label="Aparar com {{../name}}">{{this.defense}}</a></span>

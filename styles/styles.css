@@ -2471,6 +2471,64 @@ nav.sheet-tabs {
     text-transform: uppercase;
 }
 
+.gurps-damage-card .card-footer {
+    padding: 8px 10px;
+    background: #f0ebe8;
+    border-top: 1px solid #d1c8c4;
+}
+.gurps-damage-card .extra-damage {
+    font-size: 0.9em;
+    color: #444;
+}
+.gurps-damage-card .extra-damage + .extra-damage {
+    margin-top: 4px;
+}
+
+/* =================================================================== */
+/* 18. ESTILO DO DIÁLOGO DE CRIAÇÃO/EDIÇÃO DE ATAQUE                 */
+/* =================================================================== */
+
+.dialog.gurps-attack-dialog .window-content {
+    background: #28282b !important; /* Aplica nosso fundo escuro */
+    color: #e1e1e1;
+    padding: 0; /* O padding será controlado pelo conteúdo */
+}
+.dialog.gurps-attack-dialog .dialog-content {
+    padding: 10px;
+}
+
+/* Garante que o formulário use o espaço e tenha rolagem se necessário */
+.dialog.gurps-attack-dialog .gurps-dialog-form {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Estilo para a seção "sanfonada" de opções avançadas */
+.dialog.gurps-attack-dialog details.advanced-options {
+    border-color: rgba(255,255,255,0.1);
+    margin-top: 20px;
+}
+.dialog.gurps-attack-dialog details.advanced-options[open] {
+    padding-bottom: 15px;
+}
+.dialog.gurps-attack-dialog details.advanced-options > summary {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--c-accent-gold, #c5a05b);
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+/* Pequenos subtítulos dentro das opções avançadas */
+.dialog.gurps-attack-dialog .subheader {
+    font-size: 1em;
+    font-weight: bold;
+    color: #ccc;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 3px;
+    margin: 15px 0 10px 0;
+}
+
 /* =================================================================== */
 /* DESIGN: JANELA DE DIÁLOGO DE EDIÇÃO DE STATS                        */
 /* =================================================================== */

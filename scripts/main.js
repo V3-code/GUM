@@ -57,6 +57,9 @@ Handlebars.registerHelper('or', function() {
     const args = Array.prototype.slice.call(arguments, 0, -1);
     return args.some(Boolean);
 });
+Handlebars.registerHelper('gt', function (a, b) {
+    return a > b;
+});
     // Ajudante para transformar um objeto em um array de seus valores
     Handlebars.registerHelper('objectValues', function(obj) { return obj ? Object.values(obj) : []; });
     // Ajudante para pegar o primeiro elemento de um array
@@ -1107,79 +1110,82 @@ html.on('click', '.item-quick-view', async (ev) => {
 
         // Listener para EDITAR um ataque 
     // ============== NOVO LISTENER DE EDIÇÃO DE ATAQUE ================
-        html.on('click', '.edit-attack', ev => {
-          ev.preventDefault();
-          // 1. Pega o ID do ataque a partir do atributo data-attack-id do elemento <li>
-          const attackId = $(ev.currentTarget).closest(".attack-item").data("attackId");
-          // 2. Pega o objeto de dados completo para esse ataque
-          const attack = this.actor.system.combat.attacks[attackId];
+html.on('click', '.edit-attack', ev => {
+    ev.preventDefault();
+    const attackId = $(ev.currentTarget).closest(".attack-item").data("attackId");
+    // CORREÇÃO: O caminho para os ataques foi ajustado
+    const attack = this.actor.system.combat.attacks_groups[groupId]?.attacks[attackId];
 
-          if (!attack) {
-            ui.notifications.error("Ataque não encontrado!");
-            return;
-          }
+    if (!attack) return;
 
-          let dialogTitle;
-          let dialogContent;
+    // Define o conteúdo do formulário baseado no tipo de ataque
+    const getFormContent = (attackData) => {
+        const commonFields = `
+            <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${attackData.name || ''}"/></div>
+            <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="${attackData.skill_name || ''}"/></div>
+            <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="${attackData.skill_level || 0}"/></div>
+            <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="${attackData.damage_formula || ''}"/></div>
+            <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="${attackData.damage_type || ''}"/></div>
+        `;
 
-          // 3. Verifica o tipo do ataque e monta o formulário HTML apropriado
-          if (attack.attack_type === "melee") {
-            dialogTitle = "Editar Ataque Corpo a Corpo";
-            dialogContent = `
-              <form>
-                <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${attack.name}"/></div>
-                <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="${attack.skill_name}"/></div>
-                <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="${attack.skill_level}"/></div>
-                <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="${attack.damage_formula}"/></div>
-                <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="${attack.damage_type}"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="reach" value="${attack.reach}"/></div>
-                <div class="form-group"><label>Aparar:</label><input type="number" name="defense" value="${attack.defense}"/></div>
-                <input type="hidden" name="attack_type" value="melee" />
-              </form>
+        let specificFields = '';
+        if (attackData.attack_type === "melee") {
+            specificFields = `
+                <div class="form-group"><label>Alcance:</label><input type="text" name="reach" value="${attackData.reach || ''}"/></div>
+                <div class="form-group"><label>Aparar:</label><input type="number" name="defense" value="${attackData.defense || 0}"/></div>
             `;
-          } else if (attack.attack_type === "ranged") {
-            dialogTitle = "Editar Ataque à Distância";
-            dialogContent = `
-              <form>
-                <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${attack.name}"/></div>
-                <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="${attack.skill_name}"/></div>
-                <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="${attack.skill_level}"/></div>
-                <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="${attack.damage_formula}"/></div>
-                <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="${attack.damage_type}"/></div>
-                <div class="form-group"><label>Prec:</label><input type="text" name="accuracy" value="${attack.accuracy}"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="range" value="${attack.range}"/></div>
-                <div class="form-group"><label>CdT:</label><input type="text" name="rof" value="${attack.rof}"/></div>
-                <div class="form-group"><label>Tiros:</label><input type="text" name="shots" value="${attack.shots || ''}"/></div>
-                <div class="form-group"><label>RCO:</label><input type="text" name="rcl" value="${attack.rcl || ''}"/></div>
-                <input type="hidden" name="attack_type" value="ranged" />
-              </form>
+        } else { // Ranged
+            specificFields = `
+                <div class="form-group"><label>Prec:</label><input type="text" name="accuracy" value="${attackData.accuracy || ''}"/></div>
+                <div class="form-group"><label>Alcance:</label><input type="text" name="range" value="${attackData.range || ''}"/></div>
+                <div class="form-group"><label>CdT:</label><input type="text" name="rof" value="${attackData.rof || ''}"/></div>
+                <div class="form-group"><label>Tiros:</label><input type="text" name="shots" value="${attackData.shots || ''}"/></div>
+                <div class="form-group"><label>RCO:</label><input type="text" name="rcl" value="${attackData.rcl || ''}"/></div>
             `;
-          } else {
-            return; // Sai da função se o tipo for desconhecido
-          }
-          
-          // 4. Cria e renderiza o Dialog com o formulário correto
-          new Dialog({
-            title: dialogTitle,
-            content: dialogContent,
-            buttons: {
-              save: {
+        }
+        
+        // --- SEÇÃO DE DANO AVANÇADO ---
+        const advancedDamageFields = `
+            <details>
+                <summary>Opções Avançadas de Dano</summary>
+                <div class="advanced-damage-fields">
+                    <div class="form-group">
+                        <label title="Ex: (2), (3), (0.5)">Divisor de Armadura</label>
+                        <input type="number" step="0.1" name="armor_divisor" value="${attackData.armor_divisor || 1}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Dano de Acompanhamento</label>
+                        <input type="text" name="follow_up_damage" value="${attackData.follow_up_damage || ''}" placeholder="Ex: 1d que"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Dano de Fragmentação</label>
+                        <input type="text" name="fragmentation_damage" value="${attackData.fragmentation_damage || ''}" placeholder="Ex: 2d-1 cort"/>
+                    </div>
+                </div>
+            </details>
+        `;
+
+        return `<form>${commonFields}${specificFields}<hr>${advancedDamageFields}</form>`;
+    };
+
+    new Dialog({
+        title: `Editar Ataque: ${attack.name}`,
+        content: getFormContent(attack),
+        buttons: {
+            save: {
                 icon: '<i class="fas fa-save"></i>',
                 label: "Salvar",
                 callback: (html) => {
-                  const form = html.find("form")[0];
-                  // 5. Usa FormDataExtended para coletar os dados, mantendo consistência com a função de criar.
-                  const formData = new FormDataExtended(form).object;
-                  
-                  // 6. Constrói o caminho para o update e envia os dados atualizados para o ator.
-                  const updateKey = `system.combat.attacks.${attackId}`;
-                  this.actor.update({ [updateKey]: formData });
+                    const form = html.find("form")[0];
+                    const formData = new FormDataExtended(form).object;
+                    const updateKey = `system.combat.attacks_groups.${groupId}.attacks.${attackId}`;
+                    this.actor.update({ [updateKey]: formData });
                 }
-              }
-            },
-            default: "save"
-          }).render(true);
-        });
+            }
+        },
+        default: "save"
+    }).render(true);
+});
       
         html.on('click', '.delete-attack', ev => { const attackId = $(ev.currentTarget).closest(".attack-item").data("attackId"); Dialog.confirm({ title: "Deletar Ataque", content: "<p>Você tem certeza que quer deletar este ataque?</p>", yes: () => { const deleteKey = `system.combat.attacks.-=${attackId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
 
@@ -2197,127 +2203,148 @@ html.on('click', '.item-quick-view', async (ev) => {
             }
                   });
 
-    html.on('click', '.rollable-damage', async (ev) => {
+// ================================================================== //
+//   LISTENER PARA ROLAGEM DE DANO (VERSÃO FINAL COM DANOS AVANÇADOS) //
+// ================================================================== //
+
+html.on('click', '.rollable-damage', async (ev) => {
         ev.preventDefault();
         const element = ev.currentTarget;
-        const baseFormula = element.dataset.rollFormula;
-        const damageType = element.dataset.damageType;
-        const label = element.dataset.label;
+        const attackId = $(element).closest(".attack-item").data("attackId");
+        const groupId = $(element).closest('.attack-group-card').data('groupId');
+        const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
 
-        if (!baseFormula) return;
+        if (!attack || !attack.damage_formula) {
+            return ui.notifications.warn("Este ataque não possui uma fórmula de dano válida.");
+        }
+        
+        const { name, damage_formula, damage_type, armor_divisor, follow_up_damage, fragmentation_damage } = attack;
 
         const performDamageRoll = async (modifier = 0) => {
-            let finalFormula = baseFormula;
-            if (modifier > 0) {
-                finalFormula += `+${modifier}`;
-            } else if (modifier < 0) {
-                finalFormula += `${modifier}`;
-            }
+            let totalRolls = [];
+            const cleanedFormula = (damage_formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
+            const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
+            const mainRoll = new Roll(mainRollFormula, attack);
+            await mainRoll.evaluate();
+            totalRolls.push(mainRoll);
+            
+            const formulaPill = `${mainRoll.formula} ${damage_type || ''} ${armor_divisor && armor_divisor != 1 ? `(${armor_divisor})` : ''}`;
 
-            const roll = new Roll(finalFormula);
-            await roll.evaluate({async: true});
-
-            let allDiceResults = [];
-            roll.dice.forEach(d => {
-                allDiceResults.push(...d.results.map(r => r.result));
-            });
-
-            const diceHtml = allDiceResults.map(die => `<span class="die-damage">${die}</span>`).join('');
-
-            // --- MUDANÇA: Posição da fórmula alterada ---
-            const flavor = `
+            let flavor = `
                 <div class="gurps-damage-card">
-                    <header class="card-header">
-                        <h3>${label}</h3>
-                    </header>
-
-                    <div class="card-formula-container">
-                        <span class="formula-pill">${roll.formula} ${damageType}</span>
-                    </div>
-
+                    <header class="card-header"><h3>${name || 'Rolagem de Dano'}</h3></header>
+                    <div class="card-formula-container"><span class="formula-pill">${formulaPill}</span></div>
                     <div class="card-content">
                         <div class="card-main-flex">
                             <div class="roll-column">
                                 <span class="column-label">Dados</span>
                                 <div class="individual-dice-damage">
-                                    ${diceHtml}
+                                    ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
                                 </div>
                             </div>
-
                             <div class="column-separator"></div>
-
                             <div class="target-column">
                                 <span class="column-label">Dano Total</span>
                                 <div class="damage-total">
-                                    <span class="damage-value">${roll.total}</span>
-                                    <span class="damage-type">${damageType}</span>
+                                    <span class="damage-value">${mainRoll.total}</span>
+                                    <span class="damage-type">${damage_type || ''}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    </div>
             `;
+
+            const hasExtraDamage = (follow_up_damage?.formula) || (fragmentation_damage?.formula);
+            if (hasExtraDamage) {
+                flavor += `<footer class="card-footer">`;
+                if (follow_up_damage?.formula) {
+                    const followUpRoll = new Roll(follow_up_damage.formula, attack);
+                    await followUpRoll.evaluate();
+                    totalRolls.push(followUpRoll);
+                    let followUpText = `<strong>Acompanhamento:</strong> ${followUpRoll.total} [${followUpRoll.formula}] ${follow_up_damage.type || ''}`;
+                    if (follow_up_damage.armor_divisor && follow_up_damage.armor_divisor != 1) followUpText += ` (${follow_up_damage.armor_divisor})`;
+                    flavor += `<div class="extra-damage">${followUpText}</div>`;
+                }
+                if (fragmentation_damage?.formula) {
+                    const fragRoll = new Roll(fragmentation_damage.formula, attack);
+                    await fragRoll.evaluate();
+                    totalRolls.push(fragRoll);
+                    let fragText = `<strong>Fragmentação:</strong> ${fragRoll.total} [${fragRoll.formula}] ${fragmentation_damage.type || ''}`;
+                    if (fragmentation_damage.armor_divisor && fragmentation_damage.armor_divisor != 1) fragText += ` (${fragmentation_damage.armor_divisor})`;
+                    flavor += `<div class="extra-damage">${fragText}</div>`;
+                }
+                flavor += `</footer>`;
+            }
+            flavor += `</div>`;
 
             ChatMessage.create({
                 speaker: ChatMessage.getSpeaker({ actor: this.actor }),
                 content: flavor,
-                rolls: [roll],
+                rolls: totalRolls,
                 type: CONST.CHAT_MESSAGE_TYPES.ROLL
             });
         };
-        
-        // O diálogo de modificadores permanece o mesmo que já atualizamos.
+    
+        // A sua lógica para abrir o diálogo de modificador com Shift+Click permanece a mesma
         if (ev.shiftKey) {
-            new Dialog({
-                title: "Modificador de Dano",
-                content: `
-                    <div class="modifier-dialog">
-                        <p>Insira ou clique nos modificadores para o dano de ${label}:</p>
-                        <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px;"/>
-                        <div class="modifier-grid">
-                            <div class="mod-row">
-                                <button type="button" class="mod-button" data-mod="-5">-5</button>
-                                <button type="button" class="mod-button" data-mod="-4">-4</button>
-                                <button type="button" class="mod-button" data-mod="-3">-3</button>
-                                <button type="button" class="mod-button" data-mod="-2">-2</button>
-                                <button type="button" class="mod-button" data-mod="-1">-1</button>
-                            </div>
-                            <div class="mod-row">
-                                <button type="button" class="mod-button" data-mod="+1">+1</button>
-                                <button type="button" class="mod-button" data-mod="+2">+2</button>
-                                <button type="button" class="mod-button" data-mod="+3">+3</button>
-                                <button type="button" class="mod-button" data-mod="+4">+4</button>
-                                <button type="button" class="mod-button" data-mod="+5">+5</button>
-                            </div>
+        // Encontra o 'label' do ataque para usar no título do diálogo
+        const label = attack.name || "Ataque";
+        
+        new Dialog({
+            title: "Modificador de Dano",
+            // ✅ CÓDIGO DO CONTEÚDO RESTAURADO ABAIXO ✅
+            content: `
+                <div class="modifier-dialog" style="text-align: center;">
+                    <p>Insira ou clique nos modificadores para o dano de <strong>${label}</strong>:</p>
+                    <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px; width: 80px;"/>
+                    
+                    <div class="modifier-grid" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+                        <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                            <button type="button" class="mod-button" data-mod="-5">-5</button>
+                            <button type="button" class="mod-button" data-mod="-4">-4</button>
+                            <button type="button" class="mod-button" data-mod="-3">-3</button>
+                            <button type="button" class="mod-button" data-mod="-2">-2</button>
+                            <button type="button" class="mod-button" data-mod="-1">-1</button>
                         </div>
-                        <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar Modificador</button>
-                    </div>`,
-                buttons: {
-                    roll: {
-                        icon: '<i class="fas fa-dice-d6"></i>',
-                        label: "Rolar Dano",
-                        callback: (html) => {
-                            const modifier = parseInt(html.find('input[name="modifier"]').val());
-                            performDamageRoll(modifier);
-                        }
+                        <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                            <button type="button" class="mod-button" data-mod="+1">+1</button>
+                            <button type="button" class="mod-button" data-mod="+2">+2</button>
+                            <button type="button" class="mod-button" data-mod="+3">+3</button>
+                            <button type="button" class="mod-button" data-mod="+4">+4</button>
+                            <button type="button" class="mod-button" data-mod="+5">+5</button>
+                        </div>
+                    </div>
+                    <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar</button>
+                </div>
+            `,
+            buttons: {
+                roll: {
+                    icon: '<i class="fas fa-dice-d6"></i>',
+                    label: "Rolar Dano",
+                    callback: (html) => {
+                        const modifier = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                        performDamageRoll(modifier);
                     }
-                },
-                default: "roll",
-                render: (html) => {
-                    const input = html.find('input[name="modifier"]');
-                    html.find('.mod-button').click((event) => {
-                        const currentMod = parseInt(input.val());
-                        const modToAdd = parseInt($(event.currentTarget).data('mod'));
-                        input.val(currentMod + modToAdd);
-                    });
-                    html.find('.mod-clear-button').click(() => {
-                        input.val(0);
-                    });
                 }
-            }).render(true);
-        } else {
-            performDamageRoll(0);
-        }
+            },
+            default: "roll",
+            render: (html) => {
+                // Lógica para fazer os botões funcionarem
+                const input = html.find('input[name="modifier"]');
+                html.find('.mod-button').click((event) => {
+                    const currentMod = parseInt(input.val()) || 0;
+                    const modToAdd = parseInt($(event.currentTarget).data('mod'));
+                    input.val(currentMod + modToAdd);
+                });
+                html.find('.mod-clear-button').click(() => {
+                    input.val(0);
+                });
+            }
+        }).render(true);
+
+    } else {
+        performDamageRoll(0); // Rola o dano diretamente se não houver Shift
+    }
     });
 
 
@@ -2504,67 +2531,135 @@ html.on('click', '.item-quick-view', async (ev) => {
     
     }
 
-          // NOVA FUNÇÃO AUXILIAR PARA CRIAR/EDITAR ATAQUES
-      _openAttackCreationDialog(groupId, attackType, existingAttack = null) {
-        const isEditing = existingAttack !== null;
-        const attack = isEditing ? existingAttack.attackData : {};
+/**
+ * Abre o diálogo para criar ou editar um modo de ataque.
+ * VERSÃO FINAL: Layout totalmente reorganizado para clareza e usabilidade.
+ * @private
+ */
+/**
+ * Abre o diálogo para criar ou editar um modo de ataque.
+ * VERSÃO FINAL E CORRIGIDA.
+ * @private
+ */
+async _openAttackCreationDialog(groupId, attackType, options = {}) {
+    const isEditing = Boolean(options.attackId);
+    const attackData = isEditing ? options.attackData : {};
+    
+    // ✅ CORREÇÃO PRINCIPAL: Capturamos o ID do ataque aqui fora para evitar erros de escopo.
+    const attackId = isEditing ? options.attackId : null;
 
-        let dialogTitle = isEditing ? `Editar Ataque ${attack.name}` : "Criar Novo Ataque";
-        let dialogContent = ``;
+    const dialogTitle = isEditing ? `Editar Ataque: ${attackData.name}` : "Criar Novo Ataque";
 
-        // Formulário base com campos comuns
-        let baseForm = `
-          <div class="form-group"><label>Modo de Uso:</label><input type="text" name="name" value="${attack.name || 'Ataque'}"/></div>
-          <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="${attack.skill_name || 'Perícia'}"/></div>
-          <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="${attack.skill_level ?? 10}"/></div>
-          <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="${attack.damage_formula || ''}"/></div>
-          <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="${attack.damage_type || ''}"/></div>
+    // --- Montagem do Formulário HTML Reorganizado ---
+    const getFormContent = (type, data) => {
+        
+        // Grupo 1: Identificação e Habilidade
+        const identityFields = `
+            <div class="form-section">
+                <h4 class="section-title">Identificação</h4>
+                <div class="form-group">
+                    <label>Nome / Modo de Uso</label>
+                    <input type="text" name="name" value="${data.name || 'Ataque'}"/>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group"><label>Perícia</label><input type="text" name="skill_name" value="${data.skill_name || ''}"/></div>
+                    <div class="form-group input-narrow"><label>NH</label><input type="number" name="skill_level" value="${data.skill_level ?? 10}"/></div>
+                </div>
+            </div>
         `;
 
-        // Campos específicos para cada tipo de ataque
-        if (attackType === "melee") {
-            dialogContent = `<form>${baseForm}
-                <div class="form-group"><label>Alcance:</label><input type="text" name="reach" value="${attack.reach || 'C,1'}"/></div>
-                <div class="form-group"><label>Aparar:</label><input type="number" name="defense" value="${attack.defense ?? 8}"/></div>
-            </form>`;
+        // Grupo 2: Atributos de Ataque
+        let specificFields = '';
+        if (type === "melee") {
+            specificFields = `
+                <div class="form-section">
+                    
+                    <div class="form-grid-2">
+                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="reach" value="${data.reach || 'C,1'}"/></div>
+                        <div class="form-group input-narrow"><label>Defesa (Apr/Blq)</label><input type="text" name="defense" value="${data.defense ?? '0'}"/></div>
+                    </div>
+                </div>
+            `;
         } else { // Ranged
-            dialogContent = `<form>${baseForm}
-                <div class="form-group"><label>Prec:</label><input type="text" name="accuracy" value="${attack.accuracy || '1'}"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="range" value="${attack.range || '10/100'}"/></div>
-                <div class="form-group"><label>CdT:</label><input type="text" name="rof" value="${attack.rof || '1'}"/></div>
-                <div class="form-group"><label>Tiros:</label><input type="text" name="shots" value="${attack.shots || '10(3)'}"/></div>
-                <div class="form-group"><label>RCO:</label><input type="text" name="rcl" value="${attack.rcl || '1'}"/></div>
-            </form>`;
+            specificFields = `
+                <div class="form-section">
+                    
+                    <div class="form-grid-3">
+                        <div class="form-group input-narrow"><label>Prec.</label><input type="text" name="accuracy" value="${data.accuracy || ''}"/></div>
+                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="range" value="${data.range || ''}"/></div>
+                        <div class="form-group input-narrow"><label>CdT</label><input type="text" name="rof" value="${data.rof || ''}"/></div>
+                        <div class="form-group input-narrow"><label>Tiros</label><input type="text" name="shots" value="${data.shots || ''}"/></div>
+                        <div class="form-group input-narrow"><label>RCO</label><input type="text" name="rcl" value="${data.rcl || ''}"/></div>
+                    </div>
+                </div>
+            `;
         }
 
-        new Dialog({
-            title: dialogTitle,
-            content: dialogContent,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: isEditing ? "Salvar" : "Criar",
-                    callback: (html) => {
-                        const form = html.find("form")[0];
-                        let newAttackData = new FormDataExtended(form).object;
-                        newAttackData.attack_type = attackType; // Garante que o tipo seja salvo
-
-                        if (isEditing) {
-                            // Atualiza um ataque existente
-                            const updateKey = `system.combat.attack_groups.${groupId}.attacks.${existingAttack.attackId}`;
-                            this.actor.update({ [updateKey]: newAttackData });
-                        } else {
-                            // Cria um novo ataque
-                            const newAttackKey = `system.combat.attack_groups.${groupId}.attacks.${foundry.utils.randomID()}`;
-                            this.actor.update({ [newAttackKey]: newAttackData });
-                        }
+        // Grupo 3: Dano
+        const damageFields = `
+            <div class="form-section">
+                <h5 class="subheader">Dano</h5>
+                <div class="form-grid-3">
+                    <div class="form-group"><label>Fórmula</label><input type="text" name="damage_formula" value="${data.damage_formula || ''}"/></div>
+                    <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="damage_type" value="${data.damage_type || ''}"/></div>
+                    <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="armor_divisor" value="${data.armor_divisor || 1}"/></div>
+                </div>
+                
+                
+                <details class="advanced-options">
+                    <summary>Danos Secundários</summary>
+                    <div class="advanced-damage-fields">
+                        <h5 class="subheader">Dano de Acompanhamento</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="follow_up_damage.formula" value="${data.follow_up_damage?.formula || ''}" /></div>
+                            <div class="form-group"><label>Tipo</label><input type="text" name="follow_up_damage.type" value="${data.follow_up_damage?.type || ''}" /></div>
+                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="follow_up_damage.armor_divisor" value="${data.follow_up_damage?.armor_divisor || 1}" /></div>
+                        </div>
+                        <h5 class="subheader">Dano de Fragmentação</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="fragmentation_damage.formula" value="${data.fragmentation_damage?.formula || ''}" /></div>
+                            <div class="form-group"><label>Tipo</label><input type="text" name="fragmentation_damage.type" value="${data.fragmentation_damage?.type || ''}" /></div>
+                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="fragmentation_damage.armor_divisor" value="${data.fragmentation_damage?.armor_divisor || 1}" /></div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        `;
+        
+        const hiddenTypeField = `<input type="hidden" name="attack_type" value="${type}" />`;
+        return `<form class="gurps-dialog-form">${identityFields}${specificFields}${damageFields}${hiddenTypeField}</form>`;
+    };
+    
+    new Dialog({
+        title: dialogTitle,
+        content: getFormContent(attackType, attackData),
+        buttons: {
+            save: {
+                icon: '<i class="fas fa-save"></i>',
+                label: isEditing ? "Salvar" : "Criar",
+                callback: (html) => {
+                    const form = html.find("form")[0];
+                    const formData = new FormDataExtended(form, { dtypes: ["Number"] }).object;
+                    
+                    if (isEditing) {
+                        // Usa a variável 'attackId' que foi capturada fora do callback
+                        const updateKey = `system.combat.attack_groups.${groupId}.attacks.${attackId}`;
+                        this.actor.update({ [updateKey]: formData });
+                    } else {
+                        const newAttackKey = `system.combat.attack_groups.${groupId}.attacks.${foundry.utils.randomID()}`;
+                        this.actor.update({ [newAttackKey]: formData });
                     }
                 }
-            },
-            default: 'save'
-        }).render(true);
-      }
-
+            }
+        },
+        default: 'save'
+    }, {
+        classes: ["dialog", "gum", "gurps-attack-dialog"],
+        width: 520,
+        height: "auto",
+        resizable: true
+    }).render(true);
+}
       }
 
 // ================================================================== //
