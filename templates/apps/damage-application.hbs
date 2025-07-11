@@ -1,0 +1,81 @@
+{{!-- O Novo Layout da Janela de Aplicação de Dano --}}
+<form class="damage-application-window">
+    
+    {{!-- Seção dos Tokens Envolvidos --}}
+    <div class="actors-strip">
+        <div class="actor-portrait attacker">
+            <img src="{{attacker.img}}" title="Atacante: {{attacker.name}}"/>
+            <span>Atacante</span>
+        </div>
+        <div class="arrow-icon">
+            <i class="fas fa-long-arrow-alt-right"></i>
+        </div>
+        <div class="actor-portrait target">
+            <img src="{{target.img}}" title="Alvo: {{target.name}}"/>
+            <span>Alvo</span>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="main-content-grid">
+        {{!-- Coluna da Esquerda: Locais de Acerto e Opções --}}
+        <div class="hit-locations-panel">
+            <div class="panel-header">Ponto de Impacto</div>
+            <div class="locations-table">
+                <div class="location-header">
+                    <span>Rolagem</span>
+                    <span>Local</span>
+                    <span>RD</span>
+                </div>
+                {{#each locations as |loc|}}
+                    <div class="location-row" data-location-key="{{loc.key}}" data-dr="{{loc.totalDR}}">
+                        <span class="roll">{{loc.roll}}</span>
+                        <span class="label">{{loc.label}}</span>
+                        <span class="dr">{{loc.totalDR}}</span>
+                    </div>
+                {{/each}}
+            </div>
+            <div class="damage-options">
+                <label class="custom-checkbox"><input type="checkbox" name="large_area_injury"/> Lesão em Larga Escala</label>
+                <label class="custom-checkbox"><input type="checkbox" name="ignore_dr"/> Ignorar RD do Alvo</label>
+            </div>
+        </div>
+
+        {{!-- Coluna da Direita: Cálculos --}}
+<div class="calculation-panel">
+    <div class="form-section">
+        <h4 class="section-title">Cálculo de Dano Principal</h4>
+        <div class="calc-grid">
+            <div class="form-group">
+                <label>Dano Rolado</label>
+                <input type="number" name="damage_rolled" value="{{damage.main.total}}"/>
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <input type="text" name="damage_type" value="{{damage.main.type}}"/>
+            </div>
+            <div class="form-group">
+                <label>RD do Alvo</label>
+                <input type="number" name="target_dr" value="0"/>
+            </div>
+            <div class="form-group">
+                <label>Dano Penetrante</label>
+                <input type="text" name="penetrating_damage" value="{{damage.main.total}}" readonly/>
+            </div>
+            <div class="form-group">
+                <label>Multiplicador</label>
+                <input type="text" name="wounding_mod" value="x1" readonly/>
+            </div>
+            <div class="form-group final-injury">
+                <label>Lesão Final</label>
+                <input type="text" name="final_injury" value="{{damage.main.total}}" readonly/>
+            </div>
+        </div>
+    </div>
+    
+    {{!-- Área para os danos secundários (será preenchida dinamicamente pelo JS) --}}
+    <div class="secondary-damages"></div>
+</div>
+    </div>
+</form>

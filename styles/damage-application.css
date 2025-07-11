@@ -1,0 +1,124 @@
+/* =================================================================== */
+/* ESTILO DEDICADO PARA A JANELA DE APLICAÇÃO DE DANO                */
+/* =================================================================== */
+
+/* --- Estilo Principal da Janela --- */
+.dialog.damage-application-dialog .window-content {
+    background: #28282b !important; /* Nosso fundo escuro padrão */
+    color: #e1e1e1;
+    padding: 10px;
+}
+
+/* --- Tira de Retratos (Atacante -> Alvo) --- */
+.damage-application-dialog .actors-strip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+.damage-application-dialog .actor-portrait {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.damage-application-dialog .actor-portrait img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.damage-application-dialog .actor-portrait span {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.damage-application-dialog .arrow-icon {
+    font-size: 2em;
+    color: rgba(255,255,255,0.3);
+}
+
+/* --- Layout Principal de Duas Colunas --- */
+.damage-application-dialog .main-content-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr; /* Coluna da esquerda fixa, direita flexível */
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* --- Painel da Esquerda: Locais de Acerto --- */
+.damage-application-dialog .hit-locations-panel .panel-header {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--c-accent-gold, #c5a05b);
+    margin-bottom: 8px;
+    padding-left: 5px;
+}
+.damage-application-dialog .locations-table {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.damage-application-dialog .location-header {
+    display: grid;
+    grid-template-columns: 50px 1fr 30px;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #a0a0a0;
+    background: rgba(0,0,0,0.2);
+}
+.damage-application-dialog .location-header span:last-child { text-align: right; }
+.damage-application-dialog .location-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 30px;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.damage-application-dialog .location-row:last-child { border-bottom: none; }
+.damage-application-dialog .location-row:hover { background-color: rgba(255,255,255,0.05); }
+.damage-application-dialog .location-row.active { background-color: var(--c-accent-gold, #c5a05b); color: #111; font-weight: bold; }
+.damage-application-dialog .location-row .roll { color: #ccc; }
+.damage-application-dialog .location-row.active .roll,
+.damage-application-dialog .location-row.active .label { color: #111; }
+.damage-application-dialog .location-row .dr { text-align: right; font-weight: bold; }
+
+/* Opções de Dano abaixo da tabela */
+.damage-application-dialog .damage-options {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* --- Painel da Direita: Cálculos --- */
+.damage-application-dialog .calculation-panel .form-section {
+    margin: 0;
+    padding-top: 25px;
+}
+.damage-application-dialog .calculation-panel .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 15px;
+}
+.damage-application-dialog .calculation-panel .final-injury {
+    grid-column: 1 / -1;
+}
+.damage-application-dialog .calculation-panel .final-injury input {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--c-accent-red, #a53541);
+    height: 40px;
+}
+.damage-application-dialog .calculation-panel input[readonly] {
+    background-color: rgba(0,0,0,0.4) !important;
+    border-style: dashed;
+    border-color: rgba(255,255,255,0.2);
+}

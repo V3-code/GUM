@@ -2775,5 +2775,24 @@ nav.sheet-tabs {
     color: #a53541;
 }
 
+/* BOTÃO APLICAR DANO*/
 
+.gurps-damage-card .card-actions {
+    padding: 5px;
+    background: #e9e3e0;
+    border-top: 1px solid #d1c8c4;
+    text-align: right;
+}
+.gurps-damage-card .apply-damage-button {
+    border: 1px solid #b5b5b5;
+    background: #f0f0f0;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.gurps-damage-card .apply-damage-button:hover {
+    background: #e0e0e0;
+    border-color: #999;
+}
 
