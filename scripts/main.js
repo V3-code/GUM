@@ -2690,6 +2690,135 @@ const performDamageRoll = async (modifier = 0) => {
 
 
 }
+
+// ================================================================== //
+//  ✅ RESTAURE ESTA FUNÇÃO DENTRO DA SUA CLASSE DA FICHA DE PERSONAGEM ✅
+// ================================================================== //
+
+/**
+ * Abre o diálogo para criar ou editar um modo de ataque.
+ * VERSÃO FINAL E CORRIGIDA.
+ * @private
+ */
+async _openAttackCreationDialog(groupId, attackType, options = {}) {
+    const isEditing = Boolean(options.attackId);
+    const attackData = isEditing ? options.attackData : {};
+    
+    // ✅ CORREÇÃO PRINCIPAL: Capturamos o ID do ataque aqui fora para evitar erros de escopo.
+    const attackId = isEditing ? options.attackId : null;
+
+    const dialogTitle = isEditing ? `Editar Ataque: ${attackData.name}` : "Criar Novo Ataque";
+
+    // --- Montagem do Formulário HTML Reorganizado ---
+    const getFormContent = (type, data) => {
+        
+        // Grupo 1: Identificação e Habilidade
+        const identityFields = `
+            <div class="form-section">
+                <h4 class="section-title">Identificação</h4>
+                <div class="form-group">
+                    <label>Nome / Modo de Uso</label>
+                    <input type="text" name="name" value="${data.name || 'Ataque'}"/>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group"><label>Perícia</label><input type="text" name="skill_name" value="${data.skill_name || ''}"/></div>
+                    <div class="form-group input-narrow"><label>NH</label><input type="number" name="skill_level" value="${data.skill_level ?? 10}"/></div>
+                </div>
+            </div>
+        `;
+
+        // Grupo 2: Atributos de Ataque
+        let specificFields = '';
+        if (type === "melee") {
+            specificFields = `
+                <div class="form-section">
+                    
+                    <div class="form-grid-2">
+                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="reach" value="${data.reach || 'C,1'}"/></div>
+                        <div class="form-group input-narrow"><label>Defesa (Apr/Blq)</label><input type="text" name="defense" value="${data.defense ?? '0'}"/></div>
+                    </div>
+                </div>
+            `;
+        } else { // Ranged
+            specificFields = `
+                <div class="form-section">
+                    
+                    <div class="form-grid-3">
+                        <div class="form-group input-narrow"><label>Prec.</label><input type="text" name="accuracy" value="${data.accuracy || ''}"/></div>
+                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="range" value="${data.range || ''}"/></div>
+                        <div class="form-group input-narrow"><label>CdT</label><input type="text" name="rof" value="${data.rof || ''}"/></div>
+                        <div class="form-group input-narrow"><label>Tiros</label><input type="text" name="shots" value="${data.shots || ''}"/></div>
+                        <div class="form-group input-narrow"><label>RCO</label><input type="text" name="rcl" value="${data.rcl || ''}"/></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Grupo 3: Dano
+        const damageFields = `
+            <div class="form-section">
+                <h5 class="subheader">Dano</h5>
+                <div class="form-grid-3">
+                    <div class="form-group"><label>Fórmula</label><input type="text" name="damage_formula" value="${data.damage_formula || ''}"/></div>
+                    <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="damage_type" value="${data.damage_type || ''}"/></div>
+                    <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="armor_divisor" value="${data.armor_divisor || 1}"/></div>
+                </div>
+                
+                
+                <details class="advanced-options">
+                    <summary>Danos Secundários</summary>
+                    <div class="advanced-damage-fields">
+                        <h5 class="subheader">Dano de Acompanhamento</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="follow_up_damage.formula" value="${data.follow_up_damage?.formula || ''}" /></div>
+                            <div class="form-group"><label>Tipo</label><input type="text" name="follow_up_damage.type" value="${data.follow_up_damage?.type || ''}" /></div>
+                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="follow_up_damage.armor_divisor" value="${data.follow_up_damage?.armor_divisor || 1}" /></div>
+                        </div>
+                        <h5 class="subheader">Dano de Fragmentação</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="fragmentation_damage.formula" value="${data.fragmentation_damage?.formula || ''}" /></div>
+                            <div class="form-group"><label>Tipo</label><input type="text" name="fragmentation_damage.type" value="${data.fragmentation_damage?.type || ''}" /></div>
+                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="fragmentation_damage.armor_divisor" value="${data.fragmentation_damage?.armor_divisor || 1}" /></div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        `;
+        
+        const hiddenTypeField = `<input type="hidden" name="attack_type" value="${type}" />`;
+        return `<form class="gurps-dialog-form">${identityFields}${specificFields}${damageFields}${hiddenTypeField}</form>`;
+    };
+    
+    new Dialog({
+        title: dialogTitle,
+        content: getFormContent(attackType, attackData),
+        buttons: {
+            save: {
+                icon: '<i class="fas fa-save"></i>',
+                label: isEditing ? "Salvar" : "Criar",
+                callback: (html) => {
+                    const form = html.find("form")[0];
+                    const formData = new FormDataExtended(form, { dtypes: ["Number"] }).object;
+                    
+                    if (isEditing) {
+                        // Usa a variável 'attackId' que foi capturada fora do callback
+                        const updateKey = `system.combat.attack_groups.${groupId}.attacks.${attackId}`;
+                        this.actor.update({ [updateKey]: formData });
+                    } else {
+                        const newAttackKey = `system.combat.attack_groups.${groupId}.attacks.${foundry.utils.randomID()}`;
+                        this.actor.update({ [newAttackKey]: formData });
+                    }
+                }
+            }
+        },
+        default: 'save'
+    }, {
+        classes: ["dialog", "gum", "gurps-attack-dialog"],
+        width: 520,
+        height: "auto",
+        resizable: true
+    }).render(true);
+  }
       }
 
 // ================================================================== //
