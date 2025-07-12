@@ -72,6 +72,18 @@
                 <input type="text" name="final_injury" value="{{damage.main.total}}" readonly/>
             </div>
         </div>
+
+            <div class="dialog-buttons">
+        <button type="button" data-action="applyAndPublish">
+            <i class="fas fa-bullhorn"></i> Aplicar e Publicar
+        </button>
+        <button type="button" data-action="applyAndClose">
+            <i class="fas fa-check"></i> Aplicar e Fechar
+        </button>
+        <button type="button" data-action="applyAndKeepOpen">
+            <i class="fas fa-sync-alt"></i> Aplicar e Manter
+        </button>
+    </div>
     </div>
     
     {{!-- Área para os danos secundários (será preenchida dinamicamente pelo JS) --}}

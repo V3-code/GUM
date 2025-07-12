@@ -8,7 +8,7 @@ export default class DamageApplicationWindow extends Application {
     }
 
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return foundry.utils.mergeObject(super.defaultOptions, {
             title: `Aplicar Dano em ${this.object?.target?.name || "Alvo"}`,
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
@@ -115,8 +115,22 @@ export default class DamageApplicationWindow extends Application {
             input.addEventListener('change', () => this._updateDamageCalculation(form));
         });
         
-        // Inicia o cálculo uma vez quando a janela abre
+    // --- LÓGICA PARA PRÉ-SELECIONAR O TORSO ---
+    // Encontra a linha do Torso e a "clica" programaticamente para iniciar os cálculos.
+    const torsoRow = form.querySelector('.location-row[data-location-key="torso"]');
+    if (torsoRow) {
+        torsoRow.click();
+    } else {
+        // Se o torso não for encontrado, apenas inicia o cálculo com os valores padrão.
         this._updateDamageCalculation(form);
+    }
+
+        html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
+        html.find('button[data-action="applyAndClose"]').on('click', () => this._onApplyDamage(form, true, false));
+        html.find('button[data-action="applyAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, false));
+       
+
+
     }
 
     /**
