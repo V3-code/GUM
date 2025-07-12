@@ -1,124 +1,296 @@
-/* =================================================================== */
-/* ESTILO DEDICADO PARA A JANELA DE APLICAÇÃO DE DANO                */
-/* =================================================================== */
+/* Estilo Principal */
+.dialog.damage-application-dialog .window-content { background: #28282b !important; color: #e1e1e1; padding: 10px; }
+.dialog.damage-application-dialog .dialog-buttons { margin-top: 10px; text-align: right; }
+.damage-application-dialog .dialog-buttons button { margin-left: 5px; }
 
-/* --- Estilo Principal da Janela --- */
-.dialog.damage-application-dialog .window-content {
-    background: #28282b !important; /* Nosso fundo escuro padrão */
-    color: #e1e1e1;
-    padding: 10px;
-}
+/* --- 1. CABEÇALHO --- */
+.damage-application-dialog .damage-header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; }
+.damage-application-dialog .actor-portrait { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.damage-application-dialog .actor-portrait img { width: 50px; height: 50px; border-radius: 5px; border: 1px solid rgba(0,0,0,0.5); }
+.damage-application-dialog .actor-portrait span { font-size: 11px; text-transform: uppercase; }
+.damage-application-dialog .damage-cards-area { display: flex; gap: 8px; justify-content: center; }
+.damage-application-dialog .damage-card { border: 2px solid; padding: 5px 10px; border-radius: 4px; text-align: center; cursor: pointer; transition: all 0.2s ease; opacity: 0.6; }
+.damage-application-dialog .damage-card.active, .damage-application-dialog .damage-card:hover { box-shadow: 0 0 10px; transform: scale(1.05); opacity: 1; }
+.damage-application-dialog .damage-card .damage-value { font-size: 1.8em; font-weight: bold; }
+.damage-application-dialog .damage-card .damage-label { font-size: 0.8em; text-transform: uppercase; }
+.damage-application-dialog .damage-card { border-color: var(--c-accent-gold, #c5a05b); }
+.damage-application-dialog .damage-card.follow-up { border-color: var(--c-accent-blue, #5b9ec5); }
+.damage-application-dialog .damage-card.fragmentation { border-color: var(--c-accent-red, #a53541); }
 
-/* --- Tira de Retratos (Atacante -> Alvo) --- */
-.damage-application-dialog .actors-strip {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
-}
-.damage-application-dialog .actor-portrait {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-.damage-application-dialog .actor-portrait img {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.2);
-}
-.damage-application-dialog .actor-portrait span {
-    font-size: 11px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-.damage-application-dialog .arrow-icon {
-    font-size: 2em;
-    color: rgba(255,255,255,0.3);
-}
+/* --- 2. CORPO E COLUNAS --- */
+.damage-application-dialog .damage-app-body { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 15px; margin-top: 15px; }
+.damage-application-dialog .panel-header { font-weight: bold; text-transform: uppercase; font-size: 11px; color: #a0a0a0; margin-bottom: 8px; }
+.damage-application-dialog .placeholder { display: flex; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.2); border-radius: 3px; color: #888; font-style: italic; }
 
-/* --- Layout Principal de Duas Colunas --- */
-.damage-application-dialog .main-content-grid {
-    display: grid;
-    grid-template-columns: 200px 1fr; /* Coluna da esquerda fixa, direita flexível */
-    gap: 15px;
-    margin-top: 10px;
-}
-
-/* --- Painel da Esquerda: Locais de Acerto --- */
-.damage-application-dialog .hit-locations-panel .panel-header {
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 12px;
-    color: var(--c-accent-gold, #c5a05b);
-    margin-bottom: 8px;
-    padding-left: 5px;
-}
-.damage-application-dialog .locations-table {
-    display: flex;
-    flex-direction: column;
-    background: rgba(0,0,0,0.2);
-    border-radius: 3px;
-    overflow: hidden;
-}
-.damage-application-dialog .location-header {
-    display: grid;
-    grid-template-columns: 50px 1fr 30px;
-    padding: 6px 8px;
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #a0a0a0;
-    background: rgba(0,0,0,0.2);
-}
+/* ✅ TABELA DE LOCAIS DE ACERTO (RD) ESTILIZADA ✅ */
+.damage-application-dialog .locations-table { display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.4); border-radius: 3px; }
+.damage-application-dialog .location-header, .damage-application-dialog .location-row { display: grid; grid-template-columns: 70px 1fr 30px; padding: 5px 8px; align-items: center; font-size: 12px; }
+.damage-application-dialog .location-header { font-size: 10px; font-weight: bold; color: #a0a0a0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .damage-application-dialog .location-header span:last-child { text-align: right; }
-.damage-application-dialog .location-row {
-    display: grid;
-    grid-template-columns: 50px 1fr 30px;
-    padding: 6px 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
+.damage-application-dialog .location-row { cursor: pointer; transition: background-color 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .damage-application-dialog .location-row:last-child { border-bottom: none; }
 .damage-application-dialog .location-row:hover { background-color: rgba(255,255,255,0.05); }
 .damage-application-dialog .location-row.active { background-color: var(--c-accent-gold, #c5a05b); color: #111; font-weight: bold; }
 .damage-application-dialog .location-row .roll { color: #ccc; }
-.damage-application-dialog .location-row.active .roll,
-.damage-application-dialog .location-row.active .label { color: #111; }
+.damage-application-dialog .location-row.active .roll, .damage-application-dialog .location-row.active .label, .damage-application-dialog .location-row.active .dr { color: #111; }
 .damage-application-dialog .location-row .dr { text-align: right; font-weight: bold; }
+.damage-application-dialog .damage-options { margin-top: 10px; }
 
-/* Opções de Dano abaixo da tabela */
-.damage-application-dialog .damage-options {
-    margin-top: 10px;
+/* Tabela de Multiplicadores */
+.wounding-mods-panel .wounding-table { font-size: 12px; }
+.wounding-mods-panel .wounding-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.wounding-mods-panel .wounding-row .type { font-weight: bold; }
+.wounding-mods-panel .wounding-row .mult { font-weight: bold; color: var(--c-accent-gold, #c5a05b); }
+.wounding-mods-panel .custom-radio { display: flex; align-items: center; }
+.wounding-mods-panel .custom-mod-input { width: 50px; margin-left: 5px; }
+
+/* Rodapé */
+.damage-application-dialog .damage-app-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 15px; }
+.damage-application-dialog .calculation-summary .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+.damage-application-dialog .calculation-summary .summary-row label { color: #a0a0a0; }
+.damage-application-dialog .calculation-summary .final-injury { font-weight: bold; font-size: 1.2em; color: var(--c-accent-red, #a53541); }
+.damage-application-dialog .action-buttons { display: flex; flex-direction: column; gap: 5px; }
+
+/* =================================================================== */
+/* ESTILO PARA CHECKBOXES CUSTOMIZADOS NA JANELA DE DANO             */
+/* =================================================================== */
+
+/* O container do nosso checkbox (a tag <label>) */
+.damage-application-dialog .custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espaço entre a caixinha e o texto */
+  cursor: pointer;
+  font-size: 13px;
+  color: #d1d1d1;
+  transition: color 0.2s ease;
+  padding: 3px 0;
+}
+.damage-application-dialog .custom-checkbox:hover {
+  color: #fff;
+}
+
+/* Esconde o checkbox padrão do navegador */
+.damage-application-dialog .custom-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+/* Adiciona um span ao redor do texto para o truque funcionar (precisa de um pequeno ajuste no .hbs) */
+.damage-application-dialog .custom-checkbox span {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Cria a nossa própria caixinha de checkbox usando um pseudo-elemento */
+.damage-application-dialog .custom-checkbox span::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+/* Estilo da caixinha QUANDO o checkbox está marcado */
+.damage-application-dialog .custom-checkbox input[type="checkbox"]:checked + span::before {
+  background-color: var(--c-accent-gold, #c5a05b);
+  border-color: var(--c-accent-gold, #c5a05b);
+}
+
+/* Cria o "✓" (check) */
+.damage-application-dialog .custom-checkbox input[type="checkbox"]:checked + span::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  width: 3px;
+  height: 7px;
+  border: solid #111; /* Cor do check (preto para contrastar com o dourado) */
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* =================================================================== */
+/* ESTILO FINAL PARA OS BOTÕES DE AÇÃO DA JANELA DE DANO             */
+/* =================================================================== */
+
+/* Container que alinha os botões verticalmente */
+.damage-application-dialog .action-buttons {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    justify-content: flex-end; /* Alinha os botões à base do rodapé */
 }
 
-/* --- Painel da Direita: Cálculos --- */
-.damage-application-dialog .calculation-panel .form-section {
-    margin: 0;
-    padding-top: 25px;
-}
-.damage-application-dialog .calculation-panel .calc-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px 15px;
-}
-.damage-application-dialog .calculation-panel .final-injury {
-    grid-column: 1 / -1;
-}
-.damage-application-dialog .calculation-panel .final-injury input {
-    font-size: 1.8em;
+/* Estilo base para cada um dos três botões */
+.damage-application-dialog .action-buttons button {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px;
     font-weight: bold;
-    color: var(--c-accent-red, #a53541);
-    height: 40px;
+    text-align: left;
+    color: #dcdcdc;
+    
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 3px;
+    
+    padding: 8px 10px;
+    margin: 0; /* Reseta qualquer margem padrão */
+    cursor: pointer;
+    
+    display: flex; /* Permite alinhar o ícone e o texto */
+    align-items: center;
+    gap: 8px; /* Espaço entre o ícone e o texto */
+    
+    transition: all 0.2s ease;
 }
-.damage-application-dialog .calculation-panel input[readonly] {
-    background-color: rgba(0,0,0,0.4) !important;
-    border-style: dashed;
+
+/* Efeito ao passar o mouse */
+.damage-application-dialog .action-buttons button:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--c-accent-gold, #c5a05b);
+    color: #fff;
+}
+
+/* Estilo para o ícone dentro do botão */
+.damage-application-dialog .action-buttons button i {
+    font-size: 14px;
+    width: 16px; /* Garante que os ícones tenham o mesmo alinhamento */
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+}
+
+.damage-application-dialog .action-buttons button:hover i {
+    color: var(--c-accent-gold, #c5a05b);
+}
+
+/* --- Estilo para o Seletor de Alvo de Dano --- */
+
+.damage-application-dialog .target-pool-selector {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.damage-application-dialog .target-pool-selector label {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #a0a0a0;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.damage-application-dialog .target-pool-selector select {
+    /* Reutiliza o estilo dos nossos inputs */
+    width: 100%;
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e1e1e1;
+    padding: 6px;
+    border-radius: 3px;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* --- Estilo para a Tabela de Modificadores de Ferimento --- */
+
+.damage-application-dialog .wounding-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.damage-application-dialog .wounding-row {
+    padding: 4px 6px;
+    border-radius: 2px;
+}
+.damage-application-dialog .wounding-row label.custom-radio {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    cursor: pointer;
+}
+.damage-application-dialog .wounding-row .dots {
+    flex-grow: 1;
+    border-bottom: 1px dotted rgba(255,255,255,0.2);
+    margin-bottom: 4px;
+}
+.damage-application-dialog .wounding-row .mult {
+    font-weight: bold;
+    color: var(--c-accent-gold, #c5a05b);
+}
+.damage-application-dialog .custom-mod-input {
+    width: 60px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+/* --- Estilo para Tabela de Locais e Resumo de Cálculo --- */
+
+/* Restaura o visual da Tabela de Locais de Acerto */
+.damage-application-dialog .locations-table {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(0,0,0,0.4);
+    border-radius: 3px;
+    font-size: 12px;
+}
+.damage-application-dialog .location-header, 
+.damage-application-dialog .location-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 30px;
+    padding: 5px 8px;
+    align-items: center;
+}
+.damage-application-dialog .location-header {
+    font-weight: bold;
+    color: #a0a0a0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.damage-application-dialog .location-row {
+    cursor: pointer;
+}
+.damage-application-dialog .location-row:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+.damage-application-dialog .location-row.active {
+    background-color: var(--c-accent-gold, #c5a05b);
+    color: #111;
+    font-weight: bold;
+}
+.damage-application-dialog .location-row .dr {
+    text-align: right;
+}
+
+/* Estilo para a nova Tabela de Resumo no Rodapé */
+.damage-application-dialog .calculation-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.damage-application-dialog .calculation-summary .summary-row label {
+    color: #a0a0a0;
+}
+.damage-application-dialog .calculation-summary .summary-row span {
+    font-weight: bold;
+    color: #fff;
+}
+.damage-application-dialog .calculation-summary .final-injury label {
+    font-size: 1.1em;
+}
+.damage-application-dialog .calculation-summary .final-injury span {
+    font-size: 1.4em;
+    color: var(--c-accent-red, #a53541);
+}
+.damage-application-dialog .calculation-summary hr {
+    margin: 5px 0;
     border-color: rgba(255,255,255,0.2);
 }

@@ -1,93 +1,139 @@
-{{!-- O Novo Layout da Janela de Aplicação de Dano --}}
 <form class="damage-application-window">
     
-    {{!-- Seção dos Tokens Envolvidos --}}
-    <div class="actors-strip">
+    {{!-- 1. CABEÇALHO COM ATACANTE, DANOS E ALVO --}}
+    <header class="damage-header">
         <div class="actor-portrait attacker">
             <img src="{{attacker.img}}" title="Atacante: {{attacker.name}}"/>
             <span>Atacante</span>
         </div>
-        <div class="arrow-icon">
-            <i class="fas fa-long-arrow-alt-right"></i>
+        <div class="damage-cards-area">
+            {{!-- Card do Dano Principal --}}
+            <a class="damage-card active" data-damage-key="main">
+                <div class="damage-value">{{damage.main.total}}</div>
+                <div class="damage-label">{{damage.main.type}}{{#if (gt damage.main.armorDivisor 1)}}({{damage.main.armorDivisor}}){{/if}}</div>
+            </a>
+            {{#if damage.followUp.total}}
+            <a class="damage-card follow-up" data-damage-key="followUp">
+                <div class="damage-value">{{damage.followUp.total}}</div>
+                <div class="damage-label">{{damage.followUp.type}}{{#if (gt damage.followUp.armorDivisor 1)}}({{damage.followUp.armorDivisor}}){{/if}}</div>
+            </a>
+            {{/if}}
+            {{#if damage.fragmentation.total}}
+             <a class="damage-card fragmentation" data-damage-key="fragmentation">
+                <div class="damage-value">{{damage.fragmentation.total}}</div>
+                <div class="damage-label">[{{damage.fragmentation.type}}]{{#if (gt damage.fragmentation.armorDivisor 1)}}({{damage.fragmentation.armorDivisor}}){{/if}}</div>
+            </a>
+            {{/if}}
         </div>
         <div class="actor-portrait target">
             <img src="{{target.img}}" title="Alvo: {{target.name}}"/>
             <span>Alvo</span>
         </div>
+           <div class="form-group target-pool-selector">
+        <label>Aplicar Lesão em:</label>
+        <select name="damage_target_pool">
+            {{#each damageablePools as |pool|}}
+                <option value="{{pool.path}}">{{pool.label}}</option>
+            {{/each}}
+        </select>
     </div>
+    </header>
 
-    <hr>
+    <hr class="header-divider">
 
-    <div class="main-content-grid">
-        {{!-- Coluna da Esquerda: Locais de Acerto e Opções --}}
-        <div class="hit-locations-panel">
+    {{!-- 2. CORPO COM 3 COLUNAS --}}
+    <main class="damage-app-body">
+        <div class="body-column hit-locations-panel">
             <div class="panel-header">Ponto de Impacto</div>
             <div class="locations-table">
+                {{!-- Cabeçalho da Tabela de RD --}}
                 <div class="location-header">
                     <span>Rolagem</span>
                     <span>Local</span>
                     <span>RD</span>
                 </div>
-                {{#each locations as |loc|}}
-                    <div class="location-row" data-location-key="{{loc.key}}" data-dr="{{loc.totalDR}}">
-                        <span class="roll">{{loc.roll}}</span>
-                        <span class="label">{{loc.label}}</span>
-                        <span class="dr">{{loc.totalDR}}</span>
-                    </div>
+                {{!-- Lista de Locais --}}
+                {{#each locations}}
+                <div class="location-row" data-location-key="{{this.key}}" data-dr="{{this.totalDR}}">
+                    <span class="roll">{{this.roll}}</span>
+                    <span class="label">{{this.label}}</span>
+                    <span class="dr">{{this.totalDR}}</span>
+                </div>
                 {{/each}}
             </div>
             <div class="damage-options">
-                <label class="custom-checkbox"><input type="checkbox" name="large_area_injury"/> Lesão em Larga Escala</label>
-                <label class="custom-checkbox"><input type="checkbox" name="ignore_dr"/> Ignorar RD do Alvo</label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" name="large_area_injury"/>
+                    <span>Lesão em Larga Escala</span>
+                </label>
+                <label class="custom-checkbox">
+                    <input type="checkbox" name="ignore_dr"/>
+                    <span>Ignorar RD do Alvo</span>
+                </label>
             </div>
         </div>
 
-        {{!-- Coluna da Direita: Cálculos --}}
-<div class="calculation-panel">
-    <div class="form-section">
-        <h4 class="section-title">Cálculo de Dano Principal</h4>
-        <div class="calc-grid">
-            <div class="form-group">
-                <label>Dano Rolado</label>
-                <input type="number" name="damage_rolled" value="{{damage.main.total}}"/>
+        
+       {{!-- Coluna 2: Modificadores de Ferimento --}}
+<div class="body-column wounding-mods-panel">
+     <div class="panel-header">Mod. de Ferimento e Lesão</div>
+     <div class="wounding-table">
+        {{#each woundingModifiers as |mod|}}
+            <div class="wounding-row">
+                <label class="custom-radio">
+                    <input type="radio" name="wounding_mod_type" value="{{mod.mult}}" {{#if mod.checked}}checked{{/if}}/>
+                    <span class="type">{{mod.type}} ({{mod.abrev}})</span>
+                    <span class="dots"></span>
+                    <span class="mult">x{{mod.mult}}</span>
+                </label>
             </div>
-            <div class="form-group">
-                <label>Tipo</label>
-                <input type="text" name="damage_type" value="{{damage.main.type}}"/>
-            </div>
-            <div class="form-group">
-                <label>RD do Alvo</label>
-                <input type="number" name="target_dr" value="0"/>
-            </div>
-            <div class="form-group">
-                <label>Dano Penetrante</label>
-                <input type="text" name="penetrating_damage" value="{{damage.main.total}}" readonly/>
-            </div>
-            <div class="form-group">
-                <label>Multiplicador</label>
-                <input type="text" name="wounding_mod" value="x1" readonly/>
-            </div>
-            <div class="form-group final-injury">
-                <label>Lesão Final</label>
-                <input type="text" name="final_injury" value="{{damage.main.total}}" readonly/>
-            </div>
+        {{/each}}
+        <hr>
+        <div class="wounding-row">
+            <label class="custom-radio">
+                <input type="radio" name="wounding_mod_type" value="1" {{#if noModChecked}}checked{{/if}}/>
+                <span>Sem Modificador</span>
+                <span class="dots"></span>
+                <span class="mult">x1</span>
+            </label>
         </div>
-
-            <div class="dialog-buttons">
-        <button type="button" data-action="applyAndPublish">
-            <i class="fas fa-bullhorn"></i> Aplicar e Publicar
-        </button>
-        <button type="button" data-action="applyAndClose">
-            <i class="fas fa-check"></i> Aplicar e Fechar
-        </button>
-        <button type="button" data-action="applyAndKeepOpen">
-            <i class="fas fa-sync-alt"></i> Aplicar e Manter
-        </button>
-    </div>
-    </div>
-    
-    {{!-- Área para os danos secundários (será preenchida dinamicamente pelo JS) --}}
-    <div class="secondary-damages"></div>
+        <div class="wounding-row">
+             <label class="custom-radio">
+                 <input type="radio" name="wounding_mod_type" value="custom"/>
+                 <span>Outros:</span>
+                 <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
+            </label>
+        </div>
+     </div>
 </div>
-    </div>
+
+        {{!-- Colunas 3 --}}
+        <div class="body-column situational-mods-panel">
+             <div class="panel-header">Situações Especiais</div>
+             <div class="placeholder">A ser implementado</div>
+        </div>
+    </main>
+
+    <input type="hidden" name="target_dr" value="0" />
+    {{!-- ================================== --}}
+    {{!--  3. RODAPÉ COM CÁLCULOS E AÇÕES   --}}
+    {{!-- ================================== --}}
+    <footer class="damage-app-footer">
+        <div class="footer-column calculation-summary">
+            <div class="summary-row"><label>Dano Básico:</label><span class="calc-field" data-field="damage_rolled"></span></div>
+            <div class="summary-row"><label>RD do Alvo:</label><span class="calc-field" data-field="target_dr"></span></div>
+            <div class="summary-row"><label>Dano Penetrante:</label><span class="calc-field" data-field="penetrating_damage"></span></div>
+            <div class="summary-row"><label>Modificador de Dano:</label><span class="calc-field" data-field="wounding_mod"></span></div>
+            <hr>
+            <div class="summary-row final-injury"><label>Lesão:</label><span class="calc-field" data-field="final_injury"></span></div>
+        </div>
+        <div class="footer-column effects-summary">
+            <div class="placeholder">Efeitos a serem aplicados</div>
+        </div>
+        <div class="footer-column action-buttons">
+            <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> Aplicar e Publicar</button>
+            <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> Aplicar e Fechar</button>
+            <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> Aplicar e Manter</button>
+        </div>
+    </footer>
 </form>

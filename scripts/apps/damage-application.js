@@ -5,6 +5,11 @@ export default class DamageApplicationWindow extends Application {
         this.damageData = damageData;
         this.attackerActor = attackerActor;
         this.targetActor = targetActor;
+        this.state = {
+            finalInjury: 0,
+            targetDR: 0,
+            activeDamageKey: 'main' // Começa com o dano principal selecionado
+        };
     }
 
     static get defaultOptions() {
@@ -12,17 +17,11 @@ export default class DamageApplicationWindow extends Application {
             title: `Aplicar Dano em ${this.object?.target?.name || "Alvo"}`,
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
-            width: 650,
+            width: 720,
             height: "auto",
             resizable: true,
             // ✅ NOVO: Adicionamos um botão "Aplicar" no rodapé da janela ✅
-            buttons: {
-                apply: {
-                    icon: '<i class="fas fa-check"></i>',
-                    label: "Aplicar Lesão",
-                    callback: (html) => this._onApplyDamage(html.find('form')[0])
-                }
-            }
+            buttons: { }
         });
     }
 
@@ -31,6 +30,48 @@ export default class DamageApplicationWindow extends Application {
     context.damage = this.damageData;
     context.attacker = this.attackerActor;
     context.target = this.targetActor;
+
+     const damageablePools = [];
+
+    // Adiciona os padrões: Pontos de Vida e Pontos de Fadiga
+    damageablePools.push({
+        path: 'system.attributes.hp.value',
+        label: `Pontos de Vida (PV)`
+    });
+    damageablePools.push({
+        path: 'system.attributes.fp.value',
+        label: `Pontos de Fadiga (PF)`
+    });
+
+    // Adiciona os "Registros de Combate" customizados
+    const combatMeters = this.targetActor.system.combat.combat_meters || {};
+    for (const [key, meter] of Object.entries(combatMeters)) {
+        damageablePools.push({
+            path: `system.combat.combat_meters.${key}.value`,
+            label: meter.name
+        });
+    }
+    
+        // 3. ✅ NOVO: Adiciona as "Reservas de Magia" ✅
+    const spellReserves = this.targetActor.system.spell_reserves || {};
+    for (const [key, reserve] of Object.entries(spellReserves)) {
+        damageablePools.push({
+            path: `system.spell_reserves.${key}.value`,
+            label: `RM:${reserve.name}`
+        });
+    }
+
+    // 4. ✅ NOVO: Adiciona as "Reservas de Poder" ✅
+    const powerReserves = this.targetActor.system.power_reserves || {};
+    for (const [key, reserve] of Object.entries(powerReserves)) {
+        damageablePools.push({
+            path: `system.power_reserves.${key}.value`,
+            label: `RP:${reserve.name}`
+        });
+    }
+    
+    // Passa a lista final de "piscinas de dano" para o template
+    context.damageablePools = damageablePools;
 
     // Tabela base de locais de acerto com RD inicial 0
     const locationsData = {
@@ -87,7 +128,31 @@ export default class DamageApplicationWindow extends Application {
         return firstRollA - firstRollB;
     });
 
+        // --- ✅ NOVA LÓGICA PARA A TABELA DE MODIFICADORES ✅ ---
+    const mainDamageType = this.damageData.main.type || 'cr'; // 'cr' é o padrão x1
+    const woundingModifiersList = [
+        { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 },
+        { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 },
+        { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 },
+        { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 },
+        { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 },
+        { type: "Apenas Projeção", abrev: "kb", mult: 1 }, { type: "Fadiga", abrev: "fad", mult: 1 },
+        { type: "Pontos de Controle", abrev: "ctrle", mult: 1 }
+    ];
+
+    // Verifica qual modificador deve vir pré-selecionado
+    let defaultModFound = false;
+    context.woundingModifiers = woundingModifiersList.map(mod => {
+        mod.checked = (mod.abrev === mainDamageType);
+        if (mod.checked) defaultModFound = true;
+        return mod;
+    });
+
+    // Se nenhum modificador corresponder, a opção "Sem Modificador" será a padrão
+    context.noModChecked = !defaultModFound;
+
     return context;
+
 }
 
     /**
@@ -96,6 +161,17 @@ export default class DamageApplicationWindow extends Application {
     activateListeners(html) {
         super.activateListeners(html);
         const form = html[0]; 
+
+        form.querySelectorAll('.damage-card').forEach(card => {
+            card.addEventListener('click', ev => {
+                // Remove 'active' de todos os cards
+                form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
+                // Adiciona 'active' ao card clicado
+                ev.currentTarget.classList.add('active');
+                // Atualiza o campo ativo (não é necessário pois _updateDamageCalculation já busca)
+                this._updateDamageCalculation(form);
+            });
+        });
 
         // Listener para os cliques nas linhas de local de acerto
         form.querySelectorAll('.location-row').forEach(row => {
@@ -133,62 +209,113 @@ export default class DamageApplicationWindow extends Application {
 
     }
 
-    /**
-     * ✅ NOVO MÉTODO: Centraliza toda a lógica de cálculo de dano.
-     */
-    _updateDamageCalculation(form) {
-        // Pega os valores atuais da janela
-        const damageRolled = parseInt(form.querySelector('[name="damage_rolled"]').value) || 0;
-        const targetDR = parseInt(form.querySelector('[name="target_dr"]').value) || 0;
-        const damageType = form.querySelector('[name="damage_type"]').value || '';
-        const armorDivisor = parseFloat(this.damageData.main.armorDivisor) || 1;
-        const ignoreDR = form.querySelector('[name="ignore_dr"]').checked;
-        const isLargeArea = form.querySelector('[name="large_area_injury"]').checked;
+/**
+ * ✅ MÉTODO DE CÁLCULO CORRIGIDO PARA ATUALIZAR O NOVO LAYOUT DO RODAPÉ ✅
+ */
+_updateDamageCalculation(form) {
+    // Pega os dados do card de dano selecionado no cabeçalho
+    const activeCard = form.querySelector('.damage-card.active');
+    // Se nenhum card estiver ativo (ex: na primeira abertura), usa o dano principal como padrão
+    const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
+    const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
 
-        // Calcula a RD efetiva
-        const effectiveDR = ignoreDR ? 0 : (armorDivisor > 0 ? Math.floor(targetDR / armorDivisor) : targetDR);
-        
-        // Calcula o dano penetrante
-        const penetratingDamage = Math.max(0, damageRolled - effectiveDR);
-        
-        // --- ✅ LÓGICA DO MULTIPLICADOR DE FERIMENTO ✅ ---
-        const woundingModifiers = {
-            'pi-': 0.5, 'pi': 1, 'pi+': 1.5, 'pi++': 2,
-            'cort': 1.5, 'cor': 1, 'cr': 1, 'exp': 1,
-            'fad': 1, 'tox': 1, 'que': 1, 'kb': 1
-        };
-        let woundingMod = woundingModifiers[damageType] || 1;
-
-        // Regra de Lesão em Larga Escala (limita o multiplicador em 1x)
-        if (isLargeArea && woundingMod > 1) {
-            woundingMod = 1;
+    // Pega os valores da UI
+    const damageRolled = activeDamage.total;
+    const damageType = activeDamage.type || '';
+    const armorDivisor = activeDamage.armorDivisor > 0 ? activeDamage.armorDivisor : 1
+    const selectedLocationDR = parseInt(form.querySelector('.location-row.active')?.dataset.dr || 0);
+    const ignoreDR = form.querySelector('[name="ignore_dr"]').checked;
+    const isLargeArea = form.querySelector('[name="large_area_injury"]').checked;
+    
+    // Pega o multiplicador da tabela de ferimento
+    const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+    let woundingMod = 1;
+    if (selectedModRadio) {
+        if (selectedModRadio.value === 'custom') {
+            woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]').value) || 1;
+        } else {
+            woundingMod = parseFloat(selectedModRadio.value) || 1;
         }
-        
-        // Calcula a lesão final
-        const finalInjury = Math.floor(penetratingDamage * woundingMod);
-
-        // Atualiza os campos "readonly" na janela
-        form.querySelector('[name="penetrating_damage"]').value = penetratingDamage;
-        form.querySelector('[name="wounding_mod"]').value = `x${woundingMod}`;
-        form.querySelector('[name="final_injury"]').value = finalInjury;
     }
 
-    /**
-     * ✅ NOVO MÉTODO: Executado ao clicar no botão "Aplicar Lesão".
+    // --- FAZ OS CÁLCULOS ---
+    const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
+    const penetratingDamage = Math.max(0, damageRolled - effectiveDR);
+    
+    // Aplica a regra de Lesão em Larga Escala
+    if (isLargeArea && woundingMod > 1) {
+        woundingMod = 1;
+    }
+    
+    const finalInjury = Math.floor(penetratingDamage * woundingMod);
+
+    // --- ATUALIZA A TABELA DE RESUMO NO RODAPÉ ---
+    form.querySelector('[data-field="damage_rolled"]').textContent = damageRolled;
+    
+    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
+    form.querySelector('[data-field="target_dr"]').textContent = `${selectedLocationDR} (${selectedLocationLabel})`;
+
+    
+    form.querySelector('[data-field="penetrating_damage"]').textContent = penetratingDamage;
+    form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod} (${damageType})`;
+    form.querySelector('[data-field="final_injury"]').textContent = finalInjury;
+
+    // Guarda o valor final para o botão aplicar usar
+    this.finalInjury = finalInjury;
+}
+
+        _onLocationClick(event, form) {
+        // Remove a classe 'active' de todas as outras linhas
+        form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
+        // Adiciona a classe 'active' na linha clicada (o CSS vai cuidar do destaque)
+        event.currentTarget.classList.add('active');
+        // Pega a RD do atributo data-dr que definimos no HBS
+        const targetDR = event.currentTarget.dataset.dr;
+        // Atualiza o valor no campo de input
+        form.querySelector('[name="target_dr"]').value = targetDR;
+        // Chama a função de recálculo
+        this._updateDamageCalculation(form);
+    }
+     /**
+     * ✅ LÓGICA DE APLICAR O DANO FINAL E FUNCIONAL ✅
      */
-    async _onApplyDamage(form) {
-        const finalInjury = parseInt(form.querySelector('[name="final_injury"]').value) || 0;
+    async _onApplyDamage(form, shouldClose, shouldPublish) {
+        if (!form) return;
+        
+        // 1. Pega o caminho do atributo a ser danificado (ex: "system.attributes.hp.value")
+        const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
+        if (!selectedPoolPath) {
+            return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
+        }
+
+        // 2. Pega o valor atual desse atributo no ator alvo
+        const currentPoolValue = getProperty(this.targetActor, selectedPoolPath);
+
+        // 3. Pega o valor final da lesão que já calculamos
+        const finalInjury = this.finalInjury || 0;
+
         if (finalInjury > 0) {
-            const currentHP = this.targetActor.system.attributes.hp.value;
-            await this.targetActor.update({ 'system.attributes.hp.value': currentHP - finalInjury });
-            ui.notifications.info(`${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`);
-            // Futuramente, poderíamos adicionar lógicas para danos extras aqui
+            // 4. Calcula o novo valor e atualiza o ator
+            const newPoolValue = currentPoolValue - finalInjury;
+            await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+            
+            // 5. Lida com a publicação no chat ou notificação
+            if (shouldPublish) {
+                const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+                const summaryContent = `<strong>${this.targetActor.name}</strong> sofreu <strong>${finalInjury}</strong> de lesão em <strong>${poolLabel.trim()}</strong> do ataque de <strong>${this.attackerActor.name}</strong>!`;
+                ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.attackerActor}), content: summaryContent });
+            } else {
+                 ui.notifications.info(`${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`);
+            }
         } else {
             ui.notifications.info(`O ataque não causou lesão em ${this.targetActor.name}.`);
         }
-        this.close(); // Fecha a janela após aplicar
-    }
 
+        // 6. Fecha a janela se necessário
+        if (shouldClose) {
+            this.close();
+        }
+    }
 
     // Sobrescreve o método de submissão do formulário para usar nossa lógica
     async _updateObject(event, formData) {
