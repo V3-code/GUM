@@ -87,6 +87,12 @@ export default class DamageApplicationWindow extends Application {
         "neck":     { label: "Pescoço",     roll: "17-18",     dr: 0 },
         "eyes":     { label: "Olhos",       roll: "--",        dr: 0 }
     };
+    locationsData["custom"] = {
+    label: "Outro",
+    roll: "--",
+    dr: 0,
+    custom: true
+};
 
     // --- ✅ NOVA LÓGICA DE CÁLCULO DE RD AUTOSSUFICIENTE ✅ ---
 
@@ -129,7 +135,7 @@ export default class DamageApplicationWindow extends Application {
     });
 
         // --- ✅ NOVA LÓGICA PARA A TABELA DE MODIFICADORES ✅ ---
-    const mainDamageType = this.damageData.main.type || 'cr'; // 'cr' é o padrão x1
+    const mainDamageType = this.damageData.main?.type?.toLowerCase() || ''; // 'cr' é o padrão x1
     const woundingModifiersList = [
         { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 },
         { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 },
@@ -147,6 +153,7 @@ export default class DamageApplicationWindow extends Application {
         if (mod.checked) defaultModFound = true;
         return mod;
     });
+    
 
     // Se nenhum modificador corresponder, a opção "Sem Modificador" será a padrão
     context.noModChecked = !defaultModFound;
@@ -170,6 +177,27 @@ export default class DamageApplicationWindow extends Application {
                 ev.currentTarget.classList.add('active');
                 // Atualiza o campo ativo (não é necessário pois _updateDamageCalculation já busca)
                 this._updateDamageCalculation(form);
+
+                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
+if (damageType) {
+    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+    let matched = false;
+    allRadios.forEach(r => {
+        const label = r.closest('.wounding-row')?.textContent;
+        if (label?.toLowerCase().includes(damageType.toLowerCase())) {
+            r.checked = true;
+            matched = true;
+        }
+    });
+
+    // Se não encontrou, deixa "Sem Modificador" marcado
+    if (!matched) {
+        const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]');
+        if (noModRadio) noModRadio.checked = true;
+    }
+}
+this._updateDamageCalculation(form);
+
             });
         });
 
@@ -185,6 +213,17 @@ export default class DamageApplicationWindow extends Application {
                 this._updateDamageCalculation(form);
             });
         });
+
+form.querySelectorAll('input[name="custom_dr"]').forEach(input => {
+    input.addEventListener('input', () => {
+        const customRow = form.querySelector('.location-row[data-location-key="custom"]');
+        if (customRow.classList.contains('active')) {
+            // Atualiza o atributo escondido
+            form.querySelector('[name="target_dr"]').value = parseInt(input.value) || 0;
+            this._updateDamageCalculation(form);
+        }
+    });
+});
 
         // Listener para qualquer mudança nos campos de cálculo
         form.querySelectorAll('input').forEach(input => {
@@ -223,7 +262,17 @@ _updateDamageCalculation(form) {
     const damageRolled = activeDamage.total;
     const damageType = activeDamage.type || '';
     const armorDivisor = activeDamage.armorDivisor > 0 ? activeDamage.armorDivisor : 1
-    const selectedLocationDR = parseInt(form.querySelector('.location-row.active')?.dataset.dr || 0);
+    let selectedLocationDR = 0;
+        const activeRow = form.querySelector('.location-row.active');
+        if (activeRow) {
+            if (activeRow.dataset.locationKey === 'custom') {
+                const customInput = activeRow.querySelector('input[name="custom_dr"]');
+                selectedLocationDR = parseInt(customInput?.value || 0);
+            } else {
+                selectedLocationDR = parseInt(activeRow.dataset.dr || 0);
+            }
+        }
+
     const ignoreDR = form.querySelector('[name="ignore_dr"]').checked;
     const isLargeArea = form.querySelector('[name="large_area_injury"]').checked;
     
@@ -257,7 +306,23 @@ _updateDamageCalculation(form) {
 
     
     form.querySelector('[data-field="penetrating_damage"]').textContent = penetratingDamage;
-    form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod} (${damageType})`;
+    // Tenta pegar o nome do modificador visível na interface
+let modName = '';
+if (selectedModRadio) {
+    const modRow = selectedModRadio.closest('.wounding-row');
+    if (modRow) {
+        const fullText = modRow.querySelector('.type')?.textContent || '';
+        const abrevMatch = fullText.match(/\(([^)]+)\)/);
+        modName = abrevMatch ? abrevMatch[1] : 'x1';
+    }
+    if (selectedModRadio.value === '1') {
+        modName = 'x1';
+    }
+}
+
+
+form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod} (${modName})`;
+
     form.querySelector('[data-field="final_injury"]').textContent = finalInjury;
 
     // Guarda o valor final para o botão aplicar usar

@@ -57,7 +57,13 @@
                 <div class="location-row" data-location-key="{{this.key}}" data-dr="{{this.totalDR}}">
                     <span class="roll">{{this.roll}}</span>
                     <span class="label">{{this.label}}</span>
-                    <span class="dr">{{this.totalDR}}</span>
+                        <span class="dr">
+                            {{#if this.custom}}
+                                <input type="number" name="custom_dr" value="0" min="0" class="custom-dr-input"/>
+                            {{else}}
+                                {{this.totalDR}}
+                            {{/if}}
+                        </span>
                 </div>
                 {{/each}}
             </div>
