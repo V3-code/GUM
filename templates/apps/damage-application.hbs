@@ -126,8 +126,15 @@
     {{!-- ================================== --}}
     <footer class="damage-app-footer">
         <div class="footer-column calculation-summary">
-            <div class="summary-row"><label>Dano Básico:</label><span class="calc-field" data-field="damage_rolled"></span></div>
-            <div class="summary-row"><label>RD do Alvo:</label><span class="calc-field" data-field="target_dr"></span></div>
+            <div class="summary-row">
+  <label>Dano Básico:</label>
+  <input type="number" name="damage_rolled" class="calc-input" min="0" step="1"/>
+</div>
+            <div class="summary-row">
+  <label>Divisor de Armadura:</label>
+  <input type="number" name="armor_divisor" class="calc-input" min="0.1" step="0.1"/>
+</div>
+            <div class="summary-row"><label>RD do Alvo:</label><span class="calc-field" data-field="target_dr"></span></div>         
             <div class="summary-row"><label>Dano Penetrante:</label><span class="calc-field" data-field="penetrating_damage"></span></div>
             <div class="summary-row"><label>Modificador de Dano:</label><span class="calc-field" data-field="wounding_mod"></span></div>
             <hr>

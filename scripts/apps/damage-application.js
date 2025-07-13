@@ -17,7 +17,7 @@ export default class DamageApplicationWindow extends Application {
             title: `Aplicar Dano em ${this.object?.target?.name || "Alvo"}`,
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
-            width: 720,
+            width: 760,
             height: "auto",
             resizable: true,
             // ✅ NOVO: Adicionamos um botão "Aplicar" no rodapé da janela ✅
@@ -153,7 +153,7 @@ export default class DamageApplicationWindow extends Application {
         if (mod.checked) defaultModFound = true;
         return mod;
     });
-    
+
 
     // Se nenhum modificador corresponder, a opção "Sem Modificador" será a padrão
     context.noModChecked = !defaultModFound;
@@ -179,25 +179,32 @@ export default class DamageApplicationWindow extends Application {
                 this._updateDamageCalculation(form);
 
                 const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
-if (damageType) {
-    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
-    let matched = false;
-    allRadios.forEach(r => {
-        const label = r.closest('.wounding-row')?.textContent;
-        if (label?.toLowerCase().includes(damageType.toLowerCase())) {
-            r.checked = true;
-            matched = true;
-        }
-    });
+                if (damageType) {
+                    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+                    let matched = false;
+                    allRadios.forEach(r => {
+                        const label = r.closest('.wounding-row')?.textContent;
+                        if (label?.toLowerCase().includes(damageType.toLowerCase())) {
+                            r.checked = true;
+                            matched = true;
+                        }
+                    });
 
-    // Se não encontrou, deixa "Sem Modificador" marcado
-    if (!matched) {
-        const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]');
-        if (noModRadio) noModRadio.checked = true;
-    }
-}
+                    // Se não encontrou, deixa "Sem Modificador" marcado
+                    if (!matched) {
+                        const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]');
+                        if (noModRadio) noModRadio.checked = true;
+                    }
+                }
+                
+
+const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
+const damageInput = form.querySelector('[name="damage_rolled"]');
+const armorInput = form.querySelector('[name="armor_divisor"]');
+if (damageInput) damageInput.value = newDamage.total || 0;
+if (armorInput) armorInput.value = newDamage.armorDivisor || 1;
+
 this._updateDamageCalculation(form);
-
             });
         });
 
@@ -259,10 +266,26 @@ _updateDamageCalculation(form) {
     const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
 
     // Pega os valores da UI
-    const damageRolled = activeDamage.total;
+    
     const damageType = activeDamage.type || '';
-    const armorDivisor = activeDamage.armorDivisor > 0 ? activeDamage.armorDivisor : 1
-    let selectedLocationDR = 0;
+    // Captura os valores dos campos editáveis (com fallback)
+const damageRolledInput = form.querySelector('[name="damage_rolled"]');
+const armorDivisorInput = form.querySelector('[name="armor_divisor"]');
+
+let damageRolled = parseFloat(damageRolledInput?.value);
+let armorDivisor = parseFloat(armorDivisorInput?.value);
+
+if (isNaN(damageRolled)) {
+  damageRolled = activeDamage.total;
+  if (damageRolledInput) damageRolledInput.value = damageRolled;
+}
+
+if (!armorDivisor || armorDivisor <= 0) {
+  armorDivisor = activeDamage.armorDivisor || 1;
+  if (armorDivisorInput) armorDivisorInput.value = armorDivisor;
+}
+    
+        let selectedLocationDR = 0;
         const activeRow = form.querySelector('.location-row.active');
         if (activeRow) {
             if (activeRow.dataset.locationKey === 'custom') {
@@ -299,13 +322,22 @@ _updateDamageCalculation(form) {
     const finalInjury = Math.floor(penetratingDamage * woundingMod);
 
     // --- ATUALIZA A TABELA DE RESUMO NO RODAPÉ ---
-    form.querySelector('[data-field="damage_rolled"]').textContent = damageRolled;
+    if (damageRolledInput) damageRolledInput.value = damageRolled;
     
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
-    form.querySelector('[data-field="target_dr"]').textContent = `${selectedLocationDR} (${selectedLocationLabel})`;
-
     
-    form.querySelector('[data-field="penetrating_damage"]').textContent = penetratingDamage;
+    let drDisplay = `${selectedLocationDR}`;
+        if (armorDivisor && armorDivisor !== 1) {
+            const effectiveDR = Math.floor(selectedLocationDR / armorDivisor);
+            drDisplay = `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}`;
+        }
+        const drField = form.querySelector('[data-field="target_dr"]');
+    if (drField) drField.textContent = `${drDisplay} (${selectedLocationLabel})`;
+
+    if (armorDivisorInput) armorDivisorInput.value = armorDivisor;
+
+    const penField = form.querySelector('[data-field="penetrating_damage"]');
+    if (penField) penField.textContent = penetratingDamage;
     // Tenta pegar o nome do modificador visível na interface
 let modName = '';
 if (selectedModRadio) {
@@ -321,9 +353,11 @@ if (selectedModRadio) {
 }
 
 
-form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod} (${modName})`;
+const modField = form.querySelector('[data-field="wounding_mod"]');
+    if (modField) modField.textContent = `x${woundingMod} (${modName})`;
 
-    form.querySelector('[data-field="final_injury"]').textContent = finalInjury;
+    const finalField = form.querySelector('[data-field="final_injury"]');
+    if (finalField) finalField.textContent = finalInjury;
 
     // Guarda o valor final para o botão aplicar usar
     this.finalInjury = finalInjury;
@@ -348,13 +382,21 @@ form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod}
         if (!form) return;
         
         // 1. Pega o caminho do atributo a ser danificado (ex: "system.attributes.hp.value")
-        const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
+        let selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
         if (!selectedPoolPath) {
             return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
         }
 
         // 2. Pega o valor atual desse atributo no ator alvo
-        const currentPoolValue = getProperty(this.targetActor, selectedPoolPath);
+        let currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+
+        // Corrige o caminho se for um registro de combate
+        if (selectedPoolPath.includes("combat_meters") && currentPoolValue === undefined) {
+        // Verifica se é um antigo caminho .value (inválido), e troca para .current
+        const correctedPath = selectedPoolPath.replace(".value", ".current");
+        currentPoolValue = foundry.utils.getProperty(this.targetActor, correctedPath);
+        selectedPoolPath = correctedPath;
+        }
 
         // 3. Pega o valor final da lesão que já calculamos
         const finalInjury = this.finalInjury || 0;
@@ -362,7 +404,18 @@ form.querySelector('[data-field="wounding_mod"]').textContent = `x${woundingMod}
         if (finalInjury > 0) {
             // 4. Calcula o novo valor e atualiza o ator
             const newPoolValue = currentPoolValue - finalInjury;
-            await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+            if (selectedPoolPath.includes("combat_meters")) {
+  const meterMatch = selectedPoolPath.match(/combat_meters\.([^.]+)\.current/);
+  if (meterMatch) {
+    const meterKey = meterMatch[1];
+    await this.targetActor.update({
+      [`system.combat.combat_meters.${meterKey}.current`]: newPoolValue
+    });
+  }
+} else {
+  // Para todos os outros caminhos (PV, PF, reservas, etc)
+  await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+}
             
             // 5. Lida com a publicação no chat ou notificação
             if (shouldPublish) {
