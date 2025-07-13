@@ -2,42 +2,45 @@
     
     {{!-- 1. CABEÇALHO COM ATACANTE, DANOS E ALVO --}}
     <header class="damage-header">
-        <div class="actor-portrait attacker">
-            <img src="{{attacker.img}}" title="Atacante: {{attacker.name}}"/>
-            <span>Atacante</span>
-        </div>
-        <div class="damage-cards-area">
-            {{!-- Card do Dano Principal --}}
-            <a class="damage-card active" data-damage-key="main">
-                <div class="damage-value">{{damage.main.total}}</div>
-                <div class="damage-label">{{damage.main.type}}{{#if (gt damage.main.armorDivisor 1)}}({{damage.main.armorDivisor}}){{/if}}</div>
-            </a>
-            {{#if damage.followUp.total}}
-            <a class="damage-card follow-up" data-damage-key="followUp">
-                <div class="damage-value">{{damage.followUp.total}}</div>
-                <div class="damage-label">{{damage.followUp.type}}{{#if (gt damage.followUp.armorDivisor 1)}}({{damage.followUp.armorDivisor}}){{/if}}</div>
-            </a>
-            {{/if}}
-            {{#if damage.fragmentation.total}}
-             <a class="damage-card fragmentation" data-damage-key="fragmentation">
-                <div class="damage-value">{{damage.fragmentation.total}}</div>
-                <div class="damage-label">[{{damage.fragmentation.type}}]{{#if (gt damage.fragmentation.armorDivisor 1)}}({{damage.fragmentation.armorDivisor}}){{/if}}</div>
-            </a>
-            {{/if}}
-        </div>
-        <div class="actor-portrait target">
-            <img src="{{target.img}}" title="Alvo: {{target.name}}"/>
-            <span>Alvo</span>
-        </div>
-           <div class="form-group target-pool-selector">
-        <label>Aplicar Lesão em:</label>
-        <select name="damage_target_pool">
-            {{#each damageablePools as |pool|}}
-                <option value="{{pool.path}}">{{pool.label}}</option>
-            {{/each}}
-        </select>
+  <div class="header-row">
+    <div class="actor-portrait attacker">
+      <img src="{{attacker.img}}" title="Atacante: {{attacker.name}}"/>
+      </div>
+
+    <div class="damage-cards-area">
+      {{!-- Card do Dano Principal --}}
+      <a class="damage-card active" data-damage-key="main">
+        <div class="damage-value">{{damage.main.total}}</div>
+        <div class="damage-label">{{damage.main.type}}{{#if (gt damage.main.armorDivisor 1)}}({{damage.main.armorDivisor}}){{/if}}</div>
+      </a>
+      {{#if damage.followUp.total}}
+      <a class="damage-card follow-up" data-damage-key="followUp">
+        <div class="damage-value">{{damage.followUp.total}}</div>
+        <div class="damage-label">{{damage.followUp.type}}{{#if (gt damage.followUp.armorDivisor 1)}}({{damage.followUp.armorDivisor}}){{/if}}</div>
+      </a>
+      {{/if}}
+      {{#if damage.fragmentation.total}}
+      <a class="damage-card fragmentation" data-damage-key="fragmentation">
+        <div class="damage-value">{{damage.fragmentation.total}}</div>
+        <div class="damage-label">[{{damage.fragmentation.type}}]{{#if (gt damage.fragmentation.armorDivisor 1)}}({{damage.fragmentation.armorDivisor}}){{/if}}</div>
+      </a>
+      {{/if}}
     </div>
-    </header>
+
+    <div class="actor-portrait target">
+      <img src="{{target.img}}" title="Alvo: {{target.name}}"/>
+      </div>
+  </div>
+
+  <div class="header-row selector-row">
+    <select name="damage_target_pool">
+      {{#each damageablePools as |pool|}}
+        <option value="{{pool.path}}">{{pool.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+</header>
+
 
     <hr class="header-divider">
 
@@ -83,34 +86,66 @@
        {{!-- Coluna 2: Modificadores de Ferimento --}}
 <div class="body-column wounding-mods-panel">
      <div class="panel-header">Mod. de Ferimento e Lesão</div>
-     <div class="wounding-table">
-        {{#each woundingModifiers as |mod|}}
-            <div class="wounding-row">
-                <label class="custom-radio">
-                    <input type="radio" name="wounding_mod_type" value="{{mod.mult}}" {{#if mod.checked}}checked{{/if}}/>
-                    <span class="type">{{mod.type}} ({{mod.abrev}})</span>
-                    <span class="dots"></span>
-                    <span class="mult">x{{mod.mult}}</span>
-                </label>
-            </div>
-        {{/each}}
-        <hr>
-        <div class="wounding-row">
-            <label class="custom-radio">
-                <input type="radio" name="wounding_mod_type" value="1" {{#if noModChecked}}checked{{/if}}/>
-                <span>Sem Modificador</span>
-                <span class="dots"></span>
-                <span class="mult">x1</span>
-            </label>
-        </div>
-        <div class="wounding-row">
-             <label class="custom-radio">
-                 <input type="radio" name="wounding_mod_type" value="custom"/>
-                 <span>Outros:</span>
-                 <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
-            </label>
-        </div>
-     </div>
+<div class="wounding-table">
+  <div class="wounding-table">
+  {{#each woundingModifiers}}
+    {{#if (or (eq this.abrev "cort") (eq this.abrev "cont") (eq this.abrev "perf"))}}
+      <div class="wounding-row group-1">
+        <label class="custom-radio">
+          <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
+          <span class="type">{{this.type}} ({{this.abrev}})</span>
+          <span class="dots"></span>
+          <span class="mult">x{{this.mult}}</span>
+        </label>
+      </div>
+    {{/if}}
+  {{/each}}
+
+  {{#each woundingModifiers}}
+    {{#if (or (eq this.abrev "qmd") (eq this.abrev "cor") (eq this.abrev "tox"))}}
+      <div class="wounding-row group-2">
+        <label class="custom-radio">
+          <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
+          <span class="type">{{this.type}} ({{this.abrev}})</span>
+          <span class="dots"></span>
+          <span class="mult">x{{this.mult}}</span>
+        </label>
+      </div>
+    {{/if}}
+  {{/each}}
+
+  {{#each woundingModifiers}}
+    {{#if (or (eq this.abrev "pa") (eq this.abrev "pa-") (eq this.abrev "pa+") (eq this.abrev "pa++"))}}
+      <div class="wounding-row group-3">
+        <label class="custom-radio">
+          <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
+          <span class="type">{{this.type}} ({{this.abrev}})</span>
+          <span class="dots"></span>
+          <span class="mult">x{{this.mult}}</span>
+        </label>
+      </div>
+    {{/if}}
+  {{/each}}
+
+  <hr style="margin-top: 6px; margin-bottom: 6px;">
+  <div class="wounding-row">
+    <label class="custom-radio">
+      <input type="radio" name="wounding_mod_type" value="1" {{#if noModChecked}}checked{{/if}}/>
+      <span>Sem Modificador</span>
+      <span class="dots"></span>
+      <span class="mult">x1</span>
+    </label>
+  </div>
+  <div class="wounding-row">
+    <label class="custom-radio">
+      <input type="radio" name="wounding_mod_type" value="custom"/>
+      <span>Outros:</span>
+      <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
+    </label>
+  </div>
+</div>
+</div>
+
 </div>
 
         {{!-- Colunas 3 --}}

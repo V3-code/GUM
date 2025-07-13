@@ -140,10 +140,8 @@ export default class DamageApplicationWindow extends Application {
         { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 },
         { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 },
         { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 },
-        { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 },
-        { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 },
-        { type: "Apenas Projeção", abrev: "kb", mult: 1 }, { type: "Fadiga", abrev: "fad", mult: 1 },
-        { type: "Pontos de Controle", abrev: "ctrle", mult: 1 }
+        { type: "Perfurante", abrev: "pa", mult: 1 }, { type: "Pouco Perfurante", abrev: "pa-", mult: 0.5 },
+        { type: "Muito Perfurante", abrev: "pa+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pa++", mult: 2 }
     ];
 
     // Verifica qual modificador deve vir pré-selecionado
@@ -178,24 +176,37 @@ export default class DamageApplicationWindow extends Application {
                 // Atualiza o campo ativo (não é necessário pois _updateDamageCalculation já busca)
                 this._updateDamageCalculation(form);
 
-                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
-                if (damageType) {
-                    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
-                    let matched = false;
-                    allRadios.forEach(r => {
-                        const label = r.closest('.wounding-row')?.textContent;
-                        if (label?.toLowerCase().includes(damageType.toLowerCase())) {
-                            r.checked = true;
-                            matched = true;
-                        }
-                    });
+const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
 
-                    // Se não encontrou, deixa "Sem Modificador" marcado
-                    if (!matched) {
-                        const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]');
-                        if (noModRadio) noModRadio.checked = true;
-                    }
-                }
+// Se houver tipo de dano identificado
+if (damageType) {
+    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+    let matched = false;
+    allRadios.forEach(r => {
+        const label = r.closest('.wounding-row')?.textContent;
+        if (label?.toLowerCase().includes(damageType.toLowerCase())) {
+            r.checked = true;
+            matched = true;
+        }
+    });
+
+    // Se não encontrou nenhum modificador compatível
+    if (!matched) {
+        const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]');
+        if (noModRadio) noModRadio.checked = true;
+    }
+} else {
+    // Força a seleção do campo "Sem Modificador" (o que tem value="1" e label "Sem Modificador")
+    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+    for (let r of allRadios) {
+        const label = r.closest('.wounding-row')?.textContent?.toLowerCase() || '';
+        if (r.value === '1' && label.includes("sem modificador")) {
+            r.checked = true;
+            break;
+        }
+    }
+}
+
                 
 
 const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
@@ -345,12 +356,15 @@ if (selectedModRadio) {
     if (modRow) {
         const fullText = modRow.querySelector('.type')?.textContent || '';
         const abrevMatch = fullText.match(/\(([^)]+)\)/);
-        modName = abrevMatch ? abrevMatch[1] : 'x1';
+        modName = abrevMatch ? abrevMatch[1] : '';
     }
-    if (selectedModRadio.value === '1') {
-        modName = 'x1';
+
+    // Corrige para exibir o tipo de dano mesmo se o multiplicador for x1
+    if (selectedModRadio.value === '1' && modName === 'x1') {
+        modName = damageType || '—';
     }
 }
+
 
 
 const modField = form.querySelector('[data-field="wounding_mod"]');

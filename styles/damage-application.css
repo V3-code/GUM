@@ -4,12 +4,12 @@
 .damage-application-dialog .dialog-buttons button { margin-left: 5px; }
 
 /* --- 1. CABEÇALHO --- */
-.damage-application-dialog .damage-header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; }
+
 .damage-application-dialog .actor-portrait { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.damage-application-dialog .actor-portrait img { width: 50px; height: 50px; border-radius: 5px; border: 1px solid rgba(0,0,0,0.5); }
+
 .damage-application-dialog .actor-portrait span { font-size: 11px; text-transform: uppercase; }
 .damage-application-dialog .damage-cards-area { display: flex; gap: 8px; justify-content: center; }
-.damage-application-dialog .damage-card { border: 2px solid; padding: 5px 10px; border-radius: 4px; text-align: center; cursor: pointer; transition: all 0.2s ease; opacity: 0.6; }
+.damage-application-dialog .damage-card { border: 2px solid; padding: 10px 10px; border-radius: 4px; text-align: center; cursor: pointer; transition: all 0.2s ease; opacity: 0.6; }
 .damage-application-dialog .damage-card.active, .damage-application-dialog .damage-card:hover { box-shadow: 0 0 10px; transform: scale(1.05); opacity: 1; }
 .damage-application-dialog .damage-card .damage-value { font-size: 1.8em; font-weight: bold; }
 .damage-application-dialog .damage-card .damage-label { font-size: 0.8em; text-transform: uppercase; }
@@ -303,4 +303,107 @@
   font-size: 13px;
   padding: 2px 6px;
   text-align: right;
+}
+.mod-group-header {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: var(--color-text-light-3);
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px dashed var(--color-border-light-2);
+  padding-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/*Gradiente da tabela de Modificadores de Dano*/
+.wounding-row.group-1 {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+.wounding-row.group-2 {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.wounding-row.group-3 {
+  background-color: rgba(255, 255, 255, 0.055);
+  border-radius: 4px;
+}
+
+/*ESTILO DO CABEÇALHO*/
+/* Estilo geral do cabeçalho reorganizado */
+.damage-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+/* Linha com retratos e cards */
+.damage-header .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 12px;
+}
+
+/* Linha do seletor (pools de lesão) */
+.damage-header .selector-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: -2px;
+}
+
+/* Estilo do select para se ajustar melhor */
+.damage-header select[name="damage_target_pool"] {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: var(--color-bg-light-2, #1e1e1e);
+  color: var(--color-text-light-1, #eee);
+  border: 1px solid var(--color-border-light-2, #444);
+  max-width: 240px;
+  text-align: center;
+}
+
+/* Estilo dos retratos */
+.actor-portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--color-text-light-3);
+}
+
+.actor-portrait img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%; /* já circular */
+  object-fit: cover;
+  border: 2px solid var(--color-border-light-highlight, #999);
+  margin-bottom: 2px;
+}
+
+
+/* Cards de dano centralizados */
+.damage-cards-area {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+.damage-header select[name="damage_target_pool"] {
+  /* ... mantém estilos existentes ... */
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+}
+
+.damage-header select[name="damage_target_pool"] option {
+  color: #111;
+  background-color: #f8f8f8;
 }
