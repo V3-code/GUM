@@ -317,15 +317,15 @@
 }
 
 /*Gradiente da tabela de Modificadores de Dano*/
-.wounding-row.group-1 {
+.wounding-row.mod-group-1 {
   background-color: rgba(255, 255, 255, 0.25);
   border-radius: 4px;
 }
-.wounding-row.group-2 {
+.wounding-row.mod-group-2 {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
-.wounding-row.group-3 {
+.wounding-row.mod-group-3 {
   background-color: rgba(255, 255, 255, 0.055);
   border-radius: 4px;
 }
@@ -406,4 +406,29 @@
 .damage-header select[name="damage_target_pool"] option {
   color: #111;
   background-color: #f8f8f8;
+}
+.damage-app-footer .action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  justify-content: center;
+  margin-top: 4px; /* Reduz a distância vertical */
+}
+
+/* Estilo dos botões */
+.damage-app-footer .action-buttons button {
+  background: var(--color-button-background, #c5a05b); /* Amarelo padrão */
+  color: #000;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.damage-app-footer .action-buttons button:hover {
+  background: #c5a05b; /* tom mais claro ao passar o mouse */
+  box-shadow: 0 0 4px #c5a05b;
 }

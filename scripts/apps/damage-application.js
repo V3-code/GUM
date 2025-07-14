@@ -140,8 +140,8 @@ export default class DamageApplicationWindow extends Application {
         { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 },
         { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 },
         { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 },
-        { type: "Perfurante", abrev: "pa", mult: 1 }, { type: "Pouco Perfurante", abrev: "pa-", mult: 0.5 },
-        { type: "Muito Perfurante", abrev: "pa+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pa++", mult: 2 }
+        { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 },
+        { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 }
     ];
 
     // Verifica qual modificador deve vir pré-selecionado
@@ -220,17 +220,79 @@ this._updateDamageCalculation(form);
         });
 
         // Listener para os cliques nas linhas de local de acerto
-        form.querySelectorAll('.location-row').forEach(row => {
-            row.addEventListener('click', ev => {
-                form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
-                ev.currentTarget.classList.add('active');
-                
-                const targetDR = ev.currentTarget.dataset.dr;
-                form.querySelector('[name="target_dr"]').value = targetDR;
-                
-                this._updateDamageCalculation(form);
-            });
-        });
+form.querySelectorAll('.location-row').forEach(row => {
+    row.addEventListener('click', ev => {
+        // Marca o local clicado como ativo
+        form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
+        ev.currentTarget.classList.add('active');
+
+        // Atualiza o campo de RD selecionado
+        const targetDR = ev.currentTarget.dataset.dr;
+        form.querySelector('[name="target_dr"]').value = targetDR;
+
+        // ✅ NOVO: Atualiza os modificadores de dano com base no local
+        const locationKey = ev.currentTarget.dataset.locationKey;
+        const newMods = this._getAdjustedWoundingModifiers(locationKey);
+
+        // Redesenha a tabela de modificadores com os valores ajustados
+        const modTable = form.querySelector('.wounding-table');
+        if (modTable) {
+            const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+                let selectedAbrev = '';
+
+                if (selectedRadio) {
+                const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type');
+                selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || '';
+                }
+
+            const html = newMods.map(mod => `
+                <div class="wounding-row mod-group-${mod.group || 'x'}">
+                  <label class="custom-radio">
+                    <input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}
+/>
+                    <span class="type">${mod.type} (${mod.abrev})</span>
+                    <span class="dots"></span>
+                    <span class="mult">x${mod.mult}</span>
+                  </label>
+                </div>
+            `).join('');
+
+            // Adiciona também as opções padrão (sem mod e custom)
+            modTable.innerHTML = html + `
+                <hr>
+                <div class="wounding-row">
+                  <label class="custom-radio">
+                    <input type="radio" name="wounding_mod_type" value="1"/>
+                    <span>Sem Modificador</span>
+                    <span class="dots"></span>
+                    <span class="mult">x1</span>
+                  </label>
+                </div>
+                <div class="wounding-row">
+                  <label class="custom-radio">
+                    <input type="radio" name="wounding_mod_type" value="custom"/>
+                    <span>Outros:</span>
+                    <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
+                  </label>
+                </div>
+            `;
+            // Reaplica os listeners dos novos inputs de modificadores
+form.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => {
+    input.addEventListener('change', () => this._updateDamageCalculation(form));
+});
+
+// Listener para o campo customizado também
+const customModInput = form.querySelector('input[name="custom_wounding_mod"]');
+if (customModInput) {
+    customModInput.addEventListener('input', () => this._updateDamageCalculation(form));
+}
+        }
+
+        // Atualiza os cálculos com os novos modificadores
+        this._updateDamageCalculation(form);
+    });
+});
+
 
 form.querySelectorAll('input[name="custom_dr"]').forEach(input => {
     input.addEventListener('input', () => {
@@ -453,4 +515,66 @@ const modField = form.querySelector('[data-field="wounding_mod"]');
     async _updateObject(event, formData) {
         await this._onApplyDamage(this.form);
     }
+
+    _getAdjustedWoundingModifiers(locationKey) {
+const baseMods = [
+  { group: 1, type: "Corte", abrev: "cort", mult: 1.5 },
+  { group: 1, type: "Perfuração", abrev: "perf", mult: 2 },
+  { group: 1, type: "Contusão", abrev: "cont", mult: 1 },
+
+  { group: 2, type: "Queimadura", abrev: "qmd", mult: 1 },
+  { group: 2, type: "Corrosão", abrev: "cor", mult: 1 },
+  { group: 2, type: "Toxina", abrev: "tox", mult: 1 },
+
+  { group: 3, type: "Perfurante", abrev: "pi", mult: 1 },
+  { group: 3, type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 },
+  { group: 3, type: "Muito Perfurante", abrev: "pi+", mult: 1.5 },
+  { group: 3, type: "Ext. Perfurante", abrev: "pi++", mult: 2 },
+];
+
+
+  // 1. Crânio ou Olhos → tudo x4 (exceto tox)
+  if (["head", "eyes"].includes(locationKey)) {
+    return baseMods.map(mod => ({
+      ...mod,
+      mult: mod.abrev === "tox" ? 1 : 4
+    }));
+  }
+
+  // 2. Rosto → corrosão = 1.5
+  if (locationKey === "face") {
+    return baseMods.map(mod => ({
+      ...mod,
+      mult: mod.abrev === "cor" ? 1.5 : mod.mult
+    }));
+  }
+
+  // 3. Braço, Perna, Mão, Pé → perfurantes = x1
+  if (["arm", "leg", "hand", "foot"].includes(locationKey)) {
+    return baseMods.map(mod => {
+      if (["perf", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 1 };
+      return mod;
+    });
+  }
+
+  // 4. Pescoço → corrosão e contusão = 1.5, corte = 2
+  if (locationKey === "neck") {
+    return baseMods.map(mod => {
+      if (mod.abrev === "cor" || mod.abrev === "cont") return { ...mod, mult: 1.5 };
+      if (mod.abrev === "cort") return { ...mod, mult: 2 };
+      return mod;
+    });
+  }
+
+  // 5. Órgãos Vitais → todos perfurantes = x3
+  if (locationKey === "vitals") {
+    return baseMods.map(mod => {
+      if (["perf", "pi", "pi-", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 3 };
+      return mod;
+    });
+  }
+
+  // Padrão (tronco)
+  return baseMods;
+}
 }

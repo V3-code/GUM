@@ -115,7 +115,7 @@
   {{/each}}
 
   {{#each woundingModifiers}}
-    {{#if (or (eq this.abrev "pa") (eq this.abrev "pa-") (eq this.abrev "pa+") (eq this.abrev "pa++"))}}
+    {{#if (or (eq this.abrev "pi") (eq this.abrev "pi-") (eq this.abrev "pi+") (eq this.abrev "pi++"))}}
       <div class="wounding-row group-3">
         <label class="custom-radio">
           <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
