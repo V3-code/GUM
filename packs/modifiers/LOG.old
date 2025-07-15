@@ -1,8 +1,1 @@
-2025/07/13-21:29:04.794 3234 Log #83: 0 ops saved to Table #86 OK
-2025/07/13-21:29:04.796 3234 Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/000083.log: OK
-2025/07/13-21:29:04.796 3234 Log #85: 0 ops saved to Table #87 OK
-2025/07/13-21:29:04.796 3234 Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/000085.log: OK
-2025/07/13-21:29:04.806 3234 Table #29: 3 entries OK
-2025/07/13-21:29:04.811 3234 Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/MANIFEST-000082: OK
-2025/07/13-21:29:04.811 3234 Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/MANIFEST-000084: OK
-2025/07/13-21:29:04.815 3234 **** Repaired leveldb C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers; recovered 1 files; 909 bytes. Some data may have been lost. ****
+2025/07/13-21:29:04.825 3234 Delete type=3 #1

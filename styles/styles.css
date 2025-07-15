@@ -2377,7 +2377,7 @@ nav.sheet-tabs {
 }
 
 /* =================================================================== */
-/* DESIGN: MENSAGENS DE ROLAGEM DE DANO (v4 - Layout Corrigido)        */
+/* DESIGN DO CARD DE DANO NO CHAT (VERSÃO FINAL)                     */
 /* =================================================================== */
 
 .gurps-damage-card {
@@ -2390,31 +2390,23 @@ nav.sheet-tabs {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     margin-top: 5px;
 }
-
-/* --- MUDANÇA: Restaurando o cabeçalho como um bloco distinto --- */
 .gurps-damage-card .card-header {
     background: #e9e3e0;
     padding: 6px 10px;
-    border-bottom: 1px solid #d1c8c4; /* Borda inferior restaurada */
+    border-bottom: 1px solid #d1c8c4;
     text-align: center;
 }
-
 .gurps-damage-card .card-header h3 {
     font-family: 'Cinzel', serif;
     font-size: 1.2em;
     margin: 0;
-    padding: 0;
     color: #313131;
     font-weight: 700;
 }
-
-/* --- MUDANÇA: Posicionando a pílula fora do cabeçalho --- */
 .gurps-damage-card .card-formula-container {
-    background: transparent; /* Fundo removido para ficar na área de conteúdo */
     text-align: center;
-    padding: 8px 0 4px 0; /* Espaçamento para respirar abaixo do header */
+    padding: 8px 10px 4px 10px;
 }
-
 .gurps-damage-card .formula-pill {
     font-size: 0.9em;
     color: #6d6666;
@@ -2423,14 +2415,10 @@ nav.sheet-tabs {
     border-radius: 15px;
     padding: 4px 10px;
     display: inline-block;
-    white-space: nowrap;
 }
-
-/* A borda inferior do card-content foi removida pois não há mais necessidade */
 .gurps-damage-card .card-content {
-    padding: 4px 10px 10px 10px; /* Ajuste no padding superior */
+    padding: 4px 10px 10px 10px;
 }
-
 .gurps-damage-card .card-main-flex {
     display: flex;
     justify-content: space-around;
@@ -2438,23 +2426,18 @@ nav.sheet-tabs {
     padding-top: 8px;
     border-top: 1px solid #e9e3e0;
 }
-
 .gurps-damage-card .roll-column, .gurps-damage-card .target-column {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
     flex-basis: 45%;
-    min-height: 70px;
 }
-
 .gurps-damage-card .column-separator {
-    display: block;
     width: 1px;
     background-color: #d1c8c4;
     align-self: stretch;
 }
-
 .gurps-damage-card .column-label {
     font-size: 0.8em;
     font-weight: bold;
@@ -2462,7 +2445,6 @@ nav.sheet-tabs {
     text-transform: uppercase;
     margin-bottom: 4px;
 }
-
 .gurps-damage-card .individual-dice-damage {
     display: flex;
     flex-wrap: wrap;
@@ -2474,35 +2456,27 @@ nav.sheet-tabs {
     width: 100%;
     box-sizing: border-box;
 }
-
 .gurps-damage-card .die-damage {
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
     background-color: #fdfaf8;
     border: 1px solid #d1c8c4;
     border-radius: 3px;
     font-weight: bold;
-    font-size: 0.9em;
 }
-
 .gurps-damage-card .damage-total {
     display: flex;
-    justify-content: center;
     align-items: baseline;
     gap: 8px;
-    line-height: 1;
-  
 }
-
 .gurps-damage-card .damage-value {
     font-size: 2.8em;
     font-weight: bold;
     color: #a53541;
 }
-
 .gurps-damage-card .damage-type {
     font-size: 1em;
     font-weight: bold;
@@ -2513,17 +2487,67 @@ nav.sheet-tabs {
     text-transform: uppercase;
 }
 
+/* --- ✅ NOVO ESTILO PARA DANOS EXTRAS ✅ --- */
 .gurps-damage-card .card-footer {
     padding: 8px 10px;
     background: #f0ebe8;
     border-top: 1px solid #d1c8c4;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-.gurps-damage-card .extra-damage {
+.extra-damage-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.extra-damage-label {
     font-size: 0.9em;
-    color: #444;
+    font-weight: bold;
+    color: #5c524a;
 }
-.gurps-damage-card .extra-damage + .extra-damage {
-    margin-top: 4px;
+.extra-damage-roll {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+.extra-damage-roll .damage-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #a53541;
+}
+.extra-damage-roll .damage-type,
+.extra-damage-roll .armor-divisor-tag {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #313131;
+    background-color: #e9e3e0;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+.extra-damage-roll .armor-divisor-tag {
+    color: #6d6666;
+    background: none;
+}
+
+/* --- ✅ NOVO ESTILO PARA O BOTÃO ✅ --- */
+.gurps-damage-card .card-actions {
+    padding: 0;
+    border-top: 1px solid #d1c8c4;
+}
+.gurps-damage-card .apply-damage-button {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.9em;
+    font-weight: bold;
+    border: none;
+    background: #e9e3e0;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.gurps-damage-card .apply-damage-button:hover {
+    background: #d1c8c4;
 }
 
 /* =================================================================== */

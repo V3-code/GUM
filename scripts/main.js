@@ -2339,17 +2339,16 @@ const performDamageRoll = async (modifier = 0) => {
     }
     
     // Monta a 'pílula' de fórmula completa no topo do card
-    let fullFormula = `${mainRoll.formula} ${normalizedAttack.type || ''} ${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''}`;
-    if (followUpRoll) {
-        let followUpText = `${normalizedAttack.follow_up_damage.formula} ${normalizedAttack.follow_up_damage.type || ''}`;
-        if (normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1) followUpText += ` (${normalizedAttack.follow_up_damage.armor_divisor})`;
-        fullFormula += ` + ${followUpText}`;
-    }
-    if (fragRoll) {
-        let fragText = `${normalizedAttack.fragmentation_damage.formula} ${normalizedAttack.fragmentation_damage.type || ''}`;
-        if (normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1) fragText += ` (${normalizedAttack.fragmentation_damage.armor_divisor})`;
-        fullFormula += ` [${fragText}]`;
-    }
+// Monta a 'pílula' de fórmula completa no topo do card
+let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
+if (followUpRoll) {
+    let followUpText = `${normalizedAttack.follow_up_damage.formula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ''} ${normalizedAttack.follow_up_damage.type || ''}`;
+    fullFormula += ` + ${followUpText}`;
+}
+if (fragRoll) {
+    let fragText = `${normalizedAttack.fragmentation_damage.formula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ''} ${normalizedAttack.fragmentation_damage.type || ''}`;
+    fullFormula += ` [${fragText}]`;
+}
 
     // ✅ INÍCIO DA MUDANÇA PRINCIPAL: MONTAGEM DO PACOTE DE DADOS ✅
     const damagePackage = {
@@ -2402,23 +2401,28 @@ const performDamageRoll = async (modifier = 0) => {
             </div>
     `;
 
+    // ✅ NOVA ESTRUTURA PARA DANOS EXTRAS ✅
     const hasExtraDamage = followUpRoll || fragRoll;
     if (hasExtraDamage) {
         flavor += `<footer class="card-footer">`;
+        
+        const createExtraDamageBlock = (roll, data, label) => {
+            return `
+                <div class="extra-damage-block">
+                    <div class="extra-damage-label">${label}</div>
+                    <div class="extra-damage-roll">
+                        <span class="damage-value">${roll.total}</span>
+                        <span class="damage-type">${data.type || ''}</span>
+                    </div>
+                </div>
+            `;
+        };
 
-        // Bloco do Dano de Acompanhamento (se existir)
         if (followUpRoll) {
-            let followUpText = `<strong>Acompanhamento:</strong> ${followUpRoll.total} (${followUpRoll.formula}) ${normalizedAttack.follow_up_damage.type || ''}`;
-            if (normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1) followUpText += ` (${normalizedAttack.follow_up_damage.armor_divisor})`;
-            flavor += `<div class="extra-damage">${followUpText}</div>`;
+            flavor += createExtraDamageBlock(followUpRoll, normalizedAttack.follow_up_damage, "Acompanhamento");
         }
-
-        // Bloco do Dano de Fragmentação (se existir)
         if (fragRoll) {
-            let fragText = `<strong>Fragmentação:</strong> ${fragRoll.total} (${fragRoll.formula}) ${normalizedAttack.fragmentation_damage.type || ''}`;
-            if (normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1) fragText += ` (${normalizedAttack.fragmentation_damage.armor_divisor})`;
-            // A linha abaixo adiciona o texto ao card
-            flavor += `<div class="extra-damage">${fragText}</div>`;
+            flavor += createExtraDamageBlock(fragRoll, normalizedAttack.fragmentation_damage, "Fragmentação");
         }
 
     // A tag de fechamento do rodapé vem aqui, FORA dos ifs individuais.

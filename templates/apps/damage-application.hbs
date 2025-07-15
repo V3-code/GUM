@@ -11,18 +11,18 @@
       {{!-- Card do Dano Principal --}}
       <a class="damage-card active" data-damage-key="main">
         <div class="damage-value">{{damage.main.total}}</div>
-        <div class="damage-label">{{damage.main.type}}{{#if (gt damage.main.armorDivisor 1)}}({{damage.main.armorDivisor}}){{/if}}</div>
+        <div class="damage-label">{{#if (gt damage.main.armorDivisor 1)}}({{damage.main.armorDivisor}}){{/if}} {{damage.main.type}}</div>
       </a>
       {{#if damage.followUp.total}}
       <a class="damage-card follow-up" data-damage-key="followUp">
         <div class="damage-value">{{damage.followUp.total}}</div>
-        <div class="damage-label">{{damage.followUp.type}}{{#if (gt damage.followUp.armorDivisor 1)}}({{damage.followUp.armorDivisor}}){{/if}}</div>
+        <div class="damage-label">{{#if (gt damage.followUp.armorDivisor 1)}}({{damage.followUp.armorDivisor}}){{/if}} {{damage.followUp.type}}</div>
       </a>
       {{/if}}
       {{#if damage.fragmentation.total}}
       <a class="damage-card fragmentation" data-damage-key="fragmentation">
         <div class="damage-value">{{damage.fragmentation.total}}</div>
-        <div class="damage-label">[{{damage.fragmentation.type}}]{{#if (gt damage.fragmentation.armorDivisor 1)}}({{damage.fragmentation.armorDivisor}}){{/if}}</div>
+        <div class="damage-label">{{#if (gt damage.fragmentation.armorDivisor 1)}}({{damage.fragmentation.armorDivisor}}){{/if}} {{damage.fragmentation.type}}</div>
       </a>
       {{/if}}
     </div>
@@ -150,9 +150,37 @@
 
         {{!-- Colunas 3 --}}
         <div class="body-column situational-mods-panel">
-             <div class="panel-header">Situações Especiais</div>
-             <div class="placeholder">A ser implementado</div>
-        </div>
+  <div class="panel-header">Situações Especiais</div>
+  <div class="situational-options">
+   <label class="custom-checkbox">
+  <input type="checkbox" name="special_half_damage"/>
+  <span>Acima da Distância 1/2D (x0.5 no dano)</span>
+</label>
+
+<label class="custom-checkbox">
+  <input type="checkbox" name="special_explosion"/>
+  <span>Dano de Explosão</span>
+  <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex"/>
+</label>
+
+<label class="custom-select">
+  <span>Tolerância a Ferimentos:</span>
+  <select name="tolerance_type">
+    <option value="">Nenhuma</option>
+    <option value="nao-vivo">Não Vivo</option>
+    <option value="homogeneo">Homogêneo</option>
+    <option value="difuso">Difuso (máx. 1 lesão)</option>
+  </select>
+</label>
+
+<label class="custom-checkbox">
+  <input type="checkbox" name="show_impact_effects"/>
+  <span>Mostrar efeitos do ponto de impacto</span>
+</label>
+
+  </div>
+</div>
+
     </main>
 
     <input type="hidden" name="target_dr" value="0" />
@@ -162,8 +190,11 @@
     <footer class="damage-app-footer">
         <div class="footer-column calculation-summary">
             <div class="summary-row">
-  <label>Dano Básico:</label>
-  <input type="number" name="damage_rolled" class="calc-input" min="0" step="1"/>
+<label>Dano Básico:</label>
+  <div class="input-with-output">
+    <input type="number" name="damage_rolled" class="calc-input" min="0" step="1"/>
+    <span class="calc-field result-inline" data-field="base_damage_note"></span>
+  </div>
 </div>
             <div class="summary-row">
   <label>Divisor de Armadura:</label>

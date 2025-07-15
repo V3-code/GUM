@@ -309,7 +309,69 @@ form.querySelectorAll('input[name="custom_dr"]').forEach(input => {
         form.querySelectorAll('input').forEach(input => {
             input.addEventListener('change', () => this._updateDamageCalculation(form));
         });
-        
+        const toleranceSelect = form.querySelector('[name="tolerance_type"]');
+if (toleranceSelect) {
+    toleranceSelect.addEventListener('change', () => this._updateDamageCalculation(form));
+    toleranceSelect.addEventListener('change', () => {
+    const activeRow = form.querySelector('.location-row.active');
+    const locationKey = activeRow?.dataset.locationKey || "torso";
+    const newMods = this._getAdjustedWoundingModifiers(locationKey);
+
+    // Atualiza a tabela como já fazemos
+    const modTable = form.querySelector('.wounding-table');
+    if (modTable) {
+      const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+      let selectedAbrev = '';
+      if (selectedRadio) {
+        const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type');
+        selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || '';
+      }
+
+      const html = newMods.map(mod => `
+        <div class="wounding-row mod-group-${mod.group || 'x'}">
+          <label class="custom-radio">
+            <input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/>
+            <span class="type">${mod.type} (${mod.abrev})</span>
+            <span class="dots"></span>
+            <span class="mult">x${mod.mult}</span>
+          </label>
+        </div>
+      `).join('');
+
+      modTable.innerHTML = html + `
+        <hr>
+        <div class="wounding-row">
+          <label class="custom-radio">
+            <input type="radio" name="wounding_mod_type" value="1"/>
+            <span>Sem Modificador</span>
+            <span class="dots"></span>
+            <span class="mult">x1</span>
+          </label>
+        </div>
+        <div class="wounding-row">
+          <label class="custom-radio">
+            <input type="radio" name="wounding_mod_type" value="custom"/>
+            <span>Outros:</span>
+            <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
+          </label>
+        </div>
+      `;
+
+      form.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => {
+        input.addEventListener('change', () => this._updateDamageCalculation(form));
+      });
+
+      const customModInput = form.querySelector('input[name="custom_wounding_mod"]');
+      if (customModInput) {
+        customModInput.addEventListener('input', () => this._updateDamageCalculation(form));
+      }
+
+      this._updateDamageCalculation(form);
+    }
+});
+
+    }
+
     // --- LÓGICA PARA PRÉ-SELECIONAR O TORSO ---
     // Encontra a linha do Torso e a "clica" programaticamente para iniciar os cálculos.
     const torsoRow = form.querySelector('.location-row[data-location-key="torso"]');
@@ -332,112 +394,152 @@ form.querySelectorAll('input[name="custom_dr"]').forEach(input => {
  * ✅ MÉTODO DE CÁLCULO CORRIGIDO PARA ATUALIZAR O NOVO LAYOUT DO RODAPÉ ✅
  */
 _updateDamageCalculation(form) {
-    // Pega os dados do card de dano selecionado no cabeçalho
-    const activeCard = form.querySelector('.damage-card.active');
-    // Se nenhum card estiver ativo (ex: na primeira abertura), usa o dano principal como padrão
-    const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
-    const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
+  const activeCard = form.querySelector('.damage-card.active');
+  const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
+  const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
 
-    // Pega os valores da UI
-    
-    const damageType = activeDamage.type || '';
-    // Captura os valores dos campos editáveis (com fallback)
-const damageRolledInput = form.querySelector('[name="damage_rolled"]');
-const armorDivisorInput = form.querySelector('[name="armor_divisor"]');
+  const damageRolledInput = form.querySelector('[name="damage_rolled"]');
+  const armorDivisorInput = form.querySelector('[name="armor_divisor"]');
+  let damageRolled = parseFloat(damageRolledInput?.value);
+  let armorDivisor = parseFloat(armorDivisorInput?.value);
 
-let damageRolled = parseFloat(damageRolledInput?.value);
-let armorDivisor = parseFloat(armorDivisorInput?.value);
+  const halfDamageChecked = form.querySelector('[name="special_half_damage"]')?.checked;
+  const explosionChecked = form.querySelector('[name="special_explosion"]')?.checked;
+  const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
+  const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
 
-if (isNaN(damageRolled)) {
-  damageRolled = activeDamage.total;
-  if (damageRolledInput) damageRolledInput.value = damageRolled;
-}
-
-if (!armorDivisor || armorDivisor <= 0) {
-  armorDivisor = activeDamage.armorDivisor || 1;
-  if (armorDivisorInput) armorDivisorInput.value = armorDivisor;
-}
-    
-        let selectedLocationDR = 0;
-        const activeRow = form.querySelector('.location-row.active');
-        if (activeRow) {
-            if (activeRow.dataset.locationKey === 'custom') {
-                const customInput = activeRow.querySelector('input[name="custom_dr"]');
-                selectedLocationDR = parseInt(customInput?.value || 0);
-            } else {
-                selectedLocationDR = parseInt(activeRow.dataset.dr || 0);
-            }
-        }
-
-    const ignoreDR = form.querySelector('[name="ignore_dr"]').checked;
-    const isLargeArea = form.querySelector('[name="large_area_injury"]').checked;
-    
-    // Pega o multiplicador da tabela de ferimento
-    const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
-    let woundingMod = 1;
-    if (selectedModRadio) {
-        if (selectedModRadio.value === 'custom') {
-            woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]').value) || 1;
-        } else {
-            woundingMod = parseFloat(selectedModRadio.value) || 1;
-        }
-    }
-
-    // --- FAZ OS CÁLCULOS ---
-    const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
-    const penetratingDamage = Math.max(0, damageRolled - effectiveDR);
-    
-    // Aplica a regra de Lesão em Larga Escala
-    if (isLargeArea && woundingMod > 1) {
-        woundingMod = 1;
-    }
-    
-    const finalInjury = Math.floor(penetratingDamage * woundingMod);
-
-    // --- ATUALIZA A TABELA DE RESUMO NO RODAPÉ ---
+  // Corrige valores inválidos
+  if (isNaN(damageRolled)) {
+    damageRolled = activeDamage.total;
     if (damageRolledInput) damageRolledInput.value = damageRolled;
-    
-    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
-    
-    let drDisplay = `${selectedLocationDR}`;
-        if (armorDivisor && armorDivisor !== 1) {
-            const effectiveDR = Math.floor(selectedLocationDR / armorDivisor);
-            drDisplay = `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}`;
-        }
-        const drField = form.querySelector('[data-field="target_dr"]');
-    if (drField) drField.textContent = `${drDisplay} (${selectedLocationLabel})`;
-
+  }
+  if (!armorDivisor || armorDivisor <= 0) {
+    armorDivisor = activeDamage.armorDivisor || 1;
     if (armorDivisorInput) armorDivisorInput.value = armorDivisor;
+  }
 
-    const penField = form.querySelector('[data-field="penetrating_damage"]');
-    if (penField) penField.textContent = penetratingDamage;
-    // Tenta pegar o nome do modificador visível na interface
-let modName = '';
-if (selectedModRadio) {
-    const modRow = selectedModRadio.closest('.wounding-row');
-    if (modRow) {
-        const fullText = modRow.querySelector('.type')?.textContent || '';
-        const abrevMatch = fullText.match(/\(([^)]+)\)/);
-        modName = abrevMatch ? abrevMatch[1] : '';
-    }
+  // Aplica modificadores no Dano Básico (antes da RD)
+// Inicia a lista de efeitos visuais
+const effects = [];
 
-    // Corrige para exibir o tipo de dano mesmo se o multiplicador for x1
-    if (selectedModRadio.value === '1' && modName === 'x1') {
-        modName = damageType || '—';
+let originalBase = damageRolled;
+let modifiedBase = damageRolled;
+
+// Aplica metade do dano (acima de 1/2D)
+if (halfDamageChecked) {
+  modifiedBase = Math.floor(modifiedBase / 2);
+  effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`);
+  originalBase = modifiedBase;
+}
+
+// Aplica explosão antes da RD
+if (explosionChecked && explosionDistance > 0) {
+  const divisor = Math.max(1, 3 * explosionDistance);
+  const preExplosion = modifiedBase;
+  modifiedBase = Math.floor(modifiedBase / divisor);
+  effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`);
+}
+
+// Agora damageRolled recebe o valor final modificado
+damageRolled = modifiedBase;
+
+  // Captura RD do local
+  let selectedLocationDR = 0;
+  const activeRow = form.querySelector('.location-row.active');
+  if (activeRow) {
+    if (activeRow.dataset.locationKey === 'custom') {
+      const customInput = activeRow.querySelector('input[name="custom_dr"]');
+      selectedLocationDR = parseInt(customInput?.value || 0);
+    } else {
+      selectedLocationDR = parseInt(activeRow.dataset.dr || 0);
     }
+  }
+
+  const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
+  const isLargeArea = form.querySelector('[name="large_area_injury"]')?.checked;
+
+  // Cálculo da RD e dano penetrante
+  const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
+  let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
+
+
+  // Modificador de Ferimento
+  let selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+  let woundingMod = 1;
+  if (selectedModRadio) {
+    if (selectedModRadio.value === 'custom') {
+      woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1;
+    } else {
+      woundingMod = parseFloat(selectedModRadio.value) || 1;
+    }
+  }
+
+  const damageAbrev = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
+
+  // Aplica tolerância a ferimentos
+  if (toleranceType === "nao-vivo") {
+    const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 };
+    if (table[damageAbrev] !== undefined) {
+      woundingMod = table[damageAbrev];
+      effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)");
+    }
+  }
+  if (toleranceType === "homogeneo") {
+    const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 };
+    if (table[damageAbrev] !== undefined) {
+      woundingMod = table[damageAbrev];
+      effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)");
+    }
+  }
+  if (toleranceType === "difuso") {
+    woundingMod = 1;
+    effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)");
+  }
+
+  // Cálculo final
+  let finalInjury = Math.floor(penetratingDamage * woundingMod);
+  if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
+
+  // Atualização visual
+  const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
+  const drDisplay = (armorDivisor && armorDivisor !== 1)
+    ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}`
+    : `${selectedLocationDR}`;
+  const modName = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1] || 'x1';
+
+  const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
+  if (field("base_damage_note")) {
+  if (halfDamageChecked && explosionChecked && explosionDistance > 0) {
+    field("base_damage_note").textContent = `÷ 2 ÷ ${3 * explosionDistance} = ${modifiedBase}`;
+  } else if (halfDamageChecked) {
+    field("base_damage_note").textContent = `÷ 2 = ${modifiedBase}`;
+  } else if (explosionChecked && explosionDistance > 0) {
+    field("base_damage_note").textContent = `÷ ${3 * explosionDistance} = ${modifiedBase}`;
+  } else {
+    field("base_damage_note").textContent ='';
+  }
+}
+
+  if (field("damage_rolled")) field("damage_rolled").textContent = damageRolled;
+  if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${selectedLocationLabel})`;
+  if (field("armor_divisor")) field("armor_divisor").textContent = armorDivisor;
+  if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
+  if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod} (${modName})`;
+  if (field("final_injury")) field("final_injury").textContent = finalInjury;
+
+  const effectsList = form.querySelector(".effects-list");
+  if (effectsList) {
+    effectsList.innerHTML = "";
+    for (let effect of effects) {
+      effectsList.innerHTML += `<li>${effect}</li>`;
+    }
+  }
+
+  this.finalInjury = finalInjury;
 }
 
 
 
-const modField = form.querySelector('[data-field="wounding_mod"]');
-    if (modField) modField.textContent = `x${woundingMod} (${modName})`;
-
-    const finalField = form.querySelector('[data-field="final_injury"]');
-    if (finalField) finalField.textContent = finalInjury;
-
-    // Guarda o valor final para o botão aplicar usar
-    this.finalInjury = finalInjury;
-}
 
         _onLocationClick(event, form) {
         // Remove a classe 'active' de todas as outras linhas
