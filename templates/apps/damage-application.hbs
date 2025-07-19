@@ -152,17 +152,33 @@
         <div class="body-column situational-mods-panel">
   <div class="panel-header">Situações Especiais</div>
   <div class="situational-options">
-   <label class="custom-checkbox">
-  <input type="checkbox" name="special_half_damage"/>
-  <span>Acima da Distância 1/2D (x0.5 no dano)</span>
-</label>
+   
+   <div class="form-group">
+    
+  <label class="custom-checkbox">
+    <input type="checkbox" name="special_apply_as_heal" />
+     <span title="Inverte a Lesão - Recupera ao invés de Ferir">Aplicar como Cura</span>
+  </label>
+</div>
 
-<label class="custom-checkbox">
-  <input type="checkbox" name="special_explosion"/>
-  <span>Dano de Explosão</span>
-  <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex"/>
-</label>
+  <label class="custom-checkbox">
+    <input type="checkbox" name="special_half_damage"/>
+    <span>Acima da Distância 1/2D (x0.5 no dano)</span>
+  </label>
 
+  <label class="custom-checkbox">
+    <input type="checkbox" name="special_explosion"/>
+    <span>Dano de Explosão</span>
+    <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex do centro da explosão"/>
+  </label>
+
+  <label class="custom-checkbox">
+    <input type="checkbox" name="show_impact_effects"/>
+    <span>Mostrar efeitos do ponto de impacto</span>
+  </label>
+
+
+<div class="injury-tolerance-section">
 <label class="custom-select">
   <span>Tolerância a Ferimentos:</span>
   <select name="tolerance_type">
@@ -172,11 +188,7 @@
     <option value="difuso">Difuso (máx. 1 lesão)</option>
   </select>
 </label>
-
-<label class="custom-checkbox">
-  <input type="checkbox" name="show_impact_effects"/>
-  <span>Mostrar efeitos do ponto de impacto</span>
-</label>
+</div>
 
   </div>
 </div>

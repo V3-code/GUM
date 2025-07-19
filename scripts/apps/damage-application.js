@@ -553,65 +553,73 @@ damageRolled = modifiedBase;
         // Chama a função de recálculo
         this._updateDamageCalculation(form);
     }
-     /**
-     * ✅ LÓGICA DE APLICAR O DANO FINAL E FUNCIONAL ✅
-     */
-    async _onApplyDamage(form, shouldClose, shouldPublish) {
-        if (!form) return;
-        
-        // 1. Pega o caminho do atributo a ser danificado (ex: "system.attributes.hp.value")
-        let selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
-        if (!selectedPoolPath) {
-            return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
-        }
+/**
+ * ✅ LÓGICA DE APLICAR O DANO OU CURA FINAL E FUNCIONAL ✅
+ */
+async _onApplyDamage(form, shouldClose, shouldPublish) {
+    if (!form) return;
 
-        // 2. Pega o valor atual desse atributo no ator alvo
-        let currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+    // 1. Pega o caminho do atributo a ser danificado (ex: "system.attributes.hp.value")
+    let selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
+    if (!selectedPoolPath) {
+        return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
+    }
 
-        // Corrige o caminho se for um registro de combate
-        if (selectedPoolPath.includes("combat_meters") && currentPoolValue === undefined) {
+    // 2. Pega o valor atual desse atributo no ator alvo
+    let currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+
+    // Corrige o caminho se for um registro de combate
+    if (selectedPoolPath.includes("combat_meters") && currentPoolValue === undefined) {
         // Verifica se é um antigo caminho .value (inválido), e troca para .current
         const correctedPath = selectedPoolPath.replace(".value", ".current");
         currentPoolValue = foundry.utils.getProperty(this.targetActor, correctedPath);
         selectedPoolPath = correctedPath;
-        }
-
-        // 3. Pega o valor final da lesão que já calculamos
-        const finalInjury = this.finalInjury || 0;
-
-        if (finalInjury > 0) {
-            // 4. Calcula o novo valor e atualiza o ator
-            const newPoolValue = currentPoolValue - finalInjury;
-            if (selectedPoolPath.includes("combat_meters")) {
-  const meterMatch = selectedPoolPath.match(/combat_meters\.([^.]+)\.current/);
-  if (meterMatch) {
-    const meterKey = meterMatch[1];
-    await this.targetActor.update({
-      [`system.combat.combat_meters.${meterKey}.current`]: newPoolValue
-    });
-  }
-} else {
-  // Para todos os outros caminhos (PV, PF, reservas, etc)
-  await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
-}
-            
-            // 5. Lida com a publicação no chat ou notificação
-            if (shouldPublish) {
-                const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
-                const summaryContent = `<strong>${this.targetActor.name}</strong> sofreu <strong>${finalInjury}</strong> de lesão em <strong>${poolLabel.trim()}</strong> do ataque de <strong>${this.attackerActor.name}</strong>!`;
-                ChatMessage.create({ speaker: ChatMessage.getSpeaker({actor: this.attackerActor}), content: summaryContent });
-            } else {
-                 ui.notifications.info(`${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`);
-            }
-        } else {
-            ui.notifications.info(`O ataque não causou lesão em ${this.targetActor.name}.`);
-        }
-
-        // 6. Fecha a janela se necessário
-        if (shouldClose) {
-            this.close();
-        }
     }
+
+    // 3. Pega o valor final da lesão que já calculamos
+    const finalInjury = this.finalInjury || 0;
+
+    // ⚙️ Verifica se está em modo cura
+    const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+    const sign = applyAsHeal ? 1 : -1;
+
+    // 4. Aplica o efeito no valor
+    const newPoolValue = currentPoolValue + (sign * finalInjury);
+
+    // 5. Atualiza o ator
+    if (selectedPoolPath.includes("combat_meters")) {
+        const meterMatch = selectedPoolPath.match(/combat_meters\.([^.]+)\.current/);
+        if (meterMatch) {
+            const meterKey = meterMatch[1];
+            await this.targetActor.update({
+                [`system.combat.combat_meters.${meterKey}.current`]: newPoolValue
+            });
+        }
+    } else {
+        // Para todos os outros caminhos (PV, PF, reservas, etc)
+        await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+    }
+
+    // 6. Notificação
+    if (shouldPublish) {
+        const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+        const message = applyAsHeal
+            ? `<strong>${this.targetActor.name}</strong> recuperou <strong>${finalInjury}</strong> em <strong>${poolLabel.trim()}</strong>!`
+            : `<strong>${this.targetActor.name}</strong> sofreu <strong>${finalInjury}</strong> de lesão em <strong>${poolLabel.trim()}</strong> do ataque de <strong>${this.attackerActor.name}</strong>!`;
+        ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }), content: message });
+    } else {
+        const msg = applyAsHeal
+            ? `${this.targetActor.name} recuperou ${finalInjury} pontos!`
+            : `${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`;
+        ui.notifications.info(msg);
+    }
+
+    // 7. Fecha a janela se necessário
+    if (shouldClose) {
+        this.close();
+    }
+}
+
 
     // Sobrescreve o método de submissão do formulário para usar nossa lógica
     async _updateObject(event, formData) {

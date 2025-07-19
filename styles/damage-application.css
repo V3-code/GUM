@@ -186,7 +186,6 @@
 }
 
 .damage-application-dialog .target-pool-selector select {
-    /* Reutiliza o estilo dos nossos inputs */
     width: 100%;
     background-color: rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.1);
@@ -398,7 +397,6 @@
   flex: 1;
 }
 .damage-header select[name="damage_target_pool"] {
-  /* ... mantém estilos existentes ... */
   background-color: #2a2a2a;
   color: #f0f0f0;
 }
@@ -407,18 +405,19 @@
   color: #111;
   background-color: #f8f8f8;
 }
+
 .damage-app-footer .action-buttons {
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
   justify-content: center;
-  margin-top: 4px; /* Reduz a distância vertical */
+  margin-top: 4px; 
 }
 
 /* Estilo dos botões */
 .damage-app-footer .action-buttons button {
-  background: var(--color-button-background, #c5a05b); /* Amarelo padrão */
+  background: var(--color-button-background, #c5a05b); 
   color: #000;
   border: 1px solid #999;
   border-radius: 4px;
@@ -457,3 +456,31 @@
   width: 50px;
 }
 
+/* --- Estilo para o Seletor de Tolerância a Ferimentos --- */
+.damage-application-dialog .injury-tolerance-section {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+}
+.damage-application-dialog .custom-select {
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 4px; 
+}
+.damage-application-dialog .custom-select span {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #a0a0a0;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+.damage-application-dialog .custom-select select {
+    width: 100%;
+    flex-grow: 1;
+}
+.damage-application-dialog .custom-select select option {
+    color: #111;
+  background-color: #f8f8f8;
+}
