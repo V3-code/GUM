@@ -1,4 +1,4 @@
-import { GUM_DATA } from "./apps/gum-data.js";
+
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
