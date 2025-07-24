@@ -268,6 +268,9 @@
           <a class="item" data-tab="biography" title="Biografia">
             <i class="fas fa-scroll"></i>
           </a>
+          <a class="item" data-tab="conditions" title="Condições">
+            <i class="fas fa-heart-pulse"></i>
+          </a>
         </nav>
 
   {{!-- ============   ESSE É O BODY DA FICHA - O QUE FICA DENTRO DE CADA ABA  =============== --}}
@@ -1346,9 +1349,70 @@
     </div>
   </div>
 </div>
+
+{{! ============================================================= }}
+{{!  ABA DE CONDIÇÕES (COM CÓDIGO CORRIGIDO)                      }}
+{{! ============================================================= }}
+<div class="tab conditions-tab" data-group="primary" data-tab="conditions">
+
+    {{!-- NOVO CARD: SUMÁRIO DE EFEITOS ATIVOS --}}
+    <div class="active-effects-summary">
+        <div class="summary-header">Efeitos Ativos</div>
+        <div class="effects-pill-list">
+            {{#each activeConditionsList as |effect|}}
+                <div class="effect-pill" title="{{effect.tooltip}}">
+                    <img src="{{effect.img}}" class="pill-icon"/>
+                    <span>{{effect.name}}</span>
+                </div>
+            {{/each}}
+            {{#unless activeConditionsList}}
+                <div class="placeholder-text">Nenhum efeito mecanicamente ativo.</div>
+            {{/unless}}
+        </div>
+    </div>
+
+    {{!-- LAYOUT DE DUAS COLUNAS PARA GERENCIAMENTO --}}
+    <div class="conditions-grid">
+        <div class="condition-column">
+            <header class="column-header"><h4>Condições Gerais</h4></header>
+            <ol class="item-list">
+                {{#each generalConditions as |item id|}}
+                    <li class="item condition-card" data-item-id="{{item.id}}">
+                        <label class="switch" title="Anular Automação"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider"></span></label>
+                        <img src="{{item.img}}" class="item-icon" alt="{{item.name}}"/>
+                        <div class="item-name"><h4>{{item.name}}</h4></div>
+                        <div class="item-controls">
+                            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Remover"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                {{/each}}
+                {{#unless generalConditions}}<li class="placeholder-text">Nenhuma.</li>{{/unless}}
+            </ol>
+        </div>
+        <div class="condition-column">
+            <header class="column-header"><h4>Efeitos Temporários</h4></header>
+            <ol class="item-list">
+                {{#each temporaryConditions as |item id|}}
+                     <li class="item condition-card" data-item-id="{{item.id}}">
+                        <label class="switch" title="Anular Automação"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider"></span></label>
+                        <img src="{{item.img}}" class="item-icon" alt="{{item.name}}"/>
+                        <div class="item-name"><h4>{{item.name}}</h4></div>
+                        <div class="item-controls">
+                            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Remover"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                {{/each}}
+                 {{#unless temporaryConditions}}<li class="placeholder-text">Nenhum.</li>{{/unless}}
+            </ol>
+        </div>
+    </div>
+</div> 
 </section>
 </main>
 </div>
+
 
 {{! ======= ESTRUTURA DO MENU CUSTOMIZADO (TEMPLATE VAZIO) ==========}}
 <div class="custom-context-menu">

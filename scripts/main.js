@@ -4,6 +4,8 @@
 import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
+import { ConditionSheet } from "./apps/condition-sheet.js";
+import { evaluateConditions } from "./apps/condition-evaluator.js";
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -18,6 +20,11 @@ Hooks.once('init', async function() {
         types: ["character"], makeDefault: true 
     }); 
     Items.registerSheet("gum", GurpsItemSheet, { makeDefault: true }); 
+        Items.registerSheet("gum", ConditionSheet, { 
+        types: ["condition"], 
+        makeDefault: true 
+    });
+    
     
     // Apenas REGISTRA as configurações do sistema. Não as lê ainda.
     registerSystemSettings();
@@ -60,6 +67,48 @@ Hooks.once('ready', async function() {
     };
 });
 
+
+Hooks.on("updateActor", (actor, data, options, userId) => {
+    if (game.user.id === userId) {
+        evaluateConditions(actor);
+    }
+});
+
+// Avalia as condições quando um item (condição) é adicionado
+Hooks.on("createItem", (item, options, userId) => {
+    if (game.user.id === userId && item.parent && item.type === 'condition') {
+        evaluateConditions(item.parent);
+    }
+});
+
+Hooks.on("deleteItem", async (item, options, userId) => {
+    // Roda apenas para o usuário que fez a mudança e se o item for uma condição com um pai (ator)
+    if (game.user.id !== userId || !item.parent || item.type !== 'condition') return;
+
+    console.log(`GUM | Deletando o item de condição "${item.name}". Iniciando limpeza de efeitos.`);
+
+    const updates = {};
+    // CORREÇÃO: Lê os efeitos diretamente de 'item.system.effects'
+    const effectsData = item.system.effects || [];
+    const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
+
+    // Encontra todos os caminhos que este item modificava
+    effectsArray.forEach(effect => {
+        // Se o caminho for um .temp, prepara para zerá-lo
+        if (effect.path && effect.path.endsWith('.temp')) {
+            updates[effect.path] = 0;
+        }
+    });
+    
+    console.log("GUM | Preparando para zerar os seguintes atributos:", updates);
+
+    // Aplica a limpeza. Não precisamos mais reavaliar, pois o item já foi removido.
+    // A próxima atualização de qualquer outro dado no ator irá recalcular tudo corretamente.
+    if (Object.keys(updates).length > 0) {
+        await item.parent.update(updates);
+        console.log("GUM | Atributos zerados com sucesso.");
+    }
+});
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
@@ -106,7 +155,9 @@ Handlebars.registerHelper('gt', function (a, b) {
         // Retorna o estilo CSS pronto para ser usado
         return new Handlebars.SafeString(`width: ${width}%;`);
     });
-
+Handlebars.registerHelper('add', function(a, b) {
+  return a + b;
+});
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
 // ================================================================== //
@@ -158,6 +209,53 @@ Handlebars.registerHelper('gt', function (a, b) {
           return acc;
         }, {});
         context.itemsByType = itemsByType;
+
+        
+    // --- LÓGICA FINAL PARA A ABA DE CONDIÇÕES ---
+    
+    // 1. Separa as condições em duas listas com base na categoria
+    const allConditions = itemsByType.condition || [];
+    context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
+    context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
+
+    // 2. ✅ LÓGICA CORRIGIDA PARA O SUMÁRIO DE "EFEITOS ATIVOS" ✅
+    context.activeConditionsList = []; // Usaremos este novo nome
+    for (const condition of allConditions) {
+        // Pula a condição se o mestre a desabilitou manualmente
+        if (condition.getFlag("gum", "manual_override")) continue;
+
+        let isConditionActive = false;
+        const whenClause = condition.system.when;
+
+        // Avalia se a condição está ativa (incondicional ou a fórmula é verdadeira)
+        if (!whenClause || whenClause.trim() === "") {
+            isConditionActive = true;
+        } else {
+            try {
+                isConditionActive = Function("actor", `return ( ${whenClause} )`)(this.actor);
+            } catch (e) {
+                // Ignora erros de avaliação aqui, simplesmente não ativa
+                isConditionActive = false; 
+            }
+        }
+
+        // Se a condição estiver ativa, adiciona à lista do sumário
+        if (isConditionActive) {
+            const effectsData = condition.system.effects || [];
+            const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
+            const tooltip = effectsArray.map(e => `${e.path}: ${e.value}`).join('; ');
+            
+            context.activeConditionsList.push({
+                name: condition.name,
+                img: condition.img,
+                tooltip: tooltip
+            });
+        }
+    }
+    // --- FIM DA LÓGICA DE CONDIÇÕES ---
+        context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
+        context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
+
 
         // ================================================================== //
         //    FUNÇÃO AUXILIAR DE ORDENAÇÃO (PARA EVITAR REPETIÇÃO)            //
@@ -259,7 +357,22 @@ Handlebars.registerHelper('gt', function (a, b) {
 
         
         context.survivalBlockWasOpen = this._survivalBlockOpen || false;
-        
+        // --- NOVA LÓGICA PARA O SUMÁRIO DE EFEITOS ATIVOS ---
+// Filtra a lista completa de efeitos do ator para pegar apenas os que estão ativos.
+context.activeConditionEffects = Array.from(this.actor.effects).filter(effect => {
+    // Um efeito está ativo se ele NÃO está desabilitado E vem de um item de condição.
+    return !effect.disabled && effect.origin && fromUuidSync(effect.origin)?.type === 'condition';
+}).map(effect => {
+    // Prepara uma dica de ferramenta (tooltip) com os detalhes mecânicos
+    const changes = effect.changes.map(c => `${c.key}: ${c.value > 0 ? '+' : ''}${c.value}`).join('; ');
+    return {
+        id: effect.id,
+        name: effect.name,
+        img: effect.img,
+        tooltip: changes
+    };
+});
+
         return context;
       }
 
@@ -303,6 +416,53 @@ _getSubmitData(updateData) {
 
       _prepareCharacterItems(sheetData) {
         const actorData = sheetData.actor;
+// ================================================================== //
+    //           MOTOR DE CONDIÇÕES (VERSÃO COM TRATAMENTO DE ERRO ROBUSTO) //
+    // ================================================================== //
+    for (const effect of actorData.effects) {
+        try {
+            const sourceItem = fromUuidSync(effect.origin);
+            if (!sourceItem || sourceItem.type !== 'condition') continue;
+
+            const conditionData = sourceItem.system.activation_condition;
+
+            if (conditionData && conditionData.attribute && conditionData.operator && conditionData.value !== "") {
+                
+                // --- A CORREÇÃO ESTÁ AQUI ---
+                // Garante que o atributo do lado esquerdo sempre comece com @ para o motor de rolagem
+                const leftFormula = conditionData.attribute.startsWith('@') ? conditionData.attribute : `@${conditionData.attribute}`;
+
+                const rollLeft = new Roll(leftFormula, this.actor.getRollData());
+                const leftValue = rollLeft.evaluateSync({ strict: false }).total;
+
+                const rollRight = new Roll(String(conditionData.value), this.actor.getRollData());
+                const rightValue = rollRight.evaluateSync({ strict: false }).total;
+
+                let conditionMet = false;
+                if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+                    switch (conditionData.operator) {
+                        case '==': conditionMet = leftValue == rightValue; break;
+                        case '!=': conditionMet = leftValue != rightValue; break;
+                        case '<':  conditionMet = leftValue < rightValue; break;
+                        case '<=': conditionMet = leftValue <= rightValue; break;
+                        case '>':  conditionMet = leftValue > rightValue; break;
+                        case '>=': conditionMet = leftValue >= rightValue; break;
+                    }
+                }
+                
+                effect.disabled = !conditionMet;
+            } else {
+                effect.disabled = false;
+            }
+        } catch (err) {
+            console.error(`GUM | Erro ao avaliar condição para o efeito ${effect.name}:`, err);
+            effect.disabled = true;
+        }
+    }
+    // ================================================================== //
+    //                     FIM DO MOTOR DE CONDIÇÕES                      //
+    // ================================================================== //
+        
         const attributes = actorData.system.attributes;
 
         for (let i of sheetData.actor.items) {
@@ -2691,7 +2851,15 @@ if (fragRoll) {
       }).render(true);
     }); 
   
-
+    html.on('click', '.manual-override-toggle', async (ev) => {
+    const checkbox = ev.currentTarget;
+    const itemId = checkbox.dataset.itemId;
+    const item = this.actor.items.get(itemId);
+    if (item) {
+        await item.setFlag('gum', 'manual_override', checkbox.checked);
+        evaluateConditions(this.actor); // Reavalia as condições
+    }
+});
 
 }
 

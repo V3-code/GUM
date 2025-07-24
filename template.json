@@ -21,7 +21,7 @@
     }
   },
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition"],
     
     "templates": {
       "base": {
@@ -140,6 +140,17 @@
             "armor_divisor": 1
         }
     }
+    },
+    "condition": {
+      "templates": ["base"],
+      "when": "", 
+      "effects": [],
+      "category": "general",
+      "flags": {
+        "gum": {
+          "manual_override": false
+        }
+      }
     },
     "modifier": {
       "templates": ["base"],

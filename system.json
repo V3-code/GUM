@@ -16,7 +16,9 @@
     "verified": "13"
   },
   "esmodules": [
+    "scripts/gum-data.js",
     "scripts/apps/damage-application.js",
+    "scripts/apps/condition-sheet.js",
     "scripts/main.js"
     
   ],
@@ -24,7 +26,8 @@
     "styles/styles.css",
     "styles/modifier-browser.css",
     "styles/item-sheet.css",
-    "styles/damage-application.css"
+    "styles/damage-application.css",
+    "styles/conditions.css"
   ],
     "packs": [
     {

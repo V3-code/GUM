@@ -1,0 +1,63 @@
+<form class="{{cssClass}}" autocomplete="off">
+    <header class="sheet-header item-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome da Condição"/></h1>
+            <div class="form-group-inline">
+                <label>Categoria</label>
+                <select name="system.category">
+                    <option value="general" {{#if (eq system.category 'general')}}selected{{/if}}>Condição Geral</option>
+                    <option value="temporary" {{#if (eq system.category 'temporary')}}selected{{/if}}>Efeito Temporário</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="sheet-body">
+        <div class="sheet-body-content">
+            
+            {{!-- Seção da Condição de Ativação com Dicionário --}}
+            <div class="form-section">
+                <h4 class="section-title">Condição de Ativação</h4>
+                <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
+                <input type="text" name="system.when" value="{{system.when}}" placeholder="ex: actor.system.attributes.hp.value <= 10"/>
+            </div>
+
+            {{!-- Seção de Efeitos Aplicados --}}
+            <div class="form-section">
+                <h4 class="section-title">Efeitos Aplicados</h4>
+                <div class="effects-header">
+                    <span>Caminho do Atributo</span>
+                    <span>Operação</span>
+                    <span>Valor</span>
+                    <span></span>
+                </div>
+                {{#each system.effects as |effect effIndex|}}
+                <div class="effect-row" data-effect-index="{{effIndex}}">
+                    <input type="text" name="system.effects.{{effIndex}}.path" value="{{effect.path}}" placeholder="system.attributes.dx.temp"/>
+                    <select name="system.effects.{{effIndex}}.operation">
+                        <option value="ADD" {{#if (eq effect.operation 'ADD')}}selected{{/if}}>Adicionar</option>
+                        <option value="SUB" {{#if (eq effect.operation 'SUB')}}selected{{/if}}>Subtrair</option>
+                        <option value="SET" {{#if (eq effect.operation 'SET')}}selected{{/if}}>Definir</option>
+                    </select>
+                    <input type="text" name="system.effects.{{effIndex}}.value" value="{{effect.value}}"/>
+                    <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-times-circle"></i></a>
+                </div>
+                {{/each}}
+                <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+            </div>
+
+            {{!-- Seção de Descrição Corrigida --}}
+            <div class="form-section">
+                <div class="section-header">
+                    <h4 class="section-title">Descrição</h4>
+                    <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
+                </div>
+                <div class="rendered-text">
+                    {{{enrichedDescription}}}
+                </div>
+            </div>
+
+        </div>
+    </main>
+</form>

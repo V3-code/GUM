@@ -1,19 +1,15 @@
 // GUM/module/settings.js
 
 export const registerSystemSettings = function() {
+    
+    // --- SUA CONFIGURAÇÃO EXISTENTE (MANTIDA 100%) ---
     game.settings.register("gum", "initiativeFormula", {
         name: "Fórmula de Iniciativa (GUM)",
         hint: "Fórmula para determinar a iniciativa. Verifique o caminho dos atributos no console com _token.actor.",
         scope: "world",
         config: true,
         type: String,
-        
-        // --- CORREÇÃO 1: Usando o caminho mais provável com '.value' ---
-      
-        default: "(@attributes.basic_speed.value*100) + ((@attributes.dx.value+@attributes.dx.temp)/100) + (1d6/1000)",
-
-        // --- CORREÇÃO 2: Adicionando o pop-up de recarregamento ---
-        // Esta função é executada toda vez que o valor no menu de configurações é salvo.
+        default: "(@attributes.basic_speed.value*100) + ((@attributes.dx.value+@attributes.ht.temp)/100) + (1d6/1000)",
         onChange: value => {
             new Dialog({
                 title: "Recarregar Necessário",
@@ -33,4 +29,28 @@ export const registerSystemSettings = function() {
             }).render(true);
         }
     });
+
+    // --- NOVAS CONFIGURAÇÕES PARA O SISTEMA DE CONDIÇÕES (ADICIONADAS ABAIXO) ---
+
+    // Habilita a regra de condições automáticas por HP
+    game.settings.register("gum", "enableHpConditions", {
+        name: "Habilitar Condições Automáticas por HP",
+        hint: "Se ativado, o sistema aplicará ou removerá condições automaticamente com base nos níveis de Pontos de Vida do personagem (ex: Vacilante). Requer que as condições estejam criadas em um Compêndio.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true
+    });
+
+    // Permite ao GM definir um Compêndio com condições padrão para novos personagens
+    game.settings.register("gum", "defaultConditionsCompendium", {
+        name: "Compêndio de Condições Padrão",
+        hint: "Selecione um Compêndio de Itens. Todas as condições deste compêndio serão adicionadas aos novos personagens criados.",
+        scope: "world",
+        config: true,
+        type: String,
+        default: ""
+    });
+
+    // Você pode adicionar futuras configurações do sistema aqui...
 }

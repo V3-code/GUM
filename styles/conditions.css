@@ -1,0 +1,74 @@
+/* ================================== */
+/* CSS FINAL PARA ABA DE CONDIÇÕES    */
+/* ================================== */
+
+/* Aplica o tema escuro à janela da ficha de item */
+.item.sheet.condition-sheet .window-content {
+    background: var(--c-bg-dark, #2b2a29);
+    color: var(--c-text-lightest, #f0f0e8);
+}
+
+/* Corpo da Ficha */
+.item.sheet.condition-sheet .sheet-body-content {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Estilo padrão para as seções (Condição, Efeitos, Descrição) */
+.item.sheet.condition-sheet .form-section {
+    background: var(--c-bg-darkest, #191813);
+    border: 1px solid var(--c-border-light, #4a4846);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+/* Título de cada seção */
+.item.sheet.condition-sheet .section-title {
+    font-family: var(--font-secondary, 'Cinzel', serif);
+    color: var(--c-accent-gold, #c5a05b);
+    font-weight: 700;
+    font-size: 1.1em;
+    margin: 0 0 8px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--c-border-light, #4a4846);
+}
+
+.item.sheet.condition-sheet .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Texto de ajuda/dica */
+.item.sheet.condition-sheet .hint {
+    font-size: 0.85em;
+    color: var(--c-text-medium, #a9a6a0);
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+/* Cabeçalho da lista de efeitos */
+.item.sheet.condition-sheet .effects-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 30px;
+    gap: 8px;
+    font-weight: bold;
+    padding: 0 5px;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+
+/* Linha de um único efeito */
+.item.sheet.condition-sheet .effect-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 30px;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--c-border-light, #4a4846);
+}
+.item.sheet.condition-sheet .effect-row:last-of-type {
+    border-bottom: none;
+}
