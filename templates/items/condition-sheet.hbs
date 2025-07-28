@@ -16,43 +16,47 @@
     <main class="sheet-body">
         <div class="sheet-body-content">
             
-            {{!-- Seção da Condição de Ativação com Dicionário --}}
+            {{!-- Seção da Condição de Ativação com TEXTAREA --}}
             <div class="form-section">
                 <h4 class="section-title">Condição de Ativação</h4>
                 <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
-                <input type="text" name="system.when" value="{{system.when}}" placeholder="ex: actor.system.attributes.hp.value <= 10"/>
-                    <div class="button-container">
-                        <a class="button condition-assistant-btn">
-            <i class="fas fa-magic"></i> Assistente de Condições
-        </a>
-    </div>
+                {{!-- ✅ INPUT SUBSTITUÍDO POR TEXTAREA ✅ --}}
+                <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
+                <div class="button-container">
+                    <a class="button condition-assistant-btn">
+                        <i class="fas fa-magic"></i> Assistente de Condições
+                    </a>
+                </div>
             </div>
 
-            {{!-- Seção de Efeitos Aplicados --}}
-            <div class="form-section">
+            {{!-- Seção de Efeitos Aplicados com container para rolagem --}}
+            <div class="form-section effects-section">
                 <h4 class="section-title">Efeitos Aplicados</h4>
-                <div class="effects-header">
-                    <span>Caminho do Atributo</span>
-                    <span>Operação</span>
-                    <span>Valor</span>
-                    <span></span>
+                {{!-- ✅ NOVA DIV PARA CONTROLAR A ROLAGEM ✅ --}}
+                <div class="effects-list-container">
+                    <div class="effects-header">
+                        <span>Caminho do Atributo</span>
+                        <span>Operação</span>
+                        <span>Valor</span>
+                        <span></span>
+                    </div>
+                    {{#each system.effects as |effect effIndex|}}
+                    <div class="effect-row" data-effect-index="{{effIndex}}">
+                        <input type="text" name="system.effects.{{effIndex}}.path" value="{{effect.path}}" placeholder="system.attributes.dx.temp"/>
+                        <select name="system.effects.{{effIndex}}.operation">
+                            <option value="ADD" {{#if (eq effect.operation 'ADD')}}selected{{/if}}>Adicionar</option>
+                            <option value="SUB" {{#if (eq effect.operation 'SUB')}}selected{{/if}}>Subtrair</option>
+                            <option value="SET" {{#if (eq effect.operation 'SET')}}selected{{/if}}>Definir</option>
+                        </select>
+                        <input type="text" name="system.effects.{{effIndex}}.value" value="{{effect.value}}"/>
+                        <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-times-circle"></i></a>
+                    </div>
+                    {{/each}}
                 </div>
-                {{#each system.effects as |effect effIndex|}}
-                <div class="effect-row" data-effect-index="{{effIndex}}">
-                    <input type="text" name="system.effects.{{effIndex}}.path" value="{{effect.path}}" placeholder="system.attributes.dx.temp"/>
-                    <select name="system.effects.{{effIndex}}.operation">
-                        <option value="ADD" {{#if (eq effect.operation 'ADD')}}selected{{/if}}>Adicionar</option>
-                        <option value="SUB" {{#if (eq effect.operation 'SUB')}}selected{{/if}}>Subtrair</option>
-                        <option value="SET" {{#if (eq effect.operation 'SET')}}selected{{/if}}>Definir</option>
-                    </select>
-                    <input type="text" name="system.effects.{{effIndex}}.value" value="{{effect.value}}"/>
-                    <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-times-circle"></i></a>
-                </div>
-                {{/each}}
                 <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
             </div>
 
-            {{!-- Seção de Descrição Corrigida --}}
+            {{!-- Seção de Descrição (sem alterações) --}}
             <div class="form-section">
                 <div class="section-header">
                     <h4 class="section-title">Descrição</h4>

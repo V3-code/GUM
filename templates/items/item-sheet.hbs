@@ -43,7 +43,7 @@
 
   {{!-- 1. Navegação das Abas --}}
   <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item active" data-tab="summary">Sumário</a>
+    {{! -- <a class="item active" data-tab="summary">Sumário</a> --}}
     <a class="item" data-tab="details">Detalhes</a>
     {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
       <a class="item" data-tab="modifiers">Modificadores</a>
@@ -100,19 +100,7 @@
 
          <hr class="summary-divider">
 
-              {{!-- Container que permite o posicionamento do botão de editar --}}
-          <div class="editable-text-container">
-             {{!-- O botão de editar, com a classe e o data-target corretos --}}
-              <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
-                  <i class="fas fa-edit"></i>
-              </a>
-              {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
-              <div class="summary-description rendered-text">
-                  {{{enrichedChatDescription}}}
-              </div>
-              
-             
-          </div>
+       
     </div>
 </div>
 
@@ -610,7 +598,20 @@
       </div>
     {{/if}}
 
- 
+    <div class="item-section">
+        <div class="form-section"><h4 class="section-title">Descrição Resumida
+           {{!-- Container que permite o posicionamento do botão de editar --}}
+              <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                  <i class="fas fa-edit"></i>
+              </a></h4>
+              <div class="editable-text-container">
+                    {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
+                  <div class="summary-description rendered-text">{{{enrichedChatDescription}}}</div>
+             </div>
+        </div>     
+    </div>
+
+
       <div class="item-section">
         <div class="form-section"><h4 class="section-title">Descrição Completa
                     {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}

@@ -12,8 +12,8 @@ export class ConditionBuilder extends FormApplication {
             title: "Assistente de Condições",
             classes: ["gum", "condition-builder", "theme-dark"],
             template: "systems/gum/templates/apps/condition-builder.hbs",
-            width: 600,
-            height: "auto",
+            width: 700,
+            height: "320",
             resizable: true
         });
     }
@@ -57,7 +57,7 @@ export class ConditionBuilder extends FormApplication {
         // ✅ BIBLIOTECA DE ESTRUTURAS FINAL E COMPLETA
         const structures = {
             "Geral do Personagem": {
-                attr_check: { label: "Verificar Atributo", value: "actor.system.attributes.NOME_DO_ATRIBUTO.value <= VALOR" }
+                attr_check: { label: "Verificar Atributo", value: "CAMINHO_DO_ATRIBUTO <= VALOR_OU_FÓRMULA" }
             },
             "Itens e Equipamentos": {
                 item_name: { label: "Verificar Item (por nome)", value: "actor.items.some(i => i.name === 'NOME_DO_ITEM')" },
@@ -100,7 +100,8 @@ export class ConditionBuilder extends FormApplication {
         
         let content = `<div class="structure-picker-dialog">`;
         for (const [category, options] of Object.entries(structures)) {
-            content += `<details class="category" open><summary>${category}</summary><div class="options">`;
+            
+            content += `<details class="category"><summary>${category}</summary><div class="options">`;
             for (const [key, data] of Object.entries(options)) {
                 content += `<a data-key="${key}" title="${data.value || data.picker.template}">${data.label}</a>`;
             }

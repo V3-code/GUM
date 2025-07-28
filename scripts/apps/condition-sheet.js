@@ -5,8 +5,9 @@ export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
-            width: 580,
-            height: "auto",
+            width: 645,
+            height: "550",
+            resizable: true,
             template: "systems/gum/templates/items/condition-sheet.hbs"
         });
     }

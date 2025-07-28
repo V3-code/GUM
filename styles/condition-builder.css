@@ -1,79 +1,145 @@
-/* systems/gum/styles/condition-builder.css */
+/* ================================================= */
+/* DESIGN FINAL DO ASSISTENTE (MINIMALISTA E OTIMIZADO) */
+/* ================================================= */
+
+/* --- A CAMADA "ADESIVO" --- */
+/* Força a janela padrão a não ter padding */
 .dialog.condition-builder .window-content {
-    background: var(--c-bg-dark, #2b2a29);
+    padding: 0;
+    overflow: hidden; /* Garante que nada vaze */
 }
-.dialog.condition-builder .dialog-content {
-    padding: 10px;
-    color: var(--c-text-lightest);
-}
-.dialog.condition-builder .hint {
-    font-size: 0.9em;
-    color: var(--c-text-medium);
-    margin-bottom: 10px;
-    text-align: center;
-}
-.dialog.condition-builder textarea {
-    width: 100%;
-    resize: vertical;
-    font-family: monospace;
-    font-size: 1.1em;
-    border: 1px solid var(--c-border-light);
-    background: var(--c-bg-darkest);
-    color: var(--c-text-lightest);
-    padding: 5px;
-    margin-bottom: 10px;
-}
-.dialog.condition-builder .palette {
+/* Nosso formulário se torna a camada principal, preenchendo 100% da janela */
+.dialog.condition-builder .condition-builder-form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 10px;
-}
-.dialog.condition-builder .palette-group {
-    background: var(--c-bg-darkest);
-    border: 1px solid var(--c-border-light);
-    border-radius: 5px;
-    padding: 8px;
-}
-.dialog.condition-builder .palette-header {
-    font-family: var(--font-secondary);
-    color: var(--c-accent-gold);
-    font-weight: 700;
-    margin-bottom: 8px;
-    font-size: 1.1em;
-}
-.dialog.condition-builder .palette-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.dialog.condition-builder .palette-button {
-    background: var(--c-bg-medium);
-    border: 1px solid var(--c-border-light);
-    color: var(--c-text-lightest);
-    border-radius: 3px;
-    padding: 4px 8px;
-    cursor: pointer;
-    font-family: var(--font-primary);
-}
-.dialog.condition-builder .palette-button:hover {
-    border-color: var(--c-accent-gold);
-    color: var(--c-accent-gold);
+    height: 100%;
+    padding: 10px;
+    background: #2b2a29; /* Fundo escuro do tema */
+    color: #f0f0e8;
 }
 
-/* Estilos para o menu de Estruturas */
+/* --- PAINEL DE EDIÇÃO (CAIXA DE TEXTO) --- */
+.editor-panel {
+    flex-grow: 1; /* ✅ Faz a área de texto esticar para preencher o espaço */
+    display: flex;
+    flex-direction: column;
+    min-height: 150px; /* Altura mínima para a caixa de texto */
+}
+.editor-panel textarea {
+    width: 100%;
+    height: 100%;
+    resize: vertical; /* ✅ Caixa de texto ajustável verticalmente */
+    font-family: monospace;
+    font-size: 1.1em;
+    border: 1px solid #191813; /* Borda mais escura */
+    background: #191813;
+    color: #f0f0e8;
+    padding: 8px;
+    border-radius: 3px;
+    min-height: 150px
+}
+
+/* --- PALETA DE FERRAMENTAS --- */
+.palette {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px; /* ✅ Espaçamento reduzido */
+    flex-shrink: 0;
+    margin-top: 5px; /* ✅ Espaçamento reduzido */
+}
+.palette-group {
+    background: #191813;
+    border: 1px solid #4a4846;
+    border-radius: 5px;
+    padding: 4px;
+}
+.palette-header {
+    font-family: 'Cinzel', serif;
+    color: #c5a05b;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-size: 0.9em; /* ✅ Fonte otimizada */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid #4a4846;
+    padding-bottom: 5px;
+}
+.palette-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.palette-button {
+    background: #3a3836;
+    border: 1px solid #4a4846;
+    color: #f0f0e8;
+    border-radius: 3px;
+    padding: 3px 6px; /* Padding reduzido */
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.85em; /* ✅ Fonte otimizada */
+    flex: 1;
+    text-align: center;
+}
+.palette-button:hover {
+    border-color: #c5a05b;
+    color: #c5a05b;
+}
+
+/* --- BOTÃO SALVAR REFINADO --- */
+.dialog-footer-actions {
+    margin-top: 5px; /* ✅ Espaçamento superior reduzido */
+    padding-top: 0;
+    border-top: none; /* ✅ Linha superior removida */
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+.dialog-footer-actions button {
+    background: #3a3836; /* ✅ COR CINZA PADRÃO DO TEMA */
+    color: #f0f0e8;
+    font-weight: bold;
+    border: 1px solid #4a4846;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.dialog-footer-actions button:hover {
+    border-color: #c5a05b; /* Destaque dourado no hover */
+    color: #c5a05b;
+    box-shadow: 0 0 5px #c5a05b;
+}
+
+/* --- JANELAS DE SELEÇÃO (PICKERS) --- */
+/* ✅ FONTES PEQUENAS E OTIMIZADAS PARA AS JANELAS DE OPÇÕES */
+.structure-picker-dialog .category summary {
+    font-size: 1.1em;
+}
+.structure-picker-dialog .options a,
+.parameter-assistant .param-button {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9em;
+}
+/* ======================================== */
+/* --- JANELAS DE SELEÇÃO (PICKERS) ---     */
+/* ======================================== */
+
+/* --- JANELA DE ESTRUTURAS --- */
 .structure-picker-dialog .dialog-content {
     display: flex;
     flex-direction: column;
     gap: 10px;
-}
+    font-size: 0.9em; /* ✅ FONTE MENOR */
+ }
 .structure-picker-dialog .category summary {
-    font-family: var(--font-secondary);
+    font-family: var(--f-titulos);
     font-size: 1.2em;
     font-weight: bold;
     cursor: pointer;
     padding: 5px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--c-border-light);
 }
 .structure-picker-dialog .options {
     display: flex;
@@ -84,8 +150,38 @@
     padding: 6px;
     border-radius: 3px;
     cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9em;
+    /* ✅ COR DO TEXTO ALTERADA PARA PRETO */
+    color: #191813;
+    font-weight: 500; /* Um pouco mais de peso para legibilidade */
 }
 .structure-picker-dialog .options a:hover {
     background: var(--c-bg-medium);
+    color: var(--c-text-lightest);
     text-decoration: none;
+}
+
+/* --- JANELA DE ATRIBUTOS/OPERADORES --- */
+.parameter-assistant {
+    padding: 5px;
+}
+.parameter-assistant .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.parameter-assistant .param-button {
+    background: var(--c-bg-medium);
+    border: 1px solid var(--c-border-light);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--c-text-lightest);
+    font-size: 0.9em; /* ✅ FONTE MENOR */
+}
+.parameter-assistant .param-button:hover {
+    border-color: var(--c-accent-gold);
+    color: var(--c-accent-gold);
 }

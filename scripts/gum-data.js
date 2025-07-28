@@ -25,10 +25,10 @@ export const GUM_DATA = {
         "attributes.per.temp": "Percepção (Mod. Temp.)",
         
         // Atributos Secundários
-        ".attributes.hp.value": "HP (Atuais)",
-        "attributes.hp.max": "HP (Máximos)",
-        "attributes.fp.value": "FP (Atuais)",
-        "attributes.fp.max": "FP (Máximos)",
+        "attributes.hp.value": "PV Atual",
+        "attributes.hp.max": "PV Máximo",
+        "attributes.fp.value": "PF Atual",
+        "attributes.fp.max": "PF Máximo",
         "attributes.basic_speed.value": "Velocidade Básica",
         "attributes.basic_move.value": "Deslocamento Básico",
         
