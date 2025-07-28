@@ -1,4 +1,5 @@
-
+import { GUM_DATA } from "../gum-data.js";
+import { ConditionBuilder } from "./condition-builder.js";
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
@@ -54,6 +55,10 @@ export class ConditionSheet extends ItemSheet {
                 },
                 default: "save"
             }).render(true);
+        });
+
+        html.find('.condition-assistant-btn').on('click', (ev) => {
+        new ConditionBuilder(this.item).render(true);
         });
     }
 

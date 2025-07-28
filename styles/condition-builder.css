@@ -1,0 +1,91 @@
+/* systems/gum/styles/condition-builder.css */
+.dialog.condition-builder .window-content {
+    background: var(--c-bg-dark, #2b2a29);
+}
+.dialog.condition-builder .dialog-content {
+    padding: 10px;
+    color: var(--c-text-lightest);
+}
+.dialog.condition-builder .hint {
+    font-size: 0.9em;
+    color: var(--c-text-medium);
+    margin-bottom: 10px;
+    text-align: center;
+}
+.dialog.condition-builder textarea {
+    width: 100%;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 1.1em;
+    border: 1px solid var(--c-border-light);
+    background: var(--c-bg-darkest);
+    color: var(--c-text-lightest);
+    padding: 5px;
+    margin-bottom: 10px;
+}
+.dialog.condition-builder .palette {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+.dialog.condition-builder .palette-group {
+    background: var(--c-bg-darkest);
+    border: 1px solid var(--c-border-light);
+    border-radius: 5px;
+    padding: 8px;
+}
+.dialog.condition-builder .palette-header {
+    font-family: var(--font-secondary);
+    color: var(--c-accent-gold);
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+.dialog.condition-builder .palette-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.dialog.condition-builder .palette-button {
+    background: var(--c-bg-medium);
+    border: 1px solid var(--c-border-light);
+    color: var(--c-text-lightest);
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-family: var(--font-primary);
+}
+.dialog.condition-builder .palette-button:hover {
+    border-color: var(--c-accent-gold);
+    color: var(--c-accent-gold);
+}
+
+/* Estilos para o menu de Estruturas */
+.structure-picker-dialog .dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.structure-picker-dialog .category summary {
+    font-family: var(--font-secondary);
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px;
+    border-bottom: 1px solid #444;
+}
+.structure-picker-dialog .options {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 0 5px 15px;
+}
+.structure-picker-dialog .options a {
+    padding: 6px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.structure-picker-dialog .options a:hover {
+    background: var(--c-bg-medium);
+    text-decoration: none;
+}

@@ -72,3 +72,39 @@
 .item.sheet.condition-sheet .effect-row:last-of-type {
     border-bottom: none;
 }
+
+/* Estilos para o Construtor de Fórmulas Interativo */
+.condition-builder .sentence-builder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.condition-builder .formula-field {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.condition-builder .tool-palette {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.condition-builder .tool-button {
+    background: var(--c-bg-medium);
+    border: 1px solid var(--c-border-light);
+    color: var(--c-text-lightest);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.condition-builder .tool-button:hover {
+    background: var(--c-accent-gold);
+    color: var(--c-bg-darkest);
+    border-color: var(--c-accent-gold);
+}

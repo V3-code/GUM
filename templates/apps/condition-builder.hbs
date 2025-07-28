@@ -1,0 +1,31 @@
+<form>
+    <div class="dialog-content">
+        <p class="hint">Use a paleta de ferramentas abaixo para construir sua fórmula de ativação ou escreva diretamente na caixa.</p>
+        
+        <textarea name="system.when" rows="6" placeholder="Clique nos botões abaixo para começar...">{{item.system.when}}</textarea>
+
+        <div class="palette">
+            <div class="palette-group">
+                <div class="palette-header">Estruturas de Regra</div>
+                <div class="palette-buttons">
+                    <button type="button" class="palette-button" data-action="open-structures">Estruturas...</button>
+                </div>
+            </div>
+            
+            <div class="palette-group">
+                <div class="palette-header">Ferramentas de Fórmula</div>
+                <div class="palette-buttons">
+                    <button type="button" class="palette-button" data-action="open-attributes">Atributos...</button>
+                    <button type="button" class="palette-button" data-action="open-operators">Operadores de Comparação...</button>
+                    <button type="button" class="palette-button" data-action="open-connectors">Conectores Lógicos...</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="sheet-footer">
+        <button type="submit">
+            <i class="fas fa-save"></i> Salvar Fórmula
+        </button>
+    </footer>
+</form>
