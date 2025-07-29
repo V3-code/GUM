@@ -74,40 +74,37 @@ Hooks.on("updateActor", (actor, data, options, userId) => {
     }
 });
 
-// Avalia as condições quando um item (condição) é adicionado
+// ✅ VERSÃO CORRIGIDA E FINAL DOS HOOKS ✅
+
+// Avalia as condições quando QUALQUER item é adicionado ao ator
 Hooks.on("createItem", (item, options, userId) => {
-    if (game.user.id === userId && item.parent && item.type === 'condition') {
+    if (game.user.id === userId && item.parent) {
+        // Não importa o tipo do item, sempre reavaliamos as condições do ator
         evaluateConditions(item.parent);
     }
 });
 
+// Limpa e avalia as condições quando QUALQUER item é removido
 Hooks.on("deleteItem", async (item, options, userId) => {
-    // Roda apenas para o usuário que fez a mudança e se o item for uma condição com um pai (ator)
-    if (game.user.id !== userId || !item.parent || item.type !== 'condition') return;
+    if (game.user.id !== userId || !item.parent) return;
 
-    console.log(`GUM | Deletando o item de condição "${item.name}". Iniciando limpeza de efeitos.`);
-
-    const updates = {};
-    // CORREÇÃO: Lê os efeitos diretamente de 'item.system.effects'
-    const effectsData = item.system.effects || [];
-    const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
-
-    // Encontra todos os caminhos que este item modificava
-    effectsArray.forEach(effect => {
-        // Se o caminho for um .temp, prepara para zerá-lo
-        if (effect.path && effect.path.endsWith('.temp')) {
-            updates[effect.path] = 0;
+    // Se o item deletado for uma condição, primeiro limpamos seus efeitos
+    if (item.type === 'condition') {
+        const updates = {};
+        const effectsData = item.system.effects || [];
+        const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
+        effectsArray.forEach(effect => {
+            if (effect.path && effect.path.endsWith('.temp')) {
+                updates[effect.path] = 0;
+            }
+        });
+        if (Object.keys(updates).length > 0) {
+            await item.parent.update(updates);
         }
-    });
-    
-    console.log("GUM | Preparando para zerar os seguintes atributos:", updates);
-
-    // Aplica a limpeza. Não precisamos mais reavaliar, pois o item já foi removido.
-    // A próxima atualização de qualquer outro dado no ator irá recalcular tudo corretamente.
-    if (Object.keys(updates).length > 0) {
-        await item.parent.update(updates);
-        console.log("GUM | Atributos zerados com sucesso.");
     }
+
+    // Após a limpeza (se necessária), reavaliamos TODAS as condições restantes
+    evaluateConditions(item.parent);
 });
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
