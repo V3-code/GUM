@@ -94,3 +94,66 @@
 .item.sheet.condition-sheet .effect-row:last-of-type {
     border-bottom: none;
 }
+
+/* ================================== */
+/* DESIGN DE CARDS PARA A LISTA DE EFEITOS */
+/* ================================== */
+
+/* Remove o espaçamento padrão para controlarmos com o card */
+.item.sheet.condition-sheet .effects-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Espaço entre os cards */
+}
+
+/* O estilo do card de resumo do efeito */
+.item.sheet.condition-sheet .effect-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #191813; /* Fundo mais escuro, como a paleta do assistente */
+    border: 1px solid #4a4846;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.item.sheet.condition-sheet .effect-summary-info {
+    flex-grow: 1;
+}
+
+/* Rótulo do tipo de efeito (ex: Attribute, Chat) */
+.item.sheet.condition-sheet .effect-type-label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #c5a05b; /* Dourado */
+}
+
+/* Detalhes do efeito (a fórmula/resumo) */
+.item.sheet.condition-sheet .effect-details {
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #a9a6a0; /* Cinza claro */
+}
+
+/* Tag para o resumo do teste rolável */
+.item.sheet.condition-sheet .roll-summary-tag {
+    display: inline-block;
+    background: #3a3836;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 8px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8em;
+    font-style: italic;
+    color: #f0f0e8;
+}
+
+/* Controles (Editar/Deletar) */
+.item.sheet.condition-sheet .effect-controls {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}

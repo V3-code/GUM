@@ -615,11 +615,38 @@ nav.sheet-tabs {
   /* A largura é controlada pelo style="..." no HTML */
   transition: width 0.3s ease-out; /* Animação suave */
 }
-.resource-bar .bar-fill.hp {
-  background-color: #3b7d3b; /* Verde escuro para vida */
+/* --- ESTILOS PARA AS NOVAS BARRAS DE RECURSOS --- */
+.bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.resource-bar .bar-fill.fp {
-  background-color: #3b5a7d; /* Azul escuro para fadiga */
+.bar-label .edit-resource-bar {
+    font-size: 0.9em;
+    color: var(--c-texto-secundario);
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+.bar-group:hover .edit-resource-bar {
+    opacity: 1;
+    color: var(--c-acento-dourado);
+}
+.bar-inputs .final-max-value {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+}
+/* Estilos para a janela de diálogo de edição */
+.secondary-stats-dialog .form-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+.secondary-stats-dialog .final-display {
+    font-weight: bold;
+    font-size: 1.1em;
+    background: rgba(0,0,0,0.1);
+    padding: 4px;
+    border-radius: 3px;
 }
 
 /* Os inputs de texto, que ficam sobre a barra */
@@ -3029,4 +3056,59 @@ input:checked + .slider:before {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* --- ESTILOS PARA A NOVA ENGRENAGEM DE EDIÇÃO --- */
+.hex-block {
+    position: relative; /* Essencial para posicionar a engrenagem */
+}
+.edit-secondary-stats-btn {
+    position: absolute;
+    top: 16px; /* Ajuste fino vertical */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-size: 1.1em;
+    color: var(--c-texto-secundario);
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+.hex-block:hover .edit-secondary-stats-btn {
+    opacity: 1;
+    transform: translateX(-50%) rotate(45deg);
+    color: var(--c-acento-dourado);
+}
+
+/* --- ESTILOS PARA A JANELA DE DIÁLOGO --- */
+.secondary-stats-dialog .form-header,
+.secondary-stats-dialog .form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+}
+.secondary-stats-dialog .form-header {
+    font-family: var(--f-titulos);
+    font-size: 0.8em;
+    color: var(--c-texto-subtitulo);
+    padding: 0 8px;
+    border-bottom: 1px solid var(--c-borda);
+    margin-bottom: 8px;
+}
+.secondary-stats-dialog .form-header span:first-child,
+.secondary-stats-dialog .form-grid label {
+    text-align: left;
+    font-weight: bold;
+}
+.secondary-stats-dialog .form-grid {
+    padding: 0 8px;
+    margin-bottom: 5px;
+}
+.secondary-stats-dialog input {
+    text-align: center;
+}
+.secondary-stats-dialog .mod-display {
+    font-weight: bold;
+    color: var(--c-acento-verde);
 }

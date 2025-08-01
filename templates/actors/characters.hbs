@@ -56,86 +56,92 @@
             </div>
           </div>
 
-        {{!-- Bloco 2: Hexágonos de Atributos Secundários --}}
-       <div class="sidebar-block hex-block">
+        {{!-- Bloco 2: Hexágonos de Atributos Secundários (VERSÃO COM ENGRENAGEM) --}}
+<div class="sidebar-block hex-block">
 
-          {{!-- Velocidade --}}
-          <div class="hex-stat hex-velocidade">
-            <div class="hex-wrapper">
-              <svg class="hex-svg" viewBox="0 0 100 60">
-                {{!-- A camada de trás é a borda dourada --}}
-                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
-                {{!-- A camada da frente é o preenchimento escuro --}}
-                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-              </svg>
-              <input type="text" inputmode="decimal" class="hex-value" name="system.attributes.basic_speed.value" value="{{actor.system.attributes.basic_speed.value}}"/>
-            </div>
-            <div class="hex-label">VELOC.</div>
-          </div>
+    {{!-- ✅ NOVO BOTÃO DE ENGRENAGEM CENTRAL ✅ --}}
+    <a class="edit-secondary-stats-btn" title="Editar Atributos Secundários">
+        <i class="fas fa-cog"></i>
+    </a>
 
-          {{!-- Deslocamento --}}
-          <div class="hex-stat hex-deslocamento">
-            <div class="hex-wrapper">
-              <svg class="hex-svg" viewBox="0 0 100 60">
+    {{!-- Velocidade --}}
+    <div class="hex-stat hex-velocidade">
+        <div class="hex-wrapper">
+            <svg class="hex-svg" viewBox="0 0 100 60">
                 <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
                 <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-              </svg>
-              <input type="text" class="hex-value" name="system.attributes.basic_move.value" value="{{actor.system.attributes.basic_move.value}}"/>
-            </div>
-            <div class="hex-label">DESLOC.</div>
-          </div>
-
-          {{!-- Modificador de Tamanho --}}
-          <div class="hex-stat hex-mt">
-            <div class="hex-wrapper">
-              <svg class="hex-svg" viewBox="0 0 100 60">
-                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
-                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-              </svg>
-              <input type="number" class="hex-value" name="system.attributes.mt.value" value="{{actor.system.attributes.mt.value}}"/>
-            </div>
-            <div class="hex-label">MT</div>
-          </div>
-          
+            </svg>
+            {{!-- ✅ O valor agora é apenas um display, sem edição direta --}}
+            <span class="hex-value">{{actor.system.attributes.basic_speed.final}}</span>
         </div>
+        <div class="hex-label">VELOC.</div>
+    </div>
 
-        {{!-- Bloco 3: Barras de PV e PF --}}
-        <div class="sidebar-block bars-block">
-  
-        {{!-- Pontos de Vida --}}
-        <div class="bar-group">
-          <div class="bar-label">PONTOS DE VIDA</div>
-          <div class="resource-bar">
-            {{!-- 'style' é calculado pelo nosso ajudante --}}
-            <div class="bar-fill hp" style="{{#bar_width actor.system.attributes.hp.value actor.system.attributes.hp.max}}{{/bar_width}}"></div>
+    {{!-- Deslocamento --}}
+    <div class="hex-stat hex-deslocamento">
+        <div class="hex-wrapper">
+            <svg class="hex-svg" viewBox="0 0 100 60">
+                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
+                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
+            </svg>
+            <span class="hex-value">{{actor.system.attributes.basic_move.final}}</span>
+        </div>
+        <div class="hex-label">DESLOC.</div>
+    </div>
+
+    {{!-- Modificador de Tamanho --}}
+    <div class="hex-stat hex-mt">
+        <div class="hex-wrapper">
+            <svg class="hex-svg" viewBox="0 0 100 60">
+                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
+                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
+            </svg>
+             <span class="hex-value">{{actor.system.attributes.mt.final}}</span>
+        </div>
+        <div class="hex-label">MT</div>
+    </div>
+    
+</div>
+
+{{!-- Bloco 3: Barras de PV e PF (VERSÃO FINAL E CORRIGIDA) --}}
+<div class="sidebar-block bars-block">
+
+    {{!-- Pontos de Vida --}}
+    <div class="bar-group">
+        <div class="bar-label">
+            <span>PONTOS DE VIDA</span>
+            <a class="edit-resource-bar" data-stat="hp" title="Editar Valores Base de PV"><i class="fas fa-cog"></i></a>
+        </div>
+        <div class="resource-bar">
+            {{!-- ✅ USA O NOVO HELPER 'bar_style' E O VALOR .final PARA O MÁXIMO ✅ --}}
+            <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
             <div class="bar-inputs">
-              <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
-              <span>/</span>
-              <input type="number" name="system.attributes.hp.max" value="{{actor.system.attributes.hp.max}}"/>
+                {{!-- ✅ O INPUT DE PV ATUAL CONTINUA EDITÁVEL DIRETAMENTE ✅ --}}
+                <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
+                <span>/</span>
+                {{!-- ✅ O MÁXIMO AGORA É UM DISPLAY DO VALOR FINAL ✅ --}}
+                <span class="final-max-value">{{actor.system.attributes.hp.final}}</span>
             </div>
-            <div class="bar-temp">
-              <input type="number" name="system.attributes.hp.temp" value="{{actor.system.attributes.hp.temp}}" placeholder="TEMP"/>
-            </div>
-          </div>
         </div>
+    </div>
 
-        {{!-- Pontos de Fadiga --}}
-        <div class="bar-group">
-          <div class="bar-label">PONTOS DE FADIGA</div>
-          <div class="resource-bar">
-            <div class="bar-fill fp" style="{{#bar_width actor.system.attributes.fp.value actor.system.attributes.fp.max}}{{/bar_width}}"></div>
+    {{!-- Pontos de Fadiga --}}
+    <div class="bar-group">
+        <div class="bar-label">
+            <span>PONTOS DE FADIGA</span>
+            <a class="edit-resource-bar" data-stat="fp" title="Editar Valores Base de PF"><i class="fas fa-cog"></i></a>
+        </div>
+        <div class="resource-bar">
+            <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
             <div class="bar-inputs">
-              <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
-              <span>/</span>
-              <input type="number" name="system.attributes.fp.max" value="{{actor.system.attributes.fp.max}}"/>
+                <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
+                <span>/</span>
+                <span class="final-max-value">{{actor.system.attributes.fp.final}}</span>
             </div>
-            <div class="bar-temp">
-              <input type="number" name="system.attributes.fp.temp" value="{{actor.system.attributes.fp.temp}}" placeholder="TEMP"/>
-            </div>
-          </div>
         </div>
+    </div>
 
-      </div>
+</div>
 
         {{! --- Bloco 4: Marcadores de Fome, Sede e Sono --- }}
 

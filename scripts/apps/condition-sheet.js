@@ -1,5 +1,5 @@
 import { ConditionBuilder } from "./condition-builder.js";
-import { EffectBuilder } from "./effect-builder.js"; // <-- Importa nosso novo assistente
+import { EffectBuilder } from "./effect-builder.js"; 
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
@@ -20,34 +20,30 @@ export class ConditionSheet extends ItemSheet {
         return context;
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
-        if (!this.isEditable) return;
+activateListeners(html) {
+    super.activateListeners(html);
+    if (!this.isEditable) return;
 
-        // ✅ BOTÃO AGORA ABRE O ASSISTENTE ✅
-        html.find('.add-effect').on('click', (ev) => {
-            const newEffect = { type: "attribute", path: "", operation: "ADD", value: "0" };
-            new EffectBuilder(this.item, newEffect).render(true);
-        });
-        
-        // ✅ BOTÃO DE EDITAR EFEITO (NOVO) ✅
-        html.find('.edit-effect').on('click', (ev) => {
-            const effectIndex = $(ev.currentTarget).closest('.effect-block').data('effectIndex');
-            const effects = Array.isArray(this.item.system.effects) ? this.item.system.effects : Object.values(this.item.system.effects || {});
-            const effect = effects[effectIndex];
-            if (effect) {
-                effect.index = effectIndex; // Adiciona o índice para sabermos qual editar
-                new EffectBuilder(this.item, effect).render(true);
-            }
-        });
-
-        html.find('.delete-effect').on('click', this._onDeleteEffect.bind(this));
-        html.find('.condition-assistant-btn').on('click', (ev) => { new ConditionBuilder(this.item).render(true); });
-        html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
-            html.find('.effect-type-selector, input[type="checkbox"][name*="has_roll"]').on('change', () => {
-        this.submit({ preventClose: true }).then(() => this.render(false));
+    // BOTÃO DE ADICIONAR ABRE O ASSISTENTE PARA UM NOVO EFEITO
+    html.find('.add-effect').on('click', (ev) => {
+        const newEffect = { type: "attribute" };
+        new EffectBuilder(this.item, newEffect, -1).render(true);
     });
-    }
+    
+    // BOTÃO DE EDITAR ABRE O ASSISTENTE COM DADOS DO EFEITO EXISTENTE
+    html.find('.edit-effect').on('click', (ev) => {
+        const effectIndex = $(ev.currentTarget).closest('.effect-summary').data('effectIndex');
+        const effects = Array.isArray(this.item.system.effects) ? this.item.system.effects : Object.values(this.item.system.effects || {});
+        const effect = effects[effectIndex];
+        if (effect) {
+            new EffectBuilder(this.item, effect, effectIndex).render(true);
+        }
+    });
+
+    html.find('.delete-effect').on('click', this._onDeleteEffect.bind(this));
+    html.find('.condition-assistant-btn').on('click', (ev) => { new ConditionBuilder(this.item).render(true); });
+    html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
+}
     
     // Deletar um efeito (lógica simplificada)
     _onDeleteEffect(event) {

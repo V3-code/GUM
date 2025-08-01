@@ -34,92 +34,32 @@
     <h4 class="section-title">Efeitos Aplicados</h4>
     <div class="effects-list-container">
         {{#each system.effects as |effect effIndex|}}
-            <div class="effect-block" data-effect-index="{{effIndex}}">
-                <div class="effect-header">
-                    <select class="effect-type-selector" name="system.effects.{{effIndex}}.type">
-                        <option value="attribute" {{#if (eq effect.type 'attribute')}}selected{{/if}}>Modificar Atributo</option>
-                        <option value="status" {{#if (eq effect.type 'status')}}selected{{/if}}>Aplicar Status do Token</option>
-                        <option value="macro" {{#if (eq effect.type 'macro')}}selected{{/if}}>Executar Macro</option>
-                        <option value="chat" {{#if (eq effect.type 'chat')}}selected{{/if}}>Enviar Mensagem</option>
-                    </select>
-                    <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
-                </div>
-                <div class="effect-content">
-                    {{!-- Campos para Modificar Atributo --}}
-                    {{#if (eq effect.type "attribute")}}
-                        <div class="effect-row">
-                            <input type="text" name="system.effects.{{effIndex}}.path" value="{{effect.path}}" placeholder="Caminho (ex: system.attributes.dx.temp)"/>
-                            <select name="system.effects.{{effIndex}}.operation">
-                                <option value="ADD" {{#if (eq effect.operation 'ADD')}}selected{{/if}}>Adicionar</option>
-                                <option value="SUB" {{#if (eq effect.operation 'SUB')}}selected{{/if}}>Subtrair</option>
-                                <option value="SET" {{#if (eq effect.operation 'SET')}}selected{{/if}}>Definir</option>
-                            </select>
-                            <input type="text" name="system.effects.{{effIndex}}.value" value="{{effect.value}}" placeholder="Valor"/>
-                        </div>
-                    {{/if}}
-
-                    {{!-- Campos para Aplicar Status --}}
-                    {{#if (eq effect.type "status")}}
-                        <div class="form-group-inline path-input-group">
-                            <label>ID do Status</label>
-                            <input type="text" name="system.effects.{{effIndex}}.statusId" value="{{effect.statusId}}" placeholder="Ex: prone"/>
-                            <a class="open-status-picker" title="Selecionar Status"><i class="fas fa-search"></i></a>
-                        </div>
-                    {{/if}}
-
-                    {{!-- Campo para Executar Macro --}}
-                    {{#if (eq effect.type "macro")}}
-                        <div class="form-group-inline">
-                            <label>Nome da Macro</label>
-                            <input type="text" name="system.effects.{{effIndex}}.value" value="{{effect.value}}" placeholder="Nome exato da Macro"/>
-                        </div>
-                    {{/if}}
-                    
-                    {{!-- ✅ INTERFACE RESTAURADA PARA MENSAGEM / TESTE ✅ --}}
-                    {{#if (eq effect.type "chat")}}
-                        <div class="form-group">
-                            <label>Texto da Mensagem</label>
-                            <textarea name="system.effects.{{effIndex}}.chat_text" rows="2" placeholder="Ex: {actor.name} sente um calafrio!">{{effect.chat_text}}</textarea>
-                        </div>
-                         <div class="form-group-inline">
-                            <label>Visibilidade</label>
-                            <select name="system.effects.{{effIndex}}.whisperMode">
-                                <option value="public" {{#if (eq effect.whisperMode 'public')}}selected{{/if}}>Público</option>
-                                <option value="gm" {{#if (eq effect.whisperMode 'gm')}}selected{{/if}}>Apenas para MJs</option>
-                                <option value="blind" {{#if (eq effect.whisperMode 'blind')}}selected{{/if}}>Rolagem Cega</option>
-                            </select>
-                        </div>
-                        <div class="form-group-inline">
-                            <label>Incluir Botão de Teste?</label>
-                            <input type="checkbox" name="system.effects.{{effIndex}}.has_roll" {{checked effect.has_roll}}/>
-                        </div>
-                        {{#if effect.has_roll}}
-                        <div class="form-grid-3 sub-effect-group">
-                            <div class="form-group">
-                                <label>Atributo do Teste</label>
-                                <select name="system.effects.{{effIndex}}.roll_attribute">
-                                    <option value="st.final" {{#if (eq effect.roll_attribute 'st.final')}}selected{{/if}}>ST</option>
-                                    <option value="dx.final" {{#if (eq effect.roll_attribute 'dx.final')}}selected{{/if}}>DX</option>
-                                    <option value="iq.final" {{#if (eq effect.roll_attribute 'iq.final')}}selected{{/if}}>IQ</option>
-                                    <option value="ht.final" {{#if (eq effect.roll_attribute 'ht.final')}}selected{{/if}}>HT</option>
-                                    <option value="vont.final" {{#if (eq effect.roll_attribute 'vont.final')}}selected{{/if}}>Vontade</option>
-                                    <option value="per.final" {{#if (eq effect.roll_attribute 'per.final')}}selected{{/if}}>Percepção</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Modificador</label>
-                                <input type="number" name="system.effects.{{effIndex}}.roll_modifier" value="{{effect.roll_modifier}}" placeholder="0"/>
-                            </div>
-                            <div class="form-group">
-                                <label>Texto do Botão</label>
-                                <input type="text" name="system.effects.{{effIndex}}.roll_label" value="{{effect.roll_label}}" placeholder="Rolar Teste"/>
-                            </div>
-                        </div>
+            <div class="effect-summary" data-effect-index="{{effIndex}}">
+                <div class="effect-summary-info">
+                    <strong class="effect-type-label">{{capitalize effect.type}}</strong>
+                    <span class="effect-details">
+                        {{#if (eq effect.type 'attribute')}}{{effect.path}} {{effect.operation}} {{effect.value}}{{/if}}
+                        {{#if (eq effect.type 'status')}}{{effect.statusId}}{{/if}}
+                        {{#if (eq effect.type 'macro')}}Macro: {{effect.value}}{{/if}}
+                        
+                        {{!-- ✅ LÓGICA DE EXIBIÇÃO APRIMORADA ✅ --}}
+                        {{#if (eq effect.type 'chat')}}
+                            "{{effect.chat_text}}"
+                            {{#if effect.has_roll}}
+                                <span class="roll-summary-tag">(Teste: {{effect.roll_attribute}} {{#if effect.roll_modifier}}vs {{effect.roll_modifier}}{{/if}})</span>
+                            {{/if}}
                         {{/if}}
-                    {{/if}}
+                    </span>
+                </div>
+                <div class="effect-controls">
+                    <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
+                    <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
                 </div>
             </div>
         {{/each}}
+        {{#unless system.effects.length}}
+            <p class="hint">Nenhum efeito adicionado.</p>
+        {{/unless}}
     </div>
     <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
 </div>

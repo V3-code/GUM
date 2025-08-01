@@ -5,7 +5,7 @@ import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
-import { evaluateConditions } from "./apps/condition-evaluator.js";
+
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -45,6 +45,43 @@ Hooks.once('init', async function() {
 // ================================================================== //
 Hooks.once('ready', async function() {
     console.log("GUM | Fase 'ready': Aplicando configurações.");
+
+    $('body').on('click', '.apply-damage-button', (ev) => {
+    ev.preventDefault();
+    console.log("GUM | DEBUG: Botão 'Aplicar Dano' clicado.");
+
+    const button = ev.currentTarget;
+
+    // 1. Pega o token alvo selecionado
+    const controlled = canvas.tokens.controlled;
+    if (controlled.length !== 1) {
+        console.error("GUM | DEBUG: Falha na Etapa 1. Nenhum token ou múltiplos tokens selecionados.");
+        return ui.notifications.warn("Por favor, selecione exatamente um token como alvo.");
+    }
+    const targetActor = controlled[0].actor;
+    console.log(`GUM | DEBUG: Etapa 1 OK. Alvo: ${targetActor.name}`);
+
+    // 2. Lê o pacote de dados
+    const damagePackageJSON = button.dataset.damage;
+    if (!damagePackageJSON) {
+        console.error("GUM | DEBUG: Falha na Etapa 2. Pacote de dados de dano não encontrado no botão.");
+        return ui.notifications.error("Erro crítico: Pacote de dados de dano ausente.");
+    }
+    const damagePackage = JSON.parse(damagePackageJSON);
+    console.log("GUM | DEBUG: Etapa 2 OK. Pacote de dados lido:", damagePackage);
+
+    // 3. Encontra o ator atacante pela ID
+    const attackerActor = game.actors.get(damagePackage.attackerId);
+    if (!attackerActor) {
+        console.error(`GUM | DEBUG: Falha na Etapa 3. Ator atacante com ID "${damagePackage.attackerId}" não encontrado.`);
+        return ui.notifications.error("Erro: Ator atacante não encontrado. A mensagem de chat pode ser antiga.");
+    }
+    console.log(`GUM | DEBUG: Etapa 3 OK. Atacante: ${attackerActor.name}`);
+
+    // 4. Cria e renderiza nossa nova janela
+    console.log("GUM | DEBUG: Etapa 4. Tudo pronto para abrir a janela.");
+    new DamageApplicationWindow(damagePackage, attackerActor, targetActor).render(true);
+});
     
 // Listener para o botão "Aplicar Dano" no chat
    $('body').on('click', '.rollable', async (ev) => { // 'async' é necessário aqui
@@ -170,72 +207,6 @@ Hooks.once('ready', async function() {
 });
 
 
-// ✅ VERSÃO CORRIGIDA E FINAL DOS HOOKS ✅
-
-// Avalia as condições quando QUALQUER item é adicionado ao ator
-Hooks.on("createItem", (item, options, userId) => {
-    if (game.user.id === userId && item.parent) {
-        // Não importa o tipo do item, sempre reavaliamos as condições do ator
-        evaluateConditions(item.parent);
-    }
-});
-
-// Limpa e avalia as condições quando QUALQUER item é removido
-Hooks.on("deleteItem", async (item, options, userId) => {
-    if (game.user.id !== userId || !item.parent) return;
-
-    // Se o item deletado for uma condição, primeiro limpamos seus efeitos
-    if (item.type === 'condition') {
-        const updates = {};
-        const effectsData = item.system.effects || [];
-        const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
-        effectsArray.forEach(effect => {
-            if (effect.path && effect.path.endsWith('.temp')) {
-                updates[effect.path] = 0;
-            }
-        });
-        if (Object.keys(updates).length > 0) {
-            await item.parent.update(updates);
-        }
-    }
-
-    // Após a limpeza (se necessária), reavaliamos TODAS as condições restantes
-    evaluateConditions(item.parent);
-});
-
-
-// ================================================================== //
-//  HOOK DE EVENTOS DE COMBATE
-// ================================================================== //
-
-/**
- * Escuta por qualquer atualização no combate (início, fim, mudança de turno).
- */
-Hooks.on("updateCombat", (combat, changed, options, userId) => {
-    // Verifica se a mudança foi na rodada ou no turno
-    const isTurnChange = changed.round !== undefined || changed.turn !== undefined;
-
-    // Reavalia as condições de todos os personagens envolvidos no combate
-    for (const combatant of combat.combatants) {
-        if (combatant.actor) {
-            // Avisa ao motor que esta é uma avaliação de "início de turno"
-            evaluateConditions(combatant.actor, { isTurnStart: isTurnChange });
-        }
-    }
-});
-
-/**
- * Escuta quando um combate é deletado, para limpar os efeitos.
- */
-Hooks.on("deleteCombat", (combat, options, userId) => {
-    // Reavalia as condições de todos os personagens que estavam no combate
-    for (const combatant of combat.combatants) {
-        if (combatant.actor) {
-            // Avisa que o combate terminou
-            evaluateConditions(combatant.actor, { isCombatEnd: true });
-        }
-    }
-});
 
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
@@ -275,17 +246,77 @@ Handlebars.registerHelper('gt', function (a, b) {
         }
         return accum;
     });
-    // Este pequeno ajudante adiciona uma função chamada 'bar_width' que é usado no HTML para calcular a largura da barra.
-    Handlebars.registerHelper('bar_width', function(current, max) {
-        const M = Math.max(1, max);
-        // Calcula a porcentagem, garantindo que ela fique entre 0 e 100
-        const width = Math.min(100, Math.max(0, (current / M) * 100));
-        // Retorna o estilo CSS pronto para ser usado
-        return new Handlebars.SafeString(`width: ${width}%;`);
-    });
+Handlebars.registerHelper('bar_style', function(current, max, type) {
+    const M = Math.max(1, max);
+    let width = 0;
+    let color = "";
+
+    const colors = {
+        hp_normal: "#3b7d3b",
+        hp_wounded: "#b8860b",
+        hp_reeling: "#a53541",
+        hp_near_death_1: "#8B0000",
+        hp_near_death_2: "#700000",
+        hp_near_death_3: "#580000",
+        hp_near_death_4: "#400000",
+        hp_dead: "#313131",
+        
+        fp_normal: "#3b5a7d",      // Azul (Padrão)
+        fp_tired: "#6a5acd",       // Roxo (Cansado)
+        fp_exhausted: "#483d8b",    // Roxo Escuro (Exausto)
+        fp_unconscious: "#2c2c54"  // Roxo muito escuro (Inconsciente por fadiga)
+    };
+
+    if (type === 'hp') {
+        if (current > 0) {
+            width = Math.min(100, (current / M) * 100);
+            if (current <= M / 3) color = colors.hp_wounded;
+            else color = colors.hp_normal;
+        } else {
+            const negativeDepth = Math.abs(current);
+            const deathThreshold = 5 * M;
+            width = Math.min(100, (negativeDepth / deathThreshold) * 100);
+            
+            if (current <= -5 * M)      color = colors.hp_dead;
+            else if (current <= -4 * M) color = colors.hp_near_death_4;
+            else if (current <= -3 * M) color = colors.hp_near_death_3;
+            else if (current <= -2 * M) color = colors.hp_near_death_2;
+            else if (current <= -1 * M) color = colors.hp_near_death_1;
+            else                        color = colors.hp_reeling;
+        }
+    } else { // fp
+        // --- ✅ LÓGICA DE BARRA REVERSA APLICADA AOS PFs ✅ ---
+        if (current > 0) {
+            // Comportamento normal para PFs positivos
+            width = Math.min(100, (current / M) * 100);
+            if (current <= M / 3) color = colors.fp_tired;
+            else color = colors.fp_normal;
+        } else {
+            // Comportamento "reverso" para PFs negativos
+            // A barra enche à medida que o personagem vai de 0 a -PF Máx
+            const negativeDepth = Math.abs(current);
+            const unconsciousThreshold = M; // O limiar para inconsciência é -1 * PF Máx
+            width = Math.min(100, (negativeDepth / unconsciousThreshold) * 100);
+            
+            // Se os PFs forem negativos, o personagem está exausto e inconsciente
+            color = colors.fp_unconscious;
+        }
+    }
+    
+    // Retorna o estilo CSS completo
+    return new Handlebars.SafeString(`width: ${width}%; background-color: ${color};`);
+});
 Handlebars.registerHelper('add', function(a, b) {
   return a + b;
 });
+Handlebars.registerHelper('obj', function(...args) {
+    const obj = {};
+    for (let i = 0; i < args.length - 1; i += 2) {
+        obj[args[i]] = args[i + 1];
+    }
+    return obj;
+});
+
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
 // ================================================================== //
@@ -542,149 +573,159 @@ _getSubmitData(updateData) {
         }
     }
 
-      _prepareCharacterItems(sheetData) {
-        const actorData = sheetData.actor;
-// ================================================================== //
-    //           MOTOR DE CONDIÇÕES (VERSÃO COM TRATAMENTO DE ERRO ROBUSTO) //
-    // ================================================================== //
-    for (const effect of actorData.effects) {
-        try {
-            const sourceItem = fromUuidSync(effect.origin);
-            if (!sourceItem || sourceItem.type !== 'condition') continue;
+_prepareCharacterItems(sheetData) {
+    const actorData = sheetData.actor;
+    const attributes = actorData.system.attributes;
 
-            const conditionData = sourceItem.system.activation_condition;
-
-            if (conditionData && conditionData.attribute && conditionData.operator && conditionData.value !== "") {
-                
-                // --- A CORREÇÃO ESTÁ AQUI ---
-                // Garante que o atributo do lado esquerdo sempre comece com @ para o motor de rolagem
-                const leftFormula = conditionData.attribute.startsWith('@') ? conditionData.attribute : `@${conditionData.attribute}`;
-
-                const rollLeft = new Roll(leftFormula, this.actor.getRollData());
-                const leftValue = rollLeft.evaluateSync({ strict: false }).total;
-
-                const rollRight = new Roll(String(conditionData.value), this.actor.getRollData());
-                const rightValue = rollRight.evaluateSync({ strict: false }).total;
-
-                let conditionMet = false;
-                if (typeof leftValue === 'number' && typeof rightValue === 'number') {
-                    switch (conditionData.operator) {
-                        case '==': conditionMet = leftValue == rightValue; break;
-                        case '!=': conditionMet = leftValue != rightValue; break;
-                        case '<':  conditionMet = leftValue < rightValue; break;
-                        case '<=': conditionMet = leftValue <= rightValue; break;
-                        case '>':  conditionMet = leftValue > rightValue; break;
-                        case '>=': conditionMet = leftValue >= rightValue; break;
-                    }
-                }
-                
-                effect.disabled = !conditionMet;
-            } else {
-                effect.disabled = false;
-            }
-        } catch (err) {
-            console.error(`GUM | Erro ao avaliar condição para o efeito ${effect.name}:`, err);
-            effect.disabled = true;
+    // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS ---
+    const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
+    tempAttributes.forEach(attr => {
+        if (attributes[attr]) attributes[attr].temp = 0;
+    });
+    if (actorData.system.combat.dr_mods) {
+        for (const key in actorData.system.combat.dr_mods) {
+            actorData.system.combat.dr_mods[key] = 0;
         }
     }
-    // ================================================================== //
-    //                     FIM DO MOTOR DE CONDIÇÕES                      //
-    // ================================================================== //
-        
-        const attributes = actorData.system.attributes;
 
-        for (let i of sheetData.actor.items) {
-          if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type)) {
-            // Multiplica a quantidade pelo peso unitário e salva em uma nova variável
+    // --- ETAPA 2: MOTOR DE CONDIÇÕES - ACUMULAR MODIFICADORES ---
+    const modifiers = {}; 
+    const conditions = this.actor.items.filter(i => i.type === "condition");
+    for (const condition of conditions) {
+        if (condition.getFlag("gum", "manual_override")) continue;
+        let isConditionActive = false;
+        if (!condition.system.when || condition.system.when.trim() === "") {
+            isConditionActive = true;
+        } else {
+            try {
+                isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
+            } catch(e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
+        }
+        if (isConditionActive) {
+            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+            effects.forEach(effect => {
+                if (effect.type === 'attribute' && effect.path) {
+                    if (!modifiers[effect.path]) modifiers[effect.path] = 0;
+                    const value = Number(effect.value) || 0;
+                    if (effect.operation === "ADD") modifiers[effect.path] += value;
+                    else if (effect.operation === "SUB") modifiers[effect.path] -= value;
+                }
+            });
+        }
+    }
+
+    // --- ETAPA 3: APLICAR OS MODIFICADORES ACUMULADOS ---
+    for(const path in modifiers) {
+        // Aplica apenas a campos .temp e dr_mods por segurança
+        if (path.endsWith('.temp') || path.startsWith('system.combat.dr_mods')) {
+            const currentVal = foundry.utils.getProperty(actorData, path) || 0;
+            foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
+        }
+    }
+    
+    // ================================================================== //
+    //      FIM DO MOTOR / INÍCIO DOS CÁLCULOS FINAIS DA FICHA            //
+    // ================================================================== //
+
+    // --- CÁLCULO DOS ATRIBUTOS .final ---
+    // ✅ AGORA INCLUI TODOS OS ATRIBUTOS QUE VOCÊ ATUALIZOU ✅
+    for (const attr of tempAttributes) {
+        if (attributes[attr]) {
+            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].temp) || 0);
+        }
+    }
+    
+
+    for (let i of sheetData.actor.items) {
+        if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type)) {
             i.system.total_weight = Math.round(((i.system.quantity || 1) * (i.system.weight || 0)) * 100) / 100;
             i.system.total_cost = (i.system.quantity || 1) * (i.system.cost || 0);
-          }
         }
-        // ETAPA 1: Pré-calcula os valores FINAIS dos atributos, incluindo modificadores temporários.
-        for (const attr of ['st', 'dx', 'iq', 'ht', 'vont', 'per']) {
-          // Cria uma nova propriedade 'final' para cada atributo. Ex: st.final = st.value + st.temp
-          attributes[attr].final = (attributes[attr].value || 0) + (attributes[attr].temp || 0);
-        }
-        
-        // O resto da lógica de cálculo agora usará esses valores 'finais'.
-        // ... (A lógica de Carga, RD, etc. continua a mesma, mas é incluída aqui para integridade)
-        if (!actorData.system.combat) actorData.system.combat = { dr_mods: {}, attacks: {} };
-        const combat = actorData.system.combat;
-        
-        // --- 1. CÁLCULO DE CARGA (ENCUMBRANCE) - LÓGICA CORRIGIDA ---
-        const liftingST = attributes.lifting_st.value || 10;
-        const basicLift = (liftingST * liftingST) / 10;
-        if (attributes.basic_lift) attributes.basic_lift.value = basicLift;
-        else attributes.basic_lift = { value: basicLift };
-        
-        let totalWeight = 0;
-        const ignoreCarried = actorData.system.encumbrance.ignore_carried_weight;
+    }
 
-        for (let i of sheetData.actor.items) {
-          // Pula para o próximo item se não for um equipamento com peso
-          if (!['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type) || !i.system.weight) {
+    // --- ETAPA 3: CÁLCULOS FINAIS DA FICHA ---
+    const standardAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
+    standardAttributes.forEach(attr => {
+        if (attributes[attr]) {
+            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].temp) || 0);
+        }
+    });
+
+    // ✅ LÓGICA CORRETA E ESPECÍFICA PARA PV E PF ✅
+    if (attributes.hp) {
+        attributes.hp.final = (Number(attributes.hp.max) || 0) + (Number(attributes.hp.temp) || 0);
+    }
+    if (attributes.fp) {
+        attributes.fp.final = (Number(attributes.fp.max) || 0) + (Number(attributes.fp.temp) || 0);
+    }
+    
+    // --- CÁLCULO DE VELOCIDADE, DESLOCAMENTO, CARGA ---
+    const finalBasicSpeed = attributes.basic_speed.final;
+    const finalBasicMove = attributes.basic_move.final;
+    
+    const liftingST = attributes.lifting_st.final;
+    const basicLift = (liftingST * liftingST) / 10;
+    if (attributes.basic_lift) attributes.basic_lift.value = basicLift;
+    else attributes.basic_lift = { value: basicLift };
+    
+    let totalWeight = 0;
+    const ignoreCarried = actorData.system.encumbrance.ignore_carried_weight;
+    for (let i of sheetData.actor.items) {
+        if (!['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type) || !i.system.weight) {
             continue;
-          }
-
-          const itemLocation = i.system.location;
-          const itemWeight = i.system.weight || 0;
-          const itemQuantity = i.system.quantity || 1;
-
-          // Itens 'Em Uso' (equipped) SEMPRE contam para o peso.
-          if (itemLocation === 'equipped') {
-            totalWeight += itemWeight * itemQuantity;
-          } 
-          // Itens 'Carregados' (carried) SÓ contam se a caixa NÃO estiver marcada.
-          else if (itemLocation === 'carried' && !ignoreCarried) {
-            totalWeight += itemWeight * itemQuantity;
-          }
         }
-
-        let encumbrance = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
-        if (totalWeight > basicLift * 6) { 
-          encumbrance = { level_name: "M. Pesada", level_value: 4, penalty: -4 }; 
-        } else if (totalWeight > basicLift * 3) { 
-          encumbrance = { level_name: "Pesada", level_value: 3, penalty: -3 }; 
-        } else if (totalWeight > basicLift * 2) { 
-          encumbrance = { level_name: "Média", level_value: 2, penalty: -2 }; 
-        } else if (totalWeight > basicLift) { 
-          encumbrance = { level_name: "Leve", level_value: 1, penalty: -1 }; 
+        const itemLocation = i.system.location;
+        const itemWeight = i.system.weight || 0;
+        const itemQuantity = i.system.quantity || 1;
+        if (itemLocation === 'equipped') {
+            totalWeight += itemWeight * itemQuantity;
+        } 
+        else if (itemLocation === 'carried' && !ignoreCarried) {
+            totalWeight += itemWeight * itemQuantity;
         }
-        
-        actorData.system.encumbrance.total_weight = Math.round(totalWeight * 100) / 100;
-        actorData.system.encumbrance.level_name = encumbrance.level_name;
-        actorData.system.encumbrance.level_value = encumbrance.level_value;
-        actorData.system.encumbrance.levels = { none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2), medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2), xheavy: (basicLift * 10).toFixed(2) };
+    }
 
-        // --- 2. CÁLCULO DE DEFESAS E MOVIMENTO ---
-        const basicSpeed = parseFloat(String(attributes.basic_speed.value).replace(",", ".")) || 0;
-        const basicMove = attributes.basic_move.value || 0;
-        attributes.final_dodge = Math.max(1, Math.floor(basicSpeed) + 3 + encumbrance.penalty + (combat.dodge_mod || 0));
-        attributes.final_move = Math.max(1, Math.floor(basicMove * (1 - (encumbrance.level_value * 0.2)) ));
-        
-        // ========= CÁLCULO DE RD =============
-        const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
-          for (let i of sheetData.actor.items) {
-           if (i.type === 'armor' && i.system.location === 'equipped') {
-          const wornLocs = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
-          for (const loc of wornLocs) {
-            if (typeof loc !== "string") continue;
-            const locLower = loc.toLowerCase();
-            if (drFromArmor.hasOwnProperty(locLower)) {
-              drFromArmor[locLower] += i.system.dr || 0;
+    let encumbrance = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
+    if (totalWeight > basicLift * 6) { encumbrance = { level_name: "M. Pesada", level_value: 4, penalty: -4 }; } 
+    else if (totalWeight > basicLift * 3) { encumbrance = { level_name: "Pesada", level_value: 3, penalty: -3 }; } 
+    else if (totalWeight > basicLift * 2) { encumbrance = { level_name: "Média", level_value: 2, penalty: -2 }; } 
+    else if (totalWeight > basicLift) { encumbrance = { level_name: "Leve", level_value: 1, penalty: -1 }; }
+    
+    actorData.system.encumbrance.total_weight = Math.round(totalWeight * 100) / 100;
+    actorData.system.encumbrance.level_name = encumbrance.level_name;
+    actorData.system.encumbrance.level_value = encumbrance.level_value;
+    actorData.system.encumbrance.levels = { none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2), medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2), xheavy: (basicLift * 10).toFixed(2) };
+
+ // --- CÁLCULO DE ESQUIVA E MOVIMENTO FINAIS ---
+    let finalDodge = Math.floor(finalBasicSpeed) + 3 + (actorData.system.encumbrance.penalty || 0) + (actorData.system.combat.dodge_mod || 0);
+    let finalMove = Math.floor(finalBasicMove * (1 - ((actorData.system.encumbrance.level_value || 0) * 0.2)));
+    
+    attributes.final_dodge = finalDodge;
+    attributes.final_move = finalMove;
+    
+    // --- CÁLCULO DE RD (AGORA INCLUINDO OS MODIFICADORES DE CONDIÇÃO) ---
+    const combat = actorData.system.combat;
+    const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
+    for (let i of sheetData.actor.items) {
+        if (i.type === 'armor' && i.system.location === 'equipped') {
+            const wornLocs = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
+            for (const loc of wornLocs) {
+                if (typeof loc !== "string") continue;
+                const locLower = loc.toLowerCase();
+                if (drFromArmor.hasOwnProperty(locLower)) {
+                    drFromArmor[locLower] += i.system.dr || 0;
+                }
             }
-          }
+        }
+    }
+    const totalDr = {};
+    const drMods = combat.dr_mods || {};
+    for (let key in drFromArmor) {
+        totalDr[key] = (drFromArmor[key] || 0) + (drMods[key] || 0);
+    }
+    combat.dr_locations = totalDr;
+    combat.dr_from_armor = drFromArmor;
 
-          }
-          }
-          // Adiciona os modificadores manuais para o total
-          const totalDr = {};
-          if(!combat.dr_mods) combat.dr_mods = {};
-          for (let key in drFromArmor) {
-              totalDr[key] = Math.round((drFromArmor[key] || 0) + (combat.dr_mods?.[key] || 0));
-          }
-          combat.dr_locations = totalDr;
-          combat.dr_from_armor = drFromArmor;
 
         // ETAPA 2: O loop de cálculo de NH agora usa o valor .final dos atributos
         for (let i of sheetData.actor.items) {
@@ -747,8 +788,108 @@ _getSubmitData(updateData) {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
-// Dentro de: class GurpsActorSheet extends ActorSheet { ...
-// Dentro de: activateListeners(html) { ...
+        // ✅ NOVO LISTENER PARA EDITAR AS BARRAS DE PV E PF ✅
+html.on('click', '.edit-resource-bar', ev => {
+    ev.preventDefault();
+    const button = ev.currentTarget;
+    const statKey = button.dataset.stat; // "hp" ou "fp"
+    const statLabel = statKey === 'hp' ? "Pontos de Vida" : "Pontos de Fadiga";
+    const attrs = this.actor.system.attributes;
+
+    const content = `
+        <form class="secondary-stats-editor">
+            <p class="hint">Ajuste os valores base e os modificadores temporários aqui.</p>
+            <div class="form-header">
+                <span></span>
+                <span>Base</span>
+                <span>Mod. Temp.</span>
+                <span>Final</span>
+            </div>
+            <div class="form-grid">
+                <label>${statLabel} (Máximo)</label>
+                <input type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
+                <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
+                <span class="final-display">${attrs[statKey].final}</span>
+            </div>
+        </form>
+    `;
+
+    new Dialog({
+        title: `Editar ${statLabel}`,
+        content: content,
+        buttons: {
+            save: {
+                icon: '<i class="fas fa-save"></i>',
+                label: "Salvar",
+                callback: (html) => {
+                    const form = html.find('form')[0];
+                    const formData = new FormDataExtended(form).object;
+                    const updateData = {
+                        [`system.attributes.${statKey}.max`]: formData[`${statKey}.max`],
+                        [`system.attributes.${statKey}.temp`]: formData[`${statKey}.temp`]
+                    };
+                    this.actor.update(updateData);
+                }
+            }
+        },
+        default: 'save'
+    }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+});
+
+html.on('click', '.edit-secondary-stats-btn', ev => {
+    ev.preventDefault();
+    const attrs = this.actor.system.attributes;
+
+    const content = `
+        <form class="secondary-stats-editor">
+            <div class="form-header">
+                <span>Atributo</span>
+                <span>Base</span>
+                <span>Mod.</span>
+                <span>Pontos</span>
+            </div>
+            <div class="form-grid">
+                <label>Velocidade Básica</label>
+                <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
+                <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
+                <input type="number" name="basic_speed.points" value="0" disabled/>
+
+                <label>Deslocamento Básico</label>
+                <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
+                <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
+                <input type="number" name="basic_move.points" value="0" disabled/>
+                
+                <label>Mod. de Tamanho(MT)</label>
+                <input type="number" name="mt.value" value="${attrs.mt.value}"/>
+                <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
+                <input type="number" name="mt.points" value="0" disabled/>
+            </div>
+        </form>
+    `;
+
+    new Dialog({
+        title: "Editar Atributos Secundários",
+        content: content,
+        buttons: {
+            save: {
+                icon: '<i class="fas fa-save"></i>',
+                label: "Salvar",
+                callback: (html) => {
+                    const form = html.find('form')[0];
+                    const formData = new FormDataExtended(form).object;
+                    // Prepara os dados para a atualização
+                    const updateData = {
+                        "system.attributes.basic_speed.value": formData["basic_speed.value"],
+                        "system.attributes.basic_move.value": formData["basic_move.value"],
+                        "system.attributes.mt.value": formData["mt.value"]
+                    };
+                    this.actor.update(updateData);
+                }
+            }
+        },
+        default: 'save'
+    }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+});
 
 html.on('click', '.item-quick-view', async (ev) => {
     ev.preventDefault();
@@ -2856,7 +2997,7 @@ if (fragRoll) {
     const item = this.actor.items.get(itemId);
     if (item) {
         await item.setFlag('gum', 'manual_override', checkbox.checked);
-        evaluateConditions(this.actor); // Reavalia as condições
+         this.render(false); // Reavalia as condições
     }
 });
 
