@@ -93,8 +93,9 @@ export class ConditionBuilder extends FormApplication {
             },
             "Combate e Ambiente": {
                 scene_flag_check: { label: "Verificar Flag da Cena (Ambiente)", value: "game.scenes.current.getFlag('gum', 'NOME_DA_FLAG') === true" },
-                is_turn: { label: "Verificar se é o Turno do Personagem", value: "game.combat?.combatant?.actorId === actor.id" },
-                combat_round: { label: "Verificar a Rodada do Combate", value: "game.combat?.round >= NÚMERO_DA_RODADA" }
+                is_turn: { label: "No Início do Turno do Personagem", value: "game.combat && game.combat.started && game.combat.combatant.actorId === actor.id" },
+                combat_round: { label: "A Partir da Rodada de Combate X", value: "game.combat?.round >= NÚMERO_DA_RODADA" },
+        
             }
         };
         

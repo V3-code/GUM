@@ -2996,3 +2996,37 @@ input:checked + .slider:before {
 .condition-card input:checked ~ .item-controls {
     opacity: 0.5;
 }
+
+/* ================================================= */
+/* ESTILOS PARA O MENU DE STATUS DO TOKEN (HUD)      */
+/* ================================================= */
+
+/* Define o container principal do menu de status */
+#token-hud .status-effects {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* ✅ CRIA UMA GRADE DE 4 COLUNAS */
+    gap: 4px;
+    padding: 4px;
+    width: 160px; /* ✅ DEFINE UMA LARGURA FIXA PARA O MENU */
+}
+
+/* Estilo para cada ícone individual */
+#token-hud .effect-control {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Adiciona uma borda dourada quando o ícone está ativo */
+#token-hud .effect-control.active {
+    border: 2px solid var(--c-accent-gold, #c5a05b);
+}
+
+/* Garante que a imagem do ícone preencha o espaço */
+#token-hud .effect-control img {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

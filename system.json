@@ -17,6 +17,7 @@
   },
   "esmodules": [
     "scripts/gum-data.js",
+    "scripts/apps/effect-builder.js",
     "scripts/apps/condition-builder.js",
     "scripts/apps/damage-application.js",
     "scripts/apps/condition-sheet.js",

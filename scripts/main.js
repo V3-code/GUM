@@ -13,20 +13,30 @@ import { evaluateConditions } from "./apps/condition-evaluator.js";
 Hooks.once('init', async function() { 
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     
-    // Tarefas de inicialização que não dependem de dados do mundo:
+    CONFIG.statusEffects = [
+    { id: "dead", name: "Morto", img: "icons/svg/skull.svg" },
+    { id: "unconscious", name: "Inconsciente", img: "icons/svg/unconscious.svg" },
+    { id: "stun", name: "Atordoado (Stun)", img: "icons/svg/daze.svg" },
+    { id: "prone", name: "Caído (Prone)", img: "icons/svg/falling.svg" },
+    { id: "bleeding", name: "Sangrando", img: "icons/svg/blood.svg" },
+    { id: "burning", name: "Em Chamas", img: "icons/svg/fire.svg" },
+    { id: "poison", name: "Envenenado", img: "icons/svg/poison.svg" },
+    { id: "blind", name: "Cego", img: "icons/svg/blind.svg" },
+    { id: "deaf", name: "Surdo", img: "icons/svg/deaf.svg" },
+    { id: "silenced", name: "Silenciado", img: "icons/svg/silenced.svg" },
+    { id: "paralyzed", name: "Paralisado", img: "icons/svg/net.svg" }
+];
     
-    // Registra as fichas de Ator e Item
+    
     Actors.registerSheet("gum", GurpsActorSheet, { 
         types: ["character"], makeDefault: true 
     }); 
     Items.registerSheet("gum", GurpsItemSheet, { makeDefault: true }); 
-        Items.registerSheet("gum", ConditionSheet, { 
+    Items.registerSheet("gum", ConditionSheet, { 
         types: ["condition"], 
         makeDefault: true 
     });
     
-    
-    // Apenas REGISTRA as configurações do sistema. Não as lê ainda.
     registerSystemSettings();
 });
 
@@ -37,29 +47,121 @@ Hooks.once('ready', async function() {
     console.log("GUM | Fase 'ready': Aplicando configurações.");
     
 // Listener para o botão "Aplicar Dano" no chat
-    $('body').on('click', '.apply-damage-button', (ev) => {
+   $('body').on('click', '.rollable', async (ev) => { // 'async' é necessário aqui
     ev.preventDefault();
-    const button = ev.currentTarget;
+    const element = ev.currentTarget;
+    const baseTarget = parseInt(element.dataset.rollValue);
+    const label = element.dataset.label;
 
-    // 1. Pega o token alvo selecionado
-    const controlled = canvas.tokens.controlled;
-    if (controlled.length !== 1) {
-        return ui.notifications.warn("Por favor, selecione exatamente um token como alvo.");
-    }
-    const targetActor = controlled[0].actor;
+    const actorId = $(element).closest('[data-actor-id]').data('actorId');
+    const actor = game.actors.get(actorId) || ChatMessage.getSpeakerActor(ChatMessage.getSpeaker({}));
 
-    // 2. Lê o pacote de dados e encontra o ator atacante pela ID
-    const damagePackage = JSON.parse(button.dataset.damage);
-    const attackerActor = game.actors.get(damagePackage.attackerId);
+    const performRoll = async (modifier = 0) => { // 'async' é necessário aqui
+        const finalTarget = baseTarget + modifier;
+        const roll = new Roll("3d6");
+        
+        // ✅ CORREÇÃO FINAL: Usando o método de avaliação moderno
+        await roll.evaluate(); 
 
-    // 3. Validação para garantir que ambos os atores foram encontrados
-    if (!targetActor || !attackerActor) {
-        return ui.notifications.error("Atacante ou alvo não encontrado.");
-    }
-    
-    // 4. Cria e renderiza nossa nova janela, passando ambos os atores
-    new DamageApplicationWindow(damagePackage, attackerActor, targetActor).render(true);
-});
+        const margin = finalTarget - roll.total;
+        const diceResults = roll.dice[0].results.map(r => r.result);
+        let resultText, resultClass, resultIcon;
+
+        // ... (o resto da sua lógica de sucesso/falha, que já está perfeita, continua aqui) ...
+        if (roll.total <= finalTarget) {
+            resultText = `Sucesso com margem de ${margin}`;
+            resultClass = 'success';
+            resultIcon = 'fas fa-check-circle';
+        } else {
+            resultText = `Fracasso por uma margem de ${margin * -1}`;
+            resultClass = 'failure';
+            resultIcon = 'fas fa-times-circle';
+        }
+        if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
+            resultText = `Sucesso Crítico!`;
+        } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
+            resultText = `Falha Crítica!`;
+        }
+        
+        const diceHtml = diceResults.map(die => `<span class="die">${die}</span>`).join('');
+        const flavor = `
+            <div class="gurps-roll-card">
+                <header class="card-header"><h3>${label}</h3></header>
+                <div class="card-content">
+                    <div class="card-main-flex">
+                        <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
+                        <div class="column-separator"></div>
+                        <div class="target-column"><div class="roll-target-value">${finalTarget}</div><div class="roll-breakdown-pill"><span>Base: ${baseTarget} &nbsp;|&nbsp; Mod: ${modifier > 0 ? '+' : ''}${modifier}</span></div></div>
+                    </div>
+                </div>
+                <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
+            </div>
+        `;
+
+        // A forma moderna de criar a mensagem, que já está correta
+        ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: actor }),
+            content: flavor,
+            rolls: [roll]
+        });
+    };
+
+
+            if (ev.shiftKey) {
+                new Dialog({
+                    title: "Modificador de Rolagem",
+                  
+                    content: `
+                        <div class="modifier-dialog">
+                            <p><b>Insira ou clique nos modificadores para o ${label}:</p></b>
+                            <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px;"/>
+                            
+                            <div class="modifier-grid">
+                                <div class="mod-row">
+                                    <button type="button" class="mod-button" data-mod="-5">-5</button>
+                                    <button type="button" class="mod-button" data-mod="-4">-4</button>
+                                    <button type="button" class="mod-button" data-mod="-3">-3</button>
+                                    <button type="button" class="mod-button" data-mod="-2">-2</button>
+                                    <button type="button" class="mod-button" data-mod="-1">-1</button>
+                                </div>
+                                <div class="mod-row">
+                                    <button type="button" class="mod-button" data-mod="+1">+1</button>
+                                    <button type="button" class="mod-button" data-mod="+2">+2</button>
+                                    <button type="button" class="mod-button" data-mod="+3">+3</button>
+                                    <button type="button" class="mod-button" data-mod="+4">+4</button>
+                                    <button type="button" class="mod-button" data-mod="+5">+5</button>
+                                </div>
+                            </div>
+
+                            <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar Modificador</button>
+                        </div>`,
+                    buttons: {
+                        roll: {
+                            icon: '<i class="fas fa-dice-d6"></i>',
+                            label: "Rolar",
+                            callback: (html) => {
+                                const modifier = parseInt(html.find('input[name="modifier"]').val());
+                                performRoll(modifier);
+                            }
+                        }
+                    },
+                    default: "roll",
+                    render: (html) => {
+                        const input = html.find('input[name="modifier"]');
+                        html.find('.mod-button').click((event) => {
+                            const currentMod = parseInt(input.val());
+                            const modToAdd = parseInt($(event.currentTarget).data('mod'));
+                            input.val(currentMod + modToAdd);
+                        });
+                        html.find('.mod-clear-button').click(() => {
+                            input.val(0);
+                        });
+                    }
+                }).render(true);
+            } else {
+                performRoll(0);
+            }
+                  });
 
     CONFIG.Combat.initiative = {
         formula: game.settings.get("gum", "initiativeFormula"),
@@ -67,12 +169,6 @@ Hooks.once('ready', async function() {
     };
 });
 
-
-Hooks.on("updateActor", (actor, data, options, userId) => {
-    if (game.user.id === userId) {
-        evaluateConditions(actor);
-    }
-});
 
 // ✅ VERSÃO CORRIGIDA E FINAL DOS HOOKS ✅
 
@@ -106,6 +202,41 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     // Após a limpeza (se necessária), reavaliamos TODAS as condições restantes
     evaluateConditions(item.parent);
 });
+
+
+// ================================================================== //
+//  HOOK DE EVENTOS DE COMBATE
+// ================================================================== //
+
+/**
+ * Escuta por qualquer atualização no combate (início, fim, mudança de turno).
+ */
+Hooks.on("updateCombat", (combat, changed, options, userId) => {
+    // Verifica se a mudança foi na rodada ou no turno
+    const isTurnChange = changed.round !== undefined || changed.turn !== undefined;
+
+    // Reavalia as condições de todos os personagens envolvidos no combate
+    for (const combatant of combat.combatants) {
+        if (combatant.actor) {
+            // Avisa ao motor que esta é uma avaliação de "início de turno"
+            evaluateConditions(combatant.actor, { isTurnStart: isTurnChange });
+        }
+    }
+});
+
+/**
+ * Escuta quando um combate é deletado, para limpar os efeitos.
+ */
+Hooks.on("deleteCombat", (combat, options, userId) => {
+    // Reavalia as condições de todos os personagens que estavam no combate
+    for (const combatant of combat.combatants) {
+        if (combatant.actor) {
+            // Avisa que o combate terminou
+            evaluateConditions(combatant.actor, { isCombatEnd: true });
+        }
+    }
+});
+
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
@@ -2293,136 +2424,7 @@ html.on('click', '.edit-attack', ev => {
           
         
         
-          // --- Listeners para Rolagens ---
-          html.on('click', 'a.rollable', async (ev) => {
-            ev.preventDefault();
-            const element = ev.currentTarget;
-            const baseTarget = parseInt(element.dataset.rollValue);
-            const label = element.dataset.label;
-
-            const performRoll = async (modifier = 0) => {
-                const finalTarget = baseTarget + modifier;
-                const roll = new Roll("3d6");
-                await roll.evaluate({ async: true });
-                const margin = finalTarget - roll.total;
-
-                const diceResults = roll.dice[0].results.map(r => r.result);
-
-                let resultText, resultClass, resultIcon;
-                if (roll.total <= finalTarget) {
-                    resultText = `Sucesso com margem de ${margin}`;
-                    resultClass = 'success';
-                    resultIcon = 'fas fa-check-circle';
-                } else {
-                    resultText = `Fracasso por uma margem de ${margin * -1}`;
-                    resultClass = 'failure';
-                    resultIcon = 'fas fa-times-circle';
-                }
-
-                if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
-                    resultText = `Sucesso Crítico!`;
-                } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
-                    resultText = `Falha Crítica!`;
-                }
-                
-                const diceHtml = diceResults.map(die => `<span class="die">${die}</span>`).join('');
-
-                // --- MUDANÇA: Voltando para a estrutura de "pílula" horizontal ---
-                const flavor = `
-                    <div class="gurps-roll-card">
-                        <header class="card-header">
-                            <h3>${label}</h3>
-                        </header>
-                        <div class="card-content">
-                            <div class="card-main-flex">
-                                <div class="roll-column">
-                                    <div class="roll-total-value">${roll.total}</div>
-                                    <div class="individual-dice">
-                                        ${diceHtml}
-                                    </div>
-                                </div>
-
-                                <div class="column-separator"></div>
-
-                                <div class="target-column">
-                                    <div class="roll-target-value">${finalTarget}</div>
-                                    
-                                    <div class="roll-breakdown-pill">
-                                        <span>Base: ${baseTarget} &nbsp;|&nbsp; Mod: ${modifier > 0 ? '+' : ''}${modifier}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <footer class="card-footer ${resultClass}">
-                            <i class="${resultIcon}"></i> <span>${resultText}</span>
-                        </footer>
-                    </div>
-                `;
-
-                ChatMessage.create({
-                    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                    content: flavor,
-                    rolls: [roll],
-                    type: CONST.CHAT_MESSAGE_TYPES.ROLL
-                });
-            };
-
-
-            if (ev.shiftKey) {
-                new Dialog({
-                    title: "Modificador de Rolagem",
-                  
-                    content: `
-                        <div class="modifier-dialog">
-                            <p><b>Insira ou clique nos modificadores para o ${label}:</p></b>
-                            <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px;"/>
-                            
-                            <div class="modifier-grid">
-                                <div class="mod-row">
-                                    <button type="button" class="mod-button" data-mod="-5">-5</button>
-                                    <button type="button" class="mod-button" data-mod="-4">-4</button>
-                                    <button type="button" class="mod-button" data-mod="-3">-3</button>
-                                    <button type="button" class="mod-button" data-mod="-2">-2</button>
-                                    <button type="button" class="mod-button" data-mod="-1">-1</button>
-                                </div>
-                                <div class="mod-row">
-                                    <button type="button" class="mod-button" data-mod="+1">+1</button>
-                                    <button type="button" class="mod-button" data-mod="+2">+2</button>
-                                    <button type="button" class="mod-button" data-mod="+3">+3</button>
-                                    <button type="button" class="mod-button" data-mod="+4">+4</button>
-                                    <button type="button" class="mod-button" data-mod="+5">+5</button>
-                                </div>
-                            </div>
-
-                            <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar Modificador</button>
-                        </div>`,
-                    buttons: {
-                        roll: {
-                            icon: '<i class="fas fa-dice-d6"></i>',
-                            label: "Rolar",
-                            callback: (html) => {
-                                const modifier = parseInt(html.find('input[name="modifier"]').val());
-                                performRoll(modifier);
-                            }
-                        }
-                    },
-                    default: "roll",
-                    render: (html) => {
-                        const input = html.find('input[name="modifier"]');
-                        html.find('.mod-button').click((event) => {
-                            const currentMod = parseInt(input.val());
-                            const modToAdd = parseInt($(event.currentTarget).data('mod'));
-                            input.val(currentMod + modToAdd);
-                        });
-                        html.find('.mod-clear-button').click(() => {
-                            input.val(0);
-                        });
-                    }
-                }).render(true);
-            } else {
-                performRoll(0);
-            }
-                  });
+         
 
 // ================================================================== //
 //   LISTENER DE ROLAGEM DE DANO (VERSÃO FINAL E UNIFICADA)           //

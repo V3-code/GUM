@@ -1,0 +1,88 @@
+<form>
+    <div class="dialog-content">
+        <div class="form-section">
+            <h4 class="section-title">Tipo de Efeito</h4>
+            <div class="form-group">
+                <select name="type">
+                    <option value="attribute" {{#if (eq effect.type "attribute")}}selected{{/if}}>Modificar Atributo</option>
+                    <option value="status" {{#if (eq effect.type "status")}}selected{{/if}}>Aplicar Status do Token</option>
+                    <option value="macro" {{#if (eq effect.type "macro")}}selected{{/if}}>Executar Macro</option>
+                    <option value="chat" {{#if (eq effect.type "chat")}}selected{{/if}}>Enviar Mensagem</option>
+                </select>
+            </div>
+        </div>
+
+        {{!-- A interface se adapta com base no tipo selecionado --}}
+        
+        {{#if (eq effect.type "attribute")}}
+        <div class="form-section">
+            <h4 class="section-title">Detalhes do Atributo</h4>
+            <div class="form-group">
+                <label>Caminho do Atributo</label>
+                <input type="text" name="path" value="{{effect.path}}" placeholder="system.attributes.dx.temp"/>
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Operação</label>
+                    <select name="operation">
+                        <option value="ADD" {{#if (eq effect.operation "ADD")}}selected{{/if}}>Adicionar</option>
+                        <option value="SUB" {{#if (eq effect.operation "SUB")}}selected{{/if}}>Subtrair</option>
+                        <option value="SET" {{#if (eq effect.operation "SET")}}selected{{/if}}>Definir</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="text" name="value" value="{{effect.value}}"/>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if (eq effect.type "status")}}
+        <div class="form-section">
+            <h4 class="section-title">Detalhes do Status</h4>
+            <div class="form-group">
+                <label>Ícone de Status</label>
+                <select name="statusId">
+                    {{{selectOptions statusEffects selected=effect.statusId}}}
+                </select>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if (eq effect.type "macro")}}
+        <div class="form-section">
+             <h4 class="section-title">Detalhes da Macro</h4>
+             <div class="form-group">
+                <label>Nome da Macro</label>
+                <input type="text" name="value" value="{{effect.value}}" placeholder="Nome exato da Macro"/>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if (eq effect.type "chat")}}
+        <div class="form-section">
+             <h4 class="section-title">Detalhes da Mensagem</h4>
+             <div class="form-group">
+                <label>Texto da Mensagem</label>
+                <textarea name="chat_text" rows="3">{{effect.chat_text}}</textarea>
+            </div>
+            <div class="form-group-inline">
+                <label>Visibilidade</label>
+                <select name="whisperMode">
+                    <option value="public" {{#if (eq effect.whisperMode "public")}}selected{{/if}}>Público</option>
+                    <option value="gm" {{#if (eq effect.whisperMode "gm")}}selected{{/if}}>Apenas para MJs</option>
+                    <option value="blind" {{#if (eq effect.whisperMode "blind")}}selected{{/if}}>Rolagem Cega</option>
+                </select>
+            </div>
+        </div>
+        {{/if}}
+
+    </div>
+
+    <footer class="sheet-footer">
+        <button type="submit">
+            <i class="fas fa-save"></i> Salvar Efeito
+        </button>
+    </footer>
+</form>
