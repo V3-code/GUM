@@ -1,6 +1,7 @@
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //
+
 import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
@@ -206,8 +207,6 @@ Hooks.once('ready', async function() {
     };
 });
 
-
-
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
@@ -315,6 +314,55 @@ Handlebars.registerHelper('obj', function(...args) {
         obj[args[i]] = args[i + 1];
     }
     return obj;
+});
+
+// FUNÇÕES EXTRAS
+
+async function evaluateEvents(actor, options = {}) {
+    const conditions = actor.items.filter(i => i.type === "condition");
+    const updates = {};
+
+    for (const condition of conditions) {
+        const isManuallyDisabled = condition.getFlag("gum", "manual_override");
+        const wasActive = condition.getFlag("gum", "wasActive") || false;
+        
+        let isConditionActive = false;
+        if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
+        else {
+            try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(actor, game); }
+            catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}".`, e); }
+        }
+        
+        const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
+
+        if (isEffectivelyActive !== wasActive) {
+            updates[`flags.gum.conditionState.${condition.id}.wasActive`] = isEffectivelyActive;
+        }
+
+        const shouldTriggerEvent = (isEffectivelyActive && !wasActive) || (options.isTurnStart && isEffectivelyActive);
+
+        if (shouldTriggerEvent) {
+            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+            for (const effect of effects) {
+                if (effect.type === "macro" && effect.value) { /* ... lógica de macro ... */ }
+                else if (effect.type === "chat" && effect.chat_text) { /* ... lógica de chat ... */ }
+            }
+        }
+    }
+    if (Object.keys(updates).length > 0) await actor.update(updates);
+}
+
+// ================================================================== //
+//  HOOKS DE ITENS CONDIÇÃO //
+// ================================================================== //
+
+Hooks.on("updateActor", (actor, data, options, userId) => {
+    if (game.user.id === userId) evaluateEvents(actor);
+});
+Hooks.on("updateCombat", (combat, changed, options, userId) => {
+    if (changed.round || changed.turn) {
+        if (combat.combatant?.actor) evaluateEvents(combat.combatant.actor, { isTurnStart: true });
+    }
 });
 
 // ================================================================== //
@@ -573,55 +621,66 @@ _getSubmitData(updateData) {
         }
     }
 
-_prepareCharacterItems(sheetData) {
-    const actorData = sheetData.actor;
-    const attributes = actorData.system.attributes;
+    _prepareCharacterItems(sheetData) {
+        const actorData = sheetData.actor;
+        const attributes = actorData.system.attributes;
+        
+        // --- ETAPA 1: ZERAR MODIFICADORES DE ESTADO ---
+        const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
+        tempAttributes.forEach(attr => { if (attributes[attr]) attributes[attr].temp = 0; });
+        if (actorData.system.combat.dr_mods) { for (const key in actorData.system.combat.dr_mods) { actorData.system.combat.dr_mods[key] = 0; } }
+        // Zera as flags gerenciadas por condições
+        foundry.utils.setProperty(actorData, "flags.gum", foundry.utils.mergeObject(
+            actorData.flags.gum, { estaMolhado: false, outroFlag: false } // Adicione aqui todas as flags que suas condições podem aplicar
+        ));
 
-    // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS ---
-    const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
-    tempAttributes.forEach(attr => {
-        if (attributes[attr]) attributes[attr].temp = 0;
-    });
-    if (actorData.system.combat.dr_mods) {
-        for (const key in actorData.system.combat.dr_mods) {
-            actorData.system.combat.dr_mods[key] = 0;
-        }
-    }
+        // --- ETAPA 2: AVALIAR CONDIÇÕES E ACUMULAR EFEITOS DE ESTADO ---
+        const modifiers = {}; 
+        const activeStatuses = new Set();
+        const conditions = this.actor.items.filter(i => i.type === "condition");
 
-    // --- ETAPA 2: MOTOR DE CONDIÇÕES - ACUMULAR MODIFICADORES ---
-    const modifiers = {}; 
-    const conditions = this.actor.items.filter(i => i.type === "condition");
-    for (const condition of conditions) {
-        if (condition.getFlag("gum", "manual_override")) continue;
-        let isConditionActive = false;
-        if (!condition.system.when || condition.system.when.trim() === "") {
-            isConditionActive = true;
-        } else {
-            try {
-                isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
-            } catch(e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
-        }
-        if (isConditionActive) {
-            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-            effects.forEach(effect => {
-                if (effect.type === 'attribute' && effect.path) {
-                    if (!modifiers[effect.path]) modifiers[effect.path] = 0;
-                    const value = Number(effect.value) || 0;
-                    if (effect.operation === "ADD") modifiers[effect.path] += value;
-                    else if (effect.operation === "SUB") modifiers[effect.path] -= value;
-                }
-            });
-        }
-    }
+        for (const condition of conditions) {
+            if (condition.getFlag("gum", "manual_override")) continue;
+            let isConditionActive = false;
+            if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
+            else {
+                try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game); }
+                catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
+            }
 
-    // --- ETAPA 3: APLICAR OS MODIFICADORES ACUMULADOS ---
-    for(const path in modifiers) {
-        // Aplica apenas a campos .temp e dr_mods por segurança
-        if (path.endsWith('.temp') || path.startsWith('system.combat.dr_mods')) {
+            if (isConditionActive) {
+                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                effects.forEach(effect => {
+                    if (effect.type === 'attribute' && effect.path) {
+                        if (!modifiers[effect.path]) modifiers[effect.path] = 0;
+                        const value = Number(effect.value) || 0;
+                        if (effect.operation === "ADD") modifiers[effect.path] += value;
+                        else if (effect.operation === "SUB") modifiers[effect.path] -= value;
+                    }
+                    else if (effect.type === 'status' && effect.statusId) {
+                        activeStatuses.add(effect.statusId);
+                    }
+                    else if (effect.type === 'flag' && effect.key) {
+                        let value = effect.value;
+                        if (value === "true") value = true;
+                        else if (value === "false") value = false;
+                        else if (!isNaN(Number(value))) value = Number(value);
+                        foundry.utils.setProperty(actorData, `flags.gum.${effect.key}`, value);
+                    }
+                });
+            }
+        }
+
+        // --- ETAPA 3: APLICAR EFEITOS DE ESTADO ---
+        // Aplica modificadores de atributo
+        for(const path in modifiers) {
             const currentVal = foundry.utils.getProperty(actorData, path) || 0;
             foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
         }
-    }
+        // Aplica status
+        for(const status of CONFIG.statusEffects) {
+            this.actor.toggleStatusEffect(status.id, { active: activeStatuses.has(status.id) });
+        }
     
     // ================================================================== //
     //      FIM DO MOTOR / INÍCIO DOS CÁLCULOS FINAIS DA FICHA            //

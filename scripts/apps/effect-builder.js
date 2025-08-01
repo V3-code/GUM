@@ -27,44 +27,48 @@ export class EffectBuilder extends FormApplication {
         return context;
     }
 
-    async _updateObject(event, formData) {
-        const effectsData = this.item.system.effects || [];
-        const effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
-        
-        const newEffectData = foundry.utils.expandObject(formData);
-        const cleanEffect = { type: newEffectData.type };
+async _updateObject(event, formData) {
+    const effectsData = this.item.system.effects || [];
+    const effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
+    
+    const newEffectData = foundry.utils.expandObject(formData);
+    const cleanEffect = { type: newEffectData.type };
 
-        switch(newEffectData.type) {
-            case "attribute":
-                cleanEffect.path = newEffectData.path;
-                cleanEffect.operation = newEffectData.operation;
-                cleanEffect.value = newEffectData.value;
-                break;
-            case "status":
-                cleanEffect.statusId = newEffectData.statusId;
-                break;
-            case "macro":
-                cleanEffect.value = newEffectData.value;
-                break;
-            case "chat":
-                cleanEffect.chat_text = newEffectData.chat_text;
-                cleanEffect.whisperMode = newEffectData.whisperMode;
-                cleanEffect.has_roll = newEffectData.has_roll;
-                if (newEffectData.has_roll) {
-                    cleanEffect.roll_attribute = newEffectData.roll_attribute;
-                    cleanEffect.roll_modifier = newEffectData.roll_modifier;
-                    cleanEffect.roll_label = newEffectData.roll_label;
-                }
-                break;
-        }
-
-        if (this.effectIndex > -1) {
-            effects[this.effectIndex] = cleanEffect;
-        } else {
-            effects.push(cleanEffect);
-        }
-        await this.item.update({ "system.effects": effects });
+    switch(newEffectData.type) {
+        case "attribute":
+            cleanEffect.path = newEffectData.path;
+            cleanEffect.operation = newEffectData.operation;
+            cleanEffect.value = newEffectData.value;
+            break;
+        case "status":
+            cleanEffect.statusId = newEffectData.statusId;
+            break;
+        case "macro":
+            cleanEffect.value = newEffectData.value;
+            break;
+        case "chat":
+            cleanEffect.chat_text = newEffectData.chat_text;
+            cleanEffect.whisperMode = newEffectData.whisperMode;
+            cleanEffect.has_roll = newEffectData.has_roll;
+            if (newEffectData.has_roll) {
+                cleanEffect.roll_attribute = newEffectData.roll_attribute;
+                cleanEffect.roll_modifier = newEffectData.roll_modifier;
+                cleanEffect.roll_label = newEffectData.roll_label;
+            }
+            break;
+        case "flag":
+            cleanEffect.key = newEffectData.key;
+            cleanEffect.value = newEffectData.value;
+            break;
     }
+
+    if (this.effectIndex > -1) {
+        effects[this.effectIndex] = cleanEffect;
+    } else {
+        effects.push(cleanEffect);
+    }
+    await this.item.update({ "system.effects": effects });
+}
 
     activateListeners(html) {
         super.activateListeners(html);

@@ -6,23 +6,24 @@
                 <select name="type">
                     <option value="attribute" {{#if (eq object.type "attribute")}}selected{{/if}}>Modificar Atributo</option>
                     <option value="status" {{#if (eq object.type "status")}}selected{{/if}}>Aplicar Status do Token</option>
+                    <option value="flag" {{#if (eq object.type "flag")}}selected{{/if}}>Aplicar Flag Customizada</option>
                     <option value="macro" {{#if (eq object.type "macro")}}selected{{/if}}>Executar Macro</option>
                     <option value="chat" {{#if (eq object.type "chat")}}selected{{/if}}>Enviar Mensagem</option>
                 </select>
             </div>
         </div>
 
+{{!-- BLOCO PARA MODIFICAR ATRIBUTO FLAG --}}
         {{#if (eq object.type "attribute")}}
         <div class="form-section">
             <h4 class="section-title">Detalhes do Atributo</h4>
-<div class="form-group">
-    <label>Caminho do Atributo</label>
-    {{!-- ✅ NOVO GRUPO COM BOTÃO DE AJUDA ✅ --}}
-    <div class="path-input-group">
-        <input type="text" name="path" value="{{object.path}}" placeholder="system.attributes.dx.temp"/>
-        <a class="open-attribute-picker" title="Selecionar Atributo">⊕</a>
-    </div>
-</div>
+            <div class="form-group">
+                <label>Caminho do Atributo</label>
+                <div class="path-input-group">
+                    <input type="text" name="path" value="{{object.path}}" placeholder="system.attributes.dx.temp"/>
+                    <a class="open-attribute-picker" title="Selecionar Atributo">⊕</a>
+                </div>
+            </div>
            <div class="form-grid-2">
                 <div class="form-group"><label>Operação</label>
                     <select name="operation">
@@ -71,6 +72,26 @@
             {{/if}}
         </div>
         {{/if}}
+
+
+        {{!-- BLOCO PARA APLICAR FLAG --}}
+        {{#if (eq object.type "flag")}}
+        <div class="form-section">
+            <h4 class="section-title">Detalhes da Flag</h4>
+            <p class="hint">Isso cria uma "etiqueta" de dados invisível no personagem que outras condições podem ler.</p>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Nome da Flag (Chave)</label>
+                    <input type="text" name="key" value="{{object.key}}" placeholder="ex: estaMolhado"/>
+                </div>
+                <div class="form-group">
+                    <label>Valor da Flag</label>
+                    <input type="text" name="value" value="{{object.value}}" placeholder="ex: true, 1, 'fogo'"/>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
     </div>
     <footer class="sheet-footer"><button type="submit"><i class="fas fa-save"></i> Salvar Efeito</button></footer>
 </form>

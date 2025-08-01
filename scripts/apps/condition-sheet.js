@@ -1,5 +1,5 @@
 import { ConditionBuilder } from "./condition-builder.js";
-import { EffectBuilder } from "./effect-builder.js"; 
+import { EffectBuilder } from "./effect-builder.js";
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
