@@ -203,25 +203,20 @@ a:hover { text-decoration: underline; color: #fff; }
 
 
 /* =================================================================== */
-/* ETAPA DE DESIGN - PAINEL DE ATRIBUTOS (VERSÃO BRASÃO)     */
+/* ETAPA DE DESIGN - PAINEL DE ATRIBUTOS (VERSÃO BRASÃO RESTAURADA)    */
 /* =================================================================== */
 
-/* O container principal agora é apenas um espaçador, sem visual próprio */
 .sheet-mini-header {
   padding: 0.5rem 0;
-  
 }
-
-/* O container que alinha os brasões horizontalmente */
 .primary-attributes-container {
   display: flex;
-  /* MUDANÇA: Usamos flex com gap para um espaçamento preciso */
-  justify-content: center; /* Centraliza o grupo de brasões */
+  justify-content: center;
   align-items: center;
-  gap: 1.5rem; /* <<< Distância mínima entre os brasões. */
+  gap: 1.5rem;
 }
 
-/* O "brasão" de cada atributo individual (sem alterações) */
+/* O "brasão" de cada atributo individual */
 .attribute-box {
   position: relative;
   background: var(--c-fundo-principal);
@@ -235,7 +230,6 @@ a:hover { text-decoration: underline; color: #fff; }
   align-items: center;
   justify-content: center;
   border-radius: 5px;
-  
   box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 
@@ -244,11 +238,14 @@ a:hover { text-decoration: underline; color: #fff; }
   font-family: 'Roboto';
   font-size: 1.3rem;
   font-weight: 700;
-  
-  color: var(--c-acento-dourado)
+  color: var(--c-acento-dourado);
+  cursor: pointer; /* Adicionado para indicar que é clicável */
+}
+.attribute-box label:hover {
+    text-shadow: 0 0 5px #fff;
 }
 
-/* O valor principal do atributo */
+/* O valor principal (base) do atributo */
 .attribute-box .attribute-value {
   font-family: 'Roboto', sans-serif;
   font-size: 1.4rem; 
@@ -261,22 +258,33 @@ a:hover { text-decoration: underline; color: #fff; }
   width: 100%;
 }
 
-/* O modificador temporário */
+/* O modificador FIXO (.mod) */
 .attribute-box .attribute-modifier {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translate(-50%, 50%);
-
   font-size: 0.8rem;
   width: 75%;
   max-width: 50px;
   border-radius: 10px;
   border: 1px solid #444 !important;
   background-color: var(--c-fundo-sidebar) !important;
-  margin-top: 0.25rem;
   padding: 2px;
-  color: var(--c-texto-principal)
+  color: var(--c-texto-principal);
+  text-align: center;
+}
+
+/* Remove o sublinhado do link principal do "brasão" */
+.attribute-box a.rollable:hover {
+    text-decoration: none;
+}
+
+/* Aplica um brilho sutil ao RÓTULO (ST, DX, etc.) quando o mouse está sobre o brasão */
+.attribute-box a.rollable:hover label {
+    color: #fff; /* Deixa o texto um pouco mais brilhante */
+    text-shadow: 0 0 8px var(--c-acento-dourado); /* ✅ Adiciona um brilho dourado sutil */
+    transition: all 0.2s ease;
 }
 
 /* =================================================================== */
@@ -3079,11 +3087,12 @@ input:checked + .slider:before {
     color: var(--c-acento-dourado);
 }
 
-/* --- ESTILOS PARA A JANELA DE DIÁLOGO --- */
+/* --- ESTILOS PARA A JANELA DE DIÁLOGO DE ATRIBUTOS SECUNDÁRIOS --- */
 .secondary-stats-dialog .form-header,
 .secondary-stats-dialog .form-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    /* ✅ 6 COLUNAS AGORA */
+    grid-template-columns: 2.5fr 1fr 1fr 1fr 1fr 1fr;
     gap: 8px;
     align-items: center;
     text-align: center;
@@ -3103,12 +3112,19 @@ input:checked + .slider:before {
 }
 .secondary-stats-dialog .form-grid {
     padding: 0 8px;
-    margin-bottom: 5px;
 }
 .secondary-stats-dialog input {
     text-align: center;
 }
-.secondary-stats-dialog .mod-display {
+.secondary-stats-dialog .mod-display,
+.secondary-stats-dialog .base-display {
     font-weight: bold;
-    color: var(--c-acento-verde);
+    color: var(--c-texto-secundario);
+}
+.secondary-stats-dialog .final-display {
+    font-weight: bold;
+    font-size: 1.1em;
+    background: rgba(0,0,0,0.1);
+    padding: 4px;
+    border-radius: 3px;
 }

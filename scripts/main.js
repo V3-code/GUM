@@ -7,6 +7,68 @@ import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
 
+// ================================================================== //
+//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
+// ================================================================== //
+async function performGURPSRoll(element, actor, situationalMod = 0) {
+    const label = element.dataset.label;
+    const attrKey = element.dataset.attributeKey;
+    const attributeData = attrKey ? actor.system.attributes[attrKey] : null;
+
+    let baseTargetForChat, tempModForChat, finalTargetForRoll;
+
+    if (attributeData) {
+        const baseValue = Number(attributeData.value) || 0;
+        const fixedMod = Number(attributeData.mod) || 0;
+        const tempMod = Number(attributeData.temp) || 0;
+        baseTargetForChat = baseValue + fixedMod;
+        tempModForChat = tempMod;
+        finalTargetForRoll = baseValue + fixedMod + tempMod;
+    } else {
+        finalTargetForRoll = parseInt(element.dataset.rollValue);
+        baseTargetForChat = finalTargetForRoll;
+        tempModForChat = 0;
+    }
+    
+    const finalTarget = finalTargetForRoll + situationalMod;
+    const chatModifier = tempModForChat + situationalMod;
+    
+    const roll = new Roll("3d6");
+    await roll.evaluate({ async: true });
+
+    const margin = finalTarget - roll.total;
+    let resultText, resultClass, resultIcon;
+    if (roll.total <= finalTarget) { resultText = `Sucesso com margem de ${margin}`; resultClass = 'success'; resultIcon = 'fas fa-check-circle'; } 
+    else { resultText = `Fracasso por uma margem de ${margin * -1}`; resultClass = 'failure'; resultIcon = 'fas fa-times-circle'; }
+    if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) { resultText = `Sucesso Crítico!`; } 
+    else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) { resultText = `Falha Crítica!`; }
+    
+    const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
+    const flavor = `
+        <div class="gurps-roll-card">
+            <header class="card-header"><h3>${label}</h3></header>
+            <div class="card-content">
+                <div class="card-main-flex">
+                    <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
+                    <div class="column-separator"></div>
+                    <div class="target-column">
+                        <div class="roll-target-value">${finalTarget}</div>
+                        <div class="roll-breakdown-pill">
+                            <span>Base: ${baseTargetForChat} &nbsp;|&nbsp; Mod: ${chatModifier >= 0 ? '+' : ''}${chatModifier}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
+        </div>
+    `;
+    
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: actor }),
+        content: flavor,
+        rolls: [roll]
+    });
+}
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -84,127 +146,32 @@ Hooks.once('ready', async function() {
     new DamageApplicationWindow(damagePackage, attackerActor, targetActor).render(true);
 });
     
-// Listener para o botão "Aplicar Dano" no chat
-   $('body').on('click', '.rollable', async (ev) => { // 'async' é necessário aqui
-    ev.preventDefault();
-    const element = ev.currentTarget;
-    const baseTarget = parseInt(element.dataset.rollValue);
-    const label = element.dataset.label;
 
-    const actorId = $(element).closest('[data-actor-id]').data('actorId');
-    const actor = game.actors.get(actorId) || ChatMessage.getSpeakerActor(ChatMessage.getSpeaker({}));
-
-    const performRoll = async (modifier = 0) => { // 'async' é necessário aqui
-        const finalTarget = baseTarget + modifier;
-        const roll = new Roll("3d6");
+ $('body').on('click', '.chat-message .rollable', async (ev) => {
+        const element = ev.currentTarget;
+        const speaker = ChatMessage.getSpeaker({ scene: $(element).closest('.message').data('scene-id'), actor: $(element).closest('.message').data('actor-id') });
+        const actor = ChatMessage.getSpeakerActor(speaker);
+        if (!actor) return ui.notifications.warn("Ator da mensagem de chat não encontrado.");
         
-        // ✅ CORREÇÃO FINAL: Usando o método de avaliação moderno
-        await roll.evaluate(); 
-
-        const margin = finalTarget - roll.total;
-        const diceResults = roll.dice[0].results.map(r => r.result);
-        let resultText, resultClass, resultIcon;
-
-        // ... (o resto da sua lógica de sucesso/falha, que já está perfeita, continua aqui) ...
-        if (roll.total <= finalTarget) {
-            resultText = `Sucesso com margem de ${margin}`;
-            resultClass = 'success';
-            resultIcon = 'fas fa-check-circle';
-        } else {
-            resultText = `Fracasso por uma margem de ${margin * -1}`;
-            resultClass = 'failure';
-            resultIcon = 'fas fa-times-circle';
-        }
-        if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
-            resultText = `Sucesso Crítico!`;
-        } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
-            resultText = `Falha Crítica!`;
-        }
-        
-        const diceHtml = diceResults.map(die => `<span class="die">${die}</span>`).join('');
-        const flavor = `
-            <div class="gurps-roll-card">
-                <header class="card-header"><h3>${label}</h3></header>
-                <div class="card-content">
-                    <div class="card-main-flex">
-                        <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
-                        <div class="column-separator"></div>
-                        <div class="target-column"><div class="roll-target-value">${finalTarget}</div><div class="roll-breakdown-pill"><span>Base: ${baseTarget} &nbsp;|&nbsp; Mod: ${modifier > 0 ? '+' : ''}${modifier}</span></div></div>
-                    </div>
-                </div>
-                <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
-            </div>
-        `;
-
-        // A forma moderna de criar a mensagem, que já está correta
-        ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor: actor }),
-            content: flavor,
-            rolls: [roll]
-        });
-    };
-
-
-            if (ev.shiftKey) {
-                new Dialog({
-                    title: "Modificador de Rolagem",
-                  
-                    content: `
-                        <div class="modifier-dialog">
-                            <p><b>Insira ou clique nos modificadores para o ${label}:</p></b>
-                            <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px;"/>
-                            
-                            <div class="modifier-grid">
-                                <div class="mod-row">
-                                    <button type="button" class="mod-button" data-mod="-5">-5</button>
-                                    <button type="button" class="mod-button" data-mod="-4">-4</button>
-                                    <button type="button" class="mod-button" data-mod="-3">-3</button>
-                                    <button type="button" class="mod-button" data-mod="-2">-2</button>
-                                    <button type="button" class="mod-button" data-mod="-1">-1</button>
-                                </div>
-                                <div class="mod-row">
-                                    <button type="button" class="mod-button" data-mod="+1">+1</button>
-                                    <button type="button" class="mod-button" data-mod="+2">+2</button>
-                                    <button type="button" class="mod-button" data-mod="+3">+3</button>
-                                    <button type="button" class="mod-button" data-mod="+4">+4</button>
-                                    <button type="button" class="mod-button" data-mod="+5">+5</button>
-                                </div>
-                            </div>
-
-                            <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar Modificador</button>
-                        </div>`,
-                    buttons: {
-                        roll: {
-                            icon: '<i class="fas fa-dice-d6"></i>',
-                            label: "Rolar",
-                            callback: (html) => {
-                                const modifier = parseInt(html.find('input[name="modifier"]').val());
-                                performRoll(modifier);
-                            }
+        // A lógica de Shift+Click para modificadores
+        if (ev.shiftKey) {
+            new Dialog({
+                title: "Modificador de Rolagem Situacional",
+                content: `...`, // Seu HTML aqui
+                buttons: {
+                    roll: {
+                        label: "Rolar",
+                        callback: (html) => {
+                            const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                            performGURPSRoll(element, actor, situationalMod);
                         }
-                    },
-                    default: "roll",
-                    render: (html) => {
-                        const input = html.find('input[name="modifier"]');
-                        html.find('.mod-button').click((event) => {
-                            const currentMod = parseInt(input.val());
-                            const modToAdd = parseInt($(event.currentTarget).data('mod'));
-                            input.val(currentMod + modToAdd);
-                        });
-                        html.find('.mod-clear-button').click(() => {
-                            input.val(0);
-                        });
                     }
-                }).render(true);
-            } else {
-                performRoll(0);
-            }
-                  });
-
-    CONFIG.Combat.initiative = {
-        formula: game.settings.get("gum", "initiativeFormula"),
-        decimals: 4 
-    };
+                }
+            }).render(true);
+        } else {
+            performGURPSRoll(element, actor, 0);
+        }
+    });
 });
 
 // ================================================================== //
@@ -318,39 +285,78 @@ Handlebars.registerHelper('obj', function(...args) {
 
 // FUNÇÕES EXTRAS
 
+let evaluatingActors = new Set();
+
+// ✅ MOTOR DE EVENTOS (MACRO, CHAT) ✅
 async function evaluateEvents(actor, options = {}) {
-    const conditions = actor.items.filter(i => i.type === "condition");
-    const updates = {};
+    if (evaluatingActors.has(actor.id)) return;
+    evaluatingActors.add(actor.id);
+    try {
+        const conditions = actor.items.filter(i => i.type === "condition");
+        const updates = {};
+        for (const condition of conditions) {
+            const isManuallyDisabled = condition.getFlag("gum", "manual_override");
+            const wasActive = condition.getFlag("gum", "wasActive") || false;
+            let isConditionActive = false;
+            if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
+            else {
+                try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(actor, game); }
+                catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}".`, e); }
+            }
+            const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
+            if (isEffectivelyActive !== wasActive) {
+                updates[`flags.gum.conditionState.${condition.id}.wasActive`] = isEffectivelyActive;
+            }
+            const shouldTriggerEvent = (isEffectivelyActive && !wasActive) || (options.isTurnStart && isEffectivelyActive);
+            if (shouldTriggerEvent) {
+                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                for (const effect of effects) {
+                    if (effect.type === "macro" && effect.value) {
+                        const macro = game.macros.getName(effect.value);
+                        if (macro) macro.execute({ actor });
+                        else ui.notifications.warn(`Macro "${effect.value}" não encontrada.`);
+                    }
+                    else if (effect.type === "chat" && effect.chat_text) {
+                        let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
+                        
+                        if (effect.has_roll) {
+                            let finalTarget = 0;
+                            
+                            // ✅ LÓGICA CORRIGIDA E EXPANDIDA ✅
+                            if (effect.roll_attribute === 'fixed') {
+                                finalTarget = Number(effect.roll_fixed_value) || 10;
+                            } else if (effect.roll_attribute) {
+                                // Busca a chave do atributo (ex: 'st') a partir do caminho (ex: 'st.final')
+                                const attrKey = effect.roll_attribute.split('.')[0];
+                                const attributes = actor.system.attributes;
 
-    for (const condition of conditions) {
-        const isManuallyDisabled = condition.getFlag("gum", "manual_override");
-        const wasActive = condition.getFlag("gum", "wasActive") || false;
-        
-        let isConditionActive = false;
-        if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
-        else {
-            try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(actor, game); }
-            catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}".`, e); }
-        }
-        
-        const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
+                                // Calcula o valor final do atributo, exatamente como a ficha faz
+                                const baseValue = Number(attributes[attrKey]?.value) || 0;
+                                const tempValue = Number(attributes[attrKey]?.temp) || 0;
+                                const calculatedFinal = baseValue + tempValue;
 
-        if (isEffectivelyActive !== wasActive) {
-            updates[`flags.gum.conditionState.${condition.id}.wasActive`] = isEffectivelyActive;
-        }
+                                const modifier = Number(effect.roll_modifier) || 0;
+                                finalTarget = calculatedFinal + modifier;
+                            }
 
-        const shouldTriggerEvent = (isEffectivelyActive && !wasActive) || (options.isTurnStart && isEffectivelyActive);
-
-        if (shouldTriggerEvent) {
-            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-            for (const effect of effects) {
-                if (effect.type === "macro" && effect.value) { /* ... lógica de macro ... */ }
-                else if (effect.type === "chat" && effect.chat_text) { /* ... lógica de chat ... */ }
+                            const label = effect.roll_label || `Rolar Teste`;
+                            content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
+                        }
+                        
+                        const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
+                        if (effect.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                        else if (effect.whisperMode === 'blind') chatData.blind = true;
+                        ChatMessage.create(chatData);
+                    }
+                }
             }
         }
+        if (Object.keys(updates).length > 0) await actor.update(updates);
+    } finally {
+        evaluatingActors.delete(actor.id);
     }
-    if (Object.keys(updates).length > 0) await actor.update(updates);
 }
+
 
 // ================================================================== //
 //  HOOKS DE ITENS CONDIÇÃO //
@@ -359,12 +365,24 @@ async function evaluateEvents(actor, options = {}) {
 Hooks.on("updateActor", (actor, data, options, userId) => {
     if (game.user.id === userId) evaluateEvents(actor);
 });
+Hooks.on("createItem", (item, options, userId) => {
+    if (game.user.id === userId && item.parent) item.parent.sheet.render(true);
+});
+Hooks.on("deleteItem", (item, options, userId) => {
+    if (game.user.id === userId && item.parent) item.parent.sheet.render(true);
+});
 Hooks.on("updateCombat", (combat, changed, options, userId) => {
     if (changed.round || changed.turn) {
         if (combat.combatant?.actor) evaluateEvents(combat.combatant.actor, { isTurnStart: true });
     }
 });
-
+Hooks.on("deleteCombat", (combat, options, userId) => {
+    if (combat.combatants) {
+        for (const combatant of combat.combatants) {
+            if (combatant.actor) combatant.actor.sheet.render(true);
+        }
+    }
+});
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
 // ================================================================== //
@@ -621,80 +639,63 @@ _getSubmitData(updateData) {
         }
     }
 
-    _prepareCharacterItems(sheetData) {
-        const actorData = sheetData.actor;
-        const attributes = actorData.system.attributes;
-        
-        // --- ETAPA 1: ZERAR MODIFICADORES DE ESTADO ---
-        const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
-        tempAttributes.forEach(attr => { if (attributes[attr]) attributes[attr].temp = 0; });
-        if (actorData.system.combat.dr_mods) { for (const key in actorData.system.combat.dr_mods) { actorData.system.combat.dr_mods[key] = 0; } }
-        // Zera as flags gerenciadas por condições
-        foundry.utils.setProperty(actorData, "flags.gum", foundry.utils.mergeObject(
-            actorData.flags.gum, { estaMolhado: false, outroFlag: false } // Adicione aqui todas as flags que suas condições podem aplicar
-        ));
-
-        // --- ETAPA 2: AVALIAR CONDIÇÕES E ACUMULAR EFEITOS DE ESTADO ---
-        const modifiers = {}; 
-        const activeStatuses = new Set();
-        const conditions = this.actor.items.filter(i => i.type === "condition");
-
-        for (const condition of conditions) {
-            if (condition.getFlag("gum", "manual_override")) continue;
-            let isConditionActive = false;
-            if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
-            else {
-                try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game); }
-                catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
-            }
-
-            if (isConditionActive) {
-                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-                effects.forEach(effect => {
-                    if (effect.type === 'attribute' && effect.path) {
-                        if (!modifiers[effect.path]) modifiers[effect.path] = 0;
-                        const value = Number(effect.value) || 0;
-                        if (effect.operation === "ADD") modifiers[effect.path] += value;
-                        else if (effect.operation === "SUB") modifiers[effect.path] -= value;
-                    }
-                    else if (effect.type === 'status' && effect.statusId) {
-                        activeStatuses.add(effect.statusId);
-                    }
-                    else if (effect.type === 'flag' && effect.key) {
-                        let value = effect.value;
-                        if (value === "true") value = true;
-                        else if (value === "false") value = false;
-                        else if (!isNaN(Number(value))) value = Number(value);
-                        foundry.utils.setProperty(actorData, `flags.gum.${effect.key}`, value);
-                    }
-                });
-            }
-        }
-
-        // --- ETAPA 3: APLICAR EFEITOS DE ESTADO ---
-        // Aplica modificadores de atributo
-        for(const path in modifiers) {
-            const currentVal = foundry.utils.getProperty(actorData, path) || 0;
-            foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
-        }
-        // Aplica status
-        for(const status of CONFIG.statusEffects) {
-            this.actor.toggleStatusEffect(status.id, { active: activeStatuses.has(status.id) });
-        }
+_prepareCharacterItems(sheetData) {
+    const actorData = sheetData.actor;
+    const attributes = actorData.system.attributes;
+    const combat = actorData.system.combat;
     
-    // ================================================================== //
-    //      FIM DO MOTOR / INÍCIO DOS CÁLCULOS FINAIS DA FICHA            //
-    // ================================================================== //
+    // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS ---
+    const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
+    tempAttributes.forEach(attr => { if (attributes[attr]) attributes[attr].temp = 0; });
+    
+    if (combat.dr_mods) { for (const key in combat.dr_mods) { combat.dr_mods[key] = 0; } }
+    combat.dodge_temp = 0; // Zera o novo mod de esquiva
 
-    // --- CÁLCULO DOS ATRIBUTOS .final ---
-    // ✅ AGORA INCLUI TODOS OS ATRIBUTOS QUE VOCÊ ATUALIZOU ✅
+    // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
+    const modifiers = {}; 
+    const conditions = this.actor.items.filter(i => i.type === "condition");
+    for (const condition of conditions) {
+        if (condition.getFlag("gum", "manual_override")) continue;
+        let isConditionActive = false;
+        if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
+        else {
+            try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game); }
+            catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
+        }
+        if (isConditionActive) {
+            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+            effects.forEach(effect => {
+                if (effect.type === 'attribute' && effect.path) {
+                    if (!modifiers[effect.path]) modifiers[effect.path] = 0;
+                    const value = Number(effect.value) || 0;
+                    if (effect.operation === "ADD") modifiers[effect.path] += value;
+                    else if (effect.operation === "SUB") modifiers[effect.path] -= value;
+                }
+            });
+        }
+    }
+
+    // --- ETAPA 3: APLICAR OS MODIFICADORES ACUMULADOS ---
+    for(const path in modifiers) {
+        const currentVal = foundry.utils.getProperty(actorData, path) || 0;
+        foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
+    }
+    
+    // --- ETAPA 4: CÁLCULOS FINAIS DA FICHA ---
     for (const attr of tempAttributes) {
         if (attributes[attr]) {
-            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].temp) || 0);
+            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
         }
     }
     
+    if (attributes.hp) {
+        attributes.hp.final = (Number(attributes.hp.max) || 0) + (Number(attributes.hp.mod) || 0) + (Number(attributes.hp.temp) || 0);
+    }
+    if (attributes.fp) {
+        attributes.fp.final = (Number(attributes.fp.max) || 0) + (Number(attributes.fp.mod) || 0) + (Number(attributes.fp.temp) || 0);
+    }
 
+    // O resto da sua lógica de cálculo que você já me enviou...
     for (let i of sheetData.actor.items) {
         if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type)) {
             i.system.total_weight = Math.round(((i.system.quantity || 1) * (i.system.weight || 0)) * 100) / 100;
@@ -702,26 +703,8 @@ _getSubmitData(updateData) {
         }
     }
 
-    // --- ETAPA 3: CÁLCULOS FINAIS DA FICHA ---
-    const standardAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'fome', 'sede', 'sono', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
-    standardAttributes.forEach(attr => {
-        if (attributes[attr]) {
-            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].temp) || 0);
-        }
-    });
-
-    // ✅ LÓGICA CORRETA E ESPECÍFICA PARA PV E PF ✅
-    if (attributes.hp) {
-        attributes.hp.final = (Number(attributes.hp.max) || 0) + (Number(attributes.hp.temp) || 0);
-    }
-    if (attributes.fp) {
-        attributes.fp.final = (Number(attributes.fp.max) || 0) + (Number(attributes.fp.temp) || 0);
-    }
-    
-    // --- CÁLCULO DE VELOCIDADE, DESLOCAMENTO, CARGA ---
     const finalBasicSpeed = attributes.basic_speed.final;
     const finalBasicMove = attributes.basic_move.final;
-    
     const liftingST = attributes.lifting_st.final;
     const basicLift = (liftingST * liftingST) / 10;
     if (attributes.basic_lift) attributes.basic_lift.value = basicLift;
@@ -755,15 +738,15 @@ _getSubmitData(updateData) {
     actorData.system.encumbrance.level_value = encumbrance.level_value;
     actorData.system.encumbrance.levels = { none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2), medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2), xheavy: (basicLift * 10).toFixed(2) };
 
- // --- CÁLCULO DE ESQUIVA E MOVIMENTO FINAIS ---
-    let finalDodge = Math.floor(finalBasicSpeed) + 3 + (actorData.system.encumbrance.penalty || 0) + (actorData.system.combat.dodge_mod || 0);
-    let finalMove = Math.floor(finalBasicMove * (1 - ((actorData.system.encumbrance.level_value || 0) * 0.2)));
+    // --- ✅ CÁLCULO FINAL DE ESQUIVA (COM 3 CAMADAS) ✅ ---
+    const dodgeBase = Math.floor(finalBasicSpeed) + 3;
+    const dodgeMod = combat.dodge_mod || 0;       // O modificador manual
+    const dodgeTemp = combat.dodge_temp || 0;     // O modificador das condições
+    attributes.final_dodge = dodgeBase + (encumbrance.penalty || 0) + dodgeMod + dodgeTemp;
     
-    attributes.final_dodge = finalDodge;
+    // O seu cálculo de finalMove já estava correto
+    let finalMove = Math.floor(finalBasicMove * (1 - ((encumbrance.level_value || 0) * 0.2)));
     attributes.final_move = finalMove;
-    
-    // --- CÁLCULO DE RD (AGORA INCLUINDO OS MODIFICADORES DE CONDIÇÃO) ---
-    const combat = actorData.system.combat;
     const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
     for (let i of sheetData.actor.items) {
         if (i.type === 'armor' && i.system.location === 'equipped') {
@@ -785,50 +768,42 @@ _getSubmitData(updateData) {
     combat.dr_locations = totalDr;
     combat.dr_from_armor = drFromArmor;
 
-
-        // ETAPA 2: O loop de cálculo de NH agora usa o valor .final dos atributos
-        for (let i of sheetData.actor.items) {
-          if (['skill', 'spell', 'power'].includes(i.type)) {
-            try {
-                const defaultAttr = (i.type === 'skill') ? 'dx' : 'iq';
-                let baseAttrInput = (i.system.base_attribute || defaultAttr).toLowerCase();
-                let baseAttrValue = 10; // valor padrão
-
-                // 1. Verifica se é um atributo conhecido
-                if (attributes[baseAttrInput]?.final !== undefined) {
-                  baseAttrValue = attributes[baseAttrInput].final;
-                }
-                // 2. Se não for, tenta converter para número
-                else if (!isNaN(Number(baseAttrInput))) {
-                  baseAttrValue = Number(baseAttrInput);
-                }
-                // 3. Senão, mantém o valor padrão (10)
-                else {
-                    const refSkill = sheetData.actor.items.find(
-                      s => s.type === 'skill' && s.name?.toLowerCase() === baseAttrInput
-                    );
-                    if (refSkill && refSkill.system?.final_nh !== undefined) {
-                      baseAttrValue = refSkill.system.final_nh;
-                    }
-                  }
-                i.system.final_nh = baseAttrValue + (i.system.skill_level || 0) + (i.system.other_mods || 0);
-            } catch (e) {
-                console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
+    for (let i of sheetData.actor.items) {
+      if (['skill', 'spell', 'power'].includes(i.type)) {
+        try {
+            const defaultAttr = (i.type === 'skill') ? 'dx' : 'iq';
+            let baseAttrInput = (i.system.base_attribute || defaultAttr).toLowerCase();
+            let baseAttrValue = 10;
+            if (attributes[baseAttrInput]?.final !== undefined) {
+              baseAttrValue = attributes[baseAttrInput].final;
             }
-          }
+            else if (!isNaN(Number(baseAttrInput))) {
+              baseAttrValue = Number(baseAttrInput);
+            }
+            else {
+                const refSkill = sheetData.actor.items.find(
+                  s => s.type === 'skill' && s.name?.toLowerCase() === baseAttrInput
+                );
+                if (refSkill && refSkill.system?.final_nh !== undefined) {
+                  baseAttrValue = refSkill.system.final_nh;
+                }
+              }
+            i.system.final_nh = baseAttrValue + (i.system.skill_level || 0) + (i.system.other_mods || 0);
+        } catch (e) {
+            console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
         }
-
-        // Prepara os dados de níveis de carga para serem facilmente exibidos no HTML
-        const levels = actorData.system.encumbrance.levels;
-        actorData.system.encumbrance.level_data = [
-            { name: 'Nenhuma', max: levels.none },
-            { name: 'Leve', max: levels.light },
-            { name: 'Média', max: levels.medium },
-            { name: 'Pesada', max: levels.heavy },
-            { name: 'M. Pesada', max: levels.xheavy }
-        ];
-
       }
+    }
+
+    const levels = actorData.system.encumbrance.levels;
+    actorData.system.encumbrance.level_data = [
+        { name: 'Nenhuma', max: levels.none },
+        { name: 'Leve', max: levels.light },
+        { name: 'Média', max: levels.medium },
+        { name: 'Pesada', max: levels.heavy },
+        { name: 'M. Pesada', max: levels.xheavy }
+    ];
+}
     
       async _updateObject(event, formData) {
         // Processa a conversão de vírgula para ponto
@@ -846,6 +821,35 @@ _getSubmitData(updateData) {
       activateListeners(html) {
         super.activateListeners(html);
         if (!this.isEditable) return;
+
+        // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
+        // Ele é simples e robusto, pois sempre sabe "quem" é o ator (this.actor)
+        html.on('click', '.rollable', (ev) => {
+            const element = ev.currentTarget;
+            
+            // Lógica de Shift+Click para modificadores
+            if (ev.shiftKey) {
+                const baseTargetForRoll = parseInt(element.dataset.rollValue);
+                new Dialog({
+                    title: "Modificador de Rolagem Situacional",
+                    content: `<p><b>Modificadores para ${element.dataset.label} (vs ${baseTargetForRoll}):</b></p>
+                              <input type="number" name="modifier" value="0" style="text-align: center;"/>`,
+                    buttons: {
+                        roll: {
+                            label: "Rolar",
+                            callback: (html) => {
+                                const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                                // Chama nossa função global, passando o ator da ficha
+                                performGURPSRoll(element, this.actor, situationalMod);
+                            }
+                        }
+                    }
+                }).render(true);
+            } else {
+                // Chama nossa função global, passando o ator da ficha
+                performGURPSRoll(element, this.actor, 0);
+            }
+        });
 
         // ✅ NOVO LISTENER PARA EDITAR AS BARRAS DE PV E PF ✅
 html.on('click', '.edit-resource-bar', ev => {
@@ -898,30 +902,48 @@ html.on('click', '.edit-resource-bar', ev => {
 html.on('click', '.edit-secondary-stats-btn', ev => {
     ev.preventDefault();
     const attrs = this.actor.system.attributes;
+    const combat = this.actor.system.combat;
 
+    // A nova janela de diálogo com a coluna "Pontos" restaurada
     const content = `
         <form class="secondary-stats-editor">
+            <p class="hint">Ajuste os valores base e os pontos gastos aqui. Modificadores de condição são calculados automaticamente.</p>
             <div class="form-header">
                 <span>Atributo</span>
                 <span>Base</span>
-                <span>Mod.</span>
+                <span>Mod. Fixo</span>
+                <span>Mod. Condição</span>
                 <span>Pontos</span>
+                <span>Final</span>
             </div>
             <div class="form-grid">
                 <label>Velocidade Básica</label>
                 <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
+                <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
                 <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
-                <input type="number" name="basic_speed.points" value="0" disabled/>
+                <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
+                <span class="final-display">${attrs.basic_speed.final}</span>
 
                 <label>Deslocamento Básico</label>
                 <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
+                <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
                 <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
-                <input type="number" name="basic_move.points" value="0" disabled/>
+                <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
+                <span class="final-display">${attrs.basic_move.final}</span>
                 
-                <label>Mod. de Tamanho(MT)</label>
+                <label>Mod. de Tamanho (MT)</label>
                 <input type="number" name="mt.value" value="${attrs.mt.value}"/>
+                <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
                 <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
-                <input type="number" name="mt.points" value="0" disabled/>
+                <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
+                <span class="final-display">${attrs.mt.final}</span>
+                
+                <label>Esquiva</label>
+                <span class="base-display">(Calculado)</span>
+                <input type="number" name="dodge_mod" value="${combat.dodge_mod || 0}" title="Modificador Manual de Esquiva"/>
+                <span class="mod-display">${combat.dodge_temp > 0 ? '+' : ''}${combat.dodge_temp}</span>
+                <span class="base-display">(N/A)</span>
+                <span class="final-display">${attrs.final_dodge}</span>
             </div>
         </form>
     `;
@@ -936,18 +958,25 @@ html.on('click', '.edit-secondary-stats-btn', ev => {
                 callback: (html) => {
                     const form = html.find('form')[0];
                     const formData = new FormDataExtended(form).object;
-                    // Prepara os dados para a atualização
+                    // Prepara os dados para a atualização, incluindo os pontos
                     const updateData = {
                         "system.attributes.basic_speed.value": formData["basic_speed.value"],
+                        "system.attributes.basic_speed.mod": formData["basic_speed.mod"],
+                        "system.attributes.basic_speed.points": formData["basic_speed.points"],
                         "system.attributes.basic_move.value": formData["basic_move.value"],
-                        "system.attributes.mt.value": formData["mt.value"]
+                        "system.attributes.basic_move.mod": formData["basic_move.mod"],
+                        "system.attributes.basic_move.points": formData["basic_move.points"],
+                        "system.attributes.mt.value": formData["mt.value"],
+                        "system.attributes.mt.mod": formData["mt.mod"],
+                        "system.attributes.mt.points": formData["mt.points"],
+                        "system.combat.dodge_mod": formData["dodge_mod"]
                     };
                     this.actor.update(updateData);
                 }
             }
         },
         default: 'save'
-    }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+    }, { classes: ["dialog", "gum", "secondary-stats-dialog"], width: 550 }).render(true);
 });
 
 html.on('click', '.item-quick-view', async (ev) => {

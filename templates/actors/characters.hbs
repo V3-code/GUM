@@ -203,47 +203,58 @@
         </div>
     </aside>
 
-    {{! ================================================================== }}
-    {{! MACRORREGIÃO 3: ÁREA PRINCIPAL                                     }}
-    {{! ================================================================== }}
-    <div class="sheet-main-area">
-      <div class="sheet-mini-header">
-        {{!-- Este container garante o alinhamento horizontal --}}
-        <div class="primary-attributes-container">
-          {{#with actor.system.attributes}}
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{st.final}}" data-label="Teste de ST"><label>ST</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.st.temp" value="{{st.temp}}"/>
-            </div>
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{dx.final}}" data-label="Teste de DX"><label>DX</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.dx.temp" value="{{dx.temp}}"/>
-            </div>
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{iq.final}}" data-label="Teste de IQ"><label>IQ</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.iq.temp" value="{{iq.temp}}"/>
-            </div>
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{ht.final}}" data-label="Teste de HT"><label>HT</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.ht.temp" value="{{ht.temp}}"/>
-            </div>
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{vont.final}}" data-label="Teste de Vontade"><label>Vont</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.vont.value" value="{{vont.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.vont.temp" value="{{vont.temp}}"/>
-            </div>
-            <div class="attribute-box">
-              <a class="rollable" data-roll-value="{{per.final}}" data-label="Teste de Percepção"><label>Per</label></a>
-              <input class="attribute-value" type="number" name="system.attributes.per.value" value="{{per.value}}"/>
-              <input class="attribute-modifier" type="number" name="system.attributes.per.temp" value="{{per.temp}}"/>
-            </div>
-          {{/with}}
+{{! ================================================================== }}
+{{! MACRORREGIÃO 3: ÁREA PRINCIPAL (DESIGN RESTAURADO)                 }}
+{{! ================================================================== }}
+<div class="sheet-main-area">
+  <div class="sheet-mini-header">
+    <div class="primary-attributes-container">
+      {{#with actor.system.attributes}}
+        
+        {{!-- Estrutura para ST --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{st.final}}" data-label="Teste de ST" data-attribute-key="st"><label>ST</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.st.mod" value="{{st.mod}}" title="Modificador Fixo (Racial, Vantagens, etc)"/>
         </div>
-      </div>
+
+        {{!-- Estrutura para DX --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{dx.final}}" data-label="Teste de DX" data-attribute-key="dx"><label>DX</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.dx.mod" value="{{dx.mod}}" title="Modificador Fixo"/>
+        </div>
+
+        {{!-- Estrutura para IQ --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{iq.final}}" data-label="Teste de IQ" data-attribute-key="iq"><label>IQ</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.iq.mod" value="{{iq.mod}}" title="Modificador Fixo"/>
+        </div>
+
+        {{!-- Estrutura para HT --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{ht.final}}" data-label="Teste de HT" data-attribute-key="ht"><label>HT</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.ht.mod" value="{{ht.mod}}" title="Modificador Fixo"/>
+        </div>
+
+        {{!-- Estrutura para Vontade --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{vont.final}}" data-label="Teste de Vontade" data-attribute-key="vont"><label>Vont</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.vont.value" value="{{vont.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.vont.mod" value="{{vont.mod}}" title="Modificador Fixo"/>
+        </div>
+
+        {{!-- Estrutura para Percepção --}}
+        <div class="attribute-box">
+          <a class="rollable" data-roll-value="{{per.final}}" data-label="Teste de Percepção" data-attribute-key="per"><label>Per</label></a>
+          <input class="attribute-value" type="number" name="system.attributes.per.value" value="{{per.value}}"/>
+          <input class="attribute-modifier" type="number" name="system.attributes.per.mod" value="{{per.mod}}" title="Modificador Fixo"/>
+        </div>
+      {{/with}}
+    </div>
+  </div>
 
       {{! ================================================================== }}
       {{! MACRORREGIÃO 4: NAVEGAÇÃO DAS ABAS                               }}

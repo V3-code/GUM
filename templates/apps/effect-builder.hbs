@@ -49,29 +49,53 @@
         </div>
         {{/if}}
 
-        {{#if (eq object.type "chat")}}
-        <div class="form-section">
-             <h4 class="section-title">Detalhes da Mensagem</h4>
-             <div class="form-group"><label>Texto da Mensagem</label><textarea name="chat_text" rows="3">{{object.chat_text}}</textarea></div>
-            <div class="form-group-inline"><label>Visibilidade</label>
-                <select name="whisperMode">
-                    {{{selectOptions (obj "public" "Público" "gm" "Apenas para MJs" "blind" "Rolagem Cega") selected=object.whisperMode}}}
-                </select>
-            </div>
-            <div class="form-group-inline"><label>Incluir Botão de Teste?</label><input type="checkbox" name="has_roll" {{checked object.has_roll}}/></div>
-            {{#if object.has_roll}}
-            <div class="form-grid-3 sub-effect-group">
-                <div class="form-group"><label>Atributo</label>
-                    <select name="roll_attribute">
-                         {{{selectOptions (obj "st.final" "ST" "dx.final" "DX" "iq.final" "IQ" "ht.final" "HT" "vont.final" "Vontade" "per.final" "Percepção") selected=object.roll_attribute}}}
-                    </select>
-                </div>
-                <div class="form-group"><label>Modificador</label><input type="number" name="roll_modifier" value="{{object.roll_modifier}}"/></div>
-                <div class="form-group"><label>Texto Botão</label><input type="text" name="roll_label" value="{{object.roll_label}}"/></div>
-            </div>
-            {{/if}}
+{{#if (eq object.type "chat")}}
+<div class="form-section">
+     <h4 class="section-title">Detalhes da Mensagem</h4>
+     <div class="form-group"><label>Texto da Mensagem</label><textarea name="chat_text" rows="3">{{object.chat_text}}</textarea></div>
+    <div class="form-group-inline"><label>Visibilidade</label>
+        <select name="whisperMode">
+            {{{selectOptions (obj "public" "Público" "gm" "Apenas para MJs" "blind" "Rolagem Cega") selected=object.whisperMode}}}
+        </select>
+    </div>
+    <div class="form-group-inline"><label>Incluir Botão de Teste?</label><input type="checkbox" name="has_roll" {{checked object.has_roll}}/></div>
+    
+    {{#if object.has_roll}}
+    <div class="form-grid-3 sub-effect-group">
+        <div class="form-group"><label>Atributo do Teste</label>
+            <select name="roll_attribute">
+                {{!-- ✅ NOVA OPÇÃO "VALOR FIXO" ✅ --}}
+                <option value="fixed" {{#if (eq object.roll_attribute 'fixed')}}selected{{/if}}>Valor Fixo...</option>
+                <option value="st.final" {{#if (eq object.roll_attribute 'st.final')}}selected{{/if}}>ST</option>
+                <option value="dx.final" {{#if (eq object.roll_attribute 'dx.final')}}selected{{/if}}>DX</option>
+                <option value="iq.final" {{#if (eq object.roll_attribute 'iq.final')}}selected{{/if}}>IQ</option>
+                <option value="ht.final" {{#if (eq object.roll_attribute 'ht.final')}}selected{{/if}}>HT</option>
+                <option value="vont.final" {{#if (eq object.roll_attribute 'vont.final')}}selected{{/if}}>Vontade</option>
+                <option value="per.final" {{#if (eq object.roll_attribute 'per.final')}}selected{{/if}}>Percepção</option>
+            </select>
+        </div>
+
+        {{!-- ✅ CAMPO QUE APARECE APENAS PARA "VALOR FIXO" ✅ --}}
+        {{#if (eq object.roll_attribute "fixed")}}
+        <div class="form-group">
+            <label>Alvo Fixo</label>
+            <input type="number" name="roll_fixed_value" value="{{object.roll_fixed_value}}" placeholder="12"/>
+        </div>
+        {{else}}
+        <div class="form-group">
+            <label>Modificador</label>
+            <input type="number" name="roll_modifier" value="{{object.roll_modifier}}" placeholder="0"/>
         </div>
         {{/if}}
+
+        <div class="form-group">
+            <label>Texto do Botão</label>
+            <input type="text" name="roll_label" value="{{object.roll_label}}" placeholder="Rolar Teste"/>
+        </div>
+    </div>
+    {{/if}}
+</div>
+{{/if}}
 
 
         {{!-- BLOCO PARA APLICAR FLAG --}}

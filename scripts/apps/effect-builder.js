@@ -31,42 +31,48 @@ async _updateObject(event, formData) {
     const effectsData = this.item.system.effects || [];
     const effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
     
-    const newEffectData = foundry.utils.expandObject(formData);
-    const cleanEffect = { type: newEffectData.type };
-
-    switch(newEffectData.type) {
+    // Cria um objeto de efeito limpo para garantir que não haja dados extras
+    const newEffect = { type: formData.type };
+    
+    // Adiciona apenas os campos relevantes para o tipo de efeito selecionado
+    switch(formData.type) {
         case "attribute":
-            cleanEffect.path = newEffectData.path;
-            cleanEffect.operation = newEffectData.operation;
-            cleanEffect.value = newEffectData.value;
+            newEffect.path = formData.path;
+            newEffect.operation = formData.operation;
+            newEffect.value = formData.value;
             break;
         case "status":
-            cleanEffect.statusId = newEffectData.statusId;
+            newEffect.statusId = formData.statusId;
             break;
         case "macro":
-            cleanEffect.value = newEffectData.value;
+            newEffect.value = formData.value;
             break;
         case "chat":
-            cleanEffect.chat_text = newEffectData.chat_text;
-            cleanEffect.whisperMode = newEffectData.whisperMode;
-            cleanEffect.has_roll = newEffectData.has_roll;
-            if (newEffectData.has_roll) {
-                cleanEffect.roll_attribute = newEffectData.roll_attribute;
-                cleanEffect.roll_modifier = newEffectData.roll_modifier;
-                cleanEffect.roll_label = newEffectData.roll_label;
+            newEffect.chat_text = formData.chat_text;
+            newEffect.whisperMode = formData.whisperMode;
+            newEffect.has_roll = formData.has_roll;
+            if (formData.has_roll) {
+                newEffect.roll_attribute = formData.roll_attribute;
+                newEffect.roll_label = formData.roll_label;
+
+                // ✅ LÓGICA CORRIGIDA E ADICIONADA AQUI ✅
+                // Se for um valor fixo, salva o 'roll_fixed_value'.
+                // Se não, salva o 'roll_modifier'.
+                if (formData.roll_attribute === 'fixed') {
+                    newEffect.roll_fixed_value = formData.roll_fixed_value;
+                } else {
+                    newEffect.roll_modifier = formData.roll_modifier;
+                }
             }
-            break;
-        case "flag":
-            cleanEffect.key = newEffectData.key;
-            cleanEffect.value = newEffectData.value;
             break;
     }
 
     if (this.effectIndex > -1) {
-        effects[this.effectIndex] = cleanEffect;
+        effects[this.effectIndex] = newEffect;
     } else {
-        effects.push(cleanEffect);
+        effects.push(newEffect);
     }
+
     await this.item.update({ "system.effects": effects });
 }
 
@@ -74,7 +80,7 @@ async _updateObject(event, formData) {
         super.activateListeners(html);
         html.find('[name="type"], [name="has_roll"]').on('change', this._onTypeChange.bind(this));
         html.find('.open-attribute-picker').on('click', this._onOpenAttributePicker.bind(this));
-
+        html.find('[name="type"], [name="has_roll"], [name="roll_attribute"]').on('change', this._onTypeChange.bind(this));
     }
 
     async _onTypeChange(event) {
