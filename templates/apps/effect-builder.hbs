@@ -30,7 +30,13 @@
                         {{{selectOptions (obj "ADD" "Adicionar" "SUB" "Subtrair" "SET" "Definir") selected=object.operation}}}
                     </select>
                 </div>
-                <div class="form-group"><label>Valor</label><input type="text" name="value" value="{{object.value}}"/></div>
+                <div class="form-group">
+                    <label>Valor 
+                        <a class="open-value-help" title="Ajuda com Fórmulas">?</a>
+                    </label>
+                    <input type="text" name="value" value="{{object.value}}" placeholder="Ex: 2 ou Math.floor(...)"/>
+                    <p class="hint">Você pode usar números ou fórmulas JS com <code>actor</code>. Ex: <code>Math.floor(actor.system.attributes.st.final / 2)</code></p>
+                    </div>
             </div>
         </div>
         {{/if}}

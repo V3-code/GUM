@@ -81,6 +81,7 @@ async _updateObject(event, formData) {
         html.find('[name="type"], [name="has_roll"]').on('change', this._onTypeChange.bind(this));
         html.find('.open-attribute-picker').on('click', this._onOpenAttributePicker.bind(this));
         html.find('[name="type"], [name="has_roll"], [name="roll_attribute"]').on('change', this._onTypeChange.bind(this));
+        html.find('.open-value-help').on('click', this._onOpenValueHelp.bind(this));
     }
 
     async _onTypeChange(event) {
@@ -89,6 +90,36 @@ async _updateObject(event, formData) {
         this.object = formData;
         this.render();
     }
+
+    _onOpenValueHelp(event) {
+    const examples = [
+        { label: "Valor fixo 2", code: "2" },
+        { label: "Metade da ST final", code: "Math.floor(actor.system.attributes.st.final / 2)" },
+        { label: "Negar o peso da carga", code: "actor.system.encumbrance.penalty * -1" },
+        { label: "Se HP <= 5, então -2", code: "actor.system.attributes.hp.value <= 5 ? -2 : 0" },
+        { label: "Valor da DX final", code: "actor.system.attributes.dx.final" }
+    ];
+
+    let content = `<div class="value-helper"><ul>`;
+    for (let ex of examples) {
+        content += `<li><strong>${ex.label}:</strong> <code class="copyable" data-code="${ex.code}">${ex.code}</code></li>`;
+    }
+    content += `</ul><p class="hint">Clique no código para copiá-lo.</p></div>`;
+
+    const d = new Dialog({
+        title: "Exemplos de Fórmulas para Valor",
+        content: content,
+        buttons: { ok: { label: "Fechar" } },
+        render: html => {
+            html.find(".copyable").on("click", ev => {
+                const code = ev.currentTarget.dataset.code;
+                navigator.clipboard.writeText(code);
+                ui.notifications.info("Fórmula copiada!");
+            });
+        }
+    }, { width: 500, classes: ["dialog", "gum"] }).render(true);
+}
+
 
     _onOpenAttributePicker(event) {
     const targetInput = $(event.currentTarget).siblings('input')[0];

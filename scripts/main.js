@@ -8,48 +8,86 @@ import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
 
 // ================================================================== //
-//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
+//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅ xzxzxz
 // ================================================================== //
 async function performGURPSRoll(element, actor, situationalMod = 0) {
     const label = element.dataset.label;
     const attrKey = element.dataset.attributeKey;
-    const attributeData = attrKey ? actor.system.attributes[attrKey] : null;
+    let attributeData = attrKey ? actor.system.attributes[attrKey] : null;
 
-    let baseTargetForChat, tempModForChat, finalTargetForRoll;
+    let baseTargetForChat = 0;
+    let tempModForChat = 0;
+    let finalTargetForRoll = 0;
 
     if (attributeData) {
+        // ✅ Usa final_computed se disponível
+        if (attributeData.final_computed !== undefined) {
+            attributeData = {
+                ...attributeData,
+                value: attributeData.final_computed,
+                mod: 0,
+                temp: 0,
+                override: null
+            };
+        }
+
         const baseValue = Number(attributeData.value) || 0;
         const fixedMod = Number(attributeData.mod) || 0;
         const tempMod = Number(attributeData.temp) || 0;
+        const override = attributeData.override;
+
+        const final = (override !== undefined && override !== null)
+            ? override
+            : baseValue + fixedMod + tempMod;
+
         baseTargetForChat = baseValue + fixedMod;
         tempModForChat = tempMod;
-        finalTargetForRoll = baseValue + fixedMod + tempMod;
+        finalTargetForRoll = final;
     } else {
+        // ✅ Fallback para rolagens diretas com rollValue no HTML
         finalTargetForRoll = parseInt(element.dataset.rollValue);
         baseTargetForChat = finalTargetForRoll;
         tempModForChat = 0;
     }
-    
+
     const finalTarget = finalTargetForRoll + situationalMod;
     const chatModifier = tempModForChat + situationalMod;
-    
+
     const roll = new Roll("3d6");
-    await roll.evaluate({ async: true });
+    await roll.evaluate(); // 🔧 Corrigido: .evaluate sem 'async: true'
 
     const margin = finalTarget - roll.total;
-    let resultText, resultClass, resultIcon;
-    if (roll.total <= finalTarget) { resultText = `Sucesso com margem de ${margin}`; resultClass = 'success'; resultIcon = 'fas fa-check-circle'; } 
-    else { resultText = `Fracasso por uma margem de ${margin * -1}`; resultClass = 'failure'; resultIcon = 'fas fa-times-circle'; }
-    if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) { resultText = `Sucesso Crítico!`; } 
-    else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) { resultText = `Falha Crítica!`; }
-    
+    let resultText = "";
+    let resultClass = "";
+    let resultIcon = "";
+
+    if (roll.total <= finalTarget) {
+        resultText = `Sucesso com margem de ${margin}`;
+        resultClass = 'success';
+        resultIcon = 'fas fa-check-circle';
+    } else {
+        resultText = `Fracasso por uma margem de ${-margin}`;
+        resultClass = 'failure';
+        resultIcon = 'fas fa-times-circle';
+    }
+
+    // Sucessos e falhas críticas
+    if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
+        resultText = `Sucesso Crítico!`;
+    } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
+        resultText = `Falha Crítica!`;
+    }
+
     const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
     const flavor = `
         <div class="gurps-roll-card">
             <header class="card-header"><h3>${label}</h3></header>
             <div class="card-content">
                 <div class="card-main-flex">
-                    <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
+                    <div class="roll-column">
+                        <div class="roll-total-value">${roll.total}</div>
+                        <div class="individual-dice">${diceHtml}</div>
+                    </div>
                     <div class="column-separator"></div>
                     <div class="target-column">
                         <div class="roll-target-value">${finalTarget}</div>
@@ -59,16 +97,19 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
                     </div>
                 </div>
             </div>
-            <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
+            <footer class="card-footer ${resultClass}">
+                <i class="${resultIcon}"></i> <span>${resultText}</span>
+            </footer>
         </div>
     `;
-    
+
     ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: actor }),
         content: flavor,
         rolls: [roll]
     });
 }
+
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -359,29 +400,57 @@ async function evaluateEvents(actor, options = {}) {
 
 
 // ================================================================== //
-//  HOOKS DE ITENS CONDIÇÃO //
+//  HOOKS DE ITENS CONDIÇÃO 
 // ================================================================== //
 
-Hooks.on("updateActor", (actor, data, options, userId) => {
-    if (game.user.id === userId) evaluateEvents(actor);
-});
+// ================================================================== //
+// ✅ HOOKS DE ITENS DO TIPO CONDIÇÃO — COM ATUALIZAÇÃO COMPLETA ✅
+// ================================================================== //
+
 Hooks.on("createItem", (item, options, userId) => {
-    if (game.user.id === userId && item.parent) item.parent.sheet.render(true);
+  if (game.user.id !== userId) return;
+  if (item.type === "condition" && item.parent?.isOwner) {
+    item.parent.prepareData(); // Força recálculo dos atributos
+    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
+  }
 });
+
+Hooks.on("updateItem", (item, changes, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (item.type === "condition" && item.parent?.isOwner) {
+    item.parent.prepareData();
+    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
+  }
+});
+
 Hooks.on("deleteItem", (item, options, userId) => {
-    if (game.user.id === userId && item.parent) item.parent.sheet.render(true);
+  if (game.user.id !== userId) return;
+  if (item.type === "condition" && item.parent?.isOwner) {
+    item.parent.prepareData();
+    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
+  }
 });
 Hooks.on("updateCombat", (combat, changed, options, userId) => {
-    if (changed.round || changed.turn) {
-        if (combat.combatant?.actor) evaluateEvents(combat.combatant.actor, { isTurnStart: true });
+  if (!game.user.isGM) return; // Apenas o GM precisa rodar isso normalmente
+  if (changed.round || changed.turn) {
+    const actor = combat.combatant?.actor;
+    if (actor) {
+      evaluateEvents(actor, { isTurnStart: true });
+      actor.prepareData();
+      if (actor.sheet.rendered) actor.sheet.render(true);
     }
+  }
 });
+
 Hooks.on("deleteCombat", (combat, options, userId) => {
-    if (combat.combatants) {
-        for (const combatant of combat.combatants) {
-            if (combatant.actor) combatant.actor.sheet.render(true);
-        }
+  if (!game.user.isGM) return;
+  for (const combatant of combat.combatants) {
+    const actor = combatant.actor;
+    if (actor) {
+      actor.prepareData();
+      if (actor.sheet.rendered) actor.sheet.render(true);
     }
+  }
 });
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
@@ -667,9 +736,49 @@ _prepareCharacterItems(sheetData) {
             effects.forEach(effect => {
                 if (effect.type === 'attribute' && effect.path) {
                     if (!modifiers[effect.path]) modifiers[effect.path] = 0;
-                    const value = Number(effect.value) || 0;
-                    if (effect.operation === "ADD") modifiers[effect.path] += value;
-                    else if (effect.operation === "SUB") modifiers[effect.path] -= value;
+                    let value = 0;
+try {
+if (typeof effect.value === "string") {
+    // 🔁 Criar um clone do ator para injetar os valores finais
+    const context = duplicate(this.actor.toObject());
+    const srcAttrs = this.actor.system.attributes;
+    const ctxAttrs = context.system.attributes;
+
+    // ⚙️ Calcular final temporário no clone (mesmo que não exista no toObject)
+    const keys = ["st", "dx", "iq", "ht", "hp", "fp", "basic_speed", "basic_move", "lifting_st"];
+    for (const key of keys) {
+        if (!ctxAttrs[key]) continue;
+
+        const base = Number(ctxAttrs[key].value || 0);
+        const mod = Number(ctxAttrs[key].mod || 0);
+        const temp = Number(ctxAttrs[key].temp || 0);
+        const final = base + mod + temp;
+        ctxAttrs[key].final_computed = final;
+    }
+
+    // Também insere esquiva e movimento final
+    ctxAttrs.final_dodge_computed = this.actor.system.attributes.final_dodge;
+    ctxAttrs.final_move_computed = this.actor.system.attributes.final_move;
+
+    // Executa a função no contexto isolado
+    const func = new Function("actor", "game", `return (${effect.value});`);
+    value = func(context, game);
+}else {
+    value = Number(effect.value) || 0;
+  }
+} catch (e) {
+  console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
+}
+                    if (!modifiers[effect.path]) modifiers[effect.path] = 0;
+                    if (effect.operation === "ADD") {
+                        modifiers[effect.path] += value;
+                    }
+                    else if (effect.operation === "SUB") {
+                        modifiers[effect.path] -= value;
+                    }
+                    else if (effect.operation === "SET") {
+                        modifiers[effect.path] = value;
+                    }
                 }
             });
         }
@@ -681,19 +790,44 @@ _prepareCharacterItems(sheetData) {
         foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
     }
     
-    // --- ETAPA 4: CÁLCULOS FINAIS DA FICHA ---
-    for (const attr of tempAttributes) {
-        if (attributes[attr]) {
-            attributes[attr].final = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
+// --- ETAPA 4: CÁLCULOS FINAIS DA FICHA (com override) ---
+for (const attr of tempAttributes) {
+    if (attributes[attr]) {
+        const base = Number(attributes[attr].value) || 0;
+        const mod = Number(attributes[attr].mod) || 0;
+        const temp = Number(attributes[attr].temp) || 0;
+        const override = attributes[attr].override;
+
+        if (override !== undefined && override !== null) {
+            attributes[attr].final = override;
+        } else {
+            attributes[attr].final = base + mod + temp;
         }
     }
-    
-    if (attributes.hp) {
-        attributes.hp.final = (Number(attributes.hp.max) || 0) + (Number(attributes.hp.mod) || 0) + (Number(attributes.hp.temp) || 0);
-    }
-    if (attributes.fp) {
-        attributes.fp.final = (Number(attributes.fp.max) || 0) + (Number(attributes.fp.mod) || 0) + (Number(attributes.fp.temp) || 0);
-    }
+}
+
+if (attributes.hp) {
+    const base = Number(attributes.hp.max) || 0;
+    const mod = Number(attributes.hp.mod) || 0;
+    const temp = Number(attributes.hp.temp) || 0;
+    const override = attributes.hp.override;
+
+    attributes.hp.final = (override !== undefined && override !== null)
+        ? override
+        : base + mod + temp;
+}
+
+if (attributes.fp) {
+    const base = Number(attributes.fp.max) || 0;
+    const mod = Number(attributes.fp.mod) || 0;
+    const temp = Number(attributes.fp.temp) || 0;
+    const override = attributes.fp.override;
+
+    attributes.fp.final = (override !== undefined && override !== null)
+        ? override
+        : base + mod + temp;
+}
+
 
     // O resto da sua lógica de cálculo que você já me enviou...
     for (let i of sheetData.actor.items) {
@@ -743,10 +877,31 @@ _prepareCharacterItems(sheetData) {
     const dodgeMod = combat.dodge_mod || 0;       // O modificador manual
     const dodgeTemp = combat.dodge_temp || 0;     // O modificador das condições
     attributes.final_dodge = dodgeBase + (encumbrance.penalty || 0) + dodgeMod + dodgeTemp;
+
+    attributes.final_dodge_computed = attributes.final_dodge;
+    attributes.final_move_computed = attributes.final_move;
+
+    if (attributes.final_dodge !== undefined && attributes.final_dodge !== null) {
+    const dodgeOverride = attributes.final_dodge.override;
+    if (dodgeOverride !== undefined && dodgeOverride !== null) {
+        attributes.final_dodge = dodgeOverride;
+    }
+    }
+
+    if (attributes.final_move !== undefined && attributes.final_move !== null) {
+    const moveOverride = attributes.final_move.override;
+    if (moveOverride !== undefined && moveOverride !== null) {
+        attributes.final_move = moveOverride;
+    }
+    }
     
     // O seu cálculo de finalMove já estava correto
     let finalMove = Math.floor(finalBasicMove * (1 - ((encumbrance.level_value || 0) * 0.2)));
     attributes.final_move = finalMove;
+
+
+
+
     const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
     for (let i of sheetData.actor.items) {
         if (i.type === 'armor' && i.system.location === 'equipped') {
@@ -803,6 +958,21 @@ _prepareCharacterItems(sheetData) {
         { name: 'Pesada', max: levels.heavy },
         { name: 'M. Pesada', max: levels.xheavy }
     ];
+
+    // --- ✅ FINALIZAÇÃO: ATRIBUTOS COMPUTADOS ESTÁTICOS PARA EFEITOS E MACROS ✅ ---
+
+// Atributos principais e derivados com valores finais acessíveis
+["st", "dx", "iq", "ht", "hp", "fp", "basic_speed", "basic_move", "lifting_st"].forEach(attr => {
+  if (attributes[attr]?.final !== undefined) {
+    attributes[attr].final_computed = attributes[attr].final;
+  }
+});
+
+// Esquiva e deslocamento final também como propriedades estáticas
+attributes.final_dodge_computed = attributes.final_dodge;
+attributes.final_move_computed = attributes.final_move;
+
+
 }
     
       async _updateObject(event, formData) {
