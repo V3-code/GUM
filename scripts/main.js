@@ -835,6 +835,16 @@ _prepareCharacterItems(sheetData) {
         }
     });
 
+    // ✅ CÓDIGO RESTAURADO PARA O MEDIDOR VISUAL DE CARGA ✅
+    const levels = actorData.system.encumbrance.levels;
+    actorData.system.encumbrance.level_data = [
+        { name: 'Nenhuma', max: levels.none },
+        { name: 'Leve', max: levels.light },
+        { name: 'Média', max: levels.medium },
+        { name: 'Pesada', max: levels.heavy },
+        { name: 'M. Pesada', max: levels.xheavy }
+    ];
+
     // Cálculos específicos para Dodge e Move (usando final_computed)
     const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
     const finalBasicMoveComputed = attributes.basic_move.final_computed;
