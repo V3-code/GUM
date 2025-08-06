@@ -712,124 +712,120 @@ _prepareCharacterItems(sheetData) {
     const actorData = sheetData.actor;
     const attributes = actorData.system.attributes;
     const combat = actorData.system.combat;
-    
+
     // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS ---
-    const tempAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st'];
-    tempAttributes.forEach(attr => { if (attributes[attr]) attributes[attr].temp = 0; });
-    
-    if (combat.dr_mods) { for (const key in combat.dr_mods) { combat.dr_mods[key] = 0; } }
-    combat.dodge_temp = 0; // Zera o novo mod de esquiva
+    const tempAttributes = [
+        'st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp',
+        'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge'
+    ];
+    tempAttributes.forEach(attr => {
+        if (attributes[attr]) attributes[attr].temp = 0;
+    });
+
+    if (combat.dr_mods) {
+        for (const key in combat.dr_mods) combat.dr_mods[key] = 0;
+    }
 
     // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
-    const modifiers = {}; 
+    const modifiers = {};
     const conditions = this.actor.items.filter(i => i.type === "condition");
+
     for (const condition of conditions) {
         if (condition.getFlag("gum", "manual_override")) continue;
+
         let isConditionActive = false;
         if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
         else {
-            try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game); }
-            catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e); }
+            try {
+                isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
+            } catch (e) {
+                console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
+            }
         }
+
         if (isConditionActive) {
             const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-            effects.forEach(effect => {
+            for (const effect of effects) {
                 if (effect.type === 'attribute' && effect.path) {
                     if (!modifiers[effect.path]) modifiers[effect.path] = 0;
                     let value = 0;
-try {
-if (typeof effect.value === "string") {
-    // 🔁 Criar um clone do ator para injetar os valores finais
-    const context = duplicate(this.actor.toObject());
-    const srcAttrs = this.actor.system.attributes;
-    const ctxAttrs = context.system.attributes;
 
-    // ⚙️ Calcular final temporário no clone (mesmo que não exista no toObject)
-    const keys = ["st", "dx", "iq", "ht", "hp", "fp", "basic_speed", "basic_move", "lifting_st"];
-    for (const key of keys) {
-        if (!ctxAttrs[key]) continue;
+                    try {
+                        if (typeof effect.value === "string") {
+                            const context = duplicate(this.actor.toObject());
+                            const srcAttrs = this.actor.system.attributes;
+                            const ctxAttrs = context.system.attributes;
 
-        const base = Number(ctxAttrs[key].value || 0);
-        const mod = Number(ctxAttrs[key].mod || 0);
-        const temp = Number(ctxAttrs[key].temp || 0);
-        const final = base + mod + temp;
-        ctxAttrs[key].final_computed = final;
-    }
+                            const keys = tempAttributes;
+                            for (const key of keys) {
+                                if (!ctxAttrs[key]) continue;
+                                const base = Number(ctxAttrs[key].value || 0);
+                                const mod = Number(ctxAttrs[key].mod || 0);
+                                const temp = Number(ctxAttrs[key].temp || 0);
+                                const final = base + mod + temp;
+                                ctxAttrs[key].final_computed = final;
+                            }
 
-    // Também insere esquiva e movimento final
-    ctxAttrs.final_dodge_computed = this.actor.system.attributes.final_dodge;
-    ctxAttrs.final_move_computed = this.actor.system.attributes.final_move;
+                            ctxAttrs.final_dodge_computed = attributes.dodge?.final;
+                            ctxAttrs.final_move_computed = attributes.basic_move?.final;
 
-    // Executa a função no contexto isolado
-    const func = new Function("actor", "game", `return (${effect.value});`);
-    value = func(context, game);
-}else {
-    value = Number(effect.value) || 0;
-  }
-} catch (e) {
-  console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
-}
+                            const func = new Function("actor", "game", `return (${effect.value});`);
+                            value = func(context, game);
+                        } else {
+                            value = Number(effect.value) || 0;
+                        }
+                    } catch (e) {
+                        console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
+                    }
+
                     if (!modifiers[effect.path]) modifiers[effect.path] = 0;
-                    if (effect.operation === "ADD") {
-                        modifiers[effect.path] += value;
-                    }
-                    else if (effect.operation === "SUB") {
-                        modifiers[effect.path] -= value;
-                    }
-                    else if (effect.operation === "SET") {
-                        modifiers[effect.path] = value;
-                    }
+                    if (effect.operation === "ADD") modifiers[effect.path] += value;
+                    else if (effect.operation === "SUB") modifiers[effect.path] -= value;
+                    else if (effect.operation === "SET") modifiers[effect.path] = value;
                 }
-            });
+            }
         }
     }
 
     // --- ETAPA 3: APLICAR OS MODIFICADORES ACUMULADOS ---
-    for(const path in modifiers) {
+    for (const path in modifiers) {
         const currentVal = foundry.utils.getProperty(actorData, path) || 0;
         foundry.utils.setProperty(actorData, path, currentVal + modifiers[path]);
     }
-    
-// --- ETAPA 4: CÁLCULOS FINAIS DA FICHA (com override) ---
-for (const attr of tempAttributes) {
-    if (attributes[attr]) {
-        const base = Number(attributes[attr].value) || 0;
-        const mod = Number(attributes[attr].mod) || 0;
-        const temp = Number(attributes[attr].temp) || 0;
-        const override = attributes[attr].override;
 
-        if (override !== undefined && override !== null) {
-            attributes[attr].final = override;
-        } else {
-            attributes[attr].final = base + mod + temp;
+    // --- ETAPA 4: CÁLCULOS FINAIS COM OVERRIDE ---
+    for (const attr of tempAttributes) {
+        if (attributes[attr]) {
+            const base = Number(attributes[attr].value) || 0;
+            const mod = Number(attributes[attr].mod) || 0;
+            const temp = Number(attributes[attr].temp) || 0;
+            const override = attributes[attr].override;
+
+            attributes[attr].final = (override !== undefined && override !== null)
+                ? override
+                : base + mod + temp;
+
+            attributes[attr].final_computed = attributes[attr].final;
         }
     }
-}
 
-if (attributes.hp) {
-    const base = Number(attributes.hp.max) || 0;
-    const mod = Number(attributes.hp.mod) || 0;
-    const temp = Number(attributes.hp.temp) || 0;
-    const override = attributes.hp.override;
+    // HP / FP finais
+    for (const pool of ["hp", "fp"]) {
+        if (attributes[pool]) {
+            const base = Number(attributes[pool].max) || 0;
+            const mod = Number(attributes[pool].mod) || 0;
+            const temp = Number(attributes[pool].temp) || 0;
+            const override = attributes[pool].override;
 
-    attributes.hp.final = (override !== undefined && override !== null)
-        ? override
-        : base + mod + temp;
-}
+            attributes[pool].final = (override !== undefined && override !== null)
+                ? override
+                : base + mod + temp;
 
-if (attributes.fp) {
-    const base = Number(attributes.fp.max) || 0;
-    const mod = Number(attributes.fp.mod) || 0;
-    const temp = Number(attributes.fp.temp) || 0;
-    const override = attributes.fp.override;
+            attributes[pool].final_computed = attributes[pool].final;
+        }
+    }
 
-    attributes.fp.final = (override !== undefined && override !== null)
-        ? override
-        : base + mod + temp;
-}
-
-
-    // O resto da sua lógica de cálculo que você já me enviou...
+    // --- CÁLCULOS DE ITENS E CARGA ---
     for (let i of sheetData.actor.items) {
         if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type)) {
             i.system.total_weight = Math.round(((i.system.quantity || 1) * (i.system.weight || 0)) * 100) / 100;
@@ -841,113 +837,92 @@ if (attributes.fp) {
     const finalBasicMove = attributes.basic_move.final;
     const liftingST = attributes.lifting_st.final;
     const basicLift = (liftingST * liftingST) / 10;
-    if (attributes.basic_lift) attributes.basic_lift.value = basicLift;
-    else attributes.basic_lift = { value: basicLift };
-    
+    attributes.basic_lift = { value: basicLift };
+
     let totalWeight = 0;
     const ignoreCarried = actorData.system.encumbrance.ignore_carried_weight;
     for (let i of sheetData.actor.items) {
-        if (!['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type) || !i.system.weight) {
-            continue;
-        }
-        const itemLocation = i.system.location;
-        const itemWeight = i.system.weight || 0;
-        const itemQuantity = i.system.quantity || 1;
-        if (itemLocation === 'equipped') {
-            totalWeight += itemWeight * itemQuantity;
-        } 
-        else if (itemLocation === 'carried' && !ignoreCarried) {
-            totalWeight += itemWeight * itemQuantity;
-        }
+        if (!['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type) || !i.system.weight) continue;
+        const loc = i.system.location;
+        const q = i.system.quantity || 1;
+        const w = i.system.weight || 0;
+        if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) totalWeight += w * q;
     }
 
-    let encumbrance = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
-    if (totalWeight > basicLift * 6) { encumbrance = { level_name: "M. Pesada", level_value: 4, penalty: -4 }; } 
-    else if (totalWeight > basicLift * 3) { encumbrance = { level_name: "Pesada", level_value: 3, penalty: -3 }; } 
-    else if (totalWeight > basicLift * 2) { encumbrance = { level_name: "Média", level_value: 2, penalty: -2 }; } 
-    else if (totalWeight > basicLift) { encumbrance = { level_name: "Leve", level_value: 1, penalty: -1 }; }
-    
+    let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
+    if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada", level_value: 4, penalty: -4 };
+    else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada", level_value: 3, penalty: -3 };
+    else if (totalWeight > basicLift * 2) enc = { level_name: "Média", level_value: 2, penalty: -2 };
+    else if (totalWeight > basicLift) enc = { level_name: "Leve", level_value: 1, penalty: -1 };
+
     actorData.system.encumbrance.total_weight = Math.round(totalWeight * 100) / 100;
-    actorData.system.encumbrance.level_name = encumbrance.level_name;
-    actorData.system.encumbrance.level_value = encumbrance.level_value;
-    actorData.system.encumbrance.levels = { none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2), medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2), xheavy: (basicLift * 10).toFixed(2) };
+    actorData.system.encumbrance.level_name = enc.level_name;
+    actorData.system.encumbrance.level_value = enc.level_value;
+    actorData.system.encumbrance.levels = {
+        none: basicLift.toFixed(2),
+        light: (basicLift * 2).toFixed(2),
+        medium: (basicLift * 3).toFixed(2),
+        heavy: (basicLift * 6).toFixed(2),
+        xheavy: (basicLift * 10).toFixed(2)
+    };
 
-    // --- ✅ CÁLCULO FINAL DE ESQUIVA (COM 3 CAMADAS) ✅ ---
+    // --- CÁLCULO FINAL DE ESQUIVA E MOVIMENTO ---
     const dodgeBase = Math.floor(finalBasicSpeed) + 3;
-    const dodgeMod = combat.dodge_mod || 0;       // O modificador manual
-    const dodgeTemp = combat.dodge_temp || 0;     // O modificador das condições
-    attributes.final_dodge = dodgeBase + (encumbrance.penalty || 0) + dodgeMod + dodgeTemp;
+    const dodgeMod = attributes.dodge?.mod || 0;
+    const dodgeTemp = attributes.dodge?.temp || 0;
 
-    attributes.final_dodge_computed = attributes.final_dodge;
-    attributes.final_move_computed = attributes.final_move;
+    attributes.dodge.final = dodgeBase + (enc.penalty || 0) + dodgeMod + dodgeTemp;
+    attributes.dodge.final_computed = attributes.dodge.final;
+    attributes.dodge.value = Math.floor(finalBasicSpeed) + 3;
 
-    if (attributes.final_dodge !== undefined && attributes.final_dodge !== null) {
-    const dodgeOverride = attributes.final_dodge.override;
-    if (dodgeOverride !== undefined && dodgeOverride !== null) {
-        attributes.final_dodge = dodgeOverride;
-    }
-    }
+    attributes.basic_move.final = Math.floor(finalBasicMove * (1 - (enc.level_value * 0.2)));
+    attributes.basic_move.final_computed = attributes.basic_move.final;
 
-    if (attributes.final_move !== undefined && attributes.final_move !== null) {
-    const moveOverride = attributes.final_move.override;
-    if (moveOverride !== undefined && moveOverride !== null) {
-        attributes.final_move = moveOverride;
-    }
-    }
-    
-    // O seu cálculo de finalMove já estava correto
-    let finalMove = Math.floor(finalBasicMove * (1 - ((encumbrance.level_value || 0) * 0.2)));
-    attributes.final_move = finalMove;
-
-
-
-
+    // DR por local (sem mudanças)
     const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
     for (let i of sheetData.actor.items) {
         if (i.type === 'armor' && i.system.location === 'equipped') {
-            const wornLocs = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
-            for (const loc of wornLocs) {
-                if (typeof loc !== "string") continue;
-                const locLower = loc.toLowerCase();
-                if (drFromArmor.hasOwnProperty(locLower)) {
-                    drFromArmor[locLower] += i.system.dr || 0;
+            const worn = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
+            for (const loc of worn) {
+                if (drFromArmor.hasOwnProperty(loc.toLowerCase())) {
+                    drFromArmor[loc.toLowerCase()] += i.system.dr || 0;
                 }
             }
         }
     }
+
     const totalDr = {};
-    const drMods = combat.dr_mods || {};
     for (let key in drFromArmor) {
-        totalDr[key] = (drFromArmor[key] || 0) + (drMods[key] || 0);
+        totalDr[key] = drFromArmor[key] + (combat.dr_mods[key] || 0);
     }
     combat.dr_locations = totalDr;
     combat.dr_from_armor = drFromArmor;
 
+    // --- CÁLCULO FINAL DE NH ---
     for (let i of sheetData.actor.items) {
-      if (['skill', 'spell', 'power'].includes(i.type)) {
-        try {
-            const defaultAttr = (i.type === 'skill') ? 'dx' : 'iq';
-            let baseAttrInput = (i.system.base_attribute || defaultAttr).toLowerCase();
-            let baseAttrValue = 10;
-            if (attributes[baseAttrInput]?.final !== undefined) {
-              baseAttrValue = attributes[baseAttrInput].final;
-            }
-            else if (!isNaN(Number(baseAttrInput))) {
-              baseAttrValue = Number(baseAttrInput);
-            }
-            else {
-                const refSkill = sheetData.actor.items.find(
-                  s => s.type === 'skill' && s.name?.toLowerCase() === baseAttrInput
-                );
-                if (refSkill && refSkill.system?.final_nh !== undefined) {
-                  baseAttrValue = refSkill.system.final_nh;
+        if (['skill', 'spell', 'power'].includes(i.type)) {
+            try {
+                const defAttr = (i.type === 'skill') ? 'dx' : 'iq';
+                let baseAttr = (i.system.base_attribute || defAttr).toLowerCase();
+                let attrVal = 10;
+                if (attributes[baseAttr]?.final !== undefined) {
+                    attrVal = attributes[baseAttr].final;
+                } else if (!isNaN(Number(baseAttr))) {
+                    attrVal = Number(baseAttr);
+                } else {
+                    const refSkill = sheetData.actor.items.find(
+                        s => s.type === 'skill' && s.name?.toLowerCase() === baseAttr
+                    );
+                    if (refSkill && refSkill.system?.final_nh !== undefined) {
+                        attrVal = refSkill.system.final_nh;
+                    }
                 }
-              }
-            i.system.final_nh = baseAttrValue + (i.system.skill_level || 0) + (i.system.other_mods || 0);
-        } catch (e) {
-            console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
+
+                i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
+            } catch (e) {
+                console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
+            }
         }
-      }
     }
 
     const levels = actorData.system.encumbrance.levels;
@@ -958,22 +933,8 @@ if (attributes.fp) {
         { name: 'Pesada', max: levels.heavy },
         { name: 'M. Pesada', max: levels.xheavy }
     ];
-
-    // --- ✅ FINALIZAÇÃO: ATRIBUTOS COMPUTADOS ESTÁTICOS PARA EFEITOS E MACROS ✅ ---
-
-// Atributos principais e derivados com valores finais acessíveis
-["st", "dx", "iq", "ht", "hp", "fp", "basic_speed", "basic_move", "lifting_st"].forEach(attr => {
-  if (attributes[attr]?.final !== undefined) {
-    attributes[attr].final_computed = attributes[attr].final;
-  }
-});
-
-// Esquiva e deslocamento final também como propriedades estáticas
-attributes.final_dodge_computed = attributes.final_dodge;
-attributes.final_move_computed = attributes.final_move;
-
-
 }
+
     
       async _updateObject(event, formData) {
         // Processa a conversão de vírgula para ponto
@@ -1075,48 +1036,48 @@ html.on('click', '.edit-secondary-stats-btn', ev => {
     const combat = this.actor.system.combat;
 
     // A nova janela de diálogo com a coluna "Pontos" restaurada
-    const content = `
-        <form class="secondary-stats-editor">
-            <p class="hint">Ajuste os valores base e os pontos gastos aqui. Modificadores de condição são calculados automaticamente.</p>
-            <div class="form-header">
-                <span>Atributo</span>
-                <span>Base</span>
-                <span>Mod. Fixo</span>
-                <span>Mod. Condição</span>
-                <span>Pontos</span>
-                <span>Final</span>
-            </div>
-            <div class="form-grid">
-                <label>Velocidade Básica</label>
-                <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
-                <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
-                <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
-                <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
-                <span class="final-display">${attrs.basic_speed.final}</span>
+   const content = `
+    <form class="secondary-stats-editor">
+        <p class="hint">Ajuste os valores base e os pontos gastos aqui. Modificadores de condição são calculados automaticamente.</p>
+        <div class="form-header">
+            <span>Atributo</span>
+            <span>Base</span>
+            <span>Mod. Fixo</span>
+            <span>Mod. Condição</span>
+            <span>Pontos</span>
+            <span>Final</span>
+        </div>
+        <div class="form-grid">
+            <label>Velocidade Básica</label>
+            <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
+            <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
+            <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
+            <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
+            <span class="final-display">${attrs.basic_speed.final}</span>
 
-                <label>Deslocamento Básico</label>
-                <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
-                <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
-                <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
-                <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
-                <span class="final-display">${attrs.basic_move.final}</span>
-                
-                <label>Mod. de Tamanho (MT)</label>
-                <input type="number" name="mt.value" value="${attrs.mt.value}"/>
-                <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
-                <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
-                <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
-                <span class="final-display">${attrs.mt.final}</span>
-                
-                <label>Esquiva</label>
-                <span class="base-display">(Calculado)</span>
-                <input type="number" name="dodge_mod" value="${combat.dodge_mod || 0}" title="Modificador Manual de Esquiva"/>
-                <span class="mod-display">${combat.dodge_temp > 0 ? '+' : ''}${combat.dodge_temp}</span>
-                <span class="base-display">(N/A)</span>
-                <span class="final-display">${attrs.final_dodge}</span>
-            </div>
-        </form>
-    `;
+            <label>Deslocamento</label>
+            <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
+            <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
+            <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
+            <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
+            <span class="final-display">${attrs.basic_move.final}</span>
+            
+            <label>Mod. de Tamanho (MT)</label>
+            <input type="number" name="mt.value" value="${attrs.mt.value}"/>
+            <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
+            <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
+            <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
+            <span class="final-display">${attrs.mt.final}</span>
+            
+            <label>Esquiva</label>
+            <span class="base-display">${attrs.dodge.value}</span>
+            <input type="number" name="dodge.mod" value="${attrs.dodge.mod || 0}" title="Modificador Fixo de Esquiva"/>
+            <span class="mod-display">${attrs.dodge.temp > 0 ? '+' : ''}${attrs.dodge.temp}</span>
+            <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
+            <span class="final-display">${attrs.dodge.final}</span>
+        </div>
+    </form>
+`;
 
     new Dialog({
         title: "Editar Atributos Secundários",
@@ -1129,18 +1090,23 @@ html.on('click', '.edit-secondary-stats-btn', ev => {
                     const form = html.find('form')[0];
                     const formData = new FormDataExtended(form).object;
                     // Prepara os dados para a atualização, incluindo os pontos
-                    const updateData = {
+               const updateData = {
                         "system.attributes.basic_speed.value": formData["basic_speed.value"],
                         "system.attributes.basic_speed.mod": formData["basic_speed.mod"],
                         "system.attributes.basic_speed.points": formData["basic_speed.points"],
+
                         "system.attributes.basic_move.value": formData["basic_move.value"],
                         "system.attributes.basic_move.mod": formData["basic_move.mod"],
                         "system.attributes.basic_move.points": formData["basic_move.points"],
+
                         "system.attributes.mt.value": formData["mt.value"],
                         "system.attributes.mt.mod": formData["mt.mod"],
                         "system.attributes.mt.points": formData["mt.points"],
-                        "system.combat.dodge_mod": formData["dodge_mod"]
-                    };
+
+                        "system.attributes.dodge.value": formData["dodge.value"],
+                        "system.attributes.dodge.mod": formData["dodge.mod"],
+                        "system.attributes.dodge.points": formData["dodge.points"]
+                        };
                     this.actor.update(updateData);
                 }
             }

@@ -48,8 +48,8 @@
                   <circle class="badge-ring" cx="50" cy="50" r="42" />
                 </svg>
                 {{!-- O valor da Esquiva --}}
-                <a class="rollable dodge-value" data-roll-value="{{actor.system.attributes.final_dodge}}" data-label="Teste de Esquiva">
-                  {{actor.system.attributes.final_dodge}}
+                <a class="rollable dodge-value" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
+                  {{actor.system.attributes.dodge.final}}
                 </a>
               </div>
               <div class="badge-label">ESQUIVA</div>
@@ -1119,7 +1119,7 @@
   <div class="combat-header-stats">
   <div class="stat-card">
     <label>Mod. Esquiva</label>
-    <input type="number" name="system.combat.dodge_mod" value="{{actor.system.combat.dodge_mod}}"/>
+    <input type="number" name="system.attributes.dodge.mod" value="{{actor.system.attributes.dodge.mod}}"/>
   </div>
   <div class="stat-card">
     <label>Bônus de Defesa</label>

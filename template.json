@@ -3,31 +3,37 @@
     "types": ["character"],
     "character": {
 "attributes": {
-    "st": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "dx": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "iq": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "ht": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "vont": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "per": { "value": 10, "mod": 0, "temp": 0, "override": null },
-    "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null },
-    "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null },
-    "fome": { "value": 0, "mod": 0, "temp": 0, "override": null },
-    "sede": { "value": 0, "mod": 0, "temp": 0, "override": null },
-    "sono": { "value": 0, "mod": 0, "temp": 0, "override": null },
-    "mt": { "value": 0, "mod": 0, "temp": 0, "override": null },
-    "basic_speed": { "value": 5.00, "mod": 0, "temp": 0, "override": null },
-    "basic_move": { "value": 5, "mod": 0, "temp": 0, "override": null },
-    "dodge": { "value": 8, "mod": 0, "temp": 0, "override": null },
-    "lifting_st": { "value": 10, "mod": 0, "temp": 0, "override": null },
-     "basic_lift": { "value": 20 },
-    "thrust_damage": "1d6-2",
-    "swing_damage": "1d6"
+  "st":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "dx":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "iq":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "ht":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "vont":       { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "per":        { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+
+  "hp":         { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "fp":         { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+
+  "fome":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+  "sede":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+  "sono":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+
+  "mt":         { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+
+  "basic_speed": { "value": 5.00, "mod": 0, "temp": 0, "override": null, "final": 5.00, "final_computed": 5.00 },
+  "basic_move":  { "value": 5, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 5, "final_computed": 5 },
+  "dodge":       { "value": 8, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 8, "final_computed": 8 },
+
+  "lifting_st":  { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+  "basic_lift":  { "value": 20 },
+
+  "thrust_damage": "1d6-2",
+  "swing_damage": "1d6"
 }, 
- "points": { "total": 100, "unspent": 100 },
+      "points": { "total": 100, "unspent": 100 },
       "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "backstory": "" },
       "money": { "value": 0 },
       "encumbrance": { "ignore_carried_weight": false },
-      "combat": { "dodge_mod": 0, "dodge_temp": 0, "defense_bonus": 0, "dr_mods": {}, "attacks_groups": {}, "combat_meters": {} },
+      "combat": { "defense_bonus": 0, "dr_mods": {}, "attacks_groups": {}, "combat_meters": {} },
       "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
       "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
       "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "description": "Descreva aqui a fonte de poder.", "power_talent": 0 },
