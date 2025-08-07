@@ -33,7 +33,7 @@
       "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "backstory": "" },
       "money": { "value": 0 },
       "encumbrance": { "ignore_carried_weight": false },
-      "combat": { "defense_bonus": 0, "dr_mods": {}, "attacks_groups": {}, "combat_meters": {} },
+      "combat": { "defense_bonus": 0, "dr_mods": {}, "dr_temp_mods": {}, "attacks_groups": {}, "combat_meters": {} },
       "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
       "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
       "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "description": "Descreva aqui a fonte de poder.", "power_talent": 0 },

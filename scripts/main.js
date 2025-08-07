@@ -708,6 +708,7 @@ _getSubmitData(updateData) {
         }
     }
 
+
 _prepareCharacterItems(sheetData) {
     const actorData = sheetData.actor;
     const attributes = actorData.system.attributes;
@@ -721,32 +722,27 @@ _prepareCharacterItems(sheetData) {
     allAttributes.forEach(attr => {
         if (attributes[attr]) {
             attributes[attr].temp = 0;
-            // Crucial: Resetar o override a cada ciclo de cálculo.
             attributes[attr].override = null;
         }
     });
 
-    if (combat.dr_mods) {
-        for (const key in combat.dr_mods) combat.dr_mods[key] = 0;
+    if (combat.dr_temp_mods) {
+        for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
     }
 
     // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
-    const add_sub_modifiers = {}; // Para ADD/SUB
-    const set_modifiers = {};     // Para SET
+    const add_sub_modifiers = {};
+    const set_modifiers = {};
 
     const conditions = this.actor.items.filter(i => i.type === "condition");
     for (const condition of conditions) {
         if (condition.getFlag("gum", "manual_override")) continue;
 
         let isConditionActive = false;
-        if (!condition.system.when || condition.system.when.trim() === "") {
-            isConditionActive = true;
-        } else {
-            try {
-                isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
-            } catch (e) {
-                console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
-            }
+        try {
+            isConditionActive = !condition.system.when || Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
+        } catch (e) {
+            console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
         }
 
         if (isConditionActive) {
@@ -755,13 +751,7 @@ _prepareCharacterItems(sheetData) {
                 if (effect.type === 'attribute' && effect.path) {
                     let value = 0;
                     try {
-                        // A sua lógica de avaliação de fórmula já está aqui
-                        if (typeof effect.value === "string") {
-                            const func = new Function("actor", "game", `return (${effect.value});`);
-                            value = func(this.actor, game);
-                        } else {
-                            value = Number(effect.value) || 0;
-                        }
+                        value = typeof effect.value === "string" ? new Function("actor", "game", `return (${effect.value});`)(this.actor, game) : (Number(effect.value) || 0);
                     } catch (e) {
                         console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
                     }
@@ -785,25 +775,17 @@ _prepareCharacterItems(sheetData) {
     }
 
     // --- ETAPA 4: CÁLCULOS INTERMEDIÁRIOS (FINAL_COMPUTED) ---
-    // Primeiro, calculamos os valores "normais" sem override.
     for (const attr of allAttributes) {
-        if (attributes[attr] && attr !== 'hp' && attr !== 'fp') { // HP/FP são tratados separadamente
-            const base = Number(attributes[attr].value) || 0;
-            const mod = Number(attributes[attr].mod) || 0;
-            const temp = Number(attributes[attr].temp) || 0;
-            attributes[attr].final_computed = base + mod + temp;
+        if (attributes[attr] && !['hp', 'fp'].includes(attr)) {
+            attributes[attr].final_computed = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
         }
     }
     for (const pool of ["hp", "fp"]) {
         if (attributes[pool]) {
-            const base = Number(attributes[pool].max) || 0;
-            const mod = Number(attributes[pool].mod) || 0;
-            const temp = Number(attributes[pool].temp) || 0;
-            attributes[pool].final_computed = base + mod + temp;
+            attributes[pool].final_computed = (Number(attributes[pool].max) || 0) + (Number(attributes[pool].mod) || 0) + (Number(attributes[pool].temp) || 0);
         }
     }
 
-    // Cálculos de Carga e Encumbrance
     const liftingST = attributes.lifting_st.final_computed;
     const basicLift = (liftingST * liftingST) / 10;
     attributes.basic_lift = { value: basicLift };
@@ -811,10 +793,11 @@ _prepareCharacterItems(sheetData) {
     let totalWeight = 0;
     const ignoreCarried = actorData.system.encumbrance.ignore_carried_weight;
     for (let i of sheetData.actor.items) {
-        if (!['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(i.type) || !i.system.weight) continue;
-        const loc = i.system.location;
-        if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) {
-            totalWeight += (i.system.weight || 0) * (i.system.quantity || 1);
+        if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight')) && i.system.weight) {
+            const loc = i.system.location;
+            if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) {
+                totalWeight += (i.system.weight || 0) * (i.system.quantity || 1);
+            }
         }
     }
 
@@ -834,24 +817,18 @@ _prepareCharacterItems(sheetData) {
             xheavy: (basicLift * 10).toFixed(2)
         }
     });
-
-    // ✅ CÓDIGO RESTAURADO PARA O MEDIDOR VISUAL DE CARGA ✅
+    
     const levels = actorData.system.encumbrance.levels;
     actorData.system.encumbrance.level_data = [
-        { name: 'Nenhuma', max: levels.none },
-        { name: 'Leve', max: levels.light },
-        { name: 'Média', max: levels.medium },
-        { name: 'Pesada', max: levels.heavy },
+        { name: 'Nenhuma', max: levels.none }, { name: 'Leve', max: levels.light },
+        { name: 'Média', max: levels.medium }, { name: 'Pesada', max: levels.heavy },
         { name: 'M. Pesada', max: levels.xheavy }
     ];
 
-    // Cálculos específicos para Dodge e Move (usando final_computed)
     const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
-    const finalBasicMoveComputed = attributes.basic_move.final_computed;
-    
     attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
-    attributes.dodge.final_computed = attributes.dodge.value + (enc.penalty || 0) + (attributes.dodge.mod || 0) + (attributes.dodge.temp || 0);
-    attributes.basic_move.final_computed = Math.floor(finalBasicMoveComputed * (1 - (enc.level_value * 0.2)));
+    attributes.dodge.final_computed = attributes.dodge.value + enc.penalty + (attributes.dodge.mod || 0) + (attributes.dodge.temp || 0);
+    attributes.basic_move.final_computed = Math.floor(attributes.basic_move.final_computed * (1 - (enc.level_value * 0.2)));
 
     // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" (OVERRIDE) ---
     for (const path in set_modifiers) {
@@ -859,39 +836,32 @@ _prepareCharacterItems(sheetData) {
     }
 
     // --- ETAPA 6: CÁLCULO FINALÍSSIMO (FINAL) ---
-    // Agora, com todos os `final_computed` e `override` definidos, calculamos o valor `final`.
     for (const attr of allAttributes) {
         if (attributes[attr]) {
             const override = attributes[attr].override;
-            attributes[attr].final = (override !== undefined && override !== null)
-                ? override
-                : attributes[attr].final_computed;
-        }
-    }
-    for (const pool of ["hp", "fp"]) {
-        if (attributes[pool]) {
-            const override = attributes[pool].override;
-            attributes[pool].final = (override !== undefined && override !== null)
-                ? override
-                : attributes[pool].final_computed;
+            attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
         }
     }
 
-    // --- Cálculos que dependem dos valores FINAIS (DR, NH, etc.) ---
+    // --- Cálculos Finais (DR, NH) ---
     const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
     for (let i of sheetData.actor.items) {
         if (i.type === 'armor' && i.system.location === 'equipped') {
-            const worn = Array.isArray(i.system.worn_locations) ? i.system.worn_locations : [];
-            for (const loc of worn) {
-                if (drFromArmor.hasOwnProperty(loc.toLowerCase())) {
+            (i.system.worn_locations || []).forEach(loc => {
+                // ✅ AQUI ESTÁ A CORREÇÃO CRÍTICA ✅
+                // Adicionamos uma verificação para garantir que 'loc' não é nulo ou indefinido.
+                if (loc && drFromArmor.hasOwnProperty(loc.toLowerCase())) {
                     drFromArmor[loc.toLowerCase()] += i.system.dr || 0;
                 }
-            }
+            });
         }
     }
+    
     const totalDr = {};
+    const drMods = combat.dr_mods || {};
+    const drTempMods = combat.dr_temp_mods || {};
     for (let key in drFromArmor) {
-        totalDr[key] = drFromArmor[key] + (combat.dr_mods[key] || 0);
+        totalDr[key] = (drFromArmor[key] || 0) + (drMods[key] || 0) + (drTempMods[key] || 0);
     }
     combat.dr_locations = totalDr;
     combat.dr_from_armor = drFromArmor;
@@ -908,9 +878,7 @@ _prepareCharacterItems(sheetData) {
                     attrVal = Number(baseAttr);
                 } else {
                     const refSkill = sheetData.actor.items.find(s => s.type === 'skill' && s.name?.toLowerCase() === baseAttr);
-                    if (refSkill && refSkill.system?.final_nh !== undefined) {
-                        attrVal = refSkill.system.final_nh;
-                    }
+                    if (refSkill) attrVal = refSkill.system.final_nh;
                 }
                 i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
             } catch (e) {
@@ -919,6 +887,7 @@ _prepareCharacterItems(sheetData) {
         }
     }
 }
+
 
     
       async _updateObject(event, formData) {
