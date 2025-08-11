@@ -54,10 +54,6 @@ async _updateObject(event, formData) {
             if (formData.has_roll) {
                 newEffect.roll_attribute = formData.roll_attribute;
                 newEffect.roll_label = formData.roll_label;
-
-                // ✅ LÓGICA CORRIGIDA E ADICIONADA AQUI ✅
-                // Se for um valor fixo, salva o 'roll_fixed_value'.
-                // Se não, salva o 'roll_modifier'.
                 if (formData.roll_attribute === 'fixed') {
                     newEffect.roll_fixed_value = formData.roll_fixed_value;
                 } else {
@@ -65,6 +61,10 @@ async _updateObject(event, formData) {
                 }
             }
             break;
+        case "flag":
+            newEffect.key = formData.key; 
+            newEffect.value = formData.value; 
+        break;
     }
 
     if (this.effectIndex > -1) {

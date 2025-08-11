@@ -142,7 +142,53 @@ Hooks.once('init', async function() {
     });
     
     registerSystemSettings();
+
+    // ==================================================================
+    // ▼▼▼ BLOCO DE HOOKS CENTRALIZADOS AQUI ▼▼▼
+    // ==================================================================
+    
+    // Gatilho principal para quando os dados do ator mudam (HP, etc.)
+    Hooks.on("updateActor", (actor, data, options, userId) => {
+        if (game.user.id === userId) {
+            processConditions(actor);
+        }
+    });
+
+    // Gatilhos para quando itens de condição são adicionados, atualizados ou removidos.
+    Hooks.on("createItem", (item, options, userId) => {
+        if (game.user.id === userId && item.type === "condition" && item.parent) {
+            processConditions(item.parent);
+        }
+    });
+
+    Hooks.on("updateItem", (item, changes, options, userId) => {
+        if (game.user.id === userId && item.type === "condition" && item.parent) {
+            processConditions(item.parent);
+        }
+    });
+
+    Hooks.on("deleteItem", (item, options, userId) => {
+        if (game.user.id === userId && item.type === "condition" && item.parent) {
+            processConditions(item.parent);
+        }
+    });
+
+    // Gatilho para início de turno em combate.
+    Hooks.on("updateCombat", (combat, changed, options, userId) => {
+        // Apenas o GM precisa rodar isso para evitar múltiplas execuções
+        if (game.user.isGM && (changed.round || changed.turn)) {
+            const actor = combat.combatant?.actor;
+            if (actor) {
+                processConditions(actor);
+            }
+        }
+    });
+
+    // ==================================================================
+    // ▲▲▲ FIM DO BLOCO DE HOOKS CENTRALIZADOS ▲▲▲
+    // ==================================================================
 });
+
 
 // ================================================================== //
 //  2.1 HOOK DE PRONTO (`ready`)
@@ -214,6 +260,7 @@ Hooks.once('ready', async function() {
         }
     });
 });
+
 
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
@@ -326,132 +373,132 @@ Handlebars.registerHelper('obj', function(...args) {
 
 // FUNÇÕES EXTRAS
 
+// ================================================================== //
+//  FUNÇÃO CENTRAL DE PROCESSAMENTO DE CONDIÇÕES
+// ================================================================== //
+
 let evaluatingActors = new Set();
 
-// ✅ MOTOR DE EVENTOS (MACRO, CHAT) ✅
-async function evaluateEvents(actor, options = {}) {
-    if (evaluatingActors.has(actor.id)) return;
+/**
+ * Função unificada que avalia todas as condições de um ator.
+ * - Sincroniza ícones de status no token usando a API moderna (v12+).
+ * - Dispara efeitos de "ativação única" (macros, chat) apenas quando o estado da condição muda.
+ * - Previne loops de reavaliação.
+ * @param {Actor} actor O ator a ser processado.
+ */
+// ================================================================== //
+//  FUNÇÃO DE PROCESSAMENTO DE CONDIÇÕES (VERSÃO DE DEPURAÇÃO)
+// ================================================================== //
+
+async function processConditions(actor) {
+    if (!actor || evaluatingActors.has(actor.id)) return;
     evaluatingActors.add(actor.id);
+
+    // LOG DE DEPURAÇÃO: Mostra quando a função começa para qual ator.
+    console.log(`--- [GUM Debug] Iniciando processConditions para ${actor.name} ---`);
+
     try {
-        const conditions = actor.items.filter(i => i.type === "condition");
         const updates = {};
+        const requiredStatusIds = new Set();
+        const conditions = actor.items.filter(i => i.type === "condition");
+
         for (const condition of conditions) {
-            const isManuallyDisabled = condition.getFlag("gum", "manual_override");
             const wasActive = condition.getFlag("gum", "wasActive") || false;
+            const isManuallyDisabled = condition.getFlag("gum", "manual_override") || false;
             let isConditionActive = false;
-            if (!condition.system.when || condition.system.when.trim() === "") isConditionActive = true;
-            else {
-                try { isConditionActive = Function("actor", "game", `return ( ${condition.system.when} )`)(actor, game); }
-                catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}".`, e); }
-            }
+
+            try {
+                isConditionActive = !condition.system.when || Function("actor", "game", `return (${condition.system.when})`)(actor, game);
+            } catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}"`, e); }
+
             const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
-            if (isEffectivelyActive !== wasActive) {
-                updates[`flags.gum.conditionState.${condition.id}.wasActive`] = isEffectivelyActive;
-            }
-            const shouldTriggerEvent = (isEffectivelyActive && !wasActive) || (options.isTurnStart && isEffectivelyActive);
-            if (shouldTriggerEvent) {
+
+            // LOG DE DEPURAÇÃO: Mostra o estado calculado para cada condição.
+            console.log(`[GUM Debug] Condição: ${condition.name}, Ativa? ${isEffectivelyActive}`);
+            
+            if (isEffectivelyActive && !wasActive) {
+                updates[`flags.gum.wasActive.${condition.id}`] = true;
                 const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
                 for (const effect of effects) {
+                    // Executa a macro
                     if (effect.type === "macro" && effect.value) {
                         const macro = game.macros.getName(effect.value);
                         if (macro) macro.execute({ actor });
                         else ui.notifications.warn(`Macro "${effect.value}" não encontrada.`);
                     }
+                    // Envia a mensagem de chat
                     else if (effect.type === "chat" && effect.chat_text) {
+                        // (Sua lógica de mensagem de chat completa aqui)
                         let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
-                        
                         if (effect.has_roll) {
                             let finalTarget = 0;
-                            
-                            // ✅ LÓGICA CORRIGIDA E EXPANDIDA ✅
                             if (effect.roll_attribute === 'fixed') {
                                 finalTarget = Number(effect.roll_fixed_value) || 10;
                             } else if (effect.roll_attribute) {
-                                // Busca a chave do atributo (ex: 'st') a partir do caminho (ex: 'st.final')
-                                const attrKey = effect.roll_attribute.split('.')[0];
-                                const attributes = actor.system.attributes;
-
-                                // Calcula o valor final do atributo, exatamente como a ficha faz
-                                const baseValue = Number(attributes[attrKey]?.value) || 0;
-                                const tempValue = Number(attributes[attrKey]?.temp) || 0;
-                                const calculatedFinal = baseValue + tempValue;
-
-                                const modifier = Number(effect.roll_modifier) || 0;
-                                finalTarget = calculatedFinal + modifier;
+                                const attr = foundry.utils.getProperty(actor.system.attributes, effect.roll_attribute);
+                                finalTarget = (attr || 0) + (Number(effect.roll_modifier) || 0);
                             }
-
                             const label = effect.roll_label || `Rolar Teste`;
                             content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
                         }
-                        
                         const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
                         if (effect.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
                         else if (effect.whisperMode === 'blind') chatData.blind = true;
                         ChatMessage.create(chatData);
                     }
                 }
+            } else if (!isEffectivelyActive && wasActive) {
+                updates[`flags.gum.wasActive.${condition.id}`] = false;
+            }
+
+            if (isEffectivelyActive) {
+                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                for (const effect of effects) {
+                    if ((effect.type === "status" || effect.type === "token_effect") && effect.statusId) {
+                        requiredStatusIds.add(effect.statusId);
+                    }
+                }
             }
         }
-        if (Object.keys(updates).length > 0) await actor.update(updates);
+
+        if (Object.keys(updates).length > 0) {
+            await actor.update(updates);
+        }
+
+        const currentStatusIds = new Set();
+        for (const effect of actor.effects) {
+            // A propriedade 'statuses' é um Set contendo os IDs dos status (ex: "prone")
+            for (const statusId of effect.statuses) {
+                currentStatusIds.add(statusId);
+            }
+        }
+
+        // LOG DE DEPURAÇÃO: Mostra os ícones que deveriam estar ativos vs. os que estão.
+        console.log("[GUM Debug] Ícones REQUERIDOS:", requiredStatusIds);
+        console.log("[GUM Debug] Ícones ATUAIS:", currentStatusIds);
+
+        for (const id of requiredStatusIds) {
+            if (!currentStatusIds.has(id)) {
+                await actor.toggleStatusEffect(id, { active: true });
+            }
+        }
+
+        for (const id of currentStatusIds) {
+            if (!requiredStatusIds.has(id)) {
+                // LOG DE DEPURAÇÃO: Nos diz se ele está tentando remover o ícone.
+                console.log(`[GUM Debug] REMOVENDO o ícone: ${id}`);
+                await actor.toggleStatusEffect(id, { active: false });
+            }
+        }
+        
+        // LOG DE DEPURAÇÃO: Fim da execução.
+        console.log(`--- [GUM Debug] Finalizando processConditions para ${actor.name} ---`);
+
     } finally {
         evaluatingActors.delete(actor.id);
     }
 }
 
-
-// ================================================================== //
-//  HOOKS DE ITENS CONDIÇÃO 
-// ================================================================== //
-
-// ================================================================== //
-// ✅ HOOKS DE ITENS DO TIPO CONDIÇÃO — COM ATUALIZAÇÃO COMPLETA ✅
-// ================================================================== //
-
-Hooks.on("createItem", (item, options, userId) => {
-  if (game.user.id !== userId) return;
-  if (item.type === "condition" && item.parent?.isOwner) {
-    item.parent.prepareData(); // Força recálculo dos atributos
-    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
-  }
-});
-
-Hooks.on("updateItem", (item, changes, options, userId) => {
-  if (game.user.id !== userId) return;
-  if (item.type === "condition" && item.parent?.isOwner) {
-    item.parent.prepareData();
-    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
-  }
-});
-
-Hooks.on("deleteItem", (item, options, userId) => {
-  if (game.user.id !== userId) return;
-  if (item.type === "condition" && item.parent?.isOwner) {
-    item.parent.prepareData();
-    if (item.parent.sheet.rendered) item.parent.sheet.render(true);
-  }
-});
-Hooks.on("updateCombat", (combat, changed, options, userId) => {
-  if (!game.user.isGM) return; // Apenas o GM precisa rodar isso normalmente
-  if (changed.round || changed.turn) {
-    const actor = combat.combatant?.actor;
-    if (actor) {
-      evaluateEvents(actor, { isTurnStart: true });
-      actor.prepareData();
-      if (actor.sheet.rendered) actor.sheet.render(true);
-    }
-  }
-});
-
-Hooks.on("deleteCombat", (combat, options, userId) => {
-  if (!game.user.isGM) return;
-  for (const combatant of combat.combatants) {
-    const actor = combatant.actor;
-    if (actor) {
-      actor.prepareData();
-      if (actor.sheet.rendered) actor.sheet.render(true);
-    }
-  }
-});
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
 // ================================================================== //
