@@ -377,7 +377,7 @@ Handlebars.registerHelper('obj', function(...args) {
 //  FUNÇÃO CENTRAL DE PROCESSAMENTO DE CONDIÇÕES
 // ================================================================== //
 
-let evaluatingActors = new Set();
+
 
 /**
  * Função unificada que avalia todas as condições de um ator.
@@ -387,18 +387,15 @@ let evaluatingActors = new Set();
  * @param {Actor} actor O ator a ser processado.
  */
 // ================================================================== //
-//  FUNÇÃO DE PROCESSAMENTO DE CONDIÇÕES (VERSÃO DE DEPURAÇÃO)
+//  FUNÇÃO CENTRAL DE PROCESSAMENTO DE CONDIÇÕES (VERSÃO FINAL OTIMIZADA)
 // ================================================================== //
+let evaluatingActors = new Set();
 
 async function processConditions(actor, eventData = null) {
     if (!actor || evaluatingActors.has(actor.id)) return;
     evaluatingActors.add(actor.id);
 
-    // LOG DE DEPURAÇÃO: Mostra quando a função começa para qual ator.
-    console.log(`--- [GUM Debug] Iniciando processConditions para ${actor.name} ---`);
-
     try {
-        const updates = {};
         const requiredStatusIds = new Set();
         const conditions = actor.items.filter(i => i.type === "condition");
 
@@ -409,48 +406,53 @@ async function processConditions(actor, eventData = null) {
 
             try {
                 isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return (${condition.system.when})`)(actor, game, eventData);
-            } catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}"`, e); }
-
-            const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
-
-            // LOG DE DEPURAÇÃO: Mostra o estado calculado para cada condição.
-            console.log(`[GUM Debug] Condição: ${condition.name}, Ativa? ${isEffectivelyActive}`);
-            
-            if (isEffectivelyActive && !wasActive) {
-                updates[`flags.gum.wasActive.${condition.id}`] = true;
-                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-                for (const effect of effects) {
-                    // Executa a macro
-                    if (effect.type === "macro" && effect.value) {
-                        const macro = game.macros.getName(effect.value);
-                        if (macro) macro.execute({ actor });
-                        else ui.notifications.warn(`Macro "${effect.value}" não encontrada.`);
-                    }
-                    // Envia a mensagem de chat
-                    else if (effect.type === "chat" && effect.chat_text) {
-                        // (Sua lógica de mensagem de chat completa aqui)
-                        let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
-                        if (effect.has_roll) {
-                            let finalTarget = 0;
-                            if (effect.roll_attribute === 'fixed') {
-                                finalTarget = Number(effect.roll_fixed_value) || 10;
-                            } else if (effect.roll_attribute) {
-                                const attr = foundry.utils.getProperty(actor.system.attributes, effect.roll_attribute);
-                                finalTarget = (attr || 0) + (Number(effect.roll_modifier) || 0);
-                            }
-                            const label = effect.roll_label || `Rolar Teste`;
-                            content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
-                        }
-                        const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
-                        if (effect.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
-                        else if (effect.whisperMode === 'blind') chatData.blind = true;
-                        ChatMessage.create(chatData);
-                    }
-                }
-            } else if (!isEffectivelyActive && wasActive) {
-                updates[`flags.gum.wasActive.${condition.id}`] = false;
+            } catch (e) {
+                console.warn(`GUM | Erro na regra da condição "${condition.name}"`, e);
             }
 
+            const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
+            const stateChanged = isEffectivelyActive !== wasActive;
+
+            // ==================================================================
+            // ▼▼▼ LÓGICA DE ATUALIZAÇÃO IMEDIATA ▼▼▼
+            // ==================================================================
+
+            // Se o estado mudou, nós atualizamos a flag no item IMEDIATAMENTE.
+            if (stateChanged) {
+                await condition.setFlag("gum", "wasActive", isEffectivelyActive);
+
+                // E SÓ ENTÃO, se a condição ACABOU DE ATIVAR, disparamos os efeitos de uso único.
+                if (isEffectivelyActive) {
+                    const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                    for (const effect of effects) {
+                        if (effect.type === "macro" && effect.value) {
+                            const macro = game.macros.getName(effect.value);
+                            if (macro) macro.execute({ actor });
+                            else ui.notifications.warn(`Macro "${effect.value}" não encontrada.`);
+                        }
+                        else if (effect.type === "chat" && effect.chat_text) {
+                            let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
+                             if (effect.has_roll) {
+                                let finalTarget = 0;
+                                if (effect.roll_attribute === 'fixed') {
+                                    finalTarget = Number(effect.roll_fixed_value) || 10;
+                                } else if (effect.roll_attribute) {
+                                    const attr = foundry.utils.getProperty(actor.system.attributes, effect.roll_attribute);
+                                    finalTarget = (attr || 0) + (Number(effect.roll_modifier) || 0);
+                                }
+                                const label = effect.roll_label || `Rolar Teste`;
+                                content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
+                            }
+                            const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
+                            if (effect.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                            else if (effect.whisperMode === 'blind') chatData.blind = true;
+                            ChatMessage.create(chatData);
+                        }
+                    }
+                }
+            }
+
+            // A lógica de efeitos contínuos (ícones) não precisa de `stateChanged`.
             if (isEffectivelyActive) {
                 const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
                 for (const effect of effects) {
@@ -461,44 +463,24 @@ async function processConditions(actor, eventData = null) {
             }
         }
 
-        if (Object.keys(updates).length > 0) {
-            await actor.update(updates);
-        }
-
+        // A lógica de sincronização de ícones permanece a mesma.
         const currentStatusIds = new Set();
         for (const effect of actor.effects) {
-            // A propriedade 'statuses' é um Set contendo os IDs dos status (ex: "prone")
             for (const statusId of effect.statuses) {
                 currentStatusIds.add(statusId);
             }
         }
-
-        // LOG DE DEPURAÇÃO: Mostra os ícones que deveriam estar ativos vs. os que estão.
-        console.log("[GUM Debug] Ícones REQUERIDOS:", requiredStatusIds);
-        console.log("[GUM Debug] Ícones ATUAIS:", currentStatusIds);
-
         for (const id of requiredStatusIds) {
-            if (!currentStatusIds.has(id)) {
-                await actor.toggleStatusEffect(id, { active: true });
-            }
+            if (!currentStatusIds.has(id)) await actor.toggleStatusEffect(id, { active: true });
         }
-
         for (const id of currentStatusIds) {
-            if (!requiredStatusIds.has(id)) {
-                // LOG DE DEPURAÇÃO: Nos diz se ele está tentando remover o ícone.
-                console.log(`[GUM Debug] REMOVENDO o ícone: ${id}`);
-                await actor.toggleStatusEffect(id, { active: false });
-            }
+            if (!requiredStatusIds.has(id)) await actor.toggleStatusEffect(id, { active: false });
         }
-        
-        // LOG DE DEPURAÇÃO: Fim da execução.
-        console.log(`--- [GUM Debug] Finalizando processConditions para ${actor.name} ---`);
 
     } finally {
         evaluatingActors.delete(actor.id);
     }
 }
-
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
 // ================================================================== //
