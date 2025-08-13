@@ -150,7 +150,7 @@ Hooks.once('init', async function() {
     // Gatilho principal para quando os dados do ator mudam (HP, etc.)
     Hooks.on("updateActor", (actor, data, options, userId) => {
         if (game.user.id === userId) {
-            processConditions(actor);
+            processConditions(actor, options.gumEventData);
         }
     });
 
@@ -390,7 +390,7 @@ let evaluatingActors = new Set();
 //  FUNÇÃO DE PROCESSAMENTO DE CONDIÇÕES (VERSÃO DE DEPURAÇÃO)
 // ================================================================== //
 
-async function processConditions(actor) {
+async function processConditions(actor, eventData = null) {
     if (!actor || evaluatingActors.has(actor.id)) return;
     evaluatingActors.add(actor.id);
 
@@ -408,7 +408,7 @@ async function processConditions(actor) {
             let isConditionActive = false;
 
             try {
-                isConditionActive = !condition.system.when || Function("actor", "game", `return (${condition.system.when})`)(actor, game);
+                isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return (${condition.system.when})`)(actor, game, eventData);
             } catch (e) { console.warn(`GUM | Erro na regra da condição "${condition.name}"`, e); }
 
             const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
@@ -787,7 +787,7 @@ _prepareCharacterItems(sheetData) {
 
         let isConditionActive = false;
         try {
-            isConditionActive = !condition.system.when || Function("actor", "game", `return ( ${condition.system.when} )`)(this.actor, game);
+            isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return ( ${condition.system.when} )`)(this.actor, game, null);
         } catch (e) {
             console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
         }

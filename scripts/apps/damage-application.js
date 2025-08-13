@@ -409,6 +409,7 @@ export default class DamageApplicationWindow extends Application {
         }
 
         const damageAbrev = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
+        this.damageTypeAbrev = damageAbrev;
 
         if (toleranceType === "nao-vivo") {
             const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 };
@@ -477,24 +478,58 @@ export default class DamageApplicationWindow extends Application {
         this._updateDamageCalculation(form);
     }
 
-    async _onApplyDamage(form, shouldClose, shouldPublish) {
-        if (!form) return;
+async _onApplyDamage(form, shouldClose, shouldPublish) {
+    if (!form) return;
 
-        let selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
-        if (!selectedPoolPath) {
-            return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
+    let selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
+    if (!selectedPoolPath) {
+        return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
+    }
+
+    let currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+
+    // Lógica para corrigir o caminho de "combat_meters", se necessário
+    if (selectedPoolPath.includes("combat_meters") && currentPoolValue === undefined) {
+        const correctedPath = selectedPoolPath.replace(".value", ".current");
+        currentPoolValue = foundry.utils.getProperty(this.targetActor, correctedPath);
+        selectedPoolPath = correctedPath;
+    }
+
+    const finalInjury = this.finalInjury || 0;
+    const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+
+    // Primeiro, verificamos se isso é um evento de dano real (não é cura e a lesão é maior que zero)
+    if (!applyAsHeal && finalInjury > 0) {
+        
+        // 1. Criamos nosso objeto de dados do evento.
+        const eventData = {
+            type: "damage",
+            damage: finalInjury,
+            damageType: this.damageTypeAbrev || 'dano' // Usa o tipo de dano que salvamos, ou um padrão.
+        };
+
+        // 2. Calculamos o novo valor do pool (sempre subtraindo, pois é dano).
+        const newPoolValue = currentPoolValue - finalInjury;
+        
+        // 3. Atualizamos o ator, passando o eventData nas opções.
+        if (selectedPoolPath.includes("combat_meters")) {
+            const meterMatch = selectedPoolPath.match(/combat_meters\.([^.]+)\.current/);
+            if (meterMatch) {
+                const meterKey = meterMatch[1];
+                await this.targetActor.update(
+                    { [`system.combat.combat_meters.${meterKey}.current`]: newPoolValue },
+                    { gumEventData: eventData } // Passa o contexto do evento aqui
+                );
+            }
+        } else {
+            await this.targetActor.update(
+                { [selectedPoolPath]: newPoolValue },
+                { gumEventData: eventData } // Passa o contexto do evento aqui
+            );
         }
 
-        let currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
-
-        if (selectedPoolPath.includes("combat_meters") && currentPoolValue === undefined) {
-            const correctedPath = selectedPoolPath.replace(".value", ".current");
-            currentPoolValue = foundry.utils.getProperty(this.targetActor, correctedPath);
-            selectedPoolPath = correctedPath;
-        }
-
-        const finalInjury = this.finalInjury || 0;
-        const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+    } else {
+        // Se for um evento de CURA ou de dano ZERO, executamos a atualização normalmente, sem o eventData.
         const sign = applyAsHeal ? 1 : -1;
         const newPoolValue = currentPoolValue + (sign * finalInjury);
 
@@ -509,30 +544,25 @@ export default class DamageApplicationWindow extends Application {
         } else {
             await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
         }
-
-        // ✅ NOSSO NOVO HOOK DE EVENTO DE DANO ✅
-        // Dispara o sinalizador apenas se for dano (não cura) e a lesão for maior que zero.
-        if (!applyAsHeal && finalInjury > 0) {
-            Hooks.callAll('gurps.actorDamaged', this.targetActor, finalInjury);
-        }
-
-        if (shouldPublish) {
-            const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
-            const message = applyAsHeal
-                ? `<strong>${this.targetActor.name}</strong> recuperou <strong>${finalInjury}</strong> em <strong>${poolLabel.trim()}</strong>!`
-                : `<strong>${this.targetActor.name}</strong> sofreu <strong>${finalInjury}</strong> de lesão em <strong>${poolLabel.trim()}</strong> do ataque de <strong>${this.attackerActor.name}</strong>!`;
-            ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }), content: message });
-        } else {
-            const msg = applyAsHeal
-                ? `${this.targetActor.name} recuperou ${finalInjury} pontos!`
-                : `${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`;
-            ui.notifications.info(msg);
-        }
-
-        if (shouldClose) {
-            this.close();
-        }
     }
+
+    if (shouldPublish) {
+        const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+        const message = applyAsHeal
+            ? `<strong>${this.targetActor.name}</strong> recuperou <strong>${finalInjury}</strong> em <strong>${poolLabel.trim()}</strong>!`
+            : `<strong>${this.targetActor.name}</strong> sofreu <strong>${finalInjury}</strong> de lesão em <strong>${poolLabel.trim()}</strong> do ataque de <strong>${this.attackerActor.name}</strong>!`;
+        ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }), content: message });
+    } else {
+        const msg = applyAsHeal
+            ? `${this.targetActor.name} recuperou ${finalInjury} pontos!`
+            : `${this.targetActor.name} sofreu ${finalInjury} pontos de lesão!`;
+        ui.notifications.info(msg);
+    }
+
+    if (shouldClose) {
+        this.close();
+    }
+}
 
     async _updateObject(event, formData) {
         await this._onApplyDamage(this.form);
