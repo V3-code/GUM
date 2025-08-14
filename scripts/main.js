@@ -387,8 +387,9 @@ Handlebars.registerHelper('obj', function(...args) {
  * @param {Actor} actor O ator a ser processado.
  */
 // ================================================================== //
-//  FUNÇÃO CENTRAL DE PROCESSAMENTO DE CONDIÇÕES (VERSÃO FINAL OTIMIZADA)
+//  FUNÇÃO CENTRAL DE PROCESSAMENTO DE CONDIÇÕES (ESTRUTURA CORRIGIDA)
 // ================================================================== //
+
 let evaluatingActors = new Set();
 
 async function processConditions(actor, eventData = null) {
@@ -399,6 +400,7 @@ async function processConditions(actor, eventData = null) {
         const requiredStatusIds = new Set();
         const conditions = actor.items.filter(i => i.type === "condition");
 
+        // --- INÍCIO DO LOOP PRINCIPAL ---
         for (const condition of conditions) {
             const wasActive = condition.getFlag("gum", "wasActive") || false;
             const isManuallyDisabled = condition.getFlag("gum", "manual_override") || false;
@@ -413,25 +415,21 @@ async function processConditions(actor, eventData = null) {
             const isEffectivelyActive = isConditionActive && !isManuallyDisabled;
             const stateChanged = isEffectivelyActive !== wasActive;
 
-            // ==================================================================
-            // ▼▼▼ LÓGICA DE ATUALIZAÇÃO IMEDIATA ▼▼▼
-            // ==================================================================
-
-            // Se o estado mudou, nós atualizamos a flag no item IMEDIATAMENTE.
+            // --- LÓGICA DE EFEITOS DE ATIVAÇÃO/DESATIVAÇÃO (só rodam quando o estado muda) ---
             if (stateChanged) {
                 await condition.setFlag("gum", "wasActive", isEffectivelyActive);
+                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
 
-                // E SÓ ENTÃO, se a condição ACABOU DE ATIVAR, disparamos os efeitos de uso único.
-                if (isEffectivelyActive) {
-                    const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                if (isEffectivelyActive) { // A condição ACABOU DE LIGAR
                     for (const effect of effects) {
-                        if (effect.type === "macro" && effect.value) {
-                            const macro = game.macros.getName(effect.value);
+                        if (effect.type === "macro" && effect.value) { 
+
+			    const macro = game.macros.getName(effect.value);
                             if (macro) macro.execute({ actor });
                             else ui.notifications.warn(`Macro "${effect.value}" não encontrada.`);
-                        }
-                        else if (effect.type === "chat" && effect.chat_text) {
-                            let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
+				}
+                        else if (effect.type === "chat" && effect.chat_text) { 
+                             let content = effect.chat_text.replace(/{actor.name}/g, actor.name);
                              if (effect.has_roll) {
                                 let finalTarget = 0;
                                 if (effect.roll_attribute === 'fixed') {
@@ -448,28 +446,44 @@ async function processConditions(actor, eventData = null) {
                             else if (effect.whisperMode === 'blind') chatData.blind = true;
                             ChatMessage.create(chatData);
                         }
+                        else if (effect.type === "flag" && effect.key) {
+                            let valueToSet = effect.value;
+                            if (effect.value === "true") valueToSet = true;
+                            else if (effect.value === "false") valueToSet = false;
+                            else if (!isNaN(parseFloat(effect.value))) valueToSet = parseFloat(effect.value);
+                            await actor.setFlag("gum", effect.key, valueToSet);
+                        }
+                    }
+                } else { // A condição ACABOU DE DESLIGAR
+                    for (const effect of effects) {
+                        if (effect.type === "flag" && effect.key) {
+                            await actor.unsetFlag("gum", effect.key);
+                        }
                     }
                 }
             }
 
-            // A lógica de efeitos contínuos (ícones) não precisa de `stateChanged`.
+            // --- LÓGICA DE EFEITOS CONTÍNUOS (sempre verificada) ---
             if (isEffectivelyActive) {
                 const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
                 for (const effect of effects) {
+                    // Adiciona o ícone de status à lista de ícones necessários.
                     if ((effect.type === "status" || effect.type === "token_effect") && effect.statusId) {
                         requiredStatusIds.add(effect.statusId);
                     }
                 }
             }
-        }
+        } // --- FIM DO LOOP PRINCIPAL ---
 
-        // A lógica de sincronização de ícones permanece a mesma.
+        // A lógica de sincronização de ícones no final da função permanece a mesma.
+        // Ela agora receberá a lista `requiredStatusIds` corretamente preenchida.
         const currentStatusIds = new Set();
         for (const effect of actor.effects) {
             for (const statusId of effect.statuses) {
                 currentStatusIds.add(statusId);
             }
         }
+
         for (const id of requiredStatusIds) {
             if (!currentStatusIds.has(id)) await actor.toggleStatusEffect(id, { active: true });
         }
@@ -759,7 +773,7 @@ _prepareCharacterItems(sheetData) {
         for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
     }
 
-    // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
+       // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
     const add_sub_modifiers = {};
     const set_modifiers = {};
 
@@ -792,7 +806,7 @@ _prepareCharacterItems(sheetData) {
                         if (effect.operation === "ADD") add_sub_modifiers[effect.path] += value;
                         else if (effect.operation === "SUB") add_sub_modifiers[effect.path] -= value;
                     }
-                }
+                } 
             }
         }
     }
