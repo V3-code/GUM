@@ -171,6 +171,15 @@
       "templates": ["base"],
       "when": "", 
       "effects": [],
+      "duration": {
+    "value": 0,             
+    "unit": "unlimited",    
+    "expiration": "delete",
+    "inCombat": false,      
+    "startRound": 0,
+    "startTurn": 0,
+    "startTime": 0
+},
       "category": "general",
       "flags": {
         "gum": {

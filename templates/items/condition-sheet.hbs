@@ -15,6 +15,41 @@
 
     <main class="sheet-body">
         <div class="sheet-body-content">
+
+            {{!-- Seção de Duração e Expiração (VERSÃO REFINADA) --}}
+<div class="form-section">
+    <h4 class="section-title">Duração e Expiração</h4>
+    <div class="form-grid-3">
+        <div class="form-group">
+            <label>Duração</label>
+            <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
+        </div>
+
+        <div class="form-group">
+            <label>Unidade</label>
+            <select name="system.duration.unit">
+                <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
+                <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
+                <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
+                <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
+                <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Ao Expirar</label>
+            <select name="system.duration.expiration">
+                <option value="delete" {{#if (eq system.duration.expiration "delete")}}selected{{/if}}>Deletar Item</option>
+                <option value="disable" {{#if (eq system.duration.expiration "disable")}}selected{{/if}}>Desativar Item</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group-inline">
+        <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+        <label class="hint">A duração só é contada durante o combate?</label>
+    </div>
+</div>
             
             {{!-- Seção da Condição de Ativação com TEXTAREA --}}
             <div class="form-section">
