@@ -7,6 +7,68 @@ import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
 
+/**
+ * Uma janela de diálogo para criar e editar Efeitos Contingentes.
+ */
+class ContingentEffectBuilder extends Dialog {
+    constructor(effectData = {}, item, callback) {
+        super({
+            title: "Construtor de Efeito Contingente",
+            content: "Carregando...", // Será substituído pelo template
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: html => this._onSave(html)
+                }
+            },
+            default: "save",
+            width: 500
+        });
+
+        this.effectData = effectData;
+        this.item = item; // O item ao qual o efeito pertence
+        this.callback = callback;
+    }
+
+    async _render(force, options) {
+        // Carrega o template do construtor
+        const templatePath = "systems/gum/templates/apps/contingent-effect-builder.hbs";
+        
+        // Prepara os dados para o template
+        const templateData = {
+            effect: this.effectData,
+            // Lista de gatilhos possíveis
+            triggers: {
+                "onDamage": "Ao Causar Dano",
+                "onHit": "Ao Acertar",
+                "onCrit": "Em um Acerto Crítico"
+            },
+            // Lista de ações possíveis
+            actions: {
+                "applyCondition": "Aplicar Condição",
+                "setFlag": "Definir Flag no Alvo"
+            }
+        };
+
+        this.data.content = await renderTemplate(templatePath, templateData);
+        return super._render(force, options);
+    }
+
+    _onSave(html) {
+        const form = html.find('form')[0];
+        const formData = new FormDataExtended(form).object;
+        
+        // Chama a função de callback passando os novos dados do efeito
+        this.callback(formData);
+    }
+
+    activateListeners(html) {
+        super.activateListeners(html);
+        // Adicione aqui listeners para interatividade dentro do diálogo, se necessário.
+    }
+}
+
 // ================================================================== //
 //  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅ xzxzxz
 // ================================================================== //
@@ -264,6 +326,58 @@ Hooks.once('ready', async function() {
             performGURPSRoll(element, actor, 0);
         }
     });
+
+// ✅ OUVINTE DE EVENTOS PARA O BOTÃO DE TESTE DE RESISTÊNCIA
+$('body').on('click', '.resistance-roll-button', async ev => {
+    ev.preventDefault();
+    const button = ev.currentTarget;
+    
+    // Impede cliques múltiplos
+    button.disabled = true; 
+
+    // 1. Lê os dados embutidos no botão
+    const rollData = JSON.parse(button.dataset.rollData);
+    const { targetActorId, finalTarget, contingentEffect } = rollData;
+
+    const targetActor = game.actors.get(targetActorId);
+    if (!targetActor) return;
+
+    // 2. Faz a rolagem de 3d6
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+
+    const margin = finalTarget - roll.total;
+    const success = roll.total <= finalTarget;
+    const resultText = success ? `Sucesso (margem ${margin})` : `Falha (margem ${-margin})`;
+
+    // 3. Cria uma mensagem de chat com o resultado da rolagem
+    const flavor = `
+        <div class="gurps-roll-card">
+            <header class="card-header"><h3>Teste de Resistência: ${contingentEffect.resistanceRoll.attribute.toUpperCase()}</h3></header>
+            <div class="card-content">
+                <p><strong>${targetActor.name}</strong> ${success ? 'resiste' : 'falha'} ao teste!</p>
+                Resultado: ${roll.total} (Alvo: ${finalTarget})<br>
+                <strong>${resultText}</strong>
+            </div>
+        </div>
+    `;
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+        content: flavor,
+        rolls: [roll]
+    });
+
+    // 4. Verifica se a ação final deve ser executada
+    const triggerOn = contingentEffect.resistanceRoll.on || 'failure'; // O padrão é 'failure'
+    if ((triggerOn === 'failure' && !success) || (triggerOn === 'success' && success)) {
+        // A condição foi atendida! Executa a ação.
+        await applyContingentCondition(targetActor, contingentEffect);
+    }
+
+    // Remove o botão da mensagem original para que não possa ser rolado novamente.
+    $(button).closest('.gurps-resistance-roll-card').html(`<p><em>Teste de resistência já foi rolado.</em></p>`);
+});
+
 });
 
 
@@ -554,6 +668,42 @@ async function manageDurations(combat) {
         console.log(`GUM | Removendo condições expiradas de ${actor.name}:`, itemsToDelete);
         await actor.deleteEmbeddedDocuments("Item", itemsToDelete);
     }
+}
+
+/**
+ * Aplica um Item de Condição em um ator alvo com base em um Efeito Contingente.
+ * Esta é uma função auxiliar reutilizável.
+ * @param {Actor} targetActor - O ator que receberá a condição.
+ * @param {object} contingentEffect - O objeto do Efeito Contingente que está sendo executado.
+ * @param {object} eventContext - O contexto do evento (dano, etc.) para modificadores dinâmicos.
+ */
+export async function applyContingentCondition(targetActor, contingentEffect, eventContext = {}) {
+
+    // Garante que temos um 'payload' (o link para a condição)
+    if (!contingentEffect.payload) {
+        console.warn("GUM | Efeito Contingente tentou aplicar uma condição sem um 'payload' (UUID do item).");
+        return;
+    }
+
+    // Carrega o item de condição "molde" a partir do seu UUID
+    const conditionItem = await fromUuid(contingentEffect.payload);
+    if (!conditionItem) {
+        ui.notifications.warn(`Item de Condição com UUID "${contingentEffect.payload}" não encontrado.`);
+        return;
+    }
+
+    console.log(`GUM | Ação Final: Aplicando ${conditionItem.name} em ${targetActor.name}`);
+    
+    // Cria uma cópia dos dados do item para não modificar o original do compêndio
+    const newConditionData = conditionItem.toObject();
+
+    // FUTURAMENTE: Aqui é onde a lógica para processar o array 'dynamic' entraria,
+    // modificando o 'newConditionData' antes de criá-lo no ator. Por exemplo,
+    // alterando a duração ou o valor de um efeito interno.
+
+    // Cria o novo item de condição na ficha do ator alvo.
+    await targetActor.createEmbeddedDocuments("Item", [newConditionData]);
+    ui.notifications.info(`${targetActor.name} foi afetado por: ${conditionItem.name}!`);
 }
 
 // ================================================================== //
@@ -2873,7 +3023,8 @@ html.on('click', '.rollable-damage', async (ev) => {
             type: item.system.damage.type,
             armor_divisor: item.system.damage.armor_divisor,
             follow_up_damage: item.system.damage.follow_up_damage,
-            fragmentation_damage: item.system.damage.fragmentation_damage
+            fragmentation_damage: item.system.damage.fragmentation_damage,
+            contingentEffects: item.system.contingentEffects || {} 
         };
 
     } else { // O clique veio da Lista de Ataques manuais
@@ -2890,7 +3041,8 @@ html.on('click', '.rollable-damage', async (ev) => {
             type: attack.damage_type,
             armor_divisor: attack.armor_divisor,
             follow_up_damage: attack.follow_up_damage,
-            fragmentation_damage: attack.fragmentation_damage
+            fragmentation_damage: attack.fragmentation_damage,
+            contingentEffects: attack.contingentEffects || {}
         };
     }
     // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
@@ -2939,7 +3091,8 @@ if (fragRoll) {
             total: mainRoll.total,
             type: normalizedAttack.type || '',
             armorDivisor: normalizedAttack.armor_divisor || 1
-        }
+        },
+        contingentEffects: normalizedAttack.contingentEffects || {}
     };
     if (followUpRoll) {
         damagePackage.followUp = {
@@ -3684,6 +3837,49 @@ html.find('.delete-attack').on('click', (ev) => {
         defaultYes: false
     });
 });
+
+// Adicionar um novo Efeito Contingente
+html.find('.add-contingent-effect').on('click', ev => {
+    const newEffectData = {
+        trigger: "onDamage", // Valor padrão
+        action: "applyCondition" // Valor padrão
+    };
+
+    new ContingentEffectBuilder(newEffectData, this.item, (updatedEffect) => {
+        const newKey = foundry.utils.randomID(16);
+        this.item.update({
+            [`system.contingentEffects.${newKey}`]: updatedEffect
+        });
+    }).render(true);
+});
+
+// Editar um Efeito Contingente existente
+html.find('.edit-contingent-effect').on('click', ev => {
+    const effectId = $(ev.currentTarget).closest('.effect-summary').data('effect-id');
+    const effectData = this.item.system.contingentEffects[effectId];
+
+    new ContingentEffectBuilder(effectData, this.item, (updatedEffect) => {
+        this.item.update({
+            [`system.contingentEffects.${effectId}`]: updatedEffect
+        });
+    }).render(true);
+});
+
+// Deletar um Efeito Contingente
+html.find('.delete-contingent-effect').on('click', ev => {
+    const effectId = $(ev.currentTarget).closest('.effect-summary').data('effect-id');
+    Dialog.confirm({
+        title: "Deletar Efeito Contingente",
+        content: "<p>Você tem certeza?</p>",
+        yes: () => {
+            this.item.update({
+                [`system.contingentEffects.-=${effectId}`]: null
+            });
+        },
+        no: () => {}
+    });
+});
+
 }
 
 

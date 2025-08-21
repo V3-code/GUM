@@ -1,0 +1,39 @@
+<form>
+    <div class="form-section">
+        <h4 class="section-title">Gatilho do Efeito</h4>
+        <p class="hint">Quando este efeito deve ser verificado?</p>
+        
+        <div class="form-group">
+            <label>Gatilho Principal</label>
+            <select name="trigger">
+                {{{selectOptions triggers selected=effect.trigger}}}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Condição Adicional (Opcional)</label>
+            <input type="text" name="condition" value="{{effect.condition}}" placeholder="Ex: damage > 5"/>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h4 class="section-title">Ação Final</h4>
+        <p class="hint">O que este efeito faz se o gatilho for disparado?</p>
+
+        <div class="form-group">
+            <label>Ação a Executar</label>
+            <select name="action">
+                {{{selectOptions actions selected=effect.action}}}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Payload (Alvo da Ação)</label>
+            <input type="text" name="payload" value="{{effect.payload}}" placeholder="Arraste um Item de Condição aqui"/>
+        </div>
+        <p class="hint">Para "Aplicar Condição", arraste um item de um Compêndio para este campo. Ele preencherá o UUID do item.</p>
+    </div>
+
+    {{!-- Seção futura para modificadores dinâmicos e testes de resistência --}}
+
+</form>

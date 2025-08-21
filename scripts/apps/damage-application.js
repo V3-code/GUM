@@ -1,3 +1,5 @@
+import { applyContingentCondition } from "../main.js";
+
 export default class DamageApplicationWindow extends Application {
     
     constructor(damageData, attackerActor, targetActor, options = {}) {
@@ -265,6 +267,7 @@ export default class DamageApplicationWindow extends Application {
         form.querySelectorAll('input').forEach(input => {
             input.addEventListener('change', () => this._updateDamageCalculation(form));
         });
+        
         const toleranceSelect = form.querySelector('[name="tolerance_type"]');
         if (toleranceSelect) {
             toleranceSelect.addEventListener('change', () => this._updateDamageCalculation(form));
@@ -336,8 +339,14 @@ export default class DamageApplicationWindow extends Application {
         html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
         html.find('button[data-action="applyAndClose"]').on('click', () => this._onApplyDamage(form, true, false));
         html.find('button[data-action="applyAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, false));
+        
     }
 
+    /**
+     * Recalculates all damage values and updates the UI, including the potential effects summary.
+     * @param {HTMLFormElement} form The form element of the window.
+     * @private
+     */
     _updateDamageCalculation(form) {
         const activeCard = form.querySelector('.damage-card.active');
         const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
@@ -468,6 +477,44 @@ export default class DamageApplicationWindow extends Application {
         }
 
         this.finalInjury = finalInjury;
+
+        const effectsSummaryEl = form.querySelector(".effects-summary");
+    if (effectsSummaryEl) {
+        const contingentEffects = this.damageData.contingentEffects || {};
+        const eventContext = {
+            damage: this.finalInjury,
+            damageType: this.damageTypeAbrev,
+            target: this.targetActor,
+            attacker: this.attackerActor
+        };
+
+        let potentialEffectsHTML = '';
+        for (const effect of Object.values(contingentEffects)) {
+            if (effect.trigger !== 'onDamage') continue;
+
+            let conditionMet = true;
+            if (effect.condition) {
+                try {
+                    conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext);
+                } catch(e) { 
+                    conditionMet = false; 
+                }
+            }
+
+            if (conditionMet) {
+                // We'll just show the name of the condition for now. We need the item name.
+                // This is a bit tricky without loading the item, so we'll add a placeholder.
+                // A full implementation would use fromUuid here.
+                potentialEffectsHTML += `<div class="potential-effect">Efeito: ${effect.action} (Alvo: Condição)</div>`;
+            }
+        }
+        
+        if (potentialEffectsHTML) {
+            effectsSummaryEl.innerHTML = potentialEffectsHTML;
+        } else {
+            effectsSummaryEl.innerHTML = `<div class="placeholder">Nenhum efeito adicional</div>`;
+        }
+    }
     }
 
     _onLocationClick(event, form) {
@@ -546,6 +593,8 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
         }
     }
 
+    await this._processContingentEffects(finalInjury);
+
     if (shouldPublish) {
         const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
         const message = applyAsHeal
@@ -563,6 +612,115 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
         this.close();
     }
 }
+
+/**
+     * O "cérebro" que lê e avalia os Efeitos Contingentes.
+     * @param {number} finalInjury - A lesão final aplicada ao alvo.
+     * @private
+     */
+    async _processContingentEffects(finalInjury) {
+        const contingentEffects = this.damageData.contingentEffects || {};
+        if (Object.keys(contingentEffects).length === 0) return;
+
+        const eventContext = {
+            damage: finalInjury,
+            damageType: this.damageTypeAbrev,
+            target: this.targetActor,
+            attacker: this.attackerActor
+        };
+
+        console.log("GUM | Processando Efeitos Contingentes:", contingentEffects);
+
+        for (const effect of Object.values(contingentEffects)) {
+            // 1. Checa o gatilho
+            if (effect.trigger !== 'onDamage') continue;
+
+            // 2. Avalia a condição adicional do efeito
+            let conditionMet = true;
+            if (effect.condition) {
+                try {
+                    conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext);
+                } catch(e) {
+                    console.warn(`GUM | Erro ao avaliar condição do Efeito Contingente:`, e);
+                    conditionMet = false;
+                }
+            }
+            if (!conditionMet) continue;
+
+            // 3. Decide se aplica diretamente ou propõe um teste
+            if (effect.resistanceRoll) {
+                await this._promptResistanceRoll(effect, eventContext);
+            } else {
+                await this._executeContingentAction(effect, eventContext);
+            }
+        }
+    }
+
+    /**
+     * Executa a ação final de um efeito que não exige teste de resistência.
+     * AGORA USA A NOSSA FUNÇÃO AUXILIAR GLOBAL.
+     * @private
+     */
+    async _executeContingentAction(effect, eventContext) {
+        if (effect.action === 'applyCondition') {
+            await applyContingentCondition(eventContext.target, effect, eventContext);
+        }
+    }
+
+    /**
+     * Cria e posta uma mensagem no chat para um Teste de Resistência.
+     * @param {object} effect - O objeto do Efeito Contingente.
+     * @param {object} eventContext - O contexto do evento de dano.
+     * @private
+     */
+    async _promptResistanceRoll(effect, eventContext) {
+        const rollData = effect.resistanceRoll;
+        const target = eventContext.target;
+        
+        // 1. Calcula o alvo do teste
+        let baseAttributeValue = 10; // Valor padrão
+        if (rollData.attribute) {
+            baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
+        }
+        
+        // 2. Calcula os modificadores
+        let totalModifier = parseInt(rollData.modifier) || 0;
+        if (rollData.dynamicModifier) {
+            try {
+                const dynamicMod = Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, eventContext);
+                totalModifier += dynamicMod;
+            } catch(e) {
+                console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e);
+            }
+        }
+        
+        const finalTarget = baseAttributeValue + totalModifier;
+
+        // 3. Monta o pacote de dados para o botão do chat
+        const chatButtonPayload = {
+            targetActorId: target.id,
+            finalTarget: finalTarget,
+            contingentEffect: effect // Embeda o efeito completo para a resolução
+        };
+        
+        // 4. Cria e posta a mensagem no chat
+        const content = `
+            <div class="gurps-resistance-roll-card">
+                <p><strong>${target.name}</strong> precisa resistir a um efeito de <strong>${this.attackerActor.name}</strong>!</p>
+                <p>Faça um teste de <strong>${rollData.attribute.toUpperCase()}</strong> para evitar o efeito.</p>
+                <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatButtonPayload)}'>
+                    <i class="fas fa-dice-d6"></i> Rolar Teste de Resistência (vs ${finalTarget})
+                </button>
+            </div>
+        `;
+        
+        ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: target }),
+            content: content
+        });
+
+        console.log(`GUM | Propondo Teste de Resistência para ${target.name} vs ${finalTarget}`);
+    }
 
     async _updateObject(event, formData) {
         await this._onApplyDamage(this.form);
