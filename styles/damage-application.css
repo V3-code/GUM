@@ -572,6 +572,28 @@
   border-bottom-color: var(--c-accent-gold, #c5a05b); /* Borda dourada ao focar */
 }
 
+/* Estilos para a nova área de notas de cálculo */
+.calculation-notes {
+  
+  margin-top: 5px;
+}
+.calculation-notes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 11px;
+  color: #a0a0a0;
+  text-align: left;
+}
+.calculation-notes ul li {
+  padding: 2px 0;
+}
+
+.calculation-notes .feedback-note {
+  color: var(--c-accent-gold, #c5a05b);
+  font-style: italic;
+}
+
 /* Coluna 2: Efeitos */
 .effects-summary {
   display: flex;
@@ -605,3 +627,4 @@
   gap: 5px;
   justify-content: center; /* Centraliza os botões verticalmente */
 }
+

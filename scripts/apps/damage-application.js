@@ -147,117 +147,131 @@ export default class DamageApplicationWindow extends Application {
         }
     }
 
-    async _updateDamageCalculation(form) {
-        const activeCard = form.querySelector('.damage-card.active');
-        const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
-        const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
-        const damageRolledInput = form.querySelector('[name="damage_rolled"]');
-        const armorDivisorInput = form.querySelector('[name="armor_divisor"]');
-        let damageRolled = parseFloat(damageRolledInput?.value);
-        let armorDivisor = parseFloat(armorDivisorInput?.value);
-        const halfDamageChecked = form.querySelector('[name="special_half_damage"]')?.checked;
-        const explosionChecked = form.querySelector('[name="special_explosion"]')?.checked;
-        const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
-        const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
-        const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
-        if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
-        if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
-        const effects = [];
-        let originalBase = damageRolled;
-        let modifiedBase = damageRolled;
-        if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`); originalBase = modifiedBase; }
-        if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`); }
-        damageRolled = modifiedBase;
-        let selectedLocationDR = 0;
-        const activeRow = form.querySelector('.location-row.active');
-        if (activeRow) { if (activeRow.dataset.locationKey === 'custom') { const customInput = activeRow.querySelector('input[name="custom_dr"]'); selectedLocationDR = parseInt(customInput?.value || 0); } else { selectedLocationDR = parseInt(activeRow.dataset.dr || 0); } }
-        const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
-        
-        // ✅ Variável 'isLargeArea' removida pois não era usada.
-        
-        const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
-        let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
-        let selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
-        let woundingMod = 1;
-        if (selectedModRadio) { if (selectedModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } else { woundingMod = parseFloat(selectedModRadio.value) || 1; } }
-        const damageAbrev = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
-        this.damageTypeAbrev = damageAbrev;
-        if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
-        if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
-        if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
-        let finalInjury = Math.floor(penetratingDamage * woundingMod);
-        if (effectsOnlyChecked) {finalInjury = 0;}
-        if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
-        const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
-        const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
-        const modName = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1] || 'x1';
-        const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
-        if (field("base_damage_note")) { if (halfDamageChecked && explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ 2 ÷ ${3 * explosionDistance} = ${modifiedBase}`; } else if (halfDamageChecked) { field("base_damage_note").textContent = `÷ 2 = ${modifiedBase}`; } else if (explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ ${3 * explosionDistance} = ${modifiedBase}`; } else { field("base_damage_note").textContent = ''; } }
-        if (field("damage_rolled")) field("damage_rolled").textContent = damageRolled;
-        if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${selectedLocationLabel})`;
-        if (field("armor_divisor")) field("armor_divisor").textContent = armorDivisor;
-        if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
-        if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod} (${modName})`;
-        if (field("final_injury")) field("final_injury").textContent = finalInjury;
-        const effectsList = form.querySelector(".effects-list");
-        if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
-        this.finalInjury = finalInjury;
+async _updateDamageCalculation(form) {
+    const activeCard = form.querySelector('.damage-card.active');
+    const activeDamageKey = activeCard ? activeCard.dataset.damageKey : 'main';
+    const activeDamage = this.damageData[activeDamageKey] || this.damageData.main;
+    const damageRolledInput = form.querySelector('[name="damage_rolled"]');
+    const armorDivisorInput = form.querySelector('[name="armor_divisor"]');
+    let damageRolled = parseFloat(damageRolledInput?.value);
+    let armorDivisor = parseFloat(armorDivisorInput?.value);
 
-        // --- LÓGICA DE NOTAS DE CÁLCULO ---
-        const notesContainer = form.querySelector(".calculation-notes");
-        if (notesContainer) {
-            let notesHtml = "";
-            if (halfDamageChecked) {
-                notesHtml += `<li>1/2D: Dano base reduzido pela Metade.</li>`;
-            }
-            if (explosionChecked && explosionDistance > 0) {
-                const divisor = Math.max(1, 3 * explosionDistance);
-                notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`;
-            }
-            if (toleranceType) {
-                const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType];
-                notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`;
-            }
-            
-            // Se houver alguma nota, cria a lista, senão, limpa.
-            notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : "";
-        }
-        
-        // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES ---
-        const effectsSummaryEl = form.querySelector(".effects-summary");
-        const actionButtonsEl = form.querySelector(".action-buttons");
-        const contingentEffects = this.damageData.contingentEffects || {};
-        const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
-        let potentialEffectsHTML = '';
-        let hasPotentialEffects = false;
-        let needsResistanceRoll = false;
+    // ✅ CORREÇÃO: Lendo TODAS as checkboxes no início da função
+    const halfDamageChecked = form.querySelector('[name="special_half_damage"]')?.checked;
+    const explosionChecked = form.querySelector('[name="special_explosion"]')?.checked;
+    const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
+    const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
 
-        for (const [id, effect] of Object.entries(contingentEffects)) {
-            if (effect.trigger !== 'onDamage') continue;
-            let conditionMet = !effect.condition || effect.condition.trim() === '';
-            if (effect.condition) {
-                try { conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext); } catch(e) { console.warn("GUM | Erro na condição do efeito (preview):", e); conditionMet = false; }
-            }
+    const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
+    const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
+    if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
+    if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
+    const effects = [];
+    let originalBase = damageRolled;
+    let modifiedBase = damageRolled;
+    if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`); originalBase = modifiedBase; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`); }
+    damageRolled = modifiedBase;
+    let selectedLocationDR = 0;
+    const activeRow = form.querySelector('.location-row.active');
+    if (activeRow) { if (activeRow.dataset.locationKey === 'custom') { const customInput = activeRow.querySelector('input[name="custom_dr"]'); selectedLocationDR = parseInt(customInput?.value || 0); } else { selectedLocationDR = parseInt(activeRow.dataset.dr || 0); } }
+    const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
+    
+    const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
+    let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
+    let selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+    let woundingMod = 1;
+    if (selectedModRadio) { if (selectedModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } else { woundingMod = parseFloat(selectedModRadio.value) || 1; } }
+    const damageAbrev = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
+    this.damageTypeAbrev = damageAbrev;
+    if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
+    if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
+    if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
+    let finalInjury = Math.floor(penetratingDamage * woundingMod);
+    if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
+    if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
-            if (conditionMet) {
-                hasPotentialEffects = true;
-                if (this.effectState[id] === undefined) this.effectState[id] = { checked: true };
-                const isChecked = this.effectState[id].checked;
-                const conditionItem = await fromUuid(effect.payload);
-                const conditionName = conditionItem ? conditionItem.name : "Condição Desconhecida";
-                let resistanceHTML = '<span class="eff-type">(Automático)</span>';
-                if (effect.resistanceRoll) {
-                    if (isChecked) needsResistanceRoll = true;
-                    resistanceHTML = `<span class="eff-type">(Teste de ${effect.resistanceRoll.attribute.toUpperCase()})</span><a class="npc-resistance-roll" data-effect-id="${id}" title="Rolar para NPC"><i class="fas fa-dice-d20"></i></a>`;
-                }
-                potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionName}</span></label>${resistanceHTML}</div>`;
-            }
-        }
-        
-        effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
-        const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
-        if (proposeButton) { if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; } }
+    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
+    const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
+    const modName = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1] || 'x1';
+    const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
+    if (field("base_damage_note")) { if (halfDamageChecked && explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ 2 ÷ ${3 * explosionDistance} = ${modifiedBase}`; } else if (halfDamageChecked) { field("base_damage_note").textContent = `÷ 2 = ${modifiedBase}`; } else if (explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ ${3 * explosionDistance} = ${modifiedBase}`; } else { field("base_damage_note").textContent = ''; } }
+    if (field("damage_rolled")) field("damage_rolled").textContent = damageRolled;
+    if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${selectedLocationLabel})`;
+    if (field("armor_divisor")) field("armor_divisor").textContent = armorDivisor;
+    if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
+    if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod} (${modName})`;
+    if (field("final_injury")) field("final_injury").textContent = finalInjury;
+    const effectsList = form.querySelector(".effects-list");
+    if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
+    this.finalInjury = finalInjury;
+
+    // --- ✅ BLOCO DE FEEDBACK E NOTAS (VERSÃO UNIFICADA E CORRIGIDA) ---
+    const notesContainer = form.querySelector(".calculation-notes");
+    const injuryLabel = form.querySelector(".final-injury-compact label");
+    const injuryValue = form.querySelector(".final-injury-compact span");
+    let notesHtml = "";
+
+    if (effectsOnlyChecked) {
+        notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
     }
+    if (applyAsHeal) {
+    notesHtml += `<li class="feedback-note">A lesão final será aplicada como restauração.</li>`;
+    if (injuryLabel) {
+        injuryLabel.textContent = "Restauração";
+        injuryLabel.style.color = "#3b7d3b"; // ✅ Cor do label adicionada
+    }
+    if (injuryValue) injuryValue.style.color = "#3b7d3b"; // Verde
+    } else {
+    // Garante que volta ao normal se a caixa for desmarcada
+    if (injuryLabel) {
+        injuryLabel.textContent = "Lesão";
+        injuryLabel.style.color = "#c53434"; // ✅ Cor do label resetada
+    }
+    if (injuryValue) injuryValue.style.color = "#c53434"; // Vermelho
+    }
+
+    if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`; }
+    if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
+
+    if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
+    
+    // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES (permanece igual) ---
+    const effectsSummaryEl = form.querySelector(".effects-summary");
+    const actionButtonsEl = form.querySelector(".action-buttons");
+    const contingentEffects = this.damageData.contingentEffects || {};
+    const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
+    let potentialEffectsHTML = '';
+    let hasPotentialEffects = false;
+    let needsResistanceRoll = false;
+
+    for (const [id, effect] of Object.entries(contingentEffects)) {
+        if (effect.trigger !== 'onDamage') continue;
+        let conditionMet = !effect.condition || effect.condition.trim() === '';
+        if (effect.condition) {
+            try { conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext); } catch(e) { console.warn("GUM | Erro na condição do efeito (preview):", e); conditionMet = false; }
+        }
+
+        if (conditionMet) {
+            hasPotentialEffects = true;
+            if (this.effectState[id] === undefined) this.effectState[id] = { checked: true };
+            const isChecked = this.effectState[id].checked;
+            const conditionItem = await fromUuid(effect.payload);
+            const conditionName = conditionItem ? conditionItem.name : "Condição Desconhecida";
+            let resistanceHTML = '<span class="eff-type">(Automático)</span>';
+            if (effect.resistanceRoll) {
+                if (isChecked) needsResistanceRoll = true;
+                resistanceHTML = `<span class="eff-type">(Teste de ${effect.resistanceRoll.attribute.toUpperCase()})</span><a class="npc-resistance-roll" data-effect-id="${id}" title="Rolar para NPC"><i class="fas fa-dice-d20"></i></a>`;
+            }
+            potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionName}</span></label>${resistanceHTML}</div>`;
+        }
+    }
+    
+    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
+    const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
+    if (proposeButton) { if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; } }
+}
     
     _onProposeTests(form) {
         ui.notifications.info("Enviando propostas de teste para o chat...");
