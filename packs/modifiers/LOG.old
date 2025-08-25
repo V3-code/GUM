@@ -1,3 +1,8 @@
-2025/08/13-21:57:02.205 2320 Recovering log #257
-2025/08/13-21:57:02.209 2320 Delete type=0 #257
-2025/08/13-21:57:02.210 2320 Delete type=3 #256
+2025/08/24-21:10:52.303 2d5c Log #261: 0 ops saved to Table #264 OK
+2025/08/24-21:10:52.303 2d5c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/000261.log: OK
+2025/08/24-21:10:52.303 2d5c Log #263: 0 ops saved to Table #265 OK
+2025/08/24-21:10:52.303 2d5c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/000263.log: OK
+2025/08/24-21:10:52.316 2d5c Table #201: 3 entries OK
+2025/08/24-21:10:52.319 2d5c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/MANIFEST-000260: OK
+2025/08/24-21:10:52.319 2d5c Archiving C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers/MANIFEST-000262: OK
+2025/08/24-21:10:52.323 2d5c **** Repaired leveldb C:\Users\victo\AppData\Local\FoundryVTT\Data\systems\gum\packs\modifiers; recovered 1 files; 909 bytes. Some data may have been lost. ****

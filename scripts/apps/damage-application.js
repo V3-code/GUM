@@ -159,6 +159,7 @@ export default class DamageApplicationWindow extends Application {
         const explosionChecked = form.querySelector('[name="special_explosion"]')?.checked;
         const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
         const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
+        const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
         if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
         const effects = [];
@@ -185,6 +186,7 @@ export default class DamageApplicationWindow extends Application {
         if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
         if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
         let finalInjury = Math.floor(penetratingDamage * woundingMod);
+        if (effectsOnlyChecked) {finalInjury = 0;}
         if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
         const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
         const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
@@ -275,6 +277,7 @@ export default class DamageApplicationWindow extends Application {
     }
     
     async _onApplyDamage(form, shouldClose, shouldPublish) {
+        const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (this.isApplying) return;
         this.isApplying = true;
         try {
@@ -285,7 +288,7 @@ export default class DamageApplicationWindow extends Application {
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
             let eventData = null;
 
-            if (!applyAsHeal && finalInjury > 0) {
+            if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
                 const newPoolValue = currentPoolValue - finalInjury;
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue }, { gumEventData: eventData });
