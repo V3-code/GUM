@@ -202,6 +202,26 @@ export default class DamageApplicationWindow extends Application {
         const effectsList = form.querySelector(".effects-list");
         if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
         this.finalInjury = finalInjury;
+
+        // --- LÓGICA DE NOTAS DE CÁLCULO ---
+        const notesContainer = form.querySelector(".calculation-notes");
+        if (notesContainer) {
+            let notesHtml = "";
+            if (halfDamageChecked) {
+                notesHtml += `<li>1/2D: Dano base reduzido pela Metade.</li>`;
+            }
+            if (explosionChecked && explosionDistance > 0) {
+                const divisor = Math.max(1, 3 * explosionDistance);
+                notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`;
+            }
+            if (toleranceType) {
+                const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType];
+                notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`;
+            }
+            
+            // Se houver alguma nota, cria a lista, senão, limpa.
+            notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : "";
+        }
         
         // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES ---
         const effectsSummaryEl = form.querySelector(".effects-summary");

@@ -3188,3 +3188,19 @@ input:checked + .slider:before {
   vertical-align: middle;
   margin-right: 8px; /* Espaço entre o token e o nome */
 }
+
+/* ============================================= */
+/* Layout Flex para a Ficha de Item             */
+/* Garante que o corpo da ficha ocupe 100%       */
+/* ============================================= */
+
+.gum-item-sheet .sheet-content {
+  display: flex;          /* 1. Ativa o layout flexível */
+  flex-direction: column; /* 2. Organiza os itens em coluna (abas em cima, conteúdo embaixo) */
+  height: calc(100% - 75px); /* 3. Usa a altura total, descontando o cabeçalho */
+}
+
+.gum-item-sheet .sheet-body-content {
+  flex-grow: 1;           /* 4. A mágica: faz o conteúdo crescer e ocupar o espaço que sobra */
+  overflow-y: auto;     /* Adiciona uma barra de rolagem se o conteúdo for muito grande */
+}

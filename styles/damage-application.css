@@ -484,3 +484,124 @@
     color: #111;
   background-color: #f8f8f8;
 }
+
+/* ============================================= */
+/* ESTILO FINAL DO RODAPÉ (LAYOUT DE 3 COLUNAS)  */
+/* ============================================= */
+
+.damage-app-footer {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.2fr; /* Layout de 3 colunas */
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Coluna 1: Cálculos (VERSÃO COMPACTA E ESTILIZADA) */
+.calculation-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.calc-group-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.calc-item-compact {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+.calc-item-compact.single {
+  grid-column: span 2; /* Faz o item ocupar as duas colunas */
+}
+.calc-item-compact label {
+  font-size: 10px; /* Fonte menor */
+  text-transform: uppercase;
+  color: #a0a0a0;
+  display: block;
+  margin-bottom: 2px;
+}
+.calc-input-compact, .calc-field-compact {
+  font-size: 16px; /* Fonte menor */
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #fff;
+  border-radius: 0;
+  padding: 0;
+}
+.final-injury-compact {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.final-injury-compact label {
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #c53434;
+}
+.final-injury-compact span {
+  display: block;
+  font-size: 36px; /* Fonte menor */
+  font-weight: bold;
+  color: #c53434;
+  line-height: 1;
+}
+
+/* Adicione estas regras para destacar os inputs */
+.calc-item-compact .calc-input-compact {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); /* Sombra interna */
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2px;
+  padding: 1px 0; /* Pequeno ajuste de padding */
+  transition: all 0.2s ease;
+}
+
+.calc-item-compact .calc-input-compact:focus {
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom-color: var(--c-accent-gold, #c5a05b); /* Borda dourada ao focar */
+}
+
+/* Coluna 2: Efeitos */
+.effects-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 8px;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+.effect-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  font-size: 13px;
+}
+.effect-card .eff-type {
+  margin-left: auto;
+  font-size: 11px;
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+/* Coluna 3: Botões de Ação */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center; /* Centraliza os botões verticalmente */
+}

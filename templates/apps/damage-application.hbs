@@ -165,8 +165,8 @@
  
 
   <label class="custom-checkbox">
-    <input type="checkbox" name="special_half_damage"/>
-    <span>Acima da Distância 1/2D (x0.5 no dano)</span>
+    <input type="checkbox" name="special_half_damage" />
+    <span>Acima da Distância 1/2D</span>
   </label>
 
   <label class="custom-checkbox">
@@ -199,35 +199,63 @@
     </main>
 
     <input type="hidden" name="target_dr" value="0" />
-    {{!-- ================================== --}}
-    {{!--  3. RODAPÉ COM CÁLCULOS E AÇÕES   --}}
-    {{!-- ================================== --}}
-    <footer class="damage-app-footer">
-        <div class="footer-column calculation-summary">
-            <div class="summary-row">
-<label>Dano Básico:</label>
-  <div class="input-with-output">
-    <input type="number" name="damage_rolled" class="calc-input" min="0" step="1"/>
-    <span class="calc-field result-inline" data-field="base_damage_note"></span>
-  </div>
+
+{{!-- ================================== --}}
+{{!--  3. RODAPÉ (VERSÃO FINAL 3 COLUNAS) --}}
+{{!-- ================================== --}}
+<footer class="damage-app-footer">
+    
+    {{!-- COLUNA 1: CÁLCULOS (VERSÃO COMPACTA E ESTILIZADA) --}}
+<div class="footer-column calculation-summary">
+    <div class="calc-group-compact">
+        <div class="calc-item-compact">
+            <label>Dano Básico</label>
+            <input type="number" name="damage_rolled" class="calc-input-compact" min="0" step="1"/>
+        </div>
+        <div class="calc-item-compact">
+            <label>Divisor</label>
+            <input type="number" name="armor_divisor" class="calc-input-compact" value="1" min="0.1" step="0.1"/>
+        </div>
+    </div>
+
+    <div class="calc-group-compact">
+        <div class="calc-item-compact">
+            <label>RD Alvo</label>
+            <span class="calc-field-compact" data-field="target_dr">(...)</span>
+        </div>
+        <div class="calc-item-compact">
+            <label>Penetrante</label>
+            <span class="calc-field-compact" data-field="penetrating_damage">0</span>
+        </div>
+    </div>
+    
+    <div class="calc-item-compact single">
+        <label>Mod. Ferimento</label>
+        <span class="calc-field-compact" data-field="wounding_mod">x1</span>
+    </div>
+
+    {{!--ÁREA PARA NOTAS DE CÁLCULO --}}
+    <div class="calculation-notes">
+        {{!-- O JavaScript vai preencher esta área --}}
+    </div>
+
+    <div class="final-injury-compact">
+        <label>Lesão</label>
+        <span data-field="final_injury">0</span>
+    </div>
 </div>
-            <div class="summary-row">
-  <label>Divisor de Armadura:</label>
-  <input type="number" name="armor_divisor" class="calc-input" min="0.1" step="0.1"/>
-</div>
-            <div class="summary-row"><label>RD do Alvo:</label><span class="calc-field" data-field="target_dr"></span></div>         
-            <div class="summary-row"><label>Dano Penetrante:</label><span class="calc-field" data-field="penetrating_damage"></span></div>
-            <div class="summary-row"><label>Modificador de Dano:</label><span class="calc-field" data-field="wounding_mod"></span></div>
-            <hr>
-            <div class="summary-row final-injury"><label>Lesão:</label><span class="calc-field" data-field="final_injury"></span></div>
-        </div>
-        <div class="footer-column effects-summary">
-            <div class="placeholder">Efeitos a serem aplicados</div>
-        </div>
-        <div class="footer-column action-buttons">
-            <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> Aplicar e Publicar</button>
-            <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> Aplicar e Fechar</button>
-            <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> Aplicar e Manter</button>
-        </div>
-    </footer>
-</form>
+
+    {{!-- COLUNA 2: EFEITOS (COM A CLASSE CORRETA) --}}
+    <div class="footer-column effects-summary">
+        {{!-- O JavaScript vai preencher esta área corretamente agora --}}
+        <div class="placeholder">Efeitos a serem aplicados</div>
+    </div>
+
+    {{!-- COLUNA 3: BOTÕES DE AÇÃO --}}
+    <div class="footer-column action-buttons">
+        <button type="button" data-action="proposeTests" style="display: none;"><i class="fas fa-dice-d20"></i> Propor Testes</button>
+        <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> Aplicar e Publicar</button>
+        <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> Aplicar e Fechar</button>
+        <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> Aplicar e Manter</button>
+    </div>
+</footer>
