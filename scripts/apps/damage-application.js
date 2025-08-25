@@ -312,14 +312,68 @@ export default class DamageApplicationWindow extends Application {
                 }
             }
 
-            if (shouldPublish) {
-                const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
-                const message = applyAsHeal ? `<strong>${this.targetActor.name}</strong> recuperou...` : `<strong>${this.targetActor.name}</strong> sofreu...`;
-                ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }), content: message });
-            } else {
-                const msg = applyAsHeal ? `${this.targetActor.name} recuperou...` : `${this.targetActor.name} sofreu...`;
-                ui.notifications.info(msg);
-            }
+if (shouldPublish) {
+    const appliedEffectNames = [];
+    for (const effect of effectsToProcess) {
+        const conditionItem = await fromUuid(effect.payload);
+        if (conditionItem) {
+            appliedEffectNames.push(conditionItem.name);
+        }
+    }
+
+    const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+    let resultLine = '';
+
+    if (applyAsHeal && finalInjury > 0) {
+        resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+    } else if (finalInjury > 0 && !effectsOnlyChecked) {
+        resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+    }
+
+    // Monta o HTML final com a nova estrutura de texto
+    let messageContent = `
+        <div class="gurps-roll-card">
+            <header class="card-header">
+                <h3>Resumo do Ataque</h3>
+            </header>
+            <div class="card-content">
+                <div class="summary-actors vertical">
+                    <div class="actor-line">
+                        <img src="${this.attackerActor.img}" class="actor-token-icon">
+                        <strong>${this.attackerActor.name}</strong>
+                    </div>
+                    <div class="arrow-line">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="actor-line">
+                        <img src="${this.targetActor.img}" class="actor-token-icon">
+                        <strong>${this.targetActor.name}</strong>
+                    </div>
+                </div>
+
+                ${resultLine ? `
+                <div class="minicard result-card">
+                    <div class="minicard-title">Resultado</div>
+                    ${resultLine}
+                </div>
+                ` : ''}
+
+                ${appliedEffectNames.length > 0 ? `
+                <div class="minicard effects-card">
+                    <div class="minicard-title">Efeitos Aplicados</div>
+                    ${appliedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
+        content: messageContent
+    });
+}
+
             if (shouldClose) { this.close(); }
         } finally {
             this.isApplying = false;
