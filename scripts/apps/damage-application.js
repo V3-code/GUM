@@ -92,7 +92,7 @@ export default class DamageApplicationWindow extends Application {
                 this._updateDamageCalculation(form);
             });
         });
-
+        
         form.querySelectorAll('.location-row').forEach(row => {
             row.addEventListener('click', ev => {
                 form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
@@ -102,16 +102,54 @@ export default class DamageApplicationWindow extends Application {
                 const locationKey = ev.currentTarget.dataset.locationKey;
                 const newMods = this._getAdjustedWoundingModifiers(locationKey);
                 const modTable = form.querySelector('.wounding-table');
+
                 if (modTable) {
                     const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
                     let selectedAbrev = '';
-                    if (selectedRadio) { const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; }
-                    const htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
-                    modTable.innerHTML = htmlContent + `<hr>...`; // (Sua lógica de "Sem Modificador" etc.)
-                    modTable.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => { input.addEventListener('change', () => this._updateDamageCalculation(form)); });
+                    if (selectedRadio) { 
+                        const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); 
+                        selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; 
+                    }
+
+                    // 1. Constrói a parte dinâmica da lista
+                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
+
+                    // 2. Adiciona as opções estáticas ("Sem Modificador" e "Outros")
+                    htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
+
+                    htmlContent += `
+                        <div class="wounding-row">
+                            <label class="custom-radio">
+                                <input type="radio" name="wounding_mod_type" value="1" ${selectedAbrev === '' ? 'checked' : ''}/>
+                                <span>Sem Modificador</span>
+                                <span class="dots"></span>
+                                <span class="mult">x1</span>
+                            </label>
+                        </div>`;
+
+                    htmlContent += `
+                        <div class="wounding-row">
+                            <label class="custom-radio">
+                                <input type="radio" name="wounding_mod_type" value="custom"/>
+                                <span>Outros Mod.:</span>
+                                <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
+                            </label>
+                        </div>`;
+
+                    // 3. Insere o HTML completo na tabela
+                    modTable.innerHTML = htmlContent;
+
+                    // 4. Reativa os "ouvintes" nos novos botões que acabamos de criar
+                    modTable.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => {
+                        input.addEventListener('change', () => this._updateDamageCalculation(form));
+                    });
+
                     const customModInput = modTable.querySelector('input[name="custom_wounding_mod"]');
-                    if (customModInput) { customModInput.addEventListener('input', () => this._updateDamageCalculation(form)); }
+                    if (customModInput) {
+                        customModInput.addEventListener('input', () => this._updateDamageCalculation(form));
+                    }
                 }
+                
                 this._updateDamageCalculation(form);
             });
         });
@@ -193,7 +231,21 @@ async _updateDamageCalculation(form) {
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
     const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
-    const modName = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1] || 'x1';
+    let modName = '';
+        if (selectedModRadio) {
+            // Pega o texto da linha inteira do radio button selecionado
+            const selectedRowText = selectedModRadio.closest('.wounding-row')?.textContent || '';
+
+            if (selectedModRadio.value === 'custom') {
+                modName = 'outros mod.';
+            } else if (selectedRowText.includes('Sem Modificador')) {
+                // Agora checamos pelo texto, que é único para esta opção
+                modName = 'sem mod.';
+            } else {
+                // Para todos os outros, extrai a abreviação dos parênteses
+                modName = selectedRowText.match(/\(([^)]+)\)/)?.[1] || 'mod';
+            }
+        }
     const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
     if (field("base_damage_note")) { if (halfDamageChecked && explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ 2 ÷ ${3 * explosionDistance} = ${modifiedBase}`; } else if (halfDamageChecked) { field("base_damage_note").textContent = `÷ 2 = ${modifiedBase}`; } else if (explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ ${3 * explosionDistance} = ${modifiedBase}`; } else { field("base_damage_note").textContent = ''; } }
     if (field("damage_rolled")) field("damage_rolled").textContent = damageRolled;
@@ -216,7 +268,7 @@ async _updateDamageCalculation(form) {
         notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
     }
     if (applyAsHeal) {
-    notesHtml += `<li class="feedback-note">A lesão final será aplicada como restauração.</li>`;
+    notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
     if (injuryLabel) {
         injuryLabel.textContent = "Restauração";
         injuryLabel.style.color = "#3b7d3b"; // ✅ Cor do label adicionada

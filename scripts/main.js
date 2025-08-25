@@ -3168,7 +3168,7 @@ if (fragRoll) {
     flavor += `
         <footer class="card-actions">
             <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-                <i class="fas fa-crosshairs"></i> Aplicar Dano
+                <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
             </button>
         </footer>
     `;
