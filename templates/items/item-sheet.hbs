@@ -21,6 +21,34 @@
 
 {{/inline}}
 
+{{!-- Partial reutilizável para a seção de Efeitos Contingentes --}}
+{{#*inline "contingentEffectsSection"}}
+<div class="form-section">
+    <h4 class="section-title">Efeitos Contingentes</h4>
+    <div class="contingent-effects-list">
+        {{#each system.contingentEffects as |effect id|}}
+            <div class="effect-summary" data-effect-id="{{id}}">
+                <div class="effect-summary-info">
+                    <strong>GATILHO:</strong> {{effect.trigger}} 
+                    <span class="effect-details">
+                        | <strong>AÇÃO:</strong> {{effect.action}}
+                    </span>
+                </div>
+                <div class="effect-controls">
+                    <a class="edit-contingent-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
+                    <a class="delete-contingent-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
+                </div>
+            </div>
+        {{else}}
+            <p class="hint">Nenhum efeito contingente adicionado.</p>
+        {{/each}}
+    </div>
+    <a class="button add-contingent-effect"><i class="fas fa-plus"></i> Adicionar Efeito Contingente</a>
+</div>
+{{/inline}}
+
+
+
 <form class="{{cssClass}} gum-item-sheet" autocomplete="off">
 
 {{!-- Cabeçalho da Ficha --}}
@@ -47,6 +75,9 @@
     <a class="item" data-tab="details">Detalhes</a>
     {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
       <a class="item" data-tab="modifiers">Modificadores</a>
+    {{/if}}
+    {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        <a class="item" data-tab="effects">Efeitos</a>
     {{/if}}
   </nav>
 
@@ -470,29 +501,7 @@
     </details>
 </div>
 
-<div class="form-section">
-    <h4 class="section-title">Efeitos Contingentes</h4>
-    <div class="contingent-effects-list">
-        {{#each system.contingentEffects as |effect id|}}
-            <div class="effect-summary" data-effect-id="{{id}}">
-                <div class="effect-summary-info">
-                    {{!-- Aqui mostraremos um resumo do efeito --}}
-                    <strong>GATILHO:</strong> {{effect.trigger}} 
-                    <span class="effect-details">
-                        | <strong>AÇÃO:</strong> {{effect.action}}
-                    </span>
-                </div>
-                <div class="effect-controls">
-                    <a class="edit-contingent-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
-                    <a class="delete-contingent-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
-                </div>
-            </div>
-        {{else}}
-            <p class="hint">Nenhum efeito contingente adicionado.</p>
-        {{/each}}
-    </div>
-    <a class="button add-contingent-effect"><i class="fas fa-plus"></i> Adicionar Efeito Contingente</a>
-</div>
+
 
 {{/if}}
       
@@ -691,6 +700,12 @@
         
     </div>
 {{/if}}
+
+{{!-- Conteúdo da aba de Efeitos --}}
+<div class="tab" data-tab="effects">
+    {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
+    {{> contingentEffectsSection}}
+</div>
 
   </section>
 </section>
