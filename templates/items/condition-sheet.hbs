@@ -1,113 +1,132 @@
-<form class="{{cssClass}}" autocomplete="off">
+<form class="{{cssClass}} gum-item-sheet condition-sheet" autocomplete="off">
+
+    {{!-- CABEÇALHO SIMPLIFICADO --}}
     <header class="sheet-header item-header">
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
         <div class="header-fields">
             <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome da Condição"/></h1>
-            <div class="form-group-inline">
-                <label>Categoria</label>
-                <select name="system.category">
-                    <option value="general" {{#if (eq system.category 'general')}}selected{{/if}}>Condição Geral</option>
-                    <option value="temporary" {{#if (eq system.category 'temporary')}}selected{{/if}}>Efeito Temporário</option>
-                </select>
-            </div>
         </div>
     </header>
 
     <main class="sheet-body">
         <div class="sheet-body-content">
-
-            {{!-- Seção de Duração e Expiração (VERSÃO REFINADA) --}}
-<div class="form-section">
-    <h4 class="section-title">Duração e Expiração</h4>
-    <div class="form-grid-3">
-        <div class="form-group">
-            <label>Duração</label>
-            <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
-        </div>
-
-        <div class="form-group">
-            <label>Unidade</label>
-            <select name="system.duration.unit">
-                <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
-                <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
-                <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
-                <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
-                <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Ao Expirar</label>
-            <select name="system.duration.expiration">
-                <option value="delete" {{#if (eq system.duration.expiration "delete")}}selected{{/if}}>Deletar Item</option>
-                <option value="disable" {{#if (eq system.duration.expiration "disable")}}selected{{/if}}>Desativar Item</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="form-group-inline">
-        <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
-        <label class="hint">A duração só é contada durante o combate?</label>
-    </div>
-</div>
             
-            {{!-- Seção da Condição de Ativação com TEXTAREA --}}
-            <div class="form-section">
-                <h4 class="section-title">Condição de Ativação</h4>
-                <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
-                {{!-- ✅ INPUT SUBSTITUÍDO POR TEXTAREA ✅ --}}
-                <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
-                <div class="button-container">
-                    <a class="button condition-assistant-btn">
-                        <i class="fas fa-magic"></i> Assistente de Condições
-                    </a>
-                </div>
-            </div>
+            {{!-- NOVA ESTRUTURA DE GRID COM DUAS COLUNAS --}}
+            <div class="condition-body-grid">
 
-{{!-- Seção de Efeitos Aplicados (VERSÃO FINAL E COMPLETA) --}}
-<div class="form-section effects-section">
-    <h4 class="section-title">Efeitos Aplicados</h4>
-    <div class="effects-list-container">
-        {{#each system.effects as |effect effIndex|}}
-            <div class="effect-summary" data-effect-index="{{effIndex}}">
-                <div class="effect-summary-info">
-                    <strong class="effect-type-label">{{capitalize effect.type}}</strong>
-                    <span class="effect-details">
-                        {{#if (eq effect.type 'attribute')}}{{effect.path}} {{effect.operation}} {{effect.value}}{{/if}}
-                        {{#if (eq effect.type 'status')}}{{effect.statusId}}{{/if}}
-                        {{#if (eq effect.type 'macro')}}Macro: {{effect.value}}{{/if}}
+                {{!-- COLUNA DA ESQUERDA: CONFIGURAÇÃO --}}
+                <div class="condition-column-left">
+
+                {{!-- SEÇÃO DE CLASSIFICAÇÃO (NOMES REVISADOS) --}}
+                <div class="form-section">
+                    <h4 class="section-title">Classificação</h4>
+                    <div class="radio-group">
                         
-                        {{!-- ✅ LÓGICA DE EXIBIÇÃO APRIMORADA ✅ --}}
-                        {{#if (eq effect.type 'chat')}}
-                            "{{effect.chat_text}}"
-                            {{#if effect.has_roll}}
-                                <span class="roll-summary-tag">(Teste: {{effect.roll_attribute}} {{#if effect.roll_modifier}}vs {{effect.roll_modifier}}{{/if}})</span>
-                            {{/if}}
-                        {{/if}}
-                    </span>
-                </div>
-                <div class="effect-controls">
-                    <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
-                    <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
-                </div>
-            </div>
-        {{/each}}
-        {{#unless system.effects.length}}
-            <p class="hint">Nenhum efeito adicionado.</p>
-        {{/unless}}
-    </div>
-    <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-</div>
+                        {{!-- Opção 1: Condição Padrão --}}
+                        <label class="custom-radio" title="Para regras globais e estados persistentes definidos pelo mestre (Ex: Choque, Cambaleando).">
+                            <input type="radio" name="system.category" value="general" {{checked (eq system.category 'general')}}>
+                            <span>Condição Padrão</span>
+                        </label>
 
-            {{!-- Seção de Descrição (sem alterações) --}}
-            <div class="form-section">
-                <div class="section-header">
-                    <h4 class="section-title">Descrição</h4>
-                    <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
+                        {{!-- Opção 2: Condição Temporária --}}
+                        <label class="custom-radio" title="Um estado temporário, geralmente de curta duração e aplicado em situações como o combate.">
+                            <input type="radio" name="system.category" value="temporary" {{checked (eq system.category 'temporary')}}>
+                            <span>Condição Temporária</span>
+                        </label>
+
+                    </div>
                 </div>
-                <div class="rendered-text">
-                    {{{enrichedDescription}}}
+
+                    {{!-- SEÇÃO DE DURAÇÃO REFINADA --}}
+                    <div class="form-section">
+                        <h4 class="section-title">Duração e Expiração</h4>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label>Duração</label>
+                                <div class="input-group">
+                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
+                                    <select name="system.duration.unit">
+                                        <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
+                                        <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
+                                        <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
+                                        <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
+                                        <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ao Expirar</label>
+                                <select name="system.duration.expiration">
+                                    <option value="delete" {{#if (eq system.duration.expiration "delete")}}selected{{/if}}>Deletar Item</option>
+                                    <option value="disable" {{#if (eq system.duration.expiration "disable")}}selected{{/if}}>Desativar Item</option>
+                                </select>
+                            </div>
+                        </div>
+                        <label class="custom-checkbox hint">
+                            <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                            <span>A duração só é contada durante o combate?</span>
+                        </label>
+                    </div>
+
+                    {{!-- SEÇÃO DE CONDIÇÃO DE ATIVAÇÃO --}}
+                    <div class="form-section">
+                        <h4 class="section-title">Condição de Ativação</h4>
+                        <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
+                        <div class="condition-input-area">
+                           <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
+                           <a class="button condition-assistant-btn" title="Assistente de Condições">
+                               <i class="fas fa-magic"></i>
+                           </a>
+                        </div>
+                    </div>
+
                 </div>
+
+                {{!-- COLUNA DA DIREITA: RESULTADO --}}
+                <div class="condition-column-right">
+                    
+                    {{!-- SEÇÃO DE EFEITOS APLICADOS --}}
+                    <div class="form-section effects-section">
+                        <h4 class="section-title">Efeitos Aplicados</h4>
+                        <div class="effects-list-container">
+                            {{#each system.effects as |effect effIndex|}}
+                                <div class="effect-summary" data-effect-index="{{effIndex}}">
+                                    <div class="effect-summary-info">
+                                        <strong class="effect-type-label">{{capitalize effect.type}}</strong>
+                                        <span class="effect-details">
+                                            {{#if (eq effect.type 'attribute')}}{{effect.path}} {{effect.operation}} {{effect.value}}{{/if}}
+                                            {{#if (eq effect.type 'status')}}{{effect.statusId}}{{/if}}
+                                            {{#if (eq effect.type 'macro')}}Macro: {{effect.value}}{{/if}}
+                                            {{#if (eq effect.type 'chat')}}"{{effect.chat_text}}"
+                                                {{#if effect.has_roll}}<span class="roll-summary-tag">(c/ Teste)</span>{{/if}}
+                                            {{/if}}
+                                        </span>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
+                                        <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            {{else}}
+                                <p class="hint">Nenhum efeito adicionado.</p>
+                            {{/each}}
+                        </div>
+                        <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                    </div>
+
+                    {{!-- SEÇÃO DE DESCRIÇÃO --}}
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h4 class="section-title">Descrição</h4>
+                            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
+                        </div>
+                        <div class="rendered-text">
+                            {{{enrichedDescription}}}
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>

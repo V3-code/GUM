@@ -621,7 +621,7 @@
 }
 
 /* Coluna 3: Botões de Ação */
-.action-buttons {
+.damage-application-dialog .action-buttons {
   display: flex;
   flex-direction: column;
   gap: 5px;

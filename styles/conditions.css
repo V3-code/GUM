@@ -25,12 +25,54 @@
 }
 
 /* --- SEÇÕES --- */
+/* 1. Mantém o espaçamento entre as seções "caixa" */
 .item.sheet.condition-sheet .form-section {
-    background: var(--c-bg-darkest, #191813);
-    border: 1px solid var(--c-border-light, #4a4846);
-    border-radius: 5px;
-    padding: 5px;
-    margin-bottom: 5px;
+    margin-bottom: 12px;
+}
+
+/* 2. Organiza o grupo de botões em uma linha com mais espaço entre eles */
+.item.sheet.condition-sheet .radio-group {
+    display: flex;
+     /* Aumenta o espaço entre as duas opções */
+    justify-content: space-around;
+}
+
+/* 3. Estilo de cada opção, agora sem fundo ou borda */
+.item.sheet.condition-sheet .radio-group .custom-radio {
+    /* Removemos o estilo de "pílula" */
+    background: none;
+    padding: 0;
+    border: none;
+    
+    display: flex;
+    align-items: center;
+}
+
+/* 4. Remove o negrito do texto da opção */
+.item.sheet.condition-sheet .radio-group .custom-radio span {
+    font-weight: normal; /* ✅ Tira o negrito */
+    font-size: 1em;
+}
+
+/* 5. Lógica do botão de rádio customizado (círculo) */
+.item.sheet.condition-sheet .radio-group .custom-radio input[type="radio"] {
+    display: none;
+}
+.item.sheet.condition-sheet .radio-group .custom-radio span::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    background: #222;
+    transition: all 0.2s ease;
+    margin-right: 8px; /* ✅ ADICIONA O ESPAÇO ENTRE O CÍRCULO E O TEXTO */
+}
+.item.sheet.condition-sheet .radio-group .custom-radio input[type="radio"]:checked + span::before {
+    background: var(--c-accent-gold, #c5a05b);
+    border-color: #fff;
+    box-shadow: 0 0 5px var(--c-accent-gold, #c5a05b);
 }
 .item.sheet.condition-sheet .section-title {
     font-family: 'Cinzel', serif;

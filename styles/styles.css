@@ -293,7 +293,7 @@ a:hover { text-decoration: underline; color: #fff; }
 
 
 /* O container da navegação das abas */
-nav.sheet-tabs {
+.gum.sheet.actor nav.sheet-tabs {
   grid-row: 2; /* Garante que fique na segunda linha da área principal */
   display: flex;
   justify-content: space-between; /* Alinha as abas à esquerda */
@@ -304,7 +304,7 @@ nav.sheet-tabs {
 }
 
 /* Cada ícone de aba */
-.sheet-tabs .item {
+.gum.sheet.actor .sheet-tabs .item {
   flex: 0 0 auto;
   color: var(--c-fundo-cabecalho);
   padding: 0;
@@ -317,17 +317,17 @@ nav.sheet-tabs {
   transition: all 0.2s ease;
 }
 
-.sheet-tabs .item i {
+.gum.sheet.actor .sheet-tabs .item i {
   font-size: 1rem;
 }
 
-.sheet-tabs .item:hover {
+.gum.sheet.actor .sheet-tabs .item:hover {
   color: #fff;
   background: var(--c-fundo-input);
 }
 
 /* Estilo da aba ativa */
-.sheet-tabs .item.active {
+.gum.sheet.actor .sheet-tabs .item.active {
   color: var(--c-acento-dourado);
   border-bottom-color: var(--c-acento-dourado);
   background: var(--c-fundo-painel);
@@ -3194,13 +3194,17 @@ input:checked + .slider:before {
 /* Garante que o corpo da ficha ocupe 100%       */
 /* ============================================= */
 
-.gum-item-sheet .sheet-content {
-  display: flex;          /* 1. Ativa o layout flexível */
-  flex-direction: column; /* 2. Organiza os itens em coluna (abas em cima, conteúdo embaixo) */
-  height: calc(100% - 75px); /* 3. Usa a altura total, descontando o cabeçalho */
+.gum.sheet.item .sheet-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 90px); /* Ajuste de altura para o novo cabeçalho */
 }
 
-.gum-item-sheet .sheet-body-content {
-  flex-grow: 1;           /* 4. A mágica: faz o conteúdo crescer e ocupar o espaço que sobra */
-  overflow-y: auto;     /* Adiciona uma barra de rolagem se o conteúdo for muito grande */
+.gum.sheet.item .sheet-body-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+#sidebar-tabs {
+  flex-direction: row !important;
 }
