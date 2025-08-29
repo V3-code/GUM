@@ -1,0 +1,178 @@
+<form class="{{cssClass}} gum-item-sheet effect-sheet" autocomplete="off">
+
+    {{!-- CABEÇALHO --}}
+    <header class="sheet-header item-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Efeito"/></h1>
+        </div>
+    </header>
+
+    <main class="sheet-body">
+        <div class="sheet-body-content">
+            
+            {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
+            <div class="form-section">
+                <h4 class="section-title">Barreira de Resistência</h4>
+                <div class="resistance-section">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                        <span>Resistência específica para este efeito antes dele ser aplicado.</span>
+                    </label>
+
+                    {{#if system.resistanceRoll.isResisted}}
+                    <div class="indented">
+                        <hr>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label>Atributo do Teste</label><input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}"/></div>
+                            <div class="form-group"><label>Modificador</label><input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}"/></div>
+                        </div>
+
+                        {{!-- Linha de "Aplicar Se" --}}
+                        <div class="form-row">
+                            <label class="row-label">Aplicar efeito se obter:</label>
+                            <div class="radio-group horizontal">
+                                <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="failure" {{checked (eq system.resistanceRoll.applyOn 'failure')}}><span>Falha</span></label>
+                                <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="success" {{checked (eq system.resistanceRoll.applyOn 'success')}}><span>Sucesso</span></label>
+                            </div>
+                        </div>
+
+                        {{!-- Linha da "Margem Mínima" --}}
+                        <div class="form-row">
+                            <label class="row-label">Margem Mínima:</label>
+                            <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional"/>
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+
+            {{!-- SEÇÃO EFEITO --}}
+            <div class="form-section">
+                <h4 class="section-title">Efeito</h4>
+                
+                {{!-- Linha do "Tipo de Efeito" --}}
+                <div class="form-row">
+                    <label class="row-label">Tipo de Efeito:</label>
+                    <select name="system.type">
+                        <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Atributo</option>
+                        <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
+                        <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
+                        <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
+                        <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
+                    </select>
+                </div>
+                {{#if (eq system.type 'attribute')}}<p class="hint">Modifica um atributo ou valor numérico no alvo.</p>{{/if}}
+                {{#if (eq system.type 'status')}}<p class="hint">Aplica um ícone de status no token do alvo.</p>{{/if}}
+                {{#if (eq system.type 'macro')}}<p class="hint">Executa uma macro previamente feita - Busca a Macro pelo nome.</p>{{/if}}
+                
+                <hr>
+
+                {{!-- Campos Condicionais --}}
+                <div class="conditional-fields">
+                  {{#if (eq system.type 'attribute')}}
+    
+                        <div class="attribute-effect-layout">
+                            
+                            {{!-- 1ª Linha: Caminho --}}
+                            <div class="form-row">
+                                <label class="row-label">Caminho:</label>
+                                <textarea name="system.path" rows="1">{{system.path}}</textarea>
+                            </div>
+
+                            {{!-- 2ª Linha: Operação --}}
+                            <div class="form-row">
+                                <label class="row-label">Operação:</label>
+                                <div class="radio-group horizontal">
+                                    <label class="custom-radio"><input type="radio" name="system.operation" value="ADD" {{checked (eq system.operation 'ADD')}}><span>ADD</span></label>
+                                    <label class="custom-radio"><input type="radio" name="system.operation" value="SUB" {{checked (eq system.operation 'SUB')}}><span>SUB</span></label>
+                                    <label class="custom-radio"><input type="radio" name="system.operation" value="SET" {{checked (eq system.operation 'SET')}}><span>SET</span></label>
+                                </div>
+                            </div>
+
+                            {{!-- 3ª Linha: Modificador/Valor --}}
+                            <div class="form-row">
+                                <label class="row-label">Modificador:</label>
+                                <textarea name="system.value" rows="1">{{system.value}}</textarea>
+                            </div>
+
+                        </div>
+                    {{/if}}
+                    {{#if (eq system.type 'status')}}             
+                        <div class="form-row">
+                            <label>Ícone de Status</label>
+                            <select name="system.statusId">
+                                {{#each statusEffects as |status|}}
+                                    <option value="{{status.id}}" {{#if (eq ../system.statusId status.id)}}selected{{/if}}>
+                                        {{status.label}}
+                                    </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    {{/if}}
+                    {{#if (eq system.type 'macro')}}
+                        <div class="form-row">
+                            <label class="row-label">Nome da Macro:</label>
+                            <div class="input-with-validation">
+                                <input type="text" name="system.value" value="{{system.value}}" list="macro-list" autocomplete="off"/>
+                                <span class="validation-icon"></span>
+                            </div>
+                            <datalist id="macro-list">
+                                {{#each macros as |macroName|}}
+                                    <option value="{{macroName}}">
+                                {{/each}}
+                            </datalist>
+                        </div>
+                    {{/if}}
+                    {{#if (eq system.type 'flag')}}
+                        <p class="hint">Define uma flag customizada no alvo. Útil para criar estados que outras condições podem verificar.</p>
+                        
+                        {{!-- Linha da Chave (Key) --}}
+                        <div class="form-row">
+                            <label class="row-label">Chave da Flag (Key):</label>
+                            <input type="text" name="system.key" value="{{system.key}}" placeholder="Ex: em_chamas"/>
+                        </div>
+
+                        {{!-- Linha do Valor Lógico --}}
+                        <div class="form-row">
+                            <label class="row-label">Valor Lógico da Flag:</label>
+                            <div class="radio-group horizontal">
+                                <label class="custom-radio">
+                                    <input type="radio" name="system.flag_value_selector" value="true" {{checked (eq flagValueSelection 'true')}}>
+                                    <span>Verdadeiro</span>
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="system.flag_value_selector" value="false" {{checked (eq flagValueSelection 'false')}}>
+                                    <span>Falso</span>
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="system.flag_value_selector" value="custom" {{checked (eq flagValueSelection 'custom')}}>
+                                    <span>Outro</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{!-- Campo de valor customizado (só aparece se "Outro" for selecionado) --}}
+                        {{#unless flagValueIsBoolean}}
+                        <div class="form-row indented">
+                            <label class="row-label">Valor Customizado:</label>
+                            <input type="text" name="system.flag_value" value="{{system.flag_value}}"/>
+                        </div>
+                        {{/unless}}
+                    {{/if}}
+                    {{#if (eq system.type 'chat')}}
+                        <div class="form-group"><label>Texto da Mensagem</label><textarea name="system.chat_text" rows="3">{{system.chat_text}}</textarea></div>
+                        <label class="custom-checkbox hint"><input type="checkbox" name="system.has_roll" {{checked system.has_roll}}/><span>Incluir um botão de teste?</span></label>
+                        {{#if system.has_roll}}
+                        <div class="form-grid-3 indented"><div class="form-group"><label>Rótulo</label><input type="text" name="system.roll_label" value="{{system.roll_label}}"/></div>
+                            <div class="form-group"><label>Atributo</label><input type="text" name="system.roll_attribute" value="{{system.roll_attribute}}"/></div>
+                            <div class="form-group"><label>Modificador</label><input type="text" name="system.roll_modifier" value="{{system.roll_modifier}}"/></div>
+                        </div>
+                        {{/if}}
+                    {{/if}}
+                </div>
+            </div>
+
+        </div>
+    </main>
+</form>

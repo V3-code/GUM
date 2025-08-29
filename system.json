@@ -19,15 +19,18 @@
     "scripts/gum-data.js",
     "scripts/apps/condition-builder.js",
     "scripts/apps/effect-builder.js",
+    "scripts/apps/effect-sheet.js",
     "scripts/apps/condition-sheet.js",
     "scripts/apps/damage-application.js",
     "module/settings.js",
     "module/apps/modifier-browser.js",
+    "module/apps/effect-browser.js",
     "scripts/main.js"
   ],
   "styles": [
     "styles/styles.css",
     "styles/modifier-browser.css",
+    "styles/effect-browser.css",
     "styles/item-sheet.css",
     "styles/damage-application.css",
     "styles/conditions.css",
@@ -36,7 +39,7 @@
     "packs": [
     {
       "name": "modifiers",
-      "label": "GUM - Modificadores",
+      "label": "[GUM] Modificadores",
       "system": "gum",
       "path": "./packs/modifiers",
       "type": "Item",

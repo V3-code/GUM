@@ -47,7 +47,7 @@
     }
   },
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect"],
     
     "templates": {
       "base": {
@@ -193,6 +193,29 @@
       "cost": "0%",
       "level": 0,
       "applied_effect": ""
+    },
+    "effect": {
+        "templates": ["base"],
+        "type": "attribute",
+        "path": "system.attributes.st.mod",
+        "operation": "ADD",
+        "value": "1",
+        "statusId": "dead",
+        "key": "",
+        "flag_value": "",
+        "chat_text": "",
+        "has_roll": false,
+        "roll_label": "Rolar Teste",
+        "roll_attribute": "ht",
+        "roll_modifier": "0",
+        "whisperMode": "public",
+        "resistanceRoll": {
+            "isResisted": false,
+            "attribute": "ht",
+            "modifier": "0",
+            "applyOn": "failure",
+            "margin": ""
+        }
     }
   }
 }

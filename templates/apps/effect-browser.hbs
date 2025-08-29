@@ -1,0 +1,79 @@
+<form class="effect-browser-form">
+
+    {{!-- Container principal de 2 colunas --}}
+    <div class="browser-container">
+
+        {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
+        <aside class="browser-sidebar">
+            <div class="filter-group">
+                <h4 class="filter-title">Buscar por Nome</h4>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="Buscar efeito..."/>
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            
+            {{!-- No futuro, podemos adicionar um filtro por tipo de efeito aqui --}}
+
+        </aside>
+
+        {{!-- Coluna da Direita (Resultados Adaptados para Efeitos) --}}
+        <main class="browser-content">
+            <ol class="results-list">
+                {{#each effects as |effect|}}
+                <li class="result-item" data-item-id="{{effect.id}}">
+                    
+                    <div class="item-icon">
+                        {{#if effect.displayImg}}
+                            <img src="{{effect.displayImg}}" alt="{{effect.name}}"/>
+                        {{/if}}
+                    </div>
+
+                    <div class="item-info">
+                        <label class="item-label" for="effect-{{effect.id}}">
+                            {{!-- Linha 1: Nome do Efeito e seu Tipo --}}
+                            <div class="info-line-1">
+                                <span class="item-name">{{effect.name}}</span>
+                                <span class="item-type-tag">({{capitalize effect.system.type}})</span>
+                            </div>
+                            
+                            {{!-- Linha 2: Resumo do que o efeito faz --}}
+                            <div class="info-line-2">
+                                <span class="item-details">
+                                    {{#if (eq effect.system.type 'attribute')}}
+                                        {{effect.system.path}} {{effect.system.operation}} {{effect.system.value}}
+                                    {{/if}}
+                                    {{#if (eq effect.system.type 'status')}}
+                                        Aplica status: {{effect.system.statusId}}
+                                    {{/if}}
+                                     {{#if (eq effect.system.type 'macro')}}
+                                        Executa macro: {{effect.system.value}}
+                                    {{/if}}
+                                    {{#if (eq effect.system.type 'chat')}}
+                                        Envia mensagem no chat.
+                                    {{/if}}
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="item-controls">
+                        <input type="checkbox" name="{{effect.id}}" id="effect-{{effect.id}}" />
+                    </div>
+                </li>
+                {{else}}
+                <li class="placeholder-text">Nenhum efeito encontrado no compêndio "GUM - Efeitos".</li>
+                {{/each}}
+            </ol>
+        </main>
+
+    </div>
+
+    {{!-- Rodapé (sem alterações) --}}
+    <footer class="browser-footer">
+        <button type="submit">
+            <i class="fas fa-check"></i> Adicionar Selecionados
+        </button>
+    </footer>
+
+</form>

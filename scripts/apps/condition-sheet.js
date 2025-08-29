@@ -1,11 +1,12 @@
 import { ConditionBuilder } from "./condition-builder.js";
 import { EffectBuilder } from "./effect-builder.js";
+import { EffectBrowser } from "../../module/apps/effect-browser.js";
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
-            width: 645, height: "auto", resizable: true,
+            width: 450, height: 495, resizable: true,
             template: "systems/gum/templates/items/condition-sheet.hbs"
         });
     }
@@ -26,8 +27,7 @@ activateListeners(html) {
 
     // BOTÃO DE ADICIONAR ABRE O ASSISTENTE PARA UM NOVO EFEITO
     html.find('.add-effect').on('click', (ev) => {
-        const newEffect = { type: "attribute" };
-        new EffectBuilder(this.item, newEffect, -1).render(true);
+        new EffectBrowser(this.item).render(true);
     });
     
     // BOTÃO DE EDITAR ABRE O ASSISTENTE COM DADOS DO EFEITO EXISTENTE

@@ -13,7 +13,7 @@ export class EffectBuilder extends FormApplication {
             title: "Assistente de Efeito",
             classes: ["gum", "effect-builder", "theme-dark"],
             template: "systems/gum/templates/apps/effect-builder.hbs",
-            width: 500, height: "auto", resizable: true
+            width: "450", height: "495", resizable: true
         });
     }
 

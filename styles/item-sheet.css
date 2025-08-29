@@ -776,3 +776,232 @@
     gap: 10px;
     
 }
+
+/* ============================================= */
+/* DESIGN DA FICHA DE EFEITO (LAYOUT VERTICAL)   */
+/* ============================================= */
+
+
+
+/* 1. Corrige a cor de fundo da ficha */
+.gum.sheet.item.effect-sheet .sheet-body-content {
+    background: var(--c-bg-dark, #2b2a29);
+}
+
+/* 2. Garante que as seções tenham o visual padrão do tema escuro */
+.gum.sheet.item.effect-sheet .form-section {
+    background: var(--c-bg-darkest, #191813);
+    border: 1px solid var(--c-border-light, #4a4846);
+}
+
+/* 3. Ativa o layout em grid para os campos condicionais */
+.gum.sheet.item.effect-sheet .form-grid-2,
+.gum.sheet.item.effect-sheet .form-grid-3 {
+    display: grid;
+    
+    gap: 10px;
+    align-items: end;
+}
+.gum.sheet.item.effect-sheet .form-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+.gum.sheet.item.effect-sheet .form-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.effect-sheet .indented {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* ✅ ESTA É A LINHA QUE CONTROLA O ESPAÇO VERTICAL */
+    
+    /* Mantém o estilo de recuo que já tínhamos */
+    padding-left: 15px;
+    border-left: 2px solid var(--c-accent-gold, #c5a05b);
+    margin-top: 10px;
+}
+
+/* Faz o container dos botões ocupar o espaço e se alinhar */
+.effect-sheet .form-row .radio-group.horizontal {
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-around;
+}
+
+/* Faz cada botão individual crescer e ocupar o espaço disponível */
+.effect-sheet .form-row .radio-group .custom-radio {
+    flex: 1; /* Mantém o alinhamento de esticar para ocupar o espaço proporcionalmente */
+    display: flex;
+    justify-content: center; /* Centraliza o círculo e o texto */
+    align-items: center;
+    gap: 8px; /* ✅ MANTÉM O ESPAÇO ENTRE A "BOLINHA" E O TEXTO */
+}
+
+/* Muda a cor do texto para o cinza padrão */
+.effect-sheet .form-row .radio-group .custom-radio span {
+    color: #a9a6a0; /* ✅ COR CINZA PADRÃO */
+    font-weight: normal;
+}
+
+
+/* Garante que os inputs dentro da ficha de efeito usem o tema escuro */
+.gum.sheet.item.effect-sheet input,
+.gum.sheet.item.effect-sheet select,
+.gum.sheet.item.effect-sheet textarea {
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--c-accent-gold, #c5a05b);
+}
+
+/* Garante que o fundo e o padding sejam aplicados corretamente */
+.gum-item-sheet.effect-sheet .sheet-body-content {
+    padding: 15px;
+}
+
+/* Nova classe para alinhar rótulos e inputs na mesma linha */
+.effect-sheet .form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.effect-sheet .form-row .row-label {
+    font-weight: bold;
+    flex-shrink: 0; /* Impede que o rótulo encolha */
+}
+.effect-sheet .form-row > input,
+.effect-sheet .form-row > select {
+    flex-grow: 1; /* Faz o campo de input/select ocupar o espaço restante */
+}
+
+/* Garante que o grupo de radio buttons não ocupe espaço extra */
+.effect-sheet .form-row .radio-group {
+    flex-grow: 1;
+}
+
+/* Herda o estilo de "recuo" que já usamos */
+.effect-sheet .indented {
+    padding-left: 15px;
+    border-left: 2px solid var(--c-accent-gold, #c5a05b);
+    margin-top: 10px;
+}
+
+/* Remove o espaçamento do container 'pai' na ficha de efeito */
+.gum.sheet.item.effect-sheet .sheet-body {
+    padding: 0;
+}
+
+/* Garante que o container 'filho' tenha o espaçamento correto e o fundo escuro */
+.gum.sheet.item.effect-sheet .sheet-body-content {
+    background: var(--c-bg-dark, #2b2a29);
+    padding: 15px; /* Mantém um espaçamento interno para o conteúdo não colar nas bordas */
+}
+
+/* ============================================================= */
+/* ESTILOS PARA O LAYOUT DO EFEITO DE ATRIBUTO                   */
+/* ============================================================= */
+
+.effect-sheet .attribute-effect-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espaço vertical entre cada linha */
+}
+
+/* Garante que os textareas sejam redimensionáveis verticalmente */
+.effect-sheet .attribute-effect-layout textarea {
+    resize: vertical;
+}
+
+/* Alinha os radio buttons da Operação */
+.effect-sheet .attribute-effect-layout .radio-group.horizontal {
+    justify-content: flex-start; /* Alinha os botões à esquerda */
+    gap: 15px;
+}
+
+/* ============================================================= */
+/* ESTILOS PARA O LAYOUT HORIZONTAL DO EFEITO DE ATRIBUTO        */
+/* ============================================================= */
+
+.effect-sheet .attribute-effect-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Espaço vertical entre cada linha */
+}
+
+/* Garante que o textarea comece com uma linha e cresça conforme o necessário */
+.effect-sheet .attribute-effect-layout textarea {
+    resize: vertical;
+    min-height: 28px; /* Altura mínima para se alinhar com outros inputs */
+    line-height: 1.4;
+}
+
+/* Alinha os radio buttons da Operação */
+.effect-sheet .attribute-effect-layout .radio-group.horizontal {
+    justify-content: flex-start; 
+    gap: 15px;
+}
+
+/* A regra principal para o alinhamento horizontal das linhas */
+.effect-sheet .attribute-effect-layout .form-row {
+    display: flex;
+    align-items: center; /* Alinha o rótulo e o input verticalmente */
+    gap: 10px;
+}
+
+.effect-sheet .attribute-effect-layout .form-row .row-label {
+    flex: 0 0 90px; /* Define uma largura fixa para os rótulos */
+    font-weight: bold;
+    text-align: left;
+}
+
+.effect-sheet .attribute-effect-layout .form-row > textarea,
+.effect-sheet .attribute-effect-layout .form-row > .radio-group {
+    flex-grow: 1; /* Faz o campo/grupo de botões ocupar o resto do espaço */
+}
+
+/* ============================================================= */
+/* ESTILOS PARA O ÍCONE DE VALIDAÇÃO DE MACRO                    */
+/* ============================================================= */
+.input-with-validation {
+    position: relative;
+    display: flex; /* Para o input e o ícone ficarem lado a lado */
+    align-items: center;
+    gap: 8px; /* ✅ ESPAÇO ENTRE O INPUT E O ÍCONE */
+}
+.input-with-validation input {
+    flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
+}
+.validation-icon {
+    font-size: 0.9em;
+    flex-shrink: 0; /* Impede que o ícone encolha */
+}
+.validation-icon i {
+    text-shadow: 0 0 3px #000;
+}
+
+/* =================================================================== */
+/* ESTRUTURA FLEXÍVEL E ALTURA CORRETA PARA A FICHA DE EFEITO          */
+/* =================================================================== */
+
+/* Garante que o container principal da janela não tenha padding indesejado */
+.gum.sheet.item.effect-sheet .window-content {
+    padding: 0;
+}
+
+/* Transforma o formulário em um container flex que ocupa 100% da altura */
+.gum.sheet.item.effect-sheet form {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Faz o corpo principal (abaixo do cabeçalho) crescer para preencher o espaço */
+.gum.sheet.item.effect-sheet .sheet-body {
+    flex-grow: 1;
+    overflow: hidden; /* Controla barras de rolagem indesejadas */
+}
+
+/* Garante que a área de conteúdo tenha a altura total e uma barra de rolagem interna se necessário */
+.gum.sheet.item.effect-sheet .sheet-body-content {
+    height: 100%;
+    overflow-y: auto;
+}
