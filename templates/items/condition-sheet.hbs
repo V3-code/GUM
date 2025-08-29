@@ -37,49 +37,62 @@
                     </div>
                 </div>
 
-                    {{!-- SEÇÃO DE DURAÇÃO REFINADA --}}
-                    <div class="form-section">
-                        <h4 class="section-title">Duração e Expiração</h4>
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label>Duração</label>
-                                <div class="input-group">
-                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
-                                    <select name="system.duration.unit">
-                                        <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
-                                        <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
-                                        <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
-                                        <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
-                                        <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Ao Expirar</label>
-                                <select name="system.duration.expiration">
-                                    <option value="delete" {{#if (eq system.duration.expiration "delete")}}selected{{/if}}>Deletar Item</option>
-                                    <option value="disable" {{#if (eq system.duration.expiration "disable")}}selected{{/if}}>Desativar Item</option>
+                {{!-- SEÇÃO DE DURAÇÃO (LAYOUT FINAL CORRIGIDO) --}}
+                <div class="form-section">
+                    <h4 class="section-title">Duração e Expiração</h4>
+                    
+                    <div class="duration-grid">
+                        
+                        {{!-- Linha 1: Duração, Input e Unidade agrupados --}}
+                        <div class="duration-inline-group">
+                            <label class="grid-label">DURAÇÃO:</label>
+                            <div class="input-group">
+                                <input class="duration-value" type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
+                                <select name="system.duration.unit">
+                                    <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
+                                    <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
+                                    <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
+                                    <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
+                                    <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
                                 </select>
                             </div>
                         </div>
-                        <label class="custom-checkbox hint">
-                            <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
-                            <span>A duração só é contada durante o combate?</span>
-                        </label>
-                    </div>
 
-                    {{!-- SEÇÃO DE CONDIÇÃO DE ATIVAÇÃO --}}
-                    <div class="form-section">
-                        <h4 class="section-title">Condição de Ativação</h4>
-                        <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
-                        <div class="condition-input-area">
-                           <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
-                           <a class="button condition-assistant-btn" title="Assistente de Condições">
-                               <i class="fas fa-magic"></i>
-                           </a>
+                        {{!-- Linha 2: Opções de Expiração --}}
+                        <div class="expiration-group">
+                            <label class="grid-label">AO EXPIRAR:</label>
+                            <div class="radio-group horizontal">
+                                <label class="custom-radio" title="O item será removido permanentemente da ficha do ator.">
+                                    <input type="radio" name="system.duration.expiration" value="delete" {{checked (eq system.duration.expiration 'delete')}}>
+                                    <span>Deletar Item</span>
+                                </label>
+                                <label class="custom-radio" title="O item será desativado (marcado com um cadeado na ficha do ator), mas não removido.">
+                                    <input type="radio" name="system.duration.expiration" value="disable" {{checked (eq system.duration.expiration 'disable')}}>
+                                    <span>Desativar Item</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
+                        {{!-- Linha 3: Checkbox de Combate alinhado à esquerda --}}
+                        <label class="custom-checkbox hint combat-checkbox-row">
+                            <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                            <span>Duração contada apenas em combate.</span>
+                        </label>
+
+                    </div>
+                </div>
+
+
+                {{!-- ✅ SEÇÃO DE CONDIÇÃO DE ATIVAÇÃO RESTAURADA ✅ --}}
+                <div class="form-section">
+                    <h4 class="section-title">Gatilho de Ativação</h4>
+                    <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
+                    <div class="condition-input-area">
+                    <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
+                    <a class="button condition-assistant-btn" title="Assistente de Condições">
+                        <i class="fas fa-magic"></i>
+                    </a>
+                    </div>
                 </div>
 
                 {{!-- COLUNA DA DIREITA: RESULTADO --}}

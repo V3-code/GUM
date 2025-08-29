@@ -199,3 +199,65 @@
     gap: 8px;
     flex-shrink: 0;
 }
+
+/* ============================================= */
+/* ESTILOS PARA A SEÇÃO DE DURAÇÃO (FINAL)       */
+/* ============================================= */
+
+.duration-grid {
+    display: flex; /* MUDANÇA: Usando flexbox para empilhamento vertical */
+    flex-direction: column;
+    gap: 12px; /* Espaço entre cada linha de opção */
+}
+
+/* Grupo da primeira linha (Duração: [input] [select]) */
+.duration-inline-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.duration-inline-group .grid-label {
+    font-weight: normal;
+    flex-shrink: 0; /* Impede que o rótulo encolha */
+}
+
+.duration-inline-group .input-group {
+    display: flex; /* A mágica: força o input e o select a ficarem na mesma linha */
+    
+    justify-content: space-around;
+}
+
+.duration-inline-group .duration-value {
+    flex: 0 0 70px; /* Largura fixa de 70px para o número */
+}
+
+/* Grupo da segunda linha (Ao Expirar) */
+.expiration-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.expiration-group .grid-label {
+    font-weight: normal;
+}
+
+.expiration-group .radio-group.horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+/* Este seletor é mais específico e só afeta os textos dentro do grupo "Ao Expirar" */
+.item.sheet.condition-sheet .duration-grid .expiration-group .custom-radio span {
+    font-weight: normal; /* Garante que não está em negrito */
+    font-size: 0.9em;  /* Deixa a fonte um pouco menor */
+    color: #a9a6a0;
+}
+
+/* Alinhamento do checkbox final (ocupa a linha toda e alinha à esquerda) */
+.combat-checkbox-row {
+    width: 100%;
+    justify-content: flex-start;
+}
