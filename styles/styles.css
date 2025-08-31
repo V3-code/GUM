@@ -866,9 +866,9 @@ a:hover { text-decoration: underline; color: #fff; }
 
 /* Garante que o conteúdo da aba possa rolar independentemente */
 .sheet-body {
-  height: 100%;
+ 
   overflow-y: auto;
-  padding: 1rem;
+  
 }
 
 /* =================================================================== */

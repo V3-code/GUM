@@ -20,6 +20,7 @@
     "scripts/apps/condition-builder.js",
     "scripts/apps/effect-builder.js",
     "scripts/apps/effect-sheet.js",
+    "scripts/apps/trigger-sheet.js",
     "scripts/apps/condition-sheet.js",
     "scripts/apps/damage-application.js",
     "module/settings.js",

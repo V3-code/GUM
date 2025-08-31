@@ -7,7 +7,12 @@ export class ConditionSheet extends ItemSheet {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
             width: 450, height: 495, resizable: true,
-            template: "systems/gum/templates/items/condition-sheet.hbs"
+            template: "systems/gum/templates/items/condition-sheet.hbs",
+            tabs: [{
+                navSelector: ".sheet-tabs",
+                contentSelector: ".sheet-body-content",
+                initial: "detalhes"
+            }]
         });
     }
 
@@ -25,30 +30,92 @@ activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
-    // BOTÃO DE ADICIONAR ABRE O ASSISTENTE PARA UM NOVO EFEITO
+    // Listener para o botão Adicionar Efeito
     html.find('.add-effect').on('click', (ev) => {
         new EffectBrowser(this.item).render(true);
     });
     
-    // BOTÃO DE EDITAR ABRE O ASSISTENTE COM DADOS DO EFEITO EXISTENTE
+    // Lógica de Edição do item efeito na ficha
     html.find('.edit-effect').on('click', (ev) => {
-        const effectIndex = $(ev.currentTarget).closest('.effect-summary').data('effectIndex');
+        const effectIndex = $(ev.currentTarget).closest('.effect-tag').data('effectIndex');
         const effects = Array.isArray(this.item.system.effects) ? this.item.system.effects : Object.values(this.item.system.effects || {});
-        const effect = effects[effectIndex];
-        if (effect) {
-            new EffectBuilder(this.item, effect, effectIndex).render(true);
+        const effectData = effects[effectIndex];
+        
+        if (effectData) {
+            // Simplesmente abre o nosso novo EffectBuilder com os dados.
+            // O próprio EffectBuilder agora cuida de salvar.
+            new EffectBuilder(this.item, effectData, effectIndex).render(true);
         }
     });
 
+    // Listener para o botão Deletar Efeito
     html.find('.delete-effect').on('click', this._onDeleteEffect.bind(this));
+    
+    // Listeners dos assistentes
     html.find('.condition-assistant-btn').on('click', (ev) => { new ConditionBuilder(this.item).render(true); });
+    html.find('.saved-triggers-btn').on('click', (ev) => {
+        const textarea = this.element.find('textarea[name="system.when"]')[0];
+        this._openTriggerPicker(textarea);
+    });
+
+    // Listener para editar descrições
     html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
 }
     
+ async _openTriggerPicker(textarea) {
+        const pack = game.packs.get("world.gum-gatilhos");
+        let savedTriggers = [];
+        if (pack) {
+            savedTriggers = await pack.getDocuments();
+        }
+
+        if (savedTriggers.length === 0) {
+            return ui.notifications.warn("Nenhum gatilho salvo encontrado no compêndio '[GUM] Gatilhos'.");
+        }
+
+        let content = `<div class="structure-picker-dialog"><div class="options">`;
+        for (const trigger of savedTriggers) {
+            content += `<a data-code="${trigger.system.code}" title="${trigger.system.code}">${trigger.name}</a>`;
+        }
+        content += `</div></div>`;
+
+        const d = new Dialog({
+            title: "Selecionar Gatilho Salvo",
+            content,
+            buttons: { close: { label: "Fechar" } },
+            render: (html) => {
+                html.find('.options a').on('click', (ev) => {
+                    const triggerCode = ev.currentTarget.dataset.code;
+                    this._insertTextWithHighlight(textarea, triggerCode);
+                    d.close();
+                });
+            }
+        }, { width: 450, classes: ["dialog", "gum", "structure-picker-dialog"] }).render(true);
+    }
+
+    // ✅ NOVA FUNÇÃO AUXILIAR (adaptada do ConditionBuilder) ✅
+    _insertTextWithHighlight(textarea, text, placeholder = null) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
+        
+        if (placeholder) {
+            const selectStart = textarea.value.indexOf(placeholder, start);
+            if (selectStart !== -1) {
+                textarea.focus();
+                textarea.setSelectionRange(selectStart, selectStart + placeholder.length);
+            }
+        } else {
+            const newCursorPos = start + text.length;
+            textarea.focus();
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    }
+
     // Deletar um efeito (lógica simplificada)
     _onDeleteEffect(event) {
         event.preventDefault();
-        const effectIndex = $(event.currentTarget).closest('.effect-block').data('effectIndex');
+        const effectIndex = $(event.currentTarget).closest('.effect-tag').data('effectIndex');
         const effectsData = this.item.system.effects || [];
         const effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
         effects.splice(effectIndex, 1);

@@ -20,51 +20,77 @@ export class EffectSheet extends ItemSheet {
         const flagValue = context.system.flag_value;
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
             context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
+        context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, { async: true });
+
 
         return context;
     }
 
-        activateListeners(html) {
-        super.activateListeners(html);
+activateListeners(html) {
+    super.activateListeners(html);
+    if (!this.isEditable) return; // Adicionando uma verificação de segurança
 
-        html.find('input[name="system.flag_value_selector"]').on('change', (event) => {
-            const selectorValue = event.currentTarget.value;
-            
-            // Se o usuário selecionar "Verdadeiro" ou "Falso",
-            // nós forçamos a atualização do valor real da flag.
-            if (selectorValue === 'true' || selectorValue === 'false') {
-                this.item.update({ 'system.flag_value': selectorValue });
-            }
-        });
+    // Listener para o seletor de valor da flag (funciona independentemente)
+    html.find('input[name="system.flag_value_selector"]').on('change', (event) => {
+        const selectorValue = event.currentTarget.value;
+        if (selectorValue === 'true' || selectorValue === 'false') {
+            this.item.update({ 'system.flag_value': selectorValue });
+        }
+    });
+    
+    // ✅ OUVINTE DO BOTÃO DE EDITAR AGORA É ATIVADO SEMPRE ✅
+    html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
+
+    // ✅ LÓGICA DA MACRO AGORA ESTÁ DENTRO DE UMA VERIFICAÇÃO SEGURA ✅
+    const macroInput = html.find('input[name="system.value"]')[0];
+    // Só executa este bloco SE o campo da macro existir na ficha
+    if (macroInput) {
         
-        // Encontra o campo de input da macro
-        const macroInput = html.find('input[name="system.value"]')[0];
-        if (!macroInput) return;
-
-        // Função que faz a validação
+        // A função de validação agora vive dentro do 'if'
         const validateMacro = () => {
             const icon = html.find('.validation-icon')[0];
+            if (!icon) return; // Segurança extra para o ícone
             const macroName = macroInput.value;
-            // A lista de macros já está disponível através do this.object.macros
-            // que foi carregada no nosso getData()
             const macroExists = game.macros.some(m => m.name === macroName);
 
             if (macroName === "") {
-                icon.innerHTML = ""; // Limpa o ícone se o campo estiver vazio
+                icon.innerHTML = "";
             } else if (macroExists) {
-                icon.innerHTML = '<i class="fas fa-check"></i>'; // Ícone de "V"
+                icon.innerHTML = '<i class="fas fa-check"></i>';
                 icon.style.color = "var(--c-accent-green, #389c68)";
             } else {
-                icon.innerHTML = '<i class="fas fa-times"></i>'; // Ícone de "X"
+                icon.innerHTML = '<i class="fas fa-times"></i>';
                 icon.style.color = "var(--c-accent-red, #a53541)";
             }
         };
 
-        // Adiciona um "ouvinte" que dispara a validação sempre que o usuário digita algo
         macroInput.addEventListener('keyup', validateMacro);
-        
-        // Executa a validação uma vez quando a ficha é aberta, caso já tenha um valor
-        validateMacro();
+        validateMacro(); // Valida ao abrir a ficha
+    }
+}
+
+     // ✅ FUNÇÃO AUXILIAR PARA ABRIR O EDITOR DE TEXTO (A PARTE QUE FALTAVA) ✅
+    _onEditText(event) {
+        const target = $(event.currentTarget);
+        const fieldName = target.data('target');
+        const title = target.attr('title');
+        const currentContent = foundry.utils.getProperty(this.item, fieldName) || "";
+
+        new Dialog({
+            title: title,
+            content: `<form><textarea name="content" style="width: 100%; height: 300px;">${currentContent}</textarea></form>`,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const newContent = html.find('textarea[name="content"]').val();
+                        this.item.update({ [fieldName]: newContent });
+                    }
+                }
+            },
+            default: "save"
+        }, { width: 500, height: 400, resizable: true }).render(true);
     }
 }
 

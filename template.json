@@ -47,7 +47,7 @@
     }
   },
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger"],
     
     "templates": {
       "base": {
@@ -194,6 +194,12 @@
       "level": 0,
       "applied_effect": ""
     },
+
+    "trigger": {
+    "templates": ["base"],
+    "code": ""
+    },
+    
     "effect": {
         "templates": ["base"],
         "type": "attribute",

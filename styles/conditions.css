@@ -17,9 +17,9 @@
     overflow: hidden;
 }
 .item.sheet.condition-sheet .sheet-body-content {
-    height: 100%;
-    padding: 8px;
-    display: flex;
+    
+    padding: 15px;
+    
     flex-direction: column;
     gap: 12px;
 }
@@ -98,6 +98,8 @@
     background: #191813;
     color: #f0f0e8;
     border: 1px solid #4a4846;
+    height: 185px;
+    font-size: 0.8em;
 }
 .item.sheet.condition-sheet .button-container {
     text-align: right;
@@ -214,7 +216,8 @@
 .duration-inline-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 45px;
+    
 }
 
 .duration-inline-group .grid-label {
@@ -224,8 +227,8 @@
 
 .duration-inline-group .input-group {
     display: flex; /* A mágica: força o input e o select a ficarem na mesma linha */
+    gap: 65px;
     
-    justify-content: space-around;
 }
 
 .duration-inline-group .duration-value {
@@ -236,7 +239,8 @@
 .expiration-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 35px;
+    
 }
 
 .expiration-group .grid-label {
@@ -244,9 +248,12 @@
 }
 
 .expiration-group .radio-group.horizontal {
-    display: flex;
+    
     flex-direction: row;
-    gap: 20px;
+    row-gap: 20px;
+    column-gap: 45px;
+    
+    
 }
 
 /* Este seletor é mais específico e só afeta os textos dentro do grupo "Ao Expirar" */
@@ -260,4 +267,112 @@
 .combat-checkbox-row {
     width: 100%;
     justify-content: flex-start;
+}
+
+/* ============================================================= */
+/* ALINHAMENTO DOS BOTÕES NA ABA DE ATIVAÇÃO                     */
+/* ============================================================= */
+
+.condition-sheet .condition-input-area {
+    display: flex;
+    flex-direction: column; /* Empilha o textarea e o grupo de botões */
+    flex-grow: 1;
+}
+
+.condition-sheet .condition-input-area .button-group {
+    display: flex;
+    justify-content: space-evenly; /* Alinha os botões à direita */
+    gap: 8px; /* Espaço entre os botões */
+    margin-top: 8px; /* Espaço acima dos botões */
+}
+
+/* Garante que o ícone e o texto dentro do botão fiquem alinhados */
+.condition-sheet .button-group .button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ============================================= */
+/* ESTILOS PARA A ABA DE EFEITOS (ESTILO DE TAGS)*/
+/* ============================================= */
+
+/* Garante o padding correto na aba */
+.gum.sheet.item.condition-sheet .tab[data-tab="efeitos"] {
+    padding: 15px;
+}
+
+/* Barra de ferramentas, idêntica à de modificadores */
+.effects-toolbar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}
+
+/* Lista de tags de efeito */
+.effects-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* A "tag" de cada efeito individual */
+.effect-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    background-color: var(--c-bg-medium, #3a3836);
+    border: 1px solid var(--c-border-light, #4a4846);
+    overflow: hidden;
+}
+
+/* A parte clicável da tag (informações) */
+.effect-tag .effect-info {
+    padding: 5px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.effect-tag .effect-info:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.effect-tag .effect-type { 
+    font-weight: bold; 
+    text-transform: uppercase;
+    color: var(--c-accent-gold, #c5a05b);
+}
+.effect-tag .effect-divider { opacity: 0.6; }
+.effect-tag .effect-summary-text { font-style: italic; opacity: 0.8; }
+
+/* A parte dos controles da tag (deletar) */
+.effect-tag .effect-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: rgba(0,0,0,0.3);
+}
+.effect-tag .delete-effect {
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.effect-tag .delete-effect:hover {
+    color: #fff;
+}
+
+.effects-list .placeholder-text {
+    font-style: italic;
+    opacity: 0.7;
 }

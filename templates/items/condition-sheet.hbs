@@ -8,140 +8,165 @@
         </div>
     </header>
 
-    <main class="sheet-body">
-        <div class="sheet-body-content">
-            
-            {{!-- NOVA ESTRUTURA DE GRID COM DUAS COLUNAS --}}
+<main class="sheet-body">
+
+    {{!-- 1. NAVEGAÇÃO DAS ABAS --}}
+    <nav class="sheet-tabs tabs">
+        <a class="item active" data-tab="detalhes">Detalhes</a>
+        <a class="item" data-tab="ativacao">Ativação</a>
+        <a class="item" data-tab="efeitos">Efeitos</a>
+    </nav>
+
+    {{!-- 2. CORPO DO CONTEÚDO DAS ABAS --}}
+    <div class="sheet-body-content">
+
+        {{!-- ABA DE DETALHES --}}
+        <div class="tab active" data-tab="detalhes">
             <div class="condition-body-grid">
-
-                {{!-- COLUNA DA ESQUERDA: CONFIGURAÇÃO --}}
                 <div class="condition-column-left">
+                    {{!-- SEÇÃO DE CLASSIFICAÇÃO --}}
+                        <div class="form-section">
+                            <h4 class="section-title">Classificação</h4>
+                            <div class="radio-group">
+                                
+                                {{!-- Opção 1: Condição Padrão --}}
+                                <label class="custom-radio" title="Para regras globais e estados persistentes definidos pelo mestre (Ex: Choque, Cambaleando).">
+                                    <input type="radio" name="system.category" value="general" {{checked (eq system.category 'general')}}>
+                                    <span>Condição Padrão</span>
+                                </label>
 
-                {{!-- SEÇÃO DE CLASSIFICAÇÃO (NOMES REVISADOS) --}}
-                <div class="form-section">
-                    <h4 class="section-title">Classificação</h4>
-                    <div class="radio-group">
-                        
-                        {{!-- Opção 1: Condição Padrão --}}
-                        <label class="custom-radio" title="Para regras globais e estados persistentes definidos pelo mestre (Ex: Choque, Cambaleando).">
-                            <input type="radio" name="system.category" value="general" {{checked (eq system.category 'general')}}>
-                            <span>Condição Padrão</span>
-                        </label>
+                                {{!-- Opção 2: Condição Temporária --}}
+                                <label class="custom-radio" title="Um estado temporário, geralmente de curta duração e aplicado em situações como o combate.">
+                                    <input type="radio" name="system.category" value="temporary" {{checked (eq system.category 'temporary')}}>
+                                    <span>Condição Temporária</span>
+                                </label>
 
-                        {{!-- Opção 2: Condição Temporária --}}
-                        <label class="custom-radio" title="Um estado temporário, geralmente de curta duração e aplicado em situações como o combate.">
-                            <input type="radio" name="system.category" value="temporary" {{checked (eq system.category 'temporary')}}>
-                            <span>Condição Temporária</span>
-                        </label>
-
-                    </div>
-                </div>
-
-                {{!-- SEÇÃO DE DURAÇÃO (LAYOUT FINAL CORRIGIDO) --}}
-                <div class="form-section">
-                    <h4 class="section-title">Duração e Expiração</h4>
-                    
-                    <div class="duration-grid">
-                        
-                        {{!-- Linha 1: Duração, Input e Unidade agrupados --}}
-                        <div class="duration-inline-group">
-                            <label class="grid-label">DURAÇÃO:</label>
-                            <div class="input-group">
-                                <input class="duration-value" type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
-                                <select name="system.duration.unit">
-                                    <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
-                                    <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
-                                    <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
-                                    <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
-                                    <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
-                                </select>
                             </div>
                         </div>
+                    {{!-- SEÇÃO DE DURAÇÃO E EXPIRAÇÃO --}}
+                        <div class="form-section">
+                            <h4 class="section-title">Duração e Expiração</h4>
+                            
+                            <div class="duration-grid">
+                                
+                                {{!-- Linha 1: Duração, Input e Unidade agrupados --}}
+                                <div class="duration-inline-group">
+                                    <label class="grid-label">DURAÇÃO:</label>
+                                    <div class="input-group">
+                                        <input class="duration-value" type="number" name="system.duration.value" value="{{system.duration.value}}" min="0" placeholder="0"/>
+                                        <select name="system.duration.unit">
+                                            <option value="unlimited" {{#if (eq system.duration.unit "unlimited")}}selected{{/if}}>Ilimitada</option>
+                                            <option value="rounds" {{#if (eq system.duration.unit "rounds")}}selected{{/if}}>Rodadas</option>
+                                            <option value="seconds" {{#if (eq system.duration.unit "seconds")}}selected{{/if}}>Segundos</option>
+                                            <option value="minutes" {{#if (eq system.duration.unit "minutes")}}selected{{/if}}>Minutos</option>
+                                            <option value="hours" {{#if (eq system.duration.unit "hours")}}selected{{/if}}>Horas</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                        {{!-- Linha 2: Opções de Expiração --}}
-                        <div class="expiration-group">
-                            <label class="grid-label">AO EXPIRAR:</label>
-                            <div class="radio-group horizontal">
-                                <label class="custom-radio" title="O item será removido permanentemente da ficha do ator.">
-                                    <input type="radio" name="system.duration.expiration" value="delete" {{checked (eq system.duration.expiration 'delete')}}>
-                                    <span>Deletar Item</span>
+                                {{!-- Linha 2: Opções de Expiração --}}
+                                <div class="expiration-group">
+                                    <label class="grid-label">AO EXPIRAR:</label>
+                                    <div class="radio-group horizontal">
+                                        <label class="custom-radio" title="O item será removido permanentemente da ficha do ator.">
+                                            <input type="radio" name="system.duration.expiration" value="delete" {{checked (eq system.duration.expiration 'delete')}}>
+                                            <span>Deletar Item</span>
+                                        </label>
+                                        <label class="custom-radio" title="O item será desativado (marcado com um cadeado na ficha do ator), mas não removido.">
+                                            <input type="radio" name="system.duration.expiration" value="disable" {{checked (eq system.duration.expiration 'disable')}}>
+                                            <span>Desativar Item</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{!-- Linha 3: Checkbox de Combate alinhado à esquerda --}}
+                                <label class="custom-checkbox hint combat-checkbox-row">
+                                    <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                                    <span>Duração contada apenas em combate.</span>
                                 </label>
-                                <label class="custom-radio" title="O item será desativado (marcado com um cadeado na ficha do ator), mas não removido.">
-                                    <input type="radio" name="system.duration.expiration" value="disable" {{checked (eq system.duration.expiration 'disable')}}>
-                                    <span>Desativar Item</span>
-                                </label>
+
                             </div>
                         </div>
+                
 
-                        {{!-- Linha 3: Checkbox de Combate alinhado à esquerda --}}
-                        <label class="custom-checkbox hint combat-checkbox-row">
-                            <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
-                            <span>Duração contada apenas em combate.</span>
-                        </label>
-
-                    </div>
+               
+                        {{!-- SEÇÃO DE DESCRIÇÃO --}}
+                        <div class="form-section">
+                            
+                                <h4 class="section-title">Descrição</h4>
+                                <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
+                        
+                            <div class="rendered-text">
+                                {{{enrichedDescription}}}
+                            </div>
+                        </div>
                 </div>
+            </div>
+        </div>
 
-
-                {{!-- ✅ SEÇÃO DE CONDIÇÃO DE ATIVAÇÃO RESTAURADA ✅ --}}
+        {{!-- ABA DE ATIVAÇÃO --}}
+        <div class="tab" data-tab="ativacao">
+            {{!-- SEÇÃO DE GATILHO DE ATIVAÇÃO --}}
                 <div class="form-section">
                     <h4 class="section-title">Gatilho de Ativação</h4>
                     <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
                     <div class="condition-input-area">
                     <textarea name="system.when" rows="4" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
-                    <a class="button condition-assistant-btn" title="Assistente de Condições">
-                        <i class="fas fa-magic"></i>
-                    </a>
+                       <div class="button-group">
+                            <a class="button saved-triggers-btn" title="Buscar Gatilho Salvo">
+                                <i class="fas fa-bookmark"></i>
+                                Gatilhos Salvos
+                            </a>
+                            <a class="button condition-assistant-btn" title="Assistente de Condições">
+                                <i class="fas fa-magic"></i>
+                                Assistente de Construção
+                            </a>
+                        </div>
                     </div>
                 </div>
-
-                {{!-- COLUNA DA DIREITA: RESULTADO --}}
-                <div class="condition-column-right">
-                    
-                    {{!-- SEÇÃO DE EFEITOS APLICADOS --}}
-                    <div class="form-section effects-section">
-                        <h4 class="section-title">Efeitos Aplicados</h4>
-                        <div class="effects-list-container">
-                            {{#each system.effects as |effect effIndex|}}
-                                <div class="effect-summary" data-effect-index="{{effIndex}}">
-                                    <div class="effect-summary-info">
-                                        <strong class="effect-type-label">{{capitalize effect.type}}</strong>
-                                        <span class="effect-details">
-                                            {{#if (eq effect.type 'attribute')}}{{effect.path}} {{effect.operation}} {{effect.value}}{{/if}}
-                                            {{#if (eq effect.type 'status')}}{{effect.statusId}}{{/if}}
-                                            {{#if (eq effect.type 'macro')}}Macro: {{effect.value}}{{/if}}
-                                            {{#if (eq effect.type 'chat')}}"{{effect.chat_text}}"
-                                                {{#if effect.has_roll}}<span class="roll-summary-tag">(c/ Teste)</span>{{/if}}
-                                            {{/if}}
-                                        </span>
-                                    </div>
-                                    <div class="effect-controls">
-                                        <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
-                                        <a class="delete-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                            {{else}}
-                                <p class="hint">Nenhum efeito adicionado.</p>
-                            {{/each}}
-                        </div>
-                        <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-                    </div>
-
-                    {{!-- SEÇÃO DE DESCRIÇÃO --}}
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h4 class="section-title">Descrição</h4>
-                            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
-                        </div>
-                        <div class="rendered-text">
-                            {{{enrichedDescription}}}
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
         </div>
-    </main>
+
+        {{!-- ABA DE EFEITOS --}}
+<div class="tab" data-tab="efeitos">
+
+    {{!-- Barra de Ferramentas --}}
+    <div class="effects-toolbar">
+        <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+    </div>
+
+    {{!-- Container da Lista de Efeitos --}}
+    <div class="form-section">
+        <ol class="effects-list">
+            {{#each system.effects as |effect effIndex|}}
+                <li class="effect-tag" data-effect-index="{{effIndex}}">
+                    
+                    {{!-- Informações do Efeito (clicável para editar) --}}
+                    <a class="effect-info edit-effect">
+                        <span class="effect-type">{{capitalize effect.type}}</span>
+                        <span class="effect-divider">|</span>
+                        <span class="effect-summary-text">
+                            {{#if effect.chat_description}}"{{effect.chat_description}}"{{/if}}
+                        </span>
+                    </a>
+
+                    {{!-- Controles do Efeito (apenas deletar) --}}
+                    <div class="effect-controls">
+                        <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
+                        <a class="delete-effect" title="Remover"><i class="fas fa-trash"></i></a>
+                    </div>
+
+                </li>
+            {{else}}
+                <li class="placeholder-text">
+                    <p>Nenhum efeito aplicado.</p>
+                </li>
+            {{/each}}
+        </ol>
+    </div>
+
+</div>
+
+    </div>
+</main>
+
 </form>

@@ -30,7 +30,7 @@
     height: 100%;
     resize: vertical; /* ✅ Caixa de texto ajustável verticalmente */
     font-family: monospace;
-    font-size: 1.1em;
+    font-size: 0.8em;
     border: 1px solid #191813; /* Borda mais escura */
     background: #191813;
     color: #f0f0e8;

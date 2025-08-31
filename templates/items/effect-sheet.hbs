@@ -172,7 +172,17 @@
                     {{/if}}
                 </div>
             </div>
-
+        
+        {{!-- SEÇÃO DE DESCRIÇÃO --}}
+            <div class="form-section">
+                <div class="section-header">
+                    <h4 class="section-title">Descrição Resumida (para a Tag)</h4>
+                    <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição Resumida"><i class="fas fa-edit"></i></a>
+                </div>
+                <div class="rendered-text">
+                    {{{enrichedChatDescription}}}
+                </div>
+            </div>
         </div>
     </main>
 </form>

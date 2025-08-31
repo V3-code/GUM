@@ -39,7 +39,7 @@
 .gum.sheet.item .sheet-body-content {
     flex: 1;
     overflow-y: auto; /* Adiciona rolagem vertical apenas se o conteúdo for maior */
-    padding: 15px; /* Padding geral para o conteúdo de todas as abas */
+    padding: 20px; /* Padding geral para o conteúdo de todas as abas */
     color: #e1e1e1; /* Cor de texto padrão para o conteúdo */
 }
 
@@ -219,7 +219,7 @@
   position: relative;
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 5px;
-  padding: 25px 15px 15px 15px; /* Aumenta o padding de cima para dar espaço ao título */
+  padding: 15px 15px 15px 15px; /* Aumenta o padding de cima para dar espaço ao título */
   margin-bottom: 20px; /* Margem apenas na parte de baixo */
 }
 .gum.sheet.item .form-section:last-child {
@@ -1004,4 +1004,45 @@
 .gum.sheet.item.effect-sheet .sheet-body-content {
     height: 100%;
     overflow-y: auto;
+}
+
+/* =================================================================== */
+/* ESTILOS PADRONIZADOS PARA A FICHA DE ITEM 'TRIGGER'                 */
+/* =================================================================== */
+
+/* Garante que o container da ficha e a seção cresçam para ocupar a altura da janela */
+.gum.sheet.item.trigger-sheet .sheet-body-content,
+.gum.sheet.item.trigger-sheet .form-section {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Faz o elemento esticar */
+}
+
+/* Faz o campo de texto (textarea) crescer e ocupar todo o espaço disponível na seção */
+.gum.sheet.item.trigger-sheet .form-section textarea {
+    flex-grow: 1;
+    resize: vertical; /* Permite redimensionamento vertical */
+    font-family: monospace; /* Fonte ideal para código */
+    min-height: 150px;
+}
+
+/* Garante que o container da janela não tenha padding que revele o fundo branco */
+.gum.sheet.item.trigger-sheet .window-content {
+    padding: 0;
+}
+
+/* Aplica nosso fundo cinza escuro à area de conteúdo principal */
+.gum.sheet.item.trigger-sheet .sheet-body-content {
+    background: var(--c-bg-dark, #2b2a29);
+}
+
+/* Garante que a seção e o textarea cresçam para preencher a ficha inteira */
+.gum.sheet.item.trigger-sheet .form-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.gum.sheet.item.trigger-sheet .form-section textarea {
+    flex-grow: 1; /* Faz o campo de texto esticar e ocupar todo o espaço vertical */
 }

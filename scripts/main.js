@@ -7,6 +7,7 @@ import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
+import { TriggerSheet } from './apps/trigger-sheet.js';
 
 /**
  * Uma janela de diálogo para criar e editar Efeitos Contingentes.
@@ -205,6 +206,10 @@ Hooks.once('init', async function() {
     });
     Items.registerSheet("gum", EffectSheet, { 
     types: ["effect"], 
+    makeDefault: true 
+    });
+    Items.registerSheet("gum", TriggerSheet, { 
+    types: ["trigger"], 
     makeDefault: true 
     });
     
