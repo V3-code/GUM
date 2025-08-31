@@ -144,6 +144,10 @@
                     <a class="effect-info edit-effect">
                         <span class="effect-type">{{capitalize effect.type}}</span>
                         <span class="effect-divider">|</span>
+                            {{#if effect.name}}
+                                <span class="effect-name">{{effect.name}}</span>
+                                <span class="effect-divider">|</span>
+                            {{/if}}
                         <span class="effect-summary-text">
                             {{#if effect.chat_description}}"{{effect.chat_description}}"{{/if}}
                         </span>

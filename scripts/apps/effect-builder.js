@@ -67,6 +67,23 @@ async _updateObject(event, formData) {
         break;
     }
 
+        if (formData['resistanceRoll.isResisted']) {
+            newEffect.resistanceRoll = {
+                isResisted: formData['resistanceRoll.isResisted'],
+                attribute: formData['resistanceRoll.attribute'],
+                modifier: formData['resistanceRoll.modifier'],
+                applyOn: formData['resistanceRoll.applyOn'],
+                margin: formData['resistanceRoll.margin']
+            };
+        } else {
+            // Garante que a resistência seja marcada como falsa se a caixa for desmarcada
+            newEffect.resistanceRoll = { isResisted: false };
+        }
+        
+        // Adiciona a descrição
+        newEffect.chat_description = formData.chat_description;
+
+
     if (this.effectIndex > -1) {
         effects[this.effectIndex] = newEffect;
     } else {
@@ -82,12 +99,16 @@ async _updateObject(event, formData) {
         html.find('.open-attribute-picker').on('click', this._onOpenAttributePicker.bind(this));
         html.find('[name="type"], [name="has_roll"], [name="roll_attribute"]').on('change', this._onTypeChange.bind(this));
         html.find('.open-value-help').on('click', this._onOpenValueHelp.bind(this));
+
+        const changeTriggers = '[name="type"], [name="has_roll"], [name="roll_attribute"], [name="resistanceRoll.isResisted"]';
+        html.find(changeTriggers).on('change', this._onTypeChange.bind(this));
     }
 
     async _onTypeChange(event) {
-        // Usa o caminho correto para FormDataExtended
+        // ✅ CORREÇÃO DE RENDERIZAÇÃO: Preserva os dados existentes ao redesenhar.
         const formData = new foundry.applications.ux.FormDataExtended(this.form).object;
-        this.object = formData;
+        foundry.utils.mergeObject(this.object, foundry.utils.expandObject(formData));
+
         this.render();
     }
 

@@ -1046,3 +1046,83 @@
 .gum.sheet.item.trigger-sheet .form-section textarea {
     flex-grow: 1; /* Faz o campo de texto esticar e ocupar todo o espaço vertical */
 }
+
+/* ============================================= */
+/* DESIGN FUNCIONAL PARA O EFFECT BUILDER        */
+/* ============================================= */
+
+/* 1. Estrutura geral do formulário */
+.dialog.effect-builder .window-content {
+    /* Garante que o conteúdo não cole nas bordas da janela */
+    padding: 10px;
+}
+.effect-builder-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre as seções principais */
+}
+
+/* 2. Estilo para as seções (Barreira, Configuração, Descrição) */
+.effect-builder .form-section {
+    border: 1px solid #c9c7b8; /* Borda padrão do Foundry */
+    border-radius: 5px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.05); /* Fundo sutil para agrupar o conteúdo */
+}
+.effect-builder .form-section .section-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #333;
+    border-bottom: 1px solid #c9c7b8;
+    margin: -10px -10px 10px -10px; /* Faz o título se esticar */
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 3. Layout para linhas horizontais (Tipo de Efeito, etc.) */
+.effect-builder .form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.effect-builder .form-row .row-label {
+    font-weight: bold;
+    flex: 0 0 120px; /* Largura fixa para os rótulos */
+}
+.effect-builder .form-row > select {
+    flex-grow: 1;
+}
+
+/* 4. Layout para os grids de campos */
+.effect-builder .form-grid-2,
+.effect-builder .form-grid-3 {
+    display: grid;
+    gap: 10px;
+}
+.effect-builder .form-grid-2 { grid-template-columns: 1fr 1fr; }
+.effect-builder .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* 5. Estilo para os grupos de formulário (rótulo acima do campo) */
+.effect-builder .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.effect-builder .form-group label {
+    font-weight: bold;
+    font-size: 12px;
+    color: #555;
+}
+
+/* 6. Rodapé */
+.effect-builder .sheet-footer {
+    text-align: right;
+    margin-top: 10px;
+}
+
+/* Garante que o recuo da Barreira de Resistência funcione */
+.effect-builder .indented {
+    padding-left: 15px;
+    margin-top: 10px;
+    border-left: 2px solid rgba(0,0,0,0.2);
+}

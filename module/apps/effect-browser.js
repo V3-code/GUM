@@ -81,13 +81,18 @@ export class EffectBrowser extends FormApplication {
     const existingEffects = this.targetItem.system.effects || [];
 
     // Adiciona os novos efeitos selecionados
-    for (const id of selectedIds) {
-      const sourceEffect = this.allEffects.find(e => e.id === id);
-      if (sourceEffect) {
-        // Copiamos os dados do item de compêndio para um novo objeto de efeito
-        existingEffects.push(sourceEffect.system);
-      }
-    }
+for (const id of selectedIds) {
+  const sourceEffect = this.allEffects.find(e => e.id === id);
+  if (sourceEffect) {
+    // ✅ AQUI ESTÁ A CORREÇÃO ✅
+    // Criamos um novo objeto que junta todos os dados de .system com a propriedade .name
+    const newEffectData = {
+        ...sourceEffect.system,
+        name: sourceEffect.name 
+    };
+    existingEffects.push(newEffectData);
+  }
+}
     
     // Atualiza o item Condição com a nova lista completa de efeitos
     await this.targetItem.update({ "system.effects": existingEffects });

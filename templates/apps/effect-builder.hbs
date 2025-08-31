@@ -1,127 +1,124 @@
-<form>
-    <div class="dialog-content">
-        <div class="form-section">
-            <h4 class="section-title">Tipo de Efeito</h4>
-            <div class="form-group">
-                <select name="type">
-                    <option value="attribute" {{#if (eq object.type "attribute")}}selected{{/if}}>Modificar Atributo</option>
-                    <option value="status" {{#if (eq object.type "status")}}selected{{/if}}>Aplicar Status do Token</option>
-                    <option value="flag" {{#if (eq object.type "flag")}}selected{{/if}}>Aplicar Flag Customizada</option>
-                    <option value="macro" {{#if (eq object.type "macro")}}selected{{/if}}>Executar Macro</option>
-                    <option value="chat" {{#if (eq object.type "chat")}}selected{{/if}}>Enviar Mensagem</option>
-                </select>
-            </div>
-        </div>
+<form class="effect-builder-form">
 
-{{!-- BLOCO PARA MODIFICAR ATRIBUTO FLAG --}}
-        {{#if (eq object.type "attribute")}}
-        <div class="form-section">
-            <h4 class="section-title">Detalhes do Atributo</h4>
+{{!-- SEÇÃO DE BARREIRA DE RESISTÊNCIA (AGORA COMPLETA) --}}
+    <div class="form-section">
+        <h4 class="section-title">Barreira de Resistência</h4>
+        <label class="custom-checkbox">
+            <input type="checkbox" name="resistanceRoll.isResisted" {{checked effect.resistanceRoll.isResisted}}/>
+            <span>Resistência específica para este efeito</span>
+        </label>
+        {{#if effect.resistanceRoll.isResisted}}
+        <div class="indented">
+            <hr>
+            {{!-- ✅ CAMPOS QUE FALTAVAM, AGORA PRESENTES ✅ --}}
+            <div class="form-grid-2">
+                <div class="form-group"><label>Atributo do Teste</label><input type="text" name="resistanceRoll.attribute" value="{{effect.resistanceRoll.attribute}}"/></div>
+                <div class="form-group"><label>Modificador</label><input type="text" name="resistanceRoll.modifier" value="{{effect.resistanceRoll.modifier}}"/></div>
+            </div>
             <div class="form-group">
-                <label>Caminho do Atributo</label>
-                <div class="path-input-group">
-                    <input type="text" name="path" value="{{object.path}}" placeholder="system.attributes.dx.temp"/>
-                    <a class="open-attribute-picker" title="Selecionar Atributo">⊕</a>
+                <label>Aplicar efeito se obter:</label>
+                <div class="radio-group horizontal">
+                    <label class="custom-radio"><input type="radio" name="resistanceRoll.applyOn" value="failure" {{checked (eq effect.resistanceRoll.applyOn 'failure')}}><span>Falha</span></label>
+                    <label class="custom-radio"><input type="radio" name="resistanceRoll.applyOn" value="success" {{checked (eq effect.resistanceRoll.applyOn 'success')}}><span>Sucesso</span></label>
                 </div>
             </div>
-           <div class="form-grid-2">
-                <div class="form-group"><label>Operação</label>
-                    <select name="operation">
-                        {{{selectOptions (obj "ADD" "Adicionar" "SUB" "Subtrair" "SET" "Definir") selected=object.operation}}}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Valor 
-                        <a class="open-value-help" title="Ajuda com Fórmulas">?</a>
-                    </label>
-                    <input type="text" name="value" value="{{object.value}}" placeholder="Ex: 2 ou Math.floor(...)"/>
-                    <p class="hint">Você pode usar números ou fórmulas JS com <code>actor</code>. Ex: <code>Math.floor(actor.system.attributes.st.final / 2)</code></p>
-                    </div>
+            <div class="form-group">
+                <label>Margem Mínima</label>
+                <input type="text" name="resistanceRoll.margin" value="{{effect.resistanceRoll.margin}}" placeholder="Opcional"/>
             </div>
         </div>
         {{/if}}
-
-        {{#if (eq object.type "status")}}
-        <div class="form-section">
-            <h4 class="section-title">Detalhes do Status</h4>
-            <div class="form-group"><label>Ícone de Status</label><select name="statusId">{{{selectOptions statusEffects selected=object.statusId}}}</select></div>
-        </div>
-        {{/if}}
-
-        {{#if (eq object.type "macro")}}
-        <div class="form-section">
-             <h4 class="section-title">Detalhes da Macro</h4>
-             <div class="form-group"><label>Nome da Macro</label><input type="text" name="value" value="{{object.value}}" placeholder="Nome exato"/></div>
-        </div>
-        {{/if}}
-
-{{#if (eq object.type "chat")}}
-<div class="form-section">
-     <h4 class="section-title">Detalhes da Mensagem</h4>
-     <div class="form-group"><label>Texto da Mensagem</label><textarea name="chat_text" rows="3">{{object.chat_text}}</textarea></div>
-    <div class="form-group-inline"><label>Visibilidade</label>
-        <select name="whisperMode">
-            {{{selectOptions (obj "public" "Público" "gm" "Apenas para MJs" "blind" "Rolagem Cega") selected=object.whisperMode}}}
-        </select>
     </div>
-    <div class="form-group-inline"><label>Incluir Botão de Teste?</label><input type="checkbox" name="has_roll" {{checked object.has_roll}}/></div>
-    
-    {{#if object.has_roll}}
-    <div class="form-grid-3 sub-effect-group">
-        <div class="form-group"><label>Atributo do Teste</label>
-            <select name="roll_attribute">
-                {{!-- ✅ NOVA OPÇÃO "VALOR FIXO" ✅ --}}
-                <option value="fixed" {{#if (eq object.roll_attribute 'fixed')}}selected{{/if}}>Valor Fixo...</option>
-                <option value="st.final" {{#if (eq object.roll_attribute 'st.final')}}selected{{/if}}>ST</option>
-                <option value="dx.final" {{#if (eq object.roll_attribute 'dx.final')}}selected{{/if}}>DX</option>
-                <option value="iq.final" {{#if (eq object.roll_attribute 'iq.final')}}selected{{/if}}>IQ</option>
-                <option value="ht.final" {{#if (eq object.roll_attribute 'ht.final')}}selected{{/if}}>HT</option>
-                <option value="vont.final" {{#if (eq object.roll_attribute 'vont.final')}}selected{{/if}}>Vontade</option>
-                <option value="per.final" {{#if (eq object.roll_attribute 'per.final')}}selected{{/if}}>Percepção</option>
+
+    {{!-- SEÇÃO PRINCIPAL DE CONFIGURAÇÃO --}}
+    <div class="form-section">
+        <h4 class="section-title">Configuração do Efeito</h4>
+
+        <div class="form-row">
+            <label class="row-label">Tipo de Efeito:</label>
+            <select name="type">
+                <option value="attribute" {{#if (eq effect.type 'attribute')}}selected{{/if}}>Atributo</option>
+                <option value="status" {{#if (eq effect.type 'status')}}selected{{/if}}>Status</option>
+                <option value="chat" {{#if (eq effect.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
+                <option value="macro" {{#if (eq effect.type 'macro')}}selected{{/if}}>Macro</option>
+                <option value="flag" {{#if (eq effect.type 'flag')}}selected{{/if}}>Flag</option>
             </select>
         </div>
+        <hr>
 
-        {{!-- ✅ CAMPO QUE APARECE APENAS PARA "VALOR FIXO" ✅ --}}
-        {{#if (eq object.roll_attribute "fixed")}}
-        <div class="form-group">
-            <label>Alvo Fixo</label>
-            <input type="number" name="roll_fixed_value" value="{{object.roll_fixed_value}}" placeholder="12"/>
-        </div>
-        {{else}}
-        <div class="form-group">
-            <label>Modificador</label>
-            <input type="number" name="roll_modifier" value="{{object.roll_modifier}}" placeholder="0"/>
-        </div>
-        {{/if}}
-
-        <div class="form-group">
-            <label>Texto do Botão</label>
-            <input type="text" name="roll_label" value="{{object.roll_label}}" placeholder="Rolar Teste"/>
-        </div>
-    </div>
-    {{/if}}
-</div>
-{{/if}}
-
-
-        {{!-- BLOCO PARA APLICAR FLAG --}}
-        {{#if (eq object.type "flag")}}
-        <div class="form-section">
-            <h4 class="section-title">Detalhes da Flag</h4>
-            <p class="hint">Isso cria uma "etiqueta" de dados invisível no personagem que outras condições podem ler.</p>
-            <div class="form-grid-2">
+        {{!-- CAMPOS CONDICIONAIS --}}
+        {{#if (eq effect.type 'attribute')}}
+            <div class="form-grid-3">
                 <div class="form-group">
-                    <label>Nome da Flag (Chave)</label>
-                    <input type="text" name="key" value="{{object.key}}" placeholder="ex: estaMolhado"/>
+                    <label>Caminho</label>
+                    <div class="input-group">
+                        <input type="text" name="path" value="{{effect.path}}"/>
+                        <a class="button open-attribute-picker" title="Selecionar Atributo"><i class="fas fa-list"></i></a>
+                    </div>
                 </div>
+                <div class="form-group"><label>Operação</label><input type="text" name="operation" value="{{effect.operation}}"/></div>
                 <div class="form-group">
-                    <label>Valor da Flag</label>
-                    <input type="text" name="value" value="{{object.value}}" placeholder="ex: true, 1, 'fogo'"/>
+                    <label>Valor</label>
+                    <div class="input-group">
+                        <input type="text" name="value" value="{{effect.value}}"/>
+                        <a class="button open-value-help" title="Ajuda de Fórmulas"><i class="fas fa-question-circle"></i></a>
+                    </div>
                 </div>
             </div>
-        </div>
         {{/if}}
 
+        {{#if (eq effect.type 'status')}}
+            <div class="form-group">
+                <label>Ícone de Status</label>
+                <select name="statusId">
+                    {{selectOptions statusEffects selected=effect.statusId}}
+                </select>
+            </div>
+        {{/if}}
+
+        {{#if (eq effect.type 'macro')}}
+            <div class="form-group">
+                <label>Nome da Macro</label>
+                <input type="text" name="value" value="{{effect.value}}"/>
+            </div>
+        {{/if}}
+
+{{#if (eq effect.type 'chat')}}
+    <div class="form-group"><label>Texto da Mensagem</label><textarea name="chat_text" rows="3">{{effect.chat_text}}</textarea></div>
+    <div class="form-group">
+        <label>Mensagem: </label>
+        <select name="whisperMode">
+            <option value="public" {{#if (eq effect.whisperMode "public")}}selected{{/if}}>Pública</option>
+            <option value="gm" {{#if (eq effect.whisperMode "gm")}}selected{{/if}}>Apenas para o Mestre</option>
+            <option value="blind" {{#if (eq effect.whisperMode "blind")}}selected{{/if}}>Privada (GM não vê)</option>
+        </select>
     </div>
-    <footer class="sheet-footer"><button type="submit"><i class="fas fa-save"></i> Salvar Efeito</button></footer>
+    <label class="custom-checkbox"><input type="checkbox" name="has_roll" {{checked effect.has_roll}}/><span>Incluir Teste?</span></label>
+    {{#if effect.has_roll}}
+        <div class="form-grid-3 indented">
+            <div class="form-group"><label>Rótulo do Teste</label><input type="text" name="roll_label" value="{{effect.roll_label}}"/></div>
+            <div class="form-group"><label>Atributo</label><input type="text" name="roll_attribute" value="{{effect.roll_attribute}}"/></div>
+            <div class="form-group"><label>Modificador</label><input type="text" name="roll_modifier" value="{{effect.roll_modifier}}"/></div>
+        </div>
+    {{/if}}
+{{/if}}
+
+        {{#if (eq effect.type 'flag')}}
+            <div class="form-grid-2">
+                <div class="form-group"><label>Chave (Key)</label><input type="text" name="key" value="{{effect.key}}"/></div>
+                <div class="form-group"><label>Valor</label><input type="text" name="value" value="{{effect.value}}"/></div>
+            </div>
+        {{/if}}
+    </div>
+
+    {{!-- SEÇÃO DE DESCRIÇÃO --}}
+    <div class="form-section">
+        <h4 class="section-title">Descrição Resumida (para a Tag)</h4>
+        <textarea name="chat_description" rows="3">{{effect.chat_description}}</textarea>
+    </div>
+
+    {{!-- BOTÃO DE SALVAR NO RODAPÉ --}}
+    <footer class="sheet-footer">
+        <button type="submit"><i class="fas fa-save"></i> Salvar Efeito</button>
+    </footer>
 </form>
