@@ -1,6 +1,6 @@
 # GURPS GUM – Sistema não oficial para Foundry VTT
 
-**Autor:** Victor Valim Valentim  
+**Autor:** V3-Code
 **Versão:** 24 • 02/Julho de 2025  
 **Plataforma:** Foundry VTT v12+
 
@@ -26,15 +26,8 @@ Este sistema foi criado com os seguintes objetivos:
 ## 🗂️ Estrutura do Projeto
 
 ```
-GUM/
-├── system.json          # Manifesto do sistema
-├── template.json        # Modelos de dados
-├── scripts/
-│   └── main.js          # Lógica do sistema
-├── templates/
-│   ├── actors/characters.hbs # Ficha do PdJ
-│   └── items/item-sheet.hbs  # Fichas dos "Items Foundry"
-└── styles/styles.css    # Estilos personalizados
+Em preenchimento ...
+
 ```
 
 ---
@@ -50,6 +43,7 @@ Este projeto está licenciado sob a **Creative Commons BY-NC-ND 4.0**.
 
 🔗 Mais detalhes no arquivo [`LICENSE.md`](LICENSE.md)
 
+IMPORTANTE: A ideia aqui é simplesmente que quem quiser usar apenas mantenha o crédito de autoria.
 ---
 
 ## 🛠️ Instalação
@@ -62,8 +56,7 @@ Este projeto está licenciado sob a **Creative Commons BY-NC-ND 4.0**.
 
 ## 📬 Contato
 
-Dúvidas, sugestões ou solicitações de autorização:  
-✉️ **victor.v.valentim@gmail.com**
+Dúvidas, sugestões ou solicitações de autorização basta mandar mensagem! 
 
 ---
 
@@ -71,3 +64,4 @@ Dúvidas, sugestões ou solicitações de autorização:
 
 GURPS © Steve Jackson Games.  
 Este sistema é uma adaptação **feita por fãs**, distribuída gratuitamente sob os princípios de uso justo (fair use).
+
