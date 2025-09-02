@@ -27,10 +27,22 @@
 
 .effect-browser .info-line-1 { display: flex; align-items: baseline; gap: 8px; }
 .effect-browser .item-name { font-weight: bold; font-size: 1em; color: var(--c-text-accent); }
-.effect-browser .item-type-tag { font-size: 0.8em; color: var(--c-text-medium); font-style: italic; }
-.effect-browser .info-line-2 { margin-top: 2px; }
-.effect-browser .item-details { font-size: 0.85em; color: var(--c-text-medium); font-family: monospace; }
+.effect-browser .item-type-tag { font-size: 0.8em; font-style: italic; }
+.effect-browser .info-line-2 { margin-top: 1px; }
+.effect-browser .item-details { font-size: 0.8em; font-style: italic; }
 .effect-browser .item-controls input[type="checkbox"] { width: 16px; height: 16px; }
 .effect-browser .browser-footer { padding: 10px; background: var(--c-bg-darkest); text-align: right; border-top: 1px solid var(--c-border-light); }
 .effect-browser .browser-footer button { background: var(--c-accent-gold); color: var(--c-bg-darkest); border: none; padding: 8px 15px; border-radius: 3px; font-weight: bold; cursor: pointer; }
 .effect-browser .browser-footer button:hover { background: #fff; }
+
+/* ✅ ESTILO PARA O TEXTO DOS CHECKBOXES ✅ */
+.effect-browser .browser-sidebar .filter-group label {
+    display: flex; /* Para alinhar o checkbox e o texto */
+    align-items: center;
+    gap: 8px; /* Espaço entre o checkbox e o texto */
+    margin-bottom: 4px; /* Espaço entre cada checkbox */
+    color: var(--c-text-lightest); /* Uma cor de texto escura e legível */
+    font-size: 13px;
+    cursor: pointer; /* Indica que é clicável */
+}
+

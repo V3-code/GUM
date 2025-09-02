@@ -37,12 +37,28 @@
     "styles/conditions.css",
     "styles/condition-builder.css" 
   ],
-    "packs": [
+  "packs": [
     {
       "name": "modifiers",
       "label": "[GUM] Modificadores",
       "system": "gum",
       "path": "./packs/modifiers",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "gatilhos",
+      "label": "[GUM] Gatilhos",
+      "system": "gum",
+      "path": "./packs/gatilhos",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "efeitos",
+      "label": "[GUM] Efeitos",
+      "system": "gum",
+      "path": "./packs/efeitos",
       "type": "Item",
       "private": false
     }

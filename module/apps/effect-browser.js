@@ -24,7 +24,7 @@ export class EffectBrowser extends FormApplication {
     context.targetItem = this.targetItem;
     
     // ✅ PASSO 2: Buscar os dados do compêndio de EFEITOS
-    const pack = game.packs.get("world.gum-efeitos"); // Nome do compêndio que você criou
+    const pack = game.packs.get("gum.efeitos"); // Nome do compêndio que você criou
     if (pack) {
         this.allEffects = await pack.getDocuments();
         this.allEffects = this.allEffects.map(item => ({
@@ -39,32 +39,52 @@ export class EffectBrowser extends FormApplication {
     return context;
   }
 
-  activateListeners(html) {
+activateListeners(html) {
     super.activateListeners(html);
-    // A lógica de filtros pode ser adaptada no futuro, por enquanto vamos mantê-la simples
-    html.find('input[name="search"]').on('keyup change', this._onFilterResults.bind(this));
+    
+    // ✅ AGORA O LISTENER OBSERVA MUDANÇAS EM QUALQUER INPUT DA SIDEBAR ✅
+    html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
+    
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') event.preventDefault();
     });
-  }
+}
 
-  _onFilterResults(event) {
+_onFilterResults(event) {
     const form = this.form;
     const resultsList = form.querySelector(".results-list");
+    
+    // Lê o valor da busca por nome
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
+
+    // ✅ LÊ O ESTADO DE CADA CHECKBOX DE FILTRO DE TIPO ✅
+    const typesToShow = {
+        attribute: form.querySelector('[name="filter-attribute"]').checked,
+        status: form.querySelector('[name="filter-status"]').checked,
+        chat: form.querySelector('[name="filter-chat"]').checked,
+        macro: form.querySelector('[name="filter-macro"]').checked,
+        flag: form.querySelector('[name="filter-flag"]').checked
+    };
+
+    // Verifica se algum filtro de tipo está ativo. Se nenhum estiver, mostra todos.
+    const hasActiveTypeFilter = Object.values(typesToShow).some(v => v);
 
     for (const li of resultsList.children) {
         if (li.classList.contains("placeholder-text")) continue;
         
-        // Usamos o nome da variável que definimos no getData()
         const effectId = li.querySelector('input[type="checkbox"]').name;
         const effect = this.allEffects.find(e => e.id === effectId);
         if (!effect) continue;
 
         let isVisible = true;
 
-        // A única lógica de filtro que mantemos é a busca por nome
+        // 1. Aplica o filtro de busca por nome
         if (searchQuery && !effect.name.toLowerCase().includes(searchQuery)) {
+            isVisible = false;
+        }
+
+        // 2. Aplica o filtro de tipo, se houver algum ativo
+        if (hasActiveTypeFilter && !typesToShow[effect.system.type]) {
             isVisible = false;
         }
 
@@ -88,7 +108,8 @@ for (const id of selectedIds) {
     // Criamos um novo objeto que junta todos os dados de .system com a propriedade .name
     const newEffectData = {
         ...sourceEffect.system,
-        name: sourceEffect.name 
+        name: sourceEffect.name,
+        sourceUuid: sourceEffect.uuid  
     };
     existingEffects.push(newEffectData);
   }

@@ -59,7 +59,7 @@ export class ConditionBuilder extends FormApplication {
 
     // ✅ NOVA FUNÇÃO DEDICADA APENAS AOS GATILHOS SALVOS
     async _openTriggerPicker(textarea) {
-        const pack = game.packs.get("world.gum-gatilhos");
+        const pack = game.packs.get("gum.gatilhos");
         let savedTriggers = [];
         if (pack) {
             savedTriggers = await pack.getDocuments();

@@ -1006,47 +1006,6 @@
     overflow-y: auto;
 }
 
-/* =================================================================== */
-/* ESTILOS PADRONIZADOS PARA A FICHA DE ITEM 'TRIGGER'                 */
-/* =================================================================== */
-
-/* Garante que o container da ficha e a seção cresçam para ocupar a altura da janela */
-.gum.sheet.item.trigger-sheet .sheet-body-content,
-.gum.sheet.item.trigger-sheet .form-section {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* Faz o elemento esticar */
-}
-
-/* Faz o campo de texto (textarea) crescer e ocupar todo o espaço disponível na seção */
-.gum.sheet.item.trigger-sheet .form-section textarea {
-    flex-grow: 1;
-    resize: vertical; /* Permite redimensionamento vertical */
-    font-family: monospace; /* Fonte ideal para código */
-    min-height: 150px;
-}
-
-/* Garante que o container da janela não tenha padding que revele o fundo branco */
-.gum.sheet.item.trigger-sheet .window-content {
-    padding: 0;
-}
-
-/* Aplica nosso fundo cinza escuro à area de conteúdo principal */
-.gum.sheet.item.trigger-sheet .sheet-body-content {
-    background: var(--c-bg-dark, #2b2a29);
-}
-
-/* Garante que a seção e o textarea cresçam para preencher a ficha inteira */
-.gum.sheet.item.trigger-sheet .form-section {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.gum.sheet.item.trigger-sheet .form-section textarea {
-    flex-grow: 1; /* Faz o campo de texto esticar e ocupar todo o espaço vertical */
-}
-
 /* ============================================= */
 /* DESIGN FUNCIONAL PARA O EFFECT BUILDER        */
 /* ============================================= */
@@ -1125,4 +1084,88 @@
     padding-left: 15px;
     margin-top: 10px;
     border-left: 2px solid rgba(0,0,0,0.2);
+}
+
+
+/* =================================================================== */
+/* LAYOUT E ESTILO FINAL PARA A FICHA DE TRIGGER                       */
+/* =================================================================== */
+
+/* 1. Remove a "moldura" da janela e define a estrutura flexível */
+.gum.sheet.item.trigger-sheet .window-content {
+    padding: 0;
+}
+.gum.sheet.item.trigger-sheet form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. Faz o corpo principal (abas + conteúdo) crescer e define o fundo */
+.gum.sheet.item.trigger-sheet .sheet-body {
+    flex-grow: 1;
+    overflow: hidden;
+    background: var(--c-bg-dark, #2b2a29);
+}
+
+/* 3. Garante que a área de conteúdo tenha padding e rolagem interna */
+.gum.sheet.item.trigger-sheet .sheet-body-content {
+    height: 100%;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre as seções */
+}
+
+/* 4. Garante que as abas e seu conteúdo ocupem toda a altura disponível */
+.gum.sheet.item.trigger-sheet .tab.item.active {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.gum.sheet.item.trigger-sheet .tab > .form-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.gum.sheet.item.trigger-sheet .tab > .form-section .rendered-text,
+.gum.sheet.item.trigger-sheet .tab > .form-section textarea {
+    flex-grow: 1;
+}
+
+/* 5. Estilos para a paleta de botões na aba "Código" */
+.trigger-sheet .palette {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+    flex-shrink: 0; /* Impede que a paleta encolha */
+}
+.trigger-sheet .palette-group {
+    background: rgba(0,0,0,0.15);
+    border: 1px solid rgba(0,0,0,0.3);
+    border-radius: 3px;
+    padding: 8px;
+}
+.trigger-sheet .palette-header {
+    font-weight: bold;
+    color: #c0c0c0;
+    margin-bottom: 8px;
+}
+.trigger-sheet .palette-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* 6. Altura mínima para o textarea do código */
+.gum.sheet.item.trigger-sheet textarea[name="system.code"] {
+    min-height: 150px;
+}
+
+/* Define uma altura mínima para a área de texto da descrição na aba "Detalhes" */
+.gum.sheet.item.trigger-sheet .tab[data-tab="detalhes"] .rendered-text {
+    min-height: 150px; /* <-- Altere este valor para a altura desejada */
 }

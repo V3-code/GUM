@@ -8,15 +8,56 @@
         </div>
     </header>
 
+    {{!-- NAVEGAÇÃO DAS ABAS --}}
+    <nav class="sheet-tabs tabs">
+        <a class="item active" data-tab="detalhes">Detalhes</a>
+        <a class="item" data-tab="codigo">Código</a>
+    </nav>
+
     <main class="sheet-body">
         <div class="sheet-body-content">
             
-            <div class="form-section">
-                <h4 class="section-title">Código do Gatilho</h4>
-                <p class="hint">Insira a condição de JavaScript que ativará os efeitos. Esta condição será avaliada como Verdadeira ou Falsa.</p>
-                <textarea name="system.code" placeholder="Ex: actor.system.attributes.hp.value <= 0">{{system.code}}</textarea>
+            {{!-- ABA DE CÓDIGO --}}
+            <div class="tab" data-tab="codigo">
+                <div class="form-section">
+                    <h4 class="section-title">Código do Gatilho</h4>
+                    <p class="hint">Insira a condição de JavaScript que será avaliada como Verdadeira ou Falsa.</p>
+                    <textarea name="system.code" placeholder="Ex: actor.system.attributes.hp.value <= 0">{{system.code}}</textarea>
+                </div>
+
+                {{!-- PALETA DE FERRAMENTAS --}}
+                <div class="palette">
+                    <div class="palette-group">
+                        <div class="palette-header"><i class="fas fa-sitemap"></i> Estruturas</div>
+                        <div class="palette-buttons">
+                            <button type="button" class="palette-button" data-action="open-structures">Estruturas...</button>
+                        </div>
+                    </div>
+                    <div class="palette-group">
+                        <div class="palette-header"><i class="fas fa-cube"></i> Componentes</div>
+                        <div class="palette-buttons">
+                            <button type="button" class="palette-button" data-action="open-attributes">Atributos...</button>
+                            <button type="button" class="palette-button" data-action="open-operators">Operadores...</button>
+                            <button type="button" class="palette-button" data-action="open-connectors">Conectores...</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
+
+            {{!-- ABA DE DETALHES --}}
+            <div class="tab active" data-tab="detalhes">
+                <div class="form-section">
+                    <div class="section-header">
+                        <h4 class="section-title">Descrição
+                        <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
+                    </div></h4>
+                    
+                    <div class="rendered-text">
+                        {{{enrichedDescription}}}
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 </form>
