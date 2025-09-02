@@ -1,0 +1,2 @@
+# Ignorar apenas o arquivo de locj dos compêndios LevelDB
+packs/**/LOCK
