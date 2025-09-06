@@ -24,26 +24,31 @@
 {{!-- Partial reutilizável para a seção de Efeitos Contingentes --}}
 {{#*inline "contingentEffectsSection"}}
 <div class="form-section">
-    <h4 class="section-title">Efeitos Contingentes</h4>
-    <div class="contingent-effects-list">
-        {{#each system.contingentEffects as |effect id|}}
-            <div class="effect-summary" data-effect-id="{{id}}">
+    <h4 class="section-title">Condições Anexadas</h4>
+
+    {{!-- A lista de condições que este item pode aplicar --}}
+    <ol class="effects-list attached-conditions-list">
+        {{#each attachedConditions as |condition|}}
+            <li class="effect-summary" data-condition-id="{{condition.id}}">
+                
+                {{!-- Informações da Condição Anexada --}}
                 <div class="effect-summary-info">
-                    <strong>GATILHO:</strong> {{effect.trigger}} 
-                    <span class="effect-details">
-                        | <strong>AÇÃO:</strong> {{effect.action}}
-                    </span>
+                    <strong>{{condition.name}}</strong>
                 </div>
+
+                {{!-- Controles (Visualizar e Desanexar) --}}
                 <div class="effect-controls">
-                    <a class="edit-contingent-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
-                    <a class="delete-contingent-effect" title="Deletar Efeito"><i class="fas fa-trash"></i></a>
+                    <a class="view-attached-condition" title="Ver Condição Original"><i class="fas fa-edit"></i></a>
+                    <a class="delete-attached-condition" title="Desanexar Condição"><i class="fas fa-trash"></i></a>
                 </div>
-            </div>
+            </li>
         {{else}}
-            <p class="hint">Nenhum efeito contingente adicionado.</p>
+            <p class="hint">Nenhuma condição anexada a este item.</p>
         {{/each}}
-    </div>
-    <a class="button add-contingent-effect"><i class="fas fa-plus"></i> Adicionar Efeito Contingente</a>
+    </ol>
+    
+    {{!-- Botão para abrir o Navegador de Condições --}}
+    <a class="button add-contingent-effect"><i class="fas fa-plus"></i> Anexar Condição</a>
 </div>
 {{/inline}}
 

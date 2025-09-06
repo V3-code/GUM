@@ -3,6 +3,7 @@
 // ================================================================== //
 
 import { ModifierBrowser } from "../module/apps/modifier-browser.js";
+import { ConditionBrowser } from "../module/apps/condition-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -3631,6 +3632,13 @@ class GurpsItemSheet extends ItemSheet {
     });
     context.sortedModifiers = modifiersArray;
 
+    const attachedConditionsObj = this.item.system.attachedConditions || {};
+    context.attachedConditions = Object.entries(attachedConditionsObj).map(([id, data]) => ({
+        id: id,
+        name: data.name,
+        uuid: data.uuid
+    }));
+
     // Lógica de preparação da descrição para o template
         context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, {
             secrets: this.item.isOwner,
@@ -3848,20 +3856,39 @@ html.find('.delete-attack').on('click', (ev) => {
     });
 });
 
-// Adicionar um novo Efeito Contingente
-html.find('.add-contingent-effect').on('click', ev => {
-    const newEffectData = {
-        trigger: "onDamage", // Valor padrão
-        action: "applyCondition" // Valor padrão
-    };
+// ATUALIZADO: Adicionar um Efeito Contingente agora abre o ConditionBrowser
+    html.find('.add-contingent-effect').on('click', ev => {
+        new ConditionBrowser(this.item).render(true);
+    });
 
-    new ContingentEffectBuilder(newEffectData, this.item, (updatedEffect) => {
-        const newKey = foundry.utils.randomID(16);
-        this.item.update({
-            [`system.contingentEffects.${newKey}`]: updatedEffect
+    // NOVO: Visualizar a ficha original da Condição a partir do compêndio
+    html.find('.view-attached-condition').on('click', async ev => {
+        const conditionId = $(ev.currentTarget).closest('.effect-summary').data('condition-id');
+        const conditionData = this.item.system.attachedConditions[conditionId];
+        if (conditionData?.uuid) {
+            const conditionItem = await fromUuid(conditionData.uuid);
+            if (conditionItem) {
+                conditionItem.sheet.render(true);
+            } else {
+                ui.notifications.warn("A condição original não foi encontrada. O link pode estar quebrado.");
+            }
+        }
+    });
+
+    // ATUALIZADO: Deletar o link para uma Condição Anexada
+    html.find('.delete-attached-condition').on('click', ev => {
+        const conditionId = $(ev.currentTarget).closest('.effect-summary').data('condition-id');
+        Dialog.confirm({
+            title: "Desanexar Condição",
+            content: "<p>Você tem certeza que quer remover esta condição do item?</p>",
+            yes: () => {
+                this.item.update({
+                    [`system.attachedConditions.-=${conditionId}`]: null
+                });
+            },
+            no: () => {}
         });
-    }).render(true);
-});
+    });
 
 // Editar um Efeito Contingente existente
 html.find('.edit-contingent-effect').on('click', ev => {
@@ -3875,20 +3902,6 @@ html.find('.edit-contingent-effect').on('click', ev => {
     }).render(true);
 });
 
-// Deletar um Efeito Contingente
-html.find('.delete-contingent-effect').on('click', ev => {
-    const effectId = $(ev.currentTarget).closest('.effect-summary').data('effect-id');
-    Dialog.confirm({
-        title: "Deletar Efeito Contingente",
-        content: "<p>Você tem certeza?</p>",
-        yes: () => {
-            this.item.update({
-                [`system.contingentEffects.-=${effectId}`]: null
-            });
-        },
-        no: () => {}
-    });
-});
 
 }
 

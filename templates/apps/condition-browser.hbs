@@ -1,0 +1,64 @@
+<form class="condition-browser-form">
+
+    {{!-- Container principal de 2 colunas --}}
+    <div class="browser-container">
+
+        {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
+        <aside class="browser-sidebar">
+            <div class="filter-group">
+                <h4 class="filter-title">Buscar por Nome</h4>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="Buscar condição..."/>
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+        </aside>
+
+        {{!-- Coluna da Direita (Resultados Adaptados para Condições) --}}
+        <main class="browser-content">
+            <ol class="results-list">
+                {{#each conditions as |condition|}}
+                <li class="result-item" data-item-id="{{condition.id}}">
+                    
+                    <div class="item-icon">
+                        {{#if condition.displayImg}}
+                            <img src="{{condition.displayImg}}" alt="{{condition.name}}"/>
+                        {{/if}}
+                    </div>
+
+                    <div class="item-info">
+                        <label class="item-label" for="condition-{{condition.id}}">
+                            {{!-- Linha 1: Nome da Condição --}}
+                            <div class="info-line-1">
+                                <span class="item-name">{{condition.name}}</span>
+                            </div>
+                            
+                            {{!-- Linha 2: Resumo do gatilho (Quando a condição ativa) --}}
+                            <div class="info-line-2">
+                                <span class="item-details">
+                                    <strong>Gatilho:</strong> <code>{{condition.system.when}}</code>
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="item-controls">
+                        <input type="checkbox" name="{{condition.id}}" id="condition-{{condition.id}}" />
+                    </div>
+                </li>
+                {{else}}
+                <li class="placeholder-text">Nenhuma condição encontrada no compêndio "[GUM] Condições".</li>
+                {{/each}}
+            </ol>
+        </main>
+
+    </div>
+
+    {{!-- Rodapé (sem alterações) --}}
+    <footer class="browser-footer">
+        <button type="submit">
+            <i class="fas fa-check"></i> Anexar Selecionadas
+        </button>
+    </footer>
+
+</form>

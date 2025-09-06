@@ -35,7 +35,8 @@
     "styles/item-sheet.css",
     "styles/damage-application.css",
     "styles/conditions.css",
-    "styles/condition-builder.css" 
+    "styles/condition-builder.css",
+    "styles/condition-browser.css" 
   ],
   "packs": [
     {
@@ -59,6 +60,14 @@
       "label": "[GUM] Efeitos",
       "system": "gum",
       "path": "./packs/efeitos",
+      "type": "Item",
+      "private": false
+    },
+        {
+      "name": "conditions",
+      "label": "[GUM] Condições",
+      "system": "gum",
+      "path": "./packs/conditions",
       "type": "Item",
       "private": false
     }

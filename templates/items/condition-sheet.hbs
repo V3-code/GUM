@@ -127,48 +127,48 @@
         </div>
 
         {{!-- ABA DE EFEITOS --}}
-<div class="tab" data-tab="efeitos">
+        <div class="tab" data-tab="efeitos">
 
-    {{!-- Barra de Ferramentas --}}
-    <div class="effects-toolbar">
-        <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-    </div>
+            {{!-- Barra de Ferramentas --}}
+            <div class="effects-toolbar">
+                <a class="button add-effect"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+            </div>
 
-    {{!-- Container da Lista de Efeitos --}}
-    <div class="form-section">
-        <ol class="effects-list">
-            {{#each system.effects as |effect effIndex|}}
-                <li class="effect-tag" data-effect-index="{{effIndex}}">
-                    
-                    {{!-- Informações do Efeito (clicável para editar) --}}
-                    <a class="effect-info edit-effect">
-                        <span class="effect-type">{{capitalize effect.type}}</span>
-                        <span class="effect-divider">|</span>
-                            {{#if effect.name}}
-                                <span class="effect-name">{{effect.name}}</span>
+            {{!-- Container da Lista de Efeitos --}}
+            <div class="form-section">
+                <ol class="effects-list">
+                    {{#each system.effects as |effect effIndex|}}
+                        <li class="effect-tag" data-effect-index="{{effIndex}}">
+                            
+                            {{!-- Informações do Efeito (clicável para editar) --}}
+                            <a class="effect-info edit-effect">
+                                <span class="effect-type">{{capitalize effect.type}}</span>
                                 <span class="effect-divider">|</span>
-                            {{/if}}
-                        <span class="effect-summary-text">
-                            {{#if effect.chat_description}}"{{effect.chat_description}}"{{/if}}
-                        </span>
-                    </a>
+                                    {{#if effect.name}}
+                                        <span class="effect-name">{{effect.name}}</span>
+                                        <span class="effect-divider">|</span>
+                                    {{/if}}
+                                <span class="effect-summary-text">
+                                    {{#if effect.chat_description}}"{{effect.chat_description}}"{{/if}}
+                                </span>
+                            </a>
 
-                    {{!-- Controles do Efeito (apenas deletar) --}}
-                    <div class="effect-controls">
-                        <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
-                        <a class="delete-effect" title="Remover"><i class="fas fa-trash"></i></a>
-                    </div>
+                            {{!-- Controles do Efeito (apenas deletar) --}}
+                            <div class="effect-controls">
+                                <a class="edit-effect" title="Editar Efeito"><i class="fas fa-edit"></i></a>
+                                <a class="delete-effect" title="Remover"><i class="fas fa-trash"></i></a>
+                            </div>
 
-                </li>
-            {{else}}
-                <li class="placeholder-text">
-                    <p>Nenhum efeito aplicado.</p>
-                </li>
-            {{/each}}
-        </ol>
-    </div>
+                        </li>
+                    {{else}}
+                        <li class="placeholder-text">
+                            <p>Nenhum efeito aplicado.</p>
+                        </li>
+                    {{/each}}
+                </ol>
+            </div>
 
-</div>
+        </div>
 
     </div>
 </main>

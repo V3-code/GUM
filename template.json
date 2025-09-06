@@ -54,7 +54,8 @@
         "description": "",
         "chat_description": "",
         "ref": "",
-        "contingentEffects": []
+        "contingentEffects": [],
+        "attachedConditions": {}
       },
       "equipment_base": {
         "quantity": 1,
