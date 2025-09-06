@@ -45,3 +45,13 @@
 .condition-browser .browser-footer { padding: 10px; background: var(--c-bg-darkest); text-align: right; border-top: 1px solid var(--c-border-light); }
 .condition-browser .browser-footer button { background: var(--c-accent-gold); color: var(--c-bg-darkest); border: none; padding: 8px 15px; border-radius: 3px; font-weight: bold; cursor: pointer; }
 .condition-browser .browser-footer button:hover { background: #fff; }
+/* ESTILO PARA OS CHECKBOXES DE FILTRO */
+.condition-browser .browser-sidebar .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--c-text-lightest);
+    font-size: 13px;
+    cursor: pointer;
+}

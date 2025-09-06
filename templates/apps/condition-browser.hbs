@@ -1,9 +1,7 @@
 <form class="condition-browser-form">
 
-    {{!-- Container principal de 2 colunas --}}
     <div class="browser-container">
 
-        {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
         <aside class="browser-sidebar">
             <div class="filter-group">
                 <h4 class="filter-title">Buscar por Nome</h4>
@@ -12,9 +10,19 @@
                     <i class="fas fa-search"></i>
                 </div>
             </div>
+            
+            
+            <div class="filter-group">
+                <h4 class="filter-title">Filtrar por Tipo de Efeito</h4>
+                <label><input type="checkbox" name="filter-attribute" checked/> Atributo</label>
+                <label><input type="checkbox" name="filter-status" checked/> Status</label>
+                <label><input type="checkbox" name="filter-chat" checked/> Chat</label>
+                <label><input type="checkbox" name="filter-macro" checked/> Macro</label>
+                <label><input type="checkbox" name="filter-flag" checked/> Flag</label>
+            </div>
+
         </aside>
 
-        {{!-- Coluna da Direita (Resultados Adaptados para Condições) --}}
         <main class="browser-content">
             <ol class="results-list">
                 {{#each conditions as |condition|}}
@@ -28,12 +36,9 @@
 
                     <div class="item-info">
                         <label class="item-label" for="condition-{{condition.id}}">
-                            {{!-- Linha 1: Nome da Condição --}}
                             <div class="info-line-1">
                                 <span class="item-name">{{condition.name}}</span>
                             </div>
-                            
-                            {{!-- Linha 2: Resumo do gatilho (Quando a condição ativa) --}}
                             <div class="info-line-2">
                                 <span class="item-details">
                                     <strong>Gatilho:</strong> <code>{{condition.system.when}}</code>
@@ -54,7 +59,6 @@
 
     </div>
 
-    {{!-- Rodapé (sem alterações) --}}
     <footer class="browser-footer">
         <button type="submit">
             <i class="fas fa-check"></i> Anexar Selecionadas
