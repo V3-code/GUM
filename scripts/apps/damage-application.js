@@ -225,9 +225,18 @@ async _updateDamageCalculation(form) {
     if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
     if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
     if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
-    let finalInjury = Math.floor(penetratingDamage * woundingMod);
+       let finalInjury = Math.floor(penetratingDamage * woundingMod);
     if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
-    if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
+
+    // ✅ **PASSO 1**: Armazenamos a lesão *potencial* em uma variável separada.
+    const injuryForEventCheck = finalInjury;
+
+    // ✅ **PASSO 2**: Modificamos a `finalInjury` (que será aplicada) APENAS se a caixa estiver marcada.
+    if (effectsOnlyChecked) {
+        finalInjury = 0;
+    }
+    
+    this.finalInjury = finalInjury;    
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
     const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
@@ -292,12 +301,12 @@ async _updateDamageCalculation(form) {
     // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES (permanece igual) ---
     const effectsSummaryEl = form.querySelector(".effects-summary");
     const actionButtonsEl = form.querySelector(".action-buttons");
-    const contingentEffects = this.damageData.contingentEffects || {};
-    const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
+    const eventContext = { damage: injuryForEventCheck, target: this.targetActor, attacker: this.attackerActor };
     let potentialEffectsHTML = '';
     let hasPotentialEffects = false;
     let needsResistanceRoll = false;
-
+    
+    const contingentEffects = this.damageData.contingentEffects || {};
     for (const [id, effect] of Object.entries(contingentEffects)) {
         if (effect.trigger !== 'onDamage') continue;
         let conditionMet = !effect.condition || effect.condition.trim() === '';
@@ -320,6 +329,39 @@ async _updateDamageCalculation(form) {
         }
     }
     
+        //LÓGICA para ler as attachedConditions
+    const attachedConditions = this.damageData.attachedConditions || {};
+    for (const [id, attachedCond] of Object.entries(attachedConditions)) {
+        if (!attachedCond.uuid) continue;
+        
+        const conditionItem = await fromUuid(attachedCond.uuid);
+        if (!conditionItem) continue;
+
+        let conditionMet = !conditionItem.system.when || conditionItem.system.when.trim() === '';
+        if (conditionItem.system.when) {
+            try {
+                // Aqui usamos o eventContext com o dano final para avaliar a regra
+                conditionMet = Function("actor", "event", `return (${conditionItem.system.when})`)(this.targetActor, eventContext);
+            } catch(e) {
+                console.warn(`GUM | Erro na regra da condição anexa "${conditionItem.name}":`, e);
+                conditionMet = false;
+            }
+        }
+
+        if (conditionMet) {
+            hasPotentialEffects = true;
+            // Usamos o ID do *link* para o estado, não o ID do item original
+            if (this.effectState[id] === undefined) this.effectState[id] = { checked: true, isAttachedCondition: true };
+            const isChecked = this.effectState[id].checked;
+            
+            // Por enquanto, não vamos lidar com testes de resistência em condições anexas,
+            // mas a estrutura está aqui para o futuro.
+            const resistanceHTML = '<span class="eff-type">(Automático)</span>';
+
+            potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionItem.name}</span></label>${resistanceHTML}</div>`;
+        }
+    }
+
     effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
     const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
     if (proposeButton) { if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; } }
@@ -397,6 +439,35 @@ async _updateDamageCalculation(form) {
                     }
                 }
             }
+
+        // ✅ 2. NOVA LÓGICA para aplicar attachedConditions
+const appliedEffectNames = []; // Array para guardar os nomes de TUDO que for aplicado
+
+        // Processa contingentEffects antigos (compatibilidade)
+        const contingentEffects = this.damageData.contingentEffects || {};
+        for (const [id, state] of Object.entries(this.effectState)) {
+            if (state.checked && !state.isAttachedCondition) {
+                const effect = contingentEffects[id];
+                if (effect && !effect.resistanceRoll) {
+                    await this._executeContingentAction(effect, { damage: finalInjury, target: this.targetActor, attacker: this.attackerActor });
+                    const conditionItem = await fromUuid(effect.payload);
+                    if (conditionItem) appliedEffectNames.push(conditionItem.name);
+                }
+            }
+        }
+        
+        // Processa attachedConditions novas
+        const attachedConditions = this.damageData.attachedConditions || {};
+        for (const [id, attachedCond] of Object.entries(attachedConditions)) {
+            if (this.effectState[id]?.checked) {
+                const conditionItem = await fromUuid(attachedCond.uuid);
+                if (conditionItem) {
+                    await this.targetActor.createEmbeddedDocuments("Item", [conditionItem.toObject()]);
+                    appliedEffectNames.push(conditionItem.name);
+                }
+            }
+        }
+
 
 if (shouldPublish) {
     const appliedEffectNames = [];

@@ -3035,7 +3035,8 @@ html.on('click', '.rollable-damage', async (ev) => {
             armor_divisor: item.system.damage.armor_divisor,
             follow_up_damage: item.system.damage.follow_up_damage,
             fragmentation_damage: item.system.damage.fragmentation_damage,
-            contingentEffects: item.system.contingentEffects || {} 
+            contingentEffects: item.system.contingentEffects || {},
+            attachedConditions: item.system.attachedConditions || {} 
         };
 
     } else { // O clique veio da Lista de Ataques manuais
@@ -3103,7 +3104,8 @@ if (fragRoll) {
             type: normalizedAttack.type || '',
             armorDivisor: normalizedAttack.armor_divisor || 1
         },
-        contingentEffects: normalizedAttack.contingentEffects || {}
+        contingentEffects: normalizedAttack.contingentEffects || {},
+        attachedConditions: normalizedAttack.attachedConditions || {}
     };
     if (followUpRoll) {
         damagePackage.followUp = {
