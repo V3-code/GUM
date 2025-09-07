@@ -1,0 +1,51 @@
+{{!-- ✅ Alterado para uma tag <form> para funcionar com FormApplication --}}
+<form>
+    <div class="trigger-browser-form">
+        <div class="browser-container">
+            <aside class="browser-sidebar">
+                <div class="filter-group">
+                    <h4 class="filter-title">Buscar por Nome</h4>
+                    <div class="search-box">
+                        <input type="text" name="search" placeholder="Buscar gatilho..."/>
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="browser-content">
+                <ol class="results-list">
+                    {{#each triggers as |trigger index|}}
+                    <li class="result-item" data-item-id="{{trigger.id}}">
+                        
+                        {{!-- ✅ Botão de rádio para seleção --}}
+                        <div class="item-controls">
+                            <input type="radio" name="triggerSelection" value="{{trigger.id}}" id="trigger-{{trigger.id}}" {{#if (eq index 0)}}checked{{/if}}>
+                        </div>
+
+                        {{!-- ✅ A informação agora é um <label> para o rádio --}}
+                        <label class="item-info" for="trigger-{{trigger.id}}">
+                            <div class="info-line-1">
+                                <span class="item-name">{{trigger.name}}</span>
+                            </div>
+                            <div class="info-line-2">
+                                <span class="item-details">
+                                    <code>{{{trigger.system.description}}}</code>
+                                </span>
+                            </div>
+                        </label>
+                    </li>
+                    {{else}}
+                    <li class="placeholder-text">Nenhum gatilho encontrado no compêndio "[GUM] Gatilhos".</li>
+                    {{/each}}
+                </ol>
+            </main>
+        </div>
+
+        {{!-- ✅ Rodapé com o botão de submit adicionado --}}
+        <footer class="browser-footer">
+            <button type="submit">
+                <i class="fas fa-check"></i> Inserir Gatilho
+            </button>
+        </footer>
+    </div>
+</form>

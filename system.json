@@ -26,6 +26,7 @@
     "module/settings.js",
     "module/apps/modifier-browser.js",
     "module/apps/effect-browser.js",
+    "module/apps/trigger-browser.js",
     "scripts/main.js"
   ],
   "styles": [
@@ -36,7 +37,8 @@
     "styles/damage-application.css",
     "styles/conditions.css",
     "styles/condition-builder.css",
-    "styles/condition-browser.css" 
+    "styles/condition-browser.css",
+    "styles/trigger-browser.css" 
   ],
   "packs": [
     {

@@ -1,4 +1,5 @@
 import { GUM_DATA } from "../gum-data.js";
+import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 
 export class ConditionBuilder extends FormApplication {
 
@@ -39,7 +40,7 @@ export class ConditionBuilder extends FormApplication {
         switch(action) {
             // ✅ ROTA ATUALIZADA PARA CHAMAR A FUNÇÃO CORRETA
             case 'open-saved-triggers':
-                this._openTriggerPicker(textarea);
+                new TriggerBrowser(textarea).render(true);
                 break;
             case 'open-structures':
                 this._openStructurePicker(textarea);
@@ -57,39 +58,9 @@ export class ConditionBuilder extends FormApplication {
         }
     }
 
-    // ✅ NOVA FUNÇÃO DEDICADA APENAS AOS GATILHOS SALVOS
-    async _openTriggerPicker(textarea) {
-        const pack = game.packs.get("gum.gatilhos");
-        let savedTriggers = [];
-        if (pack) {
-            savedTriggers = await pack.getDocuments();
-        }
 
-        if (savedTriggers.length === 0) {
-            return ui.notifications.warn("Nenhum gatilho salvo encontrado no compêndio '[GUM] Gatilhos'.");
-        }
 
-        let content = `<div class="structure-picker-dialog"><div class="options">`;
-        for (const trigger of savedTriggers) {
-            content += `<a data-code="${trigger.system.code}" title="${trigger.system.code}">${trigger.name}</a>`;
-        }
-        content += `</div></div>`;
-
-        const d = new Dialog({
-            title: "Selecionar Gatilho Salvo",
-            content,
-            buttons: { close: { label: "Fechar" } },
-            render: (html) => {
-                html.find('.options a').on('click', (ev) => {
-                    const triggerCode = ev.currentTarget.dataset.code;
-                    this._insertTextWithHighlight(textarea, triggerCode);
-                    d.close();
-                });
-            }
-        }, { width: 450, classes: ["dialog", "gum", "structure-picker-dialog"] }).render(true);
-    }
-
-    // ✅ FUNÇÃO ANTIGA, AGORA SIMPLIFICADA PARA CUIDAR APENAS DAS ESTRUTURAS PADRÃO
+    // AGORA SIMPLIFICADA PARA CUIDAR APENAS DAS ESTRUTURAS PADRÃO
     _openStructurePicker(textarea) {
         const structures = {
             "Geral do Personagem": { attr_check: { label: "Verificar Atributo", value: "CAMINHO_DO_ATRIBUTO <= VALOR_OU_FÓRMULA" }},
