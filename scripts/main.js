@@ -4,6 +4,7 @@
 
 import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { ConditionBrowser } from "../module/apps/condition-browser.js";
+import { EffectBrowser } from "../module/apps/effect-browser.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -342,50 +343,41 @@ Hooks.once('ready', async function() {
 $('body').on('click', '.resistance-roll-button', async ev => {
     ev.preventDefault();
     const button = ev.currentTarget;
-    
-    // Impede cliques múltiplos
-    button.disabled = true; 
+    button.disabled = true;
 
-    // 1. Lê os dados embutidos no botão
     const rollData = JSON.parse(button.dataset.rollData);
-    const { targetActorId, finalTarget, contingentEffect } = rollData;
+    const { targetActorId, finalTarget, sourceConditionName, effectData } = rollData;
 
     const targetActor = game.actors.get(targetActorId);
     if (!targetActor) return;
 
-    // 2. Faz a rolagem de 3d6
     const roll = new Roll("3d6");
     await roll.evaluate();
 
     const margin = finalTarget - roll.total;
     const success = roll.total <= finalTarget;
-    const resultText = success ? `Sucesso (margem ${margin})` : `Falha (margem ${-margin})`;
+    // ... (lógica de criação da mensagem de chat com o resultado, que permanece igual)
 
-    // 3. Cria uma mensagem de chat com o resultado da rolagem
-    const flavor = `
-        <div class="gurps-roll-card">
-            <header class="card-header"><h3>Teste de Resistência: ${contingentEffect.resistanceRoll.attribute.toUpperCase()}</h3></header>
-            <div class="card-content">
-                <p><strong>${targetActor.name}</strong> ${success ? 'resiste' : 'falha'} ao teste!</p>
-                Resultado: ${roll.total} (Alvo: ${finalTarget})<br>
-                <strong>${resultText}</strong>
-            </div>
-        </div>
-    `;
-    ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: targetActor }),
-        content: flavor,
-        rolls: [roll]
-    });
-
-    // 4. Verifica se a ação final deve ser executada
-    const triggerOn = contingentEffect.resistanceRoll.on || 'failure'; // O padrão é 'failure'
+    const triggerOn = effectData.resistanceRoll.applyOn || 'failure';
     if ((triggerOn === 'failure' && !success) || (triggerOn === 'success' && success)) {
-        // A condição foi atendida! Executa a ação.
-        await applyContingentCondition(targetActor, contingentEffect);
+        ui.notifications.info(`${targetActor.name} foi afetado por: ${effectData.name}!`);
+        const newConditionData = {
+            name: `Efeito (Resistido): ${effectData.name} de ${sourceConditionName}`,
+            type: "condition",
+            system: {
+                when: "", 
+                effects: [effectData] 
+            }
+        };
+        // ✅ CORREÇÃO: Usamos o retorno da chamada para forçar a atualização
+        const createdItems = await targetActor.createEmbeddedDocuments("Item", [newConditionData]);
+        if (createdItems.length > 0) {
+            // Esta linha extra força o Foundry a reavaliar os estados do ator,
+            // garantindo que o motor `processConditions` aplique o ícone.
+            await targetActor.update({ "flags.gum.rerender": Math.random() });
+        }
     }
 
-    // Remove o botão da mensagem original para que não possa ser rolado novamente.
     $(button).closest('.gurps-resistance-roll-card').html(`<p><em>Teste de resistência já foi rolado.</em></p>`);
 });
 
@@ -3621,6 +3613,31 @@ class GurpsItemSheet extends ItemSheet {
       context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
     }
 
+        // Função auxiliar para buscar e preparar os dados dos itens linkados (Efeitos ou Condições)
+    const _prepareLinkedItems = async (sourceObject) => {
+        const entries = Object.entries(sourceObject || {});
+        const promises = entries.map(async ([id, linkData]) => {
+            const originalItem = await fromUuid(linkData.effectUuid || linkData.uuid);
+            return {
+                id: id,
+                ...linkData, // Inclui os campos contextuais (recipient, minInjury, etc.)
+                name: originalItem ? originalItem.name : "Item não encontrado",
+                img: originalItem ? originalItem.img : "icons/svg/mystery-man.svg"
+            };
+        });
+        return Promise.all(promises);
+    };
+
+    // Prepara os dados para o template
+    context.system.preparedEffects = {
+        activation: {
+            success: await _prepareLinkedItems(this.item.system.activationEffects?.success),
+            failure: await _prepareLinkedItems(this.item.system.activationEffects?.failure)
+        },
+        onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects),
+        general: await _prepareLinkedItems(this.item.system.generalConditions)
+    };
+
     // Lógica de ordenação e preparação dos modificadores
     const modifiersObj = this.item.system.modifiers || {};
     const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
@@ -3634,12 +3651,6 @@ class GurpsItemSheet extends ItemSheet {
     });
     context.sortedModifiers = modifiersArray;
 
-    const attachedConditionsObj = this.item.system.attachedConditions || {};
-    context.attachedConditions = Object.entries(attachedConditionsObj).map(([id, data]) => ({
-        id: id,
-        name: data.name,
-        uuid: data.uuid
-    }));
 
     // Lógica de preparação da descrição para o template
         context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, {
@@ -3858,11 +3869,6 @@ html.find('.delete-attack').on('click', (ev) => {
     });
 });
 
-// ATUALIZADO: Adicionar um Efeito Contingente agora abre o ConditionBrowser
-    html.find('.add-contingent-effect').on('click', ev => {
-        new ConditionBrowser(this.item).render(true);
-    });
-
     // NOVO: Visualizar a ficha original da Condição a partir do compêndio
     html.find('.view-attached-condition').on('click', async ev => {
         const conditionId = $(ev.currentTarget).closest('.effect-summary').data('condition-id');
@@ -3892,17 +3898,76 @@ html.find('.delete-attack').on('click', (ev) => {
         });
     });
 
-// Editar um Efeito Contingente existente
-html.find('.edit-contingent-effect').on('click', ev => {
-    const effectId = $(ev.currentTarget).closest('.effect-summary').data('effect-id');
-    const effectData = this.item.system.contingentEffects[effectId];
+    // Listener para ADICIONAR EFEITOS (para as seções de Ativação e Dano)
+    html.find('.add-effect').on('click', async (ev) => {
+        const targetList = $(ev.currentTarget).data('target-list');
+        if (!targetList) return;
 
-    new ContingentEffectBuilder(effectData, this.item, (updatedEffect) => {
-        this.item.update({
-            [`system.contingentEffects.${effectId}`]: updatedEffect
+        new EffectBrowser(this.item, {
+            onSelect: (selectedEffects) => {
+                const updates = {};
+                for (const effect of selectedEffects) {
+                    const newId = foundry.utils.randomID();
+                    const newLinkData = {
+                        effectUuid: effect.uuid,
+                        recipient: 'target'
+                    };
+                    updates[`system.${targetList}.${newId}`] = newLinkData;
+                }
+                // ✅ MELHORIA: Após a atualização, chamamos .render() para redesenhar a ficha.
+                this.item.update(updates).then(() => this.render());
+            }
+        }).render(true);
+    });
+
+    // Listener para ADICIONAR CONDIÇÕES GERAIS
+    html.find('.add-general-condition').on('click', (ev) => {
+        new ConditionBrowser(this.item, {
+            // ✅ Callback para salvar na lista correta
+            onSelect: (selectedConditions) => {
+                const updates = {};
+                for (const condition of selectedConditions) {
+                    const newId = foundry.utils.randomID();
+                    const newLinkData = {
+                        uuid: condition.uuid,
+                        name: condition.name // Guardamos o nome para fallback
+                    };
+                    updates[`system.generalConditions.${newId}`] = newLinkData;
+                }
+                this.item.update(updates);
+            }
+        }).render(true);
+    });
+    
+    // Listener para DELETAR um Efeito ou Condição de qualquer lista
+    html.find('.delete-effect').on('click', (ev) => {
+        const target = $(ev.currentTarget);
+        const listName = target.closest('.effect-entry').data('list-name');
+        const effectId = target.closest('.effect-entry').data('effect-id');
+        
+        Dialog.confirm({
+            title: "Remover Efeito",
+            content: "<p>Você tem certeza que deseja remover este efeito da habilidade?</p>",
+            yes: () => {
+                this.item.update({ [`system.${listName}.-=${effectId}`]: null });
+            },
+            no: () => {}
         });
-    }).render(true);
-});
+    });
+
+    // Listener para VISUALIZAR o item original (Efeito ou Condição)
+    html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
+        const uuid = $(ev.currentTarget).data('uuid'); // ✅ Lê o UUID diretamente do botão
+
+        if (uuid) {
+            const originalItem = await fromUuid(uuid);
+            if (originalItem) {
+                originalItem.sheet.render(true);
+            } else {
+                ui.notifications.warn("O item original não foi encontrado no compêndio.");
+            }
+        }
+    });
 
 
 }

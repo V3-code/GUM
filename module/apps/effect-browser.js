@@ -2,12 +2,13 @@
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 export class EffectBrowser extends FormApplication {
-  constructor(targetItem, options) {
-    super(options);
+constructor(targetItem, options = {}) {
+    super({}, options); // Usamos um objeto vazio como base
     this.targetItem = targetItem;
-    // ✅ Renomear a variável para clareza
+    // Armazena o callback se ele for passado nas opções
+    this.onSelect = options.onSelect; 
     this.allEffects = [];
-  }
+}
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
@@ -19,25 +20,26 @@ export class EffectBrowser extends FormApplication {
     });
   }
 
-  async getData() {
+async getData() {
     const context = await super.getData();
     context.targetItem = this.targetItem;
     
-    // ✅ PASSO 2: Buscar os dados do compêndio de EFEITOS
-    const pack = game.packs.get("gum.efeitos"); // Nome do compêndio que você criou
+    const pack = game.packs.get("gum.efeitos");
     if (pack) {
         this.allEffects = await pack.getDocuments();
         this.allEffects = this.allEffects.map(item => ({
             id: item.id,
-            name: item.name, system: item.system, img: item.img,
+            uuid: item.uuid, // ✅ LINHA CRUCIAL QUE FALTAVA
+            name: item.name, 
+            system: item.system, 
+            img: item.img,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
     }
-    // ✅ Renomear a variável de contexto para clareza
     context.effects = this.allEffects; 
     return context;
-  }
+}
 
 activateListeners(html) {
     super.activateListeners(html);
@@ -94,29 +96,24 @@ _onFilterResults(event) {
 
   // ✅ PASSO 3: Reescrever a lógica de salvamento
   async _updateObject(event, formData) {
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-    if (selectedIds.length === 0) return ui.notifications.warn("Nenhum efeito foi selecionado.");
-    
-    // Pega a lista de efeitos já existentes no item Condição
-    const existingEffects = this.targetItem.system.effects || [];
+      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+      if (selectedIds.length === 0) return ui.notifications.warn("Nenhum efeito foi selecionado.");
+      
+      const selectedEffects = selectedIds.map(id => this.allEffects.find(e => e.id === id)).filter(e => e);
 
-    // Adiciona os novos efeitos selecionados
-for (const id of selectedIds) {
-  const sourceEffect = this.allEffects.find(e => e.id === id);
-  if (sourceEffect) {
-    // ✅ AQUI ESTÁ A CORREÇÃO ✅
-    // Criamos um novo objeto que junta todos os dados de .system com a propriedade .name
-    const newEffectData = {
-        ...sourceEffect.system,
-        name: sourceEffect.name,
-        sourceUuid: sourceEffect.uuid  
-    };
-    existingEffects.push(newEffectData);
-  }
-}
-    
-    // Atualiza o item Condição com a nova lista completa de efeitos
-    await this.targetItem.update({ "system.effects": existingEffects });
-    ui.notifications.info(`${selectedIds.length} efeito(s) adicionado(s).`);
+      // ✅ LÓGICA CORRIGIDA: Se um callback onSelect existir, execute-o.
+      if (this.onSelect) {
+          // Isso executa a lógica que está dentro da ficha do item (GurpsItemSheet)
+          this.onSelect(selectedEffects);
+      } else {
+          // Lógica antiga para a ficha de Condição
+          const existingEffects = this.targetItem.system.effects || [];
+          for (const sourceEffect of selectedEffects) {
+            const newEffectData = { ...sourceEffect.system, name: sourceEffect.name, sourceUuid: sourceEffect.uuid };
+            existingEffects.push(newEffectData);
+          }
+          await this.targetItem.update({ "system.effects": existingEffects });
+          ui.notifications.info(`${selectedEffects.length} efeito(s) adicionado(s).`);
+      }
   }
 }

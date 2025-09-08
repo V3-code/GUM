@@ -1,11 +1,12 @@
 // GUM/module/apps/condition-browser.js
 
 export class ConditionBrowser extends FormApplication {
-  constructor(targetItem, options) {
-    super(options);
+constructor(targetItem, options = {}) {
+    super({}, options);
     this.targetItem = targetItem;
+    this.onSelect = options.onSelect;
     this.allConditions = [];
-  }
+}
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
@@ -97,23 +98,22 @@ export class ConditionBrowser extends FormApplication {
   }
 
   async _updateObject(event, formData) {
-    // ... (Esta função permanece inalterada)
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-    if (selectedIds.length === 0) return ui.notifications.warn("Nenhuma condição foi selecionada.");
-    
-    const newConditionsData = {};
-    for (const id of selectedIds) {
-      const sourceCondition = this.allConditions.find(c => c.id === id);
-      if (sourceCondition) {
-        const newKey = foundry.utils.randomID();
-        newConditionsData[`system.attachedConditions.${newKey}`] = {
-          name: sourceCondition.name,
-          uuid: sourceCondition.uuid
-        };
+      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+      if (selectedIds.length === 0) return ui.notifications.warn("Nenhuma condição foi selecionada.");
+
+      const selectedConditions = selectedIds.map(id => this.allConditions.find(c => c.id === id)).filter(c => c);
+
+      if (this.onSelect) {
+          this.onSelect(selectedConditions);
+      } else {
+          // Lógica antiga (será removida no futuro, mas mantida por segurança)
+          const updates = {};
+          for (const condition of selectedConditions) {
+            const newKey = foundry.utils.randomID();
+            updates[`system.generalConditions.${newKey}`] = { name: condition.name, uuid: condition.uuid };
+          }
+          await this.targetItem.update(updates);
+          ui.notifications.info(`${selectedConditions.length} condição(ões) anexada(s).`);
       }
-    }
-    
-    await this.targetItem.update(newConditionsData);
-    ui.notifications.info(`${selectedIds.length} condição(ões) anexada(s).`);
   }
 }

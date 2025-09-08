@@ -2,33 +2,27 @@
   "Actor": {
     "types": ["character"],
     "character": {
-"attributes": {
-  "st":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "dx":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "iq":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "ht":         { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "vont":       { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "per":        { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-
-  "hp":         { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "fp":         { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-
-  "fome":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-  "sede":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-  "sono":       { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-
-  "mt":         { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-
-  "basic_speed": { "value": 5.00, "mod": 0, "temp": 0, "override": null, "final": 5.00, "final_computed": 5.00 },
-  "basic_move":  { "value": 5, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 5, "final_computed": 5 },
-  "dodge":       { "value": 8, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 8, "final_computed": 8 },
-
-  "lifting_st":  { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-  "basic_lift":  { "value": 20 },
-
-  "thrust_damage": "1d6-2",
-  "swing_damage": "1d6"
-}, 
+      "attributes": {
+        "st": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "dx": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "iq": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "ht": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "vont": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "per": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "fome": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+        "sede": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+        "sono": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+        "mt": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
+        "basic_speed": { "value": 5, "mod": 0, "temp": 0, "override": null, "final": 5, "final_computed": 5 },
+        "basic_move": { "value": 5, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 5, "final_computed": 5 },
+        "dodge": { "value": 8, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 8, "final_computed": 8 },
+        "lifting_st": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "basic_lift": { "value": 20 },
+        "thrust_damage": "1d6-2",
+        "swing_damage": "1d6"
+      },
       "points": { "total": 100, "unspent": 100 },
       "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "backstory": "" },
       "money": { "value": 0 },
@@ -54,8 +48,12 @@
         "description": "",
         "chat_description": "",
         "ref": "",
-        "contingentEffects": [],
-        "attachedConditions": {}
+        "activationEffects": {
+          "success": {},
+          "failure": {}
+        },
+        "onDamageEffects": {},
+        "generalConditions": {}
       },
       "equipment_base": {
         "quantity": 1,
@@ -69,160 +67,34 @@
       }
     },
 
-    "advantage": {
-      "templates": ["base"],
-      "points": 10,
-      "block_id": "block2",
-      "self_control_roll": "",
-      "level": "",
-      "modifiers": {}
-    },
-    "disadvantage": {
-      "templates": ["base"],
-      "points": -10,
-      "block_id": "block3",
-      "self_control_roll": "",
-      "level": "",
-      "modifiers": {}
-    },
-    "skill": {
-      "templates": ["base"],
-      "points": 2,
-      "group": "Geral",
-      "base_attribute": "DX",
-      "skill_level": 0,
-      "other_mods": 0,
-      "block_id": "block1",
-      "difficulty": "M"
-    },
-    "equipment": {
-      "templates": ["base", "equipment_base"],
-       "melee_attacks": {},
-        "ranged_attacks": {}
-    },
-    "armor": {
-      "templates": ["base", "equipment_base"],
-      "dr": 1,
-      "worn_locations": ["torso"]
-    },
+    "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "modifiers": {} },
+    "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "modifiers": {} },
+    "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M" },
+    "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {} },
+    "armor": { "templates": ["base", "equipment_base"], "dr": 1, "worn_locations": ["torso"] },
     "spell": {
       "templates": ["base"],
-      "points": 4,
-      "base_attribute": "IQ",
-      "skill_level": 0,
-      "other_mods": 0,
-      "casting_time": "1s",
-      "duration": "1 min",
-      "mana_cost": "1",
-      "mana_maint": "1",
-      "spell_class": "Regular",
-      "spell_school": "Magia Geral",
-      "difficulty": "D",
-      "source": "Arcana",
-      "resistance": "",
-      "effect": "",
-      "damage": {
-        "formula": "",
-        "type": "",
-        "armor_divisor": 1,
-        "follow_up_damage": {
-            "formula": "",
-            "type": "",
-            "armor_divisor": 1
-        },
-        "fragmentation_damage": {
-            "formula": "",
-            "type": "",
-            "armor_divisor": 1
-        }
-    }
+      "points": 4, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Regular", "spell_school": "Magia Geral", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "",
+      "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
     "power": {
       "templates": ["base"],
-      "points": 10,
-      "base_attribute": "IQ",
-      "skill_level": 0,
-      "other_mods": 0,
-      "activation_time": "1s",
-      "duration": "1 min",
-      "activation_cost": "2",
-      "maint_cost":"1",
-      "spell_class": "Regular",
-      "difficulty": "D",
-      "source": "Biológico",
-      "resistance": "",
-      "effect": "",
-      "modifiers": {},
-       "damage": {
-        "formula": "",
-        "type": "",
-        "armor_divisor": 1,
-        "follow_up_damage": {
-            "formula": "",
-            "type": "",
-            "armor_divisor": 1
-        },
-        "fragmentation_damage": {
-            "formula": "",
-            "type": "",
-            "armor_divisor": 1
-        }
-    }
+      "points": 10, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "activation_time": "1s", "duration": "1 min", "activation_cost": "2", "maint_cost":"1", "spell_class": "Regular", "difficulty": "D", "source": "Biológico", "resistance": "", "effect": "", "modifiers": {},
+       "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
     "condition": {
       "templates": ["base"],
-      "when": "", 
-      "effects": [],
-      "duration": {
-    "value": 0,             
-    "unit": "unlimited",    
-    "expiration": "delete",
-    "inCombat": false,      
-    "startRound": 0,
-    "startTurn": 0,
-    "startTime": 0
-},
+      "when": "", "effects": [],
+      "duration": { "value": 0, "unit": "unlimited", "expiration": "delete", "inCombat": false, "startRound": 0, "startTurn": 0, "startTime": 0 },
       "category": "general",
-      "flags": {
-        "gum": {
-          "manual_override": false
-        }
-      }
+      "flags": { "gum": { "manual_override": false } }
     },
-    "modifier": {
-      "templates": ["base"],
-      "cost": "0%",
-      "level": 0,
-      "applied_effect": ""
-    },
-
-    "trigger": {
-    "templates": ["base"],
-    "code": ""
-    },
-    
+    "modifier": { "templates": ["base"], "cost": "0%", "level": 0, "applied_effect": "" },
+    "trigger": { "templates": ["base"], "code": "" },
     "effect": {
-        "templates": ["base"],
-        "type": "attribute",
-        "path": "system.attributes.st.mod",
-        "operation": "ADD",
-        "value": "1",
-        "statusId": "dead",
-        "key": "",
-        "flag_value": "",
-        "chat_text": "",
-        "has_roll": false,
-        "roll_label": "Rolar Teste",
-        "roll_attribute": "ht",
-        "roll_modifier": "0",
-        "whisperMode": "public",
-        "resistanceRoll": {
-            "isResisted": false,
-            "attribute": "ht",
-            "modifier": "0",
-            "applyOn": "failure",
-            "margin": ""
-        }
+      "templates": ["base"],
+      "type": "attribute", "path": "system.attributes.st.mod", "operation": "ADD", "value": "1", "statusId": "dead", "key": "", "flag_value": "", "chat_text": "", "has_roll": false, "roll_label": "Rolar Teste", "roll_attribute": "ht", "roll_modifier": "0", "whisperMode": "public",
+      "resistanceRoll": { "isResisted": false, "attribute": "ht", "modifier": "0", "applyOn": "failure", "margin": "" }
     }
   }
 }
