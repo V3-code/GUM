@@ -404,50 +404,56 @@ async _updateDamageCalculation(form) {
         }
     }
     
-    async _onApplyDamage(form, shouldClose, shouldPublish) {
-        const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
-        if (this.isApplying) return;
-        this.isApplying = true;
-        try {
-            const finalInjury = this.finalInjury || 0;
-            const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
-            const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
-            if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
-            const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
-            let eventData = null;
+async _onApplyDamage(form, shouldClose, shouldPublish) {
+    const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
+    if (this.isApplying) return;
+    this.isApplying = true;
 
-            if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
-                eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
-                const newPoolValue = currentPoolValue - finalInjury;
-                await this.targetActor.update({ [selectedPoolPath]: newPoolValue }, { gumEventData: eventData });
-            } else {
-                const sign = applyAsHeal ? 1 : -1;
-                const newPoolValue = currentPoolValue + (sign * finalInjury);
-                await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
-            }
+    try {
+        const finalInjury = this.finalInjury || 0;
+        const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+        const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
 
-            // Processa os efeitos FINAIS que permaneceram marcados.
-            const effectsToProcess = [];
-            for (const [id, state] of Object.entries(this.effectState)) {
-                if (state.checked) { effectsToProcess.push(this.damageData.contingentEffects[id]); }
-            }
-            if (effectsToProcess.length > 0) {
-                const eventContext = { damage: finalInjury, target: this.targetActor, attacker: this.attackerActor };
-                for (const effect of effectsToProcess) {
-                    if (!effect.resistanceRoll) {
-                        await this._executeContingentAction(effect, eventContext);
+        if (!selectedPoolPath) {
+            this.isApplying = false;
+            return ui.notifications.error("Nenhum alvo para o dano foi selecionado.");
+        }
+
+        const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+
+        // 1. Aplica o dano ou cura ao alvo
+        if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
+            const eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
+            await this.targetActor.update({ [selectedPoolPath]: currentPoolValue - finalInjury }, { gumEventData: eventData });
+        } else if (applyAsHeal && finalInjury > 0) {
+            await this.targetActor.update({ [selectedPoolPath]: currentPoolValue + finalInjury });
+        }
+
+        // 2. Processa os efeitos que foram marcados na UI
+        const appliedEffectNames = []; // Array único para guardar os nomes de TUDO que for aplicado
+
+        // Loop principal para verificar TODOS os efeitos marcados
+        for (const [id, state] of Object.entries(this.effectState)) {
+            if (!state.checked) continue; // Pula se o efeito foi desmarcado na UI
+
+            // Se for um efeito do NOVO sistema (attachedConditions)
+            if (state.isAttachedCondition) {
+                const attachedCond = this.damageData.attachedConditions[id];
+                if (attachedCond) {
+                    const conditionItem = await fromUuid(attachedCond.uuid);
+                    if (conditionItem) {
+                        // ✅ CORREÇÃO APLICADA AQUI ✅
+                        const newConditionData = conditionItem.toObject();
+                        newConditionData.system.when = ""; // Remove o gatilho para que a condição seja sempre ativa
+                        await this.targetActor.createEmbeddedDocuments("Item", [newConditionData]);
+                        
+                        appliedEffectNames.push(conditionItem.name);
                     }
                 }
             }
-
-        // ✅ 2. NOVA LÓGICA para aplicar attachedConditions
-const appliedEffectNames = []; // Array para guardar os nomes de TUDO que for aplicado
-
-        // Processa contingentEffects antigos (compatibilidade)
-        const contingentEffects = this.damageData.contingentEffects || {};
-        for (const [id, state] of Object.entries(this.effectState)) {
-            if (state.checked && !state.isAttachedCondition) {
-                const effect = contingentEffects[id];
+            // Se for um efeito do sistema ANTIGO (contingentEffects)
+            else {
+                const effect = this.damageData.contingentEffects[id];
                 if (effect && !effect.resistanceRoll) {
                     await this._executeContingentAction(effect, { damage: finalInjury, target: this.targetActor, attacker: this.attackerActor });
                     const conditionItem = await fromUuid(effect.payload);
@@ -455,87 +461,48 @@ const appliedEffectNames = []; // Array para guardar os nomes de TUDO que for ap
                 }
             }
         }
-        
-        // Processa attachedConditions novas
-        const attachedConditions = this.damageData.attachedConditions || {};
-        for (const [id, attachedCond] of Object.entries(attachedConditions)) {
-            if (this.effectState[id]?.checked) {
-                const conditionItem = await fromUuid(attachedCond.uuid);
-                if (conditionItem) {
-                    await this.targetActor.createEmbeddedDocuments("Item", [conditionItem.toObject()]);
-                    appliedEffectNames.push(conditionItem.name);
-                }
+
+        // 3. Publica o resultado no chat, se aplicável
+        if (shouldPublish) {
+            const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+            let resultLine = '';
+            if (applyAsHeal && finalInjury > 0) {
+                resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+            } else if (finalInjury > 0 && !effectsOnlyChecked) {
+                resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+            } else if (finalInjury === 0 && effectsOnlyChecked && appliedEffectNames.length > 0) {
+                resultLine = `<p>Não sofreu lesão, mas foi afetado por efeitos.</p>`;
             }
+
+            let effectsHtml = appliedEffectNames.length > 0
+                ? `<div class="minicard effects-card"><div class="minicard-title">Efeitos Aplicados</div>${appliedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}</div>`
+                : (finalInjury === 0 && !applyAsHeal && !effectsOnlyChecked ? `<div class="minicard result-card"><div class="minicard-title">Resultado</div><p>O ataque não causou lesão.</p></div>` : '');
+            
+            let messageContent = `
+            <div class="gurps-roll-card">
+                <header class="card-header"><h3>Resumo do Ataque</h3></header>
+                <div class="card-content">
+                    <div class="summary-actors vertical">
+                        <div class="actor-line"><img src="${this.attackerActor.img}" class="actor-token-icon"> <strong>${this.attackerActor.name}</strong></div>
+                        <div class="arrow-line"><i class="fas fa-arrow-down"></i></div>
+                        <div class="actor-line"><img src="${this.targetActor.img}" class="actor-token-icon"> <strong>${this.targetActor.name}</strong></div>
+                    </div>
+                    ${resultLine ? `<div class="minicard result-card"><div class="minicard-title">Resultado</div>${resultLine}</div>` : ''}
+                    ${effectsHtml}
+                </div>
+            </div>`;
+
+            ChatMessage.create({
+                speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
+                content: messageContent
+            });
         }
 
-
-if (shouldPublish) {
-    const appliedEffectNames = [];
-    for (const effect of effectsToProcess) {
-        const conditionItem = await fromUuid(effect.payload);
-        if (conditionItem) {
-            appliedEffectNames.push(conditionItem.name);
-        }
+        if (shouldClose) { this.close(); }
+    } finally {
+        this.isApplying = false;
     }
-
-    const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
-    let resultLine = '';
-
-    if (applyAsHeal && finalInjury > 0) {
-        resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
-    } else if (finalInjury > 0 && !effectsOnlyChecked) {
-        resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
-    }
-
-    // Monta o HTML final com a nova estrutura de texto
-    let messageContent = `
-        <div class="gurps-roll-card">
-            <header class="card-header">
-                <h3>Resumo do Ataque</h3>
-            </header>
-            <div class="card-content">
-                <div class="summary-actors vertical">
-                    <div class="actor-line">
-                        <img src="${this.attackerActor.img}" class="actor-token-icon">
-                        <strong>${this.attackerActor.name}</strong>
-                    </div>
-                    <div class="arrow-line">
-                        <i class="fas fa-arrow-down"></i>
-                    </div>
-                    <div class="actor-line">
-                        <img src="${this.targetActor.img}" class="actor-token-icon">
-                        <strong>${this.targetActor.name}</strong>
-                    </div>
-                </div>
-
-                ${resultLine ? `
-                <div class="minicard result-card">
-                    <div class="minicard-title">Resultado</div>
-                    ${resultLine}
-                </div>
-                ` : ''}
-
-                ${appliedEffectNames.length > 0 ? `
-                <div class="minicard effects-card">
-                    <div class="minicard-title">Efeitos Aplicados</div>
-                    ${appliedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
-                </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-
-    ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
-        content: messageContent
-    });
 }
-
-            if (shouldClose) { this.close(); }
-        } finally {
-            this.isApplying = false;
-        }
-    }
 
     async _executeContingentAction(effect, eventContext) {
         if (effect.action === 'applyCondition') {
