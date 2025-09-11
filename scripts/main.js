@@ -3009,17 +3009,15 @@ html.on('click', '.edit-attack', ev => {
 html.on('click', '.rollable-damage', async (ev) => {
     ev.preventDefault();
     const element = ev.currentTarget;
-    let normalizedAttack; // Objeto padronizado para guardar os dados do ataque/magia
+    let normalizedAttack;
 
-    // --- ✅ INÍCIO DA LÓGICA DE NORMALIZAÇÃO DE DADOS ✅ ---
-    const itemId = $(element).closest(".item-row").data("itemId");
+    const itemId = $(element).closest(".item-row, .attack-item").data("itemId");
 
-    if (itemId) { // O clique veio de um item da lista (Magia)
+    if (itemId) { // O clique veio de um item (Magia, Poder, etc.)
         const item = this.actor.items.get(itemId);
         if (!item || !item.system.damage?.formula) {
-            return ui.notifications.warn("Esta magia não possui uma fórmula de dano válida.");
+            return ui.notifications.warn("Esta habilidade não possui uma fórmula de dano válida.");
         }
-        // Traduz os dados da magia para o nosso formato padronizado
         normalizedAttack = {
             name: item.name,
             formula: item.system.damage.formula,
@@ -3027,11 +3025,12 @@ html.on('click', '.rollable-damage', async (ev) => {
             armor_divisor: item.system.damage.armor_divisor,
             follow_up_damage: item.system.damage.follow_up_damage,
             fragmentation_damage: item.system.damage.fragmentation_damage,
-            contingentEffects: item.system.contingentEffects || {},
-            attachedConditions: item.system.attachedConditions || {} 
+            onDamageEffects: item.system.onDamageEffects || {},
+            generalConditions: item.system.generalConditions || {}
         };
 
-    } else { // O clique veio da Lista de Ataques manuais
+    } else { 
+        // Lógica para ataques manuais (pode ser expandida no futuro)
         const attackId = $(element).closest(".attack-item").data("attackId");
         const groupId = $(element).closest('.attack-group-card').data('groupId');
         const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
@@ -3046,7 +3045,8 @@ html.on('click', '.rollable-damage', async (ev) => {
             armor_divisor: attack.armor_divisor,
             follow_up_damage: attack.follow_up_damage,
             fragmentation_damage: attack.fragmentation_damage,
-            contingentEffects: attack.contingentEffects || {}
+            onDamageEffects: attack.onDamageEffects || {}, // Prepara para o futuro
+            generalConditions: attack.generalConditions || {}
         };
     }
     // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
@@ -3076,7 +3076,7 @@ const performDamageRoll = async (modifier = 0) => {
         totalRolls.push(fragRoll);
     }
     
-    // Monta a 'pílula' de fórmula completa no topo do card
+
 // Monta a 'pílula' de fórmula completa no topo do card
 let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
 if (followUpRoll) {
@@ -3096,8 +3096,8 @@ if (fragRoll) {
             type: normalizedAttack.type || '',
             armorDivisor: normalizedAttack.armor_divisor || 1
         },
-        contingentEffects: normalizedAttack.contingentEffects || {},
-        attachedConditions: normalizedAttack.attachedConditions || {}
+        onDamageEffects: normalizedAttack.onDamageEffects,
+        generalConditions: normalizedAttack.generalConditions
     };
     if (followUpRoll) {
         damagePackage.followUp = {

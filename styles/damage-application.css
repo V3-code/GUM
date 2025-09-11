@@ -45,74 +45,74 @@
 .wounding-mods-panel .custom-mod-input { width: 50px; margin-left: 5px; }
 
 /* Rodapé */
-.damage-application-dialog .damage-app-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 15px; }
+.damage-application-dialog .damage-app-footer { margin-top: 15px; padding-top: 15px; padding-bottom: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 3fr 1.2fr; gap: 15px; }
 .damage-application-dialog .calculation-summary .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
 .damage-application-dialog .calculation-summary .summary-row label { color: #a0a0a0; }
 .damage-application-dialog .calculation-summary .final-injury { font-weight: bold; font-size: 1.2em; color: var(--c-accent-red, #a53541); }
-.damage-application-dialog .action-buttons { display: flex; flex-direction: column; gap: 5px; }
+.damage-application-dialog .action-buttons { display: flex; flex-direction: row; gap: 5px; }
 
 /* =================================================================== */
-/* ESTILO PARA CHECKBOXES CUSTOMIZADOS NA JANELA DE DANO             */
+/* ESTILO UNIFICADO E FINAL PARA TODOS OS CHECKBOXES CUSTOMIZADOS      */
 /* =================================================================== */
 
-/* O container do nosso checkbox (a tag <label>) */
+/* Define a aparência base para TODAS as labels de checkbox */
 .damage-application-dialog .custom-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* Espaço entre a caixinha e o texto */
-  cursor: pointer;
-  font-size: 13px;
-  color: #d1d1d1;
-  transition: color 0.2s ease;
-  padding: 3px 0;
-}
-.damage-application-dialog .custom-checkbox:hover {
-  color: #fff;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 22px; /* Espaço para a caixinha */
+    cursor: pointer;
+    font-size: 13px;
 }
 
 /* Esconde o checkbox padrão do navegador */
 .damage-application-dialog .custom-checkbox input[type="checkbox"] {
-  display: none;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
-/* Adiciona um span ao redor do texto para o truque funcionar (precisa de um pequeno ajuste no .hbs) */
-.damage-application-dialog .custom-checkbox span {
-    position: relative;
-    display: flex;
-    align-items: center;
+/* Desenha a CAIXINHA VISUAL (o 'box') para todos */
+.damage-application-dialog .custom-checkbox::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    transition: all 0.2s ease;
 }
 
-/* Cria a nossa própria caixinha de checkbox usando um pseudo-elemento */
-.damage-application-dialog .custom-checkbox span::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  vertical-align: middle;
-  transition: all 0.2s ease;
+/* Desenha o "✓" (check) para todos, mas o deixa invisível por padrão */
+.damage-application-dialog .custom-checkbox::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    
+    
+    width: 3px;
+    height: 7px;
+    border: solid #111; /* Cor preta para o check */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    opacity: 0; /* Começa invisível */
+    transition: opacity 0.2s ease;
 }
 
-/* Estilo da caixinha QUANDO o checkbox está marcado */
-.damage-application-dialog .custom-checkbox input[type="checkbox"]:checked + span::before {
-  background-color: var(--c-accent-gold, #c5a05b);
-  border-color: var(--c-accent-gold, #c5a05b);
+/* Esta regra se aplica a QUALQUER label que tenha a classe .is-checked */
+.damage-application-dialog .custom-checkbox.is-checked::before {
+    background-color: var(--c-accent-gold, #c5a05b);
+    border-color: var(--c-accent-gold, #c5a05b);
 }
 
-/* Cria o "✓" (check) */
-.damage-application-dialog .custom-checkbox input[type="checkbox"]:checked + span::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 4px;
-  width: 3px;
-  height: 7px;
-  border: solid #111; /* Cor do check (preto para contrastar com o dourado) */
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+.damage-application-dialog .custom-checkbox.is-checked::after {
+    opacity: 1; /* Torna o "✓" visível */
 }
 
 /* =================================================================== */
@@ -122,7 +122,7 @@
 /* Container que alinha os botões verticalmente */
 .damage-application-dialog .action-buttons {
     display: flex;
-    flex-direction: column;
+    
     gap: 5px;
     justify-content: flex-end; /* Alinha os botões à base do rodapé */
 }
@@ -135,7 +135,7 @@
     text-align: left;
     color: #dcdcdc;
     
-    background: rgba(0,0,0,0.25);
+    background: var(--c-accent-gold, #c5a05b);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 3px;
     
@@ -594,6 +594,14 @@
   font-style: italic;
 }
 
+/* Coluna 3: Botões de Ação */
+.damage-application-dialog .action-buttons {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 5px;
+  justify-content: center; /* Centraliza os botões verticalmente */
+}
+
 /* Coluna 2: Efeitos */
 .effects-summary {
   display: flex;
@@ -620,11 +628,40 @@
   font-style: italic;
 }
 
-/* Coluna 3: Botões de Ação */
-.damage-application-dialog .action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  justify-content: center; /* Centraliza os botões verticalmente */
+/*TESSSSSSSSSSSSSSSSSTEEEEEEEEEE*/
+
+/*.interactive-effects-panel {
+    background: rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 100px;
+}
+.interactive-effects-panel .effects-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}*/
+.effect-card {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    background: var(--c-bg-medium);
+    border-radius: 3px;
+    border-left: 3px solid var(--c-text-accent);
+}
+.effect-card .effect-main { display: flex; align-items: center; gap: 8px; }
+.effect-card .effect-icon { width: 24px; height: 24px; }
+.effect-card .effect-status { font-style: italic; font-size: 0.9em; opacity: 0.8; }
+.effect-card .effect-status.success { color: var(--c-success); }
+.effect-card .effect-status.failure { color: var(--c-failure); }
+.final-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 

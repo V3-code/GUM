@@ -11,16 +11,18 @@ export default class DamageApplicationWindow extends Application {
         this.effectState = {};
         this.isApplying = false;
 
-        this.state = {
-            finalInjury: 0,
-            targetDR: 0,
-            activeDamageKey: 'main'
-        };
+        // ✅ MUDANÇA 1: Adiciona a "memória" para os testes de resistência.
+        this.testsProposed = false; 
+
+        // ✅ MUDANÇA 2: Define o título dinâmico aqui, no local correto.
+        this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+
     }
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`,
+            // ✅ MUDANÇA 2: O título aqui agora é genérico.
+            title: `Aplicar Dano`, 
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
             width: 760,
@@ -31,7 +33,6 @@ export default class DamageApplicationWindow extends Application {
     }
 
     async getData() {
-        // ... (Seu método getData, 100% preservado e sem alterações)
         const context = await super.getData();
         context.damage = this.damageData;
         context.attacker = this.attackerActor;
@@ -62,121 +63,108 @@ export default class DamageApplicationWindow extends Application {
         return context;
     }
 
-    activateListeners(html) {
-        super.activateListeners(html);
-        const form = html[0]; 
+activateListeners(html) {
+    super.activateListeners(html);
+    const form = html[0]; 
 
-        // --- SEUS LISTENERS ORIGINAIS (INTACTOS) ---
-        form.querySelectorAll('.damage-card').forEach(card => {
-            card.addEventListener('click', ev => {
-                form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
-                ev.currentTarget.classList.add('active');
-                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
-                if (damageType) {
-                    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
-                    let matched = false;
-                    allRadios.forEach(r => {
-                        const label = r.closest('.wounding-row')?.textContent;
-                        if (label?.toLowerCase().includes(damageType.toLowerCase())) { r.checked = true; matched = true; }
-                    });
-                    if (!matched) { const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]'); if (noModRadio) noModRadio.checked = true; }
-                } else {
-                    const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
-                    for (let r of allRadios) { const label = r.closest('.wounding-row')?.textContent?.toLowerCase() || ''; if (r.value === '1' && label.includes("sem modificador")) { r.checked = true; break; } }
-                }
-                const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
-                const damageInput = form.querySelector('[name="damage_rolled"]');
-                const armorInput = form.querySelector('[name="armor_divisor"]');
-                if (damageInput) damageInput.value = newDamage.total || 0;
-                if (armorInput) armorInput.value = newDamage.armorDivisor || 1;
-                this._updateDamageCalculation(form);
-            });
-        });
-        
-        form.querySelectorAll('.location-row').forEach(row => {
-            row.addEventListener('click', ev => {
-                form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
-                ev.currentTarget.classList.add('active');
-                const targetDR = ev.currentTarget.dataset.dr;
-                form.querySelector('[name="target_dr"]').value = targetDR;
-                const locationKey = ev.currentTarget.dataset.locationKey;
-                const newMods = this._getAdjustedWoundingModifiers(locationKey);
-                const modTable = form.querySelector('.wounding-table');
-
-                if (modTable) {
-                    const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
-                    let selectedAbrev = '';
-                    if (selectedRadio) { 
-                        const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); 
-                        selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; 
-                    }
-
-                    // 1. Constrói a parte dinâmica da lista
-                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
-
-                    // 2. Adiciona as opções estáticas ("Sem Modificador" e "Outros")
-                    htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
-
-                    htmlContent += `
-                        <div class="wounding-row">
-                            <label class="custom-radio">
-                                <input type="radio" name="wounding_mod_type" value="1" ${selectedAbrev === '' ? 'checked' : ''}/>
-                                <span>Sem Modificador</span>
-                                <span class="dots"></span>
-                                <span class="mult">x1</span>
-                            </label>
-                        </div>`;
-
-                    htmlContent += `
-                        <div class="wounding-row">
-                            <label class="custom-radio">
-                                <input type="radio" name="wounding_mod_type" value="custom"/>
-                                <span>Outros Mod.:</span>
-                                <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
-                            </label>
-                        </div>`;
-
-                    // 3. Insere o HTML completo na tabela
-                    modTable.innerHTML = htmlContent;
-
-                    // 4. Reativa os "ouvintes" nos novos botões que acabamos de criar
-                    modTable.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => {
-                        input.addEventListener('change', () => this._updateDamageCalculation(form));
-                    });
-
-                    const customModInput = modTable.querySelector('input[name="custom_wounding_mod"]');
-                    if (customModInput) {
-                        customModInput.addEventListener('input', () => this._updateDamageCalculation(form));
-                    }
-                }
-                
-                this._updateDamageCalculation(form);
-            });
-        });
-        
-        form.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('change', () => this._updateDamageCalculation(form));
-            input.addEventListener('input', () => this._updateDamageCalculation(form));
-        });
-        
-        // --- ✅ NOVOS LISTENERS ADICIONADOS AO FINAL ---
-        html.on('change', '.contingent-effect-toggle', ev => {
-            const effectId = $(ev.currentTarget).closest('.effect-card').data('effectId');
-            if (this.effectState[effectId]) this.effectState[effectId].checked = ev.currentTarget.checked;
+    // ==========================================================
+    // SEU BLOCO DE LISTENERS ORIGINAL (100% PRESERVADO)
+    // ==========================================================
+    form.querySelectorAll('.damage-card').forEach(card => {
+        card.addEventListener('click', ev => {
+            form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
+            ev.currentTarget.classList.add('active');
+            const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
+            if (damageType) {
+                const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+                let matched = false;
+                allRadios.forEach(r => {
+                    const label = r.closest('.wounding-row')?.textContent;
+                    if (label?.toLowerCase().includes(damageType.toLowerCase())) { r.checked = true; matched = true; }
+                });
+                if (!matched) { const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]'); if (noModRadio) noModRadio.checked = true; }
+            } else {
+                const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
+                for (let r of allRadios) { const label = r.closest('.wounding-row')?.textContent?.toLowerCase() || ''; if (r.value === '1' && label.includes("sem modificador")) { r.checked = true; break; } }
+            }
+            const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
+            const damageInput = form.querySelector('[name="damage_rolled"]');
+            const armorInput = form.querySelector('[name="armor_divisor"]');
+            if (damageInput) damageInput.value = newDamage.total || 0;
+            if (armorInput) armorInput.value = newDamage.armorDivisor || 1;
             this._updateDamageCalculation(form);
         });
+    });
+    
+    form.querySelectorAll('.location-row').forEach(row => {
+        row.addEventListener('click', ev => {
+            form.querySelectorAll('.location-row.active').forEach(r => r.classList.remove('active'));
+            ev.currentTarget.classList.add('active');
+            const targetDR = ev.currentTarget.dataset.dr;
+            form.querySelector('[name="target_dr"]').value = targetDR;
+            const locationKey = ev.currentTarget.dataset.locationKey;
+            const newMods = this._getAdjustedWoundingModifiers(locationKey);
+            const modTable = form.querySelector('.wounding-table');
 
-        html.on('click', '.npc-resistance-roll', ev => {
-            const effectId = $(ev.currentTarget).closest('.effect-card').data('effectId');
-            this._onNpcResistanceRoll(effectId);
+            if (modTable) {
+                const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+                let selectedAbrev = '';
+                if (selectedRadio) { 
+                    const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); 
+                    selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; 
+                }
+                let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
+                htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
+                htmlContent += `<div class="wounding-row"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="1" ${selectedAbrev === '' ? 'checked' : ''}/><span>Sem Modificador</span><span class="dots"></span><span class="mult">x1</span></label></div>`;
+                htmlContent += `<div class="wounding-row"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="custom"/><span>Outros Mod.:</span><input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/></label></div>`;
+                modTable.innerHTML = htmlContent;
+                modTable.querySelectorAll('input[name="wounding_mod_type"]').forEach(input => {
+                    input.addEventListener('change', () => this._updateDamageCalculation(form));
+                });
+                const customModInput = modTable.querySelector('input[name="custom_wounding_mod"]');
+                if (customModInput) {
+                    customModInput.addEventListener('input', () => this._updateDamageCalculation(form));
+                }
+            }
+            this._updateDamageCalculation(form);
         });
+    });
+    
+    form.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('change', () => this._updateDamageCalculation(form));
+        input.addEventListener('input', () => this._updateDamageCalculation(form));
+    });
 
-        html.find('button[data-action="proposeTests"]').on('click', () => this._onProposeTests(form));
-        html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
-        html.find('button[data-action="applyAndClose"]').on('click', () => this._onApplyDamage(form, true, false));
-        html.find('button[data-action="applyAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, false));
-        
-        // --- Disparo Inicial (Preservando sua lógica de "Torso") ---
+    // ==========================================================
+    // BOTÕES DE AÇÃO (ANTIGOS E NOVOS)
+    // ==========================================================
+    html.find('button[data-action="proposeTests"]').on('click', () => this._onProposeTests(form));
+    html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
+    html.find('button[data-action="applyAndClose"]').on('click', () => this._onApplyDamage(form, true, false));
+    html.find('button[data-action="applyAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, false));
+    
+    // ==========================================================
+    // ✅ NOVOS LISTENERS PARA O PAINEL INTERATIVO (ADICIONADOS)
+    // ==========================================================
+    
+       html.on('change', '.apply-effect-checkbox', (ev) => this._onToggleEffect(ev, form));
+    
+    html.on('click', '.propose-resistance-roll', (ev) => this._onProposeIndividualTest(ev, form));
+
+
+    // ==========================================================
+    // Listeners para CheckBoxes
+    // ==========================================================
+        html.on('change', '.gcs-checkbox', (ev) => {
+        const checkbox = $(ev.currentTarget);
+        const label = checkbox.closest('.custom-checkbox');
+        // Adiciona ou remove a classe .is-checked na label pai com base no estado do checkbox
+        label.toggleClass('is-checked', checkbox.prop('checked'));
+    });
+
+    // Força uma checagem inicial para que os checkboxes já marcados apareçam corretamente
+    html.find('.gcs-checkbox').trigger('change');
+        // --- Disparo Inicial (Preservando sua lógica) ---
         const torsoRow = form.querySelector('.location-row[data-location-key="torso"]');
         if (torsoRow) {
             torsoRow.click();
@@ -263,11 +251,9 @@ async _updateDamageCalculation(form) {
     if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
     if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod} (${modName})`;
     if (field("final_injury")) field("final_injury").textContent = finalInjury;
-    const effectsList = form.querySelector(".effects-list");
-    if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
-    this.finalInjury = finalInjury;
+ 
 
-    // --- ✅ BLOCO DE FEEDBACK E NOTAS (VERSÃO UNIFICADA E CORRIGIDA) ---
+    // ✅ Bloco de Feedback e Notas (Seu código original, mantido e correto)
     const notesContainer = form.querySelector(".calculation-notes");
     const injuryLabel = form.querySelector(".final-injury-compact label");
     const injuryValue = form.querySelector(".final-injury-compact span");
@@ -277,19 +263,12 @@ async _updateDamageCalculation(form) {
         notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
     }
     if (applyAsHeal) {
-    notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
-    if (injuryLabel) {
-        injuryLabel.textContent = "Restauração";
-        injuryLabel.style.color = "#3b7d3b"; // ✅ Cor do label adicionada
-    }
-    if (injuryValue) injuryValue.style.color = "#3b7d3b"; // Verde
+        notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
+        if (injuryLabel) { injuryLabel.textContent = "Restauração"; injuryLabel.style.color = "#3b7d3b"; }
+        if (injuryValue) { injuryValue.style.color = "#3b7d3b"; }
     } else {
-    // Garante que volta ao normal se a caixa for desmarcada
-    if (injuryLabel) {
-        injuryLabel.textContent = "Lesão";
-        injuryLabel.style.color = "#c53434"; // ✅ Cor do label resetada
-    }
-    if (injuryValue) injuryValue.style.color = "#c53434"; // Vermelho
+        if (injuryLabel) { injuryLabel.textContent = "Lesão"; injuryLabel.style.color = "#c53434"; }
+        if (injuryValue) { injuryValue.style.color = "#c53434"; }
     }
 
     if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
@@ -297,140 +276,204 @@ async _updateDamageCalculation(form) {
     if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
+
+
+    // =========================================================================
+    // PARTE FINAL: COLETA E RENDERIZAÇÃO DO PAINEL DE EFEITOS (NOVA LÓGICA)
+    // =========================================================================
     
-    // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES (permanece igual) ---
-    const effectsSummaryEl = form.querySelector(".effects-summary");
-    const actionButtonsEl = form.querySelector(".action-buttons");
     const eventContext = { damage: injuryForEventCheck, target: this.targetActor, attacker: this.attackerActor };
-    let potentialEffectsHTML = '';
-    let hasPotentialEffects = false;
-    let needsResistanceRoll = false;
+    const potentialEffects = await this._collectPotentialEffects(eventContext);
     
-    const contingentEffects = this.damageData.contingentEffects || {};
-    for (const [id, effect] of Object.entries(contingentEffects)) {
-        if (effect.trigger !== 'onDamage') continue;
-        let conditionMet = !effect.condition || effect.condition.trim() === '';
-        if (effect.condition) {
-            try { conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext); } catch(e) { console.warn("GUM | Erro na condição do efeito (preview):", e); conditionMet = false; }
-        }
+    // Aponta para o painel de efeitos no seu HBS
+    const effectsListEl = form.querySelector(".effects-summary");
+    let effectsHTML = "";
+    let hasResistibleEffect = false;
 
-        if (conditionMet) {
-            hasPotentialEffects = true;
-            if (this.effectState[id] === undefined) this.effectState[id] = { checked: true };
-            const isChecked = this.effectState[id].checked;
-            const conditionItem = await fromUuid(effect.payload);
-            const conditionName = conditionItem ? conditionItem.name : "Condição Desconhecida";
-            let resistanceHTML = '<span class="eff-type">(Automático)</span>';
-            if (effect.resistanceRoll) {
-                if (isChecked) needsResistanceRoll = true;
-                resistanceHTML = `<span class="eff-type">(Teste de ${effect.resistanceRoll.attribute.toUpperCase()})</span><a class="npc-resistance-roll" data-effect-id="${id}" title="Rolar para NPC"><i class="fas fa-dice-d20"></i></a>`;
+    if (potentialEffects.length === 0) {
+        effectsHTML = `<div class="placeholder">Nenhum efeito adicional</div>`;
+    } else {
+        for (const effectInfo of potentialEffects) {
+            const { linkId, effectData, sourceName, originalItem } = effectInfo;
+            if (!this.effectState[linkId]) {
+                this.effectState[linkId] = { checked: true, resultText: null, isSuccess: null, data: effectData, sourceName: sourceName };
             }
-            potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionName}</span></label>${resistanceHTML}</div>`;
+            const state = this.effectState[linkId];
+            const isResisted = effectData.resistanceRoll?.isResisted;
+            if (isResisted && state.checked) hasResistibleEffect = true;
+
+        effectsHTML += `
+            <div class="effect-card" data-effect-link-id="${linkId}">
+                <div class="effect-main">
+                    <label class="custom-checkbox ${state.checked ? 'is-checked' : ''}">
+                        <input type="checkbox" class="apply-effect-checkbox" ${state.checked ? 'checked' : ''} />
+                        <img src="${effectData.img || originalItem.img}" class="effect-icon" title="Origem: ${sourceName}" />
+                        <span class="effect-name">${effectData.name || originalItem.name}</span>
+                    </label>
+                </div>
+                <div class="effect-status ${state.isSuccess === true ? 'success' : state.isSuccess === false ? 'failure' : ''}">
+                    ${state.resultText || (isResisted ? `(Pendente: ${effectData.resistanceRoll.attribute.toUpperCase()})` : '(Automático)')}
+                </div>
+                <div class="effect-controls">
+                    ${isResisted ? `<button type="button" class="propose-resistance-roll" data-effect-link-id="${linkId}"><i class="fas fa-dice-d20"></i></button>` : ''}
+                </div>
+            </div>`;
         }
     }
+    effectsListEl.innerHTML = effectsHTML;
     
-        //LÓGICA para ler as attachedConditions
-    const attachedConditions = this.damageData.attachedConditions || {};
-    for (const [id, attachedCond] of Object.entries(attachedConditions)) {
-        if (!attachedCond.uuid) continue;
-        
-        const conditionItem = await fromUuid(attachedCond.uuid);
-        if (!conditionItem) continue;
-
-        let conditionMet = !conditionItem.system.when || conditionItem.system.when.trim() === '';
-        if (conditionItem.system.when) {
-            try {
-                // Aqui usamos o eventContext com o dano final para avaliar a regra
-                conditionMet = Function("actor", "event", `return (${conditionItem.system.when})`)(this.targetActor, eventContext);
-            } catch(e) {
-                console.warn(`GUM | Erro na regra da condição anexa "${conditionItem.name}":`, e);
-                conditionMet = false;
-            }
-        }
-
-        if (conditionMet) {
-            hasPotentialEffects = true;
-            // Usamos o ID do *link* para o estado, não o ID do item original
-            if (this.effectState[id] === undefined) this.effectState[id] = { checked: true, isAttachedCondition: true };
-            const isChecked = this.effectState[id].checked;
-            
-            // Verifica se algum efeito DENTRO da condição tem teste de resistência
-            const effects = Array.isArray(conditionItem.system.effects) ? conditionItem.system.effects : Object.values(conditionItem.system.effects || {});
-            const resistedEffects = effects.filter(e => e.resistanceRoll?.isResisted);
-            
-            let resistanceHTML = '<span class="eff-type">(Automático)</span>';
-            if (resistedEffects.length > 0) {
-                // Se algum efeito precisa de teste, marcamos a condição inteira como "resistível"
-                // e ativamos o botão "Propor Testes"
-                if (isChecked) needsResistanceRoll = true;
-                const resistanceAttrs = resistedEffects.map(e => e.resistanceRoll.attribute.toUpperCase()).join('/');
-                resistanceHTML = `<span class="eff-type eff-resisted">(Resistido por ${resistanceAttrs})</span>`;
-            }
-
-            potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionItem.name}</span></label>${resistanceHTML}</div>`;
+    const proposeButton = form.querySelector('button[data-action="proposeTests"]');
+    if (proposeButton) {
+        proposeButton.style.display = hasResistibleEffect ? 'inline-block' : 'none';
+        proposeButton.disabled = this.testsProposed;
+        if (this.testsProposed) {
+            proposeButton.innerHTML = `<i class="fas fa-check"></i> Testes Propostos`;
+        } else {
+            proposeButton.innerHTML = `<i class="fas fa-dice-d20"></i> Propor Testes`;
         }
     }
-
-    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
-    const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
-    if (proposeButton) { if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; } }
 }
-    
-async _onProposeTests(form) {
-    ui.notifications.info("Enviando propostas de teste para o chat...");
-    const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
-    let testsProposed = 0;
 
-    for (const [id, state] of Object.entries(this.effectState)) {
-        if (!state.checked) continue;
+async _collectPotentialEffects(eventContext) {
+    const potentialEffects = [];
 
-        if (state.isAttachedCondition) {
-            const attachedCond = this.damageData.attachedConditions[id];
-            if (!attachedCond) continue;
-            
-            const conditionItem = await fromUuid(attachedCond.uuid);
-            if (!conditionItem) continue;
+    // 1. Coleta efeitos da seção "Ao Causar Dano"
+    const onDamageEffects = this.damageData.onDamageEffects || {};
+    for (const [id, linkData] of Object.entries(onDamageEffects)) {
+        const effectItem = await fromUuid(linkData.effectUuid);
+        if (!effectItem) continue;
 
-            const effects = Array.isArray(conditionItem.system.effects) ? conditionItem.system.effects : Object.values(conditionItem.system.effects || {});
-            for (const effect of effects) {
-                if (effect.resistanceRoll?.isResisted) {
-                    this._promptResistanceRoll(effect, conditionItem.name, eventContext);
-                    testsProposed++;
-                }
-            }
+        // Verifica os parâmetros contextuais
+        const minInjury = linkData.minInjury || 1;
+        if (eventContext.damage >= minInjury) {
+            potentialEffects.push({ 
+                linkId: id, 
+                effectData: effectItem.system, 
+                sourceName: effectItem.name, 
+                originalItem: effectItem 
+            });
         }
-        // Adicionar lógica para o sistema antigo de contingentEffects aqui se necessário
     }
 
-    if (testsProposed > 0) {
-        this.element.find('button[data-action="proposeTests"]').prop('disabled', true).text('Testes Propostos');
+    // 2. Coleta efeitos da seção "Condições Gerais"
+    const generalConditions = this.damageData.generalConditions || {};
+    for (const [id, linkData] of Object.entries(generalConditions)) {
+        const condItem = await fromUuid(linkData.uuid);
+        if (!condItem || !condItem.system.when) continue;
+        
+        let met = false;
+        try { 
+            met = Function("actor", "event", `return (${condItem.system.when})`)(this.targetActor, eventContext); 
+        } catch(e) {
+            console.warn(`GUM | Erro ao avaliar gatilho da Condição Geral '${condItem.name}':`, e);
+        }
+        
+        if (met) {
+            const innerEffects = Array.isArray(condItem.system.effects) ? condItem.system.effects : Object.values(condItem.system.effects || {});
+            innerEffects.forEach((eff, i) => {
+                potentialEffects.push({ 
+                    linkId: `${id}-${i}`, 
+                    effectData: eff, 
+                    sourceName: condItem.name, 
+                    originalItem: condItem 
+                });
+            });
+        }
+    }
+
+    return potentialEffects;
+}
+
+_onToggleEffect(event, form) { // ✅ CORREÇÃO: Aceita 'form' como um argumento
+    const linkId = $(event.currentTarget).closest('.effect-card').data('effect-link-id');
+    if (this.effectState[linkId]) {
+        this.effectState[linkId].checked = event.currentTarget.checked;
+        
+        // ✅ CORREÇÃO: Usa a variável 'form' que recebeu para chamar o recálculo
+        this._updateDamageCalculation(form);
+    }
+}
+
+_onProposeIndividualTest(event, form) { // ✅ CORREÇÃO: Aceita 'form' como argumento
+    const linkId = $(event.currentTarget).closest('.effect-card').data('effectLinkId');
+    const state = this.effectState[linkId];
+    if (!state) return;
+    
+    const potentialInjury = this._calculatePotentialInjury(form); // ✅ CORREÇÃO: Usa o 'form' recebido
+    const eventContext = { damage: potentialInjury, target: this.targetActor, attacker: this.attackerActor };
+    this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
+}
+
+updateEffectCard(effectLinkId, resultData) {
+    const state = this.effectState[effectLinkId];
+    if (!state) return;
+    
+    state.resultText = resultData.resultText;
+    state.isSuccess = resultData.isSuccess;
+    
+    // Se o teste foi um sucesso e a regra é aplicar em falha, desmarca o efeito
+    if (resultData.isSuccess && state.data.resistanceRoll.applyOn === 'failure') {
+        state.checked = false;
+    }
+    
+    this._updateDamageCalculation(this.form); // Redesenha a lista de efeitos
+}
+
+_calculatePotentialInjury(form) {
+    const damageRolled = parseFloat(form.querySelector('[name="damage_rolled"]')?.value) || 0;
+    const armorDivisor = parseFloat(form.querySelector('[name="armor_divisor"]')?.value) || 1;
+    const activeLocationRow = form.querySelector('.location-row.active');
+    let selectedDR = 0;
+    if (activeLocationRow) {
+        if (activeLocationRow.dataset.locationKey === 'custom') {
+            selectedDR = parseInt(activeLocationRow.querySelector('input[name="custom_dr"]')?.value || 0);
+        } else {
+            selectedDR = parseInt(activeLocationRow.dataset.dr || 0);
+        }
+    }
+    const penetratingDamage = Math.max(0, damageRolled - Math.floor(selectedDR / armorDivisor));
+    const woundingModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+    let woundingMod = 1;
+    if (woundingModRadio) {
+        if (woundingModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } 
+        else { woundingMod = parseFloat(woundingModRadio.value) || 1; }
+    }
+    return Math.floor(penetratingDamage * woundingMod);
+}
+
+async _onProposeTests(form) {
+    // Impede cliques duplicados se os testes já foram propostos
+    if (this.testsProposed) {
+        return ui.notifications.warn("Os testes de resistência já foram propostos.");
+    }
+    
+    ui.notifications.info("Enviando propostas de teste para o chat...");
+
+    // ✅ CORREÇÃO: Calcula a lesão potencial para garantir o contexto correto para os testes.
+    const potentialInjury = this._calculatePotentialInjury(form);
+    const eventContext = { damage: potentialInjury, target: this.targetActor, attacker: this.attackerActor };
+    let testsProposedCount = 0;
+
+    // ✅ LÓGICA SIMPLIFICADA: Itera diretamente sobre o estado que já preparamos.
+    for (const [linkId, state] of Object.entries(this.effectState)) {
+        // Propõe o teste apenas se o efeito estiver marcado E for resistível
+        if (state.checked && state.data.resistanceRoll?.isResisted) {
+            this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
+            testsProposedCount++;
+        }
+    }
+
+    if (testsProposedCount > 0) {
+        this.testsProposed = true; // Marca que os testes foram enviados
+        // Atualiza a UI para desabilitar o botão e dar feedback
+        const proposeButton = this.element.find('button[data-action="proposeTests"]');
+        if (proposeButton.length > 0) {
+            proposeButton.prop('disabled', true).html('<i class="fas fa-check"></i> Testes Propostos');
+        }
     } else {
         ui.notifications.warn("Nenhum efeito resistível foi encontrado para propor.");
     }
 }
-    
-    async _onNpcResistanceRoll(effectId) {
-        // ... (Este método, sem alterações)
-        const effect = this.damageData.contingentEffects[effectId];
-        const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
-        const rollData = effect.resistanceRoll;
-        const target = eventContext.target;
-        let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
-        let totalModifier = parseInt(rollData.modifier) || 0;
-        if (rollData.dynamicModifier) {
-            try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, eventContext); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
-        }
-        const finalTarget = baseAttributeValue + totalModifier;
-        const roll = new Roll("3d6");
-        await roll.evaluate();
-        const success = roll.total <= finalTarget;
-        const resultText = `<strong>Rolagem de NPC (${effect.resistanceRoll.attribute.toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
-        ChatMessage.create({ content: resultText, whisper: ChatMessage.getWhisperRecipients("GM") });
-        if (success && (rollData.on === 'failure')) {
-            this.effectState[effectId].checked = false;
-            this._updateDamageCalculation(this.form);
-        }
-    }
     
 async _onApplyDamage(form, shouldClose, shouldPublish) {
     const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
@@ -449,7 +492,7 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
 
         const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
 
-        // 1. Aplica o dano ou cura
+        // 1. Aplica o dano ou cura (esta parte está perfeita)
         if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
             const eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue - finalInjury }, { gumEventData: eventData });
@@ -457,53 +500,59 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue + finalInjury });
         }
 
-        // 2. Processa APENAS os efeitos IMEDIATOS
-        const appliedEffectNames = [];
+        // ==========================================================
+        // 2. PROCESSA OS EFEITOS (LÓGICA NOVA E CORRIGIDA)
+        // ==========================================================
+        const appliedEffectSources = new Set(); // Usamos um Set para evitar nomes duplicados no chat
 
-        for (const [id, state] of Object.entries(this.effectState)) {
-            if (!state.checked || !state.isAttachedCondition) continue;
-
-            const attachedCond = this.damageData.attachedConditions[id];
-            if (!attachedCond) continue;
-            
-            const conditionItem = await fromUuid(attachedCond.uuid);
-            if (!conditionItem) continue;
-            
-            const effects = Array.isArray(conditionItem.system.effects) ? conditionItem.system.effects : Object.values(conditionItem.system.effects || {});
-            
-            // ✅ CORREÇÃO: Filtra apenas os efeitos SEM teste de resistência
-            const unresistedEffects = effects.filter(effect => !effect.resistanceRoll?.isResisted);
-
-            if (unresistedEffects.length > 0) {
-                appliedEffectNames.push(conditionItem.name);
+        for (const [linkId, state] of Object.entries(this.effectState)) {
+            // Aplica o efeito apenas se:
+            // 1. Ele estiver MARCADO na UI.
+            // 2. Ele for um efeito AUTOMÁTICO (não tem teste de resistência).
+            // 3. OU se o teste de resistência já foi feito e FALHOU.
+            if (state.checked && (!state.data.resistanceRoll?.isResisted || state.isSuccess === false)) {
+                
                 const newConditionData = {
-                    name: `Efeitos Imediatos: ${conditionItem.name}`,
+                    name: `Efeito (${state.sourceName}): ${state.data.name || 'Sem Nome'}`,
                     type: "condition",
-                    system: { when: "", effects: unresistedEffects }
+                    system: {
+                        when: "", // Já está ativo
+                        effects: [state.data] // Contém apenas este efeito
+                    }
                 };
+                
                 await this.targetActor.createEmbeddedDocuments("Item", [newConditionData]);
+                
+                // Adiciona o nome da FONTE do efeito (a Condição Mista, por exemplo) para o log do chat
+                appliedEffectSources.add(state.sourceName);
+            }            // ✅ CASO B: Efeito é resistível e o teste AINDA NÃO FOI FEITO -> PROPÕE O TESTE
+            else if (state.data.resistanceRoll?.isResisted && state.isSuccess === null) {
+                this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
+                appliedEffectSources.add(state.sourceName); // Adiciona ao log, pois a tentativa de aplicação ocorreu
             }
         }
 
         // 3. Publica o resultado no chat
         if (shouldPublish) {
-            // Lógica para montar e enviar a mensagem do chat...
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
             let resultLine = '';
+            
+            // A lógica para a linha de resultado está correta
             if (applyAsHeal && finalInjury > 0) {
                 resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
             } else if (finalInjury > 0 && !effectsOnlyChecked) {
                 resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
-            } else if (finalInjury === 0 && effectsOnlyChecked && appliedEffectNames.length > 0) {
+            } else if (finalInjury === 0 && effectsOnlyChecked && appliedEffectSources.size > 0) {
                 resultLine = `<p>Não sofreu lesão, mas foi afetado por condições.</p>`;
             }
             
-            let effectsHtml = appliedEffectNames.length > 0
-                ? `<div class="minicard effects-card"><div class="minicard-title">Condições Ativadas</div>${appliedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}</div>`
+            // ✅ CORREÇÃO: Usa a variável 'appliedEffectSources' e a converte para um array para o .map()
+            let effectsHtml = appliedEffectSources.size > 0
+                ? `<div class="minicard effects-card"><div class="minicard-title">Condições Ativadas</div>${Array.from(appliedEffectSources).map(name => `<p><strong>${name}</strong></p>`).join('')}</div>`
                 : '';
             
-            let messageContent = `...`; // O template do seu card de chat
-            messageContent = `
+            // O restante do código para montar a mensagem está correto
+            let messageContent = `
             <div class="gurps-roll-card">
                 <header class="card-header"><h3>Resumo do Ataque</h3></header>
                 <div class="card-content">
@@ -520,29 +569,18 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
             ChatMessage.create({
                 speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
                 content: messageContent
-            });
-        }
+                    });
+                }
 
-        if (shouldClose) { this.close(); }
-    } finally {
-        this.isApplying = false;
-    }
-}
+                if (shouldClose) { this.close(); }
+            } finally {
+                this.isApplying = false;
+            }
+        } 
 
-    async _executeContingentAction(effect, eventContext) {
-        if (effect.action === 'applyCondition') {
-            await applyContingentCondition(eventContext.target, effect, eventContext);
-        }
-    }
-
-async _promptResistanceRoll(effectData, sourceConditionName, eventContext) {
+async _promptResistanceRoll(effectData, sourceConditionName, eventContext, linkId) {
     const rollData = effectData.resistanceRoll;
     const target = eventContext.target;
-
-    // A lesão potencial é lida diretamente do eventContext, que foi criado com o valor correto.
-    const potentialInjury = eventContext.damage; 
-
-    console.log(`GUM | Preparando teste de resistência. Atributo: '${rollData.attribute}', Ator Alvo:`, target);
     
     let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`);
     
@@ -554,11 +592,14 @@ async _promptResistanceRoll(effectData, sourceConditionName, eventContext) {
     let totalModifier = parseInt(rollData.modifier) || 0;
     const finalTarget = baseAttributeValue + totalModifier;
 
+    // ✅ CORREÇÃO: Adicionamos o 'effectLinkId' ao pacote de dados.
+    // Esta é a "ponte" de volta para a janela de aplicação de dano.
     const chatButtonPayload = {
         targetActorId: target.id,
         finalTarget: finalTarget,
         sourceConditionName: sourceConditionName,
-        effectData: effectData
+        effectData: effectData,
+        effectLinkId: linkId 
     };
 
     const content = `<div class="gurps-resistance-roll-card">

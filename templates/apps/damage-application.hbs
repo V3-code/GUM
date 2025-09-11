@@ -72,11 +72,11 @@
             </div>
             <div class="damage-options">
                 <label class="custom-checkbox">
-                    <input type="checkbox" name="large_area_injury"/>
+                    <input type="checkbox" name="large_area_injury" class="gcs-checkbox"/>
                     <span>Lesão em Larga Escala</span>
                 </label>
                 <label class="custom-checkbox">
-                    <input type="checkbox" name="ignore_dr"/>
+                    <input type="checkbox" name="ignore_dr" class="gcs-checkbox"/>
                     <span>Ignorar RD do Alvo</span>
                 </label>
             </div>
@@ -138,29 +138,29 @@
   <div class="situational-options">
    
     <label class="custom-checkbox">
-        <input type="checkbox" name="special_apply_effects_only" />
+        <input type="checkbox" name="special_apply_effects_only" class="gcs-checkbox"/>
         <span title="Ignora a Lesão e aplica apenas os efeitos contingentes ao alvo.">Aplicar Apenas Efeitos</span>
     </label>
       
     <label class="custom-checkbox">
-      <input type="checkbox" name="special_apply_as_heal" />
+      <input type="checkbox" name="special_apply_as_heal" class="gcs-checkbox"/>
       <span title="Inverte a Lesão - Recupera ao invés de Ferir">Aplicar como Cura</span>
     </label>
  
 
   <label class="custom-checkbox">
-    <input type="checkbox" name="special_half_damage" />
+    <input type="checkbox" name="special_half_damage" class="gcs-checkbox" />
     <span>Acima da Distância 1/2D</span>
   </label>
 
   <label class="custom-checkbox">
-    <input type="checkbox" name="special_explosion"/>
+    <input type="checkbox" name="special_explosion" class="gcs-checkbox"/>
     <span>Dano de Explosão</span>
     <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex do centro da explosão"/>
   </label>
 
   <label class="custom-checkbox">
-    <input type="checkbox" name="show_impact_effects"/>
+    <input type="checkbox" name="show_impact_effects" class="gcs-checkbox"/>
     <span>Mostrar efeitos do ponto de impacto</span>
   </label>
 
@@ -189,56 +189,60 @@
 {{!-- ================================== --}}
 <footer class="damage-app-footer">
     
-    {{!-- COLUNA 1: CÁLCULOS (VERSÃO COMPACTA E ESTILIZADA) --}}
-<div class="footer-column calculation-summary">
-    <div class="calc-group-compact">
-        <div class="calc-item-compact">
-            <label>Dano Básico</label>
-            <input type="number" name="damage_rolled" class="calc-input-compact" min="0" step="1"/>
-        </div>
-        <div class="calc-item-compact">
-            <label>Divisor</label>
-            <input type="number" name="armor_divisor" class="calc-input-compact" value="1" min="0.1" step="0.1"/>
-        </div>
-    </div>
-
-    <div class="calc-group-compact">
-        <div class="calc-item-compact">
-            <label>RD Alvo</label>
-            <span class="calc-field-compact" data-field="target_dr">(...)</span>
-        </div>
-        <div class="calc-item-compact">
-            <label>Penetrante</label>
-            <span class="calc-field-compact" data-field="penetrating_damage">0</span>
-        </div>
-    </div>
-    
-    <div class="calc-item-compact single">
-        <label>Mod. Ferimento</label>
-        <span class="calc-field-compact" data-field="wounding_mod">x1</span>
-    </div>
-
-    {{!--ÁREA PARA NOTAS DE CÁLCULO --}}
-<div class="calculation-notes">
-    {{!-- O JavaScript vai inserir as mensagens aqui --}}
-</div>
-    <div class="final-injury-compact">
-        <label>Lesão</label>
-        <span data-field="final_injury">0</span>
-    </div>
-</div>
-
     {{!-- COLUNA 2: EFEITOS (COM A CLASSE CORRETA) --}}
     <div class="footer-column effects-summary">
         {{!-- O JavaScript vai preencher esta área corretamente agora --}}
         <div class="placeholder">Efeitos a serem aplicados</div>
     </div>
 
-    {{!-- COLUNA 3: BOTÕES DE AÇÃO --}}
+    {{!-- COLUNA 1: CÁLCULOS (VERSÃO COMPACTA E ESTILIZADA) --}}
+  <div class="footer-column calculation-summary">
+      <div class="calc-group-compact">
+          <div class="calc-item-compact">
+              <label>Dano Básico</label>
+              <input type="number" name="damage_rolled" class="calc-input-compact" min="0" step="1"/>
+          </div>
+          <div class="calc-item-compact">
+              <label>Divisor</label>
+              <input type="number" name="armor_divisor" class="calc-input-compact" value="1" min="0.1" step="0.1"/>
+          </div>
+      </div>
+
+      <div class="calc-group-compact">
+          <div class="calc-item-compact">
+              <label>RD Alvo</label>
+              <span class="calc-field-compact" data-field="target_dr">(...)</span>
+          </div>
+          <div class="calc-item-compact">
+              <label>Penetrante</label>
+              <span class="calc-field-compact" data-field="penetrating_damage">0</span>
+          </div>
+      </div>
+      
+      <div class="calc-item-compact single">
+          <label>Mod. Ferimento</label>
+          <span class="calc-field-compact" data-field="wounding_mod">x1</span>
+      </div>
+
+      {{!--ÁREA PARA NOTAS DE CÁLCULO --}}
+  <div class="calculation-notes">
+      {{!-- O JavaScript vai inserir as mensagens aqui --}}
+  </div>
+      <div class="final-injury-compact">
+          <label>Lesão</label>
+          <span data-field="final_injury">0</span>
+      </div>
+  </div>
+
+
+
+
+</footer>
+
+    {{!-- BOTÕES DE APLICAÇÃO DO DANO --}}
     <div class="footer-column action-buttons">
         <button type="button" data-action="proposeTests" style="display: none;"><i class="fas fa-dice-d20"></i> Propor Testes</button>
         <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> Aplicar e Publicar</button>
         <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> Aplicar e Fechar</button>
         <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> Aplicar e Manter</button>
     </div>
-</footer>
