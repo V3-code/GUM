@@ -32,6 +32,24 @@ export default class DamageApplicationWindow extends Application {
         });
     }
 
+        /**
+     * ✅ Esta função é chamada quando a janela é renderizada.
+     * Ela se registra como a janela de dano ativa.
+     */
+    async _render(force, options) {
+        await super._render(force, options);
+        game.gum.activeDamageApplication = this;
+    }
+    
+    /**
+     * ✅ Esta função é chamada quando a janela é fechada.
+     * Ela se desregistra para limpar a referência.
+     */
+    async close(options) {
+        delete game.gum.activeDamageApplication;
+        return super.close(options);
+    }
+
     async getData() {
         const context = await super.getData();
         context.damage = this.damageData;
@@ -65,7 +83,8 @@ export default class DamageApplicationWindow extends Application {
 
 activateListeners(html) {
     super.activateListeners(html);
-    const form = html[0]; 
+    const form = html[0];
+    this.formElement = form; 
 
     // ==========================================================
     // SEU BLOCO DE LISTENERS ORIGINAL (100% PRESERVADO)
@@ -324,13 +343,9 @@ async _updateDamageCalculation(form) {
     
     const proposeButton = form.querySelector('button[data-action="proposeTests"]');
     if (proposeButton) {
+        // Apenas controla a visibilidade e se o botão está habilitado
         proposeButton.style.display = hasResistibleEffect ? 'inline-block' : 'none';
         proposeButton.disabled = this.testsProposed;
-        if (this.testsProposed) {
-            proposeButton.innerHTML = `<i class="fas fa-check"></i> Testes Propostos`;
-        } else {
-            proposeButton.innerHTML = `<i class="fas fa-dice-d20"></i> Propor Testes`;
-        }
     }
 }
 
@@ -343,19 +358,19 @@ async _collectPotentialEffects(eventContext) {
         const effectItem = await fromUuid(linkData.effectUuid);
         if (!effectItem) continue;
 
-        // Verifica os parâmetros contextuais
         const minInjury = linkData.minInjury || 1;
         if (eventContext.damage >= minInjury) {
             potentialEffects.push({ 
                 linkId: id, 
                 effectData: effectItem.system, 
-                sourceName: effectItem.name, 
+                // ✅ CORREÇÃO: Usa o nome da fonte que veio no pacote de dados.
+                sourceName: this.damageData.sourceName || "Dano Direto", 
                 originalItem: effectItem 
             });
         }
     }
 
-    // 2. Coleta efeitos da seção "Condições Gerais"
+    // 2. Coleta efeitos da seção "Condições Gerais" (esta parte já estava correta)
     const generalConditions = this.damageData.generalConditions || {};
     for (const [id, linkData] of Object.entries(generalConditions)) {
         const condItem = await fromUuid(linkData.uuid);
@@ -404,19 +419,30 @@ _onProposeIndividualTest(event, form) { // ✅ CORREÇÃO: Aceita 'form' como ar
     this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
 }
 
+/**
+ * Recebe o resultado de um teste de resistência do chat e atualiza a UI.
+ * @param {string} effectLinkId - O ID do "card de efeito" a ser atualizado.
+ * @param {object} resultData - Os dados do resultado ({isSuccess: boolean, resultText: string}).
+ */
 updateEffectCard(effectLinkId, resultData) {
     const state = this.effectState[effectLinkId];
-    if (!state) return;
+    if (!state) {
+        console.error(`Estado para o linkId '${effectLinkId}' não encontrado!`);
+        return;
+    }
     
+    // 1. Atualiza o estado interno do efeito com o resultado
     state.resultText = resultData.resultText;
     state.isSuccess = resultData.isSuccess;
     
-    // Se o teste foi um sucesso e a regra é aplicar em falha, desmarca o efeito
+    // 2. Lógica de conveniência: se o alvo resistiu, desmarca o checkbox
     if (resultData.isSuccess && state.data.resistanceRoll.applyOn === 'failure') {
         state.checked = false;
     }
     
-    this._updateDamageCalculation(this.form); // Redesenha a lista de efeitos
+    // 3. ✅ CORREÇÃO DEFINITIVA: Força o redesenho da janela
+    // Usamos 'this.element[0]', que é a referência mais direta e segura para o HTML da janela.
+    this._updateDamageCalculation(this.element[0]);
 }
 
 _calculatePotentialInjury(form) {
@@ -476,12 +502,13 @@ async _onProposeTests(form) {
 }
     
 async _onApplyDamage(form, shouldClose, shouldPublish) {
-    const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
     if (this.isApplying) return;
     this.isApplying = true;
 
     try {
-        const finalInjury = this.finalInjury || 0;
+        // --- 1. COLETA DE DADOS E APLICAÇÃO DE DANO (Lógica existente e correta) ---
+        const finalInjury = this.finalInjury;
+        const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
         const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
 
@@ -491,67 +518,52 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
         }
 
         const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
-
-        // 1. Aplica o dano ou cura (esta parte está perfeita)
         if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
-            const eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
-            await this.targetActor.update({ [selectedPoolPath]: currentPoolValue - finalInjury }, { gumEventData: eventData });
+            await this.targetActor.update({ [selectedPoolPath]: currentPoolValue - finalInjury });
         } else if (applyAsHeal && finalInjury > 0) {
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue + finalInjury });
         }
 
-        // ==========================================================
-        // 2. PROCESSA OS EFEITOS (LÓGICA NOVA E CORRIGIDA)
-        // ==========================================================
-        const appliedEffectSources = new Set(); // Usamos um Set para evitar nomes duplicados no chat
+        // --- 2. PROCESSAMENTO DE EFEITOS (SUA NOVA LÓGICA SIMPLIFICADA) ---
+        const appliedEffectSources = new Set();
+        const conditionsToCreate = [];
 
         for (const [linkId, state] of Object.entries(this.effectState)) {
-            // Aplica o efeito apenas se:
-            // 1. Ele estiver MARCADO na UI.
-            // 2. Ele for um efeito AUTOMÁTICO (não tem teste de resistência).
-            // 3. OU se o teste de resistência já foi feito e FALHOU.
-            if (state.checked && (!state.data.resistanceRoll?.isResisted || state.isSuccess === false)) {
-                
+            // A lógica agora é simples: se o checkbox está marcado, o efeito é aplicado. Ponto final.
+            if (state.checked) {
                 const newConditionData = {
                     name: `Efeito (${state.sourceName}): ${state.data.name || 'Sem Nome'}`,
                     type: "condition",
-                    system: {
-                        when: "", // Já está ativo
-                        effects: [state.data] // Contém apenas este efeito
-                    }
+                    system: { when: "", effects: [state.data] }
                 };
-                
-                await this.targetActor.createEmbeddedDocuments("Item", [newConditionData]);
-                
-                // Adiciona o nome da FONTE do efeito (a Condição Mista, por exemplo) para o log do chat
+                conditionsToCreate.push(newConditionData);
                 appliedEffectSources.add(state.sourceName);
-            }            // ✅ CASO B: Efeito é resistível e o teste AINDA NÃO FOI FEITO -> PROPÕE O TESTE
-            else if (state.data.resistanceRoll?.isResisted && state.isSuccess === null) {
-                this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
-                appliedEffectSources.add(state.sourceName); // Adiciona ao log, pois a tentativa de aplicação ocorreu
             }
         }
+        
+        if (conditionsToCreate.length > 0) {
+            await this.targetActor.createEmbeddedDocuments("Item", conditionsToCreate);
+        }
 
-        // 3. Publica o resultado no chat
+        // --- 3. PUBLICAÇÃO NO CHAT ---
         if (shouldPublish) {
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
             let resultLine = '';
             
-            // A lógica para a linha de resultado está correta
             if (applyAsHeal && finalInjury > 0) {
                 resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
             } else if (finalInjury > 0 && !effectsOnlyChecked) {
                 resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
             } else if (finalInjury === 0 && effectsOnlyChecked && appliedEffectSources.size > 0) {
                 resultLine = `<p>Não sofreu lesão, mas foi afetado por condições.</p>`;
+            } else if (appliedEffectSources.size > 0) {
+                resultLine = `<p>O alvo foi afetado por condições.</p>`;
             }
             
-            // ✅ CORREÇÃO: Usa a variável 'appliedEffectSources' e a converte para um array para o .map()
             let effectsHtml = appliedEffectSources.size > 0
-                ? `<div class="minicard effects-card"><div class="minicard-title">Condições Ativadas</div>${Array.from(appliedEffectSources).map(name => `<p><strong>${name}</strong></p>`).join('')}</div>`
+                ? `<div class="minicard effects-card"><div class="minicard-title">Condições Aplicadas</div>${Array.from(appliedEffectSources).map(name => `<p><strong>${name}</strong></p>`).join('')}</div>`
                 : '';
             
-            // O restante do código para montar a mensagem está correto
             let messageContent = `
             <div class="gurps-roll-card">
                 <header class="card-header"><h3>Resumo do Ataque</h3></header>
@@ -569,48 +581,72 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
             ChatMessage.create({
                 speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
                 content: messageContent
-                    });
-                }
+            });
+        }
 
-                if (shouldClose) { this.close(); }
-            } finally {
-                this.isApplying = false;
-            }
-        } 
+        if (shouldClose) { this.close(); }
+    } finally {
+        this.isApplying = false;
+    }
+}
 
-async _promptResistanceRoll(effectData, sourceConditionName, eventContext, linkId) {
+
+async _promptResistanceRoll(effectData, sourceName, eventContext, linkId) {
     const rollData = effectData.resistanceRoll;
     const target = eventContext.target;
-    
-    let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`);
-    
-    if (baseAttributeValue === undefined || baseAttributeValue === null) {
-        console.warn(`GUM | Não foi possível encontrar o valor para 'system.attributes.${rollData.attribute}.final'. Usando 10 como padrão.`);
-        baseAttributeValue = 10;
+
+    const attributeObject = foundry.utils.getProperty(target.system.attributes, rollData.attribute);
+    let baseAttributeValue = 10;
+
+    if (attributeObject) {
+        baseAttributeValue = (attributeObject.override !== null && attributeObject.override !== undefined) 
+            ? attributeObject.override 
+            : attributeObject.final;
+    } else {
+        console.warn(`GUM | Atributo '${rollData.attribute}' não encontrado no alvo. Usando 10 como padrão.`);
     }
     
     let totalModifier = parseInt(rollData.modifier) || 0;
     const finalTarget = baseAttributeValue + totalModifier;
 
-    // ✅ CORREÇÃO: Adicionamos o 'effectLinkId' ao pacote de dados.
-    // Esta é a "ponte" de volta para a janela de aplicação de dano.
     const chatButtonPayload = {
         targetActorId: target.id,
         finalTarget: finalTarget,
-        sourceConditionName: sourceConditionName,
         effectData: effectData,
+        sourceName: sourceName,
         effectLinkId: linkId 
     };
 
-    const content = `<div class="gurps-resistance-roll-card">
-        <p><strong>${target.name}</strong> precisa resistir ao efeito "${effectData.name}" de <strong>${sourceConditionName}</strong>!</p>
-        <p>Faça um teste de <strong>${rollData.attribute.toUpperCase()}</strong> para evitar o efeito.</p>
-        <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatButtonPayload)}'>
-            <i class="fas fa-dice-d6"></i> Rolar Teste de Resistência (vs ${finalTarget})
-        </button>
-    </div>`;
-    
-    ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: target }), content: content });
+    // ✅ INÍCIO DO NOVO CARD DE CHAT PADRONIZADO
+    const content = `
+    <div class="gurps-roll-card">
+        <header class="card-header"><h3>Proposta de Teste de Resistência</h3></header>
+        <div class="card-content">
+            <div class="summary-actors vertical" style="padding-bottom: 10px;">
+                <div class="actor-line">
+                    <img src="${target.img}" class="actor-token-icon"> 
+                    <strong>${target.name}</strong>
+                </div>
+            </div>
+            <div class="minicard result-card">
+                <div class="minicard-title">Efeito Recebido</div>
+                <p>Precisa resistir ao efeito "<strong>${effectData.name || 'desconhecido'}</strong>" de <em>${sourceName}</em>.</p>
+                <p>Faça um teste de <strong>${rollData.attribute.toUpperCase()}</strong> (Alvo: ${finalTarget}) para evitar o efeito.</p>
+            </div>
+        </div>
+        <footer class="card-actions">
+            <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatButtonPayload)}'>
+                <i class="fas fa-dice-d6"></i> Rolar Teste (vs ${finalTarget})
+            </button>
+        </footer>
+    </div>
+    `;
+    // ✅ FIM DO NOVO CARD DE CHAT
+
+    ChatMessage.create({ 
+        speaker: ChatMessage.getSpeaker({ actor: target }), 
+        content: content 
+    });
 }
     
     _getAdjustedWoundingModifiers(locationKey) {

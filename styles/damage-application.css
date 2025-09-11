@@ -628,22 +628,23 @@
   font-style: italic;
 }
 
-/*TESSSSSSSSSSSSSSSSSTEEEEEEEEEE*/
-
-/*.interactive-effects-panel {
-    background: rgba(0,0,0,0.2);
-    border-radius: 5px;
-    padding: 10px;
-    min-height: 100px;
+.effect-card .effect-status {
+    font-style: italic;
+    font-size: 0.9em;
+    font-weight: bold;
+    opacity: 0.9;
+    text-align: right;
 }
-.interactive-effects-panel .effects-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}*/
+
+/* ✅ ESTILO PARA O RESULTADO DO TESTE */
+.effect-card .effect-status.success {
+    color: #4dbd4d; /* Verde para Sucesso */
+}
+
+.effect-card .effect-status.failure {
+    color: #ff6b6b; /* Vermelho para Falha */
+}
+
 .effect-card {
     display: grid;
     grid-template-columns: 1fr auto auto;
@@ -665,3 +666,42 @@
     gap: 10px;
 }
 
+
+/* --- ✅ NOVO ESTILO PARA O BOTÃO ✅ --- */
+.gurps-roll-card .card-actions {
+    padding: 0;
+    border-top: 1px solid #d1c8c4;
+}
+.gurps-roll-card .resistance-roll-button {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.9em;
+    font-weight: bold;
+    border: none;
+    background: #e9e3e0;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.gurps-roll-card .resistance-roll-button:hover {
+    background: #d1c8c4;
+}
+
+.gurps-roll-card .card-actions {
+    padding: 5px;
+    background: #e9e3e0;
+    border-top: 1px solid #d1c8c4;
+    text-align: right;
+}
+.gurps-roll-card .resistance-roll-button {
+    border: 1px solid #b5b5b5;
+    background: #f0f0f0;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.gurps-roll-card .resistance-roll-button:hover {
+    background: #e0e0e0;
+    border-color: #999;
+}
