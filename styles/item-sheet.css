@@ -1169,3 +1169,120 @@
 .gum.sheet.item.trigger-sheet .tab[data-tab="detalhes"] .rendered-text {
     min-height: 150px; /* <-- Altere este valor para a altura desejada */
 }
+
+/* ======================================================== */
+/* NOVO ESTILO PARA A ABA DE EFEITOS (ITEM SHEET)          */
+/* ======================================================== */
+
+/* Container principal de cada categoria (Teste de Ativação, etc.) */
+.gum.sheet.item .effect-category {
+    margin-bottom: 20px;
+}
+
+/* Grupo de efeitos (ex: Em Sucesso, Em Falha) */
+.gum.sheet.item .effect-group {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+.gum.sheet.item .effect-group.success {
+    border-left: 3px solid var(--c-success, #4CAF50);
+}
+.gum.sheet.item .effect-group.failure {
+    border-left: 3px solid var(--c-failure, #F44336);
+}
+
+/* Cabeçalho de cada grupo (título + botão adicionar) */
+.gum.sheet.item .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.gum.sheet.item .group-header .group-title {
+    margin: 0;
+    font-size: 1.1em;
+    font-family: var(--font-secondary);
+}
+.gum.sheet.item .group-header .button {
+    flex-shrink: 0; /* Impede que o botão encolha */
+}
+
+/* A lista de efeitos */
+.gum.sheet.item .effects-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Cada item individual na lista ("card" do efeito) */
+.gum.sheet.item .effect-entry {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Cabeçalho do card (ícone, nome, controles) */
+.gum.sheet.item .effect-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gum.sheet.item .effect-icon {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.gum.sheet.item .effect-name {
+    font-weight: bold;
+    flex-grow: 1; /* Faz o nome ocupar o espaço disponível */
+}
+.gum.sheet.item .effect-controls {
+    display: flex;
+    gap: 8px;
+}
+.gum.sheet.item .effect-controls a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s;
+}
+.gum.sheet.item .effect-controls a:hover {
+    color: #fff;
+}
+
+/* Campos contextuais (dropdowns, inputs, etc.) */
+.gum.sheet.item .contextual-fields {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.gum.sheet.item .contextual-fields.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.gum.sheet.item .contextual-fields .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.gum.sheet.item .contextual-fields .form-group label {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #a0a0a0;
+}
+.gum.sheet.item .contextual-fields .form-group input,
+.gum.sheet.item .contextual-fields .form-group select {
+    width: 100%;
+}

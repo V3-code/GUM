@@ -3780,6 +3780,35 @@ class GurpsItemSheet extends ItemSheet {
 activateListeners(html) {
     super.activateListeners(html);
 
+        html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
+        ev.preventDefault();
+        const target = $(ev.currentTarget);
+        const effectEntry = target.closest('.effect-entry');
+        
+        // Pega as informações do elemento HTML
+        const listName = effectEntry.data('list-name');
+        const effectId = effectEntry.data('effect-id');
+        
+        // Acessa os dados salvos no item da magia/poder
+        const effectData = getProperty(this.item, `system.${listName}.${effectId}`);
+        
+        // O UUID pode estar em 'effectUuid' (para Efeitos) ou 'uuid' (para Condições)
+        const uuid = effectData.effectUuid || effectData.uuid;
+
+        if (uuid) {
+            // Usa a função do Foundry para encontrar o item pelo seu "endereço" único
+            const originalItem = await fromUuid(uuid);
+            if (originalItem) {
+                // Se encontrou, abre a ficha do item original
+                originalItem.sheet.render(true);
+            } else {
+                ui.notifications.warn("O item original não foi encontrado. O link pode estar quebrado.");
+            }
+        } else {
+            ui.notifications.error("Não foi possível encontrar o UUID para este item.");
+        }
+    });
+
     // Impede a ativação de listeners se o usuário não tiver permissão para editar.
     if (!this.isEditable) return;
 

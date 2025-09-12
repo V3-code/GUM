@@ -163,8 +163,7 @@
   align-items: center;
 }
 input, textarea {
-  color: var(--c-texto-principal);
-  background: var(--c-fundo-input);
+
   border: 1px solid #444;
   border-radius: 3px;
   padding: 0.3rem;
@@ -866,7 +865,7 @@ a:hover { text-decoration: underline; color: #fff; }
 
 /* Garante que o conteúdo da aba possa rolar independentemente */
 .sheet-body {
- 
+  overflow-x: hidden;
   overflow-y: auto;
   
 }
