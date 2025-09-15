@@ -77,6 +77,13 @@ class ContingentEffectBuilder extends Dialog {
 //  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅ xzxzxz
 // ================================================================== //
 async function performGURPSRoll(element, actor, situationalMod = 0) {
+    const itemId = element.dataset.itemId;
+    const item = itemId ? actor.items.get(itemId) : null;
+
+        // LINHAS DE DEBUG PARA ADICIONAR
+    console.log("[GUM Debug] ID do Item recebido:", itemId);
+    console.log("[GUM Debug] Objeto do Item encontrado:", item);
+
     const label = element.dataset.label;
     const attrKey = element.dataset.attributeKey;
     let attributeData = attrKey ? actor.system.attributes[attrKey] : null;
@@ -86,7 +93,7 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
     let finalTargetForRoll = 0;
 
     if (attributeData) {
-        // ✅ Usa final_computed se disponível
+        // Usa final_computed se disponível
         if (attributeData.final_computed !== undefined) {
             attributeData = {
                 ...attributeData,
@@ -110,7 +117,7 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
         tempModForChat = tempMod;
         finalTargetForRoll = final;
     } else {
-        // ✅ Fallback para rolagens diretas com rollValue no HTML
+        // Fallback para rolagens diretas com rollValue no HTML
         finalTargetForRoll = parseInt(element.dataset.rollValue);
         baseTargetForChat = finalTargetForRoll;
         tempModForChat = 0;
@@ -131,10 +138,15 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
         resultText = `Sucesso com margem de ${margin}`;
         resultClass = 'success';
         resultIcon = 'fas fa-check-circle';
+        if (item) {
+            await applyActivationEffects(item, actor, 'success');}
     } else {
         resultText = `Fracasso por uma margem de ${-margin}`;
         resultClass = 'failure';
         resultIcon = 'fas fa-times-circle';
+        if (item) {
+            await applyActivationEffects(item, actor, 'failure');
+        }
     }
 
     // Sucessos e falhas críticas
@@ -176,6 +188,71 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
     });
 }
 
+/**
+ * Aplica os efeitos de ativação (sucesso/falha) de um item em um ou mais alvos.
+ * Versão 5: Modernizada para Foundry V12+, usando Actor.toggleStatusEffect.
+ */
+async function applyActivationEffects(item, actor, outcome) {
+    if (!item || !item.system.activationEffects || !item.system.activationEffects[outcome]) {
+        return;
+    }
+
+    const effectsList = item.system.activationEffects[outcome];
+    
+    for (const effectData of Object.values(effectsList)) {
+        try {
+            const effectItem = await fromUuid(effectData.effectUuid);
+            if (!effectItem) {
+                console.warn(`[GUM] Efeito com UUID "${effectData.effectUuid}" não encontrado.`);
+                continue; 
+            }
+
+            let targetTokens = [];
+            if (effectData.recipient === 'self') {
+                targetTokens = actor.getActiveTokens();
+            } else if (effectData.recipient === 'target') {
+                targetTokens = Array.from(game.user.targets);
+                if (targetTokens.length === 0) {
+                    ui.notifications.warn(`Selecione um alvo para aplicar o efeito "${effectItem.name}".`);
+                    continue; 
+                }
+            }
+
+            for (const targetToken of targetTokens) {
+                const targetActor = targetToken.actor;
+
+                // CASO 1: O efeito é um STATUS
+                if (effectItem.system.type === 'status') {
+                    const statusId = effectItem.system.statusId;
+                    if (!statusId) continue;
+
+                    // ✅ ABORDAGEM MODERNA (V12+): Usa Actor.toggleStatusEffect com o ID do status.
+                    // É mais direto e à prova de futuro.
+                    await targetActor.toggleStatusEffect(statusId, { active: true });
+                    console.log(`[GUM] Efeito de Status "${effectItem.name}" aplicado em "${targetActor.name}".`);
+
+                // CASO 2: O efeito é um CUSTO DE RECURSO
+                } else if (effectItem.system.type === 'resource_cost') {
+                    // Nota: O path no seu item efeito não precisa de "system."
+                    // Ex: "attributes.fp.value"
+                    const path = `system.${effectItem.system.path}`;
+                    const valueChange = parseFloat(effectItem.system.value) || 0;
+
+                    if (!effectItem.system.path || valueChange === 0) continue;
+
+                    const currentValue = foundry.utils.getProperty(targetActor, path);
+                    const newValue = currentValue + valueChange;
+                    
+                    await targetActor.update({ [path]: newValue });
+                    console.log(`[GUM] Custo de Recurso "${effectItem.name}" aplicado em "${targetActor.name}".`);
+                }
+            }
+
+        } catch (error) {
+            console.error(`[GUM] Falha ao aplicar o efeito: `, error);
+        }
+    }
+}
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)

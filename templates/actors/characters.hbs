@@ -577,7 +577,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -610,7 +610,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -639,7 +639,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -668,7 +668,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -697,7 +697,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -727,7 +727,7 @@
               {{!-- As tags de detalhes --}}
               <div class="skill-details">
                 <span class="stat">({{this.system.base_attribute}}{{#if (ne this.system.skill_level 0)}}{{numberFormat this.system.skill_level sign=true}}{{/if}})</span>
-                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}">NH {{this.system.final_nh}}</a>
+                <a class="rollable stat" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">NH {{this.system.final_nh}}</a>
               </div>
 
               {{!-- Os controles --}}
@@ -806,7 +806,7 @@
     <div class="spell-stats-and-actions">
         {{!-- Primeira Linha de Stats --}}
         <div class="stats-row">
-            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}">{{this.system.final_nh}}</a></span>
+            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a></span>
             {{#if this.system.damage.formula}}
                 <span class="stat">
                     <label>Dano:</label>
@@ -902,7 +902,7 @@
     <div class="spell-stats-and-actions">
         {{!-- Primeira Linha de Stats --}}
         <div class="stats-row">
-            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}">{{this.system.final_nh}}</a></span>
+            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a></span>
             {{#if this.system.damage.formula}}
                 <span class="stat">
                     <label>Dano:</label>
@@ -1240,7 +1240,7 @@
                     </div>
 
                     <div class="attack-details-row">
-                      <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.skill_level}}" data-label="Ataque com {{../name}} ({{this.name}})">{{this.skill_level}}</a></span>
+                      <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.skill_level}}" data-label="Ataque com {{../name}} ({{this.name}})" data-item-id="{{../id}}">{{this.skill_level}}</a></span>
                     {{!-- NOVO BLOCO DE EXIBIÇÃO DE DANO (COM DIVISOR REPOSICIONADO) --}}
                     <span class="stat">
                         <label>Dano:</label>
@@ -1267,7 +1267,7 @@
                     </span>                   
                       {{!-- Ataques Corpo a Corpo --}}
                       {{#if (eq this.attack_type "melee")}}
-                        <span class="stat melee-stat"><label>Aparar:</label> <a class="rollable" data-roll-value="{{this.defense}}" data-label="Aparar com {{../name}}">{{this.defense}}</a></span>
+                        <span class="stat melee-stat"><label>Aparar:</label> <a class="rollable" data-roll-value="{{this.defense}}" data-label="Aparar com {{../name}}" data-item-id="{{../id}}">{{this.defense}}</a></span>
                         <span class="stat melee-stat"><label>Alcance:</label> {{this.reach}}</span>
                       {{/if}}
 
