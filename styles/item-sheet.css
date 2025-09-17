@@ -220,10 +220,12 @@
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 5px;
   padding: 15px 15px 15px 15px; /* Aumenta o padding de cima para dar espaço ao título */
-  margin-bottom: 20px; /* Margem apenas na parte de baixo */
+  margin-bottom: 10px;
+  
 }
 .gum.sheet.item .form-section:last-child {
-    margin-bottom: 0;
+   
+    margin-bottom: 5px;
 }
 .gum.sheet.item .form-section .section-title {
   position: absolute;
@@ -368,6 +370,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    padding: 5px;
 }
 .gum.sheet.item .custom-checkbox span::before {
   content: '';

@@ -1375,17 +1375,19 @@
     {{!-- NOVO CARD: SUMÁRIO DE EFEITOS ATIVOS --}}
     <div class="active-effects-summary">
         <div class="summary-header">Efeitos Ativos</div>
-        <div class="effects-pill-list">
-            {{#each activeConditionsList as |effect|}}
-                <div class="effect-pill" title="{{effect.tooltip}}">
-                    <img src="{{effect.img}}" class="pill-icon"/>
-                    <span>{{effect.name}}</span>
-                </div>
-            {{/each}}
-            {{#unless activeConditionsList}}
-                <div class="placeholder-text">Nenhum efeito mecanicamente ativo.</div>
-            {{/unless}}
-        </div>
+          <div class="effects-pill-list">
+              {{#each activeConditionsList as |effect|}}
+                  <div class="effect-pill" title="{{effect.name}} - Duração: {{effect.durationString}}">
+                      <img src="{{effect.icon}}" class="pill-icon"/>
+                      <span>{{effect.name}}</span>
+                      <a class="effect-control" data-action="delete-effect" data-effect-id="{{effect.id}}"><i class="fas fa-times"></i></a>
+                  </div>
+              {{/each}}
+              
+              {{#unless activeConditionsList}}
+                  <div class="placeholder-text">Nenhum efeito ativo.</div>
+              {{/unless}}
+          </div>
     </div>
 
     {{!-- LAYOUT DE DUAS COLUNAS PARA GERENCIAMENTO --}}

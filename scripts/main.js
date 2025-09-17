@@ -73,17 +73,167 @@ class ContingentEffectBuilder extends Dialog {
     }
 }
 
+
+/**
+ * O "Motor de Efeitos" central do sistema.
+ * Recebe um único Item Efeito e os alvos, e executa a lógica apropriada.
+ * @param {Item} effectItem - O Item de Efeito a ser aplicado.
+ * @param {Array<Token>} targets - Uma lista de tokens que são os alvos do efeito.
+ * @param {object} [context={}] - Informações contextuais, como o ator que originou o efeito.
+ */
+/**
+ * O "Motor de Efeitos" central do sistema. (Versão 2.1 - Completa e Corrigida)
+ */
+async function applySingleEffect(effectItem, targets, context = {}) {
+    if (!effectItem || targets.length === 0) return;
+
+    const effectSystem = effectItem.system;
+    
+    switch (effectSystem.type) {
+
+        case 'attribute':
+        case 'status':
+        case 'flag': {
+            for (const targetToken of targets) {
+                const targetActor = targetToken.actor;
+                const activeEffectData = {
+                    name: effectItem.name,
+                    icon: effectItem.img,
+                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
+                    changes: [],
+                    statuses: [],
+                    flags: {}
+                };
+
+                if (effectSystem.duration && effectSystem.duration.unit !== 'unlimited') {
+                    activeEffectData.duration = {};
+                    if (effectSystem.duration.unit === 'seconds') activeEffectData.duration.seconds = effectSystem.duration.value;
+                    else if (effectSystem.duration.unit === 'rounds') activeEffectData.duration.rounds = effectSystem.duration.value;
+                    else if (effectSystem.duration.unit === 'turns') activeEffectData.duration.turns = effectSystem.duration.value;
+                    
+                    if (effectSystem.duration.inCombat && game.combat) {
+                        activeEffectData.duration.combat = game.combat.id;
+                    }
+                }
+
+                const statusId = effectSystem.statusId || effectItem.name.slugify({strict: true});
+                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", statusId);
+                
+                if (effectSystem.type === 'attribute') {
+                    const change = {
+                        key: effectSystem.path,
+                        mode: CONST.ACTIVE_EFFECT_MODES[effectSystem.operation.toUpperCase()] || CONST.ACTIVE_EFFECT_MODES.ADD,
+                        value: effectSystem.value
+                    };
+                    activeEffectData.changes.push(change);
+                } 
+                else if (effectSystem.type === 'status') {
+                    if (effectSystem.statusId) {
+                        activeEffectData.statuses.push(effectSystem.statusId);
+                        const statusEffect = CONFIG.statusEffects.find(e => e.id === effectSystem.statusId);
+                        if (statusEffect) activeEffectData.icon = statusEffect.icon;
+                    }
+                }
+                else if (effectSystem.type === 'flag') {
+                    let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
+                    foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
+                }
+                
+                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                console.log(`[GUM] Efeito Ativo "${effectItem.name}" aplicado em "${targetActor.name}".`);
+            }
+            break;
+        }
+
+        case 'resource_change': {
+            let valueToChange = effectSystem.value;
+
+            if (effectSystem.confirm_prompt) {
+                const confirmed = await Dialog.confirm({
+                    title: "Confirmar Ação",
+                    content: `<p>Deseja aplicar o efeito "${effectItem.name}"?</p>`,
+                    yes: () => true,
+                    no: () => false,
+                    defaultYes: true
+                });
+                if (!confirmed) return;
+            }
+
+            if (effectSystem.variable_value) {
+                const newAmount = await new Promise(resolve => {
+                    new Dialog({
+                        title: "Definir Valor",
+                        content: `<p>Qual o valor para "${effectItem.name}"?</p><input type="text" name="amount" value="${valueToChange}"/>`,
+                        buttons: { apply: { label: "Aplicar", callback: (html) => resolve(html.find('input[name="amount"]').val()) } },
+                        default: "apply",
+                        close: () => resolve(null)
+                    }).render(true);
+                });
+                if (newAmount === null) return;
+                valueToChange = newAmount;
+            }
+
+            const roll = new Roll(String(valueToChange));
+            await roll.evaluate();
+            const finalValue = roll.total;
+            
+            for (const targetToken of targets) {
+                const targetActor = targetToken.actor;
+                let updatePath = "";
+                let updateObject = null;
+                
+                switch (effectSystem.category) {
+                    case 'hp': updatePath = 'system.attributes.hp.value'; break;
+                    case 'fp': updatePath = 'system.attributes.fp.value'; break;
+                    case 'energy_reserve': {
+                        const reserveKey = Object.keys(targetActor.system.spell_reserves || {}).find(k => targetActor.system.spell_reserves[k].name === effectSystem.name) || Object.keys(targetActor.system.power_reserves || {}).find(k => targetActor.system.power_reserves[k].name === effectSystem.name);
+                        if (reserveKey) {
+                            updatePath = targetActor.system.spell_reserves[reserveKey] ? `system.spell_reserves.${reserveKey}.current` : `system.power_reserves.${reserveKey}.current`;
+                        }
+                        break;
+                    }
+                    case 'combat_tracker': {
+                         const trackerKey = Object.keys(targetActor.system.combat.combat_meters || {}).find(k => targetActor.system.combat.combat_meters[k].name === effectSystem.name);
+                         if (trackerKey) updatePath = `system.combat.combat_meters.${trackerKey}.current`;
+                        break;
+                    }
+                    case 'item_quantity': {
+                        const itemToUpdate = targetActor.items.find(i => i.name === effectSystem.name);
+                        if (itemToUpdate) {
+                            const newQuantity = (itemToUpdate.system.quantity || 0) + finalValue;
+                            updateObject = itemToUpdate.update({'system.quantity': newQuantity});
+                        }
+                        break;
+                    }
+                }
+                
+                if (updateObject) await updateObject;
+                else if (updatePath) {
+                    const currentValue = foundry.utils.getProperty(targetActor, updatePath) || 0;
+                    await targetActor.update({ [updatePath]: currentValue + finalValue });
+                }
+
+                if (effectSystem.chat_notice) {
+                    ChatMessage.create({
+                        speaker: ChatMessage.getSpeaker({actor: targetActor}),
+                        content: `<strong>${effectItem.name}:</strong> ${finalValue >= 0 ? '+' : ''}${finalValue} aplicado em ${effectSystem.name || effectSystem.category}.`
+                    });
+                }
+            }
+            break;
+        }
+
+        default:
+            console.warn(`[GUM] Tipo de efeito "${effectSystem.type}" não reconhecido.`);
+    }
+}
+
 // ================================================================== //
-//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅ xzxzxz
+//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
 // ================================================================== //
 async function performGURPSRoll(element, actor, situationalMod = 0) {
     const itemId = element.dataset.itemId;
     const item = itemId ? actor.items.get(itemId) : null;
-
-        // LINHAS DE DEBUG PARA ADICIONAR
-    console.log("[GUM Debug] ID do Item recebido:", itemId);
-    console.log("[GUM Debug] Objeto do Item encontrado:", item);
-
     const label = element.dataset.label;
     const attrKey = element.dataset.attributeKey;
     let attributeData = attrKey ? actor.system.attributes[attrKey] : null;
@@ -93,7 +243,6 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
     let finalTargetForRoll = 0;
 
     if (attributeData) {
-        // Usa final_computed se disponível
         if (attributeData.final_computed !== undefined) {
             attributeData = {
                 ...attributeData,
@@ -103,21 +252,17 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
                 override: null
             };
         }
-
         const baseValue = Number(attributeData.value) || 0;
         const fixedMod = Number(attributeData.mod) || 0;
         const tempMod = Number(attributeData.temp) || 0;
         const override = attributeData.override;
-
         const final = (override !== undefined && override !== null)
             ? override
             : baseValue + fixedMod + tempMod;
-
         baseTargetForChat = baseValue + fixedMod;
         tempModForChat = tempMod;
         finalTargetForRoll = final;
     } else {
-        // Fallback para rolagens diretas com rollValue no HTML
         finalTargetForRoll = parseInt(element.dataset.rollValue);
         baseTargetForChat = finalTargetForRoll;
         tempModForChat = 0;
@@ -125,31 +270,27 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
 
     const finalTarget = finalTargetForRoll + situationalMod;
     const chatModifier = tempModForChat + situationalMod;
-
     const roll = new Roll("3d6");
-    await roll.evaluate(); // 🔧 Corrigido: .evaluate sem 'async: true'
+    await roll.evaluate();
 
     const margin = finalTarget - roll.total;
     let resultText = "";
     let resultClass = "";
     let resultIcon = "";
+    let outcome = ""; // Variável para guardar 'success' ou 'failure'
 
     if (roll.total <= finalTarget) {
         resultText = `Sucesso com margem de ${margin}`;
         resultClass = 'success';
         resultIcon = 'fas fa-check-circle';
-        if (item) {
-            await applyActivationEffects(item, actor, 'success');}
+        outcome = 'success';
     } else {
         resultText = `Fracasso por uma margem de ${-margin}`;
         resultClass = 'failure';
         resultIcon = 'fas fa-times-circle';
-        if (item) {
-            await applyActivationEffects(item, actor, 'failure');
-        }
+        outcome = 'failure';
     }
 
-    // Sucessos e falhas críticas
     if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
         resultText = `Sucesso Crítico!`;
     } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
@@ -181,16 +322,24 @@ async function performGURPSRoll(element, actor, situationalMod = 0) {
         </div>
     `;
 
-    ChatMessage.create({
+    // ✅ PASSO 1: A MENSAGEM DO CHAT AGORA É CRIADA PRIMEIRO.
+    // Usamos 'await' para garantir que ela seja enviada antes de continuarmos.
+    await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: actor }),
         content: flavor,
         rolls: [roll]
     });
+
+    // ✅ PASSO 2: SÓ DEPOIS DE A MENSAGEM ESTAR NO CHAT, CHAMAMOS OS EFEITOS.
+    // Isso fará com que as janelas de diálogo apareçam depois do resultado da rolagem.
+    if (item) {
+        await applyActivationEffects(item, actor, outcome);
+    }
 }
 
 /**
- * Aplica os efeitos de ativação (sucesso/falha) de um item em um ou mais alvos.
- * Versão 5: Modernizada para Foundry V12+, usando Actor.toggleStatusEffect.
+ * O "Despachante" de Efeitos de Ativação.
+ * Pega os efeitos de sucesso/falha de um item e os envia para o "Motor" applySingleEffect.
  */
 async function applyActivationEffects(item, actor, outcome) {
     if (!item || !item.system.activationEffects || !item.system.activationEffects[outcome]) {
@@ -200,56 +349,25 @@ async function applyActivationEffects(item, actor, outcome) {
     const effectsList = item.system.activationEffects[outcome];
     
     for (const effectData of Object.values(effectsList)) {
-        try {
-            const effectItem = await fromUuid(effectData.effectUuid);
-            if (!effectItem) {
-                console.warn(`[GUM] Efeito com UUID "${effectData.effectUuid}" não encontrado.`);
-                continue; 
-            }
-
-            let targetTokens = [];
+        const effectItem = await fromUuid(effectData.effectUuid);
+        if (effectItem) {
+            let finalTargets = [];
             if (effectData.recipient === 'self') {
-                targetTokens = actor.getActiveTokens();
-            } else if (effectData.recipient === 'target') {
-                targetTokens = Array.from(game.user.targets);
-                if (targetTokens.length === 0) {
-                    ui.notifications.warn(`Selecione um alvo para aplicar o efeito "${effectItem.name}".`);
-                    continue; 
-                }
+                finalTargets = actor.getActiveTokens();
+            } else {
+                finalTargets = Array.from(game.user.targets);
             }
 
-            for (const targetToken of targetTokens) {
-                const targetActor = targetToken.actor;
-
-                // CASO 1: O efeito é um STATUS
-                if (effectItem.system.type === 'status') {
-                    const statusId = effectItem.system.statusId;
-                    if (!statusId) continue;
-
-                    // ✅ ABORDAGEM MODERNA (V12+): Usa Actor.toggleStatusEffect com o ID do status.
-                    // É mais direto e à prova de futuro.
-                    await targetActor.toggleStatusEffect(statusId, { active: true });
-                    console.log(`[GUM] Efeito de Status "${effectItem.name}" aplicado em "${targetActor.name}".`);
-
-                // CASO 2: O efeito é um CUSTO DE RECURSO
-                } else if (effectItem.system.type === 'resource_cost') {
-                    // Nota: O path no seu item efeito não precisa de "system."
-                    // Ex: "attributes.fp.value"
-                    const path = `system.${effectItem.system.path}`;
-                    const valueChange = parseFloat(effectItem.system.value) || 0;
-
-                    if (!effectItem.system.path || valueChange === 0) continue;
-
-                    const currentValue = foundry.utils.getProperty(targetActor, path);
-                    const newValue = currentValue + valueChange;
-                    
-                    await targetActor.update({ [path]: newValue });
-                    console.log(`[GUM] Custo de Recurso "${effectItem.name}" aplicado em "${targetActor.name}".`);
-                }
+            if (finalTargets.length === 0) {
+                 // Se o alvo for 'target' mas nenhum foi selecionado, podemos usar o próprio ator como fallback ou avisar.
+                 // Usar o próprio ator como fallback pode ser um bom padrão.
+                 if (effectData.recipient === 'target') {
+                    ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
+                 }
+                 finalTargets = actor.getActiveTokens();
             }
 
-        } catch (error) {
-            console.error(`[GUM] Falha ao aplicar o efeito: `, error);
+            await applySingleEffect(effectItem, finalTargets, { actor: actor, origin: item });
         }
     }
 }
@@ -325,25 +443,32 @@ Hooks.once('init', async function() {
         }
     });
 
-    // Gatilho para início de turno em combate.
-    Hooks.on("updateCombat", (combat, changed, options, userId) => {
+    Hooks.on("updateCombat", async (combat, changed, options, userId) => {
         if (!game.user.isGM) return;
 
-        // Lógica que roda na mudança de RODADA ou TURNO
-        if (changed.round !== undefined || changed.turn !== undefined) {
-            const actor = combat.combatant?.actor;
-            if (actor) {
-                // Reavalia condições que podem depender do início do turno
-                processConditions(actor);
+        // Lógica que roda no início do turno de um novo combatente
+        if (changed.turn !== undefined || changed.round !== undefined) {
+            const currentCombatant = combat.combatant;
+            if (currentCombatant?.actor) {
+                processConditions(currentCombatant.actor);
             }
         }
 
-        // Lógica que roda APENAS no final do turno de alguém
+        // Lógica que roda no final do turno do combatente anterior
         if (changed.turn !== undefined) {
-            // Gerencia as durações das condições do combatente anterior
-            manageDurations(combat);
+            const previousCombatant = combat.previous.combatantId ? combat.combatants.get(combat.previous.combatantId) : null;
+            if (!previousCombatant?.actor) return;
+
+            const actor = previousCombatant.actor;
+
+            // ✅ PASSO 1: Chama nossa NOVA função para gerenciar ActiveEffects
+            await manageActiveEffectDurations(actor);
+            
+            // ✅ PASSO 2: Chama a SUA função original para gerenciar Itens de Condição
+            await manageDurations(combat);
         }
     });
+
 });
 
 
@@ -751,6 +876,37 @@ async function processConditions(actor, eventData = null) {
     }
 }
 
+
+/**
+ * Gerencia a duração de ActiveEffects baseados em rodadas/turnos de combate. (Versão Final e Funcional)
+ * @param {Actor} actor O ator do combatente cujo turno terminou.
+ */
+async function manageActiveEffectDurations(actor) {
+    if (!actor || !game.combat) return;
+
+    const effectsToDelete = [];
+    const currentRound = game.combat.round;
+
+    // Itera sobre todos os ActiveEffects do ator
+    for (const effect of actor.effects) {
+        const duration = effect.duration;
+
+        // A verificação matemática direta que funcionou na depuração
+        const isExpired = currentRound >= (duration.startRound || 0) + (duration.rounds || 0);
+
+        // A condição para deletar: o efeito deve ter uma duração em rodadas e ter expirado.
+        if (duration.rounds && isExpired) {
+            effectsToDelete.push(effect.id);
+        }
+    }
+
+    // Se encontramos efeitos expirados, deletamos todos de uma vez.
+    if (effectsToDelete.length > 0) {
+        console.log(`GUM | Removendo ActiveEffects expirados de ${actor.name}:`, effectsToDelete);
+        await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToDelete);
+    }
+}
+
 /**
  * Gerencia a duração de condições baseadas em rodadas de combate a cada turno.
  * @param {Combat} combat O objeto de combate que foi atualizado.
@@ -903,39 +1059,26 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
     context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
 
     // 2. ✅ LÓGICA CORRIGIDA PARA O SUMÁRIO DE "EFEITOS ATIVOS" ✅
-    context.activeConditionsList = []; // Usaremos este novo nome
-    for (const condition of allConditions) {
-        // Pula a condição se o mestre a desabilitou manualmente
-        if (condition.getFlag("gum", "manual_override")) continue;
-
-        let isConditionActive = false;
-        const whenClause = condition.system.when;
-
-        // Avalia se a condição está ativa (incondicional ou a fórmula é verdadeira)
-        if (!whenClause || whenClause.trim() === "") {
-            isConditionActive = true;
+context.activeConditionsList = Array.from(this.actor.effects).map(effect => {
+        const effectData = effect.toObject();
+        effectData.id = effect.id; // Garante que o ID para deletar está acessível
+        
+        // Prepara uma string de duração para exibir na ficha
+        const d = effect.duration;
+        if (d.seconds) {
+            effectData.durationString = `${d.seconds} seg.`;
+        } else if (d.rounds) {
+            const remaining = d.startRound ? (d.startRound + d.rounds - game.combat?.round) : d.rounds;
+            effectData.durationString = `${remaining} rodada(s)`;
+        } else if (d.turns) {
+            const remaining = d.startTurn ? (d.startTurn + d.turns - game.combat?.turn) : d.turns;
+            effectData.durationString = `${remaining} turno(s)`;
         } else {
-            try {
-                isConditionActive = Function("actor", `return ( ${whenClause} )`)(this.actor);
-            } catch (e) {
-                // Ignora erros de avaliação aqui, simplesmente não ativa
-                isConditionActive = false; 
-            }
+            effectData.durationString = "Permanente";
         }
-
-        // Se a condição estiver ativa, adiciona à lista do sumário
-        if (isConditionActive) {
-            const effectsData = condition.system.effects || [];
-            const effectsArray = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
-            const tooltip = effectsArray.map(e => `${e.path}: ${e.value}`).join('; ');
-            
-            context.activeConditionsList.push({
-                name: condition.name,
-                img: condition.img,
-                tooltip: tooltip
-            });
-        }
-    }
+        
+        return effectData;
+    });
     // --- FIM DA LÓGICA DE CONDIÇÕES ---
         context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
         context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
@@ -1056,6 +1199,22 @@ context.activeConditionEffects = Array.from(this.actor.effects).filter(effect =>
         tooltip: changes
     };
 });
+
+const activeEffects = this.actor.effects.map(effect => {
+        const effectData = effect.toObject(); // Converte para um objeto simples
+        effectData.id = effect.id; // Garante que temos o ID real para deleção
+        
+        // Determina se o efeito veio de um item do sistema ou de outro lugar
+        effectData.isSystemEffect = effect.origin ? effect.origin.startsWith('Compendium.gum.') : false;
+        
+        // Prepara uma descrição da duração para exibir na ficha
+        if (effect.duration.remaining > 0) {
+            effectData.durationString = `${effect.duration.remaining} ${effect.duration.label.toLowerCase()}`;
+        } else {
+            effectData.durationString = "Permanente";
+        }
+        return effectData;
+    });
 
         return context;
       }
@@ -1296,6 +1455,13 @@ _prepareCharacterItems(sheetData) {
       activateListeners(html) {
         super.activateListeners(html);
         if (!this.isEditable) return;
+
+            html.find('[data-action="delete-effect"]').on('click', ev => {
+            const effectId = ev.currentTarget.dataset.effectId;
+            if (effectId) {
+            this.actor.deleteEmbeddedDocuments("ActiveEffect", [effectId]);
+            }
+        });
 
         // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
         // Ele é simples e robusto, pois sempre sabe "quem" é o ator (this.actor)

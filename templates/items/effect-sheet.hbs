@@ -47,26 +47,84 @@
                 </div>
             </div>
 
-            {{!-- SEÇÃO EFEITO --}}
-            <div class="form-section">
-                <h4 class="section-title">Efeito</h4>
-                
-                {{!-- Linha do "Tipo de Efeito" --}}
+{{!-- SEÇÃO EFEITO --}}
+<div class="form-section">
+    <h4 class="section-title">Efeito</h4>
+    
+    {{!-- Linha do "Tipo de Efeito" --}}
+    <div class="form-row">
+        <label class="row-label">Tipo de Efeito:</label>
+        <select name="system.type">
+            <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
+            {{!-- ✅ NOSSA NOVA OPÇÃO --}}
+            <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
+            <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
+            <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
+            <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
+            <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
+        </select>
+    </div>
+
+    {{!-- Textos de Ajuda (Hints) --}}
+    {{#if (eq system.type 'attribute')}}<p class="hint">Modifica um atributo de forma contínua (Ex: +1 ST, -2 DX). Cria um Efeito Ativo.</p>{{/if}}
+    {{#if (eq system.type 'resource_change')}}<p class="hint">Altera um recurso de forma pontual (Ex: custo de PF, consumo de flechas, cura de PV).</p>{{/if}}
+    {{#if (eq system.type 'status')}}<p class="hint">Aplica um ícone de status no token do alvo.</p>{{/if}}
+    {{#if (eq system.type 'macro')}}<p class="hint">Executa uma macro previamente feita.</p>{{/if}}
+    
+    <hr>
+
+    {{!-- Campos Condicionais --}}
+    <div class="conditional-fields">
+    
+        {{!-- ✅ SEÇÃO DE CAMPOS PARA O NOSSO NOVO TIPO 'RESOURCE_CHANGE' --}}
+        {{#if (eq system.type 'resource_change')}}
+            <div class="resource-change-layout">
+                {{!-- Valor da Alteração --}}
                 <div class="form-row">
-                    <label class="row-label">Tipo de Efeito:</label>
-                    <select name="system.type">
-                        <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Atributo</option>
-                        <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
-                        <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
-                        <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
-                        <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
+                    <label class="row-label">Valor da Alteração:</label>
+                    <input type="text" name="system.value" value="{{system.value}}" placeholder="Ex: -1 ou 2d6"/>
+                </div>
+
+                {{!-- Categoria do Alvo --}}
+                <div class="form-row">
+                    <label class="row-label">Alvo da Alteração:</label>
+                    <select name="system.category">
+                        <option value="hp" {{#if (eq system.category 'hp')}}selected{{/if}}>Pontos de Vida</option>
+                        <option value="fp" {{#if (eq system.category 'fp')}}selected{{/if}}>Pontos de Fadiga</option>
+                        <option value="energy_reserve" {{#if (eq system.category 'energy_reserve')}}selected{{/if}}>Reserva de Energia</option>
+                        <option value="combat_tracker" {{#if (eq system.category 'combat_tracker')}}selected{{/if}}>Registro de Combate</option>
+                        <option value="item_quantity" {{#if (eq system.category 'item_quantity')}}selected{{/if}}>Quantidade de Equipamento</option>
                     </select>
                 </div>
-                {{#if (eq system.type 'attribute')}}<p class="hint">Modifica um atributo ou valor numérico no alvo.</p>{{/if}}
-                {{#if (eq system.type 'status')}}<p class="hint">Aplica um ícone de status no token do alvo.</p>{{/if}}
-                {{#if (eq system.type 'macro')}}<p class="hint">Executa uma macro previamente feita - Busca a Macro pelo nome.</p>{{/if}}
-                
+
+                {{!-- Nome do Alvo (se necessário) --}}
+                {{#if (or (eq system.category 'energy_reserve') (eq system.category 'combat_tracker') (eq system.category 'item_quantity'))}}
+                <div class="form-row indented">
+                    <label class="row-label">Nome Específico:</label>
+                    <input type="text" name="system.name" value="{{system.name}}" placeholder="Digite o nome exato da Reserva/Registro/Item"/>
+                </div>
+                {{/if}}
+
                 <hr>
+                <h4 class="subsection-title">Opções Avançadas</h4>
+
+                {{!-- Checkboxes de Funcionalidades --}}
+                <div class="checkbox-options">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.chat_notice" {{checked system.chat_notice}}/>
+                        <span>Gerar aviso no chat</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.confirm_prompt" {{checked system.confirm_prompt}}/>
+                        <span>Pedir confirmação antes de aplicar</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.variable_value" {{checked system.variable_value}}/>
+                        <span>Permitir alterar o valor</span>
+                    </label>
+                </div>
+            </div>
+        {{/if}}
 
                 {{!-- Campos Condicionais --}}
                 <div class="conditional-fields">
@@ -171,8 +229,43 @@
                         {{/if}}
                     {{/if}}
                 </div>
+
             </div>
-        
+
+        </div>
+
+                    {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
+                  
+                    <div class="form-section">
+                        <h4 class="section-title">Duração & Expiração</h4>
+                        <div class="form-grid-2">
+                            {{!-- Campo do Valor da Duração --}}
+                            <div class="form-group">
+                                <label>Duração</label>
+                                <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="0"/>
+                            </div>
+
+                            {{!-- Campo da Unidade de Duração --}}
+                            <div class="form-group">
+                                <label>Unidade</label>
+                                <select name="system.duration.unit">
+                                    <option value="unlimited" {{#if (eq system.duration.unit 'unlimited')}}selected{{/if}}>Ilimitada</option>
+                                    <option value="seconds" {{#if (eq system.duration.unit 'seconds')}}selected{{/if}}>Segundos</option>
+                                    <option value="rounds" {{#if (eq system.duration.unit 'rounds')}}selected{{/if}}>Rodadas</option>
+                                    <option value="turns" {{#if (eq system.duration.unit 'turns')}}selected{{/if}}>Turnos</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        {{!-- Checkbox "Apenas em Combate" --}}
+                        <label class="custom-checkbox hint">
+                            <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                            <span>A contagem de tempo só avança enquanto em combate.</span>
+                        </label>
+                    </div>
+                {{/if}}
+
+                        
         {{!-- SEÇÃO DE DESCRIÇÃO --}}
             <div class="form-section">
                 <div class="section-header">
@@ -183,6 +276,5 @@
                     {{{enrichedChatDescription}}}
                 </div>
             </div>
-        </div>
     </main>
 </form>

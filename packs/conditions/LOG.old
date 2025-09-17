@@ -1,3 +1,5 @@
-2025/09/11-15:28:32.084 1ac4 Recovering log #37
-2025/09/11-15:28:32.087 1ac4 Delete type=0 #37
-2025/09/11-15:28:32.087 1ac4 Delete type=3 #35
+2025/09/16-22:44:31.606 ac4 Recovering log #45
+2025/09/16-22:44:31.606 ac4 Level-0 table #47: started
+2025/09/16-22:44:31.616 ac4 Level-0 table #47: 1270 bytes OK
+2025/09/16-22:44:31.622 ac4 Delete type=0 #45
+2025/09/16-22:44:31.622 ac4 Delete type=3 #43
