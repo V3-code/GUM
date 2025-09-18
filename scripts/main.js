@@ -75,14 +75,9 @@ class ContingentEffectBuilder extends Dialog {
 
 
 /**
- * O "Motor de Efeitos" central do sistema.
- * Recebe um único Item Efeito e os alvos, e executa a lógica apropriada.
- * @param {Item} effectItem - O Item de Efeito a ser aplicado.
- * @param {Array<Token>} targets - Uma lista de tokens que são os alvos do efeito.
- * @param {object} [context={}] - Informações contextuais, como o ator que originou o efeito.
- */
-/**
- * O "Motor de Efeitos" central do sistema. (Versão 2.1 - Completa e Corrigida)
+ * O "Motor de Efeitos" central do sistema. (Versão 3.0 - Final)
+ * Lida com todos os tipos de efeitos, incluindo ActiveEffects com duração,
+ * custos de recursos, macros e mensagens de chat.
  */
 async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
@@ -223,6 +218,63 @@ async function applySingleEffect(effectItem, targets, context = {}) {
             break;
         }
 
+        // =======================================================
+        // ✅ CASOS DE AÇÃO ÚNICA (AGORA IMPLEMENTADOS)
+        // =======================================================
+        case 'macro': {
+            if (!effectSystem.value) break;
+            const macro = game.macros.getName(effectSystem.value);
+            if (macro) {
+                // Passa informações úteis para a macro, como o ator de origem e os alvos.
+                macro.execute({ 
+                    actor: context.actor, 
+                    origin: context.origin,
+                    targets: targets 
+                });
+            } else {
+                ui.notifications.warn(`[GUM] Macro "${effectSystem.value}" não encontrada.`);
+            }
+            break;
+        }
+
+        case 'chat': {
+            if (!effectSystem.chat_text) break;
+            // A lógica aqui é uma adaptação da que você já tinha em `processConditions`
+            for (const target of targets) {
+                const targetActor = target.actor;
+                let content = effectSystem.chat_text.replace(/{actor.name}/g, targetActor.name);
+                
+                // Adiciona o botão de rolagem, se configurado
+                if (effectSystem.has_roll) {
+                    let finalTarget = 0;
+                    if (effectSystem.roll_attribute === 'fixed') {
+                        finalTarget = Number(effectSystem.roll_fixed_value) || 10;
+                    } else if (effectSystem.roll_attribute) {
+                        const attr = foundry.utils.getProperty(targetActor.system.attributes, effectSystem.roll_attribute);
+                        const finalAttr = attr?.final ?? 10;
+                        finalTarget = finalAttr + (Number(effectSystem.roll_modifier) || 0);
+                    }
+                    const label = effectSystem.roll_label || `Rolar Teste`;
+                    content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
+                }
+                
+                const chatData = { 
+                    speaker: ChatMessage.getSpeaker({ actor: targetActor }), 
+                    content: content 
+                };
+                
+                // Define quem recebe a mensagem
+                if (effectSystem.whisperMode === 'gm') {
+                    chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                } else if (effectSystem.whisperMode === 'blind') {
+                    chatData.blind = true;
+                }
+                
+                ChatMessage.create(chatData);
+            }
+            break;
+        }
+        
         default:
             console.warn(`[GUM] Tipo de efeito "${effectSystem.type}" não reconhecido.`);
     }

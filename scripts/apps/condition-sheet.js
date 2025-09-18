@@ -1,99 +1,142 @@
-import { ConditionBuilder } from "./condition-builder.js";
+// GUM/scripts/apps/condition-sheet.js
+
 import { EffectBuilder } from "./effect-builder.js";
-import { EffectBrowser } from "../../module/apps/effect-browser.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
+// NOTA: O import do ConditionBuilder não é mais necessário aqui, mas pode ser mantido se você o usa em outro lugar.
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
-            width: 450, height: 495, resizable: true,
+            width: 500, // Aumentei um pouco a largura para acomodar os resumos
+            height: "auto",
+            resizable: true,
             template: "systems/gum/templates/items/condition-sheet.hbs",
             tabs: [{
                 navSelector: ".sheet-tabs",
                 contentSelector: ".sheet-body-content",
-                initial: "detalhes"
+                initial: "efeitos" // Mudei a aba inicial para 'efeitos' para ser mais direto
             }]
         });
     }
 
+    /**
+     * ✅ [VERSÃO 2.0] Prepara os dados para a ficha.
+     * Agora carrega os dados completos dos efeitos linkados por UUID.
+     */
     async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
         context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, { async: true });
         
-        const effectsData = this.item.system.effects || [];
-        context.system.effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
+        const effectLinks = this.item.system.effects || [];
+        const preparedEffects = [];
+
+        // Para cada link na lista de efeitos, carregamos o item completo.
+        for (const [index, link] of effectLinks.entries()) {
+            if (link.uuid) {
+                const effectItem = await fromUuid(link.uuid);
+                if (effectItem) {
+                    preparedEffects.push({
+                        name: effectItem.name,
+                        img: effectItem.img,
+                        type: effectItem.system.type,
+                        chat_description: effectItem.system.chat_description,
+                        summary: this._getEffectSummary(effectItem), // Gera o resumo
+                        index: index, // O índice original para a função de deletar
+                        uuid: link.uuid // O UUID para a função de visualizar
+                    });
+                } else {
+                    // Adiciona um placeholder se o link estiver quebrado
+                    preparedEffects.push({ name: "Link Quebrado", img: "icons/svg/hazard.svg", summary: "UUID não encontrado", index: index, uuid: link.uuid });
+                }
+            }
+        }
+        
+        context.preparedEffects = preparedEffects;
         return context;
     }
 
-activateListeners(html) {
-    super.activateListeners(html);
-    if (!this.isEditable) return;
-
-    // Listener para o botão Adicionar Efeito
-    html.find('.add-effect').on('click', (ev) => {
-        new EffectBrowser(this.item).render(true);
-    });
-    
-    // Lógica de Edição do item efeito na ficha
-    html.find('.edit-effect').on('click', (ev) => {
-        const effectIndex = $(ev.currentTarget).closest('.effect-tag').data('effectIndex');
-        const effects = Array.isArray(this.item.system.effects) ? this.item.system.effects : Object.values(this.item.system.effects || {});
-        const effectData = effects[effectIndex];
-        
-        if (effectData) {
-            // Simplesmente abre o nosso novo EffectBuilder com os dados.
-            // O próprio EffectBuilder agora cuida de salvar.
-            new EffectBuilder(this.item, effectData, effectIndex).render(true);
+    /**
+     * ✅ [NOVO] Gera um resumo textual para um Item Efeito.
+     */
+    _getEffectSummary(effectItem) {
+        const sys = effectItem.system;
+        switch (sys.type) {
+            case 'attribute': return `Modificador: ${sys.path || ''} ${sys.operation || ''} ${sys.value || ''}`;
+            case 'resource_change': return `Recurso: ${sys.category} (${sys.value || '0'})`;
+            case 'status':
+                const status = CONFIG.statusEffects.find(s => s.id === sys.statusId);
+                return `Status: ${status ? status.name : sys.statusId}`;
+            case 'chat': return `Mensagem no Chat`;
+            case 'macro': return `Executa Macro: ${sys.value}`;
+            case 'flag': return `Define Flag: ${sys.key}`;
+            default: return "Efeito desconhecido";
         }
-    });
+    }
 
-    // Listener para o botão Deletar Efeito
-    html.find('.delete-effect').on('click', this._onDeleteEffect.bind(this));
-    
-    // Listeners dos assistentes
-    html.find('.condition-assistant-btn').on('click', (ev) => { new ConditionBuilder(this.item).render(true); });
-        html.find('.saved-triggers-btn').on('click', (ev) => {
-            const textarea = this.element.find('textarea[name="system.when"]')[0];
-            new TriggerBrowser(textarea).render(true); // AGORA CHAMA NOSSO NAVEGADOR!
+    /**
+     * ✅ [VERSÃO 2.0] Listeners limpos e aprimorados.
+     */
+    activateListeners(html) {
+        super.activateListeners(html);
+        if (!this.isEditable) return;
+
+            html.find('.view-effect').on('click', async (ev) => {
+            ev.preventDefault();
+            // Pega o UUID que armazenamos no elemento HTML
+            const effectUuid = $(ev.currentTarget).closest('.effect-tag').data('effect-uuid');
+            if (effectUuid) {
+                const effectItem = await fromUuid(effectUuid);
+                if (effectItem) {
+                    // Renderiza a ficha do item original
+                    effectItem.sheet.render(true);
+                }
+            }
         });
 
-    // Listener para editar descrições
-    html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
-}
+        // --- ABA DE EFEITOS ---
 
-    // ✅ NOVA FUNÇÃO AUXILIAR (adaptada do ConditionBuilder) ✅
-    _insertTextWithHighlight(textarea, text, placeholder = null) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
+        // Adicionar um novo efeito (linkado)
+        html.find('.add-effect').on('click', (ev) => {
+            ev.preventDefault();
+            new EffectBuilder(this.item).render();
+        });
+
+        // Deletar um link de efeito
+        html.find('.delete-effect').on('click', (ev) => {
+            ev.preventDefault();
+            const effectIndex = $(ev.currentTarget).closest('.effect-entry').data('effectIndex');
+            const effects = foundry.utils.deepClone(this.item.system.effects || []);
+            effects.splice(effectIndex, 1);
+            this.item.update({ "system.effects": effects });
+        });
         
-        if (placeholder) {
-            const selectStart = textarea.value.indexOf(placeholder, start);
-            if (selectStart !== -1) {
-                textarea.focus();
-                textarea.setSelectionRange(selectStart, selectStart + placeholder.length);
+        // Visualizar a ficha do Item Efeito original
+        html.find('.view-effect').on('click', async (ev) => {
+            ev.preventDefault();
+            const effectUuid = $(ev.currentTarget).closest('.effect-entry').data('effectUuid');
+            const effectItem = await fromUuid(effectUuid);
+            if (effectItem) {
+                effectItem.sheet.render(true);
             }
-        } else {
-            const newCursorPos = start + text.length;
-            textarea.focus();
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-        }
+        });
+
+        // --- ABA DE ATIVAÇÃO ---
+
+        // Assistente de Gatilho 'when'
+        html.find('.saved-triggers-btn').on('click', (ev) => {
+            const textarea = this.element.find('textarea[name="system.when"]')[0];
+            new TriggerBrowser(textarea).render(true);
+        });
+
+        // --- ABA DE DETALHES ---
+        
+        // Editor de Descrição
+        html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
     }
 
-    // Deletar um efeito (lógica simplificada)
-    _onDeleteEffect(event) {
-        event.preventDefault();
-        const effectIndex = $(event.currentTarget).closest('.effect-tag').data('effectIndex');
-        const effectsData = this.item.system.effects || [];
-        const effects = Array.isArray(effectsData) ? effectsData : Object.values(effectsData);
-        effects.splice(effectIndex, 1);
-        this.item.update({ "system.effects": effects });
-    }
-
-
-    // ✅ MÉTODO PARA EDITAR TEXTO (DESCRIÇÃO)
+    // Função auxiliar para editar texto (mantida)
     _onEditText(event) {
         const fieldName = $(event.currentTarget).data('target');
         const title = $(event.currentTarget).attr('title');

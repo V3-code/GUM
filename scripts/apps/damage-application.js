@@ -81,30 +81,27 @@ export default class DamageApplicationWindow extends Application {
         return context;
     }
 
-    // Adicione esta nova função dentro da classe DamageApplicationWindow
 /**
- * Gera um nome descritivo para um objeto de efeito com base em seu tipo e dados.
- * @param {object} effectData - Os dados do efeito (ex: {type: 'status', statusId: 'prone'}).
- * @returns {string} Uma descrição legível do efeito.
+ * [VERSÃO 2.0] Gera um nome descritivo para um objeto de efeito.
  */
 getEffectDescription(effectData) {
     switch (effectData.type) {
         case 'status':
-            return `Status: ${effectData.statusId || 'desconhecido'}`;
-        case 'attribute': {
+            // Pega o nome amigável do status, em vez do ID.
+            const status = CONFIG.statusEffects.find(s => s.id === effectData.statusId);
+            return `Status: ${status ? status.name : (effectData.statusId || 'desconhecido')}`;
+        case 'attribute':
             const behavior = effectData.behavior === 'instant' ? ' (Pontual)' : ' (Contínuo)';
-            return `Atributo: ${effectData.path || ''} ${effectData.operation || ''} ${effectData.value || ''}${behavior}`;
-        }
-        case 'resource_change': {
+            return `Atributo: ${effectData.path?.split('.').pop() || ''} ${effectData.operation || ''} ${effectData.value || ''}${behavior}`;
+        case 'resource_change':
             const op = parseFloat(effectData.value) >= 0 ? '+' : '';
             return `Recurso: ${effectData.category} (${op}${effectData.value})`;
-        }
         case 'chat':
             return `Mensagem no Chat`;
         case 'macro':
-            return `Executar Macro: ${effectData.value || 'desconhecida'}`;
+            return `Macro: ${effectData.value || 'desconhecida'}`;
         case 'flag':
-            return `Definir Flag: ${effectData.key || 'desconhecida'}`;
+            return `Flag: ${effectData.key || 'desconhecida'}`;
         default:
             return effectData.name || 'Efeito Desconhecido';
     }
@@ -114,6 +111,19 @@ activateListeners(html) {
     super.activateListeners(html);
     const form = html[0];
     this.formElement = form; 
+
+    html.on('click', '.view-original-item', async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.uuid;
+        if (uuid) {
+            const item = await fromUuid(uuid);
+            if (item && item.sheet) {
+                item.sheet.render(true);
+            } else {
+                ui.notifications.warn("Item original não encontrado.");
+            }
+        }
+    });
 
     // ==========================================================
     // SEU BLOCO DE LISTENERS ORIGINAL (100% PRESERVADO)
@@ -342,31 +352,42 @@ async _updateDamageCalculation(form) {
         effectsHTML = `<div class="placeholder">Nenhum efeito adicional</div>`;
     } else {
         for (const effectInfo of potentialEffects) {
-            const { linkId, effectData, sourceName, originalItem } = effectInfo;
-            if (!this.effectState[linkId]) {
-                this.effectState[linkId] = { checked: true, resultText: null, isSuccess: null, data: effectData, sourceName: sourceName };
-            }
-            const state = this.effectState[linkId];
-            const isResisted = effectData.resistanceRoll?.isResisted;
-            if (isResisted && state.checked) hasResistibleEffect = true;
+    const { linkId, effectData, sourceName, originalItem } = effectInfo;
+    if (!this.effectState[linkId]) {
+        this.effectState[linkId] = { checked: true, resultText: null, isSuccess: null, data: effectData, sourceName: sourceName };
+    }
+    const state = this.effectState[linkId];
+    const isResisted = effectData.resistanceRoll?.isResisted;
+    if (isResisted && state.checked) hasResistibleEffect = true;
 
-        effectsHTML += `
-            <div class="effect-card" data-effect-link-id="${linkId}">
-                <div class="effect-main">
-                    <label class="custom-checkbox ${state.checked ? 'is-checked' : ''}">
-                        <input type="checkbox" class="apply-effect-checkbox" ${state.checked ? 'checked' : ''} />
-                        <img src="${effectData.img || originalItem.img}" class="effect-icon" title="Origem: ${sourceName}" />
-                        <span class="effect-name">${this.getEffectDescription(effectData)}</span>
-                    </label>
-                </div>
-                <div class="effect-status ${state.isSuccess === true ? 'success' : state.isSuccess === false ? 'failure' : ''}">
-                    ${state.resultText || (isResisted ? `(Pendente: ${effectData.resistanceRoll.attribute.toUpperCase()})` : '(Automático)')}
-                </div>
-                <div class="effect-controls">
-                    ${isResisted ? `<button type="button" class="propose-resistance-roll" data-effect-link-id="${linkId}"><i class="fas fa-dice-d20"></i></button>` : ''}
-                </div>
-            </div>`;
-        }
+    let displayName = "";
+    // Se o item original for um efeito ou resource_change, usamos seu nome diretamente.
+    if (['effect', 'resource_change'].includes(originalItem.type)) {
+        displayName = originalItem.name;
+    } 
+    // Se vier de uma Condição, usamos o formato "Nome (Descrição)".
+    else {
+        displayName = `${sourceName} (${this.getEffectDescription(effectData)})`;
+    }
+
+    effectsHTML += `
+        <div class="effect-card" data-effect-link-id="${linkId}">
+            <div class="effect-main">
+                <label class="custom-checkbox ${state.checked ? 'is-checked' : ''}">
+                    <input type="checkbox" class="apply-effect-checkbox" ${state.checked ? 'checked' : ''} />
+                    <img src="${originalItem.img}" class="effect-icon" title="Origem: ${sourceName}" />
+                    <span class="effect-name">${displayName}</span>
+                </label>
+            </div>
+            <div class="effect-status ${state.isSuccess === true ? 'success' : state.isSuccess === false ? 'failure' : ''}">
+                ${state.resultText || (isResisted ? `(Pendente: ${effectData.resistanceRoll.attribute.toUpperCase()})` : '(Automático)')}
+            </div>
+            <div class="effect-controls">
+                <a class="view-original-item" title="Ver Item Original" data-uuid="${originalItem.uuid}"><i class="fas fa-eye"></i></a>
+                ${isResisted ? `<button type="button" class="propose-resistance-roll" data-effect-link-id="${linkId}"><i class="fas fa-dice-d20"></i></button>` : ''}
+            </div>
+        </div>`;
+}
     }
     effectsListEl.innerHTML = effectsHTML;
     
@@ -378,65 +399,43 @@ async _updateDamageCalculation(form) {
     }
 }
 
+// Versão final e limpa.
 async _collectPotentialEffects(eventContext) {
     const potentialEffects = [];
-    
-    // ✅ PASSO 1: Cria o nosso "guarda de portão" para rastrear condições já processadas.
-    const processedConditionUuids = new Set();
+    const processedConditionUuids = new Set(); 
 
-    // 2. Coleta efeitos da seção "Ao Causar Dano"
+    // Passada 1: Processa a lista específica "Ao Causar Dano"
     const onDamageEffects = this.damageData.onDamageEffects || {};
     for (const [id, linkData] of Object.entries(onDamageEffects)) {
-        
-        // Vamos verificar se o link é para um 'effect' ou 'condition'
         const itemUuid = linkData.effectUuid || linkData.uuid;
         if (!itemUuid) continue;
-
         const linkedItem = await fromUuid(itemUuid);
         if (!linkedItem) continue;
-
-        // Se o item linkado for uma CONDIÇÃO, pegamos seus efeitos internos
-        if (linkedItem.type === 'condition') {
-            const innerEffects = Array.isArray(linkedItem.system.effects) ? linkedItem.system.effects : Object.values(linkedItem.system.effects || {});
-            
-            innerEffects.forEach((eff, i) => {
-                potentialEffects.push({ 
-                    linkId: `${id}-${i}`, 
-                    effectData: eff, 
-                    sourceName: linkedItem.name, 
-                    originalItem: linkedItem 
-                });
-            });
-            
-            // ✅ PASSO 2: Registra que esta condição já foi processada.
-            processedConditionUuids.add(linkedItem.uuid);
-
-        // Se for um EFEITO direto
-        } else {
-            const minInjury = linkData.minInjury || 1;
-            if (eventContext.damage >= minInjury) {
-                potentialEffects.push({ 
-                    linkId: id, 
-                    effectData: linkedItem.system, 
-                    sourceName: this.damageData.sourceName || "Dano Direto", 
-                    originalItem: linkedItem 
-                });
+        const minInjury = linkData.minInjury || 1;
+        if (eventContext.damage >= minInjury) {
+            if (['effect', 'resource_change'].includes(linkedItem.type)) {
+                potentialEffects.push({ linkId: id, effectData: linkedItem.system, sourceName: this.damageData.sourceName || "Dano Direto", originalItem: linkedItem });
+            } else if (linkedItem.type === 'condition') {
+                const innerEffectLinks = linkedItem.system.effects || [];
+                for (const [i, effectLink] of innerEffectLinks.entries()) {
+                    const innerEffectItem = await fromUuid(effectLink.uuid);
+                    if (innerEffectItem) {
+                        potentialEffects.push({ linkId: `${id}-${i}`, effectData: innerEffectItem.system, sourceName: linkedItem.name, originalItem: innerEffectItem });
+                    }
+                }
+                processedConditionUuids.add(linkedItem.uuid);
             }
         }
     }
 
-    // 3. Coleta efeitos da seção "Condições Gerais"
+    // Passada 2: Processa a lista "Condições Gerais"
     const generalConditions = this.damageData.generalConditions || {};
     for (const [id, linkData] of Object.entries(generalConditions)) {
-        const condItem = await fromUuid(linkData.uuid);
+        const condUuid = linkData.uuid;
+        if (!condUuid || processedConditionUuids.has(condUuid)) continue;
 
-        // ✅ PASSO 3: O "Guarda de Portão" em ação!
-        // Se a condição já foi processada pela lista "Ao Causar Dano", pulamos para a próxima.
-        if (!condItem || processedConditionUuids.has(condItem.uuid)) {
-            continue;
-        }
-        
-        if (!condItem.system.when) continue;
+        const condItem = await fromUuid(condUuid);
+        if (!condItem || !condItem.system.when) continue;
         
         let met = false;
         try { 
@@ -446,15 +445,18 @@ async _collectPotentialEffects(eventContext) {
         }
         
         if (met) {
-            const innerEffects = Array.isArray(condItem.system.effects) ? condItem.system.effects : Object.values(condItem.system.effects || {});
-            innerEffects.forEach((eff, i) => {
-                potentialEffects.push({ 
-                    linkId: `${id}-${i}`, 
-                    effectData: eff, 
-                    sourceName: condItem.name, 
-                    originalItem: condItem 
-                });
-            });
+            const innerEffectLinks = condItem.system.effects || [];
+            for (const [i, effectLink] of innerEffectLinks.entries()) {
+                const innerEffectItem = await fromUuid(effectLink.uuid);
+                if (innerEffectItem) {
+                    potentialEffects.push({ 
+                        linkId: `${id}-${i}`, 
+                        effectData: innerEffectItem.system, 
+                        sourceName: condItem.name,
+                        originalItem: innerEffectItem
+                    });
+                }
+            }
         }
     }
 
