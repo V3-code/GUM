@@ -597,97 +597,75 @@ Hooks.once('ready', async function() {
 // ==========================================================
 // LISTENER FINAL E ÚNICO PARA O BOTÃO DE RESISTÊNCIA
 // ==========================================================
+
 $('body').on('click', '.resistance-roll-button', async ev => {
     ev.preventDefault();
     const button = ev.currentTarget;
     button.disabled = true;
 
+    // Acessa o pacote de dados completo
     const rollData = JSON.parse(button.dataset.rollData);
-    const { targetActorId, finalTarget, effectData, sourceName, effectLinkId } = rollData;
+    
+    // ✅ CORREÇÃO AQUI: Lemos o 'effectItemData' completo que salvamos antes.
+    const { targetActorId, finalTarget, effectItemData, sourceName, effectLinkId } = rollData;
 
     const targetActor = game.actors.get(targetActorId);
     if (!targetActor) return;
 
     const roll = new Roll("3d6");
-    await roll.evaluate({ async: true });
+    await roll.evaluate();
 
-    // Lógica completa de margem e críticos
     const margin = finalTarget - roll.total;
     const success = roll.total <= finalTarget;
-    let resultText = "";
-    let resultClass = "";
-    let resultIcon = "";
+    let resultText = success ? `Sucesso com margem de ${margin}` : `Fracasso por uma margem de ${-margin}`;
+    let resultClass = success ? 'success' : 'failure';
+    let resultIcon = success ? 'fas fa-check-circle' : 'fas fa-times-circle';
 
-    if (success) {
-        resultText = `Sucesso com margem de ${margin}`;
-        resultClass = 'success';
-        resultIcon = 'fas fa-check-circle';
-    } else {
-        resultText = `Fracasso por uma margem de ${-margin}`;
-        resultClass = 'failure';
-        resultIcon = 'fas fa-times-circle';
-    }
     if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) { resultText = `Sucesso Crítico!`; }
     else if (roll.total >= 17 || (roll.total === 16 && margin <= -10)) { resultText = `Falha Crítica!`; }
 
-    // 1. Comunica o resultado de volta para a janela de dano
+    // Comunica o resultado de volta para a janela de dano
     if (game.gum.activeDamageApplication) {
+        // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
         game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
             isSuccess: success,
-            resultText: resultText // Envia o texto completo
-        });
+            resultText: resultText
+        }, effectItemData.system); // Passamos os dados do sistema como terceiro argumento
     }
 
-    // 2. Aplica o efeito no alvo em caso de falha (ou sucesso, dependendo da regra)
-    const triggerOn = effectData.resistanceRoll.applyOn || 'failure';
+    // Aplica o efeito no alvo
+    // ✅ CORREÇÃO AQUI: Lemos a regra de 'resistanceRoll' de dentro do 'system'.
+    const triggerOn = effectItemData.system.resistanceRoll.applyOn || 'failure';
     if ((triggerOn === 'failure' && !success) || (triggerOn === 'success' && success)) {
-        ui.notifications.info(`${targetActor.name} foi afetado por: ${effectData.name}!`);
-        const newConditionData = {
-            name: `Efeito (Resistido): ${effectData.name} de ${sourceName}`,
-            type: "condition",
-            system: { when: "", effects: [effectData] }
-        };
-        const createdItems = await targetActor.createEmbeddedDocuments("Item", [newConditionData]);
-        if (createdItems.length > 0) {
-            await targetActor.update({ "flags.gum.rerender": Math.random() });
+        // Usa o motor 'applySingleEffect' para consistência
+        const effectItem = await Item.fromSource(effectItemData);
+        const targetToken = targetActor.getActiveTokens()[0];
+        if (effectItem && targetToken) {
+            ui.notifications.info(`${targetActor.name} foi afetado por: ${effectItem.name}!`);
+            await applySingleEffect(effectItem, [targetToken]);
         }
     }
 
-    // 3. Substitui a proposta de teste pelo resultado final no chat
+    // Monta o card de resultado no chat
     const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
     const flavor = `
         <div class="gurps-roll-card">
-            <header class="card-header"><h3>Teste de Resistência: ${effectData.name || 'Teste'}</h3></header>
+            <header class="card-header"><h3>Teste de Resistência: ${effectItemData.name || 'Teste'}</h3></header>
             <div class="card-content">
                 <div class="card-main-flex">
-                    <div class="roll-column">
-                        <div class="roll-total-value">${roll.total}</div>
-                        <div class="individual-dice">${diceHtml}</div>
-                    </div>
+                    <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
                     <div class="column-separator"></div>
-                    <div class="target-column">
-                        <div class="roll-target-value">${finalTarget}</div>
-                        <div class="roll-breakdown-pill">
-                            <span>Alvo: ${effectData.resistanceRoll.attribute.toUpperCase()}</span>
-                        </div>
-                    </div>
+                    <div class="target-column"><div class="roll-target-value">${finalTarget}</div><div class="roll-breakdown-pill"><span>Alvo: ${effectItemData.system.resistanceRoll.attribute.toUpperCase()}</span></div></div>
                 </div>
             </div>
-            <footer class="card-footer ${resultClass}">
-                <i class="${resultIcon}"></i> <span>${resultText}</span>
-            </footer>
+            <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
         </div>
     `;
 
+    // Atualiza a mensagem original no chat
     const originalMessage = game.messages.get($(button).closest('.message').data('messageId'));
     if (originalMessage) {
         await originalMessage.update({ content: flavor, rolls: [JSON.stringify(roll)] });
-    } else {
-        ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor: targetActor }),
-            content: flavor,
-            rolls: [roll]
-        });
     }
 });
 

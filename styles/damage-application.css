@@ -704,3 +704,39 @@
     background: #e0e0e0;
     border-color: #999;
 }
+
+/* ============================================= */
+/* Estilos para a Janela de Aplicação de Dano   */
+/* ============================================= */
+
+/* O contêiner dos ícones de ação (olho, dado, etc.) */
+.damage-application-dialog .effect-controls {
+    display: flex; /* Alinha os ícones lado a lado */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: flex-end; /* Alinha à direita */
+    gap: 8px; /* Adiciona um espaço de 8px entre cada ícone */
+}
+
+/* Regra geral para todos os botões e links dentro do contêiner */
+.damage-application-dialog .effect-controls a,
+.damage-application-dialog .effect-controls button {
+    /* Remove o estilo padrão de botão */
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    
+    /* Estilo do ícone */
+    font-size: 16px; /* Tamanho do ícone */
+    color: #b5b5b5; /* Cor cinza sutil */
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease; /* Transição suave de cor */
+}
+
+/* Efeito ao passar o mouse por cima */
+.damage-application-dialog .effect-controls a:hover,
+.damage-application-dialog .effect-controls button:hover {
+    color: #ffffff; /* Ícone fica branco */
+    text-shadow: 0 0 5px var(--c-accent-orange, #ff6400); /* Adiciona um brilho sutil */
+}

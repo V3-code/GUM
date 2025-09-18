@@ -354,7 +354,7 @@ async _updateDamageCalculation(form) {
         for (const effectInfo of potentialEffects) {
     const { linkId, effectData, sourceName, originalItem } = effectInfo;
     if (!this.effectState[linkId]) {
-        this.effectState[linkId] = { checked: true, resultText: null, isSuccess: null, data: effectData, sourceName: sourceName };
+        this.effectState[linkId] = { checked: true, resultText: null, isSuccess: null, effectItem: originalItem, sourceName: sourceName };
     }
     const state = this.effectState[linkId];
     const isResisted = effectData.resistanceRoll?.isResisted;
@@ -480,32 +480,33 @@ _onProposeIndividualTest(event, form) { // ✅ CORREÇÃO: Aceita 'form' como ar
     
     const potentialInjury = this._calculatePotentialInjury(form); // ✅ CORREÇÃO: Usa o 'form' recebido
     const eventContext = { damage: potentialInjury, target: this.targetActor, attacker: this.attackerActor };
-    this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
+    this._promptResistanceRoll(state.effectItem, state.sourceName, eventContext, linkId);
 }
 
 /**
- * Recebe o resultado de um teste de resistência do chat e atualiza a UI.
- * @param {string} effectLinkId - O ID do "card de efeito" a ser atualizado.
- * @param {object} resultData - Os dados do resultado ({isSuccess: boolean, resultText: string}).
+ * Recebe o resultado de um teste de resistência e atualiza a UI.
+ * @param {string} effectLinkId - O ID do "card de efeito".
+ * @param {object} resultData - Os dados do resultado ({isSuccess, resultText}).
+ * @param {object} effectSystemData - Os dados do sistema do efeito que foi rolado.
  */
-updateEffectCard(effectLinkId, resultData) {
+updateEffectCard(effectLinkId, resultData, effectSystemData) {
     const state = this.effectState[effectLinkId];
     if (!state) {
         console.error(`Estado para o linkId '${effectLinkId}' não encontrado!`);
         return;
     }
     
-    // 1. Atualiza o estado interno do efeito com o resultado
+    // Atualiza o estado interno do efeito com o resultado
     state.resultText = resultData.resultText;
     state.isSuccess = resultData.isSuccess;
     
-    // 2. Lógica de conveniência: se o alvo resistiu, desmarca o checkbox
-    if (resultData.isSuccess && state.data.resistanceRoll.applyOn === 'failure') {
+    // Lógica de conveniência: se o alvo resistiu, desmarca o checkbox
+    // ✅ CORREÇÃO AQUI: Lemos a regra de 'resistanceRoll' dos dados do sistema recebidos.
+    if (resultData.isSuccess && effectSystemData.resistanceRoll.applyOn === 'failure') {
         state.checked = false;
     }
     
-    // 3. ✅ CORREÇÃO DEFINITIVA: Força o redesenho da janela
-    // Usamos 'this.element[0]', que é a referência mais direta e segura para o HTML da janela.
+    // Força o redesenho da janela para mostrar o resultado do teste.
     this._updateDamageCalculation(this.element[0]);
 }
 
@@ -548,7 +549,7 @@ async _onProposeTests(form) {
     for (const [linkId, state] of Object.entries(this.effectState)) {
         // Propõe o teste apenas se o efeito estiver marcado E for resistível
         if (state.checked && state.data.resistanceRoll?.isResisted) {
-            this._promptResistanceRoll(state.data, state.sourceName, eventContext, linkId);
+           this._promptResistanceRoll(state.effectItem, state.sourceName, eventContext, linkId);
             testsProposedCount++;
         }
     }
@@ -655,8 +656,9 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
 }
 
 
-async _promptResistanceRoll(effectData, sourceName, eventContext, linkId) {
-    const rollData = effectData.resistanceRoll;
+async _promptResistanceRoll(effectItem, sourceName, eventContext, linkId) {
+    // A função agora recebe o 'effectItem' completo, não mais 'effectData'.
+    const rollData = effectItem.system.resistanceRoll;
     const target = eventContext.target;
 
     const attributeObject = foundry.utils.getProperty(target.system.attributes, rollData.attribute);
@@ -676,12 +678,12 @@ async _promptResistanceRoll(effectData, sourceName, eventContext, linkId) {
     const chatButtonPayload = {
         targetActorId: target.id,
         finalTarget: finalTarget,
-        effectData: effectData,
+        // Passamos o 'effectItem' inteiro no payload para ter todos os dados na hora do clique
+        effectItemData: effectItem.toObject(), 
         sourceName: sourceName,
         effectLinkId: linkId 
     };
 
-    // ✅ INÍCIO DO NOVO CARD DE CHAT PADRONIZADO
     const content = `
     <div class="gurps-roll-card">
         <header class="card-header"><h3>Proposta de Teste de Resistência</h3></header>
@@ -694,7 +696,7 @@ async _promptResistanceRoll(effectData, sourceName, eventContext, linkId) {
             </div>
             <div class="minicard result-card">
                 <div class="minicard-title">Efeito Recebido</div>
-                <p>Precisa resistir ao efeito "<strong>${effectData.name || 'desconhecido'}</strong>" de <em>${sourceName}</em>.</p>
+                <p>Precisa resistir ao efeito "<strong>${effectItem.name || 'Efeito Desconhecido'}</strong>" de <em>${sourceName}</em>.</p>
                 <p>Faça um teste de <strong>${rollData.attribute.toUpperCase()}</strong> (Alvo: ${finalTarget}) para evitar o efeito.</p>
             </div>
         </div>
@@ -705,7 +707,6 @@ async _promptResistanceRoll(effectData, sourceName, eventContext, linkId) {
         </footer>
     </div>
     `;
-    // ✅ FIM DO NOVO CARD DE CHAT
 
     ChatMessage.create({ 
         speaker: ChatMessage.getSpeaker({ actor: target }), 
