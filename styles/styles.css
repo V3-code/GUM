@@ -2854,125 +2854,163 @@ a:hover { text-decoration: underline; color: #fff; }
     border-color: #999;
 }
 
-/* ================================== */
-/* Estilos para os Cards de Condição  */
-/* ================================== */
+/* ============================================= */
+/* ESTILOS PARA A NOVA ABA "ESTADO & REGRAS" (V3)  */
+/* ============================================= */
 
-/* --- Layout Principal da Aba --- */
+/* --- 1. Layout Principal da Aba --- */
+/* Esta regra garante que a aba ocupe o espaço e empilhe as seções */
 .conditions-tab.active {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: column; /* Empilha as seções verticalmente */
+    gap: 16px; /* Espaço entre as seções */
     padding: 8px;
     height: 100%;
+    overflow-y: auto; /* Permite rolar a aba inteira se necessário */
 }
 
-/* --- Card de Sumário de Efeitos Ativos --- */
-.active-effects-summary {
+/* --- 2. Estilo da Seção (contêiner comum) --- */
+/* Um estilo de "card" para ambas as seções */
+.conditions-tab .form-section {
     flex-shrink: 0;
     background: rgba(0,0,0,0.08);
     border: 1px solid rgba(0,0,0,0.15);
     border-radius: 8px;
     padding: 8px 12px;
 }
-.active-effects-summary .summary-header {
+.conditions-tab .form-section .section-title {
     font-family: var(--f-titulos);
     color: var(--c-texto-escuro);
     font-size: 1.1em;
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     border-bottom: 1px solid rgba(0,0,0,0.1);
     padding-bottom: 5px;
 }
-.effects-pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-}
-.effect-pill {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--c-fundo-card-claro, #fdfaf8);
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 15px;
-    padding: 3px 8px;
+.conditions-tab .form-section .hint {
+    text-align: center;
     font-size: 0.9em;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    opacity: 0.8;
+    margin-top: -2px;
+    margin-bottom: 10px;
+    padding: 0 10px;
 }
-.effect-pill .pill-icon {
-    width: 18px;
-    height: 18px;
-    border: none;
-}
-.active-effects-summary .placeholder-text {
+.conditions-tab .placeholder-text {
     text-align: center;
     opacity: 0.7;
     font-style: italic;
+    width: 100%;
 }
 
-/* --- Layout de Duas Colunas para Gerenciamento --- */
-.conditions-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    flex-grow: 1;
-    min-height: 0;
-}
-.condition-column {
+
+/* --- 3. Contêiner Flex-Wrap (Usado por AMBAS as seções) --- */
+/* Ativa o layout flexível que quebra a linha */
+.conditions-tab .flex-wrap-container {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: rgba(0,0,0,0.03);
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 5px;
-    padding: 8px;
-    overflow: hidden;
+    flex-wrap: wrap;
+    gap: 8px; /* Espaço entre os cards/pílulas */
+    padding-top: 5px;
+    list-style: none; /* Remove marcadores de lista se for um <ol> */
+    margin: 0;
+    padding: 5px 0 0 0;
 }
-.condition-column .column-header {
-    text-align: center;
+
+
+/* --- 4. Seção "Estado Atual" (Pílulas Aprimoradas) --- */
+
+/* A nova pílula aprimorada */
+.effect-pill-enhanced {
+    display: flex;
+    align-items: center;
+    background: var(--c-fundo-card-claro, #fdfaf8);
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 5px 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
+    /* Cada pílula tentará ter ~48% da largura, permitindo 2 colunas */
+    flex-basis: calc(50% - 4px); 
+    flex-grow: 1;
+    box-sizing: border-box; 
+    min-width: 250px; /* Garante que a pílula não seja esmagada */
+}
+
+.effect-pill-enhanced .pill-icon {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 8px;
     flex-shrink: 0;
 }
-.condition-column .column-header h4 {
-    margin: 0;
-    font-family: var(--f-titulos);
-    color: var(--c-texto-escuro);
-}
-.condition-column .item-list {
-    list-style: none;
-    padding: 0 4px 0 0;
-    margin: 0;
-    overflow-y: auto;
+
+.effect-pill-enhanced .pill-info {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    flex-grow: 1;
+    min-width: 0; /* Impede que o texto empurre os botões */
 }
 
-/* ============================================= */
-/* Estilos para a Aba de Condições (Layout Novo) */
-/* ============================================= */
-
-/* Aplica o layout de duas colunas às listas de itens */
-.conditions-tab .condition-column .item-list {
-  column-count: 2; /* Divide a lista em 2 colunas */
-  column-gap: 15px; /* Espaço entre as colunas */
+.effect-pill-enhanced .pill-name {
+    font-weight: bold;
+    color: var(--c-bg-darkest);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
 }
 
-/* Impede que um único card de condição seja quebrado entre as duas colunas */
-.conditions-tab .condition-column .item-list > li {
-  break-inside: avoid;
-  page-break-inside: avoid; /* Para navegadores mais antigos */
-  margin-bottom: 10px; /* Adiciona um espaço abaixo de cada card */
+.effect-pill-enhanced .pill-details {
+    display: flex;
+    gap: 10px; /* Espaço entre "Duração" e "Fonte" */
+    font-size: 0.75em;
+    color: var(--c-bg-medium);
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    padding-top: 4px;
 }
 
-/* Garante que o texto de "Nenhuma" não fique em uma coluna vazia */
-.conditions-tab .condition-column .item-list .placeholder-text {
-    column-span: all;
+.effect-pill-enhanced .pill-details .fas {
+    margin-right: 3px;
+    opacity: 0.7;
 }
 
-/* --- Card de Condição Individual (dentro das colunas) --- */
+.effect-pill-enhanced .pill-controls {
+    display: flex;
+    margin-left: 10px;
+    flex-shrink: 0;
+    gap: 5px; /* Espaço entre os botões de ícone */
+}
+
+.effect-pill-enhanced .pill-controls .effect-control {
+    color: #CCC;
+    padding: 0 3px;
+    font-size: 0.9em;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+.effect-pill-enhanced .pill-controls .effect-control:hover {
+    opacity: 1;
+    color: var(--c-accent-orange, #ff6400);
+}
+
+
+/* --- 5. Seção "Condições Passivas" (Cards de Regra) --- */
+
+/* Remove a lógica de colunas específica do .condition-column */
+/* A lógica de flex-wrap já está sendo aplicada por .flex-wrap-container */
+.conditions-tab .passive-conditions-section .item-list {
+    overflow-y: visible; /* Remove a barra de rolagem interna */
+    /* As regras de column-count foram removidas */
+}
+
+/* Garante que o texto de placeholder ocupe a largura total */
+.conditions-tab .passive-conditions-section .placeholder-text {
+    flex-basis: 100%;
+}
+
+/* Card de Condição Individual (agora como um item flex) */
 .condition-card {
     background: var(--c-fundo-card-claro, #fdfaf8);
     border: 1px solid rgba(0,0,0,0.15);
@@ -2982,7 +3020,17 @@ a:hover { text-decoration: underline; color: #fff; }
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+
+    /* Define o mesmo tamanho das pílulas para consistência */
+    flex-basis: calc(50% - 4px); 
+    flex-grow: 1;
+    box-sizing: border-box; 
+    min-width: 250px; 
+    
+    /* Remove o margin-bottom que não é mais necessário com 'gap' */
+    margin-bottom: 0; 
 }
+
 .condition-card .item-icon {
     flex: 0 0 28px;
     width: 28px;
@@ -2993,7 +3041,7 @@ a:hover { text-decoration: underline; color: #fff; }
 .condition-card .item-name {
     flex-grow: 1;
     font-weight: 700;
-    display: flex; /* Garante alinhamento do ícone e texto */
+    display: flex; 
     align-items: center;
     gap: 8px;
 }
@@ -3002,7 +3050,7 @@ a:hover { text-decoration: underline; color: #fff; }
     font-size: 1em;
 }
 
-/* --- Interruptor On/Off --- */
+/* --- 6. Interruptor On/Off (Seu código original, 100% mantido) --- */
 .switch {
   position: relative;
   display: inline-block;
@@ -3019,7 +3067,7 @@ a:hover { text-decoration: underline; color: #fff; }
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: var(--c-accent-red, #a33c3c); /* Padrão DESLIGADO (vermelho) */
+  background-color: var(--c-accent-red, #a33c3c); /* Desligado (vermelho) */
   transition: .4s;
   border-radius: 14px;
 }
@@ -3036,17 +3084,17 @@ a:hover { text-decoration: underline; color: #fff; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-/* Quando NÃO está marcado (efeito ATIVO) */
+/* Ligado (NÃO marcado) */
 input:not(:checked) + .slider {
   background-color: var(--c-accent-green, #2b8a3e);
 }
 
-/* Quando está MARCADO (efeito DESATIVADO) */
+/* Desligado (MARCADO) */
 input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Deixa o resto do card semi-transparente quando DESATIVADO */
+/* Efeito visual de desligado */
 .condition-card input:checked ~ .item-name,
 .condition-card input:checked ~ .item-icon,
 .condition-card input:checked ~ .item-controls {

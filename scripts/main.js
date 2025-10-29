@@ -371,11 +371,123 @@ Hooks.on("createItem", async (item, options, userId) => {
         }
     });
 
-    Hooks.on("updateItem", async (item, changes, options, userId) => { // Adicionado async
-        if (game.user.id === userId && item.type === "condition" && item.parent) {
-            await processConditions(item.parent); // Espera
-            item.parent.getActiveTokens().forEach(token => token.drawEffects()); // Força redesenho
+    Hooks.on("updateItem", async (item, changes, options, userId) => {
+        // Só executa para o usuário que fez a ação e se o item pertence a um ator
+        if (game.user.id !== userId || !item.parent) return;
+
+        const actor = item.parent;
+
+        // --- LÓGICA EXISTENTE PARA 'condition' ---
+        if (item.type === "condition") {
+            await processConditions(actor);
+            // O redesenho será feito no final, não precisamos mais dele aqui.
         }
+
+        // =============================================================
+        // ✅ LÓGICA DE SINCRONIZAÇÃO PARA EFEITOS PASSIVOS (UPDATE)
+        // =============================================================
+        // Verifica se o item atualizado tem a capacidade de ter passiveEffects
+        // Usamos hasOwnProperty para ser seguro, mas podemos checar 'item.system.passiveEffects'
+        if (item.system.passiveEffects) {
+            
+            // 1. Encontra e Deleta TODOS os ActiveEffects existentes originados deste item
+            const updatedItemId = item.id;
+            const effectsToDelete = actor.effects.filter(effect => 
+                foundry.utils.getProperty(effect, "flags.gum.originItemId") === updatedItemId
+            );
+
+            if (effectsToDelete.length > 0) {
+                const idsToDelete = effectsToDelete.map(e => e.id);
+                console.log(`[GUM] Item "${item.name}" atualizado. Removendo ${idsToDelete.length} efeito(s) passivo(s) antigo(s)...`);
+                await actor.deleteEmbeddedDocuments("ActiveEffect", idsToDelete);
+            }
+
+            // 2. Recria TODOS os ActiveEffects da lista atualizada do item
+            // (Esta lógica é uma cópia da que está no hook 'createItem')
+            const passiveEffectLinks = Object.values(item.system.passiveEffects || {});
+            if (passiveEffectLinks.length > 0) {
+                console.log(`[GUM] ...Recriando ${passiveEffectLinks.length} efeito(s) passivo(s) atualizado(s).`);
+                
+                for (const linkData of passiveEffectLinks) {
+                    const effectUuid = linkData.effectUuid || linkData.uuid;
+                    if (!effectUuid) continue;
+
+                    const effectItem = await fromUuid(effectUuid);
+                    if (effectItem) {
+                        // --- Início da lógica de criação do ActiveEffect (copiada do createItem) ---
+                        const effectSystem = effectItem.system;
+                        let effectImage = null; 
+                        if (effectSystem.attachedStatusId) {
+                            const statusEffect = CONFIG.statusEffects.find(e => e.id === effectSystem.attachedStatusId);
+                            if (statusEffect) { effectImage = statusEffect.icon; }
+                        }
+
+                        const activeEffectData = {
+                            name: effectItem.name,
+                            img: effectImage, 
+                            origin: item.uuid,
+                            changes: [],
+                            statuses: [],
+                            flags: { gum: { originItemId: item.id, effectUuid: effectItem.uuid } }
+                        };
+
+                        if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                            activeEffectData.duration = {};
+                            const value = parseInt(effectSystem.duration.value) || 1;
+                            const unit = effectSystem.duration.unit;
+                            if (unit === 'turns') {
+                                activeEffectData.duration.turns = value;
+                                activeEffectData.duration.combat = game.combat?.id;
+                            } else if (unit === 'rounds' || unit === 'seconds') {
+                                activeEffectData.duration.rounds = value;
+                            } else if (unit === 'minutes') {
+                                activeEffectData.duration.seconds = value * 60;
+                            } else if (unit === 'hours') {
+                                activeEffectData.duration.seconds = value * 60 * 60;
+                            } else if (unit === 'days') {
+                                activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                            }
+                            if (unit !== 'turns' && effectSystem.duration.inCombat && game.combat) {
+                                activeEffectData.duration.combat = game.combat.id;
+                            }
+                        }
+
+                        const coreStatusId = effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true });
+                        foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
+
+                        if (effectSystem.type === 'attribute') {
+                            const change = {
+                                key: effectSystem.path,
+                                mode: effectSystem.operation === 'OVERRIDE' ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
+                                value: effectSystem.value
+                            };
+                            activeEffectData.changes.push(change);
+                        } else if (effectSystem.type === 'flag') {
+                            let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
+                            foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
+                        }
+
+                        if (effectSystem.attachedStatusId) {
+                            activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                        }
+
+                        try {
+                            await actor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                        } catch (err) {
+                            console.error(`[GUM] Falha ao criar ActiveEffect passivo (update):`, err, activeEffectData);
+                        }
+                        // --- Fim da lógica de criação do ActiveEffect ---
+                    }
+                }
+            }
+        } // Fim do if (item.system.passiveEffects)
+        // =============================================================
+        
+        // --- Chamada final de atualização ---
+        // Sempre reavalia e redesenha após QUALQUER atualização de item no ator
+        await processConditions(actor);
+        actor.sheet.render(false);
+        actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
    Hooks.on("deleteItem", async (item, options, userId) => {
@@ -969,191 +1081,176 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         context.itemsByType = itemsByType;
 
         
-// --- LÓGICA FINAL PARA A ABA DE CONDIÇÕES ---
-    
-    // 1. Separa as condições em duas listas com base na categoria
-    const allConditions = itemsByType.condition || [];
-    context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
-    context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
-
-    // 2. ✅ LÓGICA "INTELIGENTE" PARA O SUMÁRIO DE "EFEITOS ATIVOS"
-    
-    // Usamos um array normal e um loop 'for...of' assíncrono
-    const activeEffectsList = [];
-    for (const effect of this.actor.effects) {
+        // ================================================================== //
+        // ✅ LÓGICA FINAL "CASTELO SÓLIDO" PARA A ABA DE CONDIÇÕES (INÍCIO)
+        // ================================================================== //
         
-        const effectData = effect.toObject(); // Pega os dados básicos
-        effectData.id = effect.id; // Garante que o ID real está lá para o botão de deletar
+        // 1. Prepara a lista para "Estado Atual" (Efeitos Ativos)
+        const activeEffectsPromises = Array.from(this.actor.effects).map(async (effect) => {
+            const effectData = effect.toObject(); 
+            effectData.id = effect.id; 
 
-        // --- Lógica "Inteligente" para buscar a imagem correta ---
-        // Procuramos pela nossa etiqueta (flag)
-        const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-        
-        if (effectUuid) {
-            // Se encontramos a etiqueta, buscamos o Item Efeito original
-            const originalEffectItem = await fromUuid(effectUuid);
-            if (originalEffectItem) {
-                // E usamos os dados originais para nome e imagem
-                effectData.name = originalEffectItem.name; 
-                effectData.img = originalEffectItem.img; // ✅ A IMAGEM CORRETA PARA A PÍLULA
+            // --- Lógica de Duração ---
+            const d = effect.duration;
+            if (d.seconds) { effectData.durationString = `${d.seconds} seg.`; }
+            else if (d.rounds) {
+                const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
+                effectData.durationString = `${remaining} rodada(s)`;
+            } 
+            else if (d.turns) {
+                const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
+                effectData.durationString = `${remaining} turno(s)`;
+            } 
+            else { effectData.durationString = "Permanente"; } 
+
+           let fonteNome = "Origem Desconhecida";
+            let fonteIcon = "fas fa-question-circle"; // Ícone genérico
+            let fonteUuid = null; // UUID da Fonte (Vantagem, Magia, etc.)
+            
+            // Busca o Item Efeito original (para nome e imagem corretos da PÍLULA)
+            const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+            if (effectUuid) {
+                const originalEffectItem = await fromUuid(effectUuid);
+                if (originalEffectItem) {
+                    effectData.name = originalEffectItem.name; 
+                    effectData.img = originalEffectItem.img;
+                }
             }
-            // Se não encontrar o item, a pílula usará a 'img' padrão do ActiveEffect (que será null ou um ícone de status)
-        }
-        // Se o efeito não tem a etiqueta (ex: efeito manual), ele também usará a 'img' padrão.
-        
-        // Prepara a string de duração (sua lógica original, está correta)
-        const d = effect.duration;
-        if (d.seconds) effectData.durationString = `${d.seconds} seg.`;
-        else if (d.rounds) {
-            const remaining = d.startRound ? (d.startRound + d.rounds - game.combat?.round) : d.rounds;
-            effectData.durationString = `${remaining} rodada(s)`;
-        } 
-        else if (d.turns) {
-            const remaining = d.startTurn ? (d.startTurn + d.turns - game.combat?.turn) : d.turns;
-            effectData.durationString = `${remaining} turno(s)`;
-        } 
-        else effectData.durationString = "Permanente";
+            
+            // Busca o Item Fonte (a Vantagem/Magia que aplicou o efeito)
+            if (effect.origin) {
+                const originItem = await fromUuid(effect.origin);
+                if (originItem) {
+                    fonteNome = originItem.name;
+                    fonteUuid = originItem.uuid; // Salva o UUID da Fonte
 
-        activeEffectsList.push(effectData);
-    }
-    
-    // Passa a lista final para o template
-    context.activeConditionsList = activeEffectsList;
+                    // ✅ Define o ícone da fonte com base no tipo do Item Fonte
+                    switch (originItem.type) {
+                        case 'spell': fonteIcon = 'fas fa-magic'; break;
+                        case 'power': fonteIcon = 'fas fa-bolt'; break;
+                        case 'advantage':
+                        case 'disadvantage': fonteIcon = 'fas fa-star'; break;
+                        case 'equipment':
+                        case 'armor': fonteIcon = 'fas fa-shield-alt'; break;
+                        default: fonteIcon = 'fas fa-archive'; // Ícone para outros itens
+                    }
+                }
+            }
+            effectData.fonteNome = fonteNome;
+            effectData.fonteIcon = fonteIcon;
+            effectData.fonteUuid = fonteUuid; // Passa o UUID da Fonte para o botão de visualização
+
+            return effectData;
+        });
+        
+        context.activeEffectsList = await Promise.all(activeEffectsPromises);
+
+        // --- 2. Prepara a lista para "Condições Passivas" (Regras de Cenário) ---
+        context.installedConditions = itemsByType.condition || [];
+        
+        // --- FIM DA NOVA LÓGICA DE CONDIÇÕES ---
+        
+        // ================================================================== //
+        //    FUNÇÃO AUXILIAR DE ORDENAÇÃO (Seu código original)
+        // ================================================================== //
+                    const getSortFunction = (sortPref) => {
+                    return (a, b) => {
+                        switch (sortPref) {
+                            case 'name':
+                                return (a.name || '').localeCompare(b.name || '');
+                            case 'spell_school':
+                                return (a.system.spell_school || '').localeCompare(b.system.spell_school || '');
+                            case 'points':
+                                return (b.system.points || 0) - (a.system.points || 0);
+                            case 'weight': 
+                                return (b.system.total_weight || 0) - (a.system.total_weight || 0);
+                            case 'cost': 
+                                return (b.system.total_cost || 0) - (a.system.total_cost || 0);
+                            case 'group': return (a.system.group || 'Geral').localeCompare(b.system.group || 'Geral');
+                            default:
+                                return (a.sort || 0) - (b.sort || 0);
+                                        }
+                                    };
+                                };
 
         // ================================================================== //
-        //    FUNÇÃO AUXILIAR DE ORDENAÇÃO (PARA EVITAR REPETIÇÃO)            //
-        // ================================================================== //
-        const getSortFunction = (sortPref) => {
-        return (a, b) => {
-            switch (sortPref) {
-                case 'name':
-                    return (a.name || '').localeCompare(b.name || '');
-                case 'spell_school':
-                    return (a.system.spell_school || '').localeCompare(b.system.spell_school || '');
-                case 'points':
-                    return (b.system.points || 0) - (a.system.points || 0);
-                case 'weight': 
-                    return (b.system.total_weight || 0) - (a.system.total_weight || 0);
-                case 'cost': 
-                    return (b.system.total_cost || 0) - (a.system.total_cost || 0);
-                case 'group': return (a.system.group || 'Geral').localeCompare(b.system.group || 'Geral');
-                default:
-                    return (a.sort || 0) - (b.sort || 0);
-            }
-        };
-    };
-
-    // ================================================================== //
-        //    AGRUPAMENTO DE PERÍCIAS POR BLOCO ESTÁTICO                       //
+        //    AGRUPAMENTO DE PERÍCIAS (Seu código original)
         // ================================================================== //
         context.skillsByBlock = (itemsByType.skill || []).reduce((acc, skill) => {
-          // Usa o block_id do item para agrupar. O padrão é 'block1'.
-          const blockId = skill.system.block_id || 'block1';
-          if (!acc[blockId]) {
-            acc[blockId] = [];
-          }
-          acc[blockId].push(skill);
-          return acc;
-        }, {});
+                // Usa o block_id do item para agrupar. O padrão é 'block1'.
+                const blockId = skill.system.block_id || 'block1';
+                if (!acc[blockId]) {
+                    acc[blockId] = [];
+                }
+                acc[blockId].push(skill);
+                return acc;
+                }, {});
         
         // Ordena as perícias dentro de cada bloco
         const skillSortPref = this.actor.system.sorting?.skill || 'manual';
-        for (const blockId in context.skillsByBlock) {
-            context.skillsByBlock[blockId].sort(getSortFunction(skillSortPref));
-        }
+                for (const blockId in context.skillsByBlock) {
+                    context.skillsByBlock[blockId].sort(getSortFunction(skillSortPref));
+                }
 
         // ================================================================== //
-        //    ORDENAÇÃO DE LISTAS SIMPLES (MAGIAS E PODERES)                   //
+        //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
         // ================================================================== //
-        const simpleSortTypes = ['spell', 'power'];
-        for (const type of simpleSortTypes) {
-            if (itemsByType[type]) {
-                const sortPref = this.actor.system.sorting?.[type] || 'manual';
-                itemsByType[type].sort(getSortFunction(sortPref));
+           const simpleSortTypes = ['spell', 'power'];
+                for (const type of simpleSortTypes) {
+                    if (itemsByType[type]) {
+                        const sortPref = this.actor.system.sorting?.[type] || 'manual';
+                        itemsByType[type].sort(getSortFunction(sortPref));
+                    }
+                }
+                context.itemsByType = itemsByType; // Salva os itens já ordenados no contexto
+
+        // ================================================================== //
+        //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (Seu código original)
+        // ================================================================== //
+            const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
+            const allEquipment = equipmentTypes.flatMap(type => itemsByType[type] || []);
+            
+            const sortingPrefs = this.actor.system.sorting?.equipment || {};
+            const equippedSortFn = getSortFunction(sortingPrefs.equipped || 'manual');
+            const carriedSortFn = getSortFunction(sortingPrefs.carried || 'manual');
+            const storedSortFn = getSortFunction(sortingPrefs.stored || 'manual');
+
+            context.equipmentInUse = allEquipment.filter(i => i.system.location === 'equipped').sort(equippedSortFn);
+            context.equipmentCarried = allEquipment.filter(i => i.system.location === 'carried').sort(carriedSortFn);
+            context.equipmentStored = allEquipment.filter(i => i.system.location === 'stored').sort(storedSortFn);
+
+        // ================================================================== //
+        //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS (Seu código original)
+        // ================================================================== //
+           const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ];
+            context.characteristicsByBlock = characteristics.reduce((acc, char) => {
+            const blockId = char.system.block_id || 'block2';
+            if (!acc[blockId]) acc[blockId] = [];
+            acc[blockId].push(char);
+            return acc;
+            }, {});
+            
+            const charSortPref = this.actor.system.sorting?.characteristic || 'manual';
+            // Adicionei uma opção de ordenar por pontos como exemplo
+            if(charSortPref === 'points') getSortFunction(charSortPref)
+            // Ordena as características DENTRO de cada bloco
+            for (const blockId in context.characteristicsByBlock) {
+                context.characteristicsByBlock[blockId].sort(getSortFunction(charSortPref));
             }
-        }
-        context.itemsByType = itemsByType; // Salva os itens já ordenados no contexto
 
         // ================================================================== //
-        //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS                          //
+        //    ENRIQUECIMENTO DE TEXTO (Seu código original)
         // ================================================================== //
-        const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
-        const allEquipment = equipmentTypes.flatMap(type => itemsByType[type] || []);
-        
-        const sortingPrefs = this.actor.system.sorting?.equipment || {};
-        const equippedSortFn = getSortFunction(sortingPrefs.equipped || 'manual');
-        const carriedSortFn = getSortFunction(sortingPrefs.carried || 'manual');
-        const storedSortFn = getSortFunction(sortingPrefs.stored || 'manual');
-
-        context.equipmentInUse = allEquipment.filter(i => i.system.location === 'equipped').sort(equippedSortFn);
-        context.equipmentCarried = allEquipment.filter(i => i.system.location === 'carried').sort(carriedSortFn);
-        context.equipmentStored = allEquipment.filter(i => i.system.location === 'stored').sort(storedSortFn);
-
-        // ================================================================== //
-        //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS                       //
-        // ================================================================== //
-        const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ];
-        context.characteristicsByBlock = characteristics.reduce((acc, char) => {
-          const blockId = char.system.block_id || 'block2';
-          if (!acc[blockId]) acc[blockId] = [];
-          acc[blockId].push(char);
-          return acc;
-        }, {});
-        
-        const charSortPref = this.actor.system.sorting?.characteristic || 'manual';
-        // Adicionei uma opção de ordenar por pontos como exemplo
-        if(charSortPref === 'points') getSortFunction(charSortPref)
-        // Ordena as características DENTRO de cada bloco
-        for (const blockId in context.characteristicsByBlock) {
-            context.characteristicsByBlock[blockId].sort(getSortFunction(charSortPref));
-        }
-
-
-          // ================================================================== //
-        //    ENRIQUECIMENTO DE TEXTO PARA BIOGRAFIA E DESCRIÇÃO DE ITEM
-        // ================================================================== //
-          // Prepara o campo de biografia, garantindo que funcione mesmo se estiver vazio
-          context.enrichedBackstory = await TextEditor.enrichHTML(this.actor.system.details.backstory || "", {
-              secrets: this.actor.isOwner,
-              async: true
-          });
-
-        
-        context.survivalBlockWasOpen = this._survivalBlockOpen || false;
-        // --- NOVA LÓGICA PARA O SUMÁRIO DE EFEITOS ATIVOS ---
-// Filtra a lista completa de efeitos do ator para pegar apenas os que estão ativos.
-context.activeConditionEffects = Array.from(this.actor.effects).filter(effect => {
-    // Um efeito está ativo se ele NÃO está desabilitado E vem de um item de condição.
-    return !effect.disabled && effect.origin && fromUuidSync(effect.origin)?.type === 'condition';
-}).map(effect => {
-    // Prepara uma dica de ferramenta (tooltip) com os detalhes mecânicos
-    const changes = effect.changes.map(c => `${c.key}: ${c.value > 0 ? '+' : ''}${c.value}`).join('; ');
-    return {
-        id: effect.id,
-        name: effect.name,
-        img: effect.img,
-        tooltip: changes
-    };
-});
-
-const activeEffects = this.actor.effects.map(effect => {
-        const effectData = effect.toObject(); // Converte para um objeto simples
-        effectData.id = effect.id; // Garante que temos o ID real para deleção
-        
-        // Determina se o efeito veio de um item do sistema ou de outro lugar
-        effectData.isSystemEffect = effect.origin ? effect.origin.startsWith('Compendium.gum.') : false;
-        
-        // Prepara uma descrição da duração para exibir na ficha
-        if (effect.duration.remaining > 0) {
-            effectData.durationString = `${effect.duration.remaining} ${effect.duration.label.toLowerCase()}`;
-        } else {
-            effectData.durationString = "Permanente";
-        }
-        return effectData;
-    });
-
+                  // Prepara o campo de biografia, garantindo que funcione mesmo se estiver vazio
+            context.enrichedBackstory = await TextEditor.enrichHTML(this.actor.system.details.backstory || "", {
+                    secrets: this.actor.isOwner,
+                    async: true
+                });              
+                context.survivalBlockWasOpen = this._survivalBlockOpen || false;
+                  
         return context;
-      }
+    }
+
 
 _getSubmitData(updateData) {
         // Encontra todos os <details> na ficha
@@ -1560,6 +1657,116 @@ html.on('click', '.edit-secondary-stats-btn', ev => {
         default: 'save'
     }, { classes: ["dialog", "gum", "secondary-stats-dialog"], width: 550 }).render(true);
 });
+
+html.find('.quick-view-origin').on('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const originUuid = ev.currentTarget.dataset.originUuid;
+        if (!originUuid) {
+            ui.notifications.warn("Este efeito não possui um item de origem rastreável (pode ser um efeito legado ou de status).");
+            return;
+        }
+
+        // Carrega o Item Fonte (Vantagem, Magia, etc.)
+        const item = await fromUuid(originUuid);
+        if (!item) {
+            ui.notifications.error("Item de origem não encontrado.");
+            return;
+        }
+        
+        // --- Início da sua lógica .item-quick-view ---
+        const getTypeName = (type) => {
+            const typeMap = {
+                equipment: "Equipamento", melee_weapon: "Arma C. a C.",
+                ranged_weapon: "Arma à Dist.", armor: "Armadura",
+                advantage: "Vantagem", disadvantage: "Desvantagem",
+                skill: "Perícia", spell: "Magia", power: "Poder",
+                condition: "Condição" // Adicionado
+            };
+            return typeMap[type] || type;
+        };
+
+        const data = {
+            name: item.name,
+            type: getTypeName(item.type),
+            system: item.system
+        };
+
+        let mechanicalTagsHtml = '';
+        const s = data.system;
+        const createTag = (label, value) => {
+            if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+            }
+            return '';
+        };
+
+        // Switch para preencher as tags (copiado do seu código)
+        switch (item.type) {
+            case 'spell':
+                mechanicalTagsHtml += createTag('Tempo', s.casting_time);
+                mechanicalTagsHtml += createTag('Duração', s.duration);
+                mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+                break;
+            case 'advantage':
+                mechanicalTagsHtml += createTag('Pontos', s.points);
+                break;
+            // Adicione mais 'case's aqui se desejar (power, etc.)
+        }
+
+        const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
+            secrets: this.actor.isOwner,
+            async: true
+        });
+        
+        const content = `
+            <div class="gurps-dialog-canvas">
+                <div class="gurps-item-preview-card" data-item-id="${item.id}">
+                    <header class="preview-header">
+                        <h3>${data.name}</h3>
+                        <div class="header-controls">
+                            <span class="preview-item-type">${data.type}</span>
+                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                        </div>
+                    </header>
+                    <div class="preview-content">
+                        <div class="preview-properties">
+                            ${createTag('Pontos', s.points)}
+                            ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
+                            ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
+                            ${mechanicalTagsHtml}
+                        </div>
+                        ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
+                        <div class="preview-description">${description}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Renderiza o Diálogo
+        new Dialog({
+            content: content,
+            buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
+            default: "close",
+            options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
+            render: (html) => {
+                // Listener para o botão "Enviar para o Chat" DENTRO do pop-up
+                html.find('.send-to-chat').on('click', (event) => {
+                    const cardHTML = $(event.currentTarget).closest('.gurps-item-preview-card').html();
+                    const chatDataType = getTypeName(item.type);
+                    const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
+                    ChatMessage.create({
+                        user: game.user.id,
+                        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                        content: chatContent
+                    });
+                });
+            }
+        }).render(true);
+        // --- Fim da sua lógica .item-quick-view ---
+    });
+
 
 html.on('click', '.item-quick-view', async (ev) => {
     ev.preventDefault();
