@@ -30,23 +30,32 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     flags: {}
                 };
 
-                // Lógica de Duração
+               // =============================================================
+                // ✅ LÓGICA DE DURAÇÃO FINAL (Sincronizada com createItem)
+                // =============================================================
                 if (effectSystem.duration && !effectSystem.duration.isPermanent) {
                     activeEffectData.duration = {};
-                    const value = parseInt(effectSystem.duration.value) || 1; // Garante um valor numérico >= 1
+                    const value = parseInt(effectSystem.duration.value) || 1; 
+                    const unit = effectSystem.duration.unit;
 
-                    // Trata 'seconds' como 'rounds' para a contagem do Foundry
-                    if (effectSystem.duration.unit === 'seconds' || effectSystem.duration.unit === 'rounds') {
-                        activeEffectData.duration.rounds = value;
-                    } else if (effectSystem.duration.unit === 'turns') {
+                    // Converte nossas unidades GURPS para as unidades do Foundry
+                    if (unit === 'turns') {
                         activeEffectData.duration.turns = value;
-                    } 
-                    // Outras unidades (minutos, horas) podem precisar ser convertidas para segundos
-                    else if (effectSystem.duration.unit === 'minutes') activeEffectData.duration.seconds = value * 60;
-                    else if (effectSystem.duration.unit === 'hours') activeEffectData.duration.seconds = value * 3600;
-
-                    // Lógica "Apenas em Combate" (inalterada)
-                    if (effectSystem.duration.inCombat && game.combat) {
+                        // Força 'inCombat' para 'turns', pois só fazem sentido em combate
+                        activeEffectData.duration.combat = game.combat?.id; 
+                    } else if (unit === 'rounds' || unit === 'seconds') {
+                        // Trata Rodadas e Segundos como 'rounds' para contagem de combate
+                        activeEffectData.duration.rounds = value;
+                    } else if (unit === 'minutes') {
+                        activeEffectData.duration.seconds = value * 60;
+                    } else if (unit === 'hours') {
+                        activeEffectData.duration.seconds = value * 60 * 60;
+                    } else if (unit === 'days') {
+                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                    }
+                    
+                    // A flag 'inCombat' do usuário se aplica a durações em segundos/minutos/etc.
+                    if (unit !== 'turns' && effectSystem.duration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
                 }

@@ -53,7 +53,8 @@
           "failure": {}
         },
         "onDamageEffects": {},
-        "generalConditions": {}
+        "generalConditions": {},
+        "passiveEffects": {}
       },
       "equipment_base": {
         "quantity": 1,

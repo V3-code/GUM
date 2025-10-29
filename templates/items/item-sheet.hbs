@@ -145,6 +145,39 @@
     </div>
 </div>
 
+{{!-- ============================================= --}}
+{{!-- ✅ NOVA SEÇÃO: EFEITOS PASSIVOS               --}}
+{{!-- ============================================= --}}
+<div class="form-section effect-category">
+    <h4 class="section-title">Efeitos Passivos</h4>
+    <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
+
+    <div class="effect-group passive"> {{!-- Nova classe 'passive' para estilização opcional --}}
+        <div class="group-header">
+            {{!-- Não precisa de título de subgrupo, apenas o botão de adicionar --}}
+            <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
+        </div>
+        <ol class="effects-list">
+            {{!-- Precisaremos atualizar o getData() para preparar 'system.preparedEffects.passive' --}}
+            {{#each system.preparedEffects.passive as |effect|}}
+                <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
+                    <div class="effect-header">
+                        <img src="{{effect.img}}" class="effect-icon"/>
+                        <span class="effect-name">{{effect.name}}</span>
+                        <div class="effect-controls">
+                            {{!-- O UUID é necessário para o botão de visualização --}}
+                            <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
+                            <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>
+                    {{!-- Efeitos passivos geralmente não precisam de campos contextuais como 'recipient' --}}
+                </li>
+            {{else}}
+                <p class="hint small">Nenhum efeito passivo definido.</p>
+            {{/each}}
+        </ol>
+    </div>
+</div>
 
 {{!-- ============================================= --}}
 {{!-- 3. SEÇÃO: CONDIÇÕES GERAIS                   --}}

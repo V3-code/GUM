@@ -263,10 +263,111 @@ Hooks.once('init', async function() {
         }
     });
 
-    Hooks.on("createItem", async (item, options, userId) => { // Adicionado async
-        if (game.user.id === userId && item.type === "condition" && item.parent) {
-            await processConditions(item.parent); // Espera
-            item.parent.getActiveTokens().forEach(token => token.drawEffects()); // Força redesenho
+Hooks.on("createItem", async (item, options, userId) => {
+        // Só executa para o usuário que fez a ação e se o item foi adicionado a um ator
+        if (game.user.id !== userId || !item.parent) return;
+
+        const actor = item.parent; // Define o ator uma vez, pois sabemos que ele existe
+
+        // Lógica para quando uma CONDIÇÃO é adicionada
+        if (item.type === "condition") {
+            await processConditions(actor);
+            actor.getActiveTokens().forEach(token => token.drawEffects());
+        }
+
+        // Lógica para EFEITOS PASSIVOS (pode rodar para qualquer tipo de item)
+        if (item.system.passiveEffects && Object.keys(item.system.passiveEffects).length > 0) {
+            const passiveEffectLinks = Object.values(item.system.passiveEffects);
+            console.log(`[GUM] Item "${item.name}" adicionado a ${actor.name}. Aplicando ${passiveEffectLinks.length} efeito(s) passivo(s)...`);
+
+            for (const linkData of passiveEffectLinks) {
+                const effectUuid = linkData.effectUuid || linkData.uuid;
+                if (!effectUuid) continue;
+
+                const effectItem = await fromUuid(effectUuid);
+                if (effectItem) {
+                    const effectSystem = effectItem.system;
+                    let effectImage = null; // ✅ Padrão: Sem imagem
+                    
+                    // ✅ NOVO: Só define uma imagem se houver um status associado
+                    if (effectSystem.attachedStatusId) {
+                        const statusEffect = CONFIG.statusEffects.find(e => e.id === effectSystem.attachedStatusId);
+                        if (statusEffect) {
+                            effectImage = statusEffect.icon; // Usa o ícone do status
+                        }
+                    }
+
+                    const activeEffectData = {
+                        name: effectItem.name,
+                        img: effectImage, // ✅ 'img' agora é o ícone do status ou null
+                        origin: item.uuid,
+                        changes: [],
+                        statuses: [],
+                        flags: {
+                            gum: { 
+                                originItemId: item.id,
+                                // ✅ IMPORTANTE: Guardamos o UUID do Item Efeito original
+                                //    para a ficha poder encontrar a imagem correta.
+                                effectUuid: effectItem.uuid 
+                            }
+                        }
+                    };
+
+                    // --- INÍCIO DO CÓDIGO DE DURAÇÃO COMPLETO ---
+                    if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                        activeEffectData.duration = {};
+                        const value = parseInt(effectSystem.duration.value) || 1;
+                        const unit = effectSystem.duration.unit;
+                        if (unit === 'turns') {
+                            activeEffectData.duration.turns = value;
+                            activeEffectData.duration.combat = game.combat?.id;
+                        } else if (unit === 'rounds' || unit === 'seconds') {
+                            activeEffectData.duration.rounds = value;
+                        } else if (unit === 'minutes') {
+                            activeEffectData.duration.seconds = value * 60;
+                        } else if (unit === 'hours') {
+                            activeEffectData.duration.seconds = value * 60 * 60;
+                        } else if (unit === 'days') {
+                            activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                        }
+                        if (unit !== 'turns' && effectSystem.duration.inCombat && game.combat) {
+                            activeEffectData.duration.combat = game.combat.id;
+                        }
+                    }
+                    // --- FIM DO CÓDIGO DE DURAÇÃO ---
+
+                    const coreStatusId = effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true });
+                    foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
+
+                    if (effectSystem.type === 'attribute') {
+                        const change = {
+                            key: effectSystem.path,
+                            mode: effectSystem.operation === 'OVERRIDE' ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
+                            value: effectSystem.value
+                        };
+                        activeEffectData.changes.push(change);
+                    } else if (effectSystem.type === 'flag') {
+                        let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
+                        foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
+                    }
+
+                    if (effectSystem.attachedStatusId) {
+                        activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                    }
+
+                    try {
+                        await actor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                        console.log(` -> Efeito passivo "${effectItem.name}" aplicado.`);
+                    } catch (err) {
+                        console.error(`[GUM] Falha ao criar ActiveEffect passivo para ${effectItem.name}:`, err, activeEffectData);
+                    }
+                }
+            }
+            
+            // Força a reavaliação e redesenho UMA VEZ no final, após todos os efeitos
+            await processConditions(actor);
+            actor.sheet.render(false);
+            actor.getActiveTokens().forEach(token => token.drawEffects());
         }
     });
 
@@ -277,11 +378,46 @@ Hooks.once('init', async function() {
         }
     });
 
-    Hooks.on("deleteItem", async (item, options, userId) => { // Adicionado async
-        if (game.user.id === userId && item.type === "condition" && item.parent) {
-            await processConditions(item.parent); // Espera
-            item.parent.getActiveTokens().forEach(token => token.drawEffects()); // Força redesenho
+   Hooks.on("deleteItem", async (item, options, userId) => {
+        // Só executa para o usuário que fez a ação e se o item pertencia a um ator
+        if (game.user.id !== userId || !item.parent) return;
+
+        const actor = item.parent; // Define o ator uma vez
+        const deletedItemId = item.id; // ID do item que foi removido
+
+        // --- LÓGICA PARA CONDIÇÕES (Sua lógica original) ---
+        if (item.type === "condition") {
+            // Apenas chamar processConditions é o suficiente, 
+            // pois o item não existe mais e seus efeitos passivos sumirão
         }
+
+        // =============================================================
+        // ✅ LÓGICA DE EFEITOS PASSIVOS CORRIGIDA
+        // =============================================================
+        
+        // Procura por efeitos que tenham a nossa "etiqueta" (flag)
+        const effectsToDelete = actor.effects.filter(effect => 
+            foundry.utils.getProperty(effect, "flags.gum.originItemId") === deletedItemId
+        );
+
+        if (effectsToDelete.length > 0) {
+            const idsToDelete = effectsToDelete.map(e => e.id);
+            console.log(`[GUM] Item "${item.name}" removido de ${actor.name}. Removendo ${idsToDelete.length} efeito(s) passivo(s) associado(s):`, idsToDelete);
+            
+            try {
+                // Deleta os ActiveEffects encontrados
+                await actor.deleteEmbeddedDocuments("ActiveEffect", idsToDelete);
+            } catch (err) {
+                console.error(`[GUM] Falha ao remover ActiveEffects passivos:`, err);
+            }
+        }
+        
+        // --- Chamada final de atualização ---
+        // Sempre chama processConditions e redesenha após deletar QUALQUER item,
+        // garantindo que o estado do ator seja reavaliado.
+        await processConditions(actor);
+        actor.sheet.render(false);
+        actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
 Hooks.on("updateCombat", async (combat, changed, options, userId) => {
@@ -833,19 +969,39 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         context.itemsByType = itemsByType;
 
         
-    // --- LÓGICA FINAL PARA A ABA DE CONDIÇÕES ---
+// --- LÓGICA FINAL PARA A ABA DE CONDIÇÕES ---
     
     // 1. Separa as condições em duas listas com base na categoria
     const allConditions = itemsByType.condition || [];
     context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
     context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
 
-    // 2. ✅ LÓGICA CORRIGIDA PARA O SUMÁRIO DE "EFEITOS ATIVOS" ✅
-    context.activeConditionsList = Array.from(this.actor.effects).map(effect => {
-        const effectData = effect.toObject();
-        effectData.id = effect.id;
+    // 2. ✅ LÓGICA "INTELIGENTE" PARA O SUMÁRIO DE "EFEITOS ATIVOS"
+    
+    // Usamos um array normal e um loop 'for...of' assíncrono
+    const activeEffectsList = [];
+    for (const effect of this.actor.effects) {
         
-        // Prepara uma string de duração para exibir na ficha
+        const effectData = effect.toObject(); // Pega os dados básicos
+        effectData.id = effect.id; // Garante que o ID real está lá para o botão de deletar
+
+        // --- Lógica "Inteligente" para buscar a imagem correta ---
+        // Procuramos pela nossa etiqueta (flag)
+        const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+        
+        if (effectUuid) {
+            // Se encontramos a etiqueta, buscamos o Item Efeito original
+            const originalEffectItem = await fromUuid(effectUuid);
+            if (originalEffectItem) {
+                // E usamos os dados originais para nome e imagem
+                effectData.name = originalEffectItem.name; 
+                effectData.img = originalEffectItem.img; // ✅ A IMAGEM CORRETA PARA A PÍLULA
+            }
+            // Se não encontrar o item, a pílula usará a 'img' padrão do ActiveEffect (que será null ou um ícone de status)
+        }
+        // Se o efeito não tem a etiqueta (ex: efeito manual), ele também usará a 'img' padrão.
+        
+        // Prepara a string de duração (sua lógica original, está correta)
         const d = effect.duration;
         if (d.seconds) effectData.durationString = `${d.seconds} seg.`;
         else if (d.rounds) {
@@ -858,15 +1014,11 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         } 
         else effectData.durationString = "Permanente";
 
-        // ✅ CORRIGIDO: Garante que a propriedade 'img' seja usada, e não 'icon'.
-        effectData.img = effect.img;
-        
-        return effectData;
-    });
-    // --- FIM DA LÓGICA DE CONDIÇÕES ---
-        context.generalConditions = allConditions.filter(c => c.system.category === 'general' || !c.system.category);
-        context.temporaryConditions = allConditions.filter(c => c.system.category === 'temporary');
-
+        activeEffectsList.push(effectData);
+    }
+    
+    // Passa a lista final para o template
+    context.activeConditionsList = activeEffectsList;
 
         // ================================================================== //
         //    FUNÇÃO AUXILIAR DE ORDENAÇÃO (PARA EVITAR REPETIÇÃO)            //
@@ -3698,12 +3850,14 @@ class GurpsItemSheet extends ItemSheet {
     }
 
         // Função auxiliar para buscar e preparar os dados dos itens linkados (Efeitos ou Condições)
-    const _prepareLinkedItems = async (sourceObject) => {
+    const _prepareLinkedItems = async (sourceObject) => {       
         const entries = Object.entries(sourceObject || {});
         const promises = entries.map(async ([id, linkData]) => {
-            const originalItem = await fromUuid(linkData.effectUuid || linkData.uuid);
+            const uuid = linkData.effectUuid || linkData.uuid; 
+            const originalItem = await fromUuid(uuid);
             return {
                 id: id,
+                uuid: uuid,
                 ...linkData, // Inclui os campos contextuais (recipient, minInjury, etc.)
                 name: originalItem ? originalItem.name : "Item não encontrado",
                 img: originalItem ? originalItem.img : "icons/svg/mystery-man.svg"
@@ -3719,7 +3873,8 @@ class GurpsItemSheet extends ItemSheet {
             failure: await _prepareLinkedItems(this.item.system.activationEffects?.failure)
         },
         onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects),
-        general: await _prepareLinkedItems(this.item.system.generalConditions)
+        general: await _prepareLinkedItems(this.item.system.generalConditions),
+        passive: await _prepareLinkedItems(this.item.system.passiveEffects)
     };
 
     // Lógica de ordenação e preparação dos modificadores
