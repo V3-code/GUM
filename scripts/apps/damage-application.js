@@ -1,4 +1,4 @@
-import { applyContingentCondition } from "../main.js";
+import { applySingleEffect } from '../effects-engine.js';
 
 export default class DamageApplicationWindow extends Application {
     
@@ -566,12 +566,14 @@ async _onProposeTests(form) {
     }
 }
     
+
+
 async _onApplyDamage(form, shouldClose, shouldPublish) {
     if (this.isApplying) return;
     this.isApplying = true;
 
     try {
-        // --- 1. COLETA DE DADOS E APLICAÇÃO DE DANO (Lógica existente e correta) ---
+        // --- 1. COLETA DE DADOS E APLICAÇÃO DE DANO (Lógica existente) ---
         const finalInjury = this.finalInjury;
         const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
@@ -589,28 +591,33 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue + finalInjury });
         }
 
-        // --- 2. PROCESSAMENTO DE EFEITOS (SUA NOVA LÓGICA SIMPLIFICADA) ---
+        // =================================================================
+        // ✅ INÍCIO DA NOVA LÓGICA DE PROCESSAMENTO DE EFEITOS
+        // =================================================================
         const appliedEffectSources = new Set();
-        const conditionsToCreate = [];
-
+        
+        // Itera sobre os efeitos que foram exibidos na janela
         for (const [linkId, state] of Object.entries(this.effectState)) {
-            // A lógica agora é simples: se o checkbox está marcado, o efeito é aplicado. Ponto final.
+            // Aplica apenas os efeitos que o usuário deixou marcados (checked)
             if (state.checked) {
-                const newConditionData = {
-                    name: `Efeito (${state.sourceName}): ${state.data.name || 'Sem Nome'}`,
-                    type: "condition",
-                    system: { when: "", effects: [state.data] }
-                };
-                conditionsToCreate.push(newConditionData);
-                appliedEffectSources.add(state.sourceName);
+                const effectItem = state.effectItem; // Pega o Item Efeito completo que salvamos
+                if (effectItem) {
+                    // Chama nosso motor central para aplicar o efeito!
+                    await applySingleEffect(effectItem, [this.targetActor.token || this.targetActor.getActiveTokens()[0]], { 
+                        actor: this.attackerActor, 
+                        origin: this.damageData.sourceItem 
+                    });
+                    
+                    // Adiciona o nome da fonte para o resumo do chat.
+                    appliedEffectSources.add(state.sourceName);
+                }
             }
         }
-        
-        if (conditionsToCreate.length > 0) {
-            await this.targetActor.createEmbeddedDocuments("Item", conditionsToCreate);
-        }
+        // =================================================================
+        // FIM DA NOVA LÓGICA
+        // =================================================================
 
-        // --- 3. PUBLICAÇÃO NO CHAT ---
+        // --- 3. PUBLICAÇÃO NO CHAT (Lógica existente, agora funciona com os novos dados) ---
         if (shouldPublish) {
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
             let resultLine = '';
@@ -621,8 +628,8 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
                 resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
             } else if (finalInjury === 0 && effectsOnlyChecked && appliedEffectSources.size > 0) {
                 resultLine = `<p>Não sofreu lesão, mas foi afetado por condições.</p>`;
-            } else if (appliedEffectSources.size > 0) {
-                resultLine = `<p>O alvo foi afetado por condições.</p>`;
+            } else if (appliedEffectSources.size === 0 && finalInjury === 0) {
+                 resultLine = `<p>O ataque não causou lesão nem aplicou efeitos.</p>`;
             }
             
             let effectsHtml = appliedEffectSources.size > 0
@@ -634,9 +641,9 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
                 <header class="card-header"><h3>Resumo do Ataque</h3></header>
                 <div class="card-content">
                     <div class="summary-actors vertical">
-                         <div class="actor-line"><img src="${this.attackerActor.img}" class="actor-token-icon"> <strong>${this.attackerActor.name}</strong></div>
-                        <div class="arrow-line"><i class="fas fa-arrow-down"></i></div>
-                        <div class="actor-line"><img src="${this.targetActor.img}" class="actor-token-icon"> <strong>${this.targetActor.name}</strong></div>
+                          <div class="actor-line"><img src="${this.attackerActor.img}" class="actor-token-icon"> <strong>${this.attackerActor.name}</strong></div>
+                         <div class="arrow-line"><i class="fas fa-arrow-down"></i></div>
+                         <div class="actor-line"><img src="${this.targetActor.img}" class="actor-token-icon"> <strong>${this.targetActor.name}</strong></div>
                     </div>
                     ${resultLine ? `<div class="minicard result-card"><div class="minicard-title">Resultado</div>${resultLine}</div>` : ''}
                     ${effectsHtml}

@@ -2950,6 +2950,28 @@ a:hover { text-decoration: underline; color: #fff; }
     gap: 6px;
 }
 
+/* ============================================= */
+/* Estilos para a Aba de Condições (Layout Novo) */
+/* ============================================= */
+
+/* Aplica o layout de duas colunas às listas de itens */
+.conditions-tab .condition-column .item-list {
+  column-count: 2; /* Divide a lista em 2 colunas */
+  column-gap: 15px; /* Espaço entre as colunas */
+}
+
+/* Impede que um único card de condição seja quebrado entre as duas colunas */
+.conditions-tab .condition-column .item-list > li {
+  break-inside: avoid;
+  page-break-inside: avoid; /* Para navegadores mais antigos */
+  margin-bottom: 10px; /* Adiciona um espaço abaixo de cada card */
+}
+
+/* Garante que o texto de "Nenhuma" não fique em uma coluna vazia */
+.conditions-tab .condition-column .item-list .placeholder-text {
+    column-span: all;
+}
+
 /* --- Card de Condição Individual (dentro das colunas) --- */
 .condition-card {
     background: var(--c-fundo-card-claro, #fdfaf8);
@@ -3042,6 +3064,7 @@ input:checked + .slider:before {
     gap: 4px;
     padding: 4px;
     width: 160px; /* ✅ DEFINE UMA LARGURA FIXA PARA O MENU */
+    background-color:#000;
 }
 
 /* Estilo para cada ícone individual */
@@ -3051,6 +3074,8 @@ input:checked + .slider:before {
     border: 1px solid #000;
     border-radius: 4px;
     overflow: hidden;
+    background-color: rgba(0,0,0,0.24);
+    
 }
 
 /* Adiciona uma borda dourada quando o ícone está ativo */
@@ -3063,6 +3088,10 @@ input:checked + .slider:before {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+#token-hud .status-effects .effect-control {
+filter:none;
 }
 
 /* --- ESTILOS PARA A NOVA ENGRENAGEM DE EDIÇÃO --- */
@@ -3207,3 +3236,4 @@ input:checked + .slider:before {
 #sidebar-tabs {
   flex-direction: row !important;
 }
+
