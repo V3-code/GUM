@@ -1,20 +1,18 @@
 // GUM/module/settings.js
 
 /**
- * ✅ A FUNÇÃO DE SINCRONIZAÇÃO
+ * ✅ A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
  * Esta é a lógica para a sua ideia do "botão de atualização".
  * Ela varre todos os personagens e atualiza seus itens vinculados.
  */
 async function syncCompendiumRules() {
     ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
 
-    // 1. Pega o compêndio de regras
-    const pack = game.packs.get("gum.Regras"); //
+    const pack = game.packs.get("gum.Regras");
     if (!pack) {
         return ui.notifications.error("Compêndio de regras [GUM] Regras (gum.Regras) não encontrado.");
     }
 
-    // 2. Carrega as regras-fonte do compêndio e as mapeia por UUID
     const sourceRules = await pack.getDocuments();
     const sourceRulesMap = new Map();
     for (const rule of sourceRules) {
@@ -28,32 +26,29 @@ async function syncCompendiumRules() {
     let updateCount = 0;
     const actorsToUpdate = game.actors.filter(a => a.type === "character");
 
-    // 3. Itera em todos os atores de personagem do mundo
     for (const actor of actorsToUpdate) {
         const updates = [];
-        // 4. Encontra todos os itens no ator que têm um "vínculo" (sourceId)
-        const itemsToUpdate = actor.items.filter(i => i.getFlag("core", "sourceId"));
+        
+        // ✅ CORREÇÃO 1 (Depreciação): Lendo a propriedade moderna '_stats.compendiumSource'
+        //    em vez do antigo 'flags.core.sourceId'.
+        const itemsToUpdate = actor.items.filter(i => i._stats.compendiumSource);
 
         for (const item of itemsToUpdate) {
-            const sourceId = item.getFlag("core", "sourceId");
-            // 5. Verifica se o vínculo do item aponta para uma regra no nosso compêndio
+            // ✅ CORREÇÃO 1 (Continuação): Lendo a propriedade moderna.
+            const sourceId = item._stats.compendiumSource; 
+            
             const sourceRule = sourceRulesMap.get(sourceId);
 
             if (sourceRule) {
-                // 6. Se encontrou, prepara uma atualização para este item
-                // Nós copiamos o 'system' (que contém as regras 'when' e 'effects')
-                // e a 'img', mas mantemos o _id e o nome que o usuário possa ter mudado.
                 const sourceData = sourceRule.toObject();
                 updates.push({
                     _id: item.id,
-                    system: sourceData.system, // Atualiza as regras 'when' e 'effects'
+                    system: sourceData.system,
                     img: sourceData.img
-                    // Note que mantemos o nome do item no ator, caso o usuário o tenha renomeado.
                 });
             }
         }
 
-        // 7. Aplica todas as atualizações encontradas para este ator
         if (updates.length > 0) {
             await actor.updateEmbeddedDocuments("Item", updates);
             updateCount += updates.length;
@@ -75,9 +70,10 @@ export const registerSystemSettings = function() {
         scope: "world",
         config: true,
         type: String,
-        default: "@system.attributes.basic_speed.final + (@system.attributes.dx.final / 100) + (1d6 / 1000)", //
+        default: "@attributes.basic_speed.final + (@attributes.dx.final/100) + (1d6/1000)",
+
+        
         onChange: value => {
-             // ... (sua lógica de recarregar a página) ...
              new Dialog({
                 title: "Recarregar Necessário",
                 content: "<p>A fórmula de iniciativa foi alterada. Para que a mudança tenha efeito, o Foundry precisa ser recarregado.</p>",
@@ -98,10 +94,9 @@ export const registerSystemSettings = function() {
         config: true,
         type: Boolean,
         default: true
-    }); //
+    });
 
-    // --- ✅ SEU NOVO "BOTÃO" DE ATUALIZAÇÃO ---
-    // Esta é a sua ideia implementada.
+    // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
         name: "Sincronizar Regras do Compêndio",
         hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Regras. A caixa desmarcará automaticamente após o uso.",
@@ -111,11 +106,8 @@ export const registerSystemSettings = function() {
         default: false,
         onChange: (value) => {
             if (value) {
-                // O usuário marcou a caixa.
                 console.log("GUM | Sincronização de regras iniciada pelo GM...");
-                // Chama nossa função de sincronização
                 syncCompendiumRules(); 
-                // Desmarca a caixa automaticamente
                 game.settings.set("gum", "syncCompendiumRulesBtn", false); 
             }
         }

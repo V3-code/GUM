@@ -13,6 +13,228 @@ import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect } from './effects-engine.js';
 import { GUM } from '../module/config.js';
 
+// ================================================================== //
+//  ✅ CLASSE DO ATOR (NOVA)
+// ================================================================== //
+class GurpsActor extends Actor {
+    
+    /**
+     * @override
+     * Esta é a função principal do Foundry para preparar os dados do ator.
+     * Ela é chamada automaticamente sempre que os dados do ator são acessados,
+     * garantindo que .final esteja sempre calculado (mesmo com a ficha fechada).
+     */
+    prepareData() {
+        super.prepareData();
+        // Chama nossa lógica de cálculo
+        this._prepareCharacterItems(); 
+    }
+
+    /**
+     * Esta é a sua lógica de _prepareCharacterItems, movida da Ficha para o Ator.
+     * As referências a 'sheetData.actor' foram trocadas por 'this'.
+     */
+    _prepareCharacterItems() {
+        // 'actorData' agora é 'this'
+        // 'attributes' agora é 'this.system.attributes'
+        const actorData = this; 
+        const attributes = actorData.system.attributes;
+        const combat = actorData.system.combat;
+
+        // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS E OVERRIDES ---
+        // (O código original de _prepareCharacterItems,)
+        const allAttributes = [
+            'st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp',
+            'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge'
+        ];
+        allAttributes.forEach(attr => {
+            if (attributes[attr]) {
+                attributes[attr].temp = 0;
+                attributes[attr].override = null;
+            }
+        });
+        if (combat.dr_temp_mods) {
+            for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
+        }
+
+        // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
+        // (O código original de _prepareCharacterItems,)
+        const add_sub_modifiers = {};
+        const set_modifiers = {};
+        // 'this.actor.items' vira 'this.items'
+        const conditions = this.items.filter(i => i.type === "condition"); 
+        for (const condition of conditions) {
+            if (condition.getFlag("gum", "manual_override")) continue;
+            let isConditionActive = false;
+            try {
+                // 'this.actor' vira 'this'
+                isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return ( ${condition.system.when} )`)(this, game, null); 
+            } catch (e) {
+                console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
+            }
+            if (isConditionActive) {
+                const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
+                for (const effect of effects) {
+                    if (effect.type === 'attribute' && effect.path) {
+                        let value = 0;
+                        try {
+                            // 'this.actor' vira 'this'
+                            value = typeof effect.value === "string" ? new Function("actor", "game", `return (${effect.value});`)(this, game) : (Number(effect.value) || 0); 
+                        } catch (e) {
+                            console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
+                        }
+                        if (effect.operation === "SET") {
+                            set_modifiers[effect.path] = value;
+                        } else {
+                            if (!add_sub_modifiers[effect.path]) add_sub_modifiers[effect.path] = 0;
+                            if (effect.operation === "ADD") add_sub_modifiers[effect.path] += value;
+                            else if (effect.operation === "SUB") add_sub_modifiers[effect.path] -= value;
+                        }
+                    } 
+                }
+            }
+        }
+
+        // --- ETAPA 3: APLICAR MODIFICADORES DE SOMA/SUBTRAÇÃO ---
+        // (O código original de _prepareCharacterItems,)
+        for (const path in add_sub_modifiers) {
+            // 'actorData' vira 'this'
+            const currentVal = foundry.utils.getProperty(this, path) || 0; 
+            foundry.utils.setProperty(this, path, currentVal + add_sub_modifiers[path]);
+        }
+
+        // --- ETAPA 4: CÁLCULOS INTERMEDIÁRIOS (FINAL_COMPUTED) ---
+        // (O código original de _prepareCharacterItems,)
+        for (const attr of allAttributes) {
+            if (attributes[attr] && !['hp', 'fp'].includes(attr)) {
+                attributes[attr].final_computed = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
+            }
+        }
+        for (const pool of ["hp", "fp"]) {
+            if (attributes[pool]) {
+                attributes[pool].final_computed = (Number(attributes[pool].max) || 0) + (Number(attributes[pool].mod) || 0) + (Number(attributes[pool].temp) || 0);
+            }
+        }
+
+        // (O código original de _prepareCharacterItems,)
+        const liftingST = attributes.lifting_st.final_computed;
+        const basicLift = (liftingST * liftingST) / 10;
+        attributes.basic_lift = { value: basicLift };
+
+        // (O código original de _prepareCharacterItems,)
+        let totalWeight = 0;
+        // 'actorData' vira 'this'
+        const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
+        // 'sheetData.actor.items' vira 'this.items'
+        for (let i of this.items) { 
+            if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight')) && i.system.weight) {
+                const loc = i.system.location;
+                if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) {
+                    totalWeight += (i.system.weight || 0) * (i.system.quantity || 1);
+                }
+            }
+        }
+
+        // (O código original de _prepareCharacterItems,)
+        let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
+        if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada", level_value: 4, penalty: -4 };
+        else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada", level_value: 3, penalty: -3 };
+        else if (totalWeight > basicLift * 2) enc = { level_name: "Média", level_value: 2, penalty: -2 };
+        else if (totalWeight > basicLift) enc = { level_name: "Leve", level_value: 1, penalty: -1 };
+        
+        // (O código original de _prepareCharacterItems,)
+        // 'actorData' vira 'this'
+        foundry.utils.mergeObject(this.system.encumbrance, { 
+            total_weight: Math.round(totalWeight * 100) / 100,
+            level_name: enc.level_name,
+            level_value: enc.level_value,
+            levels: {
+                none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2),
+                medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2),
+                xheavy: (basicLift * 10).toFixed(2)
+            }
+        });
+        
+        // (O código original de _prepareCharacterItems,, l. 1155-1159])
+        // 'actorData' vira 'this'
+        const levels = this.system.encumbrance.levels; 
+        this.system.encumbrance.level_data = [ 
+            { name: 'Nenhuma', max: levels.none }, { name: 'Leve', max: levels.light },
+            { name: 'Média', max: levels.medium }, { name: 'Pesada', max: levels.heavy },
+            { name: 'M. Pesada', max: levels.xheavy }
+        ];
+
+        // (O código original de _prepareCharacterItems,, l. 1161-1164])
+        const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
+        attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
+        attributes.dodge.final_computed = attributes.dodge.value + enc.penalty + (attributes.dodge.mod || 0) + (attributes.dodge.temp || 0);
+        attributes.basic_move.final_computed = Math.floor(attributes.basic_move.final_computed * (1 - (enc.level_value * 0.2)));
+
+        // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" (OVERRIDE) ---
+        // (O código original de _prepareCharacterItems,)
+        for (const path in set_modifiers) {
+            // 'actorData' vira 'this'
+            foundry.utils.setProperty(this, path, set_modifiers[path]); 
+        }
+
+        // --- ETAPA 6: CÁLCULO FINALÍSSIMO (FINAL) ---
+        // (O código original de _prepareCharacterItems,)
+        for (const attr of allAttributes) {
+            if (attributes[attr]) {
+                const override = attributes[attr].override;
+                attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
+            }
+        }
+
+        // --- Cálculos Finais (DR, NH) ---
+        // (O código original de _prepareCharacterItems,)
+        const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
+        // 'sheetData.actor.items' vira 'this.items'
+        for (let i of this.items) { 
+            if (i.type === 'armor' && i.system.location === 'equipped') {
+                (i.system.worn_locations || []).forEach(loc => {
+                    if (loc && drFromArmor.hasOwnProperty(loc.toLowerCase())) {
+                        drFromArmor[loc.toLowerCase()] += i.system.dr || 0;
+                    }
+                });
+            }
+        }
+        
+        const totalDr = {};
+        const drMods = combat.dr_mods || {};
+        const drTempMods = combat.dr_temp_mods || {};
+        for (let key in drFromArmor) {
+            totalDr[key] = (drFromArmor[key] || 0) + (drMods[key] || 0) + (drTempMods[key] || 0);
+        }
+        combat.dr_locations = totalDr;
+        combat.dr_from_armor = drFromArmor;
+
+        // (O código original de _prepareCharacterItems,, l. 1201-1221])
+        // 'sheetData.actor.items' vira 'this.items'
+        for (let i of this.items) { 
+            if (['skill', 'spell', 'power'].includes(i.type)) {
+                try {
+                    const defAttr = (i.type === 'skill') ? 'dx' : 'iq';
+                    let baseAttr = (i.system.base_attribute || defAttr).toLowerCase();
+                    let attrVal = 10;
+                    if (attributes[baseAttr]?.final !== undefined) {
+                        attrVal = attributes[baseAttr].final;
+                    } else if (!isNaN(Number(baseAttr))) {
+                        attrVal = Number(baseAttr);
+                    } else {
+                        // 'sheetData.actor.items' vira 'this.items'
+                        const refSkill = this.items.find(s => s.type === 'skill' && s.name?.toLowerCase() === baseAttr); 
+                        if (refSkill) attrVal = refSkill.system.final_nh;
+                    }
+                    i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
+                } catch (e) {
+                    console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
+                }
+            }
+        }
+    }
+} // Fim da nova classe GurpsActor
+
 /**
  * Uma janela de diálogo para criar e editar Efeitos Contingentes.
  */
@@ -230,7 +452,20 @@ Hooks.once('init', async function() {
     game.gum = {};
 
     CONFIG.statusEffects = GUM.statusEffects;
+    CONFIG.Actor.documentClass = GurpsActor;
+
+    registerSystemSettings();
     
+    // --- 2. LÊ A CONFIGURAÇÃO E APLICA NO SISTEMA DE COMBATE ---
+    // ✅ A CORREÇÃO FINAL:
+    // Nós lemos o *valor* da configuração que acabamos de registrar...
+    const initiativeFormula = game.settings.get("gum", "initiativeFormula");
+    
+    // ...e passamos esse *valor* (a fórmula real) para o CONFIG.
+    CONFIG.Combat.initiative = {
+      formula: initiativeFormula, // Agora isto contém "@attributes.basic_speed.final..."
+      decimals: 3 //
+    };
     
     Actors.registerSheet("gum", GurpsActorSheet, { 
         types: ["character"], makeDefault: true 
@@ -249,7 +484,7 @@ Hooks.once('init', async function() {
     makeDefault: true 
     });
     
-    registerSystemSettings();
+    
 
     // ==================================================================
     // ▼▼▼ BLOCO DE HOOKS CENTRALIZADOS AQUI ▼▼▼
@@ -284,24 +519,27 @@ Hooks.once('init', async function() {
         // Usamos o "sourceId" para criar um vínculo. Isso garante que o item
         // no ator seja sempre atualizado quando o item no compêndio mudar.
         const newRulesData = rules.map(item => {
-            // 1. Pega uma CÓPIA COMPLETA dos dados do item (incluindo system.when, system.effects, etc.)
-            const itemData = item.toObject(); 
+            // 1. Pega os dados do item (nome, img, system)
+            const itemData = item.toObject();
 
-            // 2. Garante que a estrutura de flags exista
-            itemData.flags = itemData.flags || {};
-            itemData.flags.core = itemData.flags.core || {};
+            // 2. Adiciona o vínculo usando o método moderno _stats.compendiumSource
+            //    Isso substitui o antigo 'flags.core.sourceId'
+            itemData._stats = {
+                compendiumSource: item.uuid
+            };
 
-            // 3. Adiciona o 'sourceId' (o "vínculo") a esta cópia
-            // Isso nos permitirá encontrar e atualizar este item no futuro
-            itemData.flags.core.sourceId = item.uuid;
+            // 3. Remove a flag antiga (se existir) para evitar o aviso
+            if (itemData.flags?.core?.sourceId) {
+                delete itemData.flags.core.sourceId;
+            }
 
             return itemData;
         });
 
-        // Adiciona os itens (com seus dados E o vínculo) ao ator
+        // Adiciona os itens (com seus dados E o vínculo moderno) ao ator
         try {
-            await actor.createEmbeddedDocuments("Item", newRulesData); //
-            console.log(`GUM | ${newRulesData.length} regras padrão (com dados) adicionadas a ${actor.name}.`);
+            await actor.createEmbeddedDocuments("Item", newRulesData);
+            console.log(`GUM | ${newRulesData.length} regras padrão (V12+) adicionadas a ${actor.name}.`);
         } catch (err) {
             console.error("GUM | Falha ao adicionar regras padrão:", err);
         }
@@ -1097,7 +1335,7 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
 
     async getData(options) {
         const context = await super.getData(options);
-        this._prepareCharacterItems(context);
+        
         context.hitLocations = {
         head: { label: "Crânio (-7)", roll: "3-4", penalty: -7 },
         face: { label: "Rosto (-5)", roll: "5", penalty: -5 },
@@ -1366,188 +1604,6 @@ _getSubmitData(updateData) {
             this._openDetails = null;
         }
     }
-
-
-_prepareCharacterItems(sheetData) {
-    const actorData = sheetData.actor;
-    const attributes = actorData.system.attributes;
-    const combat = actorData.system.combat;
-
-    // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS E OVERRIDES ---
-    const allAttributes = [
-        'st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp',
-        'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge'
-    ];
-    allAttributes.forEach(attr => {
-        if (attributes[attr]) {
-            attributes[attr].temp = 0;
-            attributes[attr].override = null;
-        }
-    });
-
-    if (combat.dr_temp_mods) {
-        for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
-    }
-
-       // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
-    const add_sub_modifiers = {};
-    const set_modifiers = {};
-
-    const conditions = this.actor.items.filter(i => i.type === "condition");
-    for (const condition of conditions) {
-        if (condition.getFlag("gum", "manual_override")) continue;
-
-        let isConditionActive = false;
-        try {
-            isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return ( ${condition.system.when} )`)(this.actor, game, null);
-        } catch (e) {
-            console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
-        }
-
-        if (isConditionActive) {
-            const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-            for (const effect of effects) {
-                if (effect.type === 'attribute' && effect.path) {
-                    let value = 0;
-                    try {
-                        value = typeof effect.value === "string" ? new Function("actor", "game", `return (${effect.value});`)(this.actor, game) : (Number(effect.value) || 0);
-                    } catch (e) {
-                        console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
-                    }
-
-                    if (effect.operation === "SET") {
-                        set_modifiers[effect.path] = value;
-                    } else {
-                        if (!add_sub_modifiers[effect.path]) add_sub_modifiers[effect.path] = 0;
-                        if (effect.operation === "ADD") add_sub_modifiers[effect.path] += value;
-                        else if (effect.operation === "SUB") add_sub_modifiers[effect.path] -= value;
-                    }
-                } 
-            }
-        }
-    }
-
-    // --- ETAPA 3: APLICAR MODIFICADORES DE SOMA/SUBTRAÇÃO ---
-    for (const path in add_sub_modifiers) {
-        const currentVal = foundry.utils.getProperty(actorData, path) || 0;
-        foundry.utils.setProperty(actorData, path, currentVal + add_sub_modifiers[path]);
-    }
-
-    // --- ETAPA 4: CÁLCULOS INTERMEDIÁRIOS (FINAL_COMPUTED) ---
-    for (const attr of allAttributes) {
-        if (attributes[attr] && !['hp', 'fp'].includes(attr)) {
-            attributes[attr].final_computed = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
-        }
-    }
-    for (const pool of ["hp", "fp"]) {
-        if (attributes[pool]) {
-            attributes[pool].final_computed = (Number(attributes[pool].max) || 0) + (Number(attributes[pool].mod) || 0) + (Number(attributes[pool].temp) || 0);
-        }
-    }
-
-    const liftingST = attributes.lifting_st.final_computed;
-    const basicLift = (liftingST * liftingST) / 10;
-    attributes.basic_lift = { value: basicLift };
-
-    let totalWeight = 0;
-    const ignoreCarried = actorData.system.encumbrance.ignore_carried_weight;
-    for (let i of sheetData.actor.items) {
-        if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight')) && i.system.weight) {
-            const loc = i.system.location;
-            if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) {
-                totalWeight += (i.system.weight || 0) * (i.system.quantity || 1);
-            }
-        }
-    }
-
-    let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
-    if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada", level_value: 4, penalty: -4 };
-    else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada", level_value: 3, penalty: -3 };
-    else if (totalWeight > basicLift * 2) enc = { level_name: "Média", level_value: 2, penalty: -2 };
-    else if (totalWeight > basicLift) enc = { level_name: "Leve", level_value: 1, penalty: -1 };
-    
-    foundry.utils.mergeObject(actorData.system.encumbrance, {
-        total_weight: Math.round(totalWeight * 100) / 100,
-        level_name: enc.level_name,
-        level_value: enc.level_value,
-        levels: {
-            none: basicLift.toFixed(2), light: (basicLift * 2).toFixed(2),
-            medium: (basicLift * 3).toFixed(2), heavy: (basicLift * 6).toFixed(2),
-            xheavy: (basicLift * 10).toFixed(2)
-        }
-    });
-    
-    const levels = actorData.system.encumbrance.levels;
-    actorData.system.encumbrance.level_data = [
-        { name: 'Nenhuma', max: levels.none }, { name: 'Leve', max: levels.light },
-        { name: 'Média', max: levels.medium }, { name: 'Pesada', max: levels.heavy },
-        { name: 'M. Pesada', max: levels.xheavy }
-    ];
-
-    const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
-    attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
-    attributes.dodge.final_computed = attributes.dodge.value + enc.penalty + (attributes.dodge.mod || 0) + (attributes.dodge.temp || 0);
-    attributes.basic_move.final_computed = Math.floor(attributes.basic_move.final_computed * (1 - (enc.level_value * 0.2)));
-
-    // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" (OVERRIDE) ---
-    for (const path in set_modifiers) {
-        foundry.utils.setProperty(actorData, path, set_modifiers[path]);
-    }
-
-    // --- ETAPA 6: CÁLCULO FINALÍSSIMO (FINAL) ---
-    for (const attr of allAttributes) {
-        if (attributes[attr]) {
-            const override = attributes[attr].override;
-            attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
-        }
-    }
-
-    // --- Cálculos Finais (DR, NH) ---
-    const drFromArmor = { head:0, torso:0, vitals:0, groin:0, face:0, eyes:0, neck:0, arms:0, hands:0, legs:0, feet:0 };
-    for (let i of sheetData.actor.items) {
-        if (i.type === 'armor' && i.system.location === 'equipped') {
-            (i.system.worn_locations || []).forEach(loc => {
-                // ✅ AQUI ESTÁ A CORREÇÃO CRÍTICA ✅
-                // Adicionamos uma verificação para garantir que 'loc' não é nulo ou indefinido.
-                if (loc && drFromArmor.hasOwnProperty(loc.toLowerCase())) {
-                    drFromArmor[loc.toLowerCase()] += i.system.dr || 0;
-                }
-            });
-        }
-    }
-    
-    const totalDr = {};
-    const drMods = combat.dr_mods || {};
-    const drTempMods = combat.dr_temp_mods || {};
-    for (let key in drFromArmor) {
-        totalDr[key] = (drFromArmor[key] || 0) + (drMods[key] || 0) + (drTempMods[key] || 0);
-    }
-    combat.dr_locations = totalDr;
-    combat.dr_from_armor = drFromArmor;
-
-    for (let i of sheetData.actor.items) {
-        if (['skill', 'spell', 'power'].includes(i.type)) {
-            try {
-                const defAttr = (i.type === 'skill') ? 'dx' : 'iq';
-                let baseAttr = (i.system.base_attribute || defAttr).toLowerCase();
-                let attrVal = 10;
-                if (attributes[baseAttr]?.final !== undefined) {
-                    attrVal = attributes[baseAttr].final;
-                } else if (!isNaN(Number(baseAttr))) {
-                    attrVal = Number(baseAttr);
-                } else {
-                    const refSkill = sheetData.actor.items.find(s => s.type === 'skill' && s.name?.toLowerCase() === baseAttr);
-                    if (refSkill) attrVal = refSkill.system.final_nh;
-                }
-                i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
-            } catch (e) {
-                console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
-            }
-        }
-    }
-}
-
-
     
       async _updateObject(event, formData) {
         // Processa a conversão de vírgula para ponto
