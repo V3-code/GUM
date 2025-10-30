@@ -34,7 +34,7 @@
       "spell_reserves": {},
       "power_reserves": {},
       "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" } },
-      "characteristic_blocks": { "block1": { "name": "Traços Raciais" }, "block2": { "name": "Vantagens" }, "block3": { "name": "Desvantagens" }, "block4": { "name": "Constituição Física" } },
+      "characteristic_blocks": { "block1": { "name": "Traços Raciais" }, "block2": { "name": "Vantagens" }, "block3": { "name": "Desvantagens" }, "block4": { "name": "Especiais" } },
       "skill_group_order": [],
       "social_status_entries": {}, "organization_entries": {}, "culture_entries": {}, "language_entries": {}, "reputation_entries": {}, "wealth_entries": {}, "bond_entries": {},
       "sorting": { "spells": "manual", "powers": "manual", "skills": "manual", "characteristics": "manual", "equipment": { "equipped": "manual", "carried": "manual", "stored": "manual" } }

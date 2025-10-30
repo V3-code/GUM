@@ -4062,7 +4062,7 @@ class GurpsItemSheet extends ItemSheet {
   async getData(options) { 
     const context = await super.getData(options); 
     context.system = this.item.system;  
-    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Constituição Física" };
+    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
     
     // Lógica de cálculo de custo final
     const validTypes = ['advantage', 'disadvantage', 'power'];

@@ -1936,95 +1936,141 @@ a:hover { text-decoration: underline; color: #fff; }
 }
 
 /* =================================================================== */
-/* DESIGN: ABA DE CARACTERÍSTICAS                                      */
+/* DESIGN: ABA DE CARACTERÍSTICAS (Layout "Papiro Limpo")           */
+/* Inspirado na aba de Condições                                     */
 /* =================================================================== */
 
-/* Layout de 2 colunas da aba */
+/* Remove o layout de coluna dupla que não existe mais */
 .characteristics-layout-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-.char-sub-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: block;
+    grid-template-columns: none;
 }
 
-/* Garante que os blocos nesta aba sejam "ilhas flutuantes" */
-.tab[data-tab="characteristics"] .skill-block {
-  background: var(--c-fundo-card-claro);
-  border: 1px solid var(--c-borda);
-  border-radius: 3px;
-  padding: 0.75rem;
+/* 1. O Bloco Principal (a "seção" no papiro) */
+/* Usa o mesmo estilo de 'card' da aba Condições */
+.tab[data-tab="characteristics"] .form-section {
+    flex-shrink: 0;
+    background: var(--c-fundo-card-claro); /* Fundo sutil */
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 10px; /* Espaço entre os blocos (Racial, Vantagens...) */
 }
 
-/* Garante que o cabeçalho dos blocos use as cores do tema claro */
-.tab[data-tab="characteristics"] .block-header {
-  border-bottom-color: var(--c-borda);
+/* 2. O Cabeçalho (mantém a funcionalidade do .block-header) */
+.tab[data-tab="characteristics"] .form-section .block-header {
+    color: var(--c-texto-escuro);
+    border-bottom-color: rgba(0,0,0,0.1); /* Borda sutil */
+    margin-bottom: 10px; /* Espaço para o container de cards */
 }
-.tab[data-tab="characteristics"] .block-header input {
-  font-family: var(--f-titulos);
-  color: var(--c-texto-escuro);
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-}
-.tab[data-tab="characteristics"] .block-header a {
-  color: var(--c-texto-subtitulo);
-}
-
-/* Remove o padding da lista para alinhar com a borda do card */
-.tab[data-tab="characteristics"] .item-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.tab[data-tab="characteristics"] .form-section .block-header input {
+    font-family: var(--f-titulos);
+    color: var(--c-texto-escuro);
+    border: none;
+    background: transparent;
+    font-size: 0.9em;
 }
 
-/* Estilo para cada linha de característica */
-.tab[data-tab="characteristics"] .char-item-row {
-  border-bottom: 1px solid var(--c-borda);
-  padding: 0.5rem 0.25rem;
-}
-.tab[data-tab="characteristics"] .char-item-row:last-child {
-  border-bottom: none;
-}
-.tab[data-tab="characteristics"] .char-item-row .item-name {
-  font-weight: 500;
-}
-.tab[data-tab="characteristics"] .char-item-row .item-points {
-  color: var(--c-texto-subtitulo);
-  font-weight: 700;
-  font-size: 0.9em;
-}
-/* Estilo base para as tags de nome na aba de características */
-.tab[data-tab="characteristics"] .item-name {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 3px;
-  font-weight: 500;
+/* 3. O Container Flex (exatamente como na aba Condições) */
+.tab[data-tab="characteristics"] .flex-wrap-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espaço entre os cards */
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-/* Estilo para Traços Raciais e Constituição (bloco 1 e 4) */
-.tab[data-tab="characteristics"] [data-block-id="block1"] .item-name,
-.tab[data-tab="characteristics"] [data-block-id="block4"] .item-name {
-  /* Fundo com a cor de acento "bronze" */
-  background: rgba(159, 146, 117, 0.1); 
-  border: 1px solid rgba(159, 146, 117, 0.2);
+/* 4. O Card de Característica (inspirado no .condition-card) */
+.characteristic-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Espaço entre o ícone, infos e controles */
+    
+    /* Estilo do card (mais limpo, como o .condition-card) */
+    background: var(--c-fundo-card-claro, #fdfaf8);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 5px;
+    padding: 6px 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra sutil */
+
+    /* Tamanho (como o .condition-card) */
+    flex-basis: calc(50% - 4px); /* Tenta 2 colunas */
+    flex-grow: 1;
+    box-sizing: border-box; 
+    min-width: 250px; /* Mínimo antes de quebrar a linha */
 }
 
-/* MUDANÇA: Novo estilo azulado para VANTAGENS (bloco 2) */
-.tab[data-tab="characteristics"] [data-block-id="block2"] .item-name {
-  background: rgba(86, 129, 156, 0.1); /* Fundo com a cor de acento azul */
-  border: 1px solid rgba(86, 129, 156, 0.2);
+/* 5. Layout Interno do Card */
+.characteristic-card .item-icon {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 3px;
 }
 
-/* Estilo para DESVANTAGENS (bloco 3) */
-.tab[data-tab="characteristics"] [data-block-id="block3"] .item-name {
-  /* Fundo com a cor de acento vermelho */
-  background: rgba(114, 37, 46, 0.1); 
-  border: 1px solid rgba(114, 37, 46, 0.2);
+.characteristic-card .card-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Impede que o nome empurre os controles */
+}
+
+.characteristic-card .item-name {
+    font-weight: 700;
+    color: var(--c-texto-escuro);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adiciona "..." se o nome for longo */
+}
+
+.characteristic-card .card-details {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.8em;
+    color: var(--c-texto-subtitulo);
+    padding-top: 2px;
+}
+
+.characteristic-card .card-points {
+    font-weight: 700;
+}
+.characteristic-card .card-cr {
+    font-weight: 500;
+}
+.characteristic-card .item-controls {
+    flex-shrink: 0;
+}
+
+/* 6. Cores Temáticas (Fundos sutis, como no CSS antigo) */
+
+/* Bloco 1 & 4 (Racial, Físico) - Cor Bronze */
+.tab[data-tab="characteristics"] .form-section[data-block-id="block1"] .characteristic-card,
+.tab[data-tab="characteristics"] .form-section[data-block-id="block4"] .characteristic-card {
+    background: rgba(159, 146, 117, 0.08); /* Fundo bronze sutil */
+    border-color: rgba(159, 146, 117, 0.2);
+}
+
+/* Bloco 2 (Vantagens) - Cor Azul */
+.tab[data-tab="characteristics"] .form-section[data-block-id="block2"] .characteristic-card {
+    background: rgba(86, 129, 156, 0.08); /* Fundo azul sutil */
+    border-color: rgba(86, 129, 156, 0.2);
+}
+
+/* Bloco 3 (Desvantagens) - Cor Vermelha */
+.tab[data-tab="characteristics"] .form-section[data-block-id="block3"] .characteristic-card {
+    background: rgba(114, 37, 46, 0.08); /* Fundo vermelho sutil */
+    border-color: rgba(114, 37, 46, 0.2);
+}
+
+/* 7. Estilo para o placeholder (copiado da aba Condições) */
+.tab[data-tab="characteristics"] .placeholder-text {
+    text-align: center;
+    opacity: 0.7;
+    font-style: italic;
+    width: 100%;
+    padding: 1rem 0;
 }
 
 /* =================================================================== */

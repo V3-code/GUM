@@ -447,108 +447,148 @@
   </div>
 </div>
     
-{{! ============================================================= }}
-{{!  ABA DE CARACTERÍSTICAS (COM CORREÇÃO NA CLASSE DO ITEM)      }}
-{{! ============================================================= }}
+{{!-- ============================================================= --}}
+{{!--   ABA DE CARACTERÍSTICAS (Layout "Papiro Limpo")              --}}
+{{!-- ============================================================= --}}
 <div class="tab" data-group="primary" data-tab="characteristics">
-  <div class="characteristics-layout-container">
-
-    {{! --- COLUNA DA ESQUERDA --- }}
-    <div class="char-sub-column">
-      {{!-- Bloco Constituição Física (block4) --}}
-      <div class="skill-block" data-block-id="block4">
+    
+    {{!-- Bloco Traços Raciais (block1) --}}
+    <div class="form-section" data-block-id="block1">
         <div class="block-header">
-          <input type="text" name="system.characteristic_blocks.block4.name" value="{{actor.system.characteristic_blocks.block4.name}}"/>
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+            <input type="text" name="system.characteristic_blocks.block1.name" value="{{actor.system.characteristic_blocks.block1.name}}"/>
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
-        <ol class="item-list" data-item-type="characteristic">
-          {{#each (lookup characteristicsByBlock 'block4')}}
-            {{!-- CORREÇÃO: A classe ".item" foi adicionada de volta --}}
-            <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              <span class="item-points">[{{this.system.points}} pts]</span>
-              <div class="item-controls">
-                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-              </div>
-            </li>
-          {{/each}}
+        
+        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each (lookup characteristicsByBlock 'block1')}}
+                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                    <div class="card-info">
+                        {{!-- O <a> envolve o nome para o quick-view --}}
+                        <span class="item-name">
+                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                        </span>
+                        <div class="card-details">
+                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                            {{#if this.system.self_control_roll}}
+                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                    </div>
+                </li>
+            {{/each}}
+            {{#unless (lookup characteristicsByBlock 'block1')}}
+                <li class="placeholder-text">Nenhum item neste grupo.</li>
+            {{/unless}}
         </ol>
-      </div>
-
-      {{!-- Bloco Traços Raciais (block1) --}}
-      <div class="skill-block" data-block-id="block1">
-        <div class="block-header">
-          <input type="text" name="system.characteristic_blocks.block1.name" value="{{actor.system.characteristic_blocks.block1.name}}"/>
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        <ol class="item-list" data-item-type="characteristic">
-          {{#each (lookup characteristicsByBlock 'block1')}}
-            <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              <span class="item-points">[{{this.system.points}} pts]</span>
-              <div class="item-controls">
-                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-              </div>
-            </li>
-          {{/each}}
-        </ol>
-      </div>
     </div>
 
-    {{! --- COLUNA DA DIREITA --- }}
-    <div class="char-sub-column">
-      {{!-- Bloco Vantagens (block2) --}}
-      <div class="skill-block" data-block-id="block2">
+    {{!-- Bloco Vantagens (block2) --}}
+    <div class="form-section" data-block-id="block2">
         <div class="block-header">
-          <input type="text" name="system.characteristic_blocks.block2.name" value="{{actor.system.characteristic_blocks.block2.name}}"/>
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+            <input type="text" name="system.characteristic_blocks.block2.name" value="{{actor.system.characteristic_blocks.block2.name}}"/>
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
-        <ol class="item-list" data-item-type="characteristic">
-          {{#each (lookup characteristicsByBlock 'block2')}}
-            <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              <span class="item-points">[{{this.system.points}} pts]</span>
-              <div class="item-controls">
-                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-              </div>
-            </li>
-          {{/each}}
+        
+        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each (lookup characteristicsByBlock 'block2')}}
+                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                    <div class="card-info">
+                        <span class="item-name">
+                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                        </span>
+                        <div class="card-details">
+                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                            {{#if this.system.self_control_roll}}
+                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                    </div>
+                </li>
+            {{/each}}
+            {{#unless (lookup characteristicsByBlock 'block2')}}
+                <li class="placeholder-text">Nenhum item neste grupo.</li>
+            {{/unless}}
         </ol>
-      </div>
+    </div>
 
-      {{!-- Bloco Desvantagens (block3) --}}
-      <div class="skill-block" data-block-id="block3">
-        <div class="block-header">
-          <input type="text" name="system.characteristic_blocks.block3.name" value="{{actor.system.characteristic_blocks.block3.name}}"/>
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+    {{!-- Bloco Desvantagens (block3) --}}
+    <div class="form-section" data-block-id="block3">
+         <div class="block-header">
+            <input type="text" name="system.characteristic_blocks.block3.name" value="{{actor.system.characteristic_blocks.block3.name}}"/>
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
-        <ol class="item-list" data-item-type="characteristic">
-          {{#each (lookup characteristicsByBlock 'block3')}}
-            <li class="item item-row char-item-row" data-item-id="{{this.id}}" draggable="true">
-              <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              <span class="item-points">[{{this.system.points}} pts]</span>
-              <div class="item-controls">
-                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-              </div>
-            </li>
-          {{/each}}
+        
+        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each (lookup characteristicsByBlock 'block3')}}
+                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                    <div class="card-info">
+                        <span class="item-name">
+                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                        </span>
+                        <div class="card-details">
+                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                            {{#if this.system.self_control_roll}}
+                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                    </div>
+                </li>
+            {{/each}}
+            {{#unless (lookup characteristicsByBlock 'block3')}}
+                <li class="placeholder-text">Nenhum item neste grupo.</li>
+            {{/unless}}
         </ol>
-      </div>
+    </div>
+
+    {{!-- Bloco Especiais (block4) --}}
+    <div class="form-section" data-block-id="block4">
+         <div class="block-header">
+            <input type="text" name="system.characteristic_blocks.block4.name" value="{{actor.system.characteristic_blocks.block4.name}}"/>
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+        
+        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each (lookup characteristicsByBlock 'block4')}}
+                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                    <div class="card-info">
+                        <span class="item-name">
+                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                        </span>
+                        <div class="card-details">
+                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                            {{#if this.system.self_control_roll}}
+                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                    </div>
+                </li>
+            {{/each}}
+            {{#unless (lookup characteristicsByBlock 'block4')}}
+                <li class="placeholder-text">Nenhum item neste grupo.</li>
+            {{/unless}}
+        </ol>
     </div>
     
-  </div>
 </div>
 
 {{! ========================================================= }}
