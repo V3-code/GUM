@@ -255,6 +255,58 @@ Hooks.once('init', async function() {
     // ▼▼▼ BLOCO DE HOOKS CENTRALIZADOS AQUI ▼▼▼
     // ==================================================================
     
+    // ✅ HOOK DE CRIAÇÃO DE ATOR (IMPLEMENTAÇÃO DA IDEIA 4)
+    Hooks.on("createActor", async (actor, options, userId) => {
+        // Só executa para o usuário que criou o ator
+        if (game.user.id !== userId) return;
+        
+        // Só executa se for um 'character' e se a configuração do mundo estiver ativada
+        if (actor.type !== "character" || !game.settings.get("gum", "addDefaultRules")) { //
+            return;
+        }
+    
+        console.log(`GUM | Adicionando regras padrão ao novo ator: ${actor.name}`);
+    
+        // Pega o compêndio. O ID 'Regras' do system.json é prefixado com o ID do sistema 'gum'.
+        const pack = game.packs.get("gum.Regras"); //
+        if (!pack) {
+            return ui.notifications.warn("Compêndio de regras padrão [GUM] Regras (gum.Regras) não encontrado.");
+        }
+    
+        // Carrega todos os itens do compêndio
+        const rules = await pack.getDocuments();
+        if (!rules || rules.length === 0) {
+            console.log("GUM | Compêndio de regras padrão está vazio. Nenhum item adicionado.");
+            return;
+        }
+    
+        // Prepara os dados do item para criar "links" (não cópias)
+        // Usamos o "sourceId" para criar um vínculo. Isso garante que o item
+        // no ator seja sempre atualizado quando o item no compêndio mudar.
+        const newRulesData = rules.map(item => {
+            // 1. Pega uma CÓPIA COMPLETA dos dados do item (incluindo system.when, system.effects, etc.)
+            const itemData = item.toObject(); 
+
+            // 2. Garante que a estrutura de flags exista
+            itemData.flags = itemData.flags || {};
+            itemData.flags.core = itemData.flags.core || {};
+
+            // 3. Adiciona o 'sourceId' (o "vínculo") a esta cópia
+            // Isso nos permitirá encontrar e atualizar este item no futuro
+            itemData.flags.core.sourceId = item.uuid;
+
+            return itemData;
+        });
+
+        // Adiciona os itens (com seus dados E o vínculo) ao ator
+        try {
+            await actor.createEmbeddedDocuments("Item", newRulesData); //
+            console.log(`GUM | ${newRulesData.length} regras padrão (com dados) adicionadas a ${actor.name}.`);
+        } catch (err) {
+            console.error("GUM | Falha ao adicionar regras padrão:", err);
+        }
+    });
+
     // Gatilho principal para quando os dados do ator mudam (HP, etc.)
     Hooks.on("updateActor", (actor, data, options, userId) => {
         if (game.user.id === userId) {

@@ -74,6 +74,14 @@
       "path": "./packs/conditions",
       "type": "Item",
       "private": false
+    },
+    {
+      "name": "Regras",
+      "label": "[GUM] Regras",
+      "system": "gum",
+      "path": "./packs/regras",
+      "type": "Item",
+      "private": false
     }
   ],
   "license": "CC BY-NC-ND 4.0",
