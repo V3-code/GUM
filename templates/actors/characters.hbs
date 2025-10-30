@@ -1368,18 +1368,21 @@
 </div>
 
 {{!-- ============================================================= --}}
-{{!--      ABA DE CONDIÇÕES ("CASTELO SÓLIDO" V3)                   --}}
+{{!--     ABA DE CONDIÇÕES ("CASTELO SÓLIDO" V4 - FINAL)            --}}
 {{!-- ============================================================= --}}
 <div class="tab conditions-tab" data-group="primary" data-tab="conditions">
 
-    <div class="form-section active-effects-section">
-        <h4 class="section-title">Estado Atual</h4>
-        <p class="hint">Efeitos temporários ou passivos que estão afetando o personagem *agora*.</p>
+    {{!-- ============================================================= --}}
+    {{!--     SEÇÃO 1: EFEITOS TEMPORÁRIOS                              --}}
+    {{!-- ============================================================= --}}
+    <div class="form-section temporary-effects-section">
+        <h4 class="section-title">Efeitos Temporários</h4>
+        <p class="hint">Efeitos com duração limitada, como rodadas, segundos ou turnos.</p>
         
-        {{!-- Contêiner com 'flex-wrap' para as pílulas --}}
         <div class="effects-pill-list flex-wrap-container"> 
             
-            {{#each activeEffectsList as |effect|}}
+            {{!-- Itera sobre a nova lista 'temporaryEffects' --}}
+            {{#each temporaryEffects as |effect|}}
                 <div class="effect-pill-enhanced" data-effect-id="{{effect.id}}">
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-info">
@@ -1390,27 +1393,65 @@
                         </div>
                     </div>
                     <div class="pill-controls">
-                        {{!-- ✅ O botão de visualização agora guarda o UUID da FONTE --}}
                         <a class="effect-control quick-view-origin" title="Visualizar Item Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
                         <a class="effect-control" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover Efeito"><i class="fas fa-times"></i></a>
                     </div>
                 </div>
             {{/each}}
             
-            {{#unless activeEffectsList}}
-                <div class="placeholder-text">Nenhum efeito ativo.</div>
+            {{!-- Placeholder para quando a lista estiver vazia --}}
+            {{#unless temporaryEffects}}
+                <div class="placeholder-text">Nenhum efeito temporário.</div>
             {{/unless}}
         </div>
     </div>
 
+    {{!-- ============================================================= --}}
+    {{!--     SEÇÃO 2: EFEITOS PERMANENTES                              --}}
+    {{!-- ============================================================= --}}
+    <div class="form-section permanent-effects-section">
+        <h4 class="section-title">Efeitos Permanentes</h4>
+        <p class="hint">Efeitos passivos de vantagens, equipamentos ou outras fontes sem duração definida.</p>
+        
+        <div class="effects-pill-list flex-wrap-container"> 
+            
+            {{!-- Itera sobre a nova lista 'permanentEffects' --}}
+            {{#each permanentEffects as |effect|}}
+                {{!-- A estrutura da pílula é idêntica à dos temporários --}}
+                <div class="effect-pill-enhanced" data-effect-id="{{effect.id}}">
+                    <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                    <div class="pill-info">
+                        <span class="pill-name">{{effect.name}}</span>
+                        <div class="pill-details">
+                            <span class="pill-duration" title="Duração"><i class="fas fa-hourglass-half"></i> {{effect.durationString}}</span>
+                            <span class="pill-source" title="Fonte: {{effect.fonteNome}}"><i class="{{effect.fonteIcon}}"></i> {{effect.fonteNome}}</span>
+                        </div>
+                    </div>
+                    <div class="pill-controls">
+                        <a class="effect-control quick-view-origin" title="Visualizar Item Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
+                        <a class="effect-control" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover Efeito"><i class="fas fa-times"></i></a>
+                    </div>
+                </div>
+            {{/each}}
+            
+            {{!-- Placeholder para quando a lista estiver vazia --}}
+            {{#unless permanentEffects}}
+                <div class="placeholder-text">Nenhum efeito permanente.</div>
+            {{/unless}}
+        </div>
+    </div>
+
+    {{!-- ============================================================= --}}
+    {{!--     SEÇÃO 3: CONDIÇÕES PASSIVAS (REGRAS)                      --}}
+    {{!-- ============================================================= --}}
+    {{!-- Esta seção foi copiada exatamente do seu código original. --}}
+    {{!-- Ela já estava correta e usava a variável 'installedConditions'. --}}
     <div class="form-section passive-conditions-section">
         <h4 class="section-title">Condições Passivas</h4>
         <p class="hint">Regras do sistema ou cenário que estão prontas para serem ativadas.</p>
         
-        {{!-- ✅ Contêiner com 'flex-wrap' para os cards de regra --}}
         <div class="item-list flex-wrap-container"> 
             {{#each installedConditions as |item|}}
-                {{!-- ✅ O card de regra agora é um 'flex-item' --}}
                 <li class="item condition-card" data-item-id="{{item.id}}">
                     <label class="switch" title="Anular Automação (Desligar)">
                         <input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}>
@@ -1419,7 +1460,6 @@
                     <img src="{{item.img}}" class="item-icon" alt="{{item.name}}"/>
                     <div class="item-name"><h4>{{item.name}}</h4></div>
                     <div class="item-controls">
-                        {{!-- ✅ Este botão de 'visualizar' ABRE A FICHA DE EDIÇÃO (item-edit) --}}
                         <a class="item-control item-edit" title="Editar Regra"><i class="fas fa-edit"></i></a>
                         <a class="item-control item-delete" title="Remover Regra"><i class="fas fa-trash"></i></a>
                     </div>

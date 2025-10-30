@@ -1081,33 +1081,49 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         context.itemsByType = itemsByType;
 
         
-        // ================================================================== //
-        // ✅ LÓGICA FINAL "CASTELO SÓLIDO" PARA A ABA DE CONDIÇÕES (INÍCIO)
+       // ================================================================== //
+        // ✅ LÓGICA "CASTELO SÓLIDO" ATUALIZADA PARA A ABA DE CONDIÇÕES (INÍCIO)
         // ================================================================== //
         
-        // 1. Prepara a lista para "Estado Atual" (Efeitos Ativos)
+        // 1. Prepara listas para Efeitos Ativos (divididos por Duração)
+        const temporaryEffects = [];
+        const permanentEffects = [];
+
+        // Processa todos os ActiveEffects no ator
         const activeEffectsPromises = Array.from(this.actor.effects).map(async (effect) => {
             const effectData = effect.toObject(); 
             effectData.id = effect.id; 
 
             // --- Lógica de Duração ---
             const d = effect.duration;
-            if (d.seconds) { effectData.durationString = `${d.seconds} seg.`; }
+            let isPermanent = true; // Assume permanente até que se prove o contrário
+
+            if (d.seconds) {
+                effectData.durationString = `${d.seconds} seg.`;
+                isPermanent = false;
+            } 
             else if (d.rounds) {
+                // Calcula rodadas restantes
                 const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
                 effectData.durationString = `${remaining} rodada(s)`;
+                isPermanent = false;
             } 
             else if (d.turns) {
+                // Calcula turnos restantes
                 const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
                 effectData.durationString = `${remaining} turno(s)`;
+                isPermanent = false;
             } 
-            else { effectData.durationString = "Permanente"; } 
-
-           let fonteNome = "Origem Desconhecida";
-            let fonteIcon = "fas fa-question-circle"; // Ícone genérico
-            let fonteUuid = null; // UUID da Fonte (Vantagem, Magia, etc.)
+            else {
+                effectData.durationString = "Permanente";
+                isPermanent = true;
+            }
             
-            // Busca o Item Efeito original (para nome e imagem corretos da PÍLULA)
+            // --- Lógica de Identificação da Fonte (seu código original) ---
+            let fonteNome = "Origem Desconhecida";
+            let fonteIcon = "fas fa-question-circle";
+            let fonteUuid = null;
+            
             const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
             if (effectUuid) {
                 const originalEffectItem = await fromUuid(effectUuid);
@@ -1117,14 +1133,12 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                 }
             }
             
-            // Busca o Item Fonte (a Vantagem/Magia que aplicou o efeito)
             if (effect.origin) {
                 const originItem = await fromUuid(effect.origin);
                 if (originItem) {
                     fonteNome = originItem.name;
-                    fonteUuid = originItem.uuid; // Salva o UUID da Fonte
+                    fonteUuid = originItem.uuid; 
 
-                    // ✅ Define o ícone da fonte com base no tipo do Item Fonte
                     switch (originItem.type) {
                         case 'spell': fonteIcon = 'fas fa-magic'; break;
                         case 'power': fonteIcon = 'fas fa-bolt'; break;
@@ -1132,20 +1146,31 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                         case 'disadvantage': fonteIcon = 'fas fa-star'; break;
                         case 'equipment':
                         case 'armor': fonteIcon = 'fas fa-shield-alt'; break;
-                        default: fonteIcon = 'fas fa-archive'; // Ícone para outros itens
+                        default: fonteIcon = 'fas fa-archive';
                     }
                 }
             }
             effectData.fonteNome = fonteNome;
             effectData.fonteIcon = fonteIcon;
-            effectData.fonteUuid = fonteUuid; // Passa o UUID da Fonte para o botão de visualização
+            effectData.fonteUuid = fonteUuid; 
 
-            return effectData;
+            // Adiciona o efeito processado à lista correta
+            if (isPermanent) {
+                permanentEffects.push(effectData);
+            } else {
+                temporaryEffects.push(effectData);
+            }
         });
         
-        context.activeEffectsList = await Promise.all(activeEffectsPromises);
+        // Espera todas as promessas de processamento de efeitos terminarem
+        await Promise.all(activeEffectsPromises);
+
+        // Salva as listas separadas no contexto para o .hbs usar
+        context.temporaryEffects = temporaryEffects;
+        context.permanentEffects = permanentEffects;
 
         // --- 2. Prepara a lista para "Condições Passivas" (Regras de Cenário) ---
+        // Esta parte do seu código original já estava perfeita.
         context.installedConditions = itemsByType.condition || [];
         
         // --- FIM DA NOVA LÓGICA DE CONDIÇÕES ---
