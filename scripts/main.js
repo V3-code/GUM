@@ -1350,17 +1350,6 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         feet: { label: "Pé (-4)", roll: "16", penalty: -4 }
         };
 
-            
-        // Prepara os novos Grupos de Ataque para serem exibidos na ficha
-        const attackGroupsObject = this.actor.system.combat.attack_groups || {};
-        context.attackGroups = Object.entries(attackGroupsObject)
-          .map(([id, group]) => {
-            // Para cada grupo, também preparamos seus ataques internos
-            const attacks = group.attacks ? Object.entries(group.attacks).map(([attackId, attack]) => ({ ...attack, id: attackId })) : [];
-            return { ...group, id: id, attacks: attacks };
-          })
-          .sort((a, b) => (a.sort || 0) - (b.sort || 0));
-
         // Agrupa todos os itens por tipo
         const itemsByType = context.actor.items.reduce((acc, item) => {
           const type = item.type;
@@ -2054,160 +2043,11 @@ html.on('click', '.item-quick-view', async (ev) => {
             }).render(true);
         });
 
-            // ================================================================== //
-            //          LISTENER PARA GRUPOS DE ATAQUE                            //
-            // ================================================================== //    
-        // Listener para ADICIONAR um novo GRUPO de Ataque (ex: uma arma)
-        html.on('click', '.add-attack-group', ev => {
-          ev.preventDefault();
-          new Dialog({
-            title: "Novo Grupo de Ataque",
-            content: `<div class="form-group"><label>Nome do Grupo (ex: Espada Longa, Desarmado):</label><input type="text" name="name" placeholder="Nova Arma"/></div>`,
-            buttons: { create: { icon: '<i class="fas fa-check"></i>', label: "Criar", callback: (html) => {
-              const name = html.find('input[name="name"]').val();
-              if (name) {
-                const newGroup = { name: name, attacks: {}, sort: Date.now() };
-                const newKey = `system.combat.attack_groups.${foundry.utils.randomID()}`;
-                this.actor.update({ [newKey]: newGroup });
-              }
-            }}},
-            default: "create"
-          }).render(true);
-        });
-
-        // Listener para ADICIONAR um novo ATAQUE DENTRO de um grupo
-        html.on('click', '.add-attack-to-group', ev => {
-            ev.preventDefault();
-            const groupId = $(ev.currentTarget).data('group-id');
-            if (!groupId) return;
-
-            // DIÁLOGO DE ESCOLHA
-            new Dialog({
-                title: "Escolha o Tipo de Ataque",
-                content: "<p>Qual tipo de ataque você deseja criar?</p>",
-                buttons: {
-                    melee: {
-                        label: "Corpo a Corpo",
-                        icon: '<i class="fas fa-khanda"></i>',
-                        callback: () => this._openAttackCreationDialog(groupId, "melee")
-                    },
-                    ranged: {
-                        label: "À Distância",
-                        icon: '<i class="fas fa-bullseye"></i>',
-                        callback: () => this._openAttackCreationDialog(groupId, "ranged")
-                    }
-                }
-            }).render(true);
-        });
-
-        // Listener para EDITAR um GRUPO de Ataque
-        html.on('click', '.edit-attack-group', ev => {
-          ev.preventDefault();
-          const groupId = $(ev.currentTarget).closest('.attack-group-card').data('groupId');
-          const group = this.actor.system.combat.attack_groups[groupId];
-          if (!group) return;
-
-          new Dialog({
-              title: `Editar Grupo: ${group.name}`,
-              content: `<div class="form-group"><label>Nome do Grupo:</label><input type="text" name="name" value="${group.name}"/></div>`,
-              buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => {
-                  const newName = html.find('input[name="name"]').val();
-                  this.actor.update({ [`system.combat.attack_groups.${groupId}.name`]: newName });
-              }}}
-          }).render(true);
-        });
-        
-        // Listener para DELETAR um GRUPO de Ataque
-        html.on('click', '.delete-attack-group', ev => {
-          ev.preventDefault();
-          const groupId = $(ev.currentTarget).closest('.attack-group-card').data('groupId');
-          const group = this.actor.system.combat.attack_groups[groupId];
-          if (!group) return;
-
-          Dialog.confirm({
-              title: `Deletar Grupo "${group.name}"`,
-              content: `<p>Você tem certeza? Isso irá apagar o grupo e <strong>todos os ataques dentro dele</strong>.</p>`,
-              yes: () => this.actor.update({ [`system.combat.attack_groups.-=${groupId}`]: null }),
-              no: () => {},
-              defaultYes: false
-          });
-        });
-
-        // Listener para EDITAR um ATAQUE INDIVIDUAL DENTRO de um grupo
-        html.on('click', '.edit-grouped-attack', ev => {
-          ev.preventDefault();
-          const attackId = $(ev.currentTarget).closest('.attack-item').data('attackId');
-          const groupId = $(ev.currentTarget).closest('.attack-group-card').data('groupId');
-          const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
-          if (!attack) return;
-
-          // Reutiliza o diálogo de criação, mas com os dados existentes
-          this._openAttackCreationDialog(groupId, attack.attack_type, { attackId, attackData: attack });
-        });
-
-        // Listener para DELETAR um ATAQUE INDIVIDUAL DENTRO de um grupo
-        html.on('click', '.delete-grouped-attack', ev => {
-          ev.preventDefault();
-          const attackId = $(ev.currentTarget).closest('.attack-item').data('attackId');
-          const groupId = $(ev.currentTarget).closest('.attack-group-card').data('groupId');
-          const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
-          if (!attack) return;
-
-          Dialog.confirm({
-              title: `Deletar Ataque "${attack.name}"`,
-              content: `<p>Você tem certeza que quer deletar este ataque?</p>`,
-              yes: () => this.actor.update({ [`system.combat.attack_groups.${groupId}.attacks.-=${attackId}`]: null }),
-              no: () => {},
-              defaultYes: false
-          });
-        });
-
-        // ================================================================== //
-        //     DRAG & DROP PARA GRUPOS DE ATAQUE                            //
-        // ================================================================== //
-        html.on('dragstart', '.attack-group-card', ev => {
-          const li = ev.currentTarget;
-          const dragData = { type: "AttackGroup", id: li.dataset.groupId };
-          ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-        });
-
-        html.on('drop', '.attack-group-list', async ev => {
-          const data = JSON.parse(ev.originalEvent.dataTransfer.getData("text/plain"));
-          if (data.type !== "AttackGroup") return;
-          
-          const draggedId = data.id;
-          const groups = Object.entries(this.actor.system.combat.attack_groups || {}).map(([id, group]) => ({...group, id}));
-          groups.sort((a,b) => a.sort - b.sort);
-
-          const dropTarget = ev.target.closest('.attack-group-card');
-          let newSort = 0;
-
-          if (dropTarget) {
-            const targetId = dropTarget.dataset.groupId;
-            if (targetId === draggedId) return;
-            const targetGroup = groups.find(g => g.id === targetId);
-            const targetIndex = groups.findIndex(g => g.id === targetId);
-            const targetBoundingRect = dropTarget.getBoundingClientRect();
-            const dropInTopHalf = ev.clientY < (targetBoundingRect.top + targetBoundingRect.height / 2);
-
-            if (dropInTopHalf) {
-              const prevGroup = groups[targetIndex - 1];
-              newSort = (targetGroup.sort + (prevGroup ? prevGroup.sort : 0)) / 2;
-            } else {
-              const nextGroup = groups[targetIndex + 1];
-              newSort = (targetGroup.sort + (nextGroup ? nextGroup.sort : targetGroup.sort + 2000)) / 2;
-            }
-          } else {
-            newSort = (groups.pop()?.sort || 0) + 1000;
-          }
-          
-          await this.actor.update({ [`system.combat.attack_groups.${draggedId}.sort`]: newSort });
-        });
-        
+       
             // ================================================================== //
             //          LISTENER PARA BLOCOS COLAPSÁVEIS (SOBREVIVÊNCIA)          //
             // ================================================================== //
-          html.on('click', '.collapsible-header', ev => {
+        html.on('click', '.collapsible-header', ev => {
           const header = $(ev.currentTarget);
           const parentBlock = header.closest('.collapsible-block');
 
@@ -2221,7 +2061,7 @@ html.on('click', '.item-quick-view', async (ev) => {
           // ================================================================== //
           //          LISTENER PARA MARCADORES (SEM REDESENHAR A FICHA)         //
           // ================================================================== //
-          html.on('click', '.vitals-tracker .tracker-dot', async ev => {
+        html.on('click', '.vitals-tracker .tracker-dot', async ev => {
           ev.preventDefault();
           const dot = $(ev.currentTarget);
           const tracker = dot.closest('.vitals-tracker');
@@ -2240,7 +2080,7 @@ html.on('click', '.item-quick-view', async (ev) => {
         });
         
     // Listener para o botão "Editar Perfil" (SEGUINDO O PADRÃO QUE FUNCIONA)
-    html.on('click', '.edit-biography-details', ev => {
+        html.on('click', '.edit-biography-details', ev => {
         ev.preventDefault();
         const details = this.actor.system.details;
 
@@ -2293,7 +2133,7 @@ html.on('click', '.item-quick-view', async (ev) => {
             },
             default: 'save'
         }).render(true);
-    });
+        });
         // Listener para salvar alterações diretas nos inputs de Reservas de Energia (VERSÃO CORRIGIDA)
         html.on('change', '.reserve-card input[type="number"]', ev => {
             const input = ev.currentTarget;
@@ -2376,64 +2216,6 @@ html.on('click', '.item-quick-view', async (ev) => {
                 },
                 default: 'save'
             }).render(true);
-        });
-
-    // ================================================================== //
-        //       LÓGICA DE DRAG & DROP PARA A LISTA DE ATAQUES (CUSTOM)      //
-        // ================================================================== //
-
-        // Quando começa a arrastar um ATAQUE
-        html.on('dragstart', 'li.attack-item', ev => {
-          const li = ev.currentTarget;
-          // Passamos um tipo customizado e o ID do ataque
-          const dragData = {
-            type: "AttackObject",
-            id: li.dataset.attackId
-          };
-          ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-        });
-
-        // Permite que a lista de ataques receba o drop
-        html.on('dragover', '.attacks-list-box .item-list', ev => {
-          ev.preventDefault();
-        });
-
-        // Quando solta um ATAQUE na lista
-        html.on('drop', '.attacks-list-box .item-list', async ev => {
-          ev.preventDefault();
-          const data = JSON.parse(ev.originalEvent.dataTransfer.getData("text/plain"));
-          if (data.type !== "AttackObject") return;
-
-          const draggedId = data.id;
-          const attacks = Object.entries(this.actor.system.combat.attacks).map(([id, attack]) => ({...attack, id}));
-          attacks.sort((a,b) => a.sort - b.sort);
-
-          const dropTarget = ev.target.closest('.attack-item');
-          let newSort = 0;
-
-          if (dropTarget) {
-            const targetId = dropTarget.dataset.attackId;
-            const targetAttack = attacks.find(a => a.id === targetId);
-            const targetIndex = attacks.findIndex(a => a.id === targetId);
-
-            const targetBoundingRect = dropTarget.getBoundingClientRect();
-            const dropInTopHalf = ev.clientY < (targetBoundingRect.top + targetBoundingRect.height / 2);
-
-            if (dropInTopHalf) {
-              const prevAttack = attacks[targetIndex - 1];
-              newSort = (targetAttack.sort + (prevAttack ? prevAttack.sort : 0)) / 2;
-            } else {
-              const nextAttack = attacks[targetIndex + 1];
-              newSort = (targetAttack.sort + (nextAttack ? nextAttack.sort : targetAttack.sort + 2000)) / 2;
-            }
-          } else {
-            newSort = (attacks.pop()?.sort || 0) + 1000;
-          }
-
-          // ATUALIZAÇÃO CUSTOMIZADA: Modifica o 'sort' do objeto de ataque específico
-          await this.actor.update({
-            [`system.combat.attacks.${draggedId}.sort`]: newSort
-          });
         });
 
     // ================================================================== //
@@ -2549,150 +2331,6 @@ html.on('click', '.item-quick-view', async (ev) => {
 
         // --- Listeners para elementos estáticos (botões de adicionar, etc.) ---
         html.find('.add-combat-meter').click(ev => { const newMeter = { name: "Novo Registro", current: 10, max: 10 }; const newKey = `system.combat.combat_meters.${foundry.utils.randomID()}`; this.actor.update({ [newKey]: newMeter }); });
-      
-        // Listener para ADICIONAR um ataque Corpo a Corpo
-        html.on('click', '.add-melee-attack', ev => {
-          ev.preventDefault();
-          new Dialog({
-            title: "Criar Ataque Corpo a Corpo",
-            content: `
-              <form>
-                <div class="form-group"><label>Nome do Ataque:</label><input type="text" name="name" value="Novo Ataque"/></div>
-                <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="Perícia"/></div>
-                <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="10"/></div>
-                <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="1d6"/></div>
-                <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="cr"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="reach" value="C,1"/></div>
-                <div class="form-group"><label>Aparar:</label><input type="number" name="defense" value="8"/></div>
-              </form>
-            `,
-            buttons: { create: { icon: '<i class="fas fa-check"></i>', label: "Criar", callback: (html) => {
-                  const form = html.find("form")[0];
-                  let formData = new FormDataExtended(form).object;
-                  formData.attack_type = "melee"; // Adiciona o tipo ao salvar
-                  formData.sort = Date.now();
-                  const newKey = `system.combat.attacks.${foundry.utils.randomID()}`;
-                  this.actor.update({ [newKey]: formData });
-                }
-              }
-            }
-          }).render(true);
-        });
-
-        // Listener para ADICIONAR um ataque À Distância
-        html.on('click', '.add-ranged-attack', ev => {
-          ev.preventDefault();
-          new Dialog({
-            title: "Criar Ataque à Distância",
-            content: `
-              <form>
-                <div class="form-group"><label>Nome do Ataque:</label><input type="text" name="name" value="Novo Ataque"/></div>
-                <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="Perícia"/></div>
-                <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="10"/></div>
-                <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="1d6"/></div>
-                <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="pi"/></div>
-                <div class="form-group"><label>Prec:</label><input type="text" name="accuracy" value="1"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="range" value="100/1500"/></div>
-                <div class="form-group"><label>CdT:</label><input type="text" name="rof" value="1"/></div>
-                <div class="form-group"><label>Tiros:</label><input type="text" name="shots" value="30 (3)"/></div>
-                <div class="form-group"><label>RCO:</label><input type="text" name="rcl" value="2"/></div>
-              </form>
-            `,
-            buttons: { create: { icon: '<i class="fas fa-check"></i>', label: "Criar", callback: (html) => {
-                  const form = html.find("form")[0];
-                  let formData = new FormDataExtended(form).object;
-                  formData.attack_type = "ranged"; // Adiciona o tipo ao salvar
-                  formData.sort = Date.now();
-                  const newKey = `system.combat.attacks.${foundry.utils.randomID()}`;
-                  this.actor.update({ [newKey]: formData });
-                }
-              }
-            }
-          }).render(true);
-        });
-
-        // Listener para EDITAR um ataque 
-    // ============== NOVO LISTENER DE EDIÇÃO DE ATAQUE ================
-html.on('click', '.edit-attack', ev => {
-    ev.preventDefault();
-    const attackId = $(ev.currentTarget).closest(".attack-item").data("attackId");
-    // CORREÇÃO: O caminho para os ataques foi ajustado
-    const attack = this.actor.system.combat.attacks_groups[groupId]?.attacks[attackId];
-
-    if (!attack) return;
-
-    // Define o conteúdo do formulário baseado no tipo de ataque
-    const getFormContent = (attackData) => {
-        const commonFields = `
-            <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${attackData.name || ''}"/></div>
-            <div class="form-group"><label>Perícia:</label><input type="text" name="skill_name" value="${attackData.skill_name || ''}"/></div>
-            <div class="form-group"><label>NH:</label><input type="number" name="skill_level" value="${attackData.skill_level || 0}"/></div>
-            <div class="form-group"><label>Dano:</label><input type="text" name="damage_formula" value="${attackData.damage_formula || ''}"/></div>
-            <div class="form-group"><label>Tipo:</label><input type="text" name="damage_type" value="${attackData.damage_type || ''}"/></div>
-        `;
-
-        let specificFields = '';
-        if (attackData.attack_type === "melee") {
-            specificFields = `
-                <div class="form-group"><label>Alcance:</label><input type="text" name="reach" value="${attackData.reach || ''}"/></div>
-                <div class="form-group"><label>Aparar:</label><input type="number" name="defense" value="${attackData.defense || 0}"/></div>
-            `;
-        } else { // Ranged
-            specificFields = `
-                <div class="form-group"><label>Prec:</label><input type="text" name="accuracy" value="${attackData.accuracy || ''}"/></div>
-                <div class="form-group"><label>Alcance:</label><input type="text" name="range" value="${attackData.range || ''}"/></div>
-                <div class="form-group"><label>CdT:</label><input type="text" name="rof" value="${attackData.rof || ''}"/></div>
-                <div class="form-group"><label>Tiros:</label><input type="text" name="shots" value="${attackData.shots || ''}"/></div>
-                <div class="form-group"><label>RCO:</label><input type="text" name="rcl" value="${attackData.rcl || ''}"/></div>
-            `;
-        }
-        
-        // --- SEÇÃO DE DANO AVANÇADO ---
-        const advancedDamageFields = `
-            <details>
-                <summary>Opções Avançadas de Dano</summary>
-                <div class="advanced-damage-fields">
-                    <div class="form-group">
-                        <label title="Ex: (2), (3), (0.5)">Divisor de Armadura</label>
-                        <input type="number" step="0.1" name="armor_divisor" value="${attackData.armor_divisor || 1}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Dano de Acompanhamento</label>
-                        <input type="text" name="follow_up_damage" value="${attackData.follow_up_damage || ''}" placeholder="Ex: 1d que"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Dano de Fragmentação</label>
-                        <input type="text" name="fragmentation_damage" value="${attackData.fragmentation_damage || ''}" placeholder="Ex: 2d-1 cort"/>
-                    </div>
-                </div>
-            </details>
-        `;
-
-        return `<form>${commonFields}${specificFields}<hr>${advancedDamageFields}</form>`;
-    };
-
-    new Dialog({
-        title: `Editar Ataque: ${attack.name}`,
-        content: getFormContent(attack),
-        buttons: {
-            save: {
-                icon: '<i class="fas fa-save"></i>',
-                label: "Salvar",
-                callback: (html) => {
-                    const form = html.find("form")[0];
-                    const formData = new FormDataExtended(form).object;
-                    const updateKey = `system.combat.attacks_groups.${groupId}.attacks.${attackId}`;
-                    this.actor.update({ [updateKey]: formData });
-                }
-            }
-        },
-        default: "save"
-    }).render(true);
-});
-      
-        html.on('click', '.delete-attack', ev => { const attackId = $(ev.currentTarget).closest(".attack-item").data("attackId"); Dialog.confirm({ title: "Deletar Ataque", content: "<p>Você tem certeza que quer deletar este ataque?</p>", yes: () => { const deleteKey = `system.combat.attacks.-=${attackId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
-
-
         html.find('.edit-casting-ability').click(ev => { const ability = this.actor.system.casting_ability; new Dialog({ title: "Editar Habilidade de Conjuração", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${ability.name}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${ability.points}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${ability.level}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${ability.source}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${ability.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), points: parseInt(html.find('input[name="points"]').val()), level: parseInt(html.find('input[name="level"]').val()), source: html.find('input[name="source"]').val(), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.casting_ability": newData }); } } }, default: "save" }).render(true); });
         html.find('.edit-power-source').click(ev => { const power = this.actor.system.power_source; new Dialog({ title: "Editar Fonte de Poder", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${power.name}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${power.level}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${power.points}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${power.source}"/></div><div class="form-group"><label>Talento de Poder:</label><input type="number" name="power_talent" value="${power.power_talent}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${power.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), level: parseInt(html.find('input[name="level"]').val()), points: parseInt(html.find('input[name="points"]').val()), source: html.find('input[name="source"]').val(), power_talent: parseInt(html.find('input[name="power_talent"]').val()), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.power_source": newData }); } } }, default: "save" }).render(true); });
         
@@ -3573,12 +3211,8 @@ html.on('click', '.edit-attack', ev => {
           });
         html.on('click', '.delete-combat-meter', ev => { const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); Dialog.confirm({ title: "Deletar Registro", content: "<p>Você tem certeza que quer deletar este registro?</p>", yes: () => { const deleteKey = `system.combat.combat_meters.-=${meterId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
           
-        
-        
-         
-
 // ================================================================== //
-//   LISTENER DE ROLAGEM DE DANO (VERSÃO FINAL E UNIFICADA)           //
+//   LISTENER DE ROLAGEM DE DANO (VERSÃO LIMPA - PÓS FASE 1)           //
 // ================================================================== //
 
 html.on('click', '.rollable-damage', async (ev) => {
@@ -3586,188 +3220,185 @@ html.on('click', '.rollable-damage', async (ev) => {
     const element = ev.currentTarget;
     let normalizedAttack;
 
+    // A única fonte de verdade agora é um data-item-id
     const itemId = $(element).closest(".item-row, .attack-item").data("itemId");
 
-    if (itemId) { // O clique veio de um item (Magia, Poder, etc.)
-        const item = this.actor.items.get(itemId);
-        if (!item || !item.system.damage?.formula) {
-            return ui.notifications.warn("Esta habilidade não possui uma fórmula de dano válida.");
-        }
-        normalizedAttack = {
-            name: item.name,
-            formula: item.system.damage.formula,
-            type: item.system.damage.type,
-            armor_divisor: item.system.damage.armor_divisor,
-            follow_up_damage: item.system.damage.follow_up_damage,
-            fragmentation_damage: item.system.damage.fragmentation_damage,
-            onDamageEffects: item.system.onDamageEffects || {},
-            generalConditions: item.system.generalConditions || {}
-        };
-
-    } else { 
-        // Lógica para ataques manuais (pode ser expandida no futuro)
-        const attackId = $(element).closest(".attack-item").data("attackId");
-        const groupId = $(element).closest('.attack-group-card').data('groupId');
-        const attack = this.actor.system.combat.attack_groups[groupId]?.attacks[attackId];
-        if (!attack || !attack.damage_formula) {
-            return ui.notifications.warn("Este ataque não possui uma fórmula de dano válida.");
-        }
-        // Traduz os dados do ataque manual para o nosso formato padronizado
-        normalizedAttack = {
-            name: attack.name,
-            formula: attack.damage_formula, // A única diferença de nome real está aqui
-            type: attack.damage_type,
-            armor_divisor: attack.armor_divisor,
-            follow_up_damage: attack.follow_up_damage,
-            fragmentation_damage: attack.fragmentation_damage,
-            onDamageEffects: attack.onDamageEffects || {}, // Prepara para o futuro
-            generalConditions: attack.generalConditions || {}
-        };
+    // ✅ A CORREÇÃO PRINCIPAL ESTÁ AQUI ✅
+    // Se não houver 'itemId', nós paramos a função AGORA.
+    // Isso impede o erro "cannot read properties of undefined".
+    if (!itemId) {
+        console.warn("GUM | Rolagem de dano clicada, mas nenhum 'data-item-id' foi encontrado no elemento.");
+        return;
     }
+
+    // Como sabemos que 'itemId' existe, podemos continuar com segurança
+    const item = this.actor.items.get(itemId);
+    if (!item) return ui.notifications.error("Item não encontrado para esta rolagem de dano.");
+
+    // NOTA: Esta lógica (item.system.damage) SÓ FUNCIONA para Magias e Poderes.
+    // Na Fase 2, vamos expandir isso para ler também os ataques de Equipamentos.
+    // Por enquanto, isso é o que queremos para testar a Fase 1.
+    const damageData = item.system.damage; 
+
+    if (!damageData?.formula) {
+        return ui.notifications.warn("Este item não possui uma fórmula de dano (item.system.damage.formula) válida.");
+    }
+
+    // O 'if (itemId)' não é mais necessário, pois já tratamos disso
+    normalizedAttack = {
+        name: item.name,
+        formula: damageData.formula,
+        type: damageData.type,
+        armor_divisor: damageData.armor_divisor,
+        follow_up_damage: damageData.follow_up_damage,
+        fragmentation_damage: damageData.fragmentation_damage,
+        onDamageEffects: item.system.onDamageEffects || {},
+        generalConditions: item.system.generalConditions || {}
+    };
+    
     // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
 
 
     // A partir daqui, a função só usa o objeto 'normalizedAttack', que sempre terá a mesma estrutura.
-const performDamageRoll = async (modifier = 0) => {
-    let totalRolls = [];
+    const performDamageRoll = async (modifier = 0) => {
+        let totalRolls = [];
     
-    // Rola o dano principal
-    const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
-    const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
-    const mainRoll = new Roll(mainRollFormula);
-    await mainRoll.evaluate();
-    totalRolls.push(mainRoll);
+        // Rola o dano principal
+        const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
+        const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
+        const mainRoll = new Roll(mainRollFormula);
+        await mainRoll.evaluate();
+        totalRolls.push(mainRoll);
 
-    // Rola os danos extras, se existirem
-    let followUpRoll, fragRoll;
-    if (normalizedAttack.follow_up_damage?.formula) {
-        followUpRoll = new Roll(normalizedAttack.follow_up_damage.formula);
-        await followUpRoll.evaluate();
-        totalRolls.push(followUpRoll);
-    }
-    if (normalizedAttack.fragmentation_damage?.formula) {
-        fragRoll = new Roll(normalizedAttack.fragmentation_damage.formula);
-        await fragRoll.evaluate();
-        totalRolls.push(fragRoll);
-    }
-    
-
-// Monta a 'pílula' de fórmula completa no topo do card
-let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
-if (followUpRoll) {
-    let followUpText = `${normalizedAttack.follow_up_damage.formula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ''} ${normalizedAttack.follow_up_damage.type || ''}`;
-    fullFormula += ` + ${followUpText}`;
-}
-if (fragRoll) {
-    let fragText = `${normalizedAttack.fragmentation_damage.formula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ''} ${normalizedAttack.fragmentation_damage.type || ''}`;
-    fullFormula += ` [${fragText}]`;
-}
-
-    // ✅ INÍCIO DA MUDANÇA PRINCIPAL: MONTAGEM DO PACOTE DE DADOS ✅
-    const damagePackage = {
-        attackerId: this.actor.id,
-        sourceName: normalizedAttack.name,
-        main: {
-            total: mainRoll.total,
-            type: normalizedAttack.type || '',
-            armorDivisor: normalizedAttack.armor_divisor || 1
-        },
-        onDamageEffects: normalizedAttack.onDamageEffects,
-        generalConditions: normalizedAttack.generalConditions
-    };
-    if (followUpRoll) {
-        damagePackage.followUp = {
-            total: followUpRoll.total,
-            type: normalizedAttack.follow_up_damage.type || '',
-            armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
-        };
-    }
-    if (fragRoll) {
-        damagePackage.fragmentation = {
-            total: fragRoll.total,
-            type: normalizedAttack.fragmentation_damage.type || '',
-            armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
-        };
-    }
-    // --- FIM DA MONTAGEM DO PACOTE ---
-
-
-    // Monta o HTML do card de dano
-    let flavor = `
-        <div class="gurps-damage-card">
-            <header class="card-header"><h3>${normalizedAttack.name || 'Dano'}</h3></header>
-            <div class="card-formula-container"><span class="formula-pill">${fullFormula}</span></div>
-            <div class="card-content">
-                <div class="card-main-flex">
-                    <div class="roll-column">
-                        <span class="column-label">Dados</span>
-                        <div class="individual-dice-damage">
-                            ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
-                        </div>
-                    </div>
-                    <div class="column-separator"></div>
-                    <div class="target-column">
-                        <span class="column-label">Dano Total</span>
-                        <div class="damage-total">
-                            <span class="damage-value">${mainRoll.total}</span>
-                            <span class="damage-type">${normalizedAttack.type || ''}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    `;
-
-    // ✅ NOVA ESTRUTURA PARA DANOS EXTRAS ✅
-    const hasExtraDamage = followUpRoll || fragRoll;
-    if (hasExtraDamage) {
-        flavor += `<footer class="card-footer">`;
+        // Rola os danos extras, se existirem
+        let followUpRoll, fragRoll;
+        if (normalizedAttack.follow_up_damage?.formula) {
+            followUpRoll = new Roll(normalizedAttack.follow_up_damage.formula);
+            await followUpRoll.evaluate();
+            totalRolls.push(followUpRoll);
+        }
+        if (normalizedAttack.fragmentation_damage?.formula) {
+            fragRoll = new Roll(normalizedAttack.fragmentation_damage.formula);
+            await fragRoll.evaluate();
+            totalRolls.push(fragRoll);
+        }
         
-        const createExtraDamageBlock = (roll, data, label) => {
-            return `
-                <div class="extra-damage-block">
-                    <div class="extra-damage-label">${label}</div>
-                    <div class="extra-damage-roll">
-                        <span class="damage-value">${roll.total}</span>
-                        <span class="damage-type">${data.type || ''}</span>
-                    </div>
-                </div>
-            `;
-        };
-
+        // Monta a 'pílula' de fórmula completa no topo do card
+        let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
         if (followUpRoll) {
-            flavor += createExtraDamageBlock(followUpRoll, normalizedAttack.follow_up_damage, "Acompanhamento");
+            let followUpText = `${normalizedAttack.follow_up_damage.formula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ''} ${normalizedAttack.follow_up_damage.type || ''}`;
+            fullFormula += ` + ${followUpText}`;
         }
         if (fragRoll) {
-            flavor += createExtraDamageBlock(fragRoll, normalizedAttack.fragmentation_damage, "Fragmentação");
+            let fragText = `${normalizedAttack.fragmentation_damage.formula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ''} ${normalizedAttack.fragmentation_damage.type || ''}`;
+            fullFormula += ` [${fragText}]`;
         }
 
-    // A tag de fechamento do rodapé vem aqui, FORA dos ifs individuais.
-    flavor += `</footer>`;
-}
-    
-    // ✅ BOTÃO ATUALIZADO: com o pacote de dados JSON em um rodapé separado ✅
-    flavor += `
-        <footer class="card-actions">
-            <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-                <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
-            </button>
-        </footer>
-    `;
+        // MONTAGEM DO PACOTE DE DADOS
+        const damagePackage = {
+            attackerId: this.actor.id,
+            sourceName: normalizedAttack.name,
+            main: {
+                total: mainRoll.total,
+                type: normalizedAttack.type || '',
+                armorDivisor: normalizedAttack.armor_divisor || 1
+            },
+            onDamageEffects: normalizedAttack.onDamageEffects,
+            generalConditions: normalizedAttack.generalConditions
+        };
+        if (followUpRoll) {
+            damagePackage.followUp = {
+                total: followUpRoll.total,
+                type: normalizedAttack.follow_up_damage.type || '',
+                armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
+            };
+        }
+        if (fragRoll) {
+            damagePackage.fragmentation = {
+                total: fragRoll.total,
+                type: normalizedAttack.fragmentation_damage.type || '',
+                armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
+            };
+        }
+        // --- FIM DA MONTAGEM DO PACOTE ---
 
-    flavor += `</div>`; // Fecha o .gurps-damage-card
 
-    ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: flavor,
-        rolls: totalRolls,
-        type: CONST.CHAT_MESSAGE_TYPES.ROLL
-    });
-};
+        // Monta o HTML do card de dano
+        let flavor = `
+            <div class="gurps-damage-card">
+                <header class="card-header"><h3>${normalizedAttack.name || 'Dano'}</h3></header>
+                <div class="card-formula-container"><span class="formula-pill">${fullFormula}</span></div>
+                <div class="card-content">
+                    <div class="card-main-flex">
+                        <div class="roll-column">
+                            <span class="column-label">Dados</span>
+                            <div class="individual-dice-damage">
+                                ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="column-separator"></div>
+                        <div class="target-column">
+                            <span class="column-label">Dano Total</span>
+                            <div class="damage-total">
+                                <span class="damage-value">${mainRoll.total}</span>
+                                <span class="damage-type">${normalizedAttack.type || ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        `;
+
+        // NOVA ESTRUTURA PARA DANOS EXTRAS
+        const hasExtraDamage = followUpRoll || fragRoll;
+        if (hasExtraDamage) {
+            flavor += `<footer class="card-footer">`;
+            
+            const createExtraDamageBlock = (roll, data, label) => {
+                return `
+                    <div class="extra-damage-block">
+                        <div class="extra-damage-label">${label}</div>
+                        <div class="extra-damage-roll">
+                            <span class="damage-value">${roll.total}</span>
+                            <span class="damage-type">${data.type || ''}</span>
+                        </div>
+                    </div>
+                `;
+            };
+
+            if (followUpRoll) {
+                flavor += createExtraDamageBlock(followUpRoll, normalizedAttack.follow_up_damage, "Acompanhamento");
+            }
+            if (fragRoll) {
+                flavor += createExtraDamageBlock(fragRoll, normalizedAttack.fragmentation_damage, "Fragmentação");
+            }
+
+            flavor += `</footer>`;
+        }
+        
+        // BOTÃO ATUALIZADO
+        flavor += `
+            <footer class="card-actions">
+                <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+                    <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+                </button>
+            </footer>
+        `;
+
+        flavor += `</div>`; // Fecha o .gurps-damage-card
+
+        ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            content: flavor,
+            rolls: totalRolls,
+            
+        });
+    };
     
-        // A sua lógica para abrir o diálogo de modificador com Shift+Click permanece a mesma
-        if (ev.shiftKey) {
-        // Encontra o 'label' do ataque para usar no título do diálogo
-        const label = attack.name || "Ataque";
+    // Lógica para abrir o diálogo de modificador com Shift+Click
+    if (ev.shiftKey) {
+        
+        // ✅ SEGUNDA CORREÇÃO: Usar 'normalizedAttack.name'
+        const label = normalizedAttack.name || "Ataque"; // O 'attack' antigo não existe mais
         
         new Dialog({
             title: "Modificador de Dano",
@@ -3775,7 +3406,6 @@ if (fragRoll) {
                 <div class="modifier-dialog" style="text-align: center;">
                     <p>Insira ou clique nos modificadores para o dano de <strong>${label}</strong>:</p>
                     <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px; width: 80px;"/>
-                    
                     <div class="modifier-grid" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
                         <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
                             <button type="button" class="mod-button" data-mod="-5">-5</button>
@@ -3823,7 +3453,7 @@ if (fragRoll) {
     } else {
         performDamageRoll(0); // Rola o dano diretamente se não houver Shift
     }
-    });
+});
 
 
     // ================================================================== //
