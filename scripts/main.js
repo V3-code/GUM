@@ -1532,13 +1532,23 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
             const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
-                // Tenta encontrar a perícia correspondente no ator
-                const skill = this.actor.items.find(i => i.type === 'skill' && i.name === attack.skill_name);
+                let base_nh = 10; // Padrão se nada for encontrado
+                const skillName = (attack.skill_name || "").toLowerCase().trim();
+                const attributes = context.actor.system.attributes;
+
+                // 1. Tenta encontrar uma Perícia
+                const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
+                
+                if (skill) {
+                    base_nh = skill.system.final_nh || 10;
+                } 
+                // 2. Se não achar, tenta encontrar um Atributo (dx, st, iq, ht, etc.)
+                else if (attributes[skillName]) {
+                    base_nh = attributes[skillName].final || 10;
+                }
                 
                 // Calcula o NH Final
-                // Se a perícia existir, usa o NH dela. Senão, usa 10 como base.
-                // Adiciona o modificador do próprio ataque.
-                const final_nh = (skill ? skill.system.final_nh : 10) + (attack.skill_level_mod || 0);
+                const final_nh = base_nh + (attack.skill_level_mod || 0);
 
                 return {
                     ...attack, // Traz todos os campos do 'attack_melee' (damage_formula, reach, parry, etc.)
@@ -1554,8 +1564,23 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
 
             // 3. Processa os Ataques à Distância (Ranged)
             const rangedAttacks = Object.entries(item.system.ranged_attacks || {}).map(([id, attack]) => {
-                const skill = this.actor.items.find(i => i.type === 'skill' && i.name === attack.skill_name);
-                const final_nh = (skill ? skill.system.final_nh : 10) + (attack.skill_level_mod || 0);
+                let base_nh = 10; // Padrão se nada for encontrado
+                const skillName = (attack.skill_name || "").toLowerCase().trim();
+                const attributes = context.actor.system.attributes;
+
+                // 1. Tenta encontrar uma Perícia
+                const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
+                
+                if (skill) {
+                    base_nh = skill.system.final_nh || 10;
+                } 
+                // 2. Se não achar, tenta encontrar um Atributo (dx, st, iq, ht, etc.)
+                else if (attributes[skillName]) {
+                    base_nh = attributes[skillName].final || 10;
+                }
+                
+                // Calcula o NH Final
+                const final_nh = base_nh + (attack.skill_level_mod || 0);
 
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
@@ -2373,9 +2398,20 @@ activateListeners(html) {
 
     // --- Listeners para elementos dinâmicos (dentro de listas) ---
 html.on('click', '.item-edit', ev => {
-    // Pega o ID diretamente do botão que foi clicado (ex: a engrenagem)
-    const itemId = $(ev.currentTarget).data("item-id"); 
-    if (!itemId) return; // Segurança
+    const button = $(ev.currentTarget);
+    
+    // 1. Tenta pegar o ID do próprio botão (para a engrenagem do ataque)
+    let itemId = button.data("item-id"); 
+
+    if (!itemId) {
+        // 2. Se não encontrar, procura no 'li.item' pai (para magias, vantagens, etc.)
+        itemId = button.closest('.item').data("itemId");
+    }
+    
+    if (!itemId) {
+         console.error("GUM | .item-edit clicado, mas nenhum itemId encontrado.");
+         return; 
+    }
 
     const item = this.actor.items.get(itemId);
     if (item) {
@@ -3273,7 +3309,23 @@ html.on('click', '.item-edit', ev => {
                 let totalRolls = [];
             
                 // Rola o dano principal
-                const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
+                // 1. Pega a fórmula do ataque (ex: "gdp+1" ou "gdb")
+        // 1. Pega a fórmula do ataque (ex: "gdp+1" ou "gdb")
+        let formula = (normalizedAttack.formula || "0").toLowerCase();
+
+        // 2. Pega as fórmulas de GdP e GdB do Ator
+        const thrust = (this.actor.system.attributes.thrust_damage || "0").toLowerCase();
+        const swing = (this.actor.system.attributes.swing_damage || "0").toLowerCase();
+
+        // 3. Substitui "gdp" e "gdb" pelas fórmulas reais do ator
+        // Os parênteses são cruciais para a ordem da operação (ex: (1d6-1)+1)
+        formula = formula.replace(/gdp/g, `(${thrust})`);
+        formula = formula.replace(/gdb/g, `(${swing})`);
+
+        // 4. CORREÇÃO: A regex agora é case-insensitive ('i') e não para no primeiro espaço.
+        // Ela pega tudo que for matemático (incluindo 'd') até encontrar texto (como 'cor', 'pi', etc.)
+        const match = formula.match(/^([0-9dDkK+\-/*\s()]+)/i);
+        const cleanedFormula = match ? match[1].trim() : "0";
                 const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
                 const mainRoll = new Roll(mainRollFormula);
                 await mainRoll.evaluate();
@@ -3827,7 +3879,7 @@ activateListeners(html) {
                 "mode": "Novo Ataque L.D.",
                 "skill_name": "",
                 "skill_level_mod": 0,
-                "damage_formula": "1d",
+                "damage_formula": "1d6",
                 "damage_type": "pi",
                 "armor_divisor": 1,
                 "accuracy": "0",
