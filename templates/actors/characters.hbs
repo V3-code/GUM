@@ -1228,8 +1228,8 @@
 
 </div>
 
- {{!-- Bloco de Registros de Combate (agora no topo da coluna) --}}
-      <div class="gum-block combat-meters-box">
+{{!-- Bloco de Registros de Combate (agora no topo da coluna) --}}
+<div class="gum-block combat-meters-box">
         <div class="block-header">
           <h4>Registros de Combate</h4>
           <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
@@ -1245,7 +1245,108 @@
         </div>
       </div>
 
-      </div>
+{{!-- ================================================================== --}}
+{{!-- 	FASE 3.2: A NOVA LISTA DE ATAQUES (LÊ APENAS DE ITENS) 	     --}}
+{{!-- ================================================================== --}}
+<div class="attacks-list-box gum-block">
+    <div class="block-header">
+        <h4>Lista de Ataques (de Itens Equipados)</h4>
+        {{!-- Não há mais um botão "+ Adicionar Grupo" aqui. --}}
+        {{!-- Os grupos são adicionados ao equipar um item. --}}
+    </div>
+
+    <ol class="attack-group-list">
+        {{#each attackGroups as |group|}}
+        {{!-- O 'group' aqui é o seu Item (ex: "Espada Longa") --}}
+        <li class="attack-group-card item-generated" data-group-id="{{group.id}}" draggable="false">
+            
+            <div class="group-header">
+                {{!-- O nome do Item vira o título do grupo --}}
+                <span class="group-name">
+                    <i class="fas fa-shield-alt" title="Ataque do Item '{{group.name}}'"></i> 
+                    {{group.name}}
+                </span>
+                
+                <div class="group-controls">
+                    {{!-- Este botão abre a *Ficha do Item* para edição --}}
+                    <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
+            </div>
+
+            <ol class="attacks-in-group">
+                {{#each group.attacks as |attack|}}
+                {{!-- O 'attack' aqui é o Modo de Uso (ex: "Balanço", "Estocada") --}}
+                <li class="item-row attack-item" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+                    
+                    <span class="attack-type-icon">
+                        {{#if (eq attack.attack_type "melee")}}<i class="fas fa-khanda" title="Corpo a Corpo"></i>{{/if}}
+                        {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+                    </span>
+
+                    <div class="attack-main-info">
+                        <div class="attack-name-row">
+                            <strong>{{attack.name}}</strong> {{!-- ex: "Balanço" --}}
+                            <small>({{attack.skill_name}})</small> {{!-- ex: "(Espada Larga)" --}}
+                        </div>
+
+                        <div class="attack-details-row">
+                            {{!-- O NH FINAL CALCULADO! --}}
+                            <span class="stat"><label>NH:</label> 
+                                <a class="rollable" data-roll-value="{{attack.skill_level}}" data-label="Ataque com {{../group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.skill_level}}</a>
+                            </span>
+                            
+                            {{!-- O Dano (A rolagem ainda não funciona, Fase 3.3) --}}
+                            <span class="stat">
+                                <label>Dano:</label>
+                                <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+                                    {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                                    
+                                    {{#with attack.follow_up_damage}}
+                                        {{#if this.formula}}+ {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}
+                                    {{/with}}
+                                    
+                                    {{#with attack.fragmentation_damage}}
+                                        {{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}
+                                    {{/with}}
+                                </a>
+                            </span>
+                            
+                            {{!-- Atributos de Ataque C.C. --}}
+                            {{#if (eq attack.attack_type "melee")}}
+                              <span class="stat melee-stat"><label>Aparar:</label> 
+                                  <a class="rollable" data-roll-value="{{attack.parry}}" data-label="Aparar com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.parry}}</a>
+                              </span>
+                              <span class="stat melee-stat"><label>Bloqueio:</label> 
+                                  <a class="rollable" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
+                              </span>
+                              <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
+                            {{/if}}
+
+                            {{!-- Atributos de Ataque L.D. --}}
+                            {{#if (eq attack.attack_type "ranged")}}
+                                <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
+                                <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
+                                <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
+                                <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
+                                <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="item-controls">
+                        {{!-- Não há botões de editar/deletar aqui. A edição é feita no Item. --}}
+                    </div>
+                </li>
+                {{/each}}
+            </ol>
+        </li>
+        {{/each}}
+    </ol>
+</div>
+
+</div>
    
 
 {{! ========================================================= }}

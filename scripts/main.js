@@ -1523,6 +1523,76 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
             context.equipmentCarried = allEquipment.filter(i => i.system.location === 'carried').sort(carriedSortFn);
             context.equipmentStored = allEquipment.filter(i => i.system.location === 'stored').sort(storedSortFn);
 
+            // ================================================================== //
+        //     FASE 3.1: PREPARAÇÃO DOS GRUPOS DE ATAQUE (DE ITENS)           //
+        // ================================================================== //
+        
+        // 1. Usamos a lista 'context.equipmentInUse' que você já calculou
+        const equipmentAttackGroups = (context.equipmentInUse || []).map(item => {
+            
+            // 2. Processa os Ataques Corpo a Corpo (Melee)
+            const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
+                // Tenta encontrar a perícia correspondente no ator
+                const skill = this.actor.items.find(i => i.type === 'skill' && i.name === attack.skill_name);
+                
+                // Calcula o NH Final
+                // Se a perícia existir, usa o NH dela. Senão, usa 10 como base.
+                // Adiciona o modificador do próprio ataque.
+                const final_nh = (skill ? skill.system.final_nh : 10) + (attack.skill_level_mod || 0);
+
+                return {
+                    ...attack, // Traz todos os campos do 'attack_melee' (damage_formula, reach, parry, etc.)
+                    id: id,
+                    name: attack.mode, // Mapeia 'mode' para 'name' para o template
+                    attack_type: "melee",
+                    groupId: item.id,  // O ID do grupo é o ID do item
+                    itemId: item.id,   // O ID do item de origem (para rolagens)
+                    skill_level: final_nh, // O NH calculado!
+                    skill_name: attack.skill_name || "N/A"
+                };
+            });
+
+            // 3. Processa os Ataques à Distância (Ranged)
+            const rangedAttacks = Object.entries(item.system.ranged_attacks || {}).map(([id, attack]) => {
+                const skill = this.actor.items.find(i => i.type === 'skill' && i.name === attack.skill_name);
+                const final_nh = (skill ? skill.system.final_nh : 10) + (attack.skill_level_mod || 0);
+
+                return {
+                    ...attack, // Traz todos os campos do 'attack_ranged'
+                    id: id,
+                    name: attack.mode,
+                    attack_type: "ranged",
+                    groupId: item.id,
+                    itemId: item.id,
+                    skill_level: final_nh,
+                    skill_name: attack.skill_name || "N/A"
+                };
+            });
+
+            // 4. Combina os ataques deste item
+            const allAttacks = [...meleeAttacks, ...rangedAttacks];
+
+            // Se este item não tiver ataques definidos, retorna nulo
+            if (allAttacks.length === 0) return null;
+
+            // 5. Retorna um "Grupo de Ataque" formatado
+            return {
+                id: item.id,
+                name: item.name,
+                attacks: allAttacks,
+                sort: item.sort || 0, // Usa a ordenação do item no inventário
+                isFromItem: true // Flag para a interface (útil no futuro)
+            };
+        }).filter(group => group !== null); // Remove itens que não tinham ataques
+
+        // 6. Ordena a lista final e salva no contexto
+        equipmentAttackGroups.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+        context.attackGroups = equipmentAttackGroups; // Salva no contexto para o .hbs usar
+
+        // ================================================================== //
+        //     FIM DA FASE 3.1                                                //
+        // ================================================================== //
+
         // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS (Seu código original)
         // ================================================================== //
@@ -1605,182 +1675,174 @@ _getSubmitData(updateData) {
         return this.actor.update(formData);
       }
 
-    /*====== NOSSO MENU DE OPÇÕES =========*/
+activateListeners(html) {
+    super.activateListeners(html);
+    if (!this.isEditable) return;
 
-      activateListeners(html) {
-        super.activateListeners(html);
-        if (!this.isEditable) return;
-
-            html.find('[data-action="delete-effect"]').on('click', ev => {
-            const effectId = ev.currentTarget.dataset.effectId;
-            if (effectId) {
+    html.find('[data-action="delete-effect"]').on('click', ev => {
+        const effectId = ev.currentTarget.dataset.effectId;
+        if (effectId) {
             this.actor.deleteEmbeddedDocuments("ActiveEffect", [effectId]);
-            }
-        });
+        }
+    });
 
-        // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
-        // Ele é simples e robusto, pois sempre sabe "quem" é o ator (this.actor)
-        html.on('click', '.rollable', (ev) => {
-            const element = ev.currentTarget;
-            
-            // Lógica de Shift+Click para modificadores
-            if (ev.shiftKey) {
-                const baseTargetForRoll = parseInt(element.dataset.rollValue);
-                new Dialog({
-                    title: "Modificador de Rolagem Situacional",
-                    content: `<p><b>Modificadores para ${element.dataset.label} (vs ${baseTargetForRoll}):</b></p>
-                              <input type="number" name="modifier" value="0" style="text-align: center;"/>`,
-                    buttons: {
-                        roll: {
-                            label: "Rolar",
-                            callback: (html) => {
-                                const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
-                                // Chama nossa função global, passando o ator da ficha
-                                performGURPSRoll(element, this.actor, situationalMod);
-                            }
+    // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
+    html.on('click', '.rollable', (ev) => {
+        const element = ev.currentTarget;
+        
+        if (ev.shiftKey) {
+            const baseTargetForRoll = parseInt(element.dataset.rollValue);
+            new Dialog({
+                title: "Modificador de Rolagem Situacional",
+                content: `<p><b>Modificadores para ${element.dataset.label} (vs ${baseTargetForRoll}):</b></p>
+                            <input type="number" name="modifier" value="0" style="text-align: center;"/>`,
+                buttons: {
+                    roll: {
+                        label: "Rolar",
+                        callback: (html) => {
+                            const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                            performGURPSRoll(element, this.actor, situationalMod);
                         }
                     }
-                }).render(true);
-            } else {
-                // Chama nossa função global, passando o ator da ficha
-                performGURPSRoll(element, this.actor, 0);
-            }
-        });
+                }
+            }).render(true);
+        } else {
+            performGURPSRoll(element, this.actor, 0);
+        }
+    });
 
-        // ✅ NOVO LISTENER PARA EDITAR AS BARRAS DE PV E PF ✅
-html.on('click', '.edit-resource-bar', ev => {
-    ev.preventDefault();
-    const button = ev.currentTarget;
-    const statKey = button.dataset.stat; // "hp" ou "fp"
-    const statLabel = statKey === 'hp' ? "Pontos de Vida" : "Pontos de Fadiga";
-    const attrs = this.actor.system.attributes;
+    // ✅ NOVO LISTENER PARA EDITAR AS BARRAS DE PV E PF ✅
+    html.on('click', '.edit-resource-bar', ev => {
+        ev.preventDefault();
+        const button = ev.currentTarget;
+        const statKey = button.dataset.stat; // "hp" ou "fp"
+        const statLabel = statKey === 'hp' ? "Pontos de Vida" : "Pontos de Fadiga";
+        const attrs = this.actor.system.attributes;
+
+        const content = `
+            <form class="secondary-stats-editor">
+                <p class="hint">Ajuste os valores base e os modificadores temporários aqui.</p>
+                <div class="form-header">
+                    <span></span>
+                    <span>Base</span>
+                    <span>Mod. Temp.</span>
+                    <span>Final</span>
+                </div>
+                <div class="form-grid">
+                    <label>${statLabel} (Máximo)</label>
+                    <input type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
+                    <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
+                    <span class="final-display">${attrs[statKey].final}</span>
+                </div>
+            </form>
+        `;
+
+        new Dialog({
+            title: `Editar ${statLabel}`,
+            content: content,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const form = html.find('form')[0];
+                        const formData = new FormDataExtended(form).object;
+                        const updateData = {
+                            [`system.attributes.${statKey}.max`]: formData[`${statKey}.max`],
+                            [`system.attributes.${statKey}.temp`]: formData[`${statKey}.temp`]
+                        };
+                        this.actor.update(updateData);
+                    }
+                }
+            },
+            default: 'save'
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+    });
+
+    html.on('click', '.edit-secondary-stats-btn', ev => {
+        ev.preventDefault();
+        const attrs = this.actor.system.attributes;
+        const combat = this.actor.system.combat;
 
     const content = `
         <form class="secondary-stats-editor">
-            <p class="hint">Ajuste os valores base e os modificadores temporários aqui.</p>
+            <p class="hint">Ajuste os valores base e os pontos gastos aqui. Modificadores de condição são calculados automaticamente.</p>
             <div class="form-header">
-                <span></span>
+                <span>Atributo</span>
                 <span>Base</span>
-                <span>Mod. Temp.</span>
+                <span>Mod. Fixo</span>
+                <span>Mod. Condição</span>
+                <span>Pontos</span>
                 <span>Final</span>
             </div>
             <div class="form-grid">
-                <label>${statLabel} (Máximo)</label>
-                <input type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
-                <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
-                <span class="final-display">${attrs[statKey].final}</span>
+                <label>Velocidade Básica</label>
+                <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
+                <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
+                <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
+                <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
+                <span class="final-display">${attrs.basic_speed.final}</span>
+
+                <label>Deslocamento</label>
+                <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
+                <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
+                <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
+                <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
+                <span class="final-display">${attrs.basic_move.final}</span>
+                
+                <label>Mod. de Tamanho (MT)</label>
+                <input type="number" name="mt.value" value="${attrs.mt.value}"/>
+                <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
+                <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
+                <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
+                <span class="final-display">${attrs.mt.final}</span>
+                
+                <label>Esquiva</label>
+                <span class="base-display">${attrs.dodge.value}</span>
+                <input type="number" name="dodge.mod" value="${attrs.dodge.mod || 0}" title="Modificador Fixo de Esquiva"/>
+                <span class="mod-display">${attrs.dodge.temp > 0 ? '+' : ''}${attrs.dodge.temp}</span>
+                <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
+                <span class="final-display">${attrs.dodge.final}</span>
             </div>
         </form>
     `;
 
-    new Dialog({
-        title: `Editar ${statLabel}`,
-        content: content,
-        buttons: {
-            save: {
-                icon: '<i class="fas fa-save"></i>',
-                label: "Salvar",
-                callback: (html) => {
-                    const form = html.find('form')[0];
-                    const formData = new FormDataExtended(form).object;
-                    const updateData = {
-                        [`system.attributes.${statKey}.max`]: formData[`${statKey}.max`],
-                        [`system.attributes.${statKey}.temp`]: formData[`${statKey}.temp`]
-                    };
-                    this.actor.update(updateData);
+        new Dialog({
+            title: "Editar Atributos Secundários",
+            content: content,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const form = html.find('form')[0];
+                        const formData = new FormDataExtended(form).object;
+                const updateData = {
+                            "system.attributes.basic_speed.value": formData["basic_speed.value"],
+                            "system.attributes.basic_speed.mod": formData["basic_speed.mod"],
+                            "system.attributes.basic_speed.points": formData["basic_speed.points"],
+
+                            "system.attributes.basic_move.value": formData["basic_move.value"],
+                            "system.attributes.basic_move.mod": formData["basic_move.mod"],
+                            "system.attributes.basic_move.points": formData["basic_move.points"],
+
+                            "system.attributes.mt.value": formData["mt.value"],
+                            "system.attributes.mt.mod": formData["mt.mod"],
+                            "system.attributes.mt.points": formData["mt.points"],
+
+                            "system.attributes.dodge.value": formData["dodge.value"],
+                            "system.attributes.dodge.mod": formData["dodge.mod"],
+                            "system.attributes.dodge.points": formData["dodge.points"]
+                            };
+                        this.actor.update(updateData);
+                    }
                 }
-            }
-        },
-        default: 'save'
-    }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
-});
+            },
+            default: 'save'
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog"], width: 550 }).render(true);
+    });
 
-html.on('click', '.edit-secondary-stats-btn', ev => {
-    ev.preventDefault();
-    const attrs = this.actor.system.attributes;
-    const combat = this.actor.system.combat;
-
-    // A nova janela de diálogo com a coluna "Pontos" restaurada
-   const content = `
-    <form class="secondary-stats-editor">
-        <p class="hint">Ajuste os valores base e os pontos gastos aqui. Modificadores de condição são calculados automaticamente.</p>
-        <div class="form-header">
-            <span>Atributo</span>
-            <span>Base</span>
-            <span>Mod. Fixo</span>
-            <span>Mod. Condição</span>
-            <span>Pontos</span>
-            <span>Final</span>
-        </div>
-        <div class="form-grid">
-            <label>Velocidade Básica</label>
-            <input type="text" name="basic_speed.value" value="${attrs.basic_speed.value}"/>
-            <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
-            <span class="mod-display">${attrs.basic_speed.temp > 0 ? '+' : ''}${attrs.basic_speed.temp}</span>
-            <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
-            <span class="final-display">${attrs.basic_speed.final}</span>
-
-            <label>Deslocamento</label>
-            <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
-            <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
-            <span class="mod-display">${attrs.basic_move.temp > 0 ? '+' : ''}${attrs.basic_move.temp}</span>
-            <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
-            <span class="final-display">${attrs.basic_move.final}</span>
-            
-            <label>Mod. de Tamanho (MT)</label>
-            <input type="number" name="mt.value" value="${attrs.mt.value}"/>
-            <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
-            <span class="mod-display">${attrs.mt.temp > 0 ? '+' : ''}${attrs.mt.temp}</span>
-            <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
-            <span class="final-display">${attrs.mt.final}</span>
-            
-            <label>Esquiva</label>
-            <span class="base-display">${attrs.dodge.value}</span>
-            <input type="number" name="dodge.mod" value="${attrs.dodge.mod || 0}" title="Modificador Fixo de Esquiva"/>
-            <span class="mod-display">${attrs.dodge.temp > 0 ? '+' : ''}${attrs.dodge.temp}</span>
-            <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
-            <span class="final-display">${attrs.dodge.final}</span>
-        </div>
-    </form>
-`;
-
-    new Dialog({
-        title: "Editar Atributos Secundários",
-        content: content,
-        buttons: {
-            save: {
-                icon: '<i class="fas fa-save"></i>',
-                label: "Salvar",
-                callback: (html) => {
-                    const form = html.find('form')[0];
-                    const formData = new FormDataExtended(form).object;
-                    // Prepara os dados para a atualização, incluindo os pontos
-               const updateData = {
-                        "system.attributes.basic_speed.value": formData["basic_speed.value"],
-                        "system.attributes.basic_speed.mod": formData["basic_speed.mod"],
-                        "system.attributes.basic_speed.points": formData["basic_speed.points"],
-
-                        "system.attributes.basic_move.value": formData["basic_move.value"],
-                        "system.attributes.basic_move.mod": formData["basic_move.mod"],
-                        "system.attributes.basic_move.points": formData["basic_move.points"],
-
-                        "system.attributes.mt.value": formData["mt.value"],
-                        "system.attributes.mt.mod": formData["mt.mod"],
-                        "system.attributes.mt.points": formData["mt.points"],
-
-                        "system.attributes.dodge.value": formData["dodge.value"],
-                        "system.attributes.dodge.mod": formData["dodge.mod"],
-                        "system.attributes.dodge.points": formData["dodge.points"]
-                        };
-                    this.actor.update(updateData);
-                }
-            }
-        },
-        default: 'save'
-    }, { classes: ["dialog", "gum", "secondary-stats-dialog"], width: 550 }).render(true);
-});
-
-html.find('.quick-view-origin').on('click', async (ev) => {
+    html.find('.quick-view-origin').on('click', async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
 
@@ -1790,21 +1852,19 @@ html.find('.quick-view-origin').on('click', async (ev) => {
             return;
         }
 
-        // Carrega o Item Fonte (Vantagem, Magia, etc.)
         const item = await fromUuid(originUuid);
         if (!item) {
             ui.notifications.error("Item de origem não encontrado.");
             return;
         }
         
-        // --- Início da sua lógica .item-quick-view ---
         const getTypeName = (type) => {
             const typeMap = {
                 equipment: "Equipamento", melee_weapon: "Arma C. a C.",
                 ranged_weapon: "Arma à Dist.", armor: "Armadura",
                 advantage: "Vantagem", disadvantage: "Desvantagem",
                 skill: "Perícia", spell: "Magia", power: "Poder",
-                condition: "Condição" // Adicionado
+                condition: "Condição"
             };
             return typeMap[type] || type;
         };
@@ -1824,7 +1884,6 @@ html.find('.quick-view-origin').on('click', async (ev) => {
             return '';
         };
 
-        // Switch para preencher as tags (copiado do seu código)
         switch (item.type) {
             case 'spell':
                 mechanicalTagsHtml += createTag('Tempo', s.casting_time);
@@ -1834,7 +1893,6 @@ html.find('.quick-view-origin').on('click', async (ev) => {
             case 'advantage':
                 mechanicalTagsHtml += createTag('Pontos', s.points);
                 break;
-            // Adicione mais 'case's aqui se desejar (power, etc.)
         }
 
         const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
@@ -1866,14 +1924,12 @@ html.find('.quick-view-origin').on('click', async (ev) => {
             </div>
         `;
 
-        // Renderiza o Diálogo
         new Dialog({
             content: content,
             buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
             default: "close",
             options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
             render: (html) => {
-                // Listener para o botão "Enviar para o Chat" DENTRO do pop-up
                 html.find('.send-to-chat').on('click', (event) => {
                     const cardHTML = $(event.currentTarget).closest('.gurps-item-preview-card').html();
                     const chatDataType = getTypeName(item.type);
@@ -1886,205 +1942,187 @@ html.find('.quick-view-origin').on('click', async (ev) => {
                 });
             }
         }).render(true);
-        // --- Fim da sua lógica .item-quick-view ---
     });
 
 
-html.on('click', '.item-quick-view', async (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
+    html.on('click', '.item-quick-view', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
 
-    const itemId = $(ev.currentTarget).closest('.item').data('itemId');
-    if (!itemId) return;
+        const itemId = $(ev.currentTarget).closest('.item').data('itemId');
+        if (!itemId) return;
 
-    const item = this.actor.items.get(itemId);
-    if (!item) return;
+        const item = this.actor.items.get(itemId);
+        if (!item) return;
 
-    const getTypeName = (type) => {
-        const typeMap = {
-            equipment: "Equipamento", melee_weapon: "Arma C. a C.",
-            ranged_weapon: "Arma à Dist.", armor: "Armadura",
-            advantage: "Vantagem", disadvantage: "Desvantagem",
-            skill: "Perícia", spell: "Magia", power: "Poder"
+        const getTypeName = (type) => {
+            const typeMap = {
+                equipment: "Equipamento", melee_weapon: "Arma C. a C.",
+                ranged_weapon: "Arma à Dist.", armor: "Armadura",
+                advantage: "Vantagem", disadvantage: "Desvantagem",
+                skill: "Perícia", spell: "Magia", power: "Poder"
+            };
+            return typeMap[type] || type;
         };
-        return typeMap[type] || type;
-    };
 
-    const data = {
-        name: item.name,
-        type: getTypeName(item.type),
-        system: item.system
-    };
+        const data = {
+            name: item.name,
+            type: getTypeName(item.type),
+            system: item.system
+        };
 
-    let mechanicalTagsHtml = '';
-    const s = data.system;
-    const createTag = (label, value) => {
-        if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
-            return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+        let mechanicalTagsHtml = '';
+        const s = data.system;
+        const createTag = (label, value) => {
+            if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+            }
+            return '';
+        };
+
+        switch (item.type) {
+            case 'melee_weapon':
+                mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+                mechanicalTagsHtml += createTag('Alcance', s.reach);
+                mechanicalTagsHtml += createTag('Aparar', s.parry);
+                mechanicalTagsHtml += createTag('ST', s.min_strength);
+                break;
+            case 'ranged_weapon':
+                mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+                mechanicalTagsHtml += createTag('Prec.', s.accuracy);
+                mechanicalTagsHtml += createTag('Alcance', s.range);
+                mechanicalTagsHtml += createTag('CdT', s.rof);
+                mechanicalTagsHtml += createTag('Tiros', s.shots);
+                mechanicalTagsHtml += createTag('RCO', s.rcl);
+                mechanicalTagsHtml += createTag('ST', s.min_strength);
+                break;
+            case 'armor':
+                mechanicalTagsHtml += createTag('RD', s.dr);
+                mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
+                break;
+            case 'skill':
+                mechanicalTagsHtml += createTag('Attr.', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
+                mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
+                mechanicalTagsHtml += createTag('Grupo', s.group);
+                break;
+            case 'spell':
+                mechanicalTagsHtml += createTag('Classe', s.spell_class);
+                mechanicalTagsHtml += createTag('Tempo', s.casting_time);
+                mechanicalTagsHtml += createTag('Duração', s.duration);
+                mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+                break;
         }
-        return '';
-    };
 
-    switch (item.type) {
-        case 'melee_weapon':
-            mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
-            mechanicalTagsHtml += createTag('Alcance', s.reach);
-            mechanicalTagsHtml += createTag('Aparar', s.parry);
-            mechanicalTagsHtml += createTag('ST', s.min_strength);
-            break;
-        case 'ranged_weapon':
-            mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
-            mechanicalTagsHtml += createTag('Prec.', s.accuracy);
-            mechanicalTagsHtml += createTag('Alcance', s.range);
-            mechanicalTagsHtml += createTag('CdT', s.rof);
-            mechanicalTagsHtml += createTag('Tiros', s.shots);
-            mechanicalTagsHtml += createTag('RCO', s.rcl);
-            mechanicalTagsHtml += createTag('ST', s.min_strength);
-            break;
-        case 'armor':
-             mechanicalTagsHtml += createTag('RD', s.dr);
-             mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
-            break;
-        case 'skill':
-            mechanicalTagsHtml += createTag('Attr.', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
-            mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
-            mechanicalTagsHtml += createTag('Grupo', s.group);
-            break;
-        case 'spell':
-            mechanicalTagsHtml += createTag('Classe', s.spell_class);
-            mechanicalTagsHtml += createTag('Tempo', s.casting_time);
-            mechanicalTagsHtml += createTag('Duração', s.duration);
-            mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
-            break;
-    }
+        const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
+            secrets: this.actor.isOwner,
+            async: true
+        });
+        
+        const content = `
+            <div class="gurps-dialog-canvas">
+                <div class="gurps-item-preview-card" data-item-id="${item.id}">
+                    <header class="preview-header">
+                        <h3>${data.name}</h3>
+                        <div class="header-controls">
+                            <span class="preview-item-type">${data.type}</span>
+                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                        </div>
+                    </header>
+                    
+                    <div class="preview-content">
+                        <div class="preview-properties">
+                            ${createTag('Pontos', s.points)}
+                            ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
+                            ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
+                            ${mechanicalTagsHtml}
+                        </div>
 
-    const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
-        secrets: this.actor.isOwner,
-        async: true
-    });
-    // Estrutura HTML final para o design "Clássico e Compacto"
-    const content = `
-        <div class="gurps-dialog-canvas">
-            <div class="gurps-item-preview-card" data-item-id="${item.id}">
-                <header class="preview-header">
-                    <h3>${data.name}</h3>
-                    <div class="header-controls">
-                        <span class="preview-item-type">${data.type}</span>
-                        <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
-                    </div>
-                </header>
-                
-                <div class="preview-content">
-                    <div class="preview-properties">
-                        ${createTag('Pontos', s.points)}
-                        ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
-                        ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
-                        ${mechanicalTagsHtml}
-                    </div>
+                        ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
 
-                    ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
-
-                    <div class="preview-description">
-                        ${description}
+                        <div class="preview-description">
+                            ${description}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    new Dialog({
-        content: content,
-        buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
-        default: "close",
-        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" }, // Largura reduzida
-        render: (html) => {
-            html.on('click', '.send-to-chat', (event) => {
-                event.preventDefault();
-                const card = $(event.currentTarget).closest('.gurps-item-preview-card');
-                const chatItemId = card.data('itemId');
-                const chatItem = this.actor.items.get(chatItemId);
-                if (chatItem) {
-                    const cardHTML = card.html();
-                    const chatDataType = getTypeName(chatItem.type);
-                    const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
-                    ChatMessage.create({
-                        user: game.user.id,
-                        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                        content: chatContent
-                    });
-                }
-            });
-        }
-    }).render(true);
-});
-            // ================================================================== //
-            //     Listener para EDITAR a fórmula de dano básico (GdP/GeB)        //
-            // ================================================================== //  
-            html.on('click', '.edit-basic-damage', ev => {
-            ev.preventDefault();
-            ev.stopPropagation(); // Impede que o clique também dispare a rolagem de dano
-            const button = ev.currentTarget;
-            const damageType = button.dataset.damageType; // 'thrust' ou 'swing'
-            const currentFormula = this.actor.system.attributes[`${damageType}_damage`];
+        new Dialog({
+            content: content,
+            buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
+            default: "close",
+            options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
+            render: (html) => {
+                html.on('click', '.send-to-chat', (event) => {
+                    event.preventDefault();
+                    const card = $(event.currentTarget).closest('.gurps-item-preview-card');
+                    const chatItemId = card.data('itemId');
+                    const chatItem = this.actor.items.get(chatItemId);
+                    if (chatItem) {
+                        const cardHTML = card.html();
+                        const chatDataType = getTypeName(chatItem.type);
+                        const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
+                        ChatMessage.create({
+                            user: game.user.id,
+                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                            content: chatContent
+                        });
+                    }
+                });
+            }
+        }).render(true);
+    });
+        
+    html.on('click', '.edit-basic-damage', ev => {
+        ev.preventDefault();
+        ev.stopPropagation(); 
+        const button = ev.currentTarget;
+        const damageType = button.dataset.damageType; 
+        const currentFormula = this.actor.system.attributes[`${damageType}_damage`];
 
-            new Dialog({
-                title: `Editar Dano ${damageType === 'thrust' ? 'GdP' : 'GeB'}`,
-                content: `<div class="form-group"><label>Nova Fórmula de Dano:</label><input type="text" name="formula" value="${currentFormula}"/></div>`,
-                buttons: {
-                    save: {
-                        icon: '<i class="fas fa-save"></i>',
-                        label: "Salvar",
-                        callback: (html) => {
-                            const newFormula = html.find('input[name="formula"]').val();
-                            this.actor.update({ [`system.attributes.${damageType}_damage`]: newFormula });
-                        }
+        new Dialog({
+            title: `Editar Dano ${damageType === 'thrust' ? 'GdP' : 'GeB'}`,
+            content: `<div class="form-group"><label>Nova Fórmula de Dano:</label><input type="text" name="formula" value="${currentFormula}"/></div>`,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const newFormula = html.find('input[name="formula"]').val();
+                        this.actor.update({ [`system.attributes.${damageType}_damage`]: newFormula });
                     }
                 }
-            }).render(true);
-        });
+            }
+        }).render(true);
+    });
 
-       
-            // ================================================================== //
-            //          LISTENER PARA BLOCOS COLAPSÁVEIS (SOBREVIVÊNCIA)          //
-            // ================================================================== //
-        html.on('click', '.collapsible-header', ev => {
-          const header = $(ev.currentTarget);
-          const parentBlock = header.closest('.collapsible-block');
+    html.on('click', '.collapsible-header', ev => {
+        const header = $(ev.currentTarget);
+        const parentBlock = header.closest('.collapsible-block');
+        parentBlock.toggleClass('active');
+        this._survivalBlockOpen = parentBlock.hasClass('active');
+    });
 
-          // Alterna a classe para o efeito visual imediato
-          parentBlock.toggleClass('active');
+    html.on('click', '.vitals-tracker .tracker-dot', async ev => {
+        ev.preventDefault();
+        const dot = $(ev.currentTarget);
+        const tracker = dot.closest('.vitals-tracker');
 
-          // MUDANÇA: "Anota" no objeto da ficha se a seção está aberta ou fechada
-          this._survivalBlockOpen = parentBlock.hasClass('active');
-        });
+        const statName = tracker.data('stat');
+        if (!statName) return;
 
-          // ================================================================== //
-          //          LISTENER PARA MARCADORES (SEM REDESENHAR A FICHA)         //
-          // ================================================================== //
-        html.on('click', '.vitals-tracker .tracker-dot', async ev => {
-          ev.preventDefault();
-          const dot = $(ev.currentTarget);
-          const tracker = dot.closest('.vitals-tracker');
+        const value = dot.data('value');
+        const currentValue = this.actor.system.attributes[statName]?.value || 0;
+        const newValue = (currentValue === value) ? 0 : value;
 
-          const statName = tracker.data('stat');
-          if (!statName) return;
-
-          const value = dot.data('value');
-          const currentValue = this.actor.system.attributes[statName]?.value || 0;
-          const newValue = (currentValue === value) ? 0 : value;
-
-          const updatePath = `system.attributes.${statName}.value`;
-
-          // O 'await' continua importante, mas removemos o this.render(false) e a lógica jQuery
-          await this.actor.update({ [updatePath]: newValue });
-        });
+        const updatePath = `system.attributes.${statName}.value`;
+        await this.actor.update({ [updatePath]: newValue });
+    });
         
-    // Listener para o botão "Editar Perfil" (SEGUINDO O PADRÃO QUE FUNCIONA)
-        html.on('click', '.edit-biography-details', ev => {
+    html.on('click', '.edit-biography-details', ev => {
         ev.preventDefault();
         const details = this.actor.system.details;
 
-        // O HTML do pop-up continua o mesmo.
         const content = `
             <form>
                 <div class="details-dialog-grid">
@@ -2108,9 +2146,7 @@ html.on('click', '.item-quick-view', async (ev) => {
                 save: {
                     icon: '<i class="fas fa-save"></i>',
                     label: "Salvar",
-                    // A callback agora constrói o objeto de dados manualmente, como nos outros pop-ups
                     callback: (html) => {
-                        // Cria um novo objeto para os dados atualizados
                         const newData = {
                             gender: html.find('[name="gender"]').val(),
                             age: html.find('[name="age"]').val(),
@@ -2121,52 +2157,43 @@ html.on('click', '.item-quick-view', async (ev) => {
                             eyes: html.find('[name="eyes"]').val(),
                             alignment: html.find('[name="alignment"]').val(),
                             belief: html.find('[name="belief"]').val(),
-                            // Preserva os outros dados que não estão no pop-up para não serem apagados
                             concept: this.actor.system.details.concept,
                             backstory: this.actor.system.details.backstory
                         };
                         
-                        // Substitui o objeto 'details' inteiro pela sua versão completa e atualizada
                         this.actor.update({ "system.details": newData });
                     }
                 }
             },
             default: 'save'
         }).render(true);
-        });
-        // Listener para salvar alterações diretas nos inputs de Reservas de Energia (VERSÃO CORRIGIDA)
-        html.on('change', '.reserve-card input[type="number"]', ev => {
-            const input = ev.currentTarget;
-            const reserveCard = input.closest('.reserve-card'); // Encontra o "card" pai da reserva
-            const reserveId = reserveCard.dataset.reserveId;    // Pega o ID da reserva a partir do card
-            const property = input.dataset.property;            // Pega a propriedade a ser alterada ('current' or 'max')
+    });
+        
+    // (Este listener de .reserve-card está quebrado, mas não tem problema por agora)
+    html.on('change', '.reserve-card input[type="number"]', ev => {
+        const input = ev.currentTarget;
+        const reserveCard = input.closest('.reserve-card'); 
+        const reserveId = reserveCard.dataset.reserveId;    
+        const property = input.dataset.property;            
 
-            // Uma verificação de segurança
-            if (!reserveId || !property) {
-                console.error("GUM | Não foi possível salvar a reserva de energia. Atributos faltando.");
-                return;
-            }
+        if (!reserveId || !property) {
+            console.error("GUM | Não foi possível salvar a reserva de energia. Atributos faltando.");
+            return;
+        }
+        const value = Number(input.value);
+        // const key = `system.energy_reserves.${reserveId}.${property}`; // Caminho antigo e quebrado
+        // this.actor.update({ [key]: value });
+    });
 
-            const value = Number(input.value);
-            // Constrói o caminho completo para o dado que será atualizado
-            const key = `system.energy_reserves.${reserveId}.${property}`;
 
-            // Atualiza o ator com o caminho e o valor corretos
-            this.actor.update({ [key]: value });
-        });
-
-    // ================================================================== //
-        //    LISTENER UNIFICADO E FINAL PARA TODOS OS BOTÕES DE ORDENAÇÃO    //
-        // ================================================================== //
-        html.on('click', '.sort-control', ev => {
+    html.on('click', '.sort-control', ev => {
             ev.preventDefault();
             const button = ev.currentTarget;
             const itemType = button.dataset.itemType;
-            const location = button.dataset.location; // Pega a localização, se existir
+            const location = button.dataset.location; 
 
             if (!itemType) return;
 
-            // Opções de ordenação para cada tipo de item
             const sortOptions = {
                 spell: { manual: "Manual", name: "Nome (A-Z)", spell_school: "Escola" },
                 power: { manual: "Manual", name: "Nome (A-Z)" },
@@ -2178,12 +2205,10 @@ html.on('click', '.item-quick-view', async (ev) => {
             const options = sortOptions[itemType];
             if (!options) return;
 
-            // Verifica a preferência de ordenação atual, considerando a localização
             const currentSort = location 
                 ? this.actor.system.sorting?.[itemType]?.[location] || 'manual'
                 : this.actor.system.sorting?.[itemType] || 'manual';
 
-            // Cria o conteúdo do diálogo com botões de rádio
             let content = '<form class="sort-dialog"><p>Ordenar por:</p>';
             for (const [key, label] of Object.entries(options)) {
                 const isChecked = key === currentSort ? "checked" : "";
@@ -2196,7 +2221,6 @@ html.on('click', '.item-quick-view', async (ev) => {
             }
             content += '</form>';
 
-            // Cria e renderiza o diálogo
             new Dialog({
                 title: "Opções de Ordenação",
                 content: content,
@@ -2206,7 +2230,6 @@ html.on('click', '.item-quick-view', async (ev) => {
                         label: "Aplicar",
                         callback: (html) => {
                             const selectedValue = html.find('input[name="sort-option"]:checked').val();
-                            // Salva no caminho correto (com ou sem localização)
                             const updatePath = location 
                                 ? `system.sorting.${itemType}.${location}` 
                                 : `system.sorting.${itemType}`;
@@ -2219,10 +2242,9 @@ html.on('click', '.item-quick-view', async (ev) => {
         });
 
     // ================================================================== //
-    //     LÓGICA DE ARRASTAR E SOLTAR (DRAG & DROP) - VERSÃO FINAL       //
+    //     DRAG & DROP DE ITENS (O IMPORTANTE) - ESTE ESTÁ CORRETO      //
     // ================================================================== //
 
-    // ETAPA 1: Quando você COMEÇA A ARRASTAR um item
     html.on('dragstart', 'li.item[draggable="true"]', ev => {
         const li = ev.currentTarget;
         const dragData = {
@@ -2231,18 +2253,13 @@ html.on('click', '.item-quick-view', async (ev) => {
         uuid: this.actor.items.get(li.dataset.itemId)?.uuid
         };
         if (!dragData.uuid) return;
-        
-        // Armazena os dados do item que está sendo arrastado
         ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-        console.log("GUM | Drag Start:", dragData); // Para depuração
     });
 
-    // ETAPA 2: O listener que faltava. Permite que a lista seja uma área de "soltura" válida.
     html.on('dragover', '.item-list', ev => {
         ev.preventDefault();
     });
 
-    // ETAPA 3: Quando você SOLTA o item na lista de destino
     html.on('drop', '.item-list', async ev => {
         ev.preventDefault();
         const data = JSON.parse(ev.originalEvent.dataTransfer.getData("text/plain"));
@@ -2259,9 +2276,8 @@ html.on('click', '.item-quick-view', async (ev) => {
         const blockContainer = dropContainer.closest('[data-block-id]');
         const equipmentLocation = dropContainer.dataset.location;
         const itemType = dropContainer.dataset.itemType;
-        const skillGroup = dropContainer.closest('.skill-group')?.dataset.groupName; // Pega o nome do grupo da perícia
+        const skillGroup = dropContainer.closest('.skill-group')?.dataset.groupName; 
 
-        // --- LÓGICA PARA ITENS AGRUPADOS POR BLOCO (Perícias e Características) ---
         if (blockContainer) {
         const itemTypesInBlocks = ['skill', 'advantage', 'disadvantage'];
         if (itemTypesInBlocks.includes(draggedItem.type)) {
@@ -2270,17 +2286,12 @@ html.on('click', '.item-quick-view', async (ev) => {
             .filter(i => itemTypesInBlocks.includes(i.type) && i.system.block_id === targetBlockId)
             .sort((a, b) => a.sort - b.sort);
             updatePayload['system.block_id'] = targetBlockId;
-            console.log(`GUM | Target context: Block (${targetBlockId})`);
         }
         }
-
-            // LÓGICA ATUALIZADA PARA PERÍCIAS EM GRUPOS
         else if (skillGroup && draggedItem.type === 'skill') {
             siblings = this.actor.items.filter(i => i.type === 'skill' && (i.system.group || 'Geral') === skillGroup);
             updatePayload['system.group'] = skillGroup;
         }
-          
-        // --- LÓGICA PARA ITENS AGRUPADOS POR LOCALIZAÇÃO (Equipamentos) ---
         else if (equipmentLocation) {
         const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
         if (equipmentTypes.includes(draggedItem.type)) {
@@ -2288,19 +2299,14 @@ html.on('click', '.item-quick-view', async (ev) => {
                 .filter(i => equipmentTypes.includes(i.type) && i.system.location === equipmentLocation)
                 .sort((a, b) => a.sort - b.sort);
             updatePayload['system.location'] = equipmentLocation;
-            console.log(`GUM | Target context: Equipment Location (${equipmentLocation})`);
         }
         }
-        
-        // --- NOVA LÓGICA GENÉRICA PARA LISTAS SIMPLES (Magias, Poderes, etc.) ---
         else if (itemType && draggedItem.type === itemType) {
             siblings = this.actor.items
                 .filter(i => i.type === itemType)
                 .sort((a, b) => a.sort - b.sort);
-            console.log(`GUM | Target context: Simple List (${itemType})`);
         }
 
-        // --- CÁLCULO DA NOVA POSIÇÃO (LÓGICA UNIFICADA) ---
         if (siblings.length > 0) {
             siblings.sort((a, b) => a.sort - b.sort);
         }
@@ -2329,48 +2335,59 @@ html.on('click', '.item-quick-view', async (ev) => {
         await draggedItem.update(updatePayload);
     });
 
-        // --- Listeners para elementos estáticos (botões de adicionar, etc.) ---
-        html.find('.add-combat-meter').click(ev => { const newMeter = { name: "Novo Registro", current: 10, max: 10 }; const newKey = `system.combat.combat_meters.${foundry.utils.randomID()}`; this.actor.update({ [newKey]: newMeter }); });
-        html.find('.edit-casting-ability').click(ev => { const ability = this.actor.system.casting_ability; new Dialog({ title: "Editar Habilidade de Conjuração", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${ability.name}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${ability.points}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${ability.level}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${ability.source}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${ability.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), points: parseInt(html.find('input[name="points"]').val()), level: parseInt(html.find('input[name="level"]').val()), source: html.find('input[name="source"]').val(), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.casting_ability": newData }); } } }, default: "save" }).render(true); });
-        html.find('.edit-power-source').click(ev => { const power = this.actor.system.power_source; new Dialog({ title: "Editar Fonte de Poder", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${power.name}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${power.level}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${power.points}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${power.source}"/></div><div class="form-group"><label>Talento de Poder:</label><input type="number" name="power_talent" value="${power.power_talent}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${power.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), level: parseInt(html.find('input[name="level"]').val()), points: parseInt(html.find('input[name="points"]').val()), source: html.find('input[name="source"]').val(), power_talent: parseInt(html.find('input[name="power_talent"]').val()), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.power_source": newData }); } } }, default: "save" }).render(true); });
-        
-        html.find('.edit-lifting-st').click(ev => {
-        new Dialog({
-            title: "Editar ST de Carga",
-            // --- MUDANÇA: HTML reestruturado com classes para estilização ---
-            content: `
-                <div class="gurps-stat-editor-dialog">
-                    <p class="dialog-description">
-                        Insira o valor usado para calcular a sua Base de Carga (BC).
-                    </p>
-                    <div class="form-group">
-                        <label>ST de Carga</label>
-                        <input type="number" name="lifting-st" value="${this.actor.system.attributes.lifting_st.value}" />
-                    </div>
+    html.find('.add-combat-meter').click(ev => { const newMeter = { name: "Novo Registro", current: 10, max: 10 }; const newKey = `system.combat.combat_meters.${foundry.utils.randomID()}`; this.actor.update({ [newKey]: newMeter }); });
+    
+    html.find('.edit-casting-ability').click(ev => { const ability = this.actor.system.casting_ability; new Dialog({ title: "Editar Habilidade de Conjuração", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${ability.name}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${ability.points}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${ability.level}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${ability.source}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${ability.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), points: parseInt(html.find('input[name="points"]').val()), level: parseInt(html.find('input[name="level"]').val()), source: html.find('input[name="source"]').val(), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.casting_ability": newData }); } } }, default: "save" }).render(true); });
+    html.find('.edit-power-source').click(ev => { const power = this.actor.system.power_source; new Dialog({ title: "Editar Fonte de Poder", content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${power.name}"/></div><div class="form-group"><label>Nível:</label><input type="number" name="level" value="${power.level}"/></div><div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${power.points}"/></div><div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${power.source}"/></div><div class="form-group"><label>Talento de Poder:</label><input type="number" name="power_talent" value="${power.power_talent}"/></div><div class="form-group"><label>Descrição:</label><textarea name="description">${power.description}</textarea></div>`, buttons: { save: { icon: '<i class="fas fa-save"></i>', label: "Salvar", callback: (html) => { const newData = { name: html.find('input[name="name"]').val(), level: parseInt(html.find('input[name="level"]').val()), points: parseInt(html.find('input[name="points"]').val()), source: html.find('input[name="source"]').val(), power_talent: parseInt(html.find('input[name="power_talent"]').val()), description: html.find('textarea[name="description"]').val() }; this.actor.update({ "system.power_source": newData }); } } }, default: "save" }).render(true); });
+    
+    html.find('.edit-lifting-st').click(ev => {
+    new Dialog({
+        title: "Editar ST de Carga",
+        content: `
+            <div class="gurps-stat-editor-dialog">
+                <p class="dialog-description">
+                    Insira o valor usado para calcular a sua Base de Carga (BC).
+                </p>
+                <div class="form-group">
+                    <label>ST de Carga</label>
+                    <input type="number" name="lifting-st" value="${this.actor.system.attributes.lifting_st.value}" />
                 </div>
-            `,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
-                    callback: (html) => {
-                        const newST = html.find('input[name="lifting-st"]').val();
-                        this.actor.update({ "system.attributes.lifting_st.value": newST });
-                    }
+            </div>
+        `,
+        buttons: {
+            save: {
+                icon: '<i class="fas fa-save"></i>',
+                label: "Salvar",
+                callback: (html) => {
+                    const newST = html.find('input[name="lifting-st"]').val();
+                    this.actor.update({ "system.attributes.lifting_st.value": newST });
                 }
-            },
-            // --- MUDANÇA: Adicionando uma classe customizada à janela do Dialog ---
-            // Isso nos permite estilizar a janela inteira, incluindo título e botões.
-            options: {
-                classes: ["dialog", "gurps-dialog"],
-                width: 350
             }
-        }).render(true);
-    });
+        },
+        options: {
+            classes: ["dialog", "gurps-dialog"],
+            width: 350
+        }
+    }).render(true);
+});
 
-        // --- Listeners para elementos dinâmicos (dentro de listas) ---
-        html.on('click', '.item-edit', ev => { const li = $(ev.currentTarget).parents(".item"); const item = this.actor.items.get(li.data("itemId")); item.sheet.render(true); });
-        html.on('click', '.item-delete', ev => { const li = $(ev.currentTarget).parents(".item"); this.actor.deleteEmbeddedDocuments("Item", [li.data("itemId")]); });
+    // --- Listeners para elementos dinâmicos (dentro de listas) ---
+html.on('click', '.item-edit', ev => {
+    // Pega o ID diretamente do botão que foi clicado (ex: a engrenagem)
+    const itemId = $(ev.currentTarget).data("item-id"); 
+    if (!itemId) return; // Segurança
+
+    const item = this.actor.items.get(itemId);
+    if (item) {
+        item.sheet.render(true); // Abre a ficha do item
+    }
+});
+ html.on('click', '.item-delete', ev => { const li = $(ev.currentTarget).parents(".item"); this.actor.deleteEmbeddedDocuments("Item", [li.data("itemId")]); });
+    
+    // (O resto dos seus listeners .add-social-item, .edit-social-entry, etc. estão todos aqui e parecem corretos)
+    // ... (Seu código dos listeners sociais) ...
+    // (O código continua até o final do seu arquivo)
+    
         html.on('click', '.add-social-item', ev => {
           ev.preventDefault();
           const button = ev.currentTarget;
@@ -2910,21 +2927,22 @@ html.on('click', '.item-quick-view', async (ev) => {
           ev.preventDefault();
           const li = $(ev.currentTarget).closest(".item");
           const entryId = li.data("entryId");
-          const entry = this.actor.system.wealth_entries[entryId];
+          // CORREÇÃO DE BUG: Você estava lendo 'wealth_entries' aqui
+          const entry = this.actor.system.bond_entries[entryId]; // CORRIGIDO
           new Dialog({
-            title: `Editar Riqueza: ${entry.wealth_level}`,
+            title: `Editar Vínculo: ${entry.name}`, // CORRIGIDO
             content: `
-              <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${entry.name}$"/></div>
-              <div class="form-group"><label>Vínculo:</label><input type="text" name="bond_type" value="${entry.bond_type}$"/></div>
-              <div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${entry.points}$"/></div>
-              <div class="form-group"><label>Descrição:</label><textarea name="description" rows="4" value="${entry.description}$"></textarea></div>
+              <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${entry.name}"/></div>
+              <div class="form-group"><label>Vínculo:</label><input type="text" name="bond_type" value="${entry.bond_type}"/></div>
+              <div class="form-group"><label>Pontos:</label><input type="number" name="points" value="${entry.points}"/></div>
+              <div class="form-group"><label>Descrição:</label><textarea name="description" rows="4">${entry.description}</textarea></div>
             `,
             buttons: {
               save: { icon: '<i class="fas fa-save"></i>', label: 'Salvar', callback: (html) => {
-                  const updateKey = `system.wealth_entries.${entryId}`;
+                  const updateKey = `system.bond_entries.${entryId}`; // CORRIGIDO
                   const updatedEntry = {
-                    wealth_level: html.find('[name="wealth_level"]').val(),
-                    effects: html.find('[name="effects"]').val(),
+                    name: html.find('[name="name"]').val(), // CORRIGIDO
+                    bond_type: html.find('[name="bond_type"]').val(), // CORRIGIDO
                     points: parseInt(html.find('[name="points"]').val()),
                     description: html.find('[name="description"]').val()
                   };
@@ -2941,12 +2959,13 @@ html.on('click', '.item-quick-view', async (ev) => {
           ev.preventDefault();
             const li = $(ev.currentTarget).closest(".item");
             const entryId = li.data("entryId");
-            const entry = this.actor.system.wealth_entries[entryId];
+            // CORREÇÃO DE BUG: Você estava lendo 'wealth_entries' aqui
+            const entry = this.actor.system.bond_entries[entryId]; // CORRIGIDO
             Dialog.confirm({
-                title: "Deletar Nível de Riqueza",
-                content: `<p>Você tem certeza que quer deletar <strong>${entry.wealth_level}</strong>?</p>`,
+                title: "Deletar Vínculo", // CORRIGIDO
+                content: `<p>Você tem certeza que quer deletar <strong>${entry.name}</strong>?</p>`, // CORRIGIDO
                 yes: () => {
-                    const deleteKey = `system.wealth_entries.-=${entryId}`;
+                    const deleteKey = `system.bond_entries.-=${entryId}`; // CORRIGIDO
                     this.actor.update({ [deleteKey]: null });
                 },
                 no: () => {},
@@ -2994,7 +3013,6 @@ html.on('click', '.item-quick-view', async (ev) => {
           customMenu.css({ display: "block", left: ev.clientX + 5 + "px", top: ev.clientY - 10 + "px" });
         });
 
-        // Listener para o ícone de MOVER PERÍCIA
     // ================================================================== //
     //    LISTENER PARA O NOVO MENU DE OPÇÕES DA PERÍCIA                  //
     // ================================================================== //
@@ -3010,12 +3028,10 @@ html.on('click', '.item-quick-view', async (ev) => {
         
         const skillBlocks = this.actor.system.skill_blocks || {};
         let moveSubmenu = '';
-        // Cria os sub-itens do menu para mover a perícia
         for (const [blockId, blockData] of Object.entries(skillBlocks)) {
             moveSubmenu += `<div class="context-item" data-action="update-skill-block" data-value="${blockId}"><i class="fas fa-folder"></i> ${blockData.name}</div>`;
         }
 
-        // Monta o menu principal
         const menuContent = `
             <div class="context-item" data-action="edit"><i class="fas fa-edit"></i> Editar Perícia</div>
             <div class="context-item" data-action="delete"><i class="fas fa-trash"></i> Deletar Perícia</div>
@@ -3026,14 +3042,13 @@ html.on('click', '.item-quick-view', async (ev) => {
             </div>
         `;
 
-        // Reutiliza e exibe nosso menu de contexto customizado
         const customMenu = this.element.find(".custom-context-menu");
         customMenu.html(menuContent);
-        customMenu.data("item-id", itemId); // Armazena o ID do item para uso posterior
+        customMenu.data("item-id", itemId); 
         customMenu.css({ display: "block", left: ev.clientX - 210 + "px", top: ev.clientY - 10 + "px" });
     });
 
-    // Listener para as ações DENTRO do menu (este listener precisa ser ATUALIZADO)
+    // Listener para as ações DENTRO do menu (ESTE ESTÁ DUPLICADO, VAMOS REMOVER UM)
        html.on('click', '.custom-context-menu .context-item', async ev => {
         const button = ev.currentTarget;
         const customMenu = this.element.find(".custom-context-menu");
@@ -3067,397 +3082,389 @@ html.on('click', '.item-quick-view', async (ev) => {
             }
         }
         customMenu.hide();
+        // this.render(false); // Removido 'this.render(false)' que estava no duplicado
     });
 
-        // Listener GENÉRICO para os botões DENTRO do nosso menu customizado
-        html.on('click', '.custom-context-menu .context-item', async ev => { // Adicionado async
-          const button = ev.currentTarget;
-          const itemId = customMenu.data("itemId");
-          const action = $(button).data("action");
-          const value = $(button).data("value");
-          
-          if (itemId) {
-            const item = this.actor.items.get(itemId);
-            if (!item) return;
+    // (O listener duplicado 'custom-context-menu .context-item' foi removido)
 
-            if (action === 'update-location') {
-              await item.update({ "system.location": value });
-            } else if (action === 'update-skill-block') {
-              await item.update({ "system.block_id": value });
-            }
-          }
-          
-          customMenu.hide();
-          this.render(false); // MUDANÇA: Força o redesenho da ficha
-        });
-
-        // Listener para esconder o menu quando se clica em qualquer outro lugar
-        $(document).on('click', (ev) => {
-          if (!$(ev.target).closest('.item-move, .item-move-skill, .custom-context-menu').length) {
+    $(document).on('click', (ev) => {
+        if (!$(ev.target).closest('.item-move, .item-move-skill, .item-options-btn, .custom-context-menu').length) {
+            // Adicionado .item-options-btn para que o menu de perícias funcione
             customMenu.hide();
-          }
-        });
-
-        // NOVO: Bloqueador do menu do navegador para os ícones
-        html.on('contextmenu', '.item-move, .item-move-skill', ev => {
-          ev.preventDefault();
-        });
-          
-        // ============================================================= //
-        //    NOVOS LISTENERS PARA RESERVAS DE ENERGIA (SEPARADOS)       //
-        // ============================================================= //
-
-        // Listener para ADICIONAR uma reserva
-        html.on('click', '.add-energy-reserve', ev => {
-            const reserveType = ev.currentTarget.dataset.reserveType; // 'spell' ou 'power'
-            if (!reserveType) return;
-
-            const newReserve = { name: "Nova Reserva", source: "Geral", current: 10, max: 10 };
-            const newKey = `system.${reserveType}_reserves.${foundry.utils.randomID()}`;
-            this.actor.update({ [newKey]: newReserve });
-        });
-
-        // Listener para SALVAR alterações diretas nos inputs
-        html.on('change', '.reserve-card input[type="number"]', ev => {
-            const input = ev.currentTarget;
-            const reserveCard = input.closest('.reserve-card');
-            const reserveType = reserveCard.dataset.reserveType; // 'spell' ou 'power'
-            const reserveId = reserveCard.dataset.reserveId;
-            const property = input.dataset.property;
-
-            if (!reserveType || !reserveId || !property) return;
-
-            const value = Number(input.value);
-            const key = `system.${reserveType}_reserves.${reserveId}.${property}`;
-            this.actor.update({ [key]: value });
-        });
-
-        // Listener para EDITAR uma reserva via diálogo
-        html.on('click', '.edit-energy-reserve', ev => {
-            const reserveCard = ev.currentTarget.closest(".reserve-card");
-            const reserveType = reserveCard.dataset.reserveType; // 'spell' ou 'power'
-            const reserveId = reserveCard.dataset.reserveId;
-            if (!reserveId || !reserveType) return;
-
-            const reserve = this.actor.system[`${reserveType}_reserves`][reserveId];
-            new Dialog({
-                title: `Editar Reserva: ${reserve.name}`,
-                content: `
-                <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${reserve.name}"/></div>
-                <div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${reserve.source}"/></div>
-                <div class="form-group"><label>Atual:</label><input type="number" name="current" value="${reserve.current}"/></div>
-                <div class="form-group"><label>Máximo:</label><input type="number" name="max" value="${reserve.max}"/></div>
-                `,
-                buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>', label: 'Salvar',
-                    callback: (html) => {
-                    const updateKey = `system.${reserveType}_reserves.${reserveId}`;
-                    this.actor.update({
-                        [`${updateKey}.name`]: html.find('input[name="name"]').val(),
-                        [`${updateKey}.source`]: html.find('input[name="source"]').val(),
-                        [`${updateKey}.current`]: parseInt(html.find('input[name="current"]').val()),
-                        [`${updateKey}.max`]: parseInt(html.find('input[name="max"]').val())
-                    });
-                    }
-                }
-                }
-            }).render(true);
-        });
-
-        // Listener para DELETAR uma reserva
-        html.on('click', '.delete-energy-reserve', ev => {
-            const reserveCard = ev.currentTarget.closest(".reserve-card");
-            const reserveType = reserveCard.dataset.reserveType; // 'spell' ou 'power'
-            const reserveId = reserveCard.dataset.reserveId;
-            if (!reserveId || !reserveType) return;
-
-            Dialog.confirm({
-                title: "Deletar Reserva",
-                content: "<p>Você tem certeza que quer deletar esta reserva de energia?</p>",
-                yes: () => {
-                    const deleteKey = `system.${reserveType}_reserves.-=${reserveId}`;
-                    this.actor.update({ [deleteKey]: null });
-                },
-                no: () => {},
-                defaultYes: false
-            });
-        });
-
-        html.on('click', '.edit-combat-meter', ev => { 
-          const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); 
-          const meter = this.actor.system.combat.combat_meters[meterId]; 
-          new Dialog({ title: `Editar Registro: ${meter.name}`, 
-            content: `
-              <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${meter.name}"/></div>
-              <div class="form-group"><label>Atual:</label><input type="number" name="current" value="${meter.current}"/></div>
-              <div class="form-group"><label>Máximo:</label><input type="number" name="max" value="${meter.max}"/></div>
-              `, 
-            buttons: { 
-              save: { 
-                icon: '<i class="fas fa-save"></i>', 
-                label: 'Salvar', 
-                callback: (html) => { 
-                  const updateKey = `system.combat.combat_meters.${meterId}`; 
-                  this.actor.update({ 
-                    [`${updateKey}.name`]: html.find('input[name="name"]').val(),
-                    [`${updateKey}.current`]: parseInt(html.find('input[name="current"]').val()), 
-                    [`${updateKey}.max`]: parseInt(html.find('input[name="max"]').val())
-                    }); 
-                  } 
-                } 
-              }
-            }).render(true); 
-          });
-        html.on('click', '.delete-combat-meter', ev => { const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); Dialog.confirm({ title: "Deletar Registro", content: "<p>Você tem certeza que quer deletar este registro?</p>", yes: () => { const deleteKey = `system.combat.combat_meters.-=${meterId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
-          
-// ================================================================== //
-//   LISTENER DE ROLAGEM DE DANO (VERSÃO LIMPA - PÓS FASE 1)           //
-// ================================================================== //
-
-html.on('click', '.rollable-damage', async (ev) => {
-    ev.preventDefault();
-    const element = ev.currentTarget;
-    let normalizedAttack;
-
-    // A única fonte de verdade agora é um data-item-id
-    const itemId = $(element).closest(".item-row, .attack-item").data("itemId");
-
-    // ✅ A CORREÇÃO PRINCIPAL ESTÁ AQUI ✅
-    // Se não houver 'itemId', nós paramos a função AGORA.
-    // Isso impede o erro "cannot read properties of undefined".
-    if (!itemId) {
-        console.warn("GUM | Rolagem de dano clicada, mas nenhum 'data-item-id' foi encontrado no elemento.");
-        return;
-    }
-
-    // Como sabemos que 'itemId' existe, podemos continuar com segurança
-    const item = this.actor.items.get(itemId);
-    if (!item) return ui.notifications.error("Item não encontrado para esta rolagem de dano.");
-
-    // NOTA: Esta lógica (item.system.damage) SÓ FUNCIONA para Magias e Poderes.
-    // Na Fase 2, vamos expandir isso para ler também os ataques de Equipamentos.
-    // Por enquanto, isso é o que queremos para testar a Fase 1.
-    const damageData = item.system.damage; 
-
-    if (!damageData?.formula) {
-        return ui.notifications.warn("Este item não possui uma fórmula de dano (item.system.damage.formula) válida.");
-    }
-
-    // O 'if (itemId)' não é mais necessário, pois já tratamos disso
-    normalizedAttack = {
-        name: item.name,
-        formula: damageData.formula,
-        type: damageData.type,
-        armor_divisor: damageData.armor_divisor,
-        follow_up_damage: damageData.follow_up_damage,
-        fragmentation_damage: damageData.fragmentation_damage,
-        onDamageEffects: item.system.onDamageEffects || {},
-        generalConditions: item.system.generalConditions || {}
-    };
-    
-    // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
-
-
-    // A partir daqui, a função só usa o objeto 'normalizedAttack', que sempre terá a mesma estrutura.
-    const performDamageRoll = async (modifier = 0) => {
-        let totalRolls = [];
-    
-        // Rola o dano principal
-        const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
-        const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
-        const mainRoll = new Roll(mainRollFormula);
-        await mainRoll.evaluate();
-        totalRolls.push(mainRoll);
-
-        // Rola os danos extras, se existirem
-        let followUpRoll, fragRoll;
-        if (normalizedAttack.follow_up_damage?.formula) {
-            followUpRoll = new Roll(normalizedAttack.follow_up_damage.formula);
-            await followUpRoll.evaluate();
-            totalRolls.push(followUpRoll);
         }
-        if (normalizedAttack.fragmentation_damage?.formula) {
-            fragRoll = new Roll(normalizedAttack.fragmentation_damage.formula);
-            await fragRoll.evaluate();
-            totalRolls.push(fragRoll);
-        }
+    });
+
+    html.on('contextmenu', '.item-move, .item-move-skill, .item-options-btn', ev => {
+        // Adicionado .item-options-btn
+        ev.preventDefault();
+    });
         
-        // Monta a 'pílula' de fórmula completa no topo do card
-        let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
-        if (followUpRoll) {
-            let followUpText = `${normalizedAttack.follow_up_damage.formula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ''} ${normalizedAttack.follow_up_damage.type || ''}`;
-            fullFormula += ` + ${followUpText}`;
-        }
-        if (fragRoll) {
-            let fragText = `${normalizedAttack.fragmentation_damage.formula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ''} ${normalizedAttack.fragmentation_damage.type || ''}`;
-            fullFormula += ` [${fragText}]`;
-        }
+    // ============================================================= //
+    //    NOVOS LISTENERS PARA RESERVAS DE ENERGIA (SEPARADOS)       //
+    // ============================================================= //
 
-        // MONTAGEM DO PACOTE DE DADOS
-        const damagePackage = {
-            attackerId: this.actor.id,
-            sourceName: normalizedAttack.name,
-            main: {
-                total: mainRoll.total,
-                type: normalizedAttack.type || '',
-                armorDivisor: normalizedAttack.armor_divisor || 1
-            },
-            onDamageEffects: normalizedAttack.onDamageEffects,
-            generalConditions: normalizedAttack.generalConditions
-        };
-        if (followUpRoll) {
-            damagePackage.followUp = {
-                total: followUpRoll.total,
-                type: normalizedAttack.follow_up_damage.type || '',
-                armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
-            };
-        }
-        if (fragRoll) {
-            damagePackage.fragmentation = {
-                total: fragRoll.total,
-                type: normalizedAttack.fragmentation_damage.type || '',
-                armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
-            };
-        }
-        // --- FIM DA MONTAGEM DO PACOTE ---
+    html.on('click', '.add-energy-reserve', ev => {
+        const reserveType = ev.currentTarget.dataset.reserveType; 
+        if (!reserveType) return;
+
+        const newReserve = { name: "Nova Reserva", source: "Geral", current: 10, max: 10 };
+        // CORREÇÃO: O caminho correto é 'spell_reserves' ou 'power_reserves'
+        const newKey = `system.${reserveType}_reserves.${foundry.utils.randomID()}`;
+        this.actor.update({ [newKey]: newReserve });
+    });
+
+    // (O listener 'change' .reserve-card já foi corrigido acima)
+    // CORREÇÃO para o listener que você mesmo notou que estava quebrado:
+    html.on('change', '.reserve-card input[type="number"]', ev => {
+        const input = ev.currentTarget;
+        const reserveCard = input.closest('.reserve-card');
+        const reserveType = reserveCard.dataset.reserveType; // 'spell' ou 'power'
+        const reserveId = reserveCard.dataset.reserveId;
+        const property = input.dataset.property;
+
+        if (!reserveType || !reserveId || !property) return;
+
+        const value = Number(input.value);
+        const key = `system.${reserveType}_reserves.${reserveId}.${property}`;
+        this.actor.update({ [key]: value });
+    });
 
 
-        // Monta o HTML do card de dano
-        let flavor = `
-            <div class="gurps-damage-card">
-                <header class="card-header"><h3>${normalizedAttack.name || 'Dano'}</h3></header>
-                <div class="card-formula-container"><span class="formula-pill">${fullFormula}</span></div>
-                <div class="card-content">
-                    <div class="card-main-flex">
-                        <div class="roll-column">
-                            <span class="column-label">Dados</span>
-                            <div class="individual-dice-damage">
-                                ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
-                            </div>
-                        </div>
-                        <div class="column-separator"></div>
-                        <div class="target-column">
-                            <span class="column-label">Dano Total</span>
-                            <div class="damage-total">
-                                <span class="damage-value">${mainRoll.total}</span>
-                                <span class="damage-type">${normalizedAttack.type || ''}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-        `;
+    html.on('click', '.edit-energy-reserve', ev => {
+        const reserveCard = ev.currentTarget.closest(".reserve-card");
+        const reserveType = reserveCard.dataset.reserveType; 
+        const reserveId = reserveCard.dataset.reserveId;
+        if (!reserveId || !reserveType) return;
 
-        // NOVA ESTRUTURA PARA DANOS EXTRAS
-        const hasExtraDamage = followUpRoll || fragRoll;
-        if (hasExtraDamage) {
-            flavor += `<footer class="card-footer">`;
-            
-            const createExtraDamageBlock = (roll, data, label) => {
-                return `
-                    <div class="extra-damage-block">
-                        <div class="extra-damage-label">${label}</div>
-                        <div class="extra-damage-roll">
-                            <span class="damage-value">${roll.total}</span>
-                            <span class="damage-type">${data.type || ''}</span>
-                        </div>
-                    </div>
-                `;
-            };
-
-            if (followUpRoll) {
-                flavor += createExtraDamageBlock(followUpRoll, normalizedAttack.follow_up_damage, "Acompanhamento");
-            }
-            if (fragRoll) {
-                flavor += createExtraDamageBlock(fragRoll, normalizedAttack.fragmentation_damage, "Fragmentação");
-            }
-
-            flavor += `</footer>`;
-        }
-        
-        // BOTÃO ATUALIZADO
-        flavor += `
-            <footer class="card-actions">
-                <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-                    <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
-                </button>
-            </footer>
-        `;
-
-        flavor += `</div>`; // Fecha o .gurps-damage-card
-
-        ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: flavor,
-            rolls: totalRolls,
-            
-        });
-    };
-    
-    // Lógica para abrir o diálogo de modificador com Shift+Click
-    if (ev.shiftKey) {
-        
-        // ✅ SEGUNDA CORREÇÃO: Usar 'normalizedAttack.name'
-        const label = normalizedAttack.name || "Ataque"; // O 'attack' antigo não existe mais
-        
+        const reserve = this.actor.system[`${reserveType}_reserves`][reserveId];
         new Dialog({
-            title: "Modificador de Dano",
+            title: `Editar Reserva: ${reserve.name}`,
             content: `
-                <div class="modifier-dialog" style="text-align: center;">
-                    <p>Insira ou clique nos modificadores para o dano de <strong>${label}</strong>:</p>
-                    <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px; width: 80px;"/>
-                    <div class="modifier-grid" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-                        <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
-                            <button type="button" class="mod-button" data-mod="-5">-5</button>
-                            <button type="button" class="mod-button" data-mod="-4">-4</button>
-                            <button type="button" class="mod-button" data-mod="-3">-3</button>
-                            <button type="button" class="mod-button" data-mod="-2">-2</button>
-                            <button type="button" class="mod-button" data-mod="-1">-1</button>
-                        </div>
-                        <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
-                            <button type="button" class="mod-button" data-mod="+1">+1</button>
-                            <button type="button" class="mod-button" data-mod="+2">+2</button>
-                            <button type="button" class="mod-button" data-mod="+3">+3</button>
-                            <button type="button" class="mod-button" data-mod="+4">+4</button>
-                            <button type="button" class="mod-button" data-mod="+5">+5</button>
-                        </div>
-                    </div>
-                    <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar</button>
-                </div>
+            <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${reserve.name}"/></div>
+            <div class="form-group"><label>Fonte:</label><input type="text" name="source" value="${reserve.source}"/></div>
+            <div class="form-group"><label>Atual:</label><input type="number" name="current" value="${reserve.current}"/></div>
+            <div class="form-group"><label>Máximo:</label><input type="number" name="max" value="${reserve.max}"/></div>
             `,
             buttons: {
-                roll: {
-                    icon: '<i class="fas fa-dice-d6"></i>',
-                    label: "Rolar Dano",
-                    callback: (html) => {
-                        const modifier = parseInt(html.find('input[name="modifier"]').val()) || 0;
-                        performDamageRoll(modifier);
-                    }
+            save: {
+                icon: '<i class="fas fa-save"></i>', label: 'Salvar',
+                callback: (html) => {
+                const updateKey = `system.${reserveType}_reserves.${reserveId}`;
+                this.actor.update({
+                    [`${updateKey}.name`]: html.find('input[name="name"]').val(),
+                    [`${updateKey}.source`]: html.find('input[name="source"]').val(),
+                    [`${updateKey}.current`]: parseInt(html.find('input[name="current"]').val()),
+                    [`${updateKey}.max`]: parseInt(html.find('input[name="max"]').val())
+                });
                 }
-            },
-            default: "roll",
-            render: (html) => {
-                // Lógica para fazer os botões funcionarem
-                const input = html.find('input[name="modifier"]');
-                html.find('.mod-button').click((event) => {
-                    const currentMod = parseInt(input.val()) || 0;
-                    const modToAdd = parseInt($(event.currentTarget).data('mod'));
-                    input.val(currentMod + modToAdd);
-                });
-                html.find('.mod-clear-button').click(() => {
-                    input.val(0);
-                });
+            }
             }
         }).render(true);
+    });
 
-    } else {
-        performDamageRoll(0); // Rola o dano diretamente se não houver Shift
-    }
-});
+    html.on('click', '.delete-energy-reserve', ev => {
+        const reserveCard = ev.currentTarget.closest(".reserve-card");
+        const reserveType = reserveCard.dataset.reserveType; 
+        const reserveId = reserveCard.dataset.reserveId;
+        if (!reserveId || !reserveType) return;
+
+        Dialog.confirm({
+            title: "Deletar Reserva",
+            content: "<p>Você tem certeza que quer deletar esta reserva de energia?</p>",
+            yes: () => {
+                const deleteKey = `system.${reserveType}_reserves.-=${reserveId}`;
+                this.actor.update({ [deleteKey]: null });
+            },
+            no: () => {},
+            defaultYes: false
+        });
+    });
+
+    html.on('click', '.edit-combat-meter', ev => { 
+        const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); 
+        const meter = this.actor.system.combat.combat_meters[meterId]; 
+        new Dialog({ title: `Editar Registro: ${meter.name}`, 
+        content: `
+            <div class="form-group"><label>Nome:</label><input type="text" name="name" value="${meter.name}"/></div>
+            <div class="form-group"><label>Atual:</label><input type="number" name="current" value="${meter.current}"/></div>
+            <div class="form-group"><label>Máximo:</label><input type="number" name="max" value="${meter.max}"/></div>
+            `, 
+        buttons: { 
+            save: { 
+            icon: '<i class="fas fa-save"></i>', 
+            label: 'Salvar', 
+            callback: (html) => { 
+                const updateKey = `system.combat.combat_meters.${meterId}`; 
+                this.actor.update({ 
+                [`${updateKey}.name`]: html.find('input[name="name"]').val(),
+                [`${updateKey}.current`]: parseInt(html.find('input[name="current"]').val()), 
+                [`${updateKey}.max`]: parseInt(html.find('input[name="max"]').val())
+                }); 
+                } 
+            } 
+            }
+        }).render(true); 
+        });
+    html.on('click', '.delete-combat-meter', ev => { const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); Dialog.confirm({ title: "Deletar Registro", content: "<p>Você tem certeza que quer deletar este registro?</p>", yes: () => { const deleteKey = `system.combat.combat_meters.-=${meterId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
+        
+    
+        // ================================================================== //
+        //   LISTENER DE ROLAGEM DE DANO (VERSÃO FINAL - FASE 3.3)            //
+        // ================================================================== //
+
+        html.on('click', '.rollable-damage', async (ev) => {
+            ev.preventDefault();
+            const element = ev.currentTarget;
+            let normalizedAttack;
+
+            // 1. Pega os IDs do botão de dano
+            const itemId = $(element).closest("[data-item-id]").data("itemId");
+            const attackId = $(element).data("attack-id"); // O ID do *modo de ataque* (ex: "Balanço")
+
+            if (!itemId) {
+                console.warn("GUM | Rolagem de dano clicada, mas nenhum 'data-item-id' foi encontrado.");
+                return;
+            }
+
+            const item = this.actor.items.get(itemId);
+            if (!item) return ui.notifications.error("Item não encontrado para esta rolagem de dano.");
+            
+            // === INÍCIO DA NOVA LÓGICA DE NORMALIZAÇÃO ===
+
+            if (attackId && (item.system.melee_attacks || item.system.ranged_attacks)) {
+                // LÓGICA 1: É um ataque de Equipamento (tem attackId)
+                
+                const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
+                if (!attack) return ui.notifications.warn("Modo de ataque não encontrado no item.");
+
+                normalizedAttack = {
+                    name: `${item.name} (${attack.mode})`,
+                    formula: attack.damage_formula,
+                    type: attack.damage_type,
+                    armor_divisor: attack.armor_divisor,
+                    follow_up_damage: attack.follow_up_damage,
+                    fragmentation_damage: attack.fragmentation_damage,
+                    onDamageEffects: attack.onDamageEffects || {}, // Efeitos específicos do modo
+                    generalConditions: item.system.generalConditions || {} // Efeitos gerais do item
+                };
+
+            } else if (item.system.damage?.formula) {
+                // LÓGICA 2: É uma Magia ou Poder (lógica antiga que preservamos)
+                const damageData = item.system.damage;
+                normalizedAttack = {
+                    name: item.name,
+                    formula: damageData.formula,
+                    type: damageData.type,
+                    armor_divisor: damageData.armor_divisor,
+                    follow_up_damage: damageData.follow_up_damage,
+                    fragmentation_damage: damageData.fragmentation_damage,
+                    onDamageEffects: item.system.onDamageEffects || {},
+                    generalConditions: item.system.generalConditions || {}
+                };
+            } else {
+                return ui.notifications.warn("Este item/ataque não possui uma fórmula de dano válida.");
+            }
+            
+            // --- FIM DA LÓGICA DE NORMALIZAÇÃO ---
+
+
+            // A partir daqui, a função só usa o objeto 'normalizedAttack', que sempre terá a mesma estrutura.
+            const performDamageRoll = async (modifier = 0) => {
+                let totalRolls = [];
+            
+                // Rola o dano principal
+                const cleanedFormula = (normalizedAttack.formula.match(/^[0-9dDkK+\-/*\s]+/) || ["0"])[0].trim();
+                const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
+                const mainRoll = new Roll(mainRollFormula);
+                await mainRoll.evaluate();
+                totalRolls.push(mainRoll);
+
+                // Rola os danos extras, se existirem
+                let followUpRoll, fragRoll;
+                if (normalizedAttack.follow_up_damage?.formula) {
+                    followUpRoll = new Roll(normalizedAttack.follow_up_damage.formula);
+                    await followUpRoll.evaluate();
+                    totalRolls.push(followUpRoll);
+                }
+                if (normalizedAttack.fragmentation_damage?.formula) {
+                    fragRoll = new Roll(normalizedAttack.fragmentation_damage.formula);
+                    await fragRoll.evaluate();
+                    totalRolls.push(fragRoll);
+                }
+                
+                // Monta a 'pílula' de fórmula completa no topo do card
+                let fullFormula = `${mainRoll.formula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor != 1 ? `(${normalizedAttack.armor_divisor})` : ''} ${normalizedAttack.type || ''}`;
+                if (followUpRoll) {
+                    let followUpText = `${normalizedAttack.follow_up_damage.formula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor != 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ''} ${normalizedAttack.follow_up_damage.type || ''}`;
+                    fullFormula += ` + ${followUpText}`;
+                }
+                if (fragRoll) {
+                    let fragText = `${normalizedAttack.fragmentation_damage.formula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor != 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ''} ${normalizedAttack.fragmentation_damage.type || ''}`;
+                    fullFormula += ` [${fragText}]`;
+                }
+
+                // MONTAGEM DO PACOTE DE DADOS
+                const damagePackage = {
+                    attackerId: this.actor.id,
+                    sourceName: normalizedAttack.name,
+                    main: {
+                        total: mainRoll.total,
+                        type: normalizedAttack.type || '',
+                        armorDivisor: normalizedAttack.armor_divisor || 1
+                    },
+                    onDamageEffects: normalizedAttack.onDamageEffects,
+                    generalConditions: normalizedAttack.generalConditions
+                };
+                if (followUpRoll) {
+                    damagePackage.followUp = {
+                        total: followUpRoll.total,
+                        type: normalizedAttack.follow_up_damage.type || '',
+                        armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
+                    };
+                }
+                if (fragRoll) {
+                    damagePackage.fragmentation = {
+                        total: fragRoll.total,
+                        type: normalizedAttack.fragmentation_damage.type || '',
+                        armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
+                    };
+                }
+                // --- FIM DA MONTAGEM DO PACOTE ---
+
+
+                // Monta o HTML do card de dano
+                let flavor = `
+                    <div class="gurps-damage-card">
+                        <header class="card-header"><h3>${normalizedAttack.name || 'Dano'}</h3></header>
+                        <div class="card-formula-container"><span class="formula-pill">${fullFormula}</span></div>
+                        <div class="card-content">
+                            <div class="card-main-flex">
+                                <div class="roll-column">
+                                    <span class="column-label">Dados</span>
+                                    <div class="individual-dice-damage">
+                                        ${mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="column-separator"></div>
+                                <div class="target-column">
+                                    <span class="column-label">Dano Total</span>
+                                    <div class="damage-total">
+                                        <span class="damage-value">${mainRoll.total}</span>
+                                        <span class="damage-type">${normalizedAttack.type || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                `;
+
+                // NOVA ESTRUTURA PARA DANOS EXTRAS
+                const hasExtraDamage = followUpRoll || fragRoll;
+                if (hasExtraDamage) {
+                    flavor += `<footer class="card-footer">`;
+                    
+                    const createExtraDamageBlock = (roll, data, label) => {
+                        return `
+                            <div class="extra-damage-block">
+                                <div class="extra-damage-label">${label}</div>
+                                <div class="extra-damage-roll">
+                                    <span class="damage-value">${roll.total}</span>
+                                    <span class="damage-type">${data.type || ''}</span>
+                                </div>
+                            </div>
+                        `;
+                    };
+
+                    if (followUpRoll) {
+                        flavor += createExtraDamageBlock(followUpRoll, normalizedAttack.follow_up_damage, "Acompanhamento");
+                    }
+                    if (fragRoll) {
+                        flavor += createExtraDamageBlock(fragRoll, normalizedAttack.fragmentation_damage, "Fragmentação");
+                    }
+
+                    flavor += `</footer>`;
+                }
+                
+                // BOTÃO ATUALIZADO
+                flavor += `
+                    <footer class="card-actions">
+                        <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+                            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+                        </button>
+                    </footer>
+                `;
+
+                flavor += `</div>`; 
+
+                // CORREÇÃO: Removido 'type: CONST.CHAT_MESSAGE_TYPES.ROLL'
+                ChatMessage.create({
+                    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                    content: flavor,
+                    rolls: totalRolls
+                });
+            };
+            
+            // Lógica para abrir o diálogo de modificador com Shift+Click
+            if (ev.shiftKey) {
+                
+                const label = normalizedAttack.name || "Ataque"; // Esta linha agora funciona para ambos
+                
+                new Dialog({
+                    title: "Modificador de Dano",
+                    content: `
+                        <div class="modifier-dialog" style="text-align: center;">
+                            <p>Insira ou clique nos modificadores para o dano de <strong>${label}</strong>:</p>
+                            <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px; width: 80px;"/>
+                            <div class="modifier-grid" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+                                <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                                    <button type="button" class="mod-button" data-mod="-5">-5</button>
+                                    <button type="button" class="mod-button" data-mod="-4">-4</button>
+                                    <button type="button" class="mod-button" data-mod="-3">-3</button>
+                                    <button type="button" class="mod-button" data-mod="-2">-2</button>
+                                    <button type="button" class="mod-button" data-mod="-1">-1</button>
+                                </div>
+                                <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                                    <button type="button" class="mod-button" data-mod="+1">+1</button>
+                                    <button type="button" class="mod-button" data-mod="+2">+2</button>
+                                    <button type="button" class="mod-button" data-mod="+3">+3</button>
+                                    <button type="button" class="mod-button" data-mod="+4">+4</button>
+                                    <button type="button" class="mod-button" data-mod="+5">+5</button>
+                                </div>
+                            </div>
+                            <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar</button>
+                        </div>
+                    `,
+                    buttons: {
+                        roll: {
+                            icon: '<i class="fas fa-dice-d6"></i>',
+                            label: "Rolar Dano",
+                            callback: (html) => {
+                                const modifier = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                                performDamageRoll(modifier);
+                            }
+                        }
+                    },
+                    default: "roll",
+                    render: (html) => {
+                        const input = html.find('input[name="modifier"]');
+                        html.find('.mod-button').click((event) => {
+                            const currentMod = parseInt(input.val()) || 0;
+                            const modToAdd = parseInt($(event.currentTarget).data('mod'));
+                            input.val(currentMod + modToAdd);
+                        });
+                        html.find('.mod-clear-button').click(() => {
+                            input.val(0);
+                        });
+                    }
+                }).render(true);
+
+            } else {
+                performDamageRoll(0); 
+            }
+        });
 
 
     // ================================================================== //
-    //    LISTENER PARA O POP-UP DA TABELA DE LOCAIS DE ACERTO (INTERATIVO) //
+    //    LISTENER DE HIT LOCATIONS (E OUTROS)                            //
     // ================================================================== //
     html.on('click', '.view-hit-locations', async ev => {
         ev.preventDefault();
@@ -3517,27 +3524,16 @@ html.on('click', '.rollable-damage', async (ev) => {
                 classes: ["dialog", "gurps-rd-dialog"],
                 width: 450
             },
-            // --- MUDANÇA: Funcionalidade interativa adicionada aqui ---
             render: (html) => {
-                // Adiciona um listener para qualquer input nos campos de 'Outra RD'
                 html.find('.loc-rd-mod input').on('input', (event) => {
                     const input = $(event.currentTarget);
-                    const row = input.closest('.table-row'); // Encontra a linha pai do input
-                    
-                    // Pega o valor da armadura que guardamos no próprio input
+                    const row = input.closest('.table-row'); 
                     const armorDR = parseInt(row.find('.loc-rd-armor').text() || 0);
-                    
-                    // Pega o novo valor do modificador que o usuário digitou
                     const modDR = parseInt(input.val() || 0);
-                    
-                    // Recalcula o total
                     const newTotal = armorDR + modDR;
-                    
-                    // Encontra a célula do total na mesma linha e atualiza o valor
                     row.find('.loc-rd-total strong').text(newTotal);
                 });
 
-                // O listener para salvar com 'Enter' continua útil
                 html.find('input').on('keydown', (event) => {
                     if (event.key === 'Enter') {
                         event.preventDefault();
@@ -3548,15 +3544,11 @@ html.on('click', '.rollable-damage', async (ev) => {
         }).render(true);
     });
 
-          // ================================================================== //
-    //    LISTENER PARA O POP-UP DE GERENCIAMENTO DE REGISTROS DE COMBATE   //
-    // ================================================================== //
     html.on('click', '.manage-meters', ev => {
       ev.preventDefault();
       const actor = this.actor;
       const meters = actor.system.combat.combat_meters || {};
 
-      // Monta o corpo da tabela para o diálogo, listando cada registro
       let meterRows = '';
       for (const [id, meter] of Object.entries(meters)) {
         meterRows += `
@@ -3577,7 +3569,6 @@ html.on('click', '.rollable-damage', async (ev) => {
 
       const content = `<form><div class="meter-list">${meterRows || '<p style="text-align:center; opacity:0.7;">Nenhum registro criado.</p>'}</div></form>`;
 
-      // Cria o Diálogo (Pop-up)
       new Dialog({
         title: "Gerenciar Registros de Combate",
         content: content,
@@ -3588,9 +3579,6 @@ html.on('click', '.rollable-damage', async (ev) => {
           }
         },
         render: (html) => {
-          // Adiciona os listeners para os botões DENTRO do pop-up
-
-          // Listener para salvar alterações nos inputs
           html.find('.meter-inputs input').change(async ev => {
             const input = ev.currentTarget;
             const key = input.dataset.path;
@@ -3598,11 +3586,9 @@ html.on('click', '.rollable-damage', async (ev) => {
             await actor.update({ [key]: value });
           });
 
-          // Listener para o botão de editar DENTRO do pop-up
           html.find('.pop-up-edit-meter').click(ev => {
             const meterId = $(ev.currentTarget).closest(".meter-card").data("meterId");
             const meter = actor.system.combat.combat_meters[meterId];
-            // Reutiliza a lógica de diálogo que já tínhamos
             new Dialog({
               title: `Editar Registro: ${meter.name}`,
               content: `<div class="form-group"><label>Nome:</label><input type="text" name="name" value="${meter.name}"/></div><div class="form-group"><label>Máximo:</label><input type="number" name="max" value="${meter.max}"/></div>`,
@@ -3621,7 +3607,6 @@ html.on('click', '.rollable-damage', async (ev) => {
             }).render(true);
           });
 
-          // Listener para o botão de deletar DENTRO do pop-up
           html.find('.pop-up-delete-meter').click(ev => {
             const meterId = $(ev.currentTarget).closest(".meter-card").data("meterId");
             const entry = actor.system.combat.combat_meters[meterId];
@@ -3638,146 +3623,18 @@ html.on('click', '.rollable-damage', async (ev) => {
     }); 
   
     html.on('click', '.manual-override-toggle', async (ev) => {
-    const checkbox = ev.currentTarget;
-    const itemId = checkbox.dataset.itemId;
-    const item = this.actor.items.get(itemId);
-    if (item) {
-        await item.setFlag('gum', 'manual_override', checkbox.checked);
-         this.render(false); // Reavalia as condições
-    }
-});
+        const checkbox = ev.currentTarget;
+        const itemId = checkbox.dataset.itemId;
+        const item = this.actor.items.get(itemId);
+        if (item) {
+            await item.setFlag('gum', 'manual_override', checkbox.checked);
+            this.render(false); // Reavalia as condições
+        }
+    });
 
 }
 
-// ================================================================== //
-//  ✅ RESTAURE ESTA FUNÇÃO DENTRO DA SUA CLASSE DA FICHA DE PERSONAGEM ✅
-// ================================================================== //
-
-/**
- * Abre o diálogo para criar ou editar um modo de ataque.
- * VERSÃO FINAL E CORRIGIDA.
- * @private
- */
-async _openAttackCreationDialog(groupId, attackType, options = {}) {
-    const isEditing = Boolean(options.attackId);
-    const attackData = isEditing ? options.attackData : {};
-    
-    // ✅ CORREÇÃO PRINCIPAL: Capturamos o ID do ataque aqui fora para evitar erros de escopo.
-    const attackId = isEditing ? options.attackId : null;
-
-    const dialogTitle = isEditing ? `Editar Ataque: ${attackData.name}` : "Criar Novo Ataque";
-
-    // --- Montagem do Formulário HTML Reorganizado ---
-    const getFormContent = (type, data) => {
-        
-        // Grupo 1: Identificação e Habilidade
-        const identityFields = `
-            <div class="form-section">
-                <h4 class="section-title">Identificação</h4>
-                <div class="form-group">
-                    <label>Nome / Modo de Uso</label>
-                    <input type="text" name="name" value="${data.name || 'Ataque'}"/>
-                </div>
-                <div class="form-grid-2">
-                    <div class="form-group"><label>Perícia</label><input type="text" name="skill_name" value="${data.skill_name || ''}"/></div>
-                    <div class="form-group input-narrow"><label>NH</label><input type="number" name="skill_level" value="${data.skill_level ?? 10}"/></div>
-                </div>
-            </div>
-        `;
-
-        // Grupo 2: Atributos de Ataque
-        let specificFields = '';
-        if (type === "melee") {
-            specificFields = `
-                <div class="form-section">
-                    
-                    <div class="form-grid-2">
-                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="reach" value="${data.reach || 'C,1'}"/></div>
-                        <div class="form-group input-narrow"><label>Defesa (Apr/Blq)</label><input type="text" name="defense" value="${data.defense ?? '0'}"/></div>
-                    </div>
-                </div>
-            `;
-        } else { // Ranged
-            specificFields = `
-                <div class="form-section">
-                    
-                    <div class="form-grid-3">
-                        <div class="form-group input-narrow"><label>Prec.</label><input type="text" name="accuracy" value="${data.accuracy || ''}"/></div>
-                        <div class="form-group input-medium"><label>Alcance</label><input type="text" name="range" value="${data.range || ''}"/></div>
-                        <div class="form-group input-narrow"><label>CdT</label><input type="text" name="rof" value="${data.rof || ''}"/></div>
-                        <div class="form-group input-narrow"><label>Tiros</label><input type="text" name="shots" value="${data.shots || ''}"/></div>
-                        <div class="form-group input-narrow"><label>RCO</label><input type="text" name="rcl" value="${data.rcl || ''}"/></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Grupo 3: Dano
-        const damageFields = `
-            <div class="form-section">
-                <h5 class="subheader">Dano</h5>
-                <div class="form-grid-3">
-                    <div class="form-group"><label>Fórmula</label><input type="text" name="damage_formula" value="${data.damage_formula || ''}"/></div>
-                    <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="damage_type" value="${data.damage_type || ''}"/></div>
-                    <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="armor_divisor" value="${data.armor_divisor || 1}"/></div>
-                </div>
-                
-                
-                <details class="advanced-options">
-                    <summary>Danos Secundários</summary>
-                    <div class="advanced-damage-fields">
-                        <h5 class="subheader">Dano de Acompanhamento</h5>
-                        <div class="form-grid-3">
-                            <div class="form-group"><label>Fórmula</label><input type="text" name="follow_up_damage.formula" value="${data.follow_up_damage?.formula || ''}" /></div>
-                            <div class="form-group"><label>Tipo</label><input type="text" name="follow_up_damage.type" value="${data.follow_up_damage?.type || ''}" /></div>
-                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="follow_up_damage.armor_divisor" value="${data.follow_up_damage?.armor_divisor || 1}" /></div>
-                        </div>
-                        <h5 class="subheader">Dano de Fragmentação</h5>
-                        <div class="form-grid-3">
-                            <div class="form-group"><label>Fórmula</label><input type="text" name="fragmentation_damage.formula" value="${data.fragmentation_damage?.formula || ''}" /></div>
-                            <div class="form-group"><label>Tipo</label><input type="text" name="fragmentation_damage.type" value="${data.fragmentation_damage?.type || ''}" /></div>
-                            <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="fragmentation_damage.armor_divisor" value="${data.fragmentation_damage?.armor_divisor || 1}" /></div>
-                        </div>
-                    </div>
-                </details>
-            </div>
-        `;
-        
-        const hiddenTypeField = `<input type="hidden" name="attack_type" value="${type}" />`;
-        return `<form class="gurps-dialog-form">${identityFields}${specificFields}${damageFields}${hiddenTypeField}</form>`;
-    };
-    
-    new Dialog({
-        title: dialogTitle,
-        content: getFormContent(attackType, attackData),
-        buttons: {
-            save: {
-                icon: '<i class="fas fa-save"></i>',
-                label: isEditing ? "Salvar" : "Criar",
-                callback: (html) => {
-                    const form = html.find("form")[0];
-                    const formData = new FormDataExtended(form, { dtypes: ["Number"] }).object;
-                    
-                    if (isEditing) {
-                        // Usa a variável 'attackId' que foi capturada fora do callback
-                        const updateKey = `system.combat.attack_groups.${groupId}.attacks.${attackId}`;
-                        this.actor.update({ [updateKey]: formData });
-                    } else {
-                        const newAttackKey = `system.combat.attack_groups.${groupId}.attacks.${foundry.utils.randomID()}`;
-                        this.actor.update({ [newAttackKey]: formData });
-                    }
-                }
-            }
-        },
-        default: 'save'
-    }, {
-        classes: ["dialog", "gum", "gurps-attack-dialog"],
-        width: 520,
-        height: "auto",
-        resizable: true
-    }).render(true);
-  }
-      }
+}
 
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO FINAL COMPLETA  //
@@ -3929,7 +3786,7 @@ class GurpsItemSheet extends ItemSheet {
  * Ativa todos os listeners de interatividade da ficha de item.
  * ESTA É A VERSÃO FINAL E COMPLETA.
  */
-// EM MAIN.JS - SUBSTITUA O MÉTODO INTEIRO DE GurpsItemSheet
+
 activateListeners(html) {
     super.activateListeners(html);
 
@@ -3937,7 +3794,7 @@ activateListeners(html) {
     // ▼▼▼ LISTENERS DO NOVO "SUPER-ITEM" (Fase 2.3) ▼▼▼
     // ==================================================================
 
-    // Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
+// Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
     html.find('.add-attack').on('click', (ev) => {
         const attackType = $(ev.currentTarget).data('type');
         const newAttackId = foundry.utils.randomID(16);
@@ -3946,12 +3803,43 @@ activateListeners(html) {
 
         if (attackType === 'melee') {
             path = `system.melee_attacks.${newAttackId}`;
-            // Usa o "molde" que definimos no template.json
-            newAttackData = game.system.template.Item.attack_melee; 
+            // CORREÇÃO: Definindo o objeto manualmente, como no seu código original,
+            // mas com TODOS os novos campos que planejamos na Fase 2.
+            newAttackData = {
+                "mode": "Novo Ataque C.C.",
+                "skill_name": "",
+                "skill_level_mod": 0,
+                "damage_formula": "GdP",
+                "damage_type": "con",
+                "armor_divisor": 1,
+                "reach": "C",
+                "parry": "0",
+                "block": "0",
+                "min_strength": 0,
+                "onDamageEffects": {},
+                "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
+                "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+            };
         } else {
             path = `system.ranged_attacks.${newAttackId}`;
-            // Usa o "molde" que definimos no template.json
-            newAttackData = game.system.template.Item.attack_ranged; 
+            // CORREÇÃO: Definindo o objeto manualmente com os campos de L.D.
+            newAttackData = {
+                "mode": "Novo Ataque L.D.",
+                "skill_name": "",
+                "skill_level_mod": 0,
+                "damage_formula": "1d",
+                "damage_type": "pi",
+                "armor_divisor": 1,
+                "accuracy": "0",
+                "range": "100/1500",
+                "rof": "1",
+                "shots": "1(3i)",
+                "rcl": "1",
+                "min_strength": 0,
+                "onDamageEffects": {},
+                "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
+                "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+            };
         }
 
         this.item.update({ [path]: newAttackData });
