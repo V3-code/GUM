@@ -68,6 +68,40 @@
       }
     },
 
+      "attack_melee": {
+        "mode": "Novo Ataque C.C.",
+        "skill_name": "",
+        "skill_level_mod": 0,
+        "damage_formula": "GdB",
+        "damage_type": "cort",
+        "armor_divisor": 1,
+        "reach": "C",
+        "parry": "0",
+        "block": "0",
+        "min_strength": 0,
+        "onDamageEffects": {},
+        "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
+        "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+      },
+      "attack_ranged": {
+        "mode": "Novo Ataque L.D.",
+        "skill_name": "",
+        "skill_level_mod": 0,
+        "damage_formula": "GdP",
+        "damage_type": "perf",
+        "armor_divisor": 1,
+        "accuracy": "0",
+        "range": "100/1500",
+        "rof": "1",
+        "shots": "1(3i)",
+        "rcl": "1",
+        "min_strength": 0,
+        "onDamageEffects": {},
+        "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
+        "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+      },
+
+
     "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "modifiers": {} },
     "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "modifiers": {} },
     "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M" },

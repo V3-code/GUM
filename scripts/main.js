@@ -3929,29 +3929,169 @@ class GurpsItemSheet extends ItemSheet {
  * Ativa todos os listeners de interatividade da ficha de item.
  * ESTA É A VERSÃO FINAL E COMPLETA.
  */
+// EM MAIN.JS - SUBSTITUA O MÉTODO INTEIRO DE GurpsItemSheet
 activateListeners(html) {
     super.activateListeners(html);
 
-        html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
+    // ==================================================================
+    // ▼▼▼ LISTENERS DO NOVO "SUPER-ITEM" (Fase 2.3) ▼▼▼
+    // ==================================================================
+
+    // Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
+    html.find('.add-attack').on('click', (ev) => {
+        const attackType = $(ev.currentTarget).data('type');
+        const newAttackId = foundry.utils.randomID(16);
+        let newAttackData;
+        let path;
+
+        if (attackType === 'melee') {
+            path = `system.melee_attacks.${newAttackId}`;
+            // Usa o "molde" que definimos no template.json
+            newAttackData = game.system.template.Item.attack_melee; 
+        } else {
+            path = `system.ranged_attacks.${newAttackId}`;
+            // Usa o "molde" que definimos no template.json
+            newAttackData = game.system.template.Item.attack_ranged; 
+        }
+
+        this.item.update({ [path]: newAttackData });
+    });
+
+    // Listener para DELETAR um Modo de Ataque (Melee ou Ranged)
+    html.find('.delete-attack').on('click', (ev) => {
+        const target = $(ev.currentTarget);
+        const attackId = target.closest('.attack-item').data('attack-id');
+        const listName = target.data('list'); // 'melee_attacks' ou 'ranged_attacks'
+        const attack = this.item.system[listName][attackId];
+
+        if (!attackId || !attack) return;
+
+        Dialog.confirm({
+            title: `Deletar Modo de Ataque "${attack.mode}"`,
+            content: "<p>Você tem certeza?</p>",
+            yes: () => {
+                this.item.update({ [`system.${listName}.-=${attackId}`]: null });
+            },
+            no: () => {},
+            defaultYes: false
+        });
+    });
+
+    // Listener para VINCULAR PERÍCIA (Sua ideia!)
+    html.find('.link-skill-button').on('click', (ev) => {
+        if (!this.item.isOwned) {
+            return ui.notifications.warn("Este item precisa estar em um ator para vincular uma perícia.");
+        }
+        
+        const actor = this.item.parent;
+        const skills = actor.items.filter(i => i.type === 'skill');
+        if (skills.length === 0) {
+            return ui.notifications.warn("Este ator não possui nenhuma perícia para vincular.");
+        }
+        
+        // Pega o caminho para o campo 'skill_name'
+        const input = $(ev.currentTarget).closest('.stat-row').find('input[name$=".skill_name"]');
+        if (!input.length) return;
+        const path = input.attr('name');
+
+        // Cria o HTML para o diálogo de seleção
+        let content = `<div class="dialog-skill-list"><select name="skill_selector">`;
+        content += `<option value="">-- Nenhuma --</option>`;
+        skills.sort((a,b) => a.name.localeCompare(b.name)).forEach(skill => {
+            content += `<option value="${skill.name}">${skill.name} (NH ${skill.system.final_nh})</option>`;
+        });
+        content += `</select></div>`;
+
+        new Dialog({
+            title: "Vincular Perícia do Ator",
+            content: content,
+            buttons: {
+                select: {
+                    icon: '<i class="fas fa-link"></i>',
+                    label: "Vincular",
+                    callback: (html) => {
+                        const selectedSkillName = html.find('select[name="skill_selector"]').val();
+                        this.item.update({ [path]: selectedSkillName });
+                    }
+                }
+            },
+            default: "select"
+        }).render(true);
+    });
+
+    // Listener para ADICIONAR um Efeito *dentro* de um Modo de Ataque
+    html.find('.add-attack-effect').on('click', (ev) => {
+        const target = $(ev.currentTarget);
+        const list = target.data('list'); // "onDamageEffects"
+        const attackType = target.closest('.attack-item').data('attack-type'); // "melee" ou "ranged"
+        const attackId = target.closest('.attack-item').data('attack-id');
+        
+        const basePath = `system.${attackType}_attacks.${attackId}.${list}`;
+
+        new EffectBrowser(this.item, {
+            onSelect: (selectedEffects) => {
+                const updates = {};
+                for (const effect of selectedEffects) {
+                    const newId = foundry.utils.randomID();
+                    const newLinkData = {
+                        id: newId,
+                        effectUuid: effect.uuid,
+                        name: effect.name,
+                        img: effect.img
+                        // Outros campos contextuais (minInjury, etc.) podem ser adicionados aqui
+                    };
+                    updates[`${basePath}.${newId}`] = newLinkData;
+                }
+                this.item.update(updates);
+            }
+        }).render(true);
+    });
+
+    // Listener para DELETAR um Efeito *dentro* de um Modo de Ataque
+    html.find('.delete-attack-effect').on('click', (ev) => {
+        const target = $(ev.currentTarget);
+        const list = target.data('list'); // "onDamageEffects"
+        const effectId = target.closest('.effect-summary').data('effect-id');
+        const attackType = target.closest('.attack-item').data('attack-type');
+        const attackId = target.closest('.attack-item').data('attack-id');
+
+        const path = `system.${attackType}_attacks.${attackId}.${list}.-=${effectId}`;
+
+        Dialog.confirm({
+            title: "Remover Efeito do Ataque",
+            content: "<p>Você tem certeza?</p>",
+            yes: () => {
+                this.item.update({ [path]: null });
+            },
+            no: () => {}
+        });
+    });
+
+    // ==================================================================
+    // ▼▼▼ SEUS LISTENERS ANTIGOS (Preservados) ▼▼▼
+    // ==================================================================
+
+    html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
         ev.preventDefault();
         const target = $(ev.currentTarget);
-        const effectEntry = target.closest('.effect-entry');
+        const effectEntry = target.closest('.effect-entry, .effect-summary');
         
         // Pega as informações do elemento HTML
         const listName = effectEntry.data('list-name');
         const effectId = effectEntry.data('effect-id');
         
-        // Acessa os dados salvos no item da magia/poder
-        const effectData = getProperty(this.item, `system.${listName}.${effectId}`);
-        
-        // O UUID pode estar em 'effectUuid' (para Efeitos) ou 'uuid' (para Condições)
-        const uuid = effectData.effectUuid || effectData.uuid;
+        // Tenta pegar o UUID direto do botão (para os novos botões)
+        let uuid = target.data('uuid');
+
+        if (!uuid) {
+            // Lógica antiga de fallback (para 'effectsTab')
+            const effectData = getProperty(this.item, `system.${listName}.${effectId}`);
+            uuid = effectData.effectUuid || effectData.uuid;
+        }
 
         if (uuid) {
-            // Usa a função do Foundry para encontrar o item pelo seu "endereço" único
             const originalItem = await fromUuid(uuid);
             if (originalItem) {
-                // Se encontrou, abre a ficha do item original
                 originalItem.sheet.render(true);
             } else {
                 ui.notifications.warn("O item original não foi encontrado. O link pode estar quebrado.");
@@ -3966,14 +4106,10 @@ activateListeners(html) {
 
     // --- Listener para o botão de EDITAR DESCRIÇÃO ---
     html.find('.edit-text-btn').on('click', (ev) => {
-        // Encontra o nome do campo a ser editado (ex: "system.description")
         const fieldName = $(ev.currentTarget).data('target');
         const title = $(ev.currentTarget).attr('title');
-        
-        // Pega o conteúdo bruto atual do item
         const currentContent = getProperty(this.item.system, fieldName.replace('system.', '')) || "";
 
-        // Abre o pop-up de edição
         new Dialog({
             title: title,
             content: `<form><textarea name="content" style="width: 100%; height: 300px;">${currentContent}</textarea></form>`,
@@ -3994,7 +4130,6 @@ activateListeners(html) {
     // --- Listener para ADICIONAR um modificador ---
     html.find('.add-modifier').on('click', (ev) => {
         ev.preventDefault();
-        // Assumindo que você tem uma classe 'ModifierBrowser' definida em outro lugar
         new ModifierBrowser(this.item).render(true);
     });
 
@@ -4015,128 +4150,62 @@ activateListeners(html) {
     });
 
     // --- Listener para VISUALIZAR os detalhes de um modificador ---
-   html.find('.view-modifier').on('click', async (ev) => {
-    ev.preventDefault();
-    const modifierId = $(ev.currentTarget).data('modifier-id');
-    const modifierData = this.item.system.modifiers[modifierId];
-    if (!modifierData) return;
+    html.find('.view-modifier').on('click', async (ev) => {
+        ev.preventDefault();
+        const modifierId = $(ev.currentTarget).data('modifier-id');
+        const modifierData = this.item.system.modifiers[modifierId];
+        if (!modifierData) return;
 
-    // Enriquece a descrição do modificador para exibir corretamente
-    const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
+        const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
 
-    // ✅ Monta o conteúdo usando nossas classes de design já existentes ✅
-    const content = `
-        <div class="sheet-body-content">
-            <div class="form-section">
-                <h4 class="section-title">Detalhes do Modificador</h4>
-                <div class="summary-list">
-                    <div class="summary-item">
-                        <label>Custo:</label>
-                        <span class="summary-dots"></span>
-                        <span class="value">${modifierData.cost}</span>
+        const content = `
+            <div class="sheet-body-content">
+                <div class="form-section">
+                    <h4 class="section-title">Detalhes do Modificador</h4>
+                    <div class="summary-list">
+                        <div class="summary-item">
+                            <label>Custo:</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modifierData.cost}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Referência:</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modifierData.ref || 'N/A'}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <label>Referência:</label>
-                        <span class="summary-dots"></span>
-                        <span class="value">${modifierData.ref || 'N/A'}</span>
+                    <hr class="summary-divider">
+                    <div class="summary-description rendered-text">
+                        ${description}
                     </div>
-                </div>
-                <hr class="summary-divider">
-                <div class="summary-description rendered-text">
-                    ${description}
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    // Cria e renderiza o diálogo
-    new Dialog({
-        title: `Detalhes: ${modifierData.name}`,
-        content: content,
-        buttons: {
-            close: {
-                label: "Fechar",
-                icon: '<i class="fas fa-times"></i>'
-            }
-        },
-        default: "close",
-       }, {
-        // Define um tamanho padrão para a janela
-        width: 420,
-        height: "auto",
-        resizable: true,
-        classes: ["dialog", "modifier-preview-dialog"]
-    }).render(true);
-});
-
-// --- Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged) ---
-html.find('.add-attack').on('click', (ev) => {
-    const attackType = $(ev.currentTarget).data('type');
-    const newAttackId = foundry.utils.randomID(16);
-    let newAttackData;
-    let path;
-
-    if (attackType === 'melee') {
-        path = `system.melee_attacks.${newAttackId}`;
-        newAttackData = { mode: "Novo Modo C.C.", damage_formula: "", reach: "", parry: "", min_strength: 0 };
-    } else {
-        path = `system.ranged_attacks.${newAttackId}`;
-        newAttackData = { mode: "Novo Modo L.D.", damage_formula: "", accuracy: "", range: "", rof: "", shots: "", rcl: "", min_strength: 0 };
-    }
-
-    this.item.update({ [path]: newAttackData });
-});
-
-// --- Listener para DELETAR um Modo de Ataque (Melee ou Ranged) ---
-html.find('.delete-attack').on('click', (ev) => {
-    const target = $(ev.currentTarget);
-    const attackId = target.closest('.attack-item').data('attack-id');
-    const listName = target.data('list'); // 'melee_attacks' ou 'ranged_attacks'
-    const attack = this.item.system[listName][attackId];
-
-    if (!attackId || !attack) return;
-
-    Dialog.confirm({
-        title: `Deletar Modo de Ataque "${attack.mode}"`,
-        content: "<p>Você tem certeza?</p>",
-        yes: () => {
-            this.item.update({ [`system.${listName}.-=${attackId}`]: null });
-        },
-        no: () => {},
-        defaultYes: false
-    });
-});
-
-    // NOVO: Visualizar a ficha original da Condição a partir do compêndio
-    html.find('.view-attached-condition').on('click', async ev => {
-        const conditionId = $(ev.currentTarget).closest('.effect-summary').data('condition-id');
-        const conditionData = this.item.system.attachedConditions[conditionId];
-        if (conditionData?.uuid) {
-            const conditionItem = await fromUuid(conditionData.uuid);
-            if (conditionItem) {
-                conditionItem.sheet.render(true);
-            } else {
-                ui.notifications.warn("A condição original não foi encontrada. O link pode estar quebrado.");
-            }
-        }
-    });
-
-    // ATUALIZADO: Deletar o link para uma Condição Anexada
-    html.find('.delete-attached-condition').on('click', ev => {
-        const conditionId = $(ev.currentTarget).closest('.effect-summary').data('condition-id');
-        Dialog.confirm({
-            title: "Desanexar Condição",
-            content: "<p>Você tem certeza que quer remover esta condição do item?</p>",
-            yes: () => {
-                this.item.update({
-                    [`system.attachedConditions.-=${conditionId}`]: null
-                });
+        new Dialog({
+            title: `Detalhes: ${modifierData.name}`,
+            content: content,
+            buttons: {
+                close: {
+                    label: "Fechar",
+                    icon: '<i class="fas fa-times"></i>'
+                }
             },
-            no: () => {}
-        });
+            default: "close",
+        }, {
+            width: 420,
+            height: "auto",
+            resizable: true,
+            classes: ["dialog", "modifier-preview-dialog"]
+        }).render(true);
     });
 
-    // Listener para ADICIONAR EFEITOS (para as seções de Ativação e Dano)
+    // (Os listeners .add-attack e .delete-attack originais foram removidos e substituídos pelos novos)
+
+    // (Os listeners .view-attached-condition e .delete-attached-condition não existem mais,
+    // pois a lógica de "Condições Anexadas" foi movida para a 'effectsTab' genérica)
+
+    // Listener para ADICIONAR EFEITOS (para as seções da 'effectsTab')
     html.find('.add-effect').on('click', async (ev) => {
         const targetList = $(ev.currentTarget).data('target-list');
         if (!targetList) return;
@@ -4147,28 +4216,31 @@ html.find('.delete-attack').on('click', (ev) => {
                 for (const effect of selectedEffects) {
                     const newId = foundry.utils.randomID();
                     const newLinkData = {
+                        id: newId, // Adicionado para consistência
                         effectUuid: effect.uuid,
-                        recipient: 'target'
+                        recipient: 'target',
+                        name: effect.name, // Adicionado para 'preparedEffects'
+                        img: effect.img    // Adicionado para 'preparedEffects'
                     };
                     updates[`system.${targetList}.${newId}`] = newLinkData;
                 }
-                // ✅ MELHORIA: Após a atualização, chamamos .render() para redesenhar a ficha.
-                this.item.update(updates).then(() => this.render());
+                this.item.update(updates); // Não precisa de .then(() => this.render())
             }
         }).render(true);
     });
 
-    // Listener para ADICIONAR CONDIÇÕES GERAIS
+    // Listener para ADICIONAR CONDIÇÕES GERAIS (para 'effectsTab')
     html.find('.add-general-condition').on('click', (ev) => {
         new ConditionBrowser(this.item, {
-            // ✅ Callback para salvar na lista correta
             onSelect: (selectedConditions) => {
                 const updates = {};
                 for (const condition of selectedConditions) {
                     const newId = foundry.utils.randomID();
                     const newLinkData = {
+                        id: newId, // Adicionado para consistência
                         uuid: condition.uuid,
-                        name: condition.name // Guardamos o nome para fallback
+                        name: condition.name,
+                        img: condition.img // Adicionado para 'preparedEffects'
                     };
                     updates[`system.generalConditions.${newId}`] = newLinkData;
                 }
@@ -4177,7 +4249,7 @@ html.find('.delete-attack').on('click', (ev) => {
         }).render(true);
     });
     
-    // Listener para DELETAR um Efeito ou Condição de qualquer lista
+    // Listener para DELETAR um Efeito ou Condição da 'effectsTab'
     html.find('.delete-effect').on('click', (ev) => {
         const target = $(ev.currentTarget);
         const listName = target.closest('.effect-entry').data('list-name');
@@ -4192,22 +4264,6 @@ html.find('.delete-attack').on('click', (ev) => {
             no: () => {}
         });
     });
-
-    // Listener para VISUALIZAR o item original (Efeito ou Condição)
-    html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
-        const uuid = $(ev.currentTarget).data('uuid'); // ✅ Lê o UUID diretamente do botão
-
-        if (uuid) {
-            const originalItem = await fromUuid(uuid);
-            if (originalItem) {
-                originalItem.sheet.render(true);
-            } else {
-                ui.notifications.warn("O item original não foi encontrado no compêndio.");
-            }
-        }
-    });
-
-
 }
 
 
