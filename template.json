@@ -70,6 +70,8 @@
 
       "attack_melee": {
         "mode": "Novo Ataque C.C.",
+        "unbalanced": false, 
+        "fencing": false,
         "skill_name": "",
         "skill_level_mod": 0,
         "damage_formula": "GdB",
@@ -85,6 +87,8 @@
       },
       "attack_ranged": {
         "mode": "Novo Ataque L.D.",
+        "unbalanced": false, 
+        "fencing": false,
         "skill_name": "",
         "skill_level_mod": 0,
         "damage_formula": "GdP",

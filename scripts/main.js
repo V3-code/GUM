@@ -1565,6 +1565,9 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                     id: id,
                     name: attack.mode, // Mapeia 'mode' para 'name' para o template
                     attack_type: "melee",
+                    weight: item.system.weight,
+                    unbalanced: attack.unbalanced, 
+                    fencing: attack.fencing,
                     groupId: item.id,  // O ID do grupo é o ID do item
                     itemId: item.id,   // O ID do item de origem (para rolagens)
                     skill_level: final_nh, // O NH calculado!
@@ -1607,6 +1610,9 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                     id: id,
                     name: attack.mode,
                     attack_type: "ranged",
+                    weight: item.system.weight,
+                    unbalanced: attack.unbalanced, 
+                    fencing: attack.fencing,
                     groupId: item.id,
                     itemId: item.id,
                     skill_level: final_nh,
@@ -3902,6 +3908,8 @@ activateListeners(html) {
             // mas com TODOS os novos campos que planejamos na Fase 2.
             newAttackData = {
                 "mode": "Novo Ataque C.C.",
+                "unbalanced": false, 
+                "fencing": false,
                 "skill_name": "",
                 "skill_level_mod": 0,
                 "damage_formula": "GdB",
@@ -3920,6 +3928,8 @@ activateListeners(html) {
             // CORREÇÃO: Definindo o objeto manualmente com os campos de L.D.
             newAttackData = {
                 "mode": "Novo Ataque L.D.",
+                "unbalanced": false, 
+                "fencing": false,
                 "skill_name": "",
                 "skill_level_mod": 0,
                 "damage_formula": "GdP",
@@ -4265,31 +4275,34 @@ html.find('.save-attack-mode').on('click', (ev) => {
         ev.preventDefault();
         const attackItem = $(ev.currentTarget).closest('.attack-item');
         
-        // 1. Coleta TODOS os dados
         const updateData = {};
-        let hasChanges = false; // Flag para verificar se algo mudou
+        let hasChanges = false; 
+
+        // 1. Coleta os dados CORRETAMENTE
         attackItem.find('input[data-name], select[data-name], textarea[data-name]').each((i, el) => {
             const name = el.dataset.name;
-            const value = el.value;
-            // Compara com o valor original no item
+
+            // ✅ A CORREÇÃO: Verifica se é um checkbox
+            const value = (el.type === 'checkbox') ? el.checked : el.value;
+
+            // Verifica se o valor realmente mudou
             if (foundry.utils.getProperty(this.item, name) != value) {
                 hasChanges = true;
             }
             updateData[name] = value;
         });
 
-        // ✅ CORREÇÃO (BUG 1 e 2): Limpa a memória
+        // 2. Limpa a memória (para o bug de fechar/não fechar)
         this._openAttackModeId = null; 
-            
-        // 2. Salva os dados (SE houver mudanças)
+          
+        // 3. Salva os dados (SE houver mudanças)
         if (hasChanges) {
             this.item.update(updateData);
+        } else {
+            // Se não houver mudanças, força o fechamento visual
+            attackItem.find('.attack-edit-mode').hide();
+            attackItem.find('.attack-display-mode').show();
         }
-        
-        // 3. ✅ CORREÇÃO (BUG 1): Força o "toggle" visual manualmente.
-        // Isso fecha a janela imediatamente, mesmo se não houver mudanças.
-        attackItem.find('.attack-edit-mode').hide();
-        attackItem.find('.attack-display-mode').show();
     });
 
 }

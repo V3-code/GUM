@@ -730,6 +730,15 @@
                                                 <i class="fas fa-magic"></i>
                                             </span>
                                         {{/if}}
+
+                                        {{#if attack.unbalanced}}
+                                            <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                                        {{/if}}
+
+                                        {{#if attack.fencing}}
+                                            <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                                        {{/if}}
+
                                         <div class="attack-controls">
                                             <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
                                             <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
@@ -819,6 +828,18 @@
                                     </div>
                                 </div>
 
+                                {{!-- ✅ MUDANÇA: GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
+                                <div class="form-grid-3 attack-flags-grid">
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
+                                        <span>Desbalanceada (U)</span>
+                                    </label>
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
+                                        <span>Esgrima (F)</span>
+                                    </label>
+                                </div>    
+
                                 {{!-- GRUPO 3: AVANÇADO --}}
                                 <details class="advanced-options item-sheet-advanced">
                                     <summary>Danos Avançados & Efeitos</summary>
@@ -883,13 +904,21 @@
                                             {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
                                             ({{attack.mode}})
                                         </span>
-                                        {{!-- ✅ MUDANÇA: NH Mod e Efeitos movidos para o Título --}}
                                         <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
                                         {{#if (objectValues attack.onDamageEffects)}}
                                             <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
                                                 <i class="fas fa-magic"></i>
                                             </span>
                                         {{/if}}
+
+                                        {{#if attack.unbalanced}}
+                                            <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                                        {{/if}}
+
+                                        {{#if attack.fencing}}
+                                            <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                                        {{/if}}
+
                                         <div class="attack-controls">
                                             <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
                                             <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
@@ -1001,6 +1030,18 @@
                                         <label>ST Mín.</label>
                                         <input type="number" data-name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
                                     </div>
+                                </div>
+
+                                {{!-- ✅ MUDANÇA: GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
+                                <div class="form-grid-3 attack-flags-grid">
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
+                                        <span>Desbalanceada (U)</span>
+                                    </label>
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
+                                        <span>Esgrima (F)</span>
+                                    </label>
                                 </div>
 
                                 {{!-- GRUPO 3: AVANÇADO --}}

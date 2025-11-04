@@ -3331,3 +3331,42 @@ filter:none;
   flex-direction: row !important;
 }
 
+/* ============================================================= */
+/* ESTILO DAS TAGS DE CARACTERÍSTICA (U/F) NA FICHA DO ATOR      */
+/* ============================================================= */
+
+.gum.sheet.actor .attack-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px; /* Espaço entre Nome, Tags e Perícia */
+}
+
+.gum.sheet.actor .attack-name-row strong {
+    flex-shrink: 0; /* Impede que o nome encolha */
+}
+.gum.sheet.actor .attack-name-row small {
+    flex-grow: 1; /* Empurra as tags para perto do nome */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* O estilo das tags "U" e "F" */
+.gum.sheet.actor .attack-flag-tag {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.8em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Tag Desbalanceada (U) - Laranja/Cuidado */
+.gum.sheet.actor .attack-flag-tag.flag-u {
+    background: #D35400; /* Laranja Escuro */
+}
+/* Tag Esgrima (F) - Azul/Técnica */
+.gum.sheet.actor .attack-flag-tag.flag-f {
+    background: #2980B9; /* Azul Escuro */
+}

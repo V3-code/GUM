@@ -1615,3 +1615,82 @@
 .gum.sheet.item .attack-controls-edit .button:hover {
     border-color: #fff;
 }
+/* ============================================================= */
+/* FASE 2.18: ESTILOS PARA CARACTERÍSTICAS (U/F)                 */
+/* ============================================================= */
+
+/* --- Estilo das Tags "U" e "F" no Modo Exibição --- */
+.gum.sheet.item .pill-stat.flag-u,
+.gum.sheet.item .pill-stat.flag-f {
+    font-weight: 700;
+    font-size: 0.9em;
+    padding: 2px 6px;
+    line-height: 1;
+}
+/* Tag Desbalanceada (U) - Laranja/Cuidado */
+.gum.sheet.item .pill-stat.flag-u {
+    background: rgba(211, 84, 0, 0.1);
+    border-color: rgba(211, 84, 0, 0.3);
+    color: #E67E22;
+}
+/* Tag Esgrima (F) - Azul/Técnica */
+.gum.sheet.item .pill-stat.flag-f {
+    background: rgba(86, 129, 156, 0.1);
+    border-color: rgba(86, 129, 156, 0.3);
+    color: #56819c;
+}
+
+/* --- Estilo do Grupo de Checkboxes no Modo Edição --- */
+.gum.sheet.item .attack-flags-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 3 colunas */
+    gap: 8px 10px;
+    
+    /* Separador sutil */
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+/* Estilo do checkbox (reutilizando seu CSS de Armadura) */
+.gum.sheet.item .attack-flags-grid .custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #d1d1d1;
+  transition: color 0.2s ease;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox:hover {
+  color: #fff;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"] {
+  display: none;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox span::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
+  background-color: var(--c-accent-gold, #c5a05b);
+  border-color: var(--c-accent-gold, #c5a05b);
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  width: 3px;
+  height: 7px;
+  border: solid #111;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

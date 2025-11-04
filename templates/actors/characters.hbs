@@ -1288,6 +1288,12 @@
                         <div class="attack-name-row">
                             <strong>{{attack.skill_name}}</strong> {{!-- ex: "Espada Longa" --}}
                             <a>({{attack.name}})</a> {{!-- ex: "(Balanço)" --}}
+                            {{#if this.unbalanced}}
+                            <span class="attack-flag-tag flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                            {{/if}}
+                            {{#if this.fencing}}
+                            <span class="attack-flag-tag flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                            {{/if}}
                         </div>
 
                         <div class="attack-details-row">
@@ -1321,6 +1327,7 @@
                                   <a class="rollable" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
                               </span>
                               <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
+                              <span class="stat melee-stat"><label>Peso:</label> {{attack.weight}} kg</span>
                             {{/if}}
 
                             {{!-- Atributos de Ataque L.D. --}}
@@ -1330,6 +1337,7 @@
                                 <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
                                 <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
                                 <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
+                                <span class="stat melee-stat"><label>Peso:</label> {{attack.weight}} kg</span>
                             {{/if}}
                         </div>
                     </div>
