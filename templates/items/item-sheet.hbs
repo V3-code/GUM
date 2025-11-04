@@ -735,15 +735,15 @@
                                             <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
                                         </div>
                                     </h4>
-                                    
+
                                     {{!-- Linha 1: Grade de Stats (com Dano completo) --}}
                                     <div class="form-grid-3 attack-display-grid melee-grid">
                                         <div class="display-stat damage-stat">
                                             <label>Dano</label>
                                             <span>
-                                                {{attack.damage_formula}} {{attack.damage_type}}
-                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
-                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
+                                                ({{attack.damage_formula}}) {{attack.damage_type}}
+                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
+                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
                                             </span>
                                         </div>
                                         <div class="display-stat">
@@ -901,8 +901,8 @@
                                         <div class="display-stat damage-stat">
                                             <label>Dano</label>
                                             <span>
-                                                ({{attack.damage_formula}} {{attack.damage_type}})
-                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}} {{this.type}}){{/if}}{{/with}}
+                                                ({{attack.damage_formula}}) {{attack.damage_type}}
+                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
                                                 {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
                                             </span>
                                         </div>

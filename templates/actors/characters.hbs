@@ -1251,7 +1251,6 @@
 <div class="attacks-list-box gum-block">
     <div class="block-header">
         <h4>Lista de Ataques (de Itens Equipados)</h4>
-        {{!-- Não há mais um botão "+ Adicionar Grupo" aqui. --}}
         {{!-- Os grupos são adicionados ao equipar um item. --}}
     </div>
 
@@ -1287,8 +1286,8 @@
 
                     <div class="attack-main-info">
                         <div class="attack-name-row">
-                            <strong>{{attack.name}}</strong> {{!-- ex: "Balanço" --}}
-                            <small>({{attack.skill_name}})</small> {{!-- ex: "(Espada Larga)" --}}
+                            <strong>{{attack.skill_name}}</strong> {{!-- ex: "Espada Longa" --}}
+                            <a>({{attack.name}})</a> {{!-- ex: "(Balanço)" --}}
                         </div>
 
                         <div class="attack-details-row">
@@ -1301,14 +1300,14 @@
                             <span class="stat">
                                 <label>Dano:</label>
                                 <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
-                                    {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                                    ({{attack.damage_formula}}){{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
                                     
                                     {{#with attack.follow_up_damage}}
-                                        {{#if this.formula}}+ {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}
+                                        {{#if this.formula}} + ({{this.formula}}){{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}
                                     {{/with}}
                                     
                                     {{#with attack.fragmentation_damage}}
-                                        {{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}
+                                        {{#if this.formula}} + [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}
                                     {{/with}}
                                 </a>
                             </span>

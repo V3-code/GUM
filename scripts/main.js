@@ -1539,16 +1539,26 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                 // 1. Tenta encontrar uma Perícia
                 const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
                 
+                // 2. Tenta encontrar um Atributo
+                const attribute = attributes[skillName];
+
+                // 3. Tenta ler um número fixo (ex: "15")
+                const fixedNumber = Number(skillName);
+
                 if (skill) {
                     base_nh = skill.system.final_nh || 10;
                 } 
-                // 2. Se não achar, tenta encontrar um Atributo (dx, st, iq, ht, etc.)
-                else if (attributes[skillName]) {
-                    base_nh = attributes[skillName].final || 10;
+                else if (attribute) {
+                    base_nh = attribute.final || 10;
                 }
+                // ✅ CORREÇÃO (BUG 2): Se o 'skillName' for um número, use-o
+                else if (!isNaN(fixedNumber) && skillName !== "") {
+                    base_nh = fixedNumber;
+                }
+                // (Se tudo falhar, base_nh continua 10)
                 
-                // Calcula o NH Final
-                const final_nh = base_nh + (attack.skill_level_mod || 0);
+                // ✅ CORREÇÃO (BUG 1): Força a conversão para Número
+                const final_nh = base_nh + (Number(attack.skill_level_mod) || 0);
 
                 return {
                     ...attack, // Traz todos os campos do 'attack_melee' (damage_formula, reach, parry, etc.)
@@ -1571,16 +1581,26 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                 // 1. Tenta encontrar uma Perícia
                 const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
                 
+                // 2. Tenta encontrar um Atributo
+                const attribute = attributes[skillName];
+
+                // 3. Tenta ler um número fixo (ex: "15")
+                const fixedNumber = Number(skillName);
+
                 if (skill) {
                     base_nh = skill.system.final_nh || 10;
                 } 
-                // 2. Se não achar, tenta encontrar um Atributo (dx, st, iq, ht, etc.)
-                else if (attributes[skillName]) {
-                    base_nh = attributes[skillName].final || 10;
+                else if (attribute) {
+                    base_nh = attribute.final || 10;
                 }
+                // ✅ CORREÇÃO (BUG 2): Se o 'skillName' for um número, use-o
+                else if (!isNaN(fixedNumber) && skillName !== "") {
+                    base_nh = fixedNumber;
+                }
+                // (Se tudo falhar, base_nh continua 10)
                 
-                // Calcula o NH Final
-                const final_nh = base_nh + (attack.skill_level_mod || 0);
+                // ✅ CORREÇÃO (BUG 1): Força a conversão para Número
+                const final_nh = base_nh + (Number(attack.skill_level_mod) || 0);
 
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
@@ -3793,43 +3813,66 @@ class GurpsItemSheet extends ItemSheet {
     return this.object.update(fullFormData);
   }
 
- _getSubmitData(updateData) {
-        // Primeiro, chama o método original
-        const data = super._getSubmitData(updateData);
-        
-        // Agora, encontra todas as seções <details> e anota quais estão abertas
-        const openDetails = [];
-        this.form.querySelectorAll('details').forEach((detailsEl, index) => {
-            if (detailsEl.open) {
-                // Usamos o texto do <summary> ou um índice como identificador único
-                const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
-                openDetails.push(summaryText);
-            }
-        });
-        // Armazena essa informação temporariamente na própria ficha
-        this._openDetailsState = openDetails;
-
-        return data;
-    }
+_getSubmitData(updateData) {
+    const data = super._getSubmitData(updateData);
+    
+    // ✅ Agora, este método apenas chama nosso helper unificado
+    this._saveUIState(); 
+    
+    return data;
+}
 
     /**
      * ✅ NOVO MÉTODO 2: Restaura o estado da UI após a ficha ser redesenhada.
      * Este método é chamado automaticamente pelo Foundry após a renderização.
      */
-    async _render(force, options) {
+async _render(force, options) {
         await super._render(force, options);
         
-        // Se temos um estado de seções abertas salvo...
+        // --- Lógica de <details> (agora lê a memória unificada) ---
         if (this._openDetailsState) {
-            // ...procuramos por todas as seções <details> na ficha recém-renderizada.
             this.form.querySelectorAll('details').forEach((detailsEl, index) => {
                 const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
-                // Se o identificador desta seção estiver na nossa lista...
                 if (this._openDetailsState.includes(summaryText)) {
-                    // ...nós a abrimos.
                     detailsEl.open = true;
                 }
             });
+            this._openDetailsState = null; // ✅ Limpa a memória de details
+        }
+
+        // --- Lógica de 'Modo Edição' (agora lê a memória unificada) ---
+        if (this._openAttackModeId) {
+            const attackItem = this.form.querySelector(`.attack-item[data-attack-id="${this._openAttackModeId}"]`);
+            if (attackItem) {
+                const displayMode = attackItem.querySelector('.attack-display-mode');
+                const editMode = attackItem.querySelector('.attack-edit-mode');
+                
+                if (displayMode) displayMode.style.display = 'none';
+                if (editMode) editMode.style.display = 'block';
+            }
+            this._openAttackModeId = null; // ✅ Limpa a memória do ataque
+        }
+    }
+
+    /**
+     * Salva o estado atual da UI (modos de ataque abertos, details abertos)
+     * na memória da ficha ANTES de uma re-renderização.
+     */
+    _saveUIState() {
+        // 1. Salva <details> abertos (lógica do _getSubmitData)
+        const openDetails = [];
+        this.form.querySelectorAll('details[open]').forEach((detailsEl, index) => {
+            const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
+            openDetails.push(summaryText);
+        });
+        this._openDetailsState = openDetails;
+
+        // 2. Salva o 'Modo Edição' aberto
+        const openAttack = this.form.querySelector('.attack-edit-mode[style*="display: block;"], .attack-edit-mode:not([style*="display: none;"])');
+        if (openAttack) {
+            this._openAttackModeId = openAttack.closest('.attack-item').dataset.attackId;
+        } else {
+            this._openAttackModeId = null;
         }
     }
   
@@ -3961,12 +4004,14 @@ activateListeners(html) {
     });
 
     // Listener para ADICIONAR um Efeito *dentro* de um Modo de Ataque
-    html.find('.add-attack-effect').on('click', (ev) => {
+html.find('.add-attack-effect').on('click', (ev) => {
+        // ✅ CORREÇÃO (BUG 3): Salva TODO o estado da UI (incluindo <details>)
+        this._saveUIState(); 
+
         const target = $(ev.currentTarget);
         const list = target.data('list'); // "onDamageEffects"
-        const attackType = target.closest('.attack-item').data('attack-type'); // "melee" ou "ranged"
+        const attackType = target.closest('.attack-item').data('attack-type');
         const attackId = target.closest('.attack-item').data('attack-id');
-        
         const basePath = `system.${attackType}_attacks.${attackId}.${list}`;
 
         new EffectBrowser(this.item, {
@@ -3974,13 +4019,7 @@ activateListeners(html) {
                 const updates = {};
                 for (const effect of selectedEffects) {
                     const newId = foundry.utils.randomID();
-                    const newLinkData = {
-                        id: newId,
-                        effectUuid: effect.uuid,
-                        name: effect.name,
-                        img: effect.img
-                        // Outros campos contextuais (minInjury, etc.) podem ser adicionados aqui
-                    };
+                    const newLinkData = { id: newId, effectUuid: effect.uuid, name: effect.name, img: effect.img };
                     updates[`${basePath}.${newId}`] = newLinkData;
                 }
                 this.item.update(updates);
@@ -3990,12 +4029,14 @@ activateListeners(html) {
 
     // Listener para DELETAR um Efeito *dentro* de um Modo de Ataque
     html.find('.delete-attack-effect').on('click', (ev) => {
+        // ✅ CORREÇÃO (BUG 3): Salva TODO o estado da UI (incluindo <details>)
+        this._saveUIState();
+
         const target = $(ev.currentTarget);
-        const list = target.data('list'); // "onDamageEffects"
+        const list = target.data('list');
         const effectId = target.closest('.effect-summary').data('effect-id');
         const attackType = target.closest('.attack-item').data('attack-type');
         const attackId = target.closest('.attack-item').data('attack-id');
-
         const path = `system.${attackType}_attacks.${attackId}.${list}.-=${effectId}`;
 
         Dialog.confirm({
@@ -4004,7 +4045,11 @@ activateListeners(html) {
             yes: () => {
                 this.item.update({ [path]: null });
             },
-            no: () => {}
+            no: () => {
+                // Se o usuário clicar "Não", limpe a memória
+                this._openAttackModeId = null;
+                this._openDetailsState = null;
+            }
         });
     });
 
@@ -4216,23 +4261,35 @@ activateListeners(html) {
     });
 
     // Botão "Concluir Edição" (check)
-    html.find('.save-attack-mode').on('click', (ev) => {
+html.find('.save-attack-mode').on('click', (ev) => {
         ev.preventDefault();
         const attackItem = $(ev.currentTarget).closest('.attack-item');
         
-        // 1. Coleta TODOS os dados do formulário de edição
+        // 1. Coleta TODOS os dados
         const updateData = {};
+        let hasChanges = false; // Flag para verificar se algo mudou
         attackItem.find('input[data-name], select[data-name], textarea[data-name]').each((i, el) => {
             const name = el.dataset.name;
             const value = el.value;
-            // Converte para número se for o caso, mas o Foundry lida bem com strings
+            // Compara com o valor original no item
+            if (foundry.utils.getProperty(this.item, name) != value) {
+                hasChanges = true;
+            }
             updateData[name] = value;
         });
 
-        // 2. Salva os dados no item.
-        // Isso vai disparar uma re-renderização da ficha do item.
-        this.item.update(updateData);
+        // ✅ CORREÇÃO (BUG 1 e 2): Limpa a memória
+        this._openAttackModeId = null; 
+            
+        // 2. Salva os dados (SE houver mudanças)
+        if (hasChanges) {
+            this.item.update(updateData);
+        }
         
+        // 3. ✅ CORREÇÃO (BUG 1): Força o "toggle" visual manualmente.
+        // Isso fecha a janela imediatamente, mesmo se não houver mudanças.
+        attackItem.find('.attack-edit-mode').hide();
+        attackItem.find('.attack-display-mode').show();
     });
 
 }
