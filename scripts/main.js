@@ -3861,8 +3861,8 @@ activateListeners(html) {
                 "mode": "Novo Ataque C.C.",
                 "skill_name": "",
                 "skill_level_mod": 0,
-                "damage_formula": "GdP",
-                "damage_type": "con",
+                "damage_formula": "GdB",
+                "damage_type": "cort",
                 "armor_divisor": 1,
                 "reach": "C",
                 "parry": "0",
@@ -3879,14 +3879,15 @@ activateListeners(html) {
                 "mode": "Novo Ataque L.D.",
                 "skill_name": "",
                 "skill_level_mod": 0,
-                "damage_formula": "1d6",
-                "damage_type": "pi",
+                "damage_formula": "GdP",
+                "damage_type": "perf",
                 "armor_divisor": 1,
                 "accuracy": "0",
                 "range": "100/1500",
                 "rof": "1",
                 "shots": "1(3i)",
                 "rcl": "1",
+                "mag": "1",
                 "min_strength": 0,
                 "onDamageEffects": {},
                 "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
@@ -4140,11 +4141,6 @@ activateListeners(html) {
         }).render(true);
     });
 
-    // (Os listeners .add-attack e .delete-attack originais foram removidos e substituídos pelos novos)
-
-    // (Os listeners .view-attached-condition e .delete-attached-condition não existem mais,
-    // pois a lógica de "Condições Anexadas" foi movida para a 'effectsTab' genérica)
-
     // Listener para ADICIONAR EFEITOS (para as seções da 'effectsTab')
     html.find('.add-effect').on('click', async (ev) => {
         const targetList = $(ev.currentTarget).data('target-list');
@@ -4204,6 +4200,41 @@ activateListeners(html) {
             no: () => {}
         });
     });
+
+    // =============================================================
+    // LISTENER PARA O NOVO MODO DE EXIBIÇÃO/EDIÇÃO DE ATAQUE
+    // =============================================================
+
+    // Botão "Editar" (lápis)
+    html.find('.edit-attack-mode').on('click', (ev) => {
+        ev.preventDefault();
+        const attackItem = $(ev.currentTarget).closest('.attack-item');
+        // Esconde o modo de exibição
+        attackItem.find('.attack-display-mode').hide();
+        // Mostra o formulário de edição
+        attackItem.find('.attack-edit-mode').show();
+    });
+
+    // Botão "Concluir Edição" (check)
+    html.find('.save-attack-mode').on('click', (ev) => {
+        ev.preventDefault();
+        const attackItem = $(ev.currentTarget).closest('.attack-item');
+        
+        // 1. Coleta TODOS os dados do formulário de edição
+        const updateData = {};
+        attackItem.find('input[data-name], select[data-name], textarea[data-name]').each((i, el) => {
+            const name = el.dataset.name;
+            const value = el.value;
+            // Converte para número se for o caso, mas o Foundry lida bem com strings
+            updateData[name] = value;
+        });
+
+        // 2. Salva os dados no item.
+        // Isso vai disparar uma re-renderização da ficha do item.
+        this.item.update(updateData);
+        
+    });
+
 }
 
 

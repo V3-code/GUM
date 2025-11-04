@@ -235,12 +235,15 @@
 
   {{!-- 1. Navegação das Abas --}}
   <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item" data-tab="details">Detalhes</a>
-    {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-      <a class="item" data-tab="modifiers">Modificadores</a>
+        <a class="item" data-tab="details">Detalhes</a>
+    {{#if (eq item.type "equipment")}}
+        <a class="item" data-tab="attacks">Modos de Ataque</a>
     {{/if}}
     {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="effects">Efeitos</a>
+    {{/if}}
+    {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+        <a class="item" data-tab="modifiers">Modificadores</a>
     {{/if}}
   </nav>
 
@@ -250,724 +253,853 @@
      {{!-- Aba "Detalhes" --}}
     <div class="tab" data-tab="details">
        
-    {{!-- ===================================================================== --}}
-{{!-- 				NOVO BLOCO DE EQUIPAMENTO (INÍCIO) 				 --}}
-{{!-- ===================================================================== --}}
-{{#if (eq item.type "equipment")}}
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM EQUIPAMENTO 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "equipment")}}
 
-    {{!-- 1. Informações Gerais (do seu partial 'inline') --}}
-    {{!-- Mantemos isso, pois tem peso, custo, etc. --}}
-    {{> itemDetailsGeneral}}
+            {{> itemDetailsGeneral}}
 
-    {{!-- ================================= --}}
-    {{!-- 		SEÇÃO "MODOS DE ATAQUE" 	 --}}
-    {{!-- (Esta é a nova seção principal) --}}
-    {{!-- ================================= --}}
-    
-    {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
-    <div class="form-section attacks-editor-section">
-        <h4 class="section-title">Ataques Corpo a Corpo</h4>
-        <ol class="attack-list">
-            {{#each system.melee_attacks as |attack key|}}
-            <li class="attack-item melee-attack-item" data-attack-id="{{key}}" data-attack-type="melee">
-                
-                {{!-- Linha 1: Identificação e Perícia --}}
-                <div class="attack-stat-rows">
-                    <div class="stat-row">
+        {{/if}}
+
+
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM ARMADURA 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "armor")}}
+
+                {{!-- Seção de Informações Gerais --}}
+                <div class="form-section">
+                    {{!-- Usamos o partial que já está pronto --}}
+                    {{> itemDetailsGeneral}}
+                </div>
+
+                {{!-- Seção de Proteção (Nova Estrutura) --}}
+                <div class="form-section">
+                    <h4 class="section-title">Proteção</h4>
+                    <div class="protection-grid">
+                        
+                        {{!-- Campo de RD --}}
                         <div class="form-group">
-                            <label>Modo de Uso</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                            <label>Resistência a Dano (RD)</label>
+                            <input type="number" name="system.dr" value="{{system.dr}}" />
                         </div>
-                        <div class="form-group">
-                            <label>Perícia Vinculada</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Mod. NH</label>
-                            <input type="number" name="system.melee_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
-                        </div>
-                        {{!-- Botão de Vincular Perícia --}}
-                        <div class="form-group-button">
-                            <a class="link-skill-button" title="Vincular Perícia do Ator (se o item estiver no ator)"><i class="fas fa-link"></i></a>
-                        </div>
-                    </div>
 
-                    {{!-- Linha 2: Atributos de Combate --}}
-                    <div class="stat-row">
-                        <div class="form-group input-medium">
-                            <label>Dano</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                        {{!-- Grid de Locais de Acerto --}}
+                        <div class="hit-locations-grid">
+                            {{#each (array "torso" "head" "face" "eyes" "neck" "vitals" "groin" "arms" "hands" "legs" "feet") as |loc|}}
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" name="system.worn_locations" value="{{loc}}" {{#if (includes ../system.worn_locations loc)}}checked{{/if}} />
+                                    <span>{{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}</span>
+                                </label>
+                            {{/each}}
                         </div>
-                        <div class="form-group input-narrow">
-                            <label>Tipo</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
-                        </div>
-                        <div class="form-group input-narrow" title="Divisor de Armadura">
-                            <label>Div.</label>
-                            <input type="number" step="0.1" name="system.melee_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Alcance</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.reach" value="{{attack.reach}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Aparar</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.parry" value="{{attack.parry}}"/>
-                        </div>
-                            <div class="form-group input-narrow">
-                            <label>Bloqueio</label>
-                            <input type="text" name="system.melee_attacks.{{key}}.block" value="{{attack.block}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>ST Mín.</label>
-                            <input type="number" name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
-                        </div>
-                    </div>
 
-                    {{!-- Linha 3: Danos Avançados & Efeitos --}}
-                    <details class="advanced-options item-sheet-advanced">
-                        <summary>Danos Avançados & Efeitos</summary>
-                        <div class="advanced-content">
-                            {{!-- Danos Secundários --}}
-                            <h5 class="subheader">Dano de Acompanhamento</h5>
-                            <div class="stat-row">
-                                <div class="form-group"><label>Fórmula</label><input type="text" name="system.melee_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
-                                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.melee_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
-                                <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" name="system.melee_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
-                            </div>
-                            <h5 class="subheader">Dano de Fragmentação</h5>
-                            <div class="stat-row">
-                                <div class="form-group"><label>Fórmula</label><input type="text" name="system.melee_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
-                                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.melee_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
-                                <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" name="system.melee_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
-                            </div>
-                            <hr>
-                            {{!-- Efeitos Ao Causar Dano --}}
-                            <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
-                            <div class="effects-list-container">
-                                {{!-- Usamos a função 'objectValues' que você já registrou no main.js --}}
-                                {{#each (objectValues attack.onDamageEffects)}}
-                                <div class="effect-summary" data-effect-id="{{this.id}}">
-                                    <img src="{{this.img}}" alt="{{this.name}}"/>
-                                    <span>{{this.name}}</span>
-                                    <div class="controls">
-                                        <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                {{/each}}
-                                <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-                            </div>
-                        </div>
-                    </details>
+                    </div>
                 </div>
                 
-                <div class="attack-controls">
-                    <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                </div>
-            </li>
-            {{/each}}
-        </ol>
-        <div class="attack-toolbar">
-            <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
-        </div>
-    </div>
+        {{/if}}
 
-    {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
-    <div class="form-section attacks-editor-section">
-        <h4 class="section-title">Ataques à Distância</h4>
-        <ol class="attack-list">
-            {{#each system.ranged_attacks as |attack key|}}
-            <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
-                
-                {{!-- Linha 1: Identificação e Perícia --}}
-                <div class="attack-stat-rows">
-                    <div class="stat-row">
-                        <div class="form-group">
-                            <label>Modo de Uso</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.mode" value="{{attack.mode}}"/>
-                        </div>
-                        <div class="form-group">
-                            <label>Perícia Vinculada</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Mod. NH</label>
-                            <input type="number" name="system.ranged_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
-                        </div>
-                        <div class="form-group-button">
-                            <a class="link-skill-button" title="Vincular Perícia do Ator (se o item estiver no ator)"><i class="fas fa-link"></i></a>
-                        </div>
-                    </div>
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
 
-                    {{!-- Linha 2: Atributos de Combate --}}
-                    <div class="stat-row">
-                        <div class="form-group input-medium">
-                            <label>Dano</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Tipo</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
-                        </div>
-                        <div class="form-group input-narrow" title="Divisor de Armadura">
-                            <label>Div.</label>
-                            <input type="number" step="0.1" name="system.ranged_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Prec.</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.accuracy" value="{{attack.accuracy}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>ST Mín.</label>
-                            <input type="number" name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
-                        </div>
-                    </div>
-
-                    {{!-- Linha 3: Performance da Arma --}}
-                    <div class="stat-row">
-                        <div class="form-group input-medium">
-                            <label>Alcance</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.range" value="{{attack.range}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>CdT</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.rof" value="{{attack.rof}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Tiros</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.shots" value="{{attack.shots}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Recuo</label>
-                            <input type="text" name="system.ranged_attacks.{{key}}.rcl" value="{{attack.rcl}}"/>
-                        </div>
-                    </div>
-
-                    {{!-- Linha 4: Danos Avançados & Efeitos --}}
-                    <details class="advanced-options item-sheet-advanced">
-                        <summary>Danos Avançados & Efeitos</summary>
-                        <div class="advanced-content">
-                            <h5 class="subheader">Dano de Acompanhamento</h5>
-                            <div class="stat-row">
-                                <div class="form-group"><label>Fórmula</label><input type="text" name="system.ranged_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
-                                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.ranged_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
-                                <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" name="system.ranged_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
-                            </div>
-                            <h5 class="subheader">Dano de Fragmentação</h5>
-                            <div class="stat-row">
-                                <div class="form-group"><label>Fórmula</label><input type="text" name="system.ranged_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
-                                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.ranged_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
-                                <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" name="system.ranged_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
-                            </div>
-                            <hr>
-                            <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
-                            <div class="effects-list-container">
-                                {{#each (objectValues attack.onDamageEffects)}}
-                                <div class="effect-summary" data-effect-id="{{this.id}}">
-                                    <img src="{{this.img}}" alt="{{this.name}}"/>
-                                    <span>{{this.name}}</span>
-                                    <div class="controls">
-                                        <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                {{/each}}
-                                <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-                            </div>
-                        </div>
-                    </details>
-                </div>
-
-                <div class="attack-controls">
-                    <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                </div>
-            </li>
-            {{/each}}
-        </ol>
-        <div class="attack-toolbar">
-            <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
-        </div>
-    </div>
-
-{{/if}}
-{{!-- ===================================================================== --}}
-{{!-- 				NOVO BLOCO DE EQUIPAMENTO (FIM) 				 --}}
-{{!-- ===================================================================== --}}
-
-      {{!-- Armadura (Versão Reorganizada) --}}
-{{#if (eq item.type "armor")}}
-
-    {{!-- Seção de Informações Gerais --}}
-    <div class="form-section">
-        {{!-- Usamos o partial que já está pronto --}}
-        {{> itemDetailsGeneral}}
-    </div>
-
-    {{!-- Seção de Proteção (Nova Estrutura) --}}
-    <div class="form-section">
-        <h4 class="section-title">Proteção</h4>
-        <div class="protection-grid">
-            
-            {{!-- Campo de RD --}}
+            {{!-- Grupo 1: Organização --}}
+            <div class="form-section"><h4 class="section-title">Organização na Ficha</h4>
             <div class="form-group">
-                <label>Resistência a Dano (RD)</label>
-                <input type="number" name="system.dr" value="{{system.dr}}" />
+                <label>Bloco na Ficha de Personagem</label>
+                <select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select>
+            </div>
             </div>
 
-            {{!-- Grid de Locais de Acerto --}}
-            <div class="hit-locations-grid">
-                {{#each (array "torso" "head" "face" "eyes" "neck" "vitals" "groin" "arms" "hands" "legs" "feet") as |loc|}}
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.worn_locations" value="{{loc}}" {{#if (includes ../system.worn_locations loc)}}checked{{/if}} />
-                        <span>{{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}</span>
-                    </label>
-                {{/each}}
-            </div>
-
-        </div>
-    </div>
-    
-{{/if}}
-
-      {{!-- Vantagens e Desvantagens (Versão Reorganizada) --}}
-{{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
-
-    {{!-- Grupo 1: Organização --}}
-    <div class="form-section"><h4 class="section-title">Organização na Ficha</h4>
-    <div class="form-group">
-        <label>Bloco na Ficha de Personagem</label>
-        <select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select>
-    </div>
-    </div>
-
-    {{!-- Grupo 2: Custo e Pontos --}}
-    <div class="form-section"><h4 class="section-title">Custo e Pontos</h4>
-    <div class="form-grid-2">
-        <div class="form-group">
-            <label>Pontos Base</label>
-            <input type="number" name="system.points" value="{{system.points}}"/>
-        </div>
-        <div class="form-group calculated-cost">
-            <label>Custo Final (c/ Modificadores)</label>
-            <div class="value">
-                <span>{{calculatedCost.finalPoints}}</span>
-                <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
-            </div>
-        </div>
-    </div>
-    </div>
-    {{!-- Grupo 3: Mecânica e Detalhes --}}
-    <div class="form-section"><h4 class="section-title">Mecânica e Detalhes</h4>
-    <div class="form-grid-3">
-        <div class="form-group">
-            <label>Nível</label>
-            <input type="text" name="system.level" value="{{system.level}}"/>
-        </div>
-        <div class="form-group">
-            <label>Rolagem de Auto-Controle</label>
-            <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
-        </div>
-        <div class="form-group">
-            <label>Ref. Página</label>
-            <input type="text" name="system.ref" value="{{system.ref}}"/>
-        </div>
-    </div>
-    </div>
-
-{{/if}}
-      
-{{!-- Perícia (com a seção Habilidade usando o layout customizado) --}}
-{{#if (eq item.type "skill")}} 
-
-    {{!-- Seção Classificação (Mantida como você definiu) --}}
-    <div class="form-section">
-        <h4 class="section-title">Classificação</h4>
-        <div class="form-grid-2">
-            <div class="form-group"><label>Grupo</label><input type="text" name="system.group" value="{{system.group}}"/></div>
-            <div class="form-group"><label>Ref. Página</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
-        </div>
-    </div>
-      
-    {{!-- ✅ SEÇÃO HABILIDADE (REORGANIZADA COM O LAYOUT "ABILITY-GRID") ✅ --}}
-    <div class="form-section">
-        <h4 class="section-title">Habilidade</h4>
-        <div class="ability-grid">
-            
-            {{!-- Coluna da Esquerda: Definição da Perícia --}}
-            <div class="ability-col-left">
-                <div class="form-group input-medium">
-                    <label>Atributo Base</label>
-                    <input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/>
-                </div>
-                <div class="form-group input-medium">
-                    <label>Dificuldade</label>
-                    <input type="text" name="system.difficulty" value="{{system.difficulty}}"/>
-                </div>
-                <div class="form-group input-medium">
-                    <label>Nível da Perícia</label>
-                    <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
-                </div>
-            </div>
-
-            {{!-- Coluna da Direita: Custo e Modificadores --}}
-            <div class="ability-col-right">
-                <div class="form-group input-narrow">
-                    <label>Pontos</label>
-                    <input type="number" name="system.points" value="{{system.points}}"/>
-                </div>
-                {{!-- Campo Modificadores devidamente incluído --}}
-                <div class="form-group input-narrow">
-                    <label>Modificadores</label>
-                    <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-{{/if}}
-      
-{{!-- Magia (Versão com Sintaxe Corrigida) --}}
-{{#if (eq item.type "spell")}}
-
-    {{!-- Grupo 1: Classificação da Magia --}}
-    <div class="form-section">
-        <h4 class="section-title">Classificação</h4>
-        {{!-- Aplicando nosso layout customizado aqui --}}
-        <div class="ability-grid">
-            <div class="ability-col-left">
-                <div class="form-group"><label>Classe</label><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
-                <div class="form-group"><label>Escola</label><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
-            </div>
-            <div class="ability-col-right">
-                <div class="form-group input-medium"><label>Fonte</label><input type="text" name="system.source" value="{{system.source}}"/></div>
-                <div class="form-group input-medium"><label>REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
-            </div>
-        </div>
-    </div>
-
-{{!-- Grupo 2: Habilidade (com Layout Final 3x2) --}}
-<div class="form-section">
-    <h4 class="section-title">Habilidade</h4>
-    
-    <div class="ability-grid">
-        
-        {{!-- Coluna da Esquerda (3 campos) --}}
-        <div class="ability-col-left">
-            <div class="form-group input-medium">
-                <label>Atributo Base</label>
-                <input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/>
-            </div>
-            <div class="form-group input-medium">
-                <label>Dificuldade</label>
-                <input type="text" name="system.difficulty" value="{{system.difficulty}}"/>
-            </div>
-            <div class="form-group input-medium">
-                <label>Nível</label>
-                <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
-            </div>
-        </div>
-
-        {{!-- Coluna da Direita (2 campos) --}}
-        <div class="ability-col-right">
-            <div class="form-group input-narrow">
-                <label>Pontos</label>
-                <input type="number" name="system.points" value="{{system.points}}"/>
-            </div>
-            <div class="form-group input-narrow">
-                <label>Modificadores</label>
-                <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
-            </div>
-        </div>
-
-    </div>
-</div>
-    
-{{!-- Grupo 3: Execução e Custo (com layout customizado) --}}
-<div class="form-section">
-    <h4 class="section-title">Execução e Custo</h4>
-    <div class="ability-grid">
-
-        {{!-- Coluna da Esquerda: Tempo --}}
-        <div class="ability-col-left">
-            <div class="form-group input-medium">
-                <label>Tempo de Execução</label>
-                <input type="text" name="system.casting_time" value="{{system.casting_time}}"/>
-            </div>
-            <div class="form-group input-medium">
-                <label>Custo de Mana</label>
-                <input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/>
-            </div>
-         </div>
-
-        {{!-- Coluna da Direita: Custo --}}
-        <div class="ability-col-right">
-             <div class="form-group input-narrow">
-                <label>Duração</label>
-                <input type="text" name="system.duration" value="{{system.duration}}"/>
-            </div>
-            <div class="form-group input-narrow">
-                <label>Manutenção</label>
-                <input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/>
-            </div>
-        </div>
-        
-    </div>
-</div>
-
-{{!-- Grupo 4: Dano e Efeitos da Magia (Layout Final) --}}
-<div class="form-section">
-    <h4 class="section-title">Dano e Efeitos da Magia</h4>
-
-    {{!-- Nova linha para Resistência e Efeito --}}
-    <div class="form-grid-2">
-        <div class="form-group">
-            <label>Resistido Por</label>
-            <input type="text" name="system.resistance" value="{{system.resistance}}"/>
-        </div>
-        <div class="form-group">
-            <label>Efeito / Condição Aplicada</label>
-            <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Ex: Alvo fica Atordoado"/>
-        </div>
-    </div>
-    
-    {{!-- Separador visual --}}
-    <hr class="section-divider">
-
-    {{!-- Dano Principal --}}
-    <div class="form-grid-3">
-        <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
-        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
-        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
-    </div>
-    
-    {{!-- Danos Secundários com novo visual --}}
-    <details class="advanced-options">
-        <summary>Danos Secundários</summary>
-        <div class="advanced-damage-fields">
-            <h5 class="subheader">Dano de Acompanhamento</h5>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
-                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
-                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
-            </div>
-            <h5 class="subheader">Dano de Fragmentação</h5>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
-                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
-                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
-            </div>
-        </div>
-    </details>
-</div>
-
-
-
-{{/if}}
-      
-{{!-- Poder (VERSÃO FINAL COM LAYOUT OTIMIZADO) --}}
-{{#if (eq item.type "power")}}
-
-    {{!-- Grupo 1: Custo e Pontos --}}
-    <div class="form-section">
-        <h4 class="section-title">Custo e Classificação</h4>
-        <div class="ability-grid">
-            {{!-- Coluna da Esquerda --}}
-            <div class="ability-col-left">
-                <div class="form-group input-narrow layout-inline">
+            {{!-- Grupo 2: Custo e Pontos --}}
+            <div class="form-section"><h4 class="section-title">Custo e Pontos</h4>
+            <div class="form-grid-2">
+                <div class="form-group">
                     <label>Pontos Base</label>
                     <input type="number" name="system.points" value="{{system.points}}"/>
                 </div>
-                <div class="form-group calculated-cost layout-inline">
-                    <label>Custo Final</label>
+                <div class="form-group calculated-cost">
+                    <label>Custo Final (c/ Modificadores)</label>
                     <div class="value">
                         <span>{{calculatedCost.finalPoints}}</span>
                         <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
                     </div>
                 </div>
             </div>
-            {{!-- Coluna da Direita --}}
-            <div class="ability-col-right">
-                <div class="form-group input-medium">
-                    <label>Fonte</label>
-                    <input type="text" name="system.source" value="{{system.source}}"/>
+            </div>
+            {{!-- Grupo 3: Mecânica e Detalhes --}}
+            <div class="form-section"><h4 class="section-title">Mecânica e Detalhes</h4>
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>Nível</label>
+                    <input type="text" name="system.level" value="{{system.level}}"/>
                 </div>
-                <div class="form-group input-medium">
-                    <label>REF</label>
+                <div class="form-group">
+                    <label>Rolagem de Auto-Controle</label>
+                    <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
+                </div>
+                <div class="form-group">
+                    <label>Ref. Página</label>
                     <input type="text" name="system.ref" value="{{system.ref}}"/>
                 </div>
             </div>
-        </div>
-    </div>
-
-    {{!-- Grupo 2: Habilidade --}}
-    <div class="form-section">
-        <h4 class="section-title">Habilidade</h4>
-        <div class="ability-grid">
-            <div class="ability-col-left">
-                <div class="form-group input-medium"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/></div>
-                <div class="form-group input-medium"><label>Dificuldade</label><input type="text" name="system.difficulty" value="{{system.difficulty}}"/></div>
-                <div class="form-group input-medium"><label>Nível</label><input type="number" name="system.skill_level" value="{{system.skill_level}}"/></div>
             </div>
-            <div class="ability-col-right">
-                <div class="form-group input-narrow"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{system.other_mods}}"/></div>
-            </div>
-        </div>
-    </div>
-    
-    {{!-- Grupo 3: Uso e Ativação --}}
-    <div class="form-section">
-        <h4 class="section-title">Uso e Ativação</h4>
-        <div class="ability-grid">
-            <div class="ability-col-left">
-                <div class="form-group"><label>Tempo de Ativação</label><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div>
-                <div class="form-group input-narrow"><label>Custo</label><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div>
-             </div>
-            <div class="ability-col-right">
-               <div class="form-group"><label>Duração</label><input type="text" name="system.duration" value="{{system.duration}}"/></div>
-               <div class="form-group input-narrow"><label>Manutenção</label><input type="text" name="system.mana_maint" value="{{system.maint_cost}}"/></div>
-            </div>
-        </div>
-    </div>
 
-    {{!-- Grupo 4: Dano e Efeitos (igual ao da Magia) --}}
-    <div class="form-section">
-        <h4 class="section-title">Dano e Efeitos</h4>
-        <div class="form-grid-2">
-            <div class="form-group"><label>Resistido Por</label><input type="text" name="system.resistance" value="{{system.resistance}}"/></div>
-            <div class="form-group"><label>Efeito / Condição Aplicada</label><input type="text" name="system.effect" value="{{system.effect}}"/></div>
-        </div>
-        <hr class="section-divider">
-        <div class="form-grid-3">
-            <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
-            <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
-            <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
-        </div>
-
-        {{!-- Danos Secundários com novo visual --}}
-    <details class="advanced-options">
-        <summary>Danos Secundários</summary>
-        <div class="advanced-damage-fields">
-            <h5 class="subheader">Dano de Acompanhamento</h5>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
-                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
-                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
-            </div>
-            <h5 class="subheader">Dano de Fragmentação</h5>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
-                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
-                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
-            </div>
-        </div>
-    </details>
-</div>
-
-{{/if}}
-
-      {{!-- NOVO: Ficha de Edição para o Item "Modificador" --}}
-    {{#if (eq item.type "modifier")}}
-      <div class="form-section"><h4 class="section-title">Dados do Modificador</h4>
-      <div class="form-grid-3">
-        <div class="form-group">
-          <label>Custo do Modificador (%)</label>
-          <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%..."/>
-        </div>
-        <div class="form-group">
-          <label>Nível (se aplicável)</label>
-          <input type="number" name="system.level" value="{{system.level}}"/>
-        </div>
-        <div class="form-group">
-        <label>Ref. Página</label>
-        <input type="text" name="system.ref" value="{{system.ref}}"/>
-      </div>
-      </div>
-      <div class="form-group">
-        <label>Efeito Aplicado</label>
-        <input type="text" name="system.applied_effect" value="{{system.applied_effect}}" placeholder="Ex: Aura, Ataque de Projétil"/>
-      </div>
+        {{/if}}
       
-      </div>
-    {{/if}}
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM PERÍCIAS 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "skill")}} 
 
-    <div class="item-section">
-        <div class="form-section"><h4 class="section-title">Descrição Resumida
-           {{!-- Container que permite o posicionamento do botão de editar --}}
-              <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
-                  <i class="fas fa-edit"></i>
-              </a></h4>
-              <div class="editable-text-container">
-                    {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
-                  <div class="summary-description rendered-text">{{{enrichedChatDescription}}}</div>
-             </div>
-        </div>     
-    </div>
+            {{!-- Seção Classificação (Mantida como você definiu) --}}
+            <div class="form-section">
+                <h4 class="section-title">Classificação</h4>
+                <div class="form-grid-2">
+                    <div class="form-group"><label>Grupo</label><input type="text" name="system.group" value="{{system.group}}"/></div>
+                    <div class="form-group"><label>Ref. Página</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+                </div>
+            </div>
+            
+            {{!-- ✅ SEÇÃO HABILIDADE (REORGANIZADA COM O LAYOUT "ABILITY-GRID") ✅ --}}
+            <div class="form-section">
+                <h4 class="section-title">Habilidade</h4>
+                <div class="ability-grid">
+                    
+                    {{!-- Coluna da Esquerda: Definição da Perícia --}}
+                    <div class="ability-col-left">
+                        <div class="form-group input-medium">
+                            <label>Atributo Base</label>
+                            <input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/>
+                        </div>
+                        <div class="form-group input-medium">
+                            <label>Dificuldade</label>
+                            <input type="text" name="system.difficulty" value="{{system.difficulty}}"/>
+                        </div>
+                        <div class="form-group input-medium">
+                            <label>Nível da Perícia</label>
+                            <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
+                        </div>
+                    </div>
 
-
-      <div class="item-section">
-                <div class="form-section"><h4 class="section-title">Descrição Completa
-                            {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
-                    <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
-                        <i class="fas fa-edit"></i>
-                    </a></h4>
-                <div class="editable-text-container">
-                    {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
-                    <div class="summary-description rendered-text">{{{enrichedDescription}}}</div>
+                    {{!-- Coluna da Direita: Custo e Modificadores --}}
+                    <div class="ability-col-right">
+                        <div class="form-group input-narrow">
+                            <label>Pontos</label>
+                            <input type="number" name="system.points" value="{{system.points}}"/>
+                        </div>
+                        {{!-- Campo Modificadores devidamente incluído --}}
+                        <div class="form-group input-narrow">
+                            <label>Modificadores</label>
+                            <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
+                        </div>
+                    </div>
 
                 </div>
             </div>
-        </div>
 
-</div>
+        {{/if}}
+      
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM MAGIAS 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "spell")}}
 
-{{!-- Conteúdo da Aba "Modificadores" com o design "Fieldset" --}}
-{{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-    <div class="tab" data-tab="modifiers">
-        
-        {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
-        <div class="modifiers-toolbar">
-            <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-        </div>
+            {{!-- Grupo 1: Classificação da Magia --}}
+            <div class="form-section">
+                <h4 class="section-title">Classificação</h4>
+                {{!-- Aplicando nosso layout customizado aqui --}}
+                <div class="ability-grid">
+                    <div class="ability-col-left">
+                        <div class="form-group"><label>Classe</label><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
+                        <div class="form-group"><label>Escola</label><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
+                    </div>
+                    <div class="ability-col-right">
+                        <div class="form-group input-medium"><label>Fonte</label><input type="text" name="system.source" value="{{system.source}}"/></div>
+                        <div class="form-group input-medium"><label>REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+                    </div>
+                </div>
+            </div>
 
-        {{!-- ✅ Envolvemos a lista com a estrutura .form-section ✅ --}}
+        {{!-- Grupo 2: Habilidade (com Layout Final 3x2) --}}
         <div class="form-section">
-                       
-            <ol class="modifier-list">
-                {{#each sortedModifiers as |modifier|}}
-                    <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
-                        
-                        <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
-                            <span class="modifier-name">{{modifier.name}}</span>
-                            {{#if modifier.applied_effect}}
-                                <span class="modifier-divider">|</span>
-                                <span class="modifier-effect">{{modifier.applied_effect}}</span>
-                            {{/if}}
-                        </a>
+            <h4 class="section-title">Habilidade</h4>
+            
+            <div class="ability-grid">
+                
+                {{!-- Coluna da Esquerda (3 campos) --}}
+                <div class="ability-col-left">
+                    <div class="form-group input-medium">
+                        <label>Atributo Base</label>
+                        <input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/>
+                    </div>
+                    <div class="form-group input-medium">
+                        <label>Dificuldade</label>
+                        <input type="text" name="system.difficulty" value="{{system.difficulty}}"/>
+                    </div>
+                    <div class="form-group input-medium">
+                        <label>Nível</label>
+                        <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
+                    </div>
+                </div>
 
-                        <div class="modifier-controls">
-                            <span class="modifier-cost">{{modifier.cost}}</span>
-                            <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
+                {{!-- Coluna da Direita (2 campos) --}}
+                <div class="ability-col-right">
+                    <div class="form-group input-narrow">
+                        <label>Pontos</label>
+                        <input type="number" name="system.points" value="{{system.points}}"/>
+                    </div>
+                    <div class="form-group input-narrow">
+                        <label>Modificadores</label>
+                        <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+            
+        {{!-- Grupo 3: Execução e Custo (com layout customizado) --}}
+        <div class="form-section">
+            <h4 class="section-title">Execução e Custo</h4>
+            <div class="ability-grid">
+
+                {{!-- Coluna da Esquerda: Tempo --}}
+                <div class="ability-col-left">
+                    <div class="form-group input-medium">
+                        <label>Tempo de Execução</label>
+                        <input type="text" name="system.casting_time" value="{{system.casting_time}}"/>
+                    </div>
+                    <div class="form-group input-medium">
+                        <label>Custo de Mana</label>
+                        <input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/>
+                    </div>
+                </div>
+
+                {{!-- Coluna da Direita: Custo --}}
+                <div class="ability-col-right">
+                    <div class="form-group input-narrow">
+                        <label>Duração</label>
+                        <input type="text" name="system.duration" value="{{system.duration}}"/>
+                    </div>
+                    <div class="form-group input-narrow">
+                        <label>Manutenção</label>
+                        <input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        {{!-- Grupo 4: Dano e Efeitos da Magia (Layout Final) --}}
+        <div class="form-section">
+            <h4 class="section-title">Dano e Efeitos da Magia</h4>
+
+            {{!-- Nova linha para Resistência e Efeito --}}
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Resistido Por</label>
+                    <input type="text" name="system.resistance" value="{{system.resistance}}"/>
+                </div>
+                <div class="form-group">
+                    <label>Efeito / Condição Aplicada</label>
+                    <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Ex: Alvo fica Atordoado"/>
+                </div>
+            </div>
+            
+            {{!-- Separador visual --}}
+            <hr class="section-divider">
+
+            {{!-- Dano Principal --}}
+            <div class="form-grid-3">
+                <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
+                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
+                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
+            </div>
+            
+            {{!-- Danos Secundários com novo visual --}}
+            <details class="advanced-options">
+                <summary>Danos Secundários</summary>
+                <div class="advanced-damage-fields">
+                    <h5 class="subheader">Dano de Acompanhamento</h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
+                    </div>
+                    <h5 class="subheader">Dano de Fragmentação</h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
+                    </div>
+                </div>
+            </details>
+        </div>
+        {{/if}}
+      
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM PODERES 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "power")}}
+
+            {{!-- Grupo 1: Custo e Pontos --}}
+            <div class="form-section">
+                <h4 class="section-title">Custo e Classificação</h4>
+                <div class="ability-grid">
+                    {{!-- Coluna da Esquerda --}}
+                    <div class="ability-col-left">
+                        <div class="form-group input-narrow layout-inline">
+                            <label>Pontos Base</label>
+                            <input type="number" name="system.points" value="{{system.points}}"/>
                         </div>
-                    </li>
-                {{else}}
-                    <li class="placeholder-text">
-                        <p>Nenhum modificador aplicado.</p>
-                    </li>
-                {{/each}}
-            </ol>
+                        <div class="form-group calculated-cost layout-inline">
+                            <label>Custo Final</label>
+                            <div class="value">
+                                <span>{{calculatedCost.finalPoints}}</span>
+                                <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
+                            </div>
+                        </div>
+                    </div>
+                    {{!-- Coluna da Direita --}}
+                    <div class="ability-col-right">
+                        <div class="form-group input-medium">
+                            <label>Fonte</label>
+                            <input type="text" name="system.source" value="{{system.source}}"/>
+                        </div>
+                        <div class="form-group input-medium">
+                            <label>REF</label>
+                            <input type="text" name="system.ref" value="{{system.ref}}"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{!-- Grupo 2: Habilidade --}}
+            <div class="form-section">
+                <h4 class="section-title">Habilidade</h4>
+                <div class="ability-grid">
+                    <div class="ability-col-left">
+                        <div class="form-group input-medium"><label>Atributo Base</label><input type="text" name="system.base_attribute" value="{{system.base_attribute}}"/></div>
+                        <div class="form-group input-medium"><label>Dificuldade</label><input type="text" name="system.difficulty" value="{{system.difficulty}}"/></div>
+                        <div class="form-group input-medium"><label>Nível</label><input type="number" name="system.skill_level" value="{{system.skill_level}}"/></div>
+                    </div>
+                    <div class="ability-col-right">
+                        <div class="form-group input-narrow"><label>Modificadores</label><input type="number" name="system.other_mods" value="{{system.other_mods}}"/></div>
+                    </div>
+                </div>
+            </div>
+            
+            {{!-- Grupo 3: Uso e Ativação --}}
+            <div class="form-section">
+                <h4 class="section-title">Uso e Ativação</h4>
+                <div class="ability-grid">
+                    <div class="ability-col-left">
+                        <div class="form-group"><label>Tempo de Ativação</label><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div>
+                        <div class="form-group input-narrow"><label>Custo</label><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div>
+                    </div>
+                    <div class="ability-col-right">
+                    <div class="form-group"><label>Duração</label><input type="text" name="system.duration" value="{{system.duration}}"/></div>
+                    <div class="form-group input-narrow"><label>Manutenção</label><input type="text" name="system.mana_maint" value="{{system.maint_cost}}"/></div>
+                    </div>
+                </div>
+            </div>
+
+            {{!-- Grupo 4: Dano e Efeitos (igual ao da Magia) --}}
+            <div class="form-section">
+                <h4 class="section-title">Dano e Efeitos</h4>
+                <div class="form-grid-2">
+                    <div class="form-group"><label>Resistido Por</label><input type="text" name="system.resistance" value="{{system.resistance}}"/></div>
+                    <div class="form-group"><label>Efeito / Condição Aplicada</label><input type="text" name="system.effect" value="{{system.effect}}"/></div>
+                </div>
+                <hr class="section-divider">
+                <div class="form-grid-3">
+                    <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
+                    <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
+                    <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
+                </div>
+
+                {{!-- Danos Secundários com novo visual --}}
+            <details class="advanced-options">
+                <summary>Danos Secundários</summary>
+                <div class="advanced-damage-fields">
+                    <h5 class="subheader">Dano de Acompanhamento</h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
+                    </div>
+                    <h5 class="subheader">Dano de Fragmentação</h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        {{/if}}
+
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM MODIFICADORES  				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "modifier")}}
+        <div class="form-section"><h4 class="section-title">Dados do Modificador</h4>
+        <div class="form-grid-3">
+            <div class="form-group">
+            <label>Custo do Modificador (%)</label>
+            <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%..."/>
+            </div>
+            <div class="form-group">
+            <label>Nível (se aplicável)</label>
+            <input type="number" name="system.level" value="{{system.level}}"/>
+            </div>
+            <div class="form-group">
+            <label>Ref. Página</label>
+            <input type="text" name="system.ref" value="{{system.ref}}"/>
+        </div>
+        </div>
+        <div class="form-group">
+            <label>Efeito Aplicado</label>
+            <input type="text" name="system.applied_effect" value="{{system.applied_effect}}" placeholder="Ex: Aura, Ataque de Projétil"/>
         </div>
         
-    </div>
-{{/if}}
+        </div>
+        {{/if}}
 
-{{!-- Conteúdo da aba de Efeitos --}}
-<div class="tab" data-tab="effects">
-    {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
-    {{> effectsTab}}
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: CAIXAS DE TEXTO DE DESCRIÇÃO DO ITEM              --}}
+        {{!-- ===================================================================== --}}
+        <div class="item-section">
+            <div class="form-section"><h4 class="section-title">Descrição Resumida
+            {{!-- Container que permite o posicionamento do botão de editar --}}
+                <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                    <i class="fas fa-edit"></i>
+                </a></h4>
+                <div class="editable-text-container">
+                        {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
+                    <div class="summary-description rendered-text">{{{enrichedChatDescription}}}</div>
+                </div>
+            </div>     
+        </div>
+
+
+        <div class="item-section">
+                    <div class="form-section"><h4 class="section-title">Descrição Completa
+                                {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
+                        <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                            <i class="fas fa-edit"></i>
+                        </a></h4>
+                    <div class="editable-text-container">
+                        {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
+                        <div class="summary-description rendered-text">{{{enrichedDescription}}}</div>
+
+                    </div>
+                </div>
+            </div>
+
 </div>
 
+     {{!-- ===================================================================== --}}
+     {{!--    ABA ESPECIAL: MODOS DE ATAQUE (v5 - CORREÇÃO DE SALVAMENTO)  --}}
+     {{!-- ===================================================================== --}}
+     <div class="tab" data-tab="attacks">
+       
+            {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
+       <div class="form-section attacks-editor-section">
+         <h4 class="section-title">Ataques Corpo a Corpo</h4>
+         <ol class="attack-list">
+           {{#each system.melee_attacks as |attack key|}}
+           <li class="attack-item melee-attack-item" data-attack-id="{{key}}" data-attack-type="melee">
+             
+                            {{!-- ================================== --}}
+                            {{!-- 	MODO EXIBIÇÃO - ATAQUE C.C. V6  --}}
+                            {{!-- ================================== --}}
+                            <div class="attack-display-mode">
+                                <div class="form-section attack-display-card">
+                                    <h4 class="section-title">
+                                        <span class="pill-skill">
+                                            {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+                                            ({{attack.mode}})
+                                        </span>
+                                        <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
+                                        {{#if (objectValues attack.onDamageEffects)}}
+                                            <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
+                                                <i class="fas fa-magic"></i>
+                                            </span>
+                                        {{/if}}
+                                        <div class="attack-controls">
+                                            <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+                                            <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </h4>
+                                    
+                                    {{!-- Linha 1: Grade de Stats (com Dano completo) --}}
+                                    <div class="form-grid-3 attack-display-grid melee-grid">
+                                        <div class="display-stat damage-stat">
+                                            <label>Dano</label>
+                                            <span>
+                                                {{attack.damage_formula}} {{attack.damage_type}}
+                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
+                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
+                                            </span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Aparar</label>
+                                            <span>{{attack.parry}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Alcance</label>
+                                            <span>{{attack.reach}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Bloqueio</label>
+                                            <span>{{attack.block}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>ST Mín.</label>
+                                            <span>{{attack.min_strength}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{!-- MODO EDIÇÃO (O FORMULÁRIO) --}}
+                            <div class="attack-edit-mode" style="display:none;">
+                                
+                                {{!-- GRUPO 1: HABILIDADE --}}
+                                <div class="ability-grid">
+                                    <div class="ability-col-left">
+                                        <div class="form-group">
+                                            <label>Modo de Uso</label>
+                                            <input type="text" data-name="system.melee_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                                            <input type="text" data-name="system.melee_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                                        </div>
+                                        <div class="form-group input-narrow">
+                                            <label>Mod. NH</label>
+                                            <input type="number" data-name="system.melee_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
+                                <div class="form-grid-3 attack-stats-grid-compact">
+                                    <div class="form-group">
+                                        <label>Dano</label>
+                                        <input type="text" data-name="system.melee_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Tipo</label>
+                                        <input type="text" data-name="system.melee_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow" title="Divisor de Armadura">
+                                        <label>Div.</label>
+                                        <input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Aparar</label>
+                                        <input type="text" data-name="system.melee_attacks.{{key}}.parry" value="{{attack.parry}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Bloqueio</label>
+                                        <input type="text" data-name="system.melee_attacks.{{key}}.block" value="{{attack.block}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Alcance</label>
+                                        <input type="text" data-name="system.melee_attacks.{{key}}.reach" value="{{attack.reach}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>ST Mín.</label>
+                                        <input type="number" data-name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                                    </div>
+                                </div>
+
+                                {{!-- GRUPO 3: AVANÇADO --}}
+                                <details class="advanced-options item-sheet-advanced">
+                                    <summary>Danos Avançados & Efeitos</summary>
+                                    <div class="advanced-content">
+                                        <h5 class="subheader">Dano de Acompanhamento</h5>
+                                        <div class="form-grid-3">
+                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
+                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
+                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
+                                        </div>
+                                        <h5 class="subheader">Dano de Fragmentação</h5>
+                                        <div class="form-grid-3">
+                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
+                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
+                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
+                                        </div>
+                                        <hr class="section-divider">
+                                        <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
+                                        <div class="effects-list-container">
+                                            {{!-- (A lista de efeitos onDamage não tem inputs, então não precisa mudar) --}}
+                                            {{#each (objectValues attack.onDamageEffects)}}
+                                            <div class="effect-summary" data-effect-id="{{this.id}}">
+                                                <img src="{{this.img}}" alt="{{this.name}}"/>
+                                                <span>{{this.name}}</span>
+                                                <div class="controls">
+                                                    <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
+                                                    <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
+                                                </div>
+                                            </div>
+                                            {{/each}}
+                                            <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                                        </div>
+                                    </div>
+                                </details>
+                                
+                                <div class="attack-controls-edit">
+                                    <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                                </div>
+                            </div>
+                            </li>
+                            {{/each}}
+                        </ol>
+                    <div class="attack-toolbar">
+                        <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
+                    </div>
+                </div>
+
+       {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
+       <div class="form-section attacks-editor-section">
+         <h4 class="section-title">Ataques à Distância</h4>
+         <ol class="attack-list">
+           {{#each system.ranged_attacks as |attack key|}}
+           <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
+             
+                            {{!-- ================================== --}}
+                            {{!-- 	MODO EXIBIÇÃO - ATAQUE L.D. V6  --}}
+                            {{!-- ================================== --}}
+                            <div class="attack-display-mode">
+                                <div class="form-section attack-display-card">
+                                    <h4 class="section-title">
+                                        <span class="pill-skill">
+                                            {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+                                            ({{attack.mode}})
+                                        </span>
+                                        {{!-- ✅ MUDANÇA: NH Mod e Efeitos movidos para o Título --}}
+                                        <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
+                                        {{#if (objectValues attack.onDamageEffects)}}
+                                            <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
+                                                <i class="fas fa-magic"></i>
+                                            </span>
+                                        {{/if}}
+                                        <div class="attack-controls">
+                                            <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+                                            <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </h4>
+
+                                    {{!-- Linha 1: Grade de Stats (com Dano completo) --}}
+                                    <div class="form-grid-3 attack-display-grid ranged-grid">
+                                        <div class="display-stat damage-stat">
+                                            <label>Dano</label>
+                                            <span>
+                                                ({{attack.damage_formula}} {{attack.damage_type}})
+                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}} {{this.type}}){{/if}}{{/with}}
+                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
+                                            </span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Prec.</label>
+                                            <span>{{attack.accuracy}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Alcance</label>
+                                            <span>{{attack.range}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>CdT</label>
+                                            <span>{{attack.rof}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Tiros</label>
+                                            <span>{{attack.shots}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Recuo</label>
+                                            <span>{{attack.rcl}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>Mag.</label>
+                                            <span>{{attack.mag}}</span>
+                                        </div>
+                                        <div class="display-stat">
+                                            <label>ST Mín.</label>
+                                            <span>{{attack.min_strength}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                             </div>
+
+                            {{!-- MODO EDIÇÃO (O FORMULÁRIO) L.D. --}}
+                            <div class="attack-edit-mode" style="display:none;">
+                                
+                                {{!-- GRUPO 1: HABILIDADE --}}
+                                <div class="ability-grid">
+                                    <div class="ability-col-left">
+                                        <div class="form-group">
+                                            <label>Modo de Uso</label>
+                                            <input type="text" data-name="system.ranged_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                                            <input type="text" data-name="system.ranged_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                                        </div>
+                                        <div class="form-group input-narrow">
+                                            <label>Mod. NH</label>
+                                            <input type="number" data-name="system.ranged_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
+                                <div class="form-grid-3 attack-stats-grid-compact">
+                                    <div class="form-group">
+                                        <label>Dano</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Tipo</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow" title="Divisor de Armadura">
+                                        <label>Div.</label>
+                                        <input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Prec.</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.accuracy" value="{{attack.accuracy}}"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Alcance</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.range" value="{{attack.range}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>CdT</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.rof" value="{{attack.rof}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Tiros</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.shots" value="{{attack.shots}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Recuo</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.rcl" value="{{attack.rcl}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>Mag.</label>
+                                        <input type="text" data-name="system.ranged_attacks.{{key}}.mag" value="{{attack.mag}}"/>
+                                    </div>
+                                    <div class="form-group input-narrow">
+                                        <label>ST Mín.</label>
+                                        <input type="number" data-name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                                    </div>
+                                </div>
+
+                                {{!-- GRUPO 3: AVANÇADO --}}
+                                <details class="advanced-options item-sheet-advanced">
+                                    <summary>Danos Avançados & Efeitos</summary>
+                                    <div class="advanced-content">
+                                        <h5 class="subheader">Dano de Acompanhamento</h5>
+                                        <div class="form-grid-3">
+                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
+                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
+                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
+                                        </div>
+                                        <h5 class="subheader">Dano de Fragmentação</h5>
+                                        <div class="form-grid-3">
+                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
+                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
+                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
+                                        </div>
+                                        <hr class="section-divider">
+                                        <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
+                                        <div class="effects-list-container">
+                                            {{#each (objectValues attack.onDamageEffects)}}
+                                       <div class="effect-summary" data-effect-id="{{this.id}}">
+                                                <img src="{{this.img}}" alt="{{this.name}}"/>
+                                                <span>{{this.name}}</span>
+                                                <div class="controls">
+                                                    <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
+                                                    <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
+                                                </div>
+                                            </div>
+                                            {{/each}}
+                                            <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                                        </div>
+                                    </div>
+                                </details>
+                                
+                                <div class="attack-controls-edit">
+                                    <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                                </div>
+                            </div>
+                        </li>
+                        {{/each}}
+                        </ol>
+                        <div class="attack-toolbar">
+                        <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
+
+                    </div>
+                    </div>
+                </div>
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA ESPECIAL: EFEITO  				 --}}
+        {{!-- ===================================================================== --}}
+        <div class="tab" data-tab="effects">
+            {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
+            {{> effectsTab}}
+        </div>
+
+        {{!-- ===================================================================== --}}
+        {{!--       ABA ESPECIAL: MODIFICADORES (RECUPERADA)                      --}}
+        {{!-- ===================================================================== --}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+            <div class="tab" data-tab="modifiers">
+                
+                {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
+                <div class="modifiers-toolbar">
+                    <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+                </div>
+
+                {{!-- Envolvemos a lista com a estrutura .form-section --}}
+                <div class="form-section">
+                            
+                    <ol class="modifier-list">
+                        {{#each sortedModifiers as |modifier|}}
+                            <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
+                                
+                                <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
+                                    <span class="modifier-name">{{modifier.name}}</span>
+                                    {{#if modifier.applied_effect}}
+                                        <span class="modifier-divider">|</span>
+                                        <span class="modifier-effect">{{modifier.applied_effect}}</span>
+                                    {{/if}}
+                                </a>
+
+                                <div class="modifier-controls">
+                                    <span class="modifier-cost">{{modifier.cost}}</span>
+                                    <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
+                                </div>
+                            </li>
+                        {{else}}
+                            <li class="placeholder-text">
+                                <p>Nenhum modificador aplicado.</p>
+                            </li>
+                        {{/each}}
+                    </ol>
+                </div>
+                
+            </div>
+        {{/if}}
+        
   </section>
 </section>
 

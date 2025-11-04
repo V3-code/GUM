@@ -95,6 +95,7 @@
         "rof": "1",
         "shots": "1(3i)",
         "rcl": "1",
+        "mag": "1",
         "min_strength": 0,
         "onDamageEffects": {},
         "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
