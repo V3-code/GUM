@@ -38,6 +38,7 @@
             <label class="row-label">Tipo de Efeito:</label>
             <select name="type">
                 <option value="attribute" {{#if (eq effect.type 'attribute')}}selected{{/if}}>Atributo</option>
+                <option value="resource_change" {{#if (eq effect.type 'resource_change')}}selected{{/if}}>Alterar Recurso</option>
                 <option value="status" {{#if (eq effect.type 'status')}}selected{{/if}}>Status</option>
                 <option value="chat" {{#if (eq effect.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
                 <option value="macro" {{#if (eq effect.type 'macro')}}selected{{/if}}>Macro</option>
@@ -65,6 +66,31 @@
                     </div>
                 </div>
             </div>
+        {{/if}}
+
+        {{#if (eq effect.type 'resource_change')}}
+            <div class="form-group">
+                <label>Categoria do Recurso</label>
+                <select name="category">
+                    <option value="hp" {{#if (eq effect.category 'hp')}}selected{{/if}}>Pontos de Vida (HP)</option>
+                    <option value="fp" {{#if (eq effect.category 'fp')}}selected{{/if}}>Pontos de Fadiga (FP)</option>
+                    <option value="energy_reserve" {{#if (eq effect.category 'energy_reserve')}}selected{{/if}}>Reserva de Energia (pelo nome)</option>
+                    <option value="combat_tracker" {{#if (eq effect.category 'combat_tracker')}}selected{{/if}}>Registro de Combate (pelo nome)</option>
+                    <option value="item_quantity" {{#if (eq effect.category 'item_quantity')}}selected{{/if}}>Quantidade de Item (pelo nome)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nome do Recurso (se aplicável)</label>
+                <input type="text" name="name" value="{{effect.name}}" placeholder="Ex: Reserva de Mana, Adrenalina, Flechas"/>
+                <p class="hint" style="font-size: 11px; margin: 0; padding: 0;">Necessário para Reservas, Registros ou Itens.</p>
+            </div>
+            <div class="form-group">
+                <label>Valor da Alteração (Pode ser fórmula. Ex: +5, -1d6)</label>
+                <input type="text" name="value" value="{{effect.value}}"/>
+            </div>
+            <label class="custom-checkbox"><input type="checkbox" name="chat_notice" {{checked effect.chat_notice}}/><span>Avisar no Chat?</span></label>
+            <label class="custom-checkbox"><input type="checkbox" name="confirm_prompt" {{checked effect.confirm_prompt}}/><span>Pedir Confirmação?</span></label>
+            <label class="custom-checkbox"><input type="checkbox" name="variable_value" {{checked effect.variable_value}}/><span>Pedir Valor Variável?</span></label>
         {{/if}}
 
         {{#if (eq effect.type 'status')}}
