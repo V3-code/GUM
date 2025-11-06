@@ -1513,6 +1513,16 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
         // ================================================================== //
             const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
             const allEquipment = equipmentTypes.flatMap(type => itemsByType[type] || []);
+
+            allEquipment.forEach(item => {
+                const s = item.system;
+                const q = s.quantity || 1;
+                const w = s.weight || 0;
+                const c = s.cost || 0;
+                
+                s.total_weight = (q * w).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                s.total_cost = (q * c).toLocaleString(); 
+            });
             
             const sortingPrefs = this.actor.system.sorting?.equipment || {};
             const equippedSortFn = getSortFunction(sortingPrefs.equipped || 'manual');
@@ -1730,6 +1740,50 @@ _getSubmitData(updateData) {
 activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
+
+    html.on('click', '.equipment-options-btn', ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const button = $(ev.currentTarget);
+            const li = button.closest('.item');
+            const itemId = li.data('itemId');
+            const item = this.actor.items.get(itemId);
+            if (!item) return;
+            
+            // Define as opções do submenu "Mover Para"
+            // (Estas ações 'update-location' já são tratadas pelo seu listener de menu existente)
+            const moveSubmenu = `
+                <div class="context-item" data-action="update-location" data-value="equipped">
+                    <i class="fas fa-user-shield"></i> Em Uso
+                </div>
+                <div class="context-item" data-action="update-location" data-value="carried">
+                    <i class="fas fa-shopping-bag"></i> Carregado
+                </div>
+                <div class="context-item" data-action="update-location" data-value="stored">
+                    <i class="fas fa-archive"></i> Armazenado
+                </div>
+            `;
+
+            // Define o menu principal
+            const menuContent = `
+                <div class="context-item" data-action="edit"><i class="fas fa-edit"></i> Editar Item</div>
+                <div class="context-item" data-action="delete"><i class="fas fa-trash"></i> Deletar Item</div>
+                <div class="context-divider"></div>
+                <div class="context-submenu">
+                    <div class="context-item"><i class="fas fa-exchange-alt"></i> Mover Para</div>
+                    <div class="submenu-items">${moveSubmenu}</div>
+                </div>
+            `;
+
+            // Pega o menu, injeta o HTML, armazena o ID do item e exibe
+            const customMenu = this.element.find(".custom-context-menu");
+            customMenu.html(menuContent);
+            customMenu.data("itemId", itemId); // Armazena o ID do item no menu
+            
+            // Copia a lógica de posicionamento do menu de perícias
+            customMenu.css({ display: "block", left: ev.clientX - 210 + "px", top: ev.clientY - 10 + "px" });
+        });
 
     html.find('[data-action="delete-effect"]').on('click', ev => {
         const effectId = ev.currentTarget.dataset.effectId;
@@ -3060,22 +3114,49 @@ html.on('click', '.item-edit', ev => {
         const customMenu = this.element.find(".custom-context-menu");
 
         // Listener para o ícone de MOVER EQUIPAMENTO
-        html.on('click', '.item-move', ev => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          const li = $(ev.currentTarget).closest(".item");
-          const itemId = li.data("itemId");
-          
-          const menuContent = `
-            <div class="context-item" data-action="update-location" data-value="equipped"><i class="fas fa-user-shield"></i> Em Uso</div>
-            <div class="context-item" data-action="update-location" data-value="carried"><i class="fas fa-shopping-bag"></i> Carregado</div>
-            <div class="context-item" data-action="update-location" data-value="stored"><i class="fas fa-archive"></i> Armazenado</div>
-          `;
-          customMenu.html(menuContent);
-          customMenu.data("item-id", itemId);
-          customMenu.css({ display: "block", left: ev.clientX + 5 + "px", top: ev.clientY - 10 + "px" });
-        });
+    html.on('click', '.equipment-options-btn', ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
 
+            const button = $(ev.currentTarget);
+            const li = button.closest('.item');
+            const itemId = li.data('itemId');
+            const item = this.actor.items.get(itemId);
+            if (!item) return;
+            
+            // Define as opções do submenu "Mover Para"
+            // (Estas ações 'update-location' já são tratadas pelo seu listener de menu existente)
+            const moveSubmenu = `
+                <div class="context-item" data-action="update-location" data-value="equipped">
+                    <i class="fas fa-user-shield"></i> Em Uso
+                </div>
+                <div class="context-item" data-action="update-location" data-value="carried">
+                    <i class="fas fa-shopping-bag"></i> Carregado
+                </div>
+                <div class="context-item" data-action="update-location" data-value="stored">
+                    <i class="fas fa-archive"></i> Armazenado
+                </div>
+            `;
+
+            // Define o menu principal
+            const menuContent = `
+                <div class="context-item" data-action="edit"><i class="fas fa-edit"></i> Editar Item</div>
+                <div class="context-item" data-action="delete"><i class="fas fa-trash"></i> Deletar Item</div>
+                <div class="context-divider"></div>
+                <div class="context-submenu">
+                    <div class="context-item"><i class="fas fa-exchange-alt"></i> Mover Para</div>
+                    <div class="submenu-items">${moveSubmenu}</div>
+                </div>
+            `;
+
+            // Pega o menu, injeta o HTML, armazena o ID do item e exibe
+            const customMenu = this.element.find(".custom-context-menu");
+            customMenu.html(menuContent);
+            customMenu.data("itemId", itemId); // Armazena o ID do item no menu
+            
+            // Copia a lógica de posicionamento do menu de perícias
+            customMenu.css({ display: "block", left: ev.clientX - 210 + "px", top: ev.clientY - 10 + "px" });
+        });
     // ================================================================== //
     //    LISTENER PARA O NOVO MENU DE OPÇÕES DA PERÍCIA                  //
     // ================================================================== //
@@ -3151,14 +3232,14 @@ html.on('click', '.item-edit', ev => {
     // (O listener duplicado 'custom-context-menu .context-item' foi removido)
 
     $(document).on('click', (ev) => {
-        if (!$(ev.target).closest('.item-move, .item-move-skill, .item-options-btn, .custom-context-menu').length) {
-            // Adicionado .item-options-btn para que o menu de perícias funcione
+        // ✅ Adicionado '.equipment-options-btn' à lista de exceções
+        if (!$(ev.target).closest('.item-move, .item-move-skill, .item-options-btn, .equipment-options-btn, .custom-context-menu').length) {
             customMenu.hide();
         }
     });
 
-    html.on('contextmenu', '.item-move, .item-move-skill, .item-options-btn', ev => {
-        // Adicionado .item-options-btn
+    html.on('contextmenu', '.item-move, .item-move-skill, .item-options-btn, .equipment-options-btn', ev => {
+        // ✅ Adicionado '.equipment-options-btn' para prevenir o menu de clique direito
         ev.preventDefault();
     });
         

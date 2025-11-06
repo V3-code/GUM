@@ -3395,3 +3395,103 @@ filter:none;
     white-space: nowrap;
     text-transform: lowercase; /* kg */
 }
+
+/* ============================================================= */
+/* DESIGN DA ABA DE EQUIPAMENTOS (ESTILO "CARD" v2 - CORRIGIDO)  */
+/* ============================================================= */
+
+/* ✅ CORREÇÃO (BUG 1): Define o layout flex-wrap para a aba de equipamentos */
+.tab[data-tab="equipment"] .flex-wrap-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espaço entre os cards */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 1. O Card de Equipamento (baseado no characteristic-card) */
+.equipment-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    
+    /* ✅ CORREÇÃO (BUG 2): Fundo sutil para o card (levemente mais escuro) */
+    background: rgba(0,0,0,0.03); 
+    
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 5px;
+    padding: 6px 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    
+    /* Regra de 2 colunas */
+    flex-basis: calc(50% - 4px); 
+    flex-grow: 1;
+    box-sizing: border-box; 
+    min-width: 250px; /* Largura mínima do card */
+}
+
+/* 2. Ícone, Info e Controles (herdados do characteristic-card) */
+.equipment-card .item-icon {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 3px;
+}
+.equipment-card .card-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Impede que o nome empurre os controles */
+}
+.equipment-card .item-name {
+    font-weight: 700;
+    color: var(--c-texto-escuro);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.equipment-card .item-controls {
+    flex-shrink: 0;
+    display: flex; 
+    gap: 0.5rem;   
+}
+.equipment-card .item-controls a {
+    color: var(--c-texto-subtitulo, #977c63);
+    font-size: 0.9em;
+    opacity: 1;
+    pointer-events: auto;
+}
+.equipment-card .item-controls a:hover {
+    color: var(--c-acento-vermelho, #72252e);
+}
+
+/* 3. O container para as "tags" de stats */
+.equipment-card .equipment-stats {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 4px;        
+    padding-top: 4px;
+}
+
+/* 4. A "Tag" individual de stat (Peso, Custo, RD, etc.) */
+.equipment-card .equip-stat-tag {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--c-texto-escuro);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.equipment-card .equip-stat-tag i {
+    font-size: 0.9em;
+    color: var(--c-texto-subtitulo, #977c63);
+    margin-right: 2px;
+}

@@ -622,7 +622,7 @@
 
               {{!-- Os controles --}}
               <div class="item-controls">
-<a class="item-control item-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
+                <a class="item-control item-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
               </div>
             </li>
           {{/each}}
@@ -1008,144 +1008,168 @@
   </div>
 </div>
 
-
-
   {{!-- Colunas de Equipamentos --}}
   <div class="equipment-columns">
+
     {{!-- Coluna 1: Em Uso --}}
     <div class="equipment-column">
         <div class="block-header">
             <h4 class="column-header">Em Uso</h4>
-            {{!-- O ícone de ordenar agora tem o data-location --}}
             <a class="sort-control" data-item-type="equipment" data-location="equipped" title="Ordenar Coluna">
               <i class="fas fa-sort-alpha-down"></i>
             </a>
           </div>
-      <ol class="item-list" data-location="equipped">
-        {{#each equipmentInUse}}
-        <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
-            <div class="item-main-info">
-              {{!-- A "tag" de nome que já funciona --}}
+        
+        {{! ✅ MUDANÇA: Adicionamos a classe 'flex-wrap-container' ao <ol> }}
+        <ol class="item-list flex-wrap-container" data-location="equipped">
+          {{#each equipmentInUse}}
+          
+          {{! ✅ MUDANÇA: Esta é a nova estrutura do 'card' (baseada na aba Características) }}
+          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+            
+            <div class="card-info">
               <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
               </span>
-              {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
-            </div>
+              
+              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+              <div class="card-details equipment-stats">
+                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
 
-            <div class="item-stats">
-              {{!-- As informações de Dano e RD agora são "tags" aqui --}}
-              {{#if this.system.dr}}
-                <span class="stat" title="Resistência a Dano">RD {{this.system.dr}}</span>
-              {{/if}}
-              {{#if this.system.damage_formula}}
-                <span class="stat" title="Dano">{{this.system.damage_formula}} {{this.system.damage_type}}</span>
-              {{/if}}
+                {{#if this.system.dr}}
+                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                {{/if}}
 
-              {{!-- As tags antigas continuam aqui --}}
-              <span class="stat" title="Quantidade">x{{this.system.quantity}}</span>
-              <span class="stat" title="Peso Total">{{this.system.total_weight}} kg</span>
-              <span class="stat" title="Custo Total">${{this.system.total_cost}}</span>
+                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                {{else}}
+                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                  {{/with}}
+                {{/with}}
+              </div>
             </div>
             
+            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
             <div class="item-controls">
-              <a class="item-control item-move" title="Mudar Localização"><i class="fas fa-exchange-alt"></i></a>
-              <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-              <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
             </div>
           </li>
-        {{/each}}
-      </ol>
+          {{/each}}
+          
+          {{#unless equipmentInUse}}
+            <li class="placeholder-text">Nenhum item em uso.</li>
+          {{/unless}}
+        </ol>
     </div>
 
     {{!-- Coluna 2: Carregado --}}
     <div class="equipment-column">
-              <div class="block-header">
-                <h4 class="column-header">Carregado</h4>
-                {{!-- O ícone de ordenar agora tem o data-location --}}
-                <a class="sort-control" data-item-type="equipment" data-location="carried" title="Ordenar Coluna">
-                  <i class="fas fa-sort-alpha-down"></i>
-                </a>
-              </div>
-      <ol class="item-list" data-location="carried">
+      <div class="block-header">
+        <h4 class="column-header">Carregado</h4>
+        <a class="sort-control" data-item-type="equipment" data-location="carried" title="Ordenar Coluna">
+          <i class="fas fa-sort-alpha-down"></i>
+        </a>
+      </div>
+      
+      {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
+      <ol class="item-list flex-wrap-container" data-location="carried">
         {{#each equipmentCarried}}
-        <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
-            <div class="item-main-info">
-              {{!-- A "tag" de nome que já funciona --}}
+          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+            
+            <div class="card-info">
               <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
               </span>
-              {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
-            </div>
+              
+              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+              <div class="card-details equipment-stats">
+                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
 
-            <div class="item-stats">
-              {{!-- As informações de Dano e RD agora são "tags" aqui --}}
-              {{#if this.system.dr}}
-                <span class="stat" title="Resistência a Dano">RD {{this.system.dr}}</span>
-              {{/if}}
-              {{#if this.system.damage_formula}}
-                <span class="stat" title="Dano">{{this.system.damage_formula}} {{this.system.damage_type}}</span>
-              {{/if}}
+                {{#if this.system.dr}}
+                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                {{/if}}
 
-              {{!-- As tags antigas continuam aqui --}}
-              <span class="stat" title="Quantidade">x{{this.system.quantity}}</span>
-              <span class="stat" title="Peso Total">{{this.system.total_weight}} kg</span>
-              <span class="stat" title="Custo Total">${{this.system.total_cost}}</span>
+                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                {{else}}
+                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                  {{/with}}
+                {{/with}}
+              </div>
             </div>
             
+            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
             <div class="item-controls">
-              <a class="item-control item-move" title="Mudar Localização"><i class="fas fa-exchange-alt"></i></a>
-              <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-              <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
             </div>
           </li>
         {{/each}}
+        {{#unless equipmentCarried}}
+          <li class="placeholder-text">Nenhum item carregado.</li>
+        {{/unless}}
       </ol>
     </div>
 
     {{!-- Coluna 3: Armazenado --}}
     <div class="equipment-column">
-              <div class="block-header">
-                <h4 class="column-header">Armazenado</h4>
-                {{!-- O ícone de ordenar agora tem o data-location --}}
-                <a class="sort-control" data-item-type="equipment" data-location="stored" title="Ordenar Coluna">
-                  <i class="fas fa-sort-alpha-down"></i>
-                </a>
-              </div>
-      <ol class="item-list" data-location="stored">
+      <div class="block-header">
+        <h4 class="column-header">Armazenado</h4>
+        <a class="sort-control" data-item-type="equipment" data-location="stored" title="Ordenar Coluna">
+          <i class="fas fa-sort-alpha-down"></i>
+        </a>
+      </div>
+      
+      {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
+      <ol class="item-list flex-wrap-container" data-location="stored">
         {{#each equipmentStored}}
-        <li class="item item-row equipment-row" data-item-id="{{this.id}}" draggable="true">
-            <div class="item-main-info">
-              {{!-- A "tag" de nome que já funciona --}}
+          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+            
+            <div class="card-info">
               <span class="item-name">
-                  <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
               </span>
-              {{!-- As informações de Dano e RD foram MOVIDAS daqui --}}
-            </div>
+              
+              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+              <div class="card-details equipment-stats">
+                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
 
-            <div class="item-stats">
-              {{!-- MUDANÇA: As informações de Dano e RD agora são "tags" aqui --}}
-              {{#if this.system.dr}}
-                <span class="stat" title="Resistência a Dano">RD {{this.system.dr}}</span>
-              {{/if}}
-              {{#if this.system.damage_formula}}
-                <span class="stat" title="Dano">{{this.system.damage_formula}} {{this.system.damage_type}}</span>
-              {{/if}}
+                {{#if this.system.dr}}
+                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                {{/if}}
 
-              {{!-- As tags antigas continuam aqui --}}
-              <span class="stat" title="Quantidade">x{{this.system.quantity}}</span>
-              <span class="stat" title="Peso Total">{{this.system.total_weight}} kg</span>
-              <span class="stat" title="Custo Total">${{this.system.total_cost}}</span>
+                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                {{else}}
+                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                  {{/with}}
+                {{/with}}
+              </div>
             </div>
             
+            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
             <div class="item-controls">
-              <a class="item-control item-move" title="Mudar Localização"><i class="fas fa-exchange-alt"></i></a>
-              <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-              <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
             </div>
           </li>
         {{/each}}
+        {{#unless equipmentStored}}
+          <li class="placeholder-text">Nenhum item armazenado.</li>
+        {{/unless}}
       </ol>
     </div>
+
   </div>
   
 </div>
