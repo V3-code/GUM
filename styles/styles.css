@@ -3370,3 +3370,28 @@ filter:none;
 .gum.sheet.actor .attack-flag-tag.flag-f {
     background: #2980B9; /* Azul Escuro */
 }
+
+/* ============================================================= */
+/* ESTILO DA TAG DE PESO DO GRUPO DE ATAQUE (FICHA DO ATOR)      */
+/* VERSÃO v2 - "Tag Estilizada"                                  */
+/* ============================================================= */
+
+.gum.sheet.actor .group-weight-tag {
+    /* Estilo de "Tag" */
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra sutil */
+    
+    /* Estilo de "Fonte" */
+    font-size: 0.75em; /* Um pouco menor para caber na tag */
+    font-weight: 500;
+    color: var(--c-texto-subtitulo, #977c63); /* Cor sutil */
+    font-style: italic;
+    
+    /* Posicionamento */
+    margin-left: 6px;
+    white-space: nowrap;
+    text-transform: lowercase; /* kg */
+}

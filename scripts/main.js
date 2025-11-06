@@ -1630,6 +1630,7 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
             return {
                 id: item.id,
                 name: item.name,
+                weight: item.system.weight,
                 attacks: allAttacks,
                 sort: item.sort || 0, // Usa a ordenação do item no inventário
                 isFromItem: true // Flag para a interface (útil no futuro)
