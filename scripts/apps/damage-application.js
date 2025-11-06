@@ -59,11 +59,11 @@ export default class DamageApplicationWindow extends Application {
         damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
         damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
         const combatMeters = this.targetActor.system.combat.combat_meters || {};
-        for (const [key, meter] of Object.entries(combatMeters)) { damageablePools.push({ path: `system.combat.combat_meters.${key}.value`, label: meter.name }); }
+        for (const [key, meter] of Object.entries(combatMeters)) { damageablePools.push({ path: `system.combat.combat_meters.${key}.current`, label: meter.name }); }
         const spellReserves = this.targetActor.system.spell_reserves || {};
-        for (const [key, reserve] of Object.entries(spellReserves)) { damageablePools.push({ path: `system.spell_reserves.${key}.value`, label: `RM:${reserve.name}` }); }
+        for (const [key, reserve] of Object.entries(spellReserves)) { damageablePools.push({ path: `system.spell_reserves.${key}.current`, label: `RM:${reserve.name}` }); }
         const powerReserves = this.targetActor.system.power_reserves || {};
-        for (const [key, reserve] of Object.entries(powerReserves)) { damageablePools.push({ path: `system.power_reserves.${key}.value`, label: `RP:${reserve.name}` }); }
+        for (const [key, reserve] of Object.entries(powerReserves)) { damageablePools.push({ path: `system.power_reserves.${key}.current`, label: `RP:${reserve.name}` }); }
         context.damageablePools = damageablePools;
         const locationsData = { "head": { label: "Crânio", roll: "3-4", dr: 0 }, "face": { label: "Rosto", roll: "5", dr: 0 }, "leg": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, "arm": { label: "Braço", roll: "8, 12", dr: 0 }, "torso": { label: "Torso", roll: "9-11", dr: 0 }, "groin": { label: "Virilha", roll: "11", dr: 0 }, "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, "hand": { label: "Mão", roll: "15", dr: 0 }, "foot": { label: "Pé", roll: "16", dr: 0 }, "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, "eyes": { label: "Olhos", roll: "--", dr: 0 } };
         locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };
@@ -585,10 +585,23 @@ async _onApplyDamage(form, shouldClose, shouldPublish) {
         }
 
         const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+        let updateApplied = false;
+
         if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue - finalInjury });
+            updateApplied = true;
         } else if (applyAsHeal && finalInjury > 0) {
             await this.targetActor.update({ [selectedPoolPath]: currentPoolValue + finalInjury });
+            updateApplied = true;
+        }
+
+        if (updateApplied) {
+            
+            if (this.targetActor.sheet.rendered) {
+                
+                this.targetActor.sheet.render(true);
+            }
+
         }
 
         // =================================================================
