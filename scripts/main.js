@@ -1683,7 +1683,22 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
                     async: true
                 });              
                 context.survivalBlockWasOpen = this._survivalBlockOpen || false;
-                  
+                const combatMeters = context.actor.system.combat.combat_meters || {};
+                
+                // Cria a lista de registros "preparados" para o template
+                const preparedCombatMeters = Object.entries(combatMeters).map(([id, meter]) => {
+                    return {
+                        id: id,
+                        meter: meter
+                    };
+                // Filtra os registros que estão marcados como "hidden"
+                }).filter(m => !m.meter.hidden); 
+                
+                // Ordena por nome
+                preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
+
+                // Salva a lista pronta no contexto
+                context.preparedCombatMeters = preparedCombatMeters;
         return context;
     }
 
@@ -3350,7 +3365,75 @@ html.on('click', '.item-edit', ev => {
         }).render(true); 
         });
     html.on('click', '.delete-combat-meter', ev => { const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId"); Dialog.confirm({ title: "Deletar Registro", content: "<p>Você tem certeza que quer deletar este registro?</p>", yes: () => { const deleteKey = `system.combat.combat_meters.-=${meterId}`; this.actor.update({ [deleteKey]: null }); }, no: () => {}, defaultYes: false }); });
-        
+    html.on('click', '.hide-combat-meter', ev => { 
+                const meterId = $(ev.currentTarget).parents(".meter-card").data("meterId");
+                const entry = this.actor.system.combat.combat_meters[meterId];
+                Dialog.confirm({ 
+                    title: "Ocultar Registro", 
+                    content: `<p>Você tem certeza que quer ocultar <strong>${entry.name}</strong>?<br><small>Ele poderá ser restaurado.</small></p>`, 
+                    yes: () => { 
+                        // Esta lógica de 'hidden: true' funciona para TODOS os casos
+                        const updateKey = `system.combat.combat_meters.${meterId}.hidden`; 
+                        this.actor.update({ [updateKey]: true });
+                    }, 
+                    no: () => {}, 
+                    defaultYes: false 
+                }); 
+            });
+
+            // NOVO Listener para o botão "MOSTRAR OCULTOS" (no cabeçalho)
+            html.on('click', '.show-hidden-meters', ev => {
+                const actor = this.actor;
+                const allMeters = actor.system.combat.combat_meters || {};
+                
+                // 1. Encontra todos os registros que estão ocultos
+                const hiddenMeters = Object.entries(allMeters).filter(([id, meter]) => meter.hidden === true);
+
+                if (hiddenMeters.length === 0) {
+                    return ui.notifications.info("Nenhum registro oculto para mostrar.");
+                }
+
+                // 2. Constrói o HTML para o diálogo
+                let dialogContent = '<div class="meter-list" style="padding: 5px;">';
+                hiddenMeters.sort((a, b) => a[1].name.localeCompare(b[1].name)); // Ordena por nome
+                
+                hiddenMeters.forEach(([id, meter]) => {
+                    dialogContent += `
+                        <div class="item-row meter-card" data-meter-id="${id}" style="margin-bottom: 5px;">
+                            <span class="item-name" style="font-style: italic; color: #aaa;">${meter.name}</span>
+                            <div class="item-controls">
+                                <a class="item-control restore-combat-meter" title="Restaurar (Mostrar na ficha)">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+                dialogContent += '</div>';
+
+                // 3. Cria o diálogo
+                new Dialog({
+                    title: "Restaurar Registros Ocultos",
+                    content: dialogContent,
+                    buttons: {
+                        close: { label: "Fechar" }
+                    },
+                    render: (html) => {
+                        // 4. Adiciona o listener para o botão "Restaurar" DENTRO do diálogo
+                        html.find('.restore-combat-meter').click(async (ev) => {
+                            const meterCard = $(ev.currentTarget).closest('.meter-card');
+                            const meterId = meterCard.data('meter-id');
+                            
+                            // Esta é a forma correta de "remover" a flag 'hidden'
+                            const updateKey = `system.combat.combat_meters.${meterId}.-=hidden`;
+                            await actor.update({ [updateKey]: null });
+                            
+                            // Remove o item da lista do *diálogo* para feedback visual
+                            meterCard.remove();
+                        });
+                    }
+                }).render(true);
+            });    
     
         // ================================================================== //
         //   LISTENER DE ROLAGEM DE DANO (VERSÃO FINAL - FASE 3.3)            //
