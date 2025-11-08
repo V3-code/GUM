@@ -65,14 +65,43 @@ export default class DamageApplicationWindow extends Application {
         const powerReserves = this.targetActor.system.power_reserves || {};
         for (const [key, reserve] of Object.entries(powerReserves)) { damageablePools.push({ path: `system.power_reserves.${key}.current`, label: `RP:${reserve.name}` }); }
         context.damageablePools = damageablePools;
-        const locationsData = { "head": { label: "Crânio", roll: "3-4", dr: 0 }, "face": { label: "Rosto", roll: "5", dr: 0 }, "leg": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, "arm": { label: "Braço", roll: "8, 12", dr: 0 }, "torso": { label: "Torso", roll: "9-11", dr: 0 }, "groin": { label: "Virilha", roll: "11", dr: 0 }, "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, "hand": { label: "Mão", roll: "15", dr: 0 }, "foot": { label: "Pé", roll: "16", dr: 0 }, "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, "eyes": { label: "Olhos", roll: "--", dr: 0 } };
+        
+// 1. Definição base dos locais (com chaves no PLURAL para corresponder ao main.js)
+        const locationsData = { 
+            "head": { label: "Crânio", roll: "3-4", dr: 0 }, 
+            "face": { label: "Rosto", roll: "5", dr: 0 }, 
+            "legs": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, // ✅ CORRIGIDO: legs
+            "arms": { label: "Braço", roll: "8, 12", dr: 0 },     // ✅ CORRIGIDO: arms
+            "torso": { label: "Torso", roll: "9-11", dr: 0 }, 
+            "groin": { label: "Virilha", roll: "11", dr: 0 }, 
+            "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, 
+            "hands": { label: "Mão", roll: "15", dr: 0 },    // ✅ CORRIGIDO: hands
+            "feet": { label: "Pé", roll: "16", dr: 0 },     // ✅ CORRIGIDO: feet
+            "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, 
+            "eyes": { label: "Olhos", roll: "--", dr: 0 } 
+        };
         locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };
-        const manualDRMods = this.targetActor.system.combat.dr_mods || {};
-        for (const [key, mod] of Object.entries(manualDRMods)) { if (locationsData[key]) { locationsData[key].dr += parseInt(mod) || 0; } }
-        const equippedArmor = this.targetActor.items.filter(i => i.type === 'armor' && i.system.location === 'equipped');
-        for (const armor of equippedArmor) { const armorDR = parseInt(armor.system.dr) || 0; if (armor.system.worn_locations) { for (const locationKey of armor.system.worn_locations) { if (locationsData[locationKey]) { locationsData[locationKey].dr += armorDR; } } } }
-        context.locations = Object.entries(locationsData).map(([key, data]) => { data.key = key; data.totalDR = data.dr; return data; });
-        context.locations.sort((a, b) => { const firstRollA = parseInt(a.roll.split(/[,-]/)[0]); const firstRollB = parseInt(b.roll.split(/[,-]/)[0]); if (isNaN(firstRollA)) return 1; if (isNaN(firstRollB)) return -1; return firstRollA - firstRollB; });
+
+        // 2. Pega a DR FINAL já calculada pelo Ator (esta parte estava correta)
+        //    (Isto já inclui armadura + drMods + drTempMods)
+        const finalActorDR = this.targetActor.system.combat.dr_locations || {};
+
+        // 3. Alimenta o 'locationsData.dr' com os valores finais.
+        for (const [key, data] of Object.entries(locationsData)) {
+            // Agora, a chave 'arms' (da janela) vai bater com a 'arms' (do ator)
+            if (key !== "custom" && finalActorDR[key] !== undefined) {
+                data.dr = parseInt(finalActorDR[key]) || 0;
+            }
+        }
+        
+        // 4. Prepara para o template
+        context.locations = Object.entries(locationsData).map(([key, data]) => { 
+            data.key = key; 
+            data.totalDR = data.dr; // 'totalDR' agora está correto
+            return data; 
+        });
+        context.locations.sort((a, b) => { const firstRollA = parseInt(a.roll.split(/[,-]/)[0]); const firstRollB = parseInt(b.roll.split(/[,-]/)[0]); if (isNaN(firstRollA)) return 1; if (isNaN(firstRollB)) return -1; return firstRollA - firstRollB; });        
+        
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
         const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
         let defaultModFound = false;

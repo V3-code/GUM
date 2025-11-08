@@ -192,11 +192,12 @@ class GurpsActor extends Actor {
         // 'sheetData.actor.items' vira 'this.items'
         for (let i of this.items) { 
             if (i.type === 'armor' && i.system.location === 'equipped') {
-                (i.system.worn_locations || []).forEach(loc => {
-                    if (loc && drFromArmor.hasOwnProperty(loc.toLowerCase())) {
-                        drFromArmor[loc.toLowerCase()] += i.system.dr || 0;
+                const itemDrLocations = i.system.dr_locations || {};
+                for (let loc in drFromArmor) {
+                    if (itemDrLocations[loc] && drFromArmor.hasOwnProperty(loc)) {
+                        drFromArmor[loc] += Number(itemDrLocations[loc]) || 0;
                     }
-                });
+                }
             }
         }
         

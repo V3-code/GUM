@@ -286,12 +286,13 @@
                         </div>
 
                         {{!-- Grid de Locais de Acerto --}}
-                        <div class="hit-locations-grid">
+                        <div class="hit-locations-grid-inputs">
                             {{#each (array "torso" "head" "face" "eyes" "neck" "vitals" "groin" "arms" "hands" "legs" "feet") as |loc|}}
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" name="system.worn_locations" value="{{loc}}" {{#if (includes ../system.worn_locations loc)}}checked{{/if}} />
-                                    <span>{{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}</span>
-                                </label>
+                                <div class="form-group form-group-small">
+                                    <label>{{lookup (object torso="Torso" head="Cabeça" face="Rosto" eyes="Olhos" neck="Pescoço" 
+                                        vitals="Órg. Vitais" groin="Virilha" arms="Braços" hands="Mãos" legs="Pernas" feet="Pés") loc}}</label>
+                                    <input type="number" name="system.dr_locations.{{loc}}" value="{{lookup ../system.dr_locations loc}}" class="form-input" />
+                                </div>
                             {{/each}}
                         </div>
 

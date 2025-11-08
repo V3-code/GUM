@@ -1694,3 +1694,26 @@
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+
+.hit-locations-grid-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 4px 8px;
+    padding: 5px 0;
+}
+
+.hit-locations-grid-inputs .form-group-small {
+    margin-bottom: 0;
+}
+
+.hit-locations-grid-inputs .form-group-small label {
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.hit-locations-grid-inputs .form-group-small input[type="number"] {
+    height: 24px;
+    font-size: 0.9em;
+    text-align: center;
+}
