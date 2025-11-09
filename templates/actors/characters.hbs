@@ -1175,233 +1175,213 @@
 </div>
 
 {{! ========================================================= }}
-{{!      ABA DE COMBATE (NOVO LAYOUT "PAINEL DE CONTROLE")    }}
+{{!     ABA DE COMBATE (LAYOUT REORGANIZADO)    }}
 {{! ========================================================= }}
 <div class="tab combat-tab" data-group="primary" data-tab="combat">
 
-  {{! --- CABEÇALHO DE STATUS RÁPIDOS --- }}
+  {{! --- CABEÇALHO DE STATUS RÁPIDOS (SIMPLIFICADO) --- }}
   <div class="combat-header-stats">
-  <div class="stat-card">
-    <label>Mod. Esquiva</label>
-    <input type="number" name="system.attributes.dodge.mod" value="{{actor.system.attributes.dodge.mod}}"/>
-  </div>
-  <div class="stat-card">
-    <label>Bônus de Defesa</label>
-    <input type="number" name="system.combat.defense_bonus" value="{{actor.system.combat.defense_bonus}}"/>
-  </div>
-{{! --- CARD DE RD HÍBRIDO ---}}
-<div class="stat-card rd-hybrid-card">
-  
-  {{!-- Seção Principal (Esquerda) --}}
-  <div class="rd-main-display">
-    <label>RD Torso</label>
-    <div class="value">{{lookup actor.system.combat.dr_locations 'torso'}}</div>
-    {{!-- O ícone de editar que abre o pop-up --}}
-    <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
-  </div>
-
-  {{!-- Seção de Detalhes (Direita) --}}
-  <div class="rd-details-list">
-    {{!-- Linha 1 --}}
-    <div class="rd-detail-row">
-      <span>C: <strong>{{lookup actor.system.combat.dr_locations 'head'}}</strong></span>
-      <span>O: <strong>{{lookup actor.system.combat.dr_locations 'eyes'}}</strong></span>
-      <span>R: <strong>{{lookup actor.system.combat.dr_locations 'face'}}</strong></span>
-    </div>
-    {{!-- Linha 2 --}}
-    <div class="rd-detail-row">
-      <span>Ps: <strong>{{lookup actor.system.combat.dr_locations 'neck'}}</strong></span>
-      <span>B: <strong>{{lookup actor.system.combat.dr_locations 'arms'}}</strong></span>
-      <span>M: <strong>{{lookup actor.system.combat.dr_locations 'hands'}}</strong></span>
-    </div>
-    {{!-- Linha 3 --}}
-    <div class="rd-detail-row">
-      <span>V: <strong>{{lookup actor.system.combat.dr_locations 'groin'}}</strong></span>
-      <span>Pn: <strong>{{lookup actor.system.combat.dr_locations 'legs'}}</strong></span>
-      <span>Pé: <strong>{{lookup actor.system.combat.dr_locations 'feet'}}</strong></span>
-    </div>
-  </div>
-
-</div>
     
-{{! --- CARD DE DANO GdP---}}
-<div class="stat-card">
-    <a class="edit-basic-damage" data-damage-type="thrust" title="Editar Dano"><i class="fas fa-edit"></i></a>
+    <div class="stat-card">
+      <label>Mod. Esquiva</label>
+      <input type="number" name="system.attributes.dodge.mod" value="{{actor.system.attributes.dodge.mod}}"/>
+    </div>
     
-    <a class="rollable-damage" 
-       data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
-       data-label="Dano de Golpe de Ponta"
-       data-damage-type="GdP">
-        <label>Dano GdP</label>
-        <div class="value">{{actor.system.attributes.thrust_damage}}</div>
-    </a>
-</div>
+    <div class="stat-card">
+      <label>Bônus de Defesa</label>
+      <input type="number" name="system.combat.defense_bonus" value="{{actor.system.combat.defense_bonus}}"/>
+    </div>
 
-{{! --- CARD DE DANO GeB ---}}
-<div class="stat-card">
-    <a class="edit-basic-damage" data-damage-type="swing" title="Editar Dano"><i class="fas fa-edit"></i></a>
-    
-    <a class="rollable-damage" 
-       data-roll-formula="{{actor.system.attributes.swing_damage}}" 
-       data-label="Dano de Golpe em Balanço"
-       data-damage-type="GeB">
-        <label>Dano GeB</label>
-        <div class="value">{{actor.system.attributes.swing_damage}}</div>
-    </a>
-</div>
+    {{! --- CARD DE RD TORSO (AGORA SIMPLES) ---}}
+    <div class="stat-card">
+        <label>RD Torso</label>
+        {{! Aqui usamos o novo helper! }}
+        <div class="value">{{formatDR (lookup actor.system.combat.dr_locations 'torso')}}</div>
+    </div>
+      
+    {{! --- CARD DE DANO GdP---}}
+    <div class="stat-card">
+      <a class="edit-basic-damage" data-damage-type="thrust" title="Editar Dano"><i class="fas fa-edit"></i></a>
+      <a class="rollable-damage" 
+         data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+         data-label="Dano de Golpe de Ponta"
+         data-damage-type="GdP">
+          <label>Dano GdP</label>
+          <div class="value">{{actor.system.attributes.thrust_damage}}</div>
+      </a>
+    </div>
 
-</div>
+    {{! --- CARD DE DANO GeB ---}}
+    <div class="stat-card">
+      <a class="edit-basic-damage" data-damage-type="swing" title="Editar Dano"><i class="fas fa-edit"></i></a>
+      <a class="rollable-damage" 
+         data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+         data-label="Dano de Golpe em Balanço"
+         data-damage-type="GeB">
+          <label>Dano GeB</label>
+          <div class="value">{{actor.system.attributes.swing_damage}}</div>
+      </a>
+    </div>
 
-{{!-- Bloco de Registros de Combate (agora no topo da coluna) --}}
-    <div class="gum-block combat-meters-box">
-                <div class="block-header">
-                  <h4>Registros de Combate</h4>
-                  <div class="header-controls">
-                    {{!-- ESTE É O NOVO BOTÃO "MOSTRAR OCULTOS" --}}
-                    <a class="show-hidden-meters" title="Mostrar Registros Ocultos"><i class="fas fa-eye-low-vision"></i></a>
-                    <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
-                  </div>
-                </div>
-                
-                <div class="meter-list">
-                  {{!-- MUDANÇA: Agora iteramos sobre a nova lista 'preparedCombatMeters' --}}
-                  {{#each preparedCombatMeters}}
-                    <div class="item-row meter-card" data-meter-id="{{this.id}}">
-                      <span class="item-name">{{this.meter.name}}</span>
-                      <div class="meter-inputs">
-                        <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
-                        <span>/</span>
-                        <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
-                      </div>
-                      <div class="item-controls">
-                        <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
-                        
-                        {{!-- MUDANÇA: Adicionamos o botão "Ocultar" --}}
-                        <a class="item-control hide-combat-meter" title="Ocultar Registro"><i class="fas fa-eye-slash"></i></a>
-                        
-                        {{!-- MUDANÇA: Mantemos o botão "Deletar" --}}
-                        <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
+  </div> {{! --- Fim do .combat-header-stats --- }}
 
-                      </div>
-                    </div>
-                  {{/each}}
-                  {{!-- Placeholder se a lista estiver vazia --}}
-                  {{#unless preparedCombatMeters}}
-                    <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
-                  {{/unless}}
-                </div>
+  {{!-- Bloco de Registros de Combate (Igual a antes) --}}
+  <div class="gum-block combat-meters-box">
+      <div class="block-header">
+        <h4>Registros de Combate</h4>
+        <div class="header-controls">
+          <a class="show-hidden-meters" title="Mostrar Registros Ocultos"><i class="fas fa-eye-low-vision"></i></a>
+          <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
+        </div>
+      </div>
+      <div class="meter-list">
+        {{#each preparedCombatMeters}}
+          <div class="item-row meter-card" data-meter-id="{{this.id}}">
+            <span class="item-name">{{this.meter.name}}</span>
+            <div class="meter-inputs">
+              <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
+              <span>/</span>
+              <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+            </div>
+            <div class="item-controls">
+              <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
+              <a class="item-control hide-combat-meter" title="Ocultar Registro"><i class="fas fa-eye-slash"></i></a>
+              <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+        {{/each}}
+        {{#unless preparedCombatMeters}}
+          <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
+        {{/unless}}
+      </div>
+  </div>
+
+  {{! ================================================================== }}
+  {{!  O NOVO BLOCO DE RD (PAINEL DE RD)                                 }}
+  {{! ================================================================== }}
+  <div class="gum-block dr-location-block">
+      <div class="block-header">
+        <h4>Resistência a Dano & Locais de Acerto</h4>
+        <div class="header-controls">
+          {{! O botão de editar agora mora aqui. Ele abre o MESMO popup de antes }}
+          <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
+        </div>
+      </div>
+      
+      {{! Uma lista de 2 colunas para exibir todas as RDs }}
+      <ol class="dr-location-list">
+        {{! Para esta lista funcionar, a função getData() da ficha do ator
+            precisa fornecer 'context.hitLocations' (o que ela já faz!) }}
+            
+{{#each hitLocations as |loc key|}}
+          <li class="dr-location-row" data-location-key="{{key}}">
+            <span class="location-name">
+              {{loc.label}} 
+              {{#if loc.roll}}({{loc.roll}}){{/if}}
+            </span>
+            <span class="location-dr-value">
+              {{! Esta parte usa a "key" (ex: 'head', 'torso') para buscar a RD no ator }}
+              {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
+            </span>
+          </li>
+        {{/each}}
+  </div>
+
+
+  {{!-- Lista de Ataques (Igual a antes) --}}
+  <div class="attacks-list-box gum-block">
+    {{! ... (todo o seu código da lista de ataques, sem alteração) ... }}
+    <div class="block-header">
+      <h4>Lista de Ataques (de Itens Equipados)</h4>
+    </div>
+    <ol class="attack-group-list">
+      {{#each attackGroups as |group|}}
+      <li class="attack-group-card item-generated" data-group-id="{{group.id}}" draggable="false">
+        
+        <div class="group-header">
+          <span class="group-name">
+            <i class="fas fa-shield-alt" title="Ataque do Item '{{group.name}}'"></i> 
+            {{group.name}}
+            {{#if (gt group.weight 0)}}
+              <span class="group-weight-tag">{{group.weight}} kg</span>
+            {{/if}}
+          </span>
+          <div class="group-controls">
+            <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
+              <i class="fas fa-cog"></i>
+            </a>
+          </div>
+        </div>
+
+        <ol class="attacks-in-group">
+          {{#each group.attacks as |attack|}}
+          <li class="item-row attack-item" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+            
+            <span class="attack-type-icon">
+              {{#if (eq attack.attack_type "melee")}}<i class="fas fa-khanda" title="Corpo a Corpo"></i>{{/if}}
+              {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+            </span>
+
+            <div class="attack-main-info">
+              <div class="attack-name-row">
+                <strong>{{attack.skill_name}}</strong>
+                <a>({{attack.name}})</a>
+                {{#if this.unbalanced}}
+                <span class="attack-flag-tag flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                {{/if}}
+                {{#if this.fencing}}
+                <span class="attack-flag-tag flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                {{/if}}
               </div>
 
-{{!-- ================================================================== --}}
-{{!-- 	FASE 3.2: A NOVA LISTA DE ATAQUES (LÊ APENAS DE ITENS) 	     --}}
-{{!-- ================================================================== --}}
-<div class="attacks-list-box gum-block">
-    <div class="block-header">
-        <h4>Lista de Ataques (de Itens Equipados)</h4>
-        {{!-- Os grupos são adicionados ao equipar um item. --}}
-    </div>
-
-    <ol class="attack-group-list">
-        {{#each attackGroups as |group|}}
-        {{!-- O 'group' aqui é o seu Item (ex: "Espada Longa") --}}
-        <li class="attack-group-card item-generated" data-group-id="{{group.id}}" draggable="false">
-            
-            <div class="group-header">
-                {{!-- O nome do Item vira o título do grupo --}}
-                <span class="group-name">
-                    <i class="fas fa-shield-alt" title="Ataque do Item '{{group.name}}'"></i> 
-                    {{group.name}}
-                    {{#if (gt group.weight 0)}}
-                        <span class="group-weight-tag">{{group.weight}} kg</span>
-                    {{/if}}
+              <div class="attack-details-row">
+                <span class="stat"><label>NH:</label> 
+                  <a class="rollable" data-roll-value="{{attack.skill_level}}" data-label="Ataque com {{../group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.skill_level}}</a>
                 </span>
                 
-                <div class="group-controls">
-                    {{!-- Este botão abre a *Ficha do Item* para edição --}}
-                    <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
-                        <i class="fas fa-cog"></i>
-                    </a>
-                </div>
+                <span class="stat">
+                  <label>Dano:</label>
+                  <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+                    ({{attack.damage_formula}}){{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                    {{#with attack.follow_up_damage}}
+                      {{#if this.formula}} + ({{this.formula}}){{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}
+                    {{/with}}
+                    {{#with attack.fragmentation_damage}}
+                      {{#if this.formula}} + [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}
+                    {{/with}}
+                  </a>
+                </span>
+                
+                {{#if (eq attack.attack_type "melee")}}
+                  <span class="stat melee-stat"><label>Aparar:</label> 
+                    <a class="rollable" data-roll-value="{{attack.parry}}" data-label="Aparar com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.parry}}</a>
+                  </span>
+                  <span class="stat melee-stat"><label>Bloqueio:</label> 
+                    <a class="rollable" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
+                  </span>
+                  <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
+                {{/if}}
+
+                {{#if (eq attack.attack_type "ranged")}}
+                    <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
+                    <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
+                    <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
+                    <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
+                    <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
+                {{/if}}
+              </div>
             </div>
 
-            <ol class="attacks-in-group">
-                {{#each group.attacks as |attack|}}
-                {{!-- O 'attack' aqui é o Modo de Uso (ex: "Balanço", "Estocada") --}}
-                <li class="item-row attack-item" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
-                    
-                    <span class="attack-type-icon">
-                        {{#if (eq attack.attack_type "melee")}}<i class="fas fa-khanda" title="Corpo a Corpo"></i>{{/if}}
-                        {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
-                    </span>
-
-                    <div class="attack-main-info">
-                        <div class="attack-name-row">
-                            <strong>{{attack.skill_name}}</strong> {{!-- ex: "Espada Longa" --}}
-                            <a>({{attack.name}})</a> {{!-- ex: "(Balanço)" --}}
-                            {{#if this.unbalanced}}
-                            <span class="attack-flag-tag flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                            {{/if}}
-                            {{#if this.fencing}}
-                            <span class="attack-flag-tag flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                            {{/if}}
-                        </div>
-
-                        <div class="attack-details-row">
-                            {{!-- O NH FINAL CALCULADO! --}}
-                            <span class="stat"><label>NH:</label> 
-                                <a class="rollable" data-roll-value="{{attack.skill_level}}" data-label="Ataque com {{../group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.skill_level}}</a>
-                            </span>
-                            
-                            {{!-- O Dano (A rolagem ainda não funciona, Fase 3.3) --}}
-                            <span class="stat">
-                                <label>Dano:</label>
-                                <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
-                                    ({{attack.damage_formula}}){{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
-                                    
-                                    {{#with attack.follow_up_damage}}
-                                        {{#if this.formula}} + ({{this.formula}}){{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}
-                                    {{/with}}
-                                    
-                                    {{#with attack.fragmentation_damage}}
-                                        {{#if this.formula}} + [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}
-                                    {{/with}}
-                                </a>
-                            </span>
-                            
-                            {{!-- Atributos de Ataque C.C. --}}
-                            {{#if (eq attack.attack_type "melee")}}
-                              <span class="stat melee-stat"><label>Aparar:</label> 
-                                  <a class="rollable" data-roll-value="{{attack.parry}}" data-label="Aparar com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.parry}}</a>
-                              </span>
-                              <span class="stat melee-stat"><label>Bloqueio:</label> 
-                                  <a class="rollable" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
-                              </span>
-                              <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
-                              
-                            {{/if}}
-
-                            {{!-- Atributos de Ataque L.D. --}}
-                            {{#if (eq attack.attack_type "ranged")}}
-                                <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
-                                <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
-                                <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
-                                <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
-                                <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
-                                
-                            {{/if}}
-                        </div>
-                    </div>
-
-                    <div class="item-controls">
-                        {{!-- Não há botões de editar/deletar aqui. A edição é feita no Item. --}}
-                    </div>
-                </li>
-                {{/each}}
-            </ol>
-        </li>
-        {{/each}}
+            <div class="item-controls">
+              {{! Não há botões de editar/deletar aqui. A edição é feita no Item. }}
+            </div>
+          </li>
+          {{/each}}
+        </ol>
+      </li>
+      {{/each}}
     </ol>
-</div>
+  </div>
 
 </div>
    

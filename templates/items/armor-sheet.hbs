@@ -1,0 +1,99 @@
+<form class="{{cssClass}}" autocomplete="0">
+    
+    {{! Cabeçalho (Nome, Imagem, etc.) }}
+    <header class="sheet-header item-header">
+        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
+        <div class="header-fields">
+            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Item"/></h1>
+            
+            <div class="item-header-grid">
+                <div class="form-group">
+                    <label>Custo</label>
+                    <input type="text" name="system.cost" value="{{system.cost}}" data-dtype="String" />
+                </div>
+                <div class="form-group">
+                    <label>Peso</label>
+                    <input type="text" name="system.weight" value="{{system.weight}}" data-dtype="String" />
+                </div>
+                <div class="form-group">
+                    <label>Qtd.</label>
+                    <input type="text" name="system.quantity" value="{{system.quantity}}" data-dtype="Number" />
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {{! Abas de Navegação }}
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item" data-tab="protection">Proteção</a>
+        <a class="item" data-tab="details">Detalhes</a>
+        <a class="item" data-tab="effects">Efeitos</a>
+    </nav>
+
+    {{! Corpo da Ficha }}
+    <section class="sheet-body-content">
+        
+        {{! Aba de Proteção (A MÁGICA) }}
+        <div class="tab" data-group="primary" data-tab="protection">
+            <div class="form-section no-header">
+                <p class="hint">
+                    Digite a RD para cada local. (ex: <code>5</code>, <code>5, 2 cont</code>, <code>3 pi++</code>).
+                </p>
+                
+                <div class="hit-locations-grid-inputs armor-dr-grid">
+                    {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
+                        <div class="form-group form-group-small">
+                            <label>{{lookup (object 
+                                head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
+                                arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
+                                leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
+                            ) loc}}</label>
+                            
+                            {{!-- O 'value' vem do 'formattedDrLocations' preparado no getData() --}}
+                            <input type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" class="form-input" />
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+
+        {{! Aba de Detalhes }}
+        <div class="tab" data-group="primary" data-tab="details">
+            <div class="form-section no-header">
+                <div class="details-grid">
+                    <div class="form-group">
+                        <label>Nível Tecnológico (NT)</label>
+                        <input type="text" name="system.tech_level" value="{{system.tech_level}}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Classe de Legalidade (CL)</label>
+                        <input type="text" name="system.legality_class" value="{{system.legality_class}}" />
+                    </div>
+                    <div class="form-group span-2">
+                        <label>Referência (Livro & Pg.)</label>
+                        <input type="text" name="system.ref" value="{{system.ref}}" />
+                    </div>
+                </div>
+                <hr>
+                <h4 class="section-title">Descrição para o Chat</h4>
+                <div class="form-group editor-container">
+                    {{editor system.chat_description target="system.chat_description" button=true owner=owner editable=editable}}
+                </div>
+                <h4 class="section-title">Descrição Completa / Notas</h4>
+                <div class="form-group editor-container">
+                    {{editor system.description target="system.description" button=true owner=owner editable=editable}}
+                </div>
+            </div>
+        </div>
+        
+        {{! Aba de Efeitos (Placeholder, como você pediu) }}
+        <div class="tab" data-group="primary" data-tab="effects">
+            <div class="form-section no-header">
+                <p class="hint" style="text-align: center; padding: 20px;">
+                    A aba de Efeitos será configurada no futuro.
+                </p>
+            </div>
+        </div>
+        
+    </section>
+</form>

@@ -16,8 +16,11 @@
     "verified": "13"
   },
   "esmodules": [
+    "scripts/main.js",
     "scripts/gum-data.js",
     "module/config.js",
+    "module/item/gurps-item-sheet.js",
+    "module/actor/gurps-actor-sheet.js",
     "scripts/apps/condition-builder.js",
     "scripts/apps/effect-builder.js",
     "scripts/apps/effect-sheet.js",
@@ -28,8 +31,9 @@
     "module/settings.js",
     "module/apps/modifier-browser.js",
     "module/apps/effect-browser.js",
-    "module/apps/trigger-browser.js",
-    "scripts/main.js"
+    "module/item/gurps-armor-sheet.js",
+    "module/apps/trigger-browser.js"
+    
   ],
   "styles": [
     "styles/styles.css",

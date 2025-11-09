@@ -60,11 +60,12 @@
                 <div class="location-row" data-location-key="{{this.key}}" data-dr="{{this.totalDR}}">
                     <span class="roll">{{this.roll}}</span>
                     <span class="label">{{this.label}}</span>
-                        <span class="dr">
+                    <span class="dr">
                             {{#if this.custom}}
                                 <input type="number" name="custom_dr" value="0" min="0" class="custom-dr-input"/>
                             {{else}}
-                                {{this.totalDR}}
+                                {{! ✅ MUDANÇA: Adicionamos o span com a classe "location-dr-value" }}
+                                <span class="location-dr-value">{{this.totalDR}}</span>
                             {{/if}}
                         </span>
                 </div>

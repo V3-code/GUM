@@ -111,7 +111,26 @@
     "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "modifiers": {} },
     "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M" },
     "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {} },
-    "armor": { "templates": ["base", "equipment_base"], "dr_locations": {"torso": 0, "head": 0, "face": 0, "eyes": 0, "neck": 0, "vitals": 0, "groin": 0, "arms": 0, "hands": 0, "legs": 0, "feet": 0} },
+"armor": { 
+        "templates": ["base", "equipment_base"], 
+        "dr_locations": {
+            "torso": { "base": 0 }, 
+            "head": { "base": 0 }, 
+            "face": { "base": 0 }, 
+            "eyes": { "base": 0 }, 
+            "neck": { "base": 0 }, 
+            "vitals": { "base": 0 }, 
+            "groin": { "base": 0 }, 
+            "arm_l": { "base": 0 },
+            "arm_r": { "base": 0 },
+            "hand_l": { "base": 0 },
+            "hand_r": { "base": 0 },
+            "leg_l": { "base": 0 },
+            "leg_r": { "base": 0 },
+            "foot_l": { "base": 0 },
+            "foot_r": { "base": 0 }
+        } 
+    },
     "spell": {
       "templates": ["base"],
       "points": 4, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Regular", "spell_school": "Magia Geral", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "",
