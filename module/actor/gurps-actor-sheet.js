@@ -452,41 +452,79 @@ _getSubmitData(updateData) {
         }
     }
 
-    /**
-     * Converte o objeto de RD (ex: {base: 5, cont: 2})
-     * em uma string legível (ex: "5, 2 cont").
+/**
+     * Converte o objeto de RD (ex: {base: 10, cont: -6})
+     * em uma string GURPS legível (ex: "10, 4 cont").
      */
     _formatDRObjectToString(drObject) {
         if (!drObject || typeof drObject !== 'object' || Object.keys(drObject).length === 0) return "0";
+        
         const parts = [];
-        if (drObject.base) parts.push(drObject.base.toString());
-        for (const [type, value] of Object.entries(drObject)) {
-            if (type === 'base') continue;
-            parts.push(`${value} ${type}`);
+        const baseDR = drObject.base || 0;
+        parts.push(baseDR.toString()); // Sempre começa com o valor base
+
+        for (const [type, mod] of Object.entries(drObject)) {
+            if (type === 'base') continue; // Já cuidamos da base
+
+            const finalDR = Math.max(0, baseDR + mod);
+            
+            // Só mostra se for diferente da base
+            if (finalDR !== baseDR) {
+                parts.push(`${finalDR} ${type}`);
+            }
         }
-        if (parts.length === 0) return "0";
-        if (parts.length > 1 && parts[0] === "0") parts.shift();
+        
+        if (parts.length === 1 && parts[0] === "0") return "0"; // Se for só "{ base: 0 }"
+        
+        // Se a base for 0 e houver outros (ex: "3 cont"), remove o "0, "
+        if (parts.length > 1 && parts[0] === "0") {
+             parts.shift(); 
+        }
+        
         return parts.join(", ");
     }
 
-    /**
-     * Converte a string de RD (ex: "5, 2 cont")
-     * em um objeto (ex: {base: 5, cont: 2}).
+/**
+     * Converte a string de RD (ex: "5, 2 cont" ou "3 qmd")
+     * em um objeto de modificador (ex: {base: 5, cont: -3} ou {qmd: 3}).
      */
     _parseDRStringToObject(drString) {
         if (typeof drString === 'object' && drString !== null) return drString;
-        if (!drString || typeof drString !== 'string' || drString.trim() === "") return { base: 0 };
+        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {}; // Retorna objeto VAZIO
+        
         const drObject = {};
         const parts = drString.split(',').map(s => s.trim().toLowerCase());
+        
+        let baseDR = 0; // Armazena o 'base' temporariamente
+
+        // 1. Primeira passada: Encontra o 'base'
         for (const part of parts) {
             const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
             if (segments.length === 1 && !isNaN(Number(segments[0]))) {
-                drObject['base'] = Number(segments[0]);
-            } else if (segments.length === 2 && !isNaN(Number(segments[0]))) {
-                drObject[segments[1]] = Number(segments[0]);
+                baseDR = Number(segments[0]);
+                drObject['base'] = baseDR;
+                break; // Encontrou a base, para
             }
         }
-        if (drObject.base === undefined) drObject.base = 0;
+
+        // 2. Segunda passada: Calcula os modificadores
+        for (const part of parts) {
+            const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
+            if (segments.length === 2 && !isNaN(Number(segments[0]))) {
+                const type = segments[1];
+                const value = Number(segments[0]);
+                
+                // Se uma base foi definida (ex: "5, 2 cont"), salva a DIFERENÇA
+                if (baseDR > 0) {
+                    drObject[type] = value - baseDR; // Ex: 2 - 5 = -3
+                } 
+                // Se não há base (ex: "3 cont"), salva o valor como um bônus
+                else {
+                    drObject[type] = value; // Ex: { cont: 3 }
+                }
+            }
+        }
+        
         return drObject;
     }
 

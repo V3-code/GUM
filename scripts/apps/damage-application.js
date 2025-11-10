@@ -115,27 +115,30 @@ export default class DamageApplicationWindow extends Application {
      * @param {string} damageType - A abreviação do tipo de dano (ex: "cont", "pi++")
      * @returns {number} - O valor final da RD.
      */
-    _getDynamicDR(locationKey, damageType) {
+_getDynamicDR(locationKey, damageType) {
         if (!locationKey) return 0;
         
-        // Se for "Outro", lê o input customizado
         if (locationKey === 'custom') {
             const customInput = this.formElement.querySelector('input[name="custom_dr"]');
             return parseInt(customInput?.value || 0);
         }
 
-        // Pega o objeto de RD do ator (ex: { base: 5, cont: 2 })
-        const drObject = foundry.utils.getProperty(this.targetActor, `system.combat.dr_locations.${locationKey}`) || { base: 0 };
+        // Pega o objeto de RD do ator (ex: { base: 5, cont: -3 })
+        const drObject = foundry.utils.getProperty(this.targetActor, `system.combat.dr_locations.${locationKey}`) || {};
         
-        // Usa o tipo de dano (ex: "cont") ou "base" se o tipo for nulo/vazio
-        const type = damageType || 'base';
+        // 1. Pega a RD Base
+        const baseDR = drObject['base'] || 0;
 
-        // Retorna a RD específica se existir, senão, retorna a RD base.
-        if (drObject[type] !== undefined) {
-            return drObject[type]; // Ex: Achou RD para 'cont' (3)
-        } else {
-            return drObject['base'] || 0; // Ex: Usa 'base' (5)
+        // 2. Se não houver tipo de dano, retorna a base
+        if (!damageType || damageType === 'base') {
+            return baseDR;
         }
+
+        // 3. Pega o MODIFICADOR específico (ex: -3 para 'cont', ou +3 para 'qmd')
+        const specificMod = drObject[damageType] || 0;
+        
+        // 4. SOMA os dois e garante que não seja negativo
+        return Math.max(0, baseDR + specificMod);
     }
 
 

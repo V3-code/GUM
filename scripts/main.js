@@ -1041,7 +1041,6 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 // ================================================================== //
 Handlebars.registerHelper('formatDR', function(drObject) {
     if (!drObject || typeof drObject !== 'object') {
-        // Se for um número antigo ou nulo, apenas retorna ele.
         return drObject || 0;
     }
 
@@ -1050,14 +1049,15 @@ Handlebars.registerHelper('formatDR', function(drObject) {
     parts.push(baseDR.toString()); // Sempre começa com o valor base
 
     // Itera sobre todas as chaves (cont, cort, pi, qmd, etc.)
-    for (const key in drObject) {
-        if (key === 'base') continue; // Já cuidamos da base
+    for (const [type, mod] of Object.entries(drObject)) {
+        if (type === 'base') continue; // Já cuidamos da base
 
-        const specificDR = drObject[key];
+        // SOMA o modificador à base
+        const finalDR = Math.max(0, baseDR + mod);
         
         // Só mostra se for diferente da base
-        if (specificDR !== undefined && specificDR !== baseDR) {
-            parts.push(`${specificDR} ${key}`);
+        if (finalDR !== baseDR) {
+            parts.push(`${finalDR} ${type}`);
         }
     }
 
@@ -1066,7 +1066,7 @@ Handlebars.registerHelper('formatDR', function(drObject) {
          parts.shift(); // Remove o "0"
     }
     
-    // Une tudo com o separador que você sugeriu
+    // Une tudo com o separador |
     return new Handlebars.SafeString(parts.join(" | "));
 });
 
