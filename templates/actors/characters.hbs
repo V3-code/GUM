@@ -790,17 +790,24 @@
 {{! ========================================================= }}
 <div class="tab" data-group="primary" data-tab="spells">
 
-  {{!-- Bloco da Habilidade de Conjuração --}}
-  <div class="casting-ability-box skill-block">
-    {{#with actor.system.casting_ability}}
-      <div class="header">
-        <h3>{{name}} {{level}}</h3>
+  {{!-- Bloco da Habilidade de Conjuração (v2 - Compacto) --}}
+<div class="casting-ability-box skill-block">
+    {{! Usamos o .block-header padrão para consistência }}
+    <div class="block-header">
+      {{! Novo container para empilhar título e subtítulo }}
+      <div class="header-main-info">
+        <h4>{{actor.system.casting_ability.name}} {{actor.system.casting_ability.level}}</h4>
+        <span class="header-subtitle">{{actor.system.casting_ability.source}}</span>
+      </div>
+      <div class="header-controls">
         <a class="edit-casting-ability" title="Editar Habilidade"><i class="fas fa-edit"></i></a>
       </div>
-      <div class="source"><i>{{source}}</i></div>
-      <div class="description">{{{description}}}</div>
-    {{/with}}
-  </div>
+    </div>
+    {{! A descrição agora fica dentro do bloco principal }}
+    <div class="ability-description">
+      {{{actor.system.casting_ability.description}}}
+    </div>
+</div>
 
   {{!-- Bloco das Reservas de Energia --}}
   <div class="energy-reserves-box skill-block">
@@ -842,10 +849,11 @@
         <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
     </div>
 
-    {{!-- ✅ NOVA ESTRUTURA PARA AS TAGS DE STATS ✅ --}}
+    {{!-- ✅ ESTRUTURA CORRIGIDA PARA AS TAGS DE STATS ✅ --}}
     <div class="spell-stats-and-actions">
-        {{!-- Primeira Linha de Stats --}}
+        {{! ✅ MUDANÇA: Agora existe apenas UM .stats-row }}
         <div class="stats-row">
+            {{!-- Primeira Linha de Stats --}}
             <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a></span>
             {{#if this.system.damage.formula}}
                 <span class="stat">
@@ -857,9 +865,6 @@
                     </a>
                 </span>
             {{/if}}
-        </div>
-        {{!-- Segunda Linha de Stats --}}
-        <div class="stats-row">
             <span class="stat"><label>Custo:</label> {{this.system.mana_cost}}/{{this.system.mana_maint}}</span>
             <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
             <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
@@ -885,17 +890,22 @@
 {{! ========================================================= }}
 <div class="tab" data-group="primary" data-tab="powers">
 
-  {{!-- Bloco da Fonte de Poder --}}
-  <div class="casting-ability-box skill-block">
-    {{#with actor.system.power_source}}
-      <div class="header">
-        <h3>{{name}} {{level}}</h3>
+  {{!-- Bloco da Fonte de Poder (v2 - Compacto) --}}
+<div class="casting-ability-box skill-block">
+    <div class="block-header">
+      <div class="header-main-info">
+        <h4>{{actor.system.power_source.name}} {{actor.system.power_source.level}}</h4>
+        {{! O subtítulo é um pouco diferente, mas a estrutura é idêntica }}
+        <span class="header-subtitle">{{actor.system.power_source.source}} | Talento de Poder: +{{actor.system.power_source.power_talent}}</span>
+      </div>
+      <div class="header-controls">
         <a class="edit-power-source" title="Editar Fonte de Poder"><i class="fas fa-edit"></i></a>
       </div>
-      <div class="source"><i>{{source}} | Talento de Poder: +{{power_talent}}</i></div>
-      <div class="description">{{{description}}}</div>
-    {{/with}}
-  </div>
+    </div>
+    <div class="ability-description">
+      {{{actor.system.power_source.description}}}
+    </div>
+</div>
 
   {{!-- Bloco das Reservas de Energia --}}
   <div class="energy-reserves-box skill-block">
@@ -938,10 +948,11 @@
         <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
     </div>
 
-    {{!-- ✅ NOVA ESTRUTURA PARA AS TAGS DE STATS ✅ --}}
+{{!-- ✅ ESTRUTURA CORRIGIDA PARA AS TAGS DE STATS ✅ --}}
     <div class="spell-stats-and-actions">
-        {{!-- Primeira Linha de Stats --}}
+        {{! ✅ MUDANÇA: Agora existe apenas UM .stats-row }}
         <div class="stats-row">
+            {{!-- Primeira Linha de Stats --}}
             <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a></span>
             {{#if this.system.damage.formula}}
                 <span class="stat">
@@ -953,9 +964,6 @@
                     </a>
                 </span>
             {{/if}}
-        </div>
-        {{!-- Segunda Linha de Stats --}}
-        <div class="stats-row">
             <span class="stat"><label>Custo:</label> {{this.system.activation_cost}}/{{this.system.maint_cost}}</span>
             <span class="stat"><label>Tempo:</label> {{this.system.activation_time}}</span>
             <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
@@ -1175,69 +1183,67 @@
 </div>
 
 {{! ========================================================= }}
-{{!     ABA DE COMBATE (VERSÃO OTIMIZADA v2 - 2 COLUNAS)    }}
+{{!     ABA DE COMBATE (VERSÃO OTIMIZADA v3 - CARD UNIFICADO) }}
 {{! ========================================================= }}
 <div class="tab combat-tab" data-group="primary" data-tab="combat">
 
-  {{! --- CABEÇALHO DE STATUS RÁPIDOS (SÓ DANO) --- }}
-  <div class="combat-header-stats">
-    
-    {{! CARD DE MOD. ESQUIVA - REMOVIDO (Conforme solicitado) }}
-    {{! CARD DE BÔNUS DE DEFESA - REMOVIDO (Conforme solicitado) }}
-    {{! CARD DE RD TORSO - REMOVIDO (Conforme solicitado) }}
-      
-    {{! --- CARD DE DANO GdP---}}
-    <div class="stat-card">
-      <a class="edit-basic-damage" data-damage-type="thrust" title="Editar Dano"><i class="fas fa-edit"></i></a>
-      <a class="rollable-damage" 
-         data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
-         data-label="Dano de Golpe de Ponta"
-         data-damage-type="GdP">
-          <label>Dano GdP</label>
-          <div class="value">{{actor.system.attributes.thrust_damage}}</div>
-      </a>
-    </div>
-
-    {{! --- CARD DE DANO GeB ---}}
-    <div class="stat-card">
-      <a class="edit-basic-damage" data-damage-type="swing" title="Editar Dano"><i class="fas fa-edit"></i></a>
-      <a class="rollable-damage" 
-         data-roll-formula="{{actor.system.attributes.swing_damage}}" 
-         data-label="Dano de Golpe em Balanço"
-         data-damage-type="GeB">
-          <label>Dano GeB</label>
-          <div class="value">{{actor.system.attributes.swing_damage}}</div>
-      </a>
-    </div>
-
-  </div> {{! --- Fim do .combat-header-stats --- }}
-
   {{! ========================================================= }}
-  {{!     NOVO CONTAINER DE 2 COLUNAS (ESQUERDA ESTREITA)       }}
+  {{!     CONTAINER DE 2 COLUNAS (ESQUERDA ESTREITA)            }}
   {{! ========================================================= }}
   <div class="combat-main-content">
 
     {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
     <div class="combat-left-column">
 
-      {{!-- Bloco do Painel de RD (Agora na esquerda) --}}
+      {{! ================================================= }}
+      {{!    CARD DE DANO BÁSICO UNIFICADO   }}
+      {{! ================================================= }}
+      <div class="gum-block basic-damage-card">
+        <div class="block-header">
+          <h4>Dano Básico</h4>
+          <div class="header-controls">
+            {{! O único botão de editar }}
+            <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-edit"></i></a>
+          </div>
+        </div>
+        {{! O container com as duas metades clicáveis }}
+        <div class="damage-halves">
+          {{! Metade GdP }}
+          <a class="damage-half thrust rollable-basic-damage" 
+             data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+             data-label="Dano de Golpe de Ponta (GdP)">
+            <label>GdP</label>
+            <div class="value">{{actor.system.attributes.thrust_damage}}</div>
+          </a>
+          {{! Metade GeB }}
+          <a class="damage-half swing rollable-basic-damage" 
+             data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+             data-label="Dano de Golpe em Balanço (GeB)">
+            <label>GeB</label>
+            <div class="value">{{actor.system.attributes.swing_damage}}</div>
+          </a>
+        </div>
+      </div>
+
+      {{! ================================================= }}
+      {{!    PAINEL DE RD  }}
+      {{! ================================================= }}
       <div class="gum-block dr-location-block">
         <div class="block-header">
-          <h4>Resist. a Dano</h4> {{! <-- Título abreviado }}
+          <h4>Resist. a Dano</h4>
           <div class="header-controls">
             <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
           </div>
         </div>
-        {{! A lista de RD (o CSS vai formatar como 1 coluna) }}
         <ol class="dr-location-list">
           {{#each hitLocations as |loc key|}}
             <li class="dr-location-row" data-location-key="{{key}}">
               <span class="location-name">
-                {{loc.label}} 
+                {{loc.label}}
                 {{#if loc.roll}}{{/if}}
               </span>
               <span class="location-dr-value" title="{{formatDR (lookup ../actor.system.combat.dr_locations key)}}">
-                    {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
+                {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
               </span>
             </li>
           {{/each}}
@@ -1316,7 +1322,7 @@
                 <div class="attack-main-info">
                   <div class="attack-name-row">
                     <strong>{{attack.skill_name}}</strong>
-                    <a>({{attack.name}})</a>
+                    <small>({{attack.name}})</small>
                     {{#if this.unbalanced}}
                     <span class="attack-flag-tag flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
                     {{/if}}
@@ -1367,9 +1373,7 @@
 
     </div>
     
-  </div> {{! --- Fim do .combat-main-content --- }}
-
-   
+  </div>    
 
 {{! ========================================================= }}
 {{!  ABA DE BIOGRAFIA (ESTRUTURA REFINADA E PADRONIZADA)      }}

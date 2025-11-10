@@ -970,25 +970,47 @@ activateListeners(html) {
         }).render(true);
     });
         
-    html.on('click', '.edit-basic-damage', ev => {
+html.on('click', '.edit-basic-damage', ev => {
         ev.preventDefault();
         ev.stopPropagation(); 
-        const button = ev.currentTarget;
-        const damageType = button.dataset.damageType; 
-        const currentFormula = this.actor.system.attributes[`${damageType}_damage`];
+        const attrs = this.actor.system.attributes;
+
+        // ✅ MUDANÇA: HTML super simples com uma nova classe
+        const content = `
+            <form class="simple-form-dialog">
+                <div class="form-group">
+                    <label>Dano de GdP (Thrust)</label>
+                    <input type="text" name="formula_thrust" value="${attrs.thrust_damage}" />
+                </div>
+                <div class="form-group">
+                    <label>Dano de GeB (Swing)</label>
+                    <input type="text" name="formula_swing" value="${attrs.swing_damage}" />
+                </div>
+            </form>
+        `;
 
         new Dialog({
-            title: `Editar Dano ${damageType === 'thrust' ? 'GdP' : 'GeB'}`,
-            content: `<div class="form-group"><label>Nova Fórmula de Dano:</label><input type="text" name="formula" value="${currentFormula}"/></div>`,
+            title: `Editar Dano Básico (GdP & GeB)`,
+            content: content,
             buttons: {
                 save: {
                     icon: '<i class="fas fa-save"></i>',
                     label: "Salvar",
                     callback: (html) => {
-                        const newFormula = html.find('input[name="formula"]').val();
-                        this.actor.update({ [`system.attributes.${damageType}_damage`]: newFormula });
+                        const newThrust = html.find('input[name="formula_thrust"]').val();
+                        const newSwing = html.find('input[name="formula_swing"]').val();
+                        this.actor.update({ 
+                            "system.attributes.thrust_damage": newThrust,
+                            "system.attributes.swing_damage": newSwing 
+                        });
                     }
                 }
+            },
+            default: "save",
+            // ✅ MUDANÇA: Usando a classe .gurps-dialog, mas NÃO a .gurps-stat-editor-dialog
+            options: {
+                classes: ["dialog", "gum", "gurps-dialog"],
+                width: 300 // Tamanho menor e mais objetivo
             }
         }).render(true);
     });
@@ -2481,6 +2503,134 @@ html.on('click', '.item-edit', ev => {
             }
         });
 
+        // Listener de rolagem de dano específicos para os danos básicos da ficha do personagem
+        html.on('click', '.rollable-basic-damage', async (ev) => {
+        ev.preventDefault();
+        const element = ev.currentTarget;
+        const actor = this.actor;
+        
+        // Pega os dados brutos do botão
+        let formula = (element.dataset.rollFormula || "0").toLowerCase();
+        const label = element.dataset.label || "Dano Básico";
+
+        // Esta é a função que rola o dano
+        const performBasicDamageRoll = async (modifier = 0) => {
+            // Substitui gdp/gdb se necessário (embora o usuário provavelmente digite 1d-1)
+            const thrust = (actor.system.attributes.thrust_damage || "0").toLowerCase();
+            const swing = (actor.system.attributes.swing_damage || "0").toLowerCase();
+            formula = formula.replace(/gdp/g, `(${thrust})`);
+            formula = formula.replace(/gdb/g, `(${swing})`);
+
+            const match = formula.match(/^([0-9dDkK+\-/*\s()]+)/i);
+            const cleanedFormula = match ? match[1].trim() : "0";
+            
+            const mainRollFormula = cleanedFormula + (modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : '');
+            const mainRoll = new Roll(mainRollFormula);
+            await mainRoll.evaluate();
+
+            // Monta um "pacote de dano" mínimo
+            const damagePackage = {
+                attackerId: actor.id,
+                sourceName: label,
+                main: {
+                    total: mainRoll.total,
+                    type: "", // ✅ Tipo vazio, como você sugeriu
+                    armorDivisor: 1
+                },
+                // Efeitos vazios, pois é um dano básico
+                onDamageEffects: {},
+                generalConditions: {} 
+            };
+
+            // Monta o card de chat
+            const diceHtml = mainRoll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
+            let flavor = `
+                <div class="gurps-damage-card">
+                    <header class="card-header"><h3>${label}</h3></header>
+                    <div class="card-formula-container"><span class="formula-pill">${mainRoll.formula}</span></div>
+                    <div class="card-content">
+                        <div class="card-main-flex">
+                            <div class="roll-column">
+                                <span class="column-label">Dados</span>
+                                <div class="individual-dice-damage">${diceHtml}</div>
+                            </div>
+                            <div class="column-separator"></div>
+                            <div class="target-column">
+                                <span class="column-label">Dano Total</span>
+                                <div class="damage-total">
+                                    <span class="damage-value">${mainRoll.total}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="card-actions">
+                        <button type="button" class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+                            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+                        </button>
+                    </footer>
+                </div>
+            `;
+
+            ChatMessage.create({
+                speaker: ChatMessage.getSpeaker({ actor: actor }),
+                content: flavor,
+                rolls: [mainRoll]
+            });
+        };
+        
+        // Lógica de Shift+Click (copiada do seu .rollable-damage)
+        if (ev.shiftKey) {
+            new Dialog({
+                title: "Modificador de Dano",
+                content: ` <div class="modifier-dialog" style="text-align: center;">
+                            <p>Insira ou clique nos modificadores para o dano de <strong>${label}</strong>:</p>
+                            <input type="number" name="modifier" value="0" style="text-align: center; margin-bottom: 10px; width: 80px;"/>
+                            <div class="modifier-grid" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+                                <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                                    <button type="button" class="mod-button" data-mod="-5">-5</button>
+                                    <button type="button" class="mod-button" data-mod="-4">-4</button>
+                                    <button type="button" class="mod-button" data-mod="-3">-3</button>
+                                    <button type="button" class="mod-button" data-mod="-2">-2</button>
+                                    <button type="button" class="mod-button" data-mod="-1">-1</button>
+                                </div>
+                                <div class="mod-row" style="display: flex; justify-content: center; gap: 5px;">
+                                    <button type="button" class="mod-button" data-mod="+1">+1</button>
+                                    <button type="button" class="mod-button" data-mod="+2">+2</button>
+                                    <button type="button" class="mod-button" data-mod="+3">+3</button>
+                                    <button type="button" class="mod-button" data-mod="+4">+4</button>
+                                    <button type="button" class="mod-button" data-mod="+5">+5</button>
+                                </div>
+                            </div>
+                            <button type="button" class="mod-clear-button" title="Zerar modificador">Limpar</button>
+                        </div>
+                    `,
+                buttons: {
+                    roll: {
+                        icon: '<i class="fas fa-dice-d6"></i>',
+                        label: "Rolar Dano",
+                        callback: (html) => {
+                            const modifier = parseInt(html.find('input[name="modifier"]').val()) || 0;
+                            performBasicDamageRoll(modifier);
+                        }
+                    }
+                },
+                default: "roll",
+                render: (html) => {
+                        const input = html.find('input[name="modifier"]');
+                        html.find('.mod-button').click((event) => {
+                            const currentMod = parseInt(input.val()) || 0;
+                            const modToAdd = parseInt($(event.currentTarget).data('mod'));
+                            input.val(currentMod + modToAdd);
+                        });
+                        html.find('.mod-clear-button').click(() => {
+                            input.val(0);
+                        });
+                    }
+            }).render(true);
+        } else {
+            performBasicDamageRoll(0); 
+        }
+    });
 
     // ================================================================== //
     //    LISTENER DE HIT LOCATIONS (E OUTROS)                            //
