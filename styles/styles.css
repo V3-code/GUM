@@ -154,7 +154,7 @@
   font-family: var(--f-titulos);
   color: var(--c-acento-dourado);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 12px;
   margin: 0 0 0.25rem 0;
   padding-bottom: 0.1rem;
   border-bottom: 1px solid var(--c-borda-dourada);
@@ -197,8 +197,7 @@ a:hover { text-decoration: underline; color: #fff; }
 .points-display { flex-direction: column; text-align: center; }
 .points-display.total-points { padding-right: 1rem; border-right: 1px solid var(--c-borda-dourada); }
 .points-display label { font-family: var(--f-titulos); font-size: 0.6rem; text-transform: uppercase; color: var(--c-texto-secundario); }
-.points-display input { font-size: 0.8rem; font-weight: 600; width: 60px; border: none !important; background: transparent !important; }
-
+.points-display input { font-size: 0.8rem; font-weight: 600; width: 60px; border: none !important; background: transparent !important; color: var(--c-texto-principal); }
 
 
 /* =================================================================== */
@@ -962,8 +961,6 @@ a:hover { text-decoration: underline; color: #fff; }
   font-family: var(--f-titulos);
 }
 
-
-
 /* Inputs gerais dentro das abas */
 .sheet-body input, .sheet-body textarea {
   color: var(--c-texto-escuro);
@@ -1040,86 +1037,92 @@ a:hover { text-decoration: underline; color: #fff; }
 }
 
 /* =================================================================== */
-/* DESIGN: JANELA DE DIÁLOGO DA TABELA DE RD                           */
+/* DESIGN: JANELA DE DIÁLOGO DA TABELA DE RD (v2 - Papiro)             */
 /* =================================================================== */
 
-/* Define a largura da janela de diálogo de RD */
 .gurps-rd-dialog .dialog-content {
     padding: 0; 
+    background: #fdfaf8; /* Fundo papiro */
 }
 
-/* Container principal da tabela, com o estilo dos nossos cards */
+/* Container principal da tabela */
 .gurps-rd-table {
     font-family: 'Roboto', sans-serif;
     color: #352425;
-    background: #fdfaf8;
 }
 
-/* Define a grade de 4 colunas */
+/* Define a grade de 5 colunas */
 .gurps-rd-table .table-header,
 .gurps-rd-table .table-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr; /* Localização tem mais espaço */
+    /* Colunas: Local, Armadura, Temp, Manual, Total */
+    grid-template-columns: 3fr 1.5fr 1.5fr 3fr 3fr;
     align-items: center;
     padding: 0 10px;
 }
 
-/* Estilo do cabeçalho da tabela */
+/* Estilo do cabeçalho da tabela (tema escuro, como no seu original) */
 .gurps-rd-table .table-header {
     background: #34161b;
     font-weight: bold;
     font-family: 'Cinzel', serif;
     border-bottom: 1px solid #c9b9b4;
 }
-
 .gurps-rd-table .table-header > div {
     padding: 8px 5px;
     text-align: center;
     color: #f8f4f1;
+    font-size: 11px; /* Fonte menor */
 }
 
-/* Corpo da tabela onde as linhas ficarão */
+/* Corpo da tabela */
 .gurps-rd-table .table-body {
     padding: 5px 0;
 }
 
-/* Estilo de cada célula da tabela */
+/* Células da tabela */
 .gurps-rd-table .table-row > div {
-    padding: 6px 5px;
+    padding: 4px 5px; /* Mais compacto */
     text-align: center;
     border-bottom: 1px solid #f0ebe8;
+    font-size: 12px; /* Fonte menor */
 }
 .gurps-rd-table .table-row .loc-label {
     text-align: left;
     font-weight: bold;
 }
 
-/* Efeito "zebrado" para melhor legibilidade */
+/* Efeito "zebrado" */
 .gurps-rd-table .table-row:nth-child(even) {
     background-color: #f8f4f1;
 }
 
-/* Estilo para o campo de input */
-.gurps-rd-table input[type="number"] {
-    width: 80%;
+/* ✅ CORREÇÃO DO INPUT (de number para text) */
+.gurps-rd-table input[type="text"] {
+    width: 100%; /* Ocupa toda a coluna */
     padding: 4px;
     border: 1px solid #c9b9b4;
     border-radius: 3px;
     background: #fff;
     text-align: center;
-    font-size: 1em;
+    font-size: 12px; /* Fonte menor */
     font-family: 'Roboto', sans-serif;
 }
-.gurps-rd-table input[type="number"]:focus {
+.gurps-rd-table input[type="text"]:focus {
     outline: none;
     border-color: #3a506b;
     box-shadow: 0 0 3px rgba(58, 80, 107, 0.5);
 }
 
-/* Destaque para a coluna do total */
+/* Colunas de "Total" e "Temp" (read-only) */
 .gurps-rd-table .loc-rd-total strong {
-    font-size: 1.2em;
-    color: #a53541; /* Mesma cor do dano para destaque */
+    font-size: 12px;
+    color: #a53541;
+}
+.gurps-rd-table .loc-rd-temp,
+.gurps-rd-table .loc-rd-armor {
+    font-size: 11px;
+    color: #6d6666; /* Cor sutil para dados não-editáveis */
 }
 
 /* =================================================================== */
@@ -3494,4 +3497,312 @@ filter:none;
     font-size: 0.9em;
     color: var(--c-texto-subtitulo, #977c63);
     margin-right: 2px;
+}
+
+/* =================================================================== */
+/* DESIGN: PAINEL DE RD (ABA DE COMBATE)                               */
+/* =================================================================== */
+
+/* 1. Estilo do Bloco (baseado no .gum-block) */
+.sheet-body .dr-location-block {
+  background: var(--c-fundo-card-claro);
+  border: 1px solid var(--c-borda);
+  padding: 0.75rem;
+  margin-top: 10px;
+}
+
+/* 2. Cabeçalho (baseado no .block-header) */
+.dr-location-block .block-header {
+  color: var(--c-texto-escuro);
+  border-bottom-color: var(--c-borda);
+}
+.dr-location-block .block-header h4 {
+  color: var(--c-texto-escuro);
+  font-family: var(--f-titulos);
+}
+
+/* 3. A Lista de Locais */
+.dr-location-block .dr-location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  /* Cria 2 colunas para a lista de RDs */
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 15px; /* Espaço vertical e horizontal */
+  margin-top: 10px;
+}
+
+/* 4. A Linha de cada Local */
+.dr-location-block .dr-location-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--c-borda);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+/* 5. O Nome do Local (Crânio, Torso) */
+.dr-location-block .location-name {
+  font-weight: 700;
+  color: var(--c-texto-escuro);
+  font-size: 13px;
+}
+.dr-location-block .location-name span {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--c-texto-subtitulo);
+  margin-left: 4px;
+}
+
+/* 6. O Valor da RD (o '5 | 2 cont') */
+.dr-location-block .location-dr-value {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--c-acento-vermelho, #a53541);
+  white-space: nowrap; /* Impede que "5 | 2 cont" quebre a linha */
+}
+
+/* =================================================================== */
+/* DESIGN: COMPACTAÇÃO DA ABA DE COMBATE (v2 - Layout Otimizado)       */
+/* =================================================================== */
+
+/* Define uma fonte base ainda menor para toda a aba de combate */
+.gum.sheet.actor .tab.combat-tab {
+  font-size: 11px;
+}
+
+/* --- 1. Otimiza o "Dashboard" (Cards de Dano) --- */
+.combat-tab .combat-header-stats {
+  /* Otimizado para apenas 2 cards */
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.combat-tab .stat-card {
+  padding: 5px 4px; /* Mais compacto */
+  gap: 1px; 
+}
+.combat-tab .stat-card label {
+  font-size: 8px; /* Rótulo minúsculo */
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--c-texto-subtitulo, #977c63);
+}
+.combat-tab .stat-card .value {
+  font-size: 1.1rem; /* Valor de dano menor */
+  line-height: 1.1;
+}
+.combat-tab .stat-card .edit-basic-damage {
+    top: 0;
+    right: 2px;
+}
+
+/* ================================================== */
+/* ✅ NOVO LAYOUT DE 2 COLUNAS (Estreita/Larga)       */
+/* ================================================== */
+.combat-tab .combat-main-content {
+  display: grid;
+  /* Coluna esquerda (RD) com 1fr, Coluna direita (Ataques) com 2.5fr */
+  grid-template-columns: 1fr 2.5fr;
+  gap: 8px;
+  align-items: start;
+}
+.combat-tab .combat-left-column,
+.combat-tab .combat-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Espaço entre os blocos na mesma coluna */
+}
+
+/* --- 2. Otimiza os Blocos Principais (Ataques, RD, Registros) --- */
+.combat-tab .gum-block {
+  padding: 6px 8px;
+  margin-top: 0;
+}
+.combat-tab .gum-block .block-header {
+  padding-bottom: 3px;
+  margin-bottom: 5px;
+}
+.combat-tab .gum-block .block-header h4 {
+  font-size: 14px; /* Títulos de bloco menores */
+  font-weight: 700;
+  font-family: var(--f-titulos);
+  margin-bottom: 0.5px;
+}
+
+/* --- 3. Otimiza a Lista de Ataques (Coluna Direita) --- */
+.combat-tab .attack-group-list {
+  gap: 6px; /* Espaço entre "Espada Longa" e "Adaga" */
+}
+.combat-tab .attack-group-card {
+  padding: 5px 8px;
+}
+.combat-tab .attack-group-card .group-header {
+  padding-bottom: 3px;
+  margin-bottom: 4px;
+}
+.combat-tab .attack-group-card .group-name {
+  font-size: 0.85rem; /* Nome do item (ex: "Espada Longa") */
+}
+.combat-tab .attack-item {
+  padding: 4px 0; /* Mais compacto verticalmente */
+}
+.combat-tab .attack-item .attack-name-row {
+  font-size: 12px; /* Nome do ataque (ex: "Balanço") */
+}
+.combat-tab .attack-details-row {
+  gap: 4px; 
+  margin-top: 2px;
+}
+.combat-tab .attack-details-row .stat {
+  font-size: 11px; /* Fonte das tags (NH, Dano, etc.) */
+  padding: 1px 4px;
+  border-left-width: 2px;
+}
+.combat-tab .attack-details-row .stat label {
+  font-size: 8px; 
+  margin-right: 2px;
+}
+
+/* --- 4. Otimiza o Painel de RD (Coluna Esquerda) --- */
+.combat-tab .dr-location-block .dr-location-list {
+  /* Remove a regra de 2 colunas */
+  grid-template-columns: 1fr; 
+  gap: 3px; /* Espaço mínimo entre as linhas de RD */
+  margin-top: 4px;
+}
+.combat-tab .dr-location-block .dr-location-row {
+  padding: 2px 6px; /* Padding super compacto */
+  background: rgba(0,0,0,0.02); /* Fundo "zebrado" sutil */
+}
+.combat-tab .dr-location-block .dr-location-row:nth-child(even) {
+  background: rgba(0,0,0,0.05);
+}
+.combat-tab .dr-location-block .location-name {
+  font-size: 11px;
+}
+.combat-tab .dr-location-block .location-name span {
+  font-size: 9px; 
+  color: var(--c-texto-subtitulo, #977c63);
+}
+.combat-tab .dr-location-block .location-dr-value {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* --- 5. Otimiza os Registros de Combate (Coluna Direita) --- */
+.combat-tab .combat-meters-box .meter-list {
+  gap: 4px;
+  flex-direction: column;
+}
+.combat-tab .meter-card {
+  padding: 4px 6px;
+  gap: 4px;
+  flex-basis: auto;
+}
+.combat-tab .meter-card .item-name {
+  font-size: 10px;
+}
+.combat-tab .meter-card .meter-inputs input {
+  width: 30px;
+  font-size: 10px;
+}
+.combat-tab .meter-card .item-controls a {
+  font-size: 10px;
+}
+
+/* =================================================================== */
+/* DESIGN: COMPACTAÇÃO DA ABA DE COMBATE (v3 - Correção de Overflow)   */
+/* =================================================================== */
+
+/* 1. Impede que a linha de RD quebre */
+.combat-tab .dr-location-block .dr-location-row {
+    white-space: nowrap; /* Impede que os elementos pulem para a linha de baixo */
+}
+
+/* 2. Impede que o NOME do local encolha */
+.combat-tab .dr-location-block .location-name {
+    flex-shrink: 0; /* Garante que o nome (ex: "Crânio (-7)") não seja esmagado */
+    margin-right: 10px; /* Adiciona um espaço antes do valor da RD */
+}
+
+/* 3. Faz o VALOR da RD ser cortado com "..." se for muito longo */
+.combat-tab .dr-location-block .location-dr-value {
+    flex-grow: 1; /* Permite que o valor ocupe o espaço restante */
+    text-align: right; /* Alinha a RD à direita */
+    overflow: hidden; /* Esconde o que não couber */
+    text-overflow: ellipsis; /* Adiciona o "..." no final */
+}
+
+/* =================================================================== */
+/* DESIGN: LISTA DE ATAQUES (Aprimoramento Visual v3)                */
+/* =================================================================== */
+
+/* --- 1. Adiciona profundidade ao "Card de Grupo" --- */
+.combat-tab .attack-group-card {
+  /* Um fundo sutil para fazer o card se destacar */
+  background: rgba(0,0,0,0.03);
+  
+  /* A sombra que você sugeriu para "elevar" o card */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  
+  /* Transição suave para o hover */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.combat-tab .attack-group-card:hover {
+  border-color: rgba(0,0,0,0.15);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+}
+
+/* --- 2. Refina os Títulos (Compactação e Hierarquia) --- */
+.combat-tab .attack-group-card .group-name {
+  font-size: 0.9rem; /* Um pouco menor que o 1rem anterior */
+  font-family: var(--f-titulos);
+  font-weight: 700;
+  color: var(--c-texto-escuro, #352425);
+}
+
+.combat-tab .attack-item .attack-name-row {
+  font-size: 0.85rem; /* Um pouco menor que o nome do grupo */
+  font-weight: 700; /* Mais forte para se destacar das tags */
+}
+.combat-tab .attack-item .attack-name-row a {
+  font-weight: 400; /* Faz o "(Modo)" ficar mais sutil */
+  color: var(--c-texto-subtitulo, #977c63);
+}
+
+/* --- 3. Destaca as Tags Roláveis (Sua Ideia Principal) --- */
+
+/* Estilo base de todas as tags (como você já tinha) */
+.combat-tab .attack-details-row .stat {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-left: 3px solid var(--c-texto-subtitulo, #977c63); /* Borda cinza/subtítulo */
+}
+
+/* * A MÁGICA: 
+ * Se uma tag (.stat) contiver um link com a classe .rollable...
+*/
+.combat-tab .attack-details-row .stat:has(a.rollable) {
+  /* ...ela se torna interativa! */
+  border-left-color: var(--c-accent-gold, #c5a05b); /* Borda Dourada */
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Efeito de hover para a tag rolável */
+.combat-tab .attack-details-row .stat:has(a.rollable):hover {
+  background: rgba(197, 160, 91, 0.1); /* Fundo dourado sutil */
+  border-color: #a07e4a; /* Dourado mais escuro */
+}
+
+/* --- 4. (Sugestão) Listras "Zebradas" para Modos de Ataque --- */
+/* Isso melhora a leitura se uma arma tiver múltiplos modos */
+.combat-tab .attacks-in-group .attack-item:nth-child(even) {
+    background: rgba(0,0,0,0.02);
 }

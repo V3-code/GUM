@@ -466,7 +466,8 @@ _getSubmitData(updateData) {
         for (const [type, mod] of Object.entries(drObject)) {
             if (type === 'base') continue; // Já cuidamos da base
 
-            const finalDR = Math.max(0, baseDR + mod);
+            // ✅ CORREÇÃO: CALCULA O VALOR FINAL GURPS
+            const finalDR = Math.max(0, baseDR + (mod || 0));
             
             // Só mostra se for diferente da base
             if (finalDR !== baseDR) {
@@ -474,9 +475,8 @@ _getSubmitData(updateData) {
             }
         }
         
-        if (parts.length === 1 && parts[0] === "0") return "0"; // Se for só "{ base: 0 }"
+        if (parts.length === 1 && parts[0] === "0") return "0"; 
         
-        // Se a base for 0 e houver outros (ex: "3 cont"), remove o "0, "
         if (parts.length > 1 && parts[0] === "0") {
              parts.shift(); 
         }
@@ -2485,6 +2485,7 @@ html.on('click', '.item-edit', ev => {
     // ================================================================== //
     //    LISTENER DE HIT LOCATIONS (E OUTROS)                            //
     // ================================================================== //
+
     html.on('click', '.view-hit-locations', async ev => {
         ev.preventDefault();
         const actor = this.actor;
@@ -2499,20 +2500,18 @@ html.on('click', '.item-edit', ev => {
         let tableRows = '';
         for (const [key, loc] of Object.entries(sheetData.hitLocations)) {
             
-            // Calcula Armadura + Efeitos Temporários
-            const armorTempDR = {};
-            this._mergeDRObjects(armorTempDR, actorDR_Armor[key]);
-            this._mergeDRObjects(armorTempDR, actorDR_Temp[key]);
-
-            // Formata tudo para string
-            const armorTempDR_String = this._formatDRObjectToString(armorTempDR);
+            // ✅ MUDANÇA: Formata cada parte separadamente
+            const armorDR_String = this._formatDRObjectToString(actorDR_Armor[key]);
+            const tempDR_String = this._formatDRObjectToString(actorDR_Temp[key]); // A nova coluna
             const manualMod_String = this._formatDRObjectToString(actorDR_Mods[key]);
             const totalDR_String = this._formatDRObjectToString(actorDR_Total[key]);
 
+            // ✅ MUDANÇA: Tabela agora com 5 colunas
             tableRows += `
                 <div class="table-row">
                     <div class="loc-label">${loc.label}</div>
-                    <div class="loc-rd-armor" title="Armadura + Efeitos">${armorTempDR_String}</div>
+                    <div class="loc-rd-armor" title="RD da Armadura">${armorDR_String}</div>
+                    <div class="loc-rd-temp" title="Bônus Temporários">${tempDR_String}</div>
                     <div class="loc-rd-mod">
                         <input type="text" name="${key}" value="${manualMod_String}" />
                     </div>
@@ -2521,13 +2520,15 @@ html.on('click', '.item-edit', ev => {
             `;
         }
 
+        // ✅ MUDANÇA: Cabeçalho agora com 5 colunas
         const content = `
             <form>
                 <div class="gurps-rd-table">
                     <div class="table-header">
                         <div>Local</div>
-                        <div>Arm. + Efeitos</div>
-                        <div>Outra RD</div>
+                        <div>Armadura</div>
+                        <div>Temp.</div>
+                        <div>Manual</div>
                         <div>Total</div>
                     </div>
                     <div class="table-body">
@@ -2548,10 +2549,11 @@ html.on('click', '.item-edit', ev => {
                         const form = html.find('form')[0];
                         const formData = new FormDataExtended(form).object;
                         const newDrMods = {};
-                        // Converte as strings salvas de volta para objetos
+                        
                         for (const [loc, drString] of Object.entries(formData)) {
                             newDrMods[loc] = this._parseDRStringToObject(drString);
                         }
+                        // Esta lógica de substituição (que já corrigimos) está correta
                         actor.update({ "system.combat.dr_mods": newDrMods });
                     }
                 }
@@ -2559,29 +2561,27 @@ html.on('click', '.item-edit', ev => {
             default: "save",
             options: {
                 classes: ["dialog", "gurps-rd-dialog"],
-                width: 450
+                width: 1000, // Aumenta a largura para caber a nova coluna
             },
             render: (html) => {
-                // Atualização em tempo real do Total
+                // A lógica de render/live-update já estava correta,
+                // pois ela já lia Armor, Temp e Manual separadamente.
+                // Nenhuma mudança é necessária aqui.
                 html.find('.loc-rd-mod input').on('input', (event) => {
                     const input = $(event.currentTarget);
                     const row = input.closest('.table-row'); 
                     const key = input.attr('name');
 
-                    // Recalcula a base (Armadura + Temp)
                     const armorTempDR = {};
                     this._mergeDRObjects(armorTempDR, actorDR_Armor[key]);
                     this._mergeDRObjects(armorTempDR, actorDR_Temp[key]);
 
-                    // Pega o valor do input e converte para objeto
                     const manualMod_Obj = this._parseDRStringToObject(input.val());
                     
-                    // Calcula o novo total
                     const newTotal_Obj = {};
                     this._mergeDRObjects(newTotal_Obj, armorTempDR);
                     this._mergeDRObjects(newTotal_Obj, manualMod_Obj);
 
-                    // Exibe a string formatada
                     row.find('.loc-rd-total strong').text(this._formatDRObjectToString(newTotal_Obj));
                 });
 

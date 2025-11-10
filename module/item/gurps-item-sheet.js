@@ -1,3 +1,6 @@
+import { EffectBrowser } from "../apps/effect-browser.js";
+import { ConditionBrowser } from "../apps/condition-browser.js";
+
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO FINAL COMPLETA  //
 // ================================================================== //

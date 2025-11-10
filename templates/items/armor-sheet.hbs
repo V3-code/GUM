@@ -1,99 +1,289 @@
-<form class="{{cssClass}}" autocomplete="0">
-    
-    {{! Cabeçalho (Nome, Imagem, etc.) }}
-    <header class="sheet-header item-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Item"/></h1>
-            
-            <div class="item-header-grid">
-                <div class="form-group">
-                    <label>Custo</label>
-                    <input type="text" name="system.cost" value="{{system.cost}}" data-dtype="String" />
-                </div>
-                <div class="form-group">
-                    <label>Peso</label>
-                    <input type="text" name="system.weight" value="{{system.weight}}" data-dtype="String" />
-                </div>
-                <div class="form-group">
-                    <label>Qtd.</label>
-                    <input type="text" name="system.quantity" value="{{system.quantity}}" data-dtype="Number" />
-                </div>
-            </div>
+{{!-- =================================================================== --}}
+{{!-- 1. DEFINIÇÃO DOS PARTIALS (COPIADOS DO SEU ITEM-SHEET.HBS)      --}}
+{{!-- =================================================================== --}}
+
+{{!-- Partial para a seção "Geral" e "Característica" da aba Detalhes --}}
+{{#*inline "itemDetailsGeneral"}}
+    {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
+    <div class="form-section"><h4 class="section-title">Geral</h4>
+        <div class="form-grid-3">
+                <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
+                <div class="form-group input-narrow"><label>Peso (kg)</label><input type="number" step="0.1" name="system.weight" value="{{system.weight}}"/></div>
+                <div class="form-group input-narrow"><label>Custo ($)</label><input type="number" name="system.cost" value="{{system.cost}}"/></div>
         </div>
-    </header>
+        <div class="form-grid-3">
+                <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
+                <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
+                <div class="form-group input-narrow"><label title="Livro e Página de Referência">REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+        </div>
+    </div>
+    <div class="form-section"><h4 class="section-title"> Característica </h4>
+            <div class="form-group layout-inline"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}"/></div>
+            <div class="form-group layout-inline"><label>Material</label><input type="text" name="system.material" value="{{system.material}}"/></div>
+    </div>
+{{/inline}}
 
-    {{! Abas de Navegação }}
-    <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item" data-tab="protection">Proteção</a>
-        <a class="item" data-tab="details">Detalhes</a>
-        <a class="item" data-tab="effects">Efeitos</a>
-    </nav>
 
-    {{! Corpo da Ficha }}
-    <section class="sheet-body-content">
-        
-        {{! Aba de Proteção (A MÁGICA) }}
-        <div class="tab" data-group="primary" data-tab="protection">
-            <div class="form-section no-header">
-                <p class="hint">
-                    Digite a RD para cada local. (ex: <code>5</code>, <code>5, 2 cont</code>, <code>3 pi++</code>).
-                </p>
-                
-                <div class="hit-locations-grid-inputs armor-dr-grid">
-                    {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
-                        <div class="form-group form-group-small">
-                            <label>{{lookup (object 
-                                head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
-                                arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
-                                leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
-                            ) loc}}</label>
-                            
-                            {{!-- O 'value' vem do 'formattedDrLocations' preparado no getData() --}}
-                            <input type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" class="form-input" />
+{{!-- Partial para a Aba de Efeitos (reutilizado) --}}
+{{#*inline "effectsTab"}}
+    {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Teste de Ativação / Ataque</h4>
+        <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
+        {{!-- SUB-SEÇÃO: EM SUCESSO --}}
+        <div class="effect-group success">
+            <div class="group-header">
+                <h5 class="group-title">Em Sucesso</h5>
+                <a class="button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.activation.success as |effect|}}
+                    <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
                         </div>
-                    {{/each}}
-                </div>
-            </div>
+                        <div class="contextual-fields">
+                            <div class="form-group">
+                                <label>Destinatário</label>
+                                <select name="system.activationEffects.success.{{effect.id}}.recipient">
+                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de sucesso.</p>
+                {{/each}}
+            </ol>
         </div>
+        {{!-- SUB-SEÇÃO: EM FALHA --}}
+        <div class="effect-group failure">
+            <div class="group-header">
+                <h5 class="group-title">Em Falha</h5>
+                <a class="button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.activation.failure as |effect|}}
+                    <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        <div class="contextual-fields">
+                            <div class="form-group">
+                                <label>Destinatário</label>
+                                <select name="system.activationEffects.failure.{{effect.id}}.recipient">
+                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de falha.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- SEÇÃO: AO CAUSAR DANO --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Ao Causar Dano</h4>
+        <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
+        <div class="effect-group">
+            <div class="group-header">
+                <a class="button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.onDamage as |effect|}}
+                    <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        <div class="contextual-fields grid-3">
+                            <div class="form-group"><label>Lesão Mín.</label><input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/></div>
+                            <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/></div>
+                            <div class="form-group"><label>Chance (%)</label><input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/></div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de dano.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- SEÇÃO: EFEITOS PASSIVOS --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Efeitos Passivos</h4>
+        <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
+        <div class="effect-group passive">
+            <div class="group-header">
+                <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.passive as |effect|}}
+                    <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito passivo definido.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- SEÇÃO: CONDIÇÕES GERAIS --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Condições Gerais</h4>
+        <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
+        <div class="effect-group">
+            <div class="group-header">
+                <a class="button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.general as |condition|}}
+                    <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
+                        <div class="effect-header">
+                            <img src="{{condition.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{condition.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhuma condição geral anexada.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+{{/inline}}
 
-        {{! Aba de Detalhes }}
-        <div class="tab" data-group="primary" data-tab="details">
-            <div class="form-section no-header">
-                <div class="details-grid">
-                    <div class="form-group">
-                        <label>Nível Tecnológico (NT)</label>
-                        <input type="text" name="system.tech_level" value="{{system.tech_level}}" />
+
+{{!-- =================================================================== --}}
+{{!-- 2. ESTRUTURA PRINCIPAL DA FICHA DE ARMADURA                       --}}
+{{!-- =================================================================== --}}
+<form class="{{cssClass}} gum-item-sheet" autocomplete="off">
+
+{{!-- Cabeçalho Padrão (consistente com seus outros itens) --}}
+<header class="sheet-header">
+  <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+  <div class="header-info">
+    <div class="header-main-line">
+      <textarea name="name" rows="1" placeholder="Nome da Armadura">{{item.name}}</textarea>
+      <span class="item-tag small-tag">Armadura</span>
+    </div>
+  </div>
+</header>
+
+{{!-- Corpo da Ficha (Abas + Conteúdo) --}}
+<section class="sheet-content">
+
+  {{!-- 2.1 Navegação das Abas --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+      <a class="item" data-tab="details">Detalhes</a>
+      <a class="item" data-tab="protection">Proteção</a>
+      <a class="item" data-tab="effects">Efeitos</a>
+  </nav>
+
+  {{!-- 2.2 Conteúdo das Abas --}}
+  <section class="sheet-body-content">
+
+{{!-- ================== ABA "DETALHES" (VERSÃO CORRIGIDA) ================== --}}
+<div class="tab" data-tab="details">
+    
+    {{!-- Reutiliza o partial "GERAL" e "CARACTERÍSTICA" --}}
+    {{> itemDetailsGeneral}}
+
+    {{!-- ✅ SEÇÃO "DESCRIÇÃO RESUMIDA" (USANDO SUA ESTRUTURA .edit-text-btn) --}}
+    <div class="form-section">
+        <h4 class="section-title">Descrição Resumida (Chat)
+            <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
+                <i class="fas fa-edit"></i>
+            </a>
+        </h4>
+        <div class="editable-text-container">
+            {{!-- Mostra o texto enriquecido (esta variável vem da GurpsItemSheet.js) --}}
+            <div class="summary-description rendered-text">{{{enrichedChatDescription}}}</div>
+        </div>
+    </div>
+    
+    {{!-- ✅ SEÇÃO "DESCRIÇÃO COMPLETA" (USANDO SUA ESTRUTURA .edit-text-btn) --}}
+    <div class="form-section">
+        <h4 class="section-title">Descrição Completa
+            <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                <i class="fas fa-edit"></i>
+            </a>
+        </h4>
+        <div class="editable-text-container">
+            {{!-- Mostra o texto enriquecido (esta variável vem da GurpsItemSheet.js) --}}
+            <div class="summary-description rendered-text">{{{enrichedDescription}}}</div>
+        </div>
+    </div>
+    
+</div>
+
+    {{!-- ================== ABA "PROTEÇÃO" ================== --}}
+    <div class="tab" data-tab="protection">
+
+        <div class="form-section">
+            <h4 class="section-title">Proteção por Localização</h4>
+            <p class="hint" style="margin-top: 5px; font-size: 12px; opacity: 0.8; text-align: center;">
+                Digite a RD para cada local. (ex: <code>5</code>, <code>5, 2 cont</code>, <code>3 pi++</code>).
+            </p>
+            
+            {{!-- Usamos a classe .hit-locations-grid-inputs do seu item-sheet.css --}}
+            <div class="hit-locations-grid-inputs" style="margin-top: 15px;">
+                
+                {{!-- Loop pelos 15 locais de acerto --}}
+                {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
+                    <div class="form-group form-group-small">
+                        {{!-- O lookup object para os nomes em Português --}}
+                        <label>{{lookup (object 
+                            head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
+                            arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
+                            leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
+                        ) loc}}</label>
+                        
+                        {{!-- O input de TEXTO que usa o valor formatado do gurps-armor-sheet.js --}}
+                        <input type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" />
                     </div>
-                    <div class="form-group">
-                        <label>Classe de Legalidade (CL)</label>
-                        <input type="text" name="system.legality_class" value="{{system.legality_class}}" />
-                    </div>
-                    <div class="form-group span-2">
-                        <label>Referência (Livro & Pg.)</label>
-                        <input type="text" name="system.ref" value="{{system.ref}}" />
-                    </div>
-                </div>
-                <hr>
-                <h4 class="section-title">Descrição para o Chat</h4>
-                <div class="form-group editor-container">
-                    {{editor system.chat_description target="system.chat_description" button=true owner=owner editable=editable}}
-                </div>
-                <h4 class="section-title">Descrição Completa / Notas</h4>
-                <div class="form-group editor-container">
-                    {{editor system.description target="system.description" button=true owner=owner editable=editable}}
-                </div>
+                {{/each}}
             </div>
         </div>
         
-        {{! Aba de Efeitos (Placeholder, como você pediu) }}
-        <div class="tab" data-group="primary" data-tab="effects">
-            <div class="form-section no-header">
-                <p class="hint" style="text-align: center; padding: 20px;">
-                    A aba de Efeitos será configurada no futuro.
-                </p>
-            </div>
-        </div>
+    </div>
+
+    {{!-- ================== ABA "EFEITOS" ================== --}}
+    <div class="tab" data-tab="effects">
         
-    </section>
+        {{!-- Simplesmente reutiliza o partial de efeitos que você já tem --}}
+        {{> effectsTab}}
+        
+    </div>
+
+  </section> {{!-- Fim do .sheet-body-content --}}
+</section> {{!-- Fim do .sheet-content --}}
+
 </form>

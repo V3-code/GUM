@@ -1052,8 +1052,8 @@ Handlebars.registerHelper('formatDR', function(drObject) {
     for (const [type, mod] of Object.entries(drObject)) {
         if (type === 'base') continue; // Já cuidamos da base
 
-        // SOMA o modificador à base
-        const finalDR = Math.max(0, baseDR + mod);
+        // ✅ CORREÇÃO: SOMA o modificador à base
+        const finalDR = Math.max(0, baseDR + (mod || 0));
         
         // Só mostra se for diferente da base
         if (finalDR !== baseDR) {

@@ -85,26 +85,36 @@ export class GurpsArmorSheet extends GurpsItemSheet {
     // (Estas são as mesmas funções que tentamos adicionar na GurpsItemSheet antes)
     //
 
-    /**
-     * Converte o objeto de RD (ex: {base: 5, cont: 2})
-     * em uma string legível (ex: "5, 2 cont").
+/**
+     * Converte o objeto de RD (ex: {base: 5, cont: -4})
+     * em uma string GURPS legível (ex: "5, 1 cont").
      */
     _formatDRObjectToString(drObject) {
-        if (!drObject) return "0";
-        if (typeof drObject !== 'object' || drObject === null) return drObject.toString();
-
+        if (!drObject || typeof drObject !== 'object' || Object.keys(drObject).length === 0) return "0";
+        
         const parts = [];
-        if (drObject.base) {
-            parts.push(drObject.base.toString());
+        const baseDR = drObject.base || 0;
+        parts.push(baseDR.toString()); // Sempre começa com o valor base
+
+        for (const [type, mod] of Object.entries(drObject)) {
+            if (type === 'base') continue; // Já cuidamos da base
+
+            // ✅ CORREÇÃO: CALCULA O VALOR FINAL GURPS (Base + Modificador)
+            const finalDR = Math.max(0, baseDR + (mod || 0));
+            
+            // Só mostra se for diferente da base
+            if (finalDR !== baseDR) {
+                parts.push(`${finalDR} ${type}`); // Mostra o VALOR FINAL (ex: 1)
+            }
         }
-        for (const [type, value] of Object.entries(drObject)) {
-            if (type === 'base') continue;
-            parts.push(`${value} ${type}`);
-        }
-        if (parts.length === 0) return "0";
+        
+        if (parts.length === 1 && parts[0] === "0") return "0"; 
+        
+        // Se a base for 0 e houver outros (ex: "3 cont"), remove o "0, "
         if (parts.length > 1 && parts[0] === "0") {
-            parts.shift();
+             parts.shift(); 
         }
+        
         return parts.join(", ");
     }
 
@@ -152,4 +162,21 @@ export class GurpsArmorSheet extends GurpsItemSheet {
         // Remove a linha "base: 0" que estava causando o bug
         return drObject;
     }
+
+    /**
+     * @override
+     * Ativa os listeners da ficha.
+     * Esta função é NECESSÁRIA para herdar os listeners da ficha-mãe.
+     */
+    activateListeners(html) {
+        // Chama a função activateListeners da "mãe" (GurpsItemSheet),
+        // que contém todos os listeners para a aba de Efeitos
+        // e a lógica para ativar os editores de texto.
+        super.activateListeners(html);
+
+        // Se você precisar de listeners *específicos* apenas para a
+        // aba "Proteção" da armadura, eles iriam aqui.
+        // Por enquanto, não precisamos de nenhum.
+    }
+
 }
