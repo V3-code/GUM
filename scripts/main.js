@@ -858,30 +858,84 @@ Hooks.on("createItem", async (item, options, userId) => {
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
-Hooks.on("updateCombat", async (combat, changed, options, userId) => {
+// [Em scripts/main.js -> Hooks.once('init', ...)]
+
+    Hooks.on("updateCombat", async (combat, changed, options, userId) => {
+        
+        // ==========================================================
+        // ✅ BLOCO DE CORREÇÃO DO ÍCONE (INÍCIO)
+        // ==========================================================
+        // Se o combate foi desativado (encerrado) ou o round resetado para null
+        if (changed.active === false || (changed.hasOwnProperty('round') && changed.round === null)) {
+            console.log("GUM | Combate encerrado. Limpando ícones dos tokens.");
+            // Loop em TODOS os combatentes para limpar seus ícones
+            for (const combatant of combat.combatants) {
+                // token.object.refresh() é a forma mais segura de forçar a limpeza
+                if (combatant.token?.object) {
+                    combatant.token.object.refresh();
+                }
+            }
+            return; // Encerra aqui, não precisa processar turnos
+        }
+        // ==========================================================
+        // ✅ BLOCO DE CORREÇÃO DO ÍCONE (FIM)
+        // ==========================================================
+
         if (!game.user.isGM) return;
 
-        // --- Lógica de Início de Turno ---
+        // --- Lógica de Início de Turno (Seu código original, sem alteração) ---
         if (changed.round !== undefined || (changed.turn !== undefined && combat.combatant)) {
             const currentCombatant = combat.combatant;
             if (currentCombatant?.actor) {
-                await processConditions(currentCombatant.actor); // Espera
-                currentCombatant.token?.object?.drawEffects(); // Força redesenho (se token visível)
+                await processConditions(currentCombatant.actor); 
+                currentCombatant.token?.object?.drawEffects(); 
             }
         }
 
-        // --- Lógica de Fim de Turno ---
+        // --- Lógica de Fim de Turno (Seu código original, sem alteração) ---
         if (changed.turn !== undefined && combat.previous.combatantId) {
             const previousCombatant = combat.combatants.get(combat.previous.combatantId);
             if (previousCombatant?.actor) {
                 const actor = previousCombatant.actor;
-                await manageActiveEffectDurations(actor); // Gerencia ActiveEffects
-                await manageDurations(combat); // Gerencia Items
-                // Re-processa condições caso a expiração tenha mudado algo
-                await processConditions(actor); // Espera
-                // Força redesenho dos tokens do ator que acabou de ter efeitos expirados
+                await manageActiveEffectDurations(actor); 
+                await manageDurations(combat); 
+                await processConditions(actor); 
                 actor.getActiveTokens().forEach(token => token.drawEffects()); 
             }
+        }
+    });
+
+    // ==========================================================
+    // ✅ NOVO HOOK: Limpa ícones quando o combate é DELETADO
+    // ==========================================================
+    Hooks.on("deleteCombat", (combat, options, userId) => {
+        console.log("GUM | Combate deletado. Limpando ícones dos tokens.");
+        for (const combatant of combat.combatants) {
+            // token.object.refresh() força uma atualização completa da aparência do token
+            if (combatant.token?.object) {
+                 combatant.token.object.refresh();
+            }
+        }
+    });
+
+    // ==========================================================
+    // ✅ NOVO HOOK: Muda para a aba de Combate ao adicionar token
+    // ==========================================================
+    Hooks.on("createCombatant", (combatant, options, userId) => {
+        // Só executa para o usuário que está interagindo
+        if (game.user.id !== userId) return;
+
+        // --- Ponto 1: Mudar a aba da Ficha do Ator (Já implementado) ---
+        const actor = combatant.actor;
+        if (actor && actor.sheet.rendered) {
+            actor.sheet.activateTab("combat");
+        }
+
+        // --- Ponto 2: Abrir o "Encontro" (o Combat Tracker) ---
+        // 'ui.combat' é o app da sidebar de combate.
+        // Se ele não estiver renderizado (visível), chame .render(true) para abri-lo.
+        if (ui.combat && !ui.combat.rendered) {
+            ui.combat.render(true);
         }
     });
 

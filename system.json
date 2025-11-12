@@ -15,6 +15,15 @@
     "minimum": "11",
     "verified": "13"
   },
+
+  "grid": {
+    "distance": 1,
+    "units": "m"
+  },
+  "primaryTokenAttribute": "attributes.hp",
+  "secondaryTokenAttribute": "attributes.fp",
+  "initiative": "@attributes.basic_speed.final + (@attributes.dx.final/100) + (1d6/1000)",
+
   "esmodules": [
     "scripts/main.js",
     "scripts/gum-data.js",

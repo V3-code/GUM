@@ -29,18 +29,19 @@ async function syncCompendiumRules() {
     for (const actor of actorsToUpdate) {
         const updates = [];
         
-        // ✅ CORREÇÃO 1 (Depreciação): Lendo a propriedade moderna '_stats.compendiumSource'
+        // ✅ CORREÇÃO 1: Lendo a propriedade moderna '_stats.compendiumSource'
         //    em vez do antigo 'flags.core.sourceId'.
         const itemsToUpdate = actor.items.filter(i => i._stats.compendiumSource);
 
         for (const item of itemsToUpdate) {
-            // ✅ CORREÇÃO 1 (Continuação): Lendo a propriedade moderna.
+            // ✅ CORREÇÃO 2: Lendo a propriedade moderna.
             const sourceId = item._stats.compendiumSource; 
             
             const sourceRule = sourceRulesMap.get(sourceId);
 
             if (sourceRule) {
                 const sourceData = sourceRule.toObject();
+                // Não atualizamos o nome, apenas o 'system' e 'img'
                 updates.push({
                     _id: item.id,
                     system: sourceData.system,

@@ -38,8 +38,30 @@
       "skill_group_order": [],
       "social_status_entries": {}, "organization_entries": {}, "culture_entries": {}, "language_entries": {}, "reputation_entries": {}, "wealth_entries": {}, "bond_entries": {},
       "sorting": { "spells": "manual", "powers": "manual", "skills": "manual", "characteristics": "manual", "equipment": { "equipped": "manual", "carried": "manual", "stored": "manual" } }
-    }
-  },
+    },
+  "prototypeToken": {
+        "actorLink": true,
+        "disposition": 1,
+        "displayName": 40,
+        "displayBars": 40,
+        "bar1": {
+          "attribute": "attributes.hp"
+        },
+        "bar2": {
+          "attribute": "attributes.fp"
+        },
+        "sight": {
+          "enabled": true,
+          "range": 0,
+          "angle": 360
+        },
+        "light": {
+          "dim": 0,
+          "bright": 0,
+          "angle": 360
+        }
+      }
+    }, 
   "Item": {
     "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger"],
     
