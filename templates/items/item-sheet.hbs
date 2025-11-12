@@ -236,6 +236,7 @@
   {{!-- 1. Navegação das Abas --}}
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="details">Detalhes</a>
+        <a class="item" data-tab="description">Descrição</a>
     {{#if (eq item.type "equipment")}}
         <a class="item" data-tab="attacks">Modos de Ataque</a>
     {{/if}}
@@ -630,38 +631,35 @@
         
         </div>
         {{/if}}
+</div>
 
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: CAIXAS DE TEXTO DE DESCRIÇÃO DO ITEM              --}}
-        {{!-- ===================================================================== --}}
-        <div class="item-section">
-            <div class="form-section"><h4 class="section-title">Descrição Resumida
-            {{!-- Container que permite o posicionamento do botão de editar --}}
-                <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição para o Chat">
-                    <i class="fas fa-edit"></i>
-                </a></h4>
-                <div class="editable-text-container">
-                        {{!-- A caixa de texto em si. A variável correta garante a quebra de linha --}}
-                    <div class="summary-description rendered-text">{{{enrichedChatDescription}}}</div>
-                </div>
-            </div>     
-        </div>
+{{! ========================================================= }}
+    {{!   ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)       }}
+    {{! ========================================================= }}
+<div class="tab" data-tab="description">
+  <div class="form-section description-section">
+    <h4 class="section-title">Descrição Resumida (Chat)</h4>
+    <div class="description-view">{{{system.chat_description}}}</div>
+    <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
 
+    <div class="description-editor" style="display:none;">
+      {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+      <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
+      <button type="button" class="cancel-description">Cancelar</button>
+    </div>
+  </div>
 
-        <div class="item-section">
-                    <div class="form-section"><h4 class="section-title">Descrição Completa
-                                {{!-- Botão para abrir o pop-up de edição. O 'data-target' nos diz qual campo editar. --}}
-                        <a class="edit-text-btn" data-target="system.description" title="Editar Descrição">
-                            <i class="fas fa-edit"></i>
-                        </a></h4>
-                    <div class="editable-text-container">
-                        {{!-- Área onde o texto final será exibido. Usamos a variável enriquecida do JS. --}}
-                        <div class="summary-description rendered-text">{{{enrichedDescription}}}</div>
+  <div class="form-section description-section">
+    <h4 class="section-title">Descrição Completa</h4>
+    <div class="description-view">{{{system.description}}}</div>
+    <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
 
-                    </div>
-                </div>
-            </div>
-
+    <div class="description-editor" style="display:none;">
+      {{editor system.description target="system.description" owner=owner editable=editable}}
+      <button type="button" class="save-description" data-field="system.description">Salvar</button>
+      <button type="button" class="cancel-description">Cancelar</button>
+    </div>
+  </div>
 </div>
 
      {{!-- ===================================================================== --}}

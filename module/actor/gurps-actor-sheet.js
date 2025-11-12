@@ -425,6 +425,27 @@ _getSubmitData(updateData) {
             // Limpa a lista para a próxima vez
             this._openDetails = null;
         }
+
+    }
+    /**
+     * @override
+     * Ativa o editor de texto rico (TinyMCE) para a Ficha do Ator.
+     */
+    activateEditor(name, options = {}, ...args) {
+        if (!options.plugins) {
+            options.plugins = "link";
+            options.toolbar = "styleselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat";
+            options.style_formats = [
+                { title: 'Parágrafo', block: 'p' },
+                { title: 'Cabeçalho 4', block: 'h4' },
+                { title: 'Cabeçalho 5', block: 'h5' },
+            ];
+        }
+        
+        // Define a altura (ex: para a biografia)
+        options.height = 300; 
+
+        return super.activateEditor(name, options, ...args);
     }
     
       async _updateObject(event, formData) {

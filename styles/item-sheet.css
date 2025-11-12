@@ -1717,3 +1717,139 @@
     font-size: 0.9em;
     text-align: center;
 }
+
+/* =================================================================== */
+/* 14. ESTILO PARA O NOVO EDITOR DE TEXTO (TinyMCE) - REFINADO         */
+/* =================================================================== */
+
+/* 1. Contêiner geral (define a altura mínima) */
+.gum.sheet.item .editor {
+   min-height: 300px; /* Altura mínima para .chat_description */
+   /* Removemos bordas/fundos daqui para evitar bugs de layout */
+}
+/* Seletor específico para a descrição principal (mais alta) */
+.gum.sheet.item .editor[data-edit="system.description"] {
+    min-height: 400px; /* Altura mínima para .description */
+}
+
+/* 2. O editor (.tox-tinymce) */
+.gum.sheet.item .tox-tinymce {
+    background: var(--c-bg-darkest, #191813);
+    border: 1px solid var(--c-border-light, #4a4846) !important; 
+    border-radius: 3px;
+    overflow: hidden;
+    height: 300px !important;
+}
+
+/* 3. A barra de ferramentas (MAIS COMPACTA) */
+.gum.sheet.item .tox-toolbar-overlord {
+  background-color: var(--c-bg-darkest, #191813);
+  border-bottom: 1px solid var(--c-border-light, #4a4846);
+  /* Remove padding extra para um visual mais "flat" */
+  padding: 0 !important;
+}
+.gum.sheet.item .tox-toolbar {
+    /* Garante que a barra em si não tenha fundo extra */
+    background: none !important;
+    padding: 2px 4px !important; /* Padding interno sutil */
+}
+
+/* 4. Botões da barra de ferramentas (AJUSTADO) */
+.gum.sheet.item .tox-tbtn,
+.gum.sheet.item .tox-mbtn {
+  color: var(--c-text-medium, #a9a6a0);
+  background: transparent;
+  
+  /* ✅ MUDANÇA: Aumentado de 30px para 34px para dar espaço ao ícone */
+  height: 34px !important; 
+  width: 34px !important;
+}
+
+/* ✅ REMOVIDO: O seletor para ".tox-tbtn svg" foi removido.
+   Isso permite que o ícone use seu tamanho padrão, que caberá no botão de 34px. */
+
+.gum.sheet.item .tox-tbtn:hover,
+.gum.sheet.item .tox-mbtn:hover {
+  background: var(--c-bg-medium, #3a3836);
+  color: #fff;
+}
+.gum.sheet.item .tox-tbtn--enabled {
+  background: var(--c-bg-medium, #3a3836);
+  color: var(--c-accent-gold, #c5a05b);
+}
+
+/* ========================================================== */
+/* CSS PARA O MODO EXPANDIDO (sem alterações)                 */
+/* ========================================================== */
+.gum.sheet.item .tox-tinymce.expanded {
+  position: relative;
+  width: 100%;
+  height: 600px !important; /* Altura expandida */
+  z-index: 20;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  border: 1px solid #c5a05b !important;
+  transition: all 0.3s ease;
+}
+
+.gum.sheet.item .tox-tinymce.expanded .tox-edit-area__iframe {
+  height: 550px !important;
+}
+
+/* ========================================================== */
+/* ✅ NOVO: CSS PARA TEXTO RENDERIZADO (MODO DE EXIBIÇÃO)      */
+/* ========================================================== */
+
+/* Este seletor afeta o texto *depois* de salvo, no modo de visualização */
+.gum.sheet.item .rendered-text p,
+.gum.sheet.item .summary-description.rendered-text p {
+    margin: 0.2em 0 !important;
+    line-height: 1em !important;
+}
+
+/* ========================================================== */
+/* ✅ ESTILO UNIFICADO DOS BOTÕES DE DESCRIÇÃO (v2)           */
+/* ========================================================== */
+
+/* 1. Estilo base unificado para TODOS os 3 botões */
+.description-section button.toggle-editor,
+.description-editor button {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  background: #2b2b2b;
+  color: var(--c-accent-gold, #c5a05b); /* Cor dourada padrão */
+  border: none;
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease; /* Adiciona transição suave */
+}
+
+/* 2. Efeito hover unificado */
+.description-section button.toggle-editor:hover,
+.description-editor button:hover {
+  color: #fff; /* Texto branco */
+  background: #3a3836; /* Cinza mais claro */
+}
+
+/* 3. (Opcional) Destaque de hover para Salvar e Cancelar */
+.description-editor button.save-description:hover {
+    background: var(--c-accent-green, #389c68);
+    color: #fff;
+}
+.description-editor button.cancel-description:hover {
+    background: var(--c-accent-red, #a53541);
+    color: #fff;
+}
+
+/* 4. Alinha os botões "Salvar" e "Cancelar" lado a lado... E ABAIXO do editor */
+.description-editor {
+  margin-top: 0.5rem;
+  flex-wrap: wrap; /*  Permite que os itens quebrem para a próxima linha */
+  gap: 0.3rem;     /* Espaço entre os botões (e entre o editor e os botões) */
+}
+
+/* ✅ ADICIONA: Nova regra para o editor de texto DENTRO do container */
+/* O .tox é o contêiner principal que o TinyMCE cria */
+.description-editor .tox {
+    flex-basis: 100%; /* Força o editor a ocupar a linha inteira, empurrando os botões para baixo */
+}
