@@ -852,25 +852,40 @@
     {{!-- ✅ ESTRUTURA CORRIGIDA PARA AS TAGS DE STATS ✅ --}}
     <div class="spell-stats-and-actions">
         {{! ✅ MUDANÇA: Agora existe apenas UM .stats-row }}
-        <div class="stats-row">
-            {{!-- Primeira Linha de Stats --}}
-            <span class="stat"><label>NH:</label> <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a></span>
-            {{#if this.system.damage.formula}}
-                <span class="stat">
-                    <label>Dano:</label>
-                    <a class="rollable-damage" title="Clique para rolar o dano">
-                        {{this.system.damage.formula}}{{#if (gt this.system.damage.armor_divisor 1)}}({{this.system.damage.armor_divisor}}){{/if}} {{this.system.damage.type}}
-                        {{#with this.system.damage.follow_up_damage}}{{#if this.formula}} + {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
-                        {{#with this.system.damage.fragmentation_damage}}{{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
-                    </a>
-                </span>
-            {{/if}}
-            <span class="stat"><label>Custo:</label> {{this.system.mana_cost}}/{{this.system.mana_maint}}</span>
-            <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
-            <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
-            {{#if this.system.resistance}}<span class="stat"><label>Resistido por:</label> {{this.system.resistance}}</span>{{/if}}
-            {{#if this.system.effect}}<span class="stat effect-stat" title="{{this.system.effect}}"><label>Efeito:</label> {{this.system.effect}}</span>{{/if}}
-        </div>
+      <div class="stats-row">
+                    {{!-- NH de Conjuração (Sempre exibido) --}}
+                    <span class="stat">
+                        <label>Conjuração (NH):</label> {{!-- MUDADO DE "NH" PARA "TESTE" --}}
+                        <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    </span>
+                    
+                    {{!-- ✅ NOVO: NH de Ataque (Só aparece se existir) --}}
+                    {{#if this.system.attack_nh}}
+                    <span class="stat">
+                        <label>Ataque:</label> {{!-- Rótulo claro --}}
+                        <a class="rollable" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
+                    </span>
+                    {{/if}}
+
+                    {{!-- Dano (sempre atrelado ao ataque, se houver) --}}
+                    {{#if this.system.damage.formula}}
+                        <span class="stat">
+                            <label>Dano:</label>
+                            <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{this.id}}"> {{!-- O data-item-id é crucial aqui --}}
+                                {{this.system.damage.formula}}{{#if (gt this.system.damage.armor_divisor 1)}}({{this.system.damage.armor_divisor}}){{/if}} {{this.system.damage.type}}
+                                {{#with this.system.damage.follow_up_damage}}{{#if this.formula}} + {{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
+                                {{#with this.system.damage.fragmentation_damage}}{{#if this.formula}} [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
+                            </a>
+                        </span>
+                    {{/if}}
+                    
+                    {{!-- Outros stats (sem alteração) --}}
+                    <span class="stat"><label>Custo:</label> {{this.system.mana_cost}}/{{this.system.mana_maint}}</span>
+                    <span class="stat"><label>Tempo:</label> {{this.system.casting_time}}</span>
+                    <span class="stat"><label>Duração:</label> {{this.system.duration}}</span>
+                    {{#if this.system.resistance}}<span class="stat"><label>Resistido por:</label> {{this.system.resistance}}</span>{{/if}}
+                    {{#if this.system.effect}}<span class="stat effect-stat" title="{{this.system.effect}}"><label>Efeito:</label> {{this.system.effect}}</span>{{/if}}
+                </div>
     </div>
     
     <div class="item-controls">
@@ -1330,35 +1345,36 @@
                     <span class="attack-flag-tag flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
                     {{/if}}
                   </div>
-                  <div class="attack-details-row">
-                    <span class="stat"><label>NH:</label> 
-                      <a class="rollable" data-roll-value="{{attack.skill_level}}" data-label="Ataque com {{../group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.skill_level}}</a>
-                    </span>
-                    <span class="stat">
-                      <label>Dano:</label>
-                      <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+            <div class="attack-details-row">
+                <span class="stat"><label>NH:</label> 
+                    {{!-- ✅ MUDANÇA AQUI: de attack.skill_level para attack.final_nh --}}
+                    <a class="rollable" data-roll-value="{{attack.final_nh}}" data-label="Ataque com {{../group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
+                </span>
+                <span class="stat">
+                    <label>Dano:</label>
+                    <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
                         ({{attack.damage_formula}}){{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
                         {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}){{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
                         {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
-                      </a>
-                    </span>
-                    {{#if (eq attack.attack_type "melee")}}
-                      <span class="stat melee-stat"><label>Aparar:</label> 
+                    </a>
+                </span>
+                {{#if (eq attack.attack_type "melee")}}
+                    <span class="stat melee-stat"><label>Aparar:</label> 
                         <a class="rollable" data-roll-value="{{attack.parry}}" data-label="Aparar com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.parry}}</a>
-                      </span>
-                      <span class="stat melee-stat"><label>Bloqueio:</label> 
+                    </span>
+                    <span class="stat melee-stat"><label>Bloqueio:</label> 
                         <a class="rollable" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
-                      </span>
-                      <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
-                    {{/if}}
-                    {{#if (eq attack.attack_type "ranged")}}
-                        <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
-                        <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
-                        <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
-                        <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
-                        <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
-                    {{/if}}
-                  </div>
+                    </span>
+                    <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
+                {{/if}}
+                {{#if (eq attack.attack_type "ranged")}}
+                    <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
+                    <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
+                    <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
+                    <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
+                    <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
+                {{/if}}
+            </div>
                 </div>
               </li>
               {{/each}}

@@ -33,7 +33,7 @@ class GurpsActor extends Actor {
         this._prepareCharacterItems(); 
     }
 
-    /**
+/**
      * Esta é a sua lógica de _prepareCharacterItems, movida da Ficha para o Ator.
      * As referências a 'sheetData.actor' foram trocadas por 'this'.
      */
@@ -45,7 +45,6 @@ class GurpsActor extends Actor {
         const combat = actorData.system.combat;
 
         // --- ETAPA 1: ZERAR MODIFICADORES TEMPORÁRIOS E OVERRIDES ---
-        // (O código original de _prepareCharacterItems,)
         const allAttributes = [
             'st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp',
             'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge'
@@ -61,16 +60,13 @@ class GurpsActor extends Actor {
         }
 
         // --- ETAPA 2: MOTOR DE CONDIÇÕES (ACUMULA MODIFICADORES) ---
-        // (O código original de _prepareCharacterItems,)
         const add_sub_modifiers = {};
         const set_modifiers = {};
-        // 'this.actor.items' vira 'this.items'
         const conditions = this.items.filter(i => i.type === "condition"); 
         for (const condition of conditions) {
             if (condition.getFlag("gum", "manual_override")) continue;
             let isConditionActive = false;
             try {
-                // 'this.actor' vira 'this'
                 isConditionActive = !condition.system.when || Function("actor", "game", "eventData", `return ( ${condition.system.when} )`)(this, game, null); 
             } catch (e) {
                 console.warn(`GUM | Erro na regra da condição "${condition.name}":`, e);
@@ -81,7 +77,6 @@ class GurpsActor extends Actor {
                     if (effect.type === 'attribute' && effect.path) {
                         let value = 0;
                         try {
-                            // 'this.actor' vira 'this'
                             value = typeof effect.value === "string" ? new Function("actor", "game", `return (${effect.value});`)(this, game) : (Number(effect.value) || 0); 
                         } catch (e) {
                             console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e);
@@ -99,15 +94,12 @@ class GurpsActor extends Actor {
         }
 
         // --- ETAPA 3: APLICAR MODIFICADORES DE SOMA/SUBTRAÇÃO ---
-        // (O código original de _prepareCharacterItems,)
         for (const path in add_sub_modifiers) {
-            // 'actorData' vira 'this'
             const currentVal = foundry.utils.getProperty(this, path) || 0; 
             foundry.utils.setProperty(this, path, currentVal + add_sub_modifiers[path]);
         }
 
         // --- ETAPA 4: CÁLCULOS INTERMEDIÁRIOS (FINAL_COMPUTED) ---
-        // (O código original de _prepareCharacterItems,)
         for (const attr of allAttributes) {
             if (attributes[attr] && !['hp', 'fp'].includes(attr)) {
                 attributes[attr].final_computed = (Number(attributes[attr].value) || 0) + (Number(attributes[attr].mod) || 0) + (Number(attributes[attr].temp) || 0);
@@ -119,16 +111,12 @@ class GurpsActor extends Actor {
             }
         }
 
-        // (O código original de _prepareCharacterItems,)
         const liftingST = attributes.lifting_st.final_computed;
         const basicLift = (liftingST * liftingST) / 10;
         attributes.basic_lift = { value: basicLift };
 
-        // (O código original de _prepareCharacterItems,)
         let totalWeight = 0;
-        // 'actorData' vira 'this'
         const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
-        // 'sheetData.actor.items' vira 'this.items'
         for (let i of this.items) { 
             if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight')) && i.system.weight) {
                 const loc = i.system.location;
@@ -138,15 +126,12 @@ class GurpsActor extends Actor {
             }
         }
 
-        // (O código original de _prepareCharacterItems,)
         let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
         if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada", level_value: 4, penalty: -4 };
         else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada", level_value: 3, penalty: -3 };
         else if (totalWeight > basicLift * 2) enc = { level_name: "Média", level_value: 2, penalty: -2 };
         else if (totalWeight > basicLift) enc = { level_name: "Leve", level_value: 1, penalty: -1 };
         
-        // (O código original de _prepareCharacterItems,)
-        // 'actorData' vira 'this'
         foundry.utils.mergeObject(this.system.encumbrance, { 
             total_weight: Math.round(totalWeight * 100) / 100,
             level_name: enc.level_name,
@@ -158,8 +143,6 @@ class GurpsActor extends Actor {
             }
         });
         
-        // (O código original de _prepareCharacterItems,, l. 1155-1159])
-        // 'actorData' vira 'this'
         const levels = this.system.encumbrance.levels; 
         this.system.encumbrance.level_data = [ 
             { name: 'Nenhuma', max: levels.none }, { name: 'Leve', max: levels.light },
@@ -167,21 +150,17 @@ class GurpsActor extends Actor {
             { name: 'M. Pesada', max: levels.xheavy }
         ];
 
-        // (O código original de _prepareCharacterItems,, l. 1161-1164])
         const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
         attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
         attributes.dodge.final_computed = attributes.dodge.value + enc.penalty + (attributes.dodge.mod || 0) + (attributes.dodge.temp || 0);
         attributes.basic_move.final_computed = Math.floor(attributes.basic_move.final_computed * (1 - (enc.level_value * 0.2)));
 
         // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" (OVERRIDE) ---
-        // (O código original de _prepareCharacterItems,)
         for (const path in set_modifiers) {
-            // 'actorData' vira 'this'
             foundry.utils.setProperty(this, path, set_modifiers[path]); 
         }
 
         // --- ETAPA 6: CÁLCULO FINALÍSSIMO (FINAL) ---
-        // (O código original de _prepareCharacterItems,)
         for (const attr of allAttributes) {
             if (attributes[attr]) {
                 const override = attributes[attr].override;
@@ -189,85 +168,124 @@ class GurpsActor extends Actor {
             }
         }
 
-// --- Cálculos Finais (DR, NH) ---
-        
-        /**
-         * Função auxiliar para somar os valores de dois objetos de RD.
-         * Ex: _mergeDRObjects({base: 5, cont: 2}, {base: 1, qmd: 3})
-         * Resultado: {base: 6, cont: 2, qmd: 3}
-         */
+        // --- ETAPA 7: CÁLCULO DE RD (Resistência a Dano) ---
         function _mergeDRObjects(target, source) {
             if (!source || typeof source !== 'object') {
-                // Failsafe para dados antigos (trata números como 'base')
                 const value = Number(source) || 0;
                 if (value > 0) {
                     target.base = (target.base || 0) + value;
                 }
                 return;
             }
-            // Adiciona os valores do objeto fonte no objeto alvo
             for (const [type, value] of Object.entries(source)) {
                 target[type] = (target[type] || 0) + (Number(value) || 0);
             }
         }
-
-        // 1. Inicializa os acumuladores de RD como objetos vazios
         const drFromArmor = { 
             head:{}, torso:{}, vitals:{}, groin:{}, face:{}, eyes:{}, neck:{}, 
             arm_l:{}, arm_r:{}, hand_l:{}, hand_r:{}, leg_l:{}, leg_r:{}, foot_l:{}, foot_r:{} 
         };
-        
-        // 2. Acumula RD das Armaduras
         for (let i of this.items) { 
             if (i.type === 'armor' && i.system.location === 'equipped') {
                 const itemDrLocations = i.system.dr_locations || {};
                 for (let loc in drFromArmor) {
-                    // Soma os objetos de RD
                     _mergeDRObjects(drFromArmor[loc], itemDrLocations[loc]);
                 }
             }
         }
-        
-        // 3. Acumula RD de Modificadores (Manuais e Temporários)
         const totalDr = {};
-        const drMods = combat.dr_mods || {}; // Agora esperamos que isto seja { torso: { base: 1 } }
-        const drTempMods = combat.dr_temp_mods || {}; // E isto também { torso: { qmd: 3 } }
-        
+        const drMods = combat.dr_mods || {}; 
+        const drTempMods = combat.dr_temp_mods || {}; 
         for (let key in drFromArmor) {
-            totalDr[key] = {}; // Começa o total como um objeto vazio
-            _mergeDRObjects(totalDr[key], drFromArmor[key]); // Adiciona Armadura
-            _mergeDRObjects(totalDr[key], drMods[key]);      // Adiciona Mods Manuais
-            _mergeDRObjects(totalDr[key], drTempMods[key]); // Adiciona Mods Temporários
+            totalDr[key] = {}; 
+            _mergeDRObjects(totalDr[key], drFromArmor[key]); 
+            _mergeDRObjects(totalDr[key], drMods[key]);      
+            _mergeDRObjects(totalDr[key], drTempMods[key]); 
         }
-        
-        combat.dr_locations = totalDr; // Salva o objeto final
-        combat.dr_from_armor = drFromArmor; // Salva o objeto só da armadura
+        combat.dr_locations = totalDr; 
+        combat.dr_from_armor = drFromArmor;
 
-        // (O código original de _prepareCharacterItems,, l. 1201-1221])
-        // 'sheetData.actor.items' vira 'this.items'
-        for (let i of this.items) { 
-            if (['skill', 'spell', 'power'].includes(i.type)) {
+        // =============================================================
+        // ✅ INÍCIO DA ETAPA 8: CÁLCULO DE NH (CORRIGIDO)
+        // =============================================================
+
+        // --- Função auxiliar para encontrar o valor base do NH ---
+        // (Usada por todas as etapas abaixo para consistência)
+        const getNHBaseValue = (baseAttrStr, skillList) => {
+            const baseAttr = (baseAttrStr || "dx").toLowerCase().trim();
+            let attrVal = 10;
+            
+            const attribute = attributes[baseAttr];
+            const fixedNumber = Number(baseAttr);
+            // ✅ CORREÇÃO: Procura apenas na lista de perícias (skillList)
+            const refSkill = skillList.find(s => s.name?.toLowerCase() === baseAttr); 
+
+            if (attribute?.final !== undefined) {
+                attrVal = attribute.final;
+            } else if (!isNaN(fixedNumber) && baseAttr !== "") {
+                attrVal = fixedNumber;
+            } else if (refSkill) {
+                // Lê o final_nh (que pode ter sido calculado no passe anterior)
+                attrVal = refSkill.system.final_nh || 10; 
+            }
+            return attrVal;
+        };
+
+        // --- 8.1: Separa os itens ---
+        const skills = this.items.filter(i => i.type === 'skill');
+        const spellsAndPowers = this.items.filter(i => ['spell', 'power'].includes(i.type));
+        const equipment = this.items.filter(i => ['melee_weapon', 'ranged_weapon', 'equipment'].includes(i.type));
+
+        // --- 8.2: Calcula Perícias (em múltiplos passes) ---
+        // (Isso resolve o bug de dependência: "Perícia B" baseada em "Perícia A")
+        for (let pass = 0; pass < 2; pass++) { // 2 passes para cobrir dependências
+            for (const i of skills) {
                 try {
-                    const defAttr = (i.type === 'skill') ? 'dx' : 'iq';
-                    let baseAttr = (i.system.base_attribute || defAttr).toLowerCase();
-                    let attrVal = 10;
-                    if (attributes[baseAttr]?.final !== undefined) {
-                        attrVal = attributes[baseAttr].final;
-                    } else if (!isNaN(Number(baseAttr))) {
-                        attrVal = Number(baseAttr);
-                    } else {
-                        // 'sheetData.actor.items' vira 'this.items'
-                        const refSkill = this.items.find(s => s.type === 'skill' && s.name?.toLowerCase() === baseAttr); 
-                        if (refSkill) attrVal = refSkill.system.final_nh;
-                    }
+                    const attrVal = getNHBaseValue(i.system.base_attribute, skills);
                     i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
-                } catch (e) {
-                    console.error(`GUM | Erro ao calcular NH para o item ${i.name}:`, e);
-                }
+                } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
             }
         }
+
+        // --- 8.3: Calcula Magias e Poderes (que podem depender de perícias) ---
+        for (const i of spellsAndPowers) {
+            try {
+                // Calcula o NH de conjuração
+                const conjurationBaseVal = getNHBaseValue(i.system.base_attribute, skills);
+                i.system.final_nh = conjurationBaseVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
+
+                // Calcula o NH de ataque (se houver)
+                if (i.system.attack_roll?.skill_name) {
+                    const attackBaseVal = getNHBaseValue(i.system.attack_roll.skill_name, skills);
+                    i.system.attack_nh = attackBaseVal + (i.system.attack_roll.skill_level_mod || 0);
+                }
+            } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
+        }
+
+        // --- 8.4: Calcula Ataques de Equipamento (que podem depender de perícias) ---
+        for (const i of equipment) {
+            try {
+                // Processa Ataques Corpo a Corpo
+                if (i.system.melee_attacks) {
+                    for (let attack of Object.values(i.system.melee_attacks)) {
+                        const attackBaseVal = getNHBaseValue(attack.skill_name, skills);
+                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                    }
+                }
+                // Processa Ataques à Distância
+                if (i.system.ranged_attacks) {
+                    for (let attack of Object.values(i.system.ranged_attacks)) {
+                        const attackBaseVal = getNHBaseValue(attack.skill_name, skills);
+                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                    }
+                }
+            } catch (e) { console.error(`GUM | Erro ao calcular NH de ataque para ${i.name}:`, e); }
+        }
+        // =============================================================
+        // ✅ FIM DA ETAPA 8
+        // =============================================================
     }
-} // Fim da nova classe GurpsActor
+} // Fim da classe GurpsActor
 
 /**
  * Uma janela de diálogo para criar e editar Efeitos Contingentes.

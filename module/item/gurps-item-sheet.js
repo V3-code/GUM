@@ -181,9 +181,18 @@ export class GurpsItemSheet extends ItemSheet {
       }
   }
   
+/**
+   * @override
+   * Ativa todos os listeners de interatividade da ficha de item.
+   */
+/**
+   * @override
+   * Ativa todos os listeners de interatividade da ficha de item.
+   */
   activateListeners(html) {
       super.activateListeners(html);
 
+      // Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
       html.find('.add-attack').on('click', (ev) => {
           const attackType = $(ev.currentTarget).data('type');
           const newAttackId = foundry.utils.randomID(16);
@@ -212,21 +221,27 @@ export class GurpsItemSheet extends ItemSheet {
           this.item.update({ [path]: newAttackData });
       });
 
+      // Listener para DELETAR um Modo de Ataque (Melee ou Ranged)
       html.find('.delete-attack').on('click', (ev) => {
           const target = $(ev.currentTarget);
           const attackId = target.closest('.attack-item').data('attack-id');
-          const listName = target.data('list'); 
+          const listName = target.data('list'); // 'melee_attacks' ou 'ranged_attacks'
           const attack = this.item.system[listName][attackId];
+
           if (!attackId || !attack) return;
+
           Dialog.confirm({
               title: `Deletar Modo de Ataque "${attack.mode}"`,
               content: "<p>Você tem certeza?</p>",
-              yes: () => { this.item.update({ [`system.${listName}.-=${attackId}`]: null }); },
+              yes: () => {
+                  this.item.update({ [`system.${listName}.-=${attackId}`]: null });
+              },
               no: () => {},
               defaultYes: false
           });
       });
 
+// Listener para VINCULAR PERÍCIA (VERSÃO UNIVERSAL)
       html.find('.link-skill-button').on('click', (ev) => {
           if (!this.item.isOwned) {
               return ui.notifications.warn("Este item precisa estar em um ator para vincular uma perícia.");
@@ -236,22 +251,48 @@ export class GurpsItemSheet extends ItemSheet {
           if (skills.length === 0) {
               return ui.notifications.warn("Este ator não possui nenhuma perícia para vincular.");
           }
-          const input = $(ev.currentTarget).closest('.stat-row').find('input[name$=".skill_name"]');
-          if (!input.length) return;
-          const path = input.attr('name');
+          
+          // ✅ INÍCIO DA CORREÇÃO: Lógica de seletor universal
+          
+          // 1. Encontra o input de texto mais próximo dentro do mesmo grupo
+          const input = $(ev.currentTarget).closest('.form-group').find('input[type="text"]');
+          if (!input.length) {
+              console.error("GUM | .link-skill-button: Não foi possível encontrar o input de texto adjacente.");
+              return; 
+          }
+
+          // 2. Tenta pegar o 'data-name' (usado em Modos de Ataque)
+          let path = input.data('name'); 
+          
+          // 3. Se não houver 'data-name', pega o 'name' (usado em Magias, Poderes, etc.)
+          if (!path) {
+              path = input.attr('name');
+          }
+
+          if (!path) {
+              console.error("GUM | .link-skill-button: O input adjacente não tem 'name' nem 'data-name'.");
+              return;
+          }
+          // ✅ FIM DA CORREÇÃO
+
           let content = `<div class="dialog-skill-list"><select name="skill_selector">`;
           content += `<option value="">-- Nenhuma --</option>`;
+          
           skills.sort((a,b) => a.name.localeCompare(b.name)).forEach(skill => {
               content += `<option value="${skill.name}">${skill.name} (NH ${skill.system.final_nh})</option>`;
           });
           content += `</select></div>`;
+
           new Dialog({
-              title: "Vincular Perícia do Ator", content: content,
+              title: "Vincular Perícia do Ator",
+              content: content,
               buttons: {
                   select: {
-                      icon: '<i class="fas fa-link"></i>', label: "Vincular",
+                      icon: '<i class="fas fa-link"></i>',
+                      label: "Vincular",
                       callback: (html) => {
                           const selectedSkillName = html.find('select[name="skill_selector"]').val();
+                          // 'path' agora conterá o atributo correto (data-name ou name)
                           this.item.update({ [path]: selectedSkillName });
                       }
                   }
@@ -260,13 +301,15 @@ export class GurpsItemSheet extends ItemSheet {
           }).render(true);
       });
 
+      // Listener para ADICIONAR um Efeito *dentro* de um Modo de Ataque
       html.find('.add-attack-effect').on('click', (ev) => {
           this._saveUIState(); 
           const target = $(ev.currentTarget);
-          const list = target.data('list'); 
+          const list = target.data('list'); // "onDamageEffects"
           const attackType = target.closest('.attack-item').data('attack-type');
           const attackId = target.closest('.attack-item').data('attack-id');
           const basePath = `system.${attackType}_attacks.${attackId}.${list}`;
+
           new EffectBrowser(this.item, {
               onSelect: (selectedEffects) => {
                   const updates = {};
@@ -280,6 +323,7 @@ export class GurpsItemSheet extends ItemSheet {
           }).render(true);
       });
 
+      // Listener para DELETAR um Efeito *dentro* de um Modo de Ataque
       html.find('.delete-attack-effect').on('click', (ev) => {
           this._saveUIState();
           const target = $(ev.currentTarget);
@@ -288,8 +332,10 @@ export class GurpsItemSheet extends ItemSheet {
           const attackType = target.closest('.attack-item').data('attack-type');
           const attackId = target.closest('.attack-item').data('attack-id');
           const path = `system.${attackType}_attacks.${attackId}.${list}.-=${effectId}`;
+
           Dialog.confirm({
-              title: "Remover Efeito do Ataque", content: "<p>Você tem certeza?</p>",
+              title: "Remover Efeito do Ataque",
+              content: "<p>Você tem certeza?</p>",
               yes: () => { this.item.update({ [path]: null }); },
               no: () => {
                   this._openAttackModeId = null;
@@ -298,6 +344,7 @@ export class GurpsItemSheet extends ItemSheet {
           });
       });
 
+      // Listeners da "effectsTab" e Modificadores (ANTIGOS)
       html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
           ev.preventDefault();
           const target = $(ev.currentTarget);
@@ -318,23 +365,23 @@ export class GurpsItemSheet extends ItemSheet {
 
       if (!this.isEditable) return;
 
+      // --- Modificadores ---
       html.find('.add-modifier').on('click', (ev) => {
           ev.preventDefault();
           new ModifierBrowser(this.item).render(true);
       });
-
       html.find('.delete-modifier').on('click', (ev) => {
           ev.preventDefault();
           const modifierId = $(ev.currentTarget).data('modifier-id');
           if (modifierId) {
               Dialog.confirm({
-                  title: "Remover Modificador", content: "<p>Você tem certeza?</p>",
+                  title: "Remover Modificador",
+                  content: "<p>Você tem certeza?</p>",
                   yes: () => { this.item.update({ [`system.modifiers.-=${modifierId}`]: null }); },
                   no: () => {}
               });
           }
       });
-
       html.find('.view-modifier').on('click', async (ev) => {
           ev.preventDefault();
           const modifierId = $(ev.currentTarget).data('modifier-id');
@@ -360,6 +407,7 @@ export class GurpsItemSheet extends ItemSheet {
           }, { width: 420, height: "auto", resizable: true, classes: ["dialog", "modifier-preview-dialog"] }).render(true);
       });
 
+      // --- Aba de Efeitos (Padrão) ---
       html.find('.add-effect').on('click', async (ev) => {
           const targetList = $(ev.currentTarget).data('target-list');
           if (!targetList) return;
@@ -375,7 +423,6 @@ export class GurpsItemSheet extends ItemSheet {
               }
           }).render(true);
       });
-
       html.find('.add-general-condition').on('click', (ev) => {
           new ConditionBrowser(this.item, {
               onSelect: (selectedConditions) => {
@@ -389,7 +436,6 @@ export class GurpsItemSheet extends ItemSheet {
               }
           }).render(true);
       });
-
       html.find('.delete-effect').on('click', (ev) => {
           const target = $(ev.currentTarget);
           const listName = target.closest('.effect-entry').data('list-name');
@@ -401,13 +447,13 @@ export class GurpsItemSheet extends ItemSheet {
           });
       });
 
+      // --- Modo Edição/Visualização de Ataque ---
       html.find('.edit-attack-mode').on('click', (ev) => {
           ev.preventDefault();
           const attackItem = $(ev.currentTarget).closest('.attack-item');
           attackItem.find('.attack-display-mode').hide();
           attackItem.find('.attack-edit-mode').show();
       });
-
       html.find('.save-attack-mode').on('click', (ev) => {
           ev.preventDefault();
           const attackItem = $(ev.currentTarget).closest('.attack-item');
@@ -430,6 +476,7 @@ export class GurpsItemSheet extends ItemSheet {
           }
       });
       
+      // --- Listeners do Editor de Texto ---
       html.find(".toggle-editor").on("click", ev => {
         const section = $(ev.currentTarget).closest(".description-section");
         section.find(".description-view, .toggle-editor").hide();
@@ -467,6 +514,5 @@ export class GurpsItemSheet extends ItemSheet {
         section.find(".description-editor").hide();
         section.find(".description-view, .toggle-editor").show();
       });
-      
   } // Fim do activateListeners
 }

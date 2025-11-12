@@ -1853,3 +1853,15 @@
 .description-editor .tox {
     flex-basis: 100%; /* Força o editor a ocupar a linha inteira, empurrando os botões para baixo */
 }
+
+/* ============================================================= */
+/* ESTILO DO SUB-CABEÇALHO (PARA GRUPO 4 DE MAGIAS/PODERES)     */
+/* ============================================================= */
+.gum.sheet.item .subheader {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #a0a0a0;
+    margin: 10px 0 8px 0;
+    padding-bottom: 3px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}

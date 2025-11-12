@@ -15,12 +15,10 @@ import { performGURPSRoll } from "/systems/gum/scripts/main.js";
         });
       }
 
-    async getData(options) {
-        // ... (Todo o seu método getData() permanece exatamente o mesmo) ...
-        // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]
+async getData(options) {
         const context = await super.getData(options);
         
-context.hitLocations = {
+        context.hitLocations = {
             head: { label: "Crânio (-7)", roll: "3-4", penalty: -7 },
             face: { label: "Rosto (-5)", roll: "5", penalty: -5 },
             eyes: { label: "Olhos (-9)", roll: "--", penalty: -9 },
@@ -221,88 +219,35 @@ context.hitLocations = {
             context.equipmentCarried = allEquipment.filter(i => i.system.location === 'carried').sort(carriedSortFn);
             context.equipmentStored = allEquipment.filter(i => i.system.location === 'stored').sort(storedSortFn);
 
-            // ================================================================== //
-        //     FASE 3.1: PREPARAÇÃO DOS GRUPOS DE ATAQUE (DE ITENS)           //
+        // ================================================================== //
+        //     FASE 3.1: PREPARAÇÃO DOS GRUPOS DE ATAQUE (REATORADO)          //
         // ================================================================== //
         
         // 1. Usamos a lista 'context.equipmentInUse' que você já calculou
         const equipmentAttackGroups = (context.equipmentInUse || []).map(item => {
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
+            // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
             const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
-                let base_nh = 10; // Padrão se nada for encontrado
-                const skillName = (attack.skill_name || "").toLowerCase().trim();
-                const attributes = context.actor.system.attributes;
-
-                // 1. Tenta encontrar uma Perícia
-                const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
-                
-                // 2. Tenta encontrar um Atributo
-                const attribute = attributes[skillName];
-
-                // 3. Tenta ler um número fixo (ex: "15")
-                const fixedNumber = Number(skillName);
-
-                if (skill) {
-                    base_nh = skill.system.final_nh || 10;
-                } 
-                else if (attribute) {
-                    base_nh = attribute.final || 10;
-                }
-                // ✅ CORREÇÃO (BUG 2): Se o 'skillName' for um número, use-o
-                else if (!isNaN(fixedNumber) && skillName !== "") {
-                    base_nh = fixedNumber;
-                }
-                // (Se tudo falhar, base_nh continua 10)
-                
-                // ✅ CORREÇÃO (BUG 1): Força a conversão para Número
-                const final_nh = base_nh + (Number(attack.skill_level_mod) || 0);
-
                 return {
-                    ...attack, // Traz todos os campos do 'attack_melee' (damage_formula, reach, parry, etc.)
+                    ...attack, // Traz todos os campos do 'attack_melee'
                     id: id,
-                    name: attack.mode, // Mapeia 'mode' para 'name' para o template
+                    name: attack.mode, 
                     attack_type: "melee",
                     weight: item.system.weight,
                     unbalanced: attack.unbalanced, 
                     fencing: attack.fencing,
-                    groupId: item.id,  // O ID do grupo é o ID do item
-                    itemId: item.id,   // O ID do item de origem (para rolagens)
-                    skill_level: final_nh, // O NH calculado!
+                    groupId: item.id,
+                    itemId: item.id,
+                    // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
+                    final_nh: attack.final_nh || 10, 
                     skill_name: attack.skill_name || "N/A"
                 };
             });
 
             // 3. Processa os Ataques à Distância (Ranged)
+            // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
             const rangedAttacks = Object.entries(item.system.ranged_attacks || {}).map(([id, attack]) => {
-                let base_nh = 10; // Padrão se nada for encontrado
-                const skillName = (attack.skill_name || "").toLowerCase().trim();
-                const attributes = context.actor.system.attributes;
-
-                // 1. Tenta encontrar uma Perícia
-                const skill = this.actor.items.find(i => i.type === 'skill' && i.name.toLowerCase() === skillName);
-                
-                // 2. Tenta encontrar um Atributo
-                const attribute = attributes[skillName];
-
-                // 3. Tenta ler um número fixo (ex: "15")
-                const fixedNumber = Number(skillName);
-
-                if (skill) {
-                    base_nh = skill.system.final_nh || 10;
-                } 
-                else if (attribute) {
-                    base_nh = attribute.final || 10;
-                }
-                // ✅ CORREÇÃO (BUG 2): Se o 'skillName' for um número, use-o
-                else if (!isNaN(fixedNumber) && skillName !== "") {
-                    base_nh = fixedNumber;
-                }
-                // (Se tudo falhar, base_nh continua 10)
-                
-                // ✅ CORREÇÃO (BUG 1): Força a conversão para Número
-                const final_nh = base_nh + (Number(attack.skill_level_mod) || 0);
-
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
                     id: id,
@@ -313,7 +258,8 @@ context.hitLocations = {
                     fencing: attack.fencing,
                     groupId: item.id,
                     itemId: item.id,
-                    skill_level: final_nh,
+                    // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
+                    final_nh: attack.final_nh || 10,
                     skill_name: attack.skill_name || "N/A"
                 };
             });
@@ -330,8 +276,8 @@ context.hitLocations = {
                 name: item.name,
                 weight: item.system.weight,
                 attacks: allAttacks,
-                sort: item.sort || 0, // Usa a ordenação do item no inventário
-                isFromItem: true // Flag para a interface (útil no futuro)
+                sort: item.sort || 0,
+                isFromItem: true
             };
         }).filter(group => group !== null); // Remove itens que não tinham ataques
 
