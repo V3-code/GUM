@@ -37,6 +37,12 @@ export class GurpsArmorSheet extends GurpsItemSheet {
             context.formattedDrLocations[loc] = this._formatDRObjectToString(drObject);
         }
         
+        // Prepara a descrição para o editor
+        context.system.description = await TextEditor.enrichHTML(this.item.system.description || "", {
+            secrets: this.item.isOwner,
+            async: true
+        });
+
         return context;
     }
 
@@ -166,17 +172,18 @@ export class GurpsArmorSheet extends GurpsItemSheet {
     /**
      * @override
      * Ativa os listeners da ficha.
-     * Esta função é NECESSÁRIA para herdar os listeners da ficha-mãe.
+     * Esta função herda os listeners da GurpsItemSheet (efeitos, modificadores)
+     * e os listeners de descrição que acabamos de adicionar lá.
      */
     activateListeners(html) {
         // Chama a função activateListeners da "mãe" (GurpsItemSheet),
-        // que contém todos os listeners para a aba de Efeitos
-        // e a lógica para ativar os editores de texto.
+        // que agora contém:
+        // 1. Listeners da aba de Efeitos
+        // 2. Listeners da aba de Modificadores
+        // 3. Listeners dos botões "Editar/Salvar/Cancelar" da Descrição
         super.activateListeners(html);
 
         // Se você precisar de listeners *específicos* apenas para a
         // aba "Proteção" da armadura, eles iriam aqui.
-        // Por enquanto, não precisamos de nenhum.
     }
-
 }

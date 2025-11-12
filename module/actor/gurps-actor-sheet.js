@@ -1,7 +1,7 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 
 // ================================================================== //
-//  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet)
+//  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet) - EDITOR ATUALIZADO
 // ================================================================== //
 
    export class GurpsActorSheet extends ActorSheet {
@@ -16,6 +16,8 @@ import { performGURPSRoll } from "/systems/gum/scripts/main.js";
       }
 
     async getData(options) {
+        // ... (Todo o seu método getData() permanece exatamente o mesmo) ...
+        // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]
         const context = await super.getData(options);
         
 context.hitLocations = {
@@ -427,26 +429,64 @@ _getSubmitData(updateData) {
         }
 
     }
-    /**
+
+    // ================================================================== //
+    // ✅ INÍCIO DA ATUALIZAÇÃO DO EDITOR
+    // ================================================================== //
+/**
      * @override
      * Ativa o editor de texto rico (TinyMCE) para a Ficha do Ator.
      */
     activateEditor(name, options = {}, ...args) {
-        if (!options.plugins) {
-            options.plugins = "link";
-            options.toolbar = "styleselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat";
-            options.style_formats = [
-                { title: 'Parágrafo', block: 'p' },
-                { title: 'Cabeçalho 4', block: 'h4' },
-                { title: 'Cabeçalho 5', block: 'h5' },
-            ];
-        }
+        // 1. Plugins e Barra de Ferramentas
+        options.plugins = "link lists image"; // Mantém 'image'
         
-        // Define a altura (ex: para a biografia)
+        // ✅ MUDANÇA: Adiciona "gurpsExpand" ao lado do botão de imagem
+        options.toolbar = "styleselect | bold italic | bullist numlist | link image | gurpsExpand | removeformat"; 
+        options.menubar = false;
+
+        options.style_formats = [
+            { title: 'Parágrafo', block: 'p' },
+            { title: 'Cabeçalho 4', block: 'h4' },
+            { title: 'Cabeçalho 5', block: 'h5' },
+        ];
+        
+        // 2. Altura padrão (quando não expandido)
         options.height = 300; 
+
+        // 3. CSS Interno (Tema Papiro e Espaçamento de Parágrafo)
+        options.content_style = `
+            body {
+                background-color: var(--c-fundo-papiro, #f1e8e7); 
+                color: var(--c-texto-escuro, #352425);
+            }
+            p { 
+                margin: 0.2em 0 !important; 
+                line-height: 1.4em !important;
+            }
+            h4, h5 {
+                margin: 0.5em 0 0.2em 0 !important;
+            }
+        `;
+        
+        // ✅ MUDANÇA: Adiciona a lógica para o botão "gurpsExpand"
+        options.setup = function (editor) {
+          editor.ui.registry.addButton("gurpsExpand", {
+            tooltip: "Expandir área de edição",
+            icon: "fullscreen",
+            onAction: function () {
+              const container = editor.getContainer();
+              // Adiciona/remove a classe "expanded"
+              container.classList.toggle("expanded");
+            }
+          });
+        };
 
         return super.activateEditor(name, options, ...args);
     }
+    // ================================================================== //
+    // ✅ FIM DA ATUALIZAÇÃO DO EDITOR
+    // ================================================================== //
     
       async _updateObject(event, formData) {
         // Processa a conversão de vírgula para ponto
@@ -550,6 +590,8 @@ _getSubmitData(updateData) {
     }
 
 activateListeners(html) {
+    // ... (Todo o seu método activateListeners() permanece exatamente o mesmo) ...
+    // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]
     super.activateListeners(html);
     if (!this.isEditable) return;
 
@@ -1093,7 +1135,7 @@ html.on('click', '.edit-basic-damage', ev => {
                             height: html.find('[name="height"]').val(),
                             weight: html.find('[name="weight"]').val(),
                             skin: html.find('[name="skin"]').val(),
-                            hair: html.find('[name="hair"]').val(),
+                            hair: html.find('[name_config"hair"]').val(),
                             eyes: html.find('[name="eyes"]').val(),
                             alignment: html.find('[name="alignment"]').val(),
                             belief: html.find('[name="belief"]').val(),
@@ -2853,6 +2895,72 @@ html.on('click', '.item-edit', ev => {
             this.render(false); // Reavalia as condições
         }
     });
+
+    // =============================================================
+    // ✅ INÍCIO: LISTENERS DO EDITOR DE TEXTO (BIOGRAFIA)
+    // =============================================================
+    
+    // Botão "Editar Descrição" (lápis)
+    html.find(".toggle-editor").on("click", ev => {
+      const section = $(ev.currentTarget).closest(".description-section");
+      section.find(".description-view, .toggle-editor").hide();
+      section.find(".description-editor").show();
+    });
+
+    // Botão "Cancelar Edição"
+    html.find(".cancel-description").on("click", ev => {
+      const section = $(ev.currentTarget).closest(".description-section");
+      section.find(".description-editor").hide();
+      section.find(".description-view, .toggle-editor").show();
+    });
+
+// Botão "Salvar Descrição"
+    html.find(".save-description").on("click", async ev => {
+      ev.preventDefault();
+      const btn = $(ev.currentTarget);
+      const section = btn.closest(".description-section");
+      const field = btn.data("field"); // Ex: "system.details.backstory"
+
+      if (!field) return ui.notifications.error("Campo de descrição não identificado.");
+
+      const editor = this.editors?.[field];
+      if (!editor) {
+        ui.notifications.warn("Editor não encontrado.");
+        return;
+      }
+
+      // ✅ ETAPA 1: Obter o conteúdo RAW (não-enriquecido) do editor
+      let content = "";
+      try {
+        // .getContent() pega o HTML bruto, que é o que queremos salvar
+        content = editor.instance.getContent(); 
+      } catch (err) {
+        console.warn("Erro ao ler conteúdo:", err);
+      }
+
+      // ✅ ETAPA 2: Salvar o conteúdo RAW no ator
+      const update = {};
+      update[field] = content;
+      await this.object.update(update);
+
+      // ✅ ETAPA 3: Enriquecer o conteúdo RAW para exibição
+      // (Esta é a etapa que estava faltando/incorreta)
+      const enriched = await TextEditor.enrichHTML(content, {
+          secrets: this.actor.isOwner,
+          async: true
+      });
+      
+      // ✅ ETAPA 4: Atualizar a view com o HTML ENRIQUECIDO
+      section.find(".description-view").html(enriched);
+
+      // Alterna de volta para modo visualização
+      section.find(".description-editor").hide();
+      section.find(".description-view, .toggle-editor").show();
+    });
+    
+    // =============================================================
+    // ✅ FIM: LISTENERS DO EDITOR DE TEXTO (BIOGRAFIA)
+    // =============================================================
 
 }
 

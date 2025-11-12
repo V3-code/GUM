@@ -1374,6 +1374,7 @@
     </div>
     
   </div>    
+</div>
 
 {{! ========================================================= }}
 {{!  ABA DE BIOGRAFIA (ESTRUTURA REFINADA E PADRONIZADA)      }}
@@ -1434,13 +1435,42 @@
       </div>
     </div>
 
-    {{!-- Coluna Principal: História do Personagem --}}
-    <div class="biography-story">
-      <h3 class="block-title">História do Personagem</h3>
-      {{!-- O editor do Foundry oferece uma experiência de texto rico --}}
-      {{editor enrichedBackstory target="system.details.backstory" button=true owner=owner editable=editable}}
+{{!-- Coluna Principal: História do Personagem --}}
+<div class="biography-story">
+    <h3 class="block-title">História do Personagem</h3>
+    
+    {{!-- ✅ INÍCIO: Nova estrutura de Editor de Texto --}}
+    <div class="description-section">
+        
+        {{!-- 1. Modo de Visualização (Texto Renderizado) --}}
+        <div class="description-view">
+            {{{enrichedBackstory}}}
+        </div>
+        
+        {{!-- 2. Botão "Editar" (Apenas para o dono) --}}
+        {{#if editable}}
+        <button type="button" class="toggle-editor" data-target="system.details.backstory">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+        {{/if}}
+
+        {{!-- 3. Modo de Edição (Escondido) --}}
+        <div class="description-editor" style="display: none;">
+            {{!-- O editor em si (note button=false) --}}
+            {{editor enrichedBackstory target="system.details.backstory" button=false owner=owner editable=editable}}
+            
+            {{!-- Botões Salvar/Cancelar --}}
+            <button type="button" class="save-description" data-field="system.details.backstory">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <button type="button" class="cancel-description">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
     </div>
-  </div>
+    {{!-- ✅ FIM: Nova estrutura de Editor de Texto --}}
+    
+</div>
 </div>
 
 {{!-- ============================================================= --}}
@@ -1547,7 +1577,8 @@
         </div>
     </div>
 </div>
-      </div> 
+
+
    </section>
   </main>
 </div>
