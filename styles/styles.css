@@ -3608,7 +3608,7 @@ filter:none;
   border-left-width: 2px;
 }
 .combat-tab .attack-details-row .stat label {
-  font-size: 8px; 
+  font-size: 10px; 
   margin-right: 2px;
 }
 
@@ -3737,6 +3737,7 @@ filter:none;
   border-left-color: var(--c-accent-gold, #c5a05b); /* Borda Dourada */
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+  font-size: 11px;
 }
 
 /* Efeito de hover para a tag rolável */

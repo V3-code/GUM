@@ -5,11 +5,11 @@ import { ConditionBrowser } from "../apps/condition-browser.js";
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO CORRIGIDA       //
 // ================================================================== //
 export class GurpsItemSheet extends ItemSheet {
-  static get defaultOptions() { 
+static get defaultOptions() { 
     return foundry.utils.mergeObject(super.defaultOptions, { 
       classes: ["gum", "sheet", "item", "theme-dark"],
       width: 450,
-      height: 495, // A altura da janela pode precisar de ajuste se o editor crescer
+      height: 495, // Você pode querer aumentar isso para 550, já que as abas têm mais conteúdo
       template: "systems/gum/templates/items/item-sheet.hbs",
       tabs: [{ 
         navSelector: ".sheet-tabs",
@@ -24,6 +24,15 @@ export class GurpsItemSheet extends ItemSheet {
     context.system = this.item.system;  
     context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
     
+    context.skillDifficulties = {
+        "F": "Fácil (F)",
+        "M": "Média (M)",
+        "D": "Difícil (D)",
+        "MD": "Muito Difícil (MD)",
+        "TecM": "Técnica (Média)",
+        "TecD": "Técnica (Difícil)"
+    };
+
     // Lógica de cálculo de custo final
     const validTypes = ['advantage', 'disadvantage', 'power'];
     if (validTypes.includes(this.item.type)) {
@@ -99,6 +108,105 @@ export class GurpsItemSheet extends ItemSheet {
       this._saveUIState(); 
       return data;
   }
+
+  /**
+     * Calcula o custo de pontos de uma perícia GURPS.
+     * @param {string} difficulty - O código da dificuldade (F, M, D, MD, TecM, TecD).
+     * @param {number} relativeLevel - O nível relativo ao atributo (ex: -1, 0, +1).
+     * @returns {number} - O custo em pontos.
+     */
+    _calculateSkillPoints(difficulty, relativeLevel) {
+        const rl = parseInt(relativeLevel) || 0;
+
+        // Lógica para Técnicas (rl = níveis comprados)
+        if (difficulty === "TecM") {
+            return Math.max(0, rl * 1); // Custo de 1 por nível
+        }
+        if (difficulty === "TecD") {
+            return Math.max(0, rl * 2); // Custo de 2 por nível
+        }
+
+        // Lógica para Perícias Padrão (rl = nível relativo ao atributo)
+        let defaultLevel = 0;
+        switch (difficulty) {
+            case "F":  defaultLevel = 0;  break;
+            case "M":  defaultLevel = -1; break;
+            case "D":  defaultLevel = -2; break;
+            case "MD": defaultLevel = -3; break;
+            default: return 0; // Dificuldade não reconhecida
+        }
+
+        // 'pointLevel' é o número de "passos" acima do nível de 1 ponto
+        const pointLevel = rl - defaultLevel;
+
+        if (pointLevel < 0) return 0; // Não custa pontos (está abaixo do nível de 1 ponto)
+        
+        // Tabela de custo [Nível 0=1pt, Nível 1=2pt, Nível 2=4pt, Nível 3=8pt]
+        const costs = [1, 2, 4, 8];
+        if (pointLevel < costs.length) {
+            return costs[pointLevel];
+        }
+        
+        // A partir do Nível 3 (8 pts), são +4 pontos por nível
+        return 8 + (pointLevel - 3) * 4;
+    }
+
+/**
+     * Manipulador de eventos para o cálculo automático de pontos. (Versão CORRIGIDA)
+     * Disparado quando os campos de automação mudam.
+     */
+    async _onAutoCalcPoints(event) {
+        // Pega o formulário como um objeto
+        const formData = new FormDataExtended(this.form).object;
+        
+        // 1. Pega o estado do checkbox (um checkbox desmarcado não aparece no formData,
+        //    então `|| false` garante que ele seja 'false' se não estiver presente)
+        const autoPoints = formData["system.auto_points"] || false;
+        
+        // 2. Descobre qual campo disparou o evento
+        const changedElementName = event.currentTarget.name;
+
+        // 3. Prepara um objeto para salvar todas as mudanças de uma vez
+        const updateData = {};
+        const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points";
+
+        // --- Caso A: O *próprio checkbox* foi alterado ---
+        if (changedElementName === "system.auto_points") {
+            // A primeira coisa a fazer é salvar o novo estado do checkbox
+            updateData["system.auto_points"] = autoPoints;
+
+            // Se o usuário acabou de LIGAR a automação,
+            // devemos recalcular os pontos imediatamente
+            if (autoPoints === true) {
+                const difficulty = formData["system.difficulty"];
+                const relativeLevel = formData["system.skill_level"];
+                updateData[pointsField] = this._calculateSkillPoints(difficulty, relativeLevel);
+            }
+            // Se o usuário DESLIGOU, não fazemos nada (apenas salvar o estado 'false')
+        } 
+        // --- Caso B: O Nível ou a Dificuldade mudaram ---
+        else {
+            // Só calculamos se a automação estiver LIGADA
+            if (autoPoints) {
+                const difficulty = formData["system.difficulty"];
+                const relativeLevel = formData["system.skill_level"];
+                const newPoints = this._calculateSkillPoints(difficulty, relativeLevel);
+                
+                // Só atualiza se o valor realmente mudou
+                if (foundry.utils.getProperty(this.item, pointsField) !== newPoints) {
+                    updateData[pointsField] = newPoints;
+                }
+            }
+        }
+
+        // 4. Se houver *qualquer coisa* para atualizar (o checkbox ou os pontos),
+        //    envia UMA ÚNICA atualização para o banco de dados.
+        if (Object.keys(updateData).length > 0) {
+            // Esta atualização salvará os dados E disparará o re-render,
+            // garantindo que o HTML reflita os dados corretos.
+            await this.item.update(updateData);
+        }
+    }
 
   async _render(force, options) {
       await super._render(force, options);
@@ -191,6 +299,8 @@ export class GurpsItemSheet extends ItemSheet {
    */
   activateListeners(html) {
       super.activateListeners(html);
+
+    html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"]').on('change', this._onAutoCalcPoints.bind(this));
 
       // Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
       html.find('.add-attack').on('click', (ev) => {

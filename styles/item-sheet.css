@@ -393,8 +393,8 @@
 .gum.sheet.item .custom-checkbox input[type="checkbox"]:checked + span::after {
   content: '';
   position: absolute;
-  left: 5px;
-  top: 4px;
+  left: 10px;
+  top: 8px;
   width: 3px;
   height: 7px;
   border: solid #111;
