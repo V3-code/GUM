@@ -156,11 +156,13 @@
     "spell": {
       "templates": ["base"],
       "points": 4, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Regular", "spell_school": "Magia Geral", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "",
+      "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
       "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
     "power": {
       "templates": ["base"],
       "points": 10, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "activation_time": "1s", "duration": "1 min", "activation_cost": "2", "maint_cost":"1", "spell_class": "Regular", "difficulty": "D", "source": "Biológico", "resistance": "", "effect": "", "modifiers": {},
+       "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
        "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
     "condition": {
