@@ -36,7 +36,7 @@ export default class DamageApplicationWindow extends Application {
         return super.close(options);
     }
 
-    async getData() {
+async getData() {
         const context = await super.getData();
         context.damage = this.damageData;
         context.attacker = this.attackerActor;
@@ -79,7 +79,6 @@ export default class DamageApplicationWindow extends Application {
         for (const [key, data] of Object.entries(locationsData)) {
             if (key !== "custom" && finalActorDR[key] !== undefined) {
                 const drValue = finalActorDR[key];
-                // ✅ CORREÇÃO: Salva a RD BASE no dataset.dr para a exibição inicial
                 if (typeof drValue === 'object' && drValue !== null) {
                     data.dr = parseInt(drValue.base) || 0;
                 } else {
@@ -96,13 +95,67 @@ export default class DamageApplicationWindow extends Application {
 
         context.locations.sort((a, b) => { const firstRollA = parseInt(a.roll.split(/[,-]/)[0]); const firstRollB = parseInt(b.roll.split(/[,-]/)[0]); if (isNaN(firstRollA)) return 1; if (isNaN(firstRollB)) return -1; return firstRollA - firstRollB; });
         
-        // --- Wounding Modifiers ---
+        // --- Wounding Modifiers (PADRONIZADO PARA PT-BR) ---
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
-        const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
+        
+        // ✅ ATUALIZAÇÃO: Abreviações em PT-BR
+        const woundingModifiersList = [ 
+            { type: "Queimadura", abrev: "qmd", mult: 1 }, 
+            { type: "Corrosão", abrev: "cor", mult: 1 }, 
+            { type: "Toxina", abrev: "tox", mult: 1 }, 
+            { type: "Contusão", abrev: "cont", mult: 1 }, 
+            { type: "Corte", abrev: "cort", mult: 1.5 }, 
+            { type: "Perfuração", abrev: "perf", mult: 2 }, 
+            { type: "Perfurante", abrev: "pa", mult: 1 }, 
+            { type: "Pouco Perfurante", abrev: "pa-", mult: 0.5 }, 
+            { type: "Muito Perfurante", abrev: "pa+", mult: 1.5 }, 
+            { type: "Ext. Perfurante", abrev: "pa++", mult: 2 } 
+        ];
+        
         let defaultModFound = false;
         context.woundingModifiers = woundingModifiersList.map(mod => { mod.checked = (mod.abrev === mainDamageType); if (mod.checked) defaultModFound = true; return mod; });
         context.noModChecked = !defaultModFound;
         return context;
+    }
+    
+    // ... (restante das funções ... _getDynamicDR, getEffectDescription, activateListeners, _updateDamageCalculation, etc. ... NÃO MUDAM) ...
+
+    // ✅ ATUALIZAÇÃO: Esta função também precisa usar PT-BR
+    _getAdjustedWoundingModifiers(locationKey) {
+        // Lista base com as abreviações em PT-BR
+        const baseMods = [ 
+            { group: 1, type: "Corte", abrev: "cort", mult: 1.5 }, 
+            { group: 1, type: "Perfuração", abrev: "perf", mult: 2 }, 
+            { group: 1, type: "Contusão", abrev: "cont", mult: 1 }, 
+            { group: 2, type: "Queimadura", abrev: "qmd", mult: 1 }, 
+            { group: 2, type: "Corrosão", abrev: "cor", mult: 1 }, 
+            { group: 2, type: "Toxina", abrev: "tox", mult: 1 }, 
+            { group: 3, type: "Perfurante", abrev: "pa", mult: 1 }, 
+            { group: 3, type: "Pouco Perfurante", abrev: "pa-", mult: 0.5 }, 
+            { group: 3, type: "Muito Perfurante", abrev: "pa+", mult: 1.5 }, 
+            { group: 3, type: "Ext. Perfurante", abrev: "pa++", mult: 2 }
+        ];
+
+        // Lógica de localização (agora usando as chaves PT-BR)
+        if (["head", "eyes"].includes(locationKey)) { 
+            return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "tox" ? 1 : 4 })); 
+        }
+        if (locationKey === "face") { 
+            return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "cor" ? 1.5 : mod.mult })); 
+        }
+        if (["arm_r", "arm_l", "leg_r", "leg_l", "hand_r", "hand_l", "foot_r", "foot_l"].includes(locationKey)) { 
+            // Procura por 'perf', 'pa+', 'pa++'
+            return baseMods.map(mod => { if (["perf", "pa+", "pa++"].includes(mod.abrev)) return { ...mod, mult: 1 }; return mod; }); 
+        } 
+        if (locationKey === "neck") { 
+            return baseMods.map(mod => { if (mod.abrev === "cor" || mod.abrev === "cont") return { ...mod, mult: 1.5 }; if (mod.abrev === "cort") return { ...mod, mult: 2 }; return mod; }); 
+        }
+        if (locationKey === "vitals") { 
+            // Procura por 'perf' e todos os 'pa'
+            return baseMods.map(mod => { if (["perf", "pa", "pa-", "pa+", "pa++"].includes(mod.abrev)) return { ...mod, mult: 3 }; return mod; }); 
+        }
+        
+        return baseMods;
     }
 
     // ==================================================================

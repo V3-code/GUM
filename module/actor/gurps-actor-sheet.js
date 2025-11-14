@@ -492,17 +492,25 @@ _getSubmitData(updateData) {
     }
 
 /**
-     * Converte a string de RD (ex: "5, 2 cont" ou "3 qmd")
-     * em um objeto de modificador (ex: {base: 5, cont: -3} ou {qmd: 3}).
+     * Converte a string de RD (ex: "5, 2 pi+" ou "3 cont")
+     * em um objeto de modificador (ex: {base: 5, "pa+": -3} ou {cont: 3}).
+     * ✅ AGORA COM TRADUÇÃO DE IDIOMA.
      */
     _parseDRStringToObject(drString) {
         if (typeof drString === 'object' && drString !== null) return drString;
-        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {}; // Retorna objeto VAZIO
+        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {}; 
         
+        // O DICIONÁRIO DE TRADUÇÃO
+        const DAMAGE_TYPE_MAP = {
+            "cr": "cont", "cut": "cort", "imp": "perf", "pi": "pa",
+            "pi-": "pa-", "pi+": "pa+", "pi++": "pa++", "burn": "qmd",
+            "corr": "cor", "tox": "tox"
+        };
+
         const drObject = {};
         const parts = drString.split(',').map(s => s.trim().toLowerCase());
         
-        let baseDR = 0; // Armazena o 'base' temporariamente
+        let baseDR = 0; 
 
         // 1. Primeira passada: Encontra o 'base'
         for (const part of parts) {
@@ -510,7 +518,7 @@ _getSubmitData(updateData) {
             if (segments.length === 1 && !isNaN(Number(segments[0]))) {
                 baseDR = Number(segments[0]);
                 drObject['base'] = baseDR;
-                break; // Encontrou a base, para
+                break; 
             }
         }
 
@@ -518,23 +526,23 @@ _getSubmitData(updateData) {
         for (const part of parts) {
             const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
             if (segments.length === 2 && !isNaN(Number(segments[0]))) {
-                const type = segments[1];
+                let type = segments[1];
                 const value = Number(segments[0]);
                 
-                // Se uma base foi definida (ex: "5, 2 cont"), salva a DIFERENÇA
+                // ✅ TRADUZ O TIPO
+                type = DAMAGE_TYPE_MAP[type] || type;
+
                 if (baseDR > 0) {
-                    drObject[type] = value - baseDR; // Ex: 2 - 5 = -3
+                    drObject[type] = value - baseDR; 
                 } 
-                // Se não há base (ex: "3 cont"), salva o valor como um bônus
                 else {
-                    drObject[type] = value; // Ex: { cont: 3 }
+                    drObject[type] = value; 
                 }
             }
         }
         
         return drObject;
     }
-
 activateListeners(html) {
     // ... (Todo o seu método activateListeners() permanece exatamente o mesmo) ...
     // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]

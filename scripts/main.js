@@ -15,6 +15,7 @@ import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect } from './effects-engine.js';
 import { GUM } from '../module/config.js';
+import { importFromGCS } from "../module/apps/importers.js";
 
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (NOVA)
@@ -502,6 +503,7 @@ async function applyActivationEffects(item, actor, outcome) {
 Hooks.once('init', async function() { 
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     game.gum = {};
+    game.gum.importFromGCS = importFromGCS;
 
     CONFIG.statusEffects = GUM.statusEffects;
     CONFIG.Actor.documentClass = GurpsActor;
@@ -955,6 +957,31 @@ Hooks.on("createItem", async (item, options, userId) => {
         if (ui.combat && !ui.combat.rendered) {
             ui.combat.render(true);
         }
+    });
+
+// ==========================================================
+    // ✅ NOVO HOOK: Adiciona o botão "Importar GCS" na barra de Atores
+    // ==========================================================
+Hooks.on("renderActorDirectory", (app, html, data) => {
+        // Apenas GMs podem ver o botão
+        if (!game.user.isGM) return;
+
+        const button = $(`
+            <button class="gcs-import-button" type="button" style="width: 100%; margin-bottom: 5px;">
+                <i class="fas fa-file-import"></i> Importar do GCS
+            </button>
+        `);
+        
+        button.on("click", () => {
+            // Chama a função de importação que está em importers.js
+            game.gum.importFromGCS();
+        });
+
+        // ✅ A CORREÇÃO REAL ESTÁ AQUI:
+        // Usamos $(html) em vez de $(html[0]).
+        // Isso lida corretamente com o parâmetro 'html'
+        // e permite o uso da função .find().
+        $(html).find(".directory-header .header-actions").append(button);
     });
 
 });

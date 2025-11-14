@@ -3,19 +3,16 @@
   "id": "gum",
   "version": "1.0.0",
   "description": "Adaptação não oficial do sistema GURPS para uso no Foundry VTT. Criado por fãs, sem fins lucrativos.",
-
   "authors": [
     {
       "name": "Victor Valentim",
       "url": "https://github.com/V3-code"
     }
   ],
-
   "compatibility": {
     "minimum": "11",
     "verified": "13"
   },
-
   "grid": {
     "distance": 1,
     "units": "m"
@@ -23,7 +20,6 @@
   "primaryTokenAttribute": "attributes.hp",
   "secondaryTokenAttribute": "attributes.fp",
   "initiative": "@attributes.basic_speed.final + (@attributes.dx.final/100) + (1d6/1000)",
-
   "esmodules": [
     "scripts/main.js",
     "scripts/gum-data.js",
@@ -41,8 +37,8 @@
     "module/apps/modifier-browser.js",
     "module/apps/effect-browser.js",
     "module/item/gurps-armor-sheet.js",
-    "module/apps/trigger-browser.js"
-    
+    "module/apps/trigger-browser.js",
+    "module/apps/importers.js" 
   ],
   "styles": [
     "styles/styles.css",
@@ -80,7 +76,7 @@
       "type": "Item",
       "private": false
     },
-        {
+    {
       "name": "conditions",
       "label": "[GUM] Condições",
       "system": "gum",
@@ -95,6 +91,63 @@
       "path": "./packs/regras",
       "type": "Item",
       "private": false
+    },
+    
+    {
+      "name": "skills",
+      "label": "[GUM] Perícias",
+      "system": "gum",
+      "path": "./packs/skills",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "advantages",
+      "label": "[GUM] Vantagens",
+      "system": "gum",
+      "path": "./packs/advantages",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "disadvantages",
+      "label": "[GUM] Desvantagens",
+      "system": "gum",
+      "path": "./packs/disadvantages",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "spells",
+      "label": "[GUM] Magias",
+      "system": "gum",
+      "path": "./packs/spells",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "powers",
+      "label": "[GUM] Poderes",
+      "system": "gum",
+      "path": "./packs/powers",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "equipment",
+      "label": "[GUM] Equipamentos",
+      "system": "gum",
+      "path": "./packs/equipment",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "armor",
+      "label": "[GUM] Armaduras",
+      "system": "gum",
+      "path": "./packs/armor",
+      "type": "Item",
+      "private": false
     }
   ],
   "license": "CC BY-NC-ND 4.0",
@@ -103,7 +156,3 @@
   "readme": "https://github.com/V3-code/GUM/blob/master/README.md",
   "bugs": "https://github.com/V3-code/GUM/issues"
 }
-
-
-
-

@@ -1,9 +1,7 @@
 // GUM/module/settings.js
 
 /**
- * ✅ A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
- * Esta é a lógica para a sua ideia do "botão de atualização".
- * Ela varre todos os personagens e atualiza seus itens vinculados.
+ * A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
  */
 async function syncCompendiumRules() {
     ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
@@ -28,20 +26,14 @@ async function syncCompendiumRules() {
 
     for (const actor of actorsToUpdate) {
         const updates = [];
-        
-        // ✅ CORREÇÃO 1: Lendo a propriedade moderna '_stats.compendiumSource'
-        //    em vez do antigo 'flags.core.sourceId'.
         const itemsToUpdate = actor.items.filter(i => i._stats.compendiumSource);
 
         for (const item of itemsToUpdate) {
-            // ✅ CORREÇÃO 2: Lendo a propriedade moderna.
             const sourceId = item._stats.compendiumSource; 
-            
             const sourceRule = sourceRulesMap.get(sourceId);
 
             if (sourceRule) {
                 const sourceData = sourceRule.toObject();
-                // Não atualizamos o nome, apenas o 'system' e 'img'
                 updates.push({
                     _id: item.id,
                     system: sourceData.system,
@@ -58,6 +50,9 @@ async function syncCompendiumRules() {
 
     ui.notifications.info(`Sincronização completa! ${updateCount} regras atualizadas em ${actorsToUpdate.length} personagens.`);
 }
+
+// --- IMPORTA A LÓGICA DOS IMPORTADORES ---
+import { importFromJson, importFromGCS } from "./apps/importers.js";
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
@@ -110,6 +105,40 @@ export const registerSystemSettings = function() {
                 console.log("GUM | Sincronização de regras iniciada pelo GM...");
                 syncCompendiumRules(); 
                 game.settings.set("gum", "syncCompendiumRulesBtn", false); 
+            }
+        }
+    });
+
+    // =============================================================
+    // NOVOS BOTÕES DE IMPORTAÇÃO
+    // =============================================================
+
+    game.settings.register("gum", "importGCSButton", {
+        name: "Importar Personagem do GCS",
+        hint: "Importa uma ficha de personagem completa a partir de um arquivo .gcs (JSON). Isso criará um novo Ator.",
+        scope: "world",
+        config: true,
+        type: Boolean, // Usamos Boolean como um "botão"
+        default: false,
+        onChange: (value) => {
+            if (value) {
+                importFromGCS(); // Chama a função do importers.js
+                game.settings.set("gum", "importGCSButton", false); // Reseta o botão
+            }
+        }
+    });
+
+    game.settings.register("gum", "importJSONButton", {
+        name: "Importar Itens (JSON)",
+        hint: "Ferramenta do Mestre. Importa um arquivo .json de itens (Perícias, Vantagens, etc.) diretamente para o compêndio do sistema correspondente.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: (value) => {
+            if (value) {
+                importFromJson(); // Chama a função do importers.js
+                game.settings.set("gum", "importJSONButton", false); // Reseta o botão
             }
         }
     });
