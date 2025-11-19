@@ -94,11 +94,12 @@ export async function importFromJson() {
 
 /**
  * Função auxiliar que TRADUZ e importa os dados para um compêndio.
+ * (VERSÃO 3 - CORRIGIDA)
  */
 async function importToCompendium(pack, gcsItems) {
     if (!pack || !gcsItems) return;
     
-    ui.notifications.info(`Traduzindo ${gcsItems.length} itens do GCS...`);
+    ui.notifications.info(`Traduzindo ${gcsItems.length} itens do GCS/JSON...`);
     const itemsToCreate = [];
     
     const packName = pack.metadata.name; 
@@ -114,6 +115,7 @@ async function importToCompendium(pack, gcsItems) {
     };
 
     let itemType = packNameToType[packName];
+    let isGenericJson = false;
     
     if (!itemType) {
         console.warn(`GUM | O compêndio "${pack.title}" não tem um tradutor GCS mapeado. Os dados JSON serão importados "como estão".`);
@@ -121,14 +123,30 @@ async function importToCompendium(pack, gcsItems) {
         if (!firstItemType) {
             return ui.notifications.error("O JSON não tem um 'type' e o compêndio não é padrão. Importação cancelada.");
         }
-        itemType = 'generic_json';
+        itemType = firstItemType; // Usa o tipo do primeiro item
+        isGenericJson = true; // Marca que não precisamos de tradução
     }
 
+    // ✅ INÍCIO DA CORREÇÃO: Detecta o formato do arquivo
+    // Verifica o primeiro item. Se ele tiver a chave "system",
+    // asumimos que o arquivo inteiro já está no formato do Foundry.
+    const isFoundryFormat = gcsItems[0]?.system && gcsItems[0]?.type;
+    
+    if (isFoundryFormat) {
+         console.log("GUM | Detectado JSON pré-formatado. Importando diretamente.");
+         isGenericJson = true; // Trata como genérico para pular a tradução
+    }
+    // ✅ FIM DA CORREÇÃO
 
     for (const gcsItemData of gcsItems) {
         let foundryItemData = null;
 
-        if (itemType === "skill") {
+        // Se for genérico (ou pré-formatado), não traduza
+        if (isGenericJson) {
+            foundryItemData = gcsItemData;
+        } 
+        // Caso contrário, traduza
+        else if (itemType === "skill") {
             foundryItemData = parseGCSLibrarySkill(gcsItemData);
         } else if (itemType === "advantage" || itemType === "disadvantage") {
             foundryItemData = parseGCSLibraryTrait(gcsItemData);
@@ -136,12 +154,12 @@ async function importToCompendium(pack, gcsItems) {
             foundryItemData = parseGCSLibraryEquipment(gcsItemData);
         } else if (itemType === "spell") {
             foundryItemData = parseGCSLibrarySpell(gcsItemData);
-        } else {
-            foundryItemData = gcsItemData;
         }
 
         if (foundryItemData) {
-            if(itemType !== 'generic_json') {
+            // Garante que o tipo do item seja o tipo esperado pelo compêndio
+            // (Se for genérico, o tipo já deve estar correto no JSON)
+            if(!isGenericJson) {
                 foundryItemData.type = itemType;
             }
             itemsToCreate.push(foundryItemData);
@@ -334,7 +352,6 @@ function parseGCSLibrarySpell(gcsSpell) {
         const gcsWeapon = gcsSpell.weapons[0]; 
         const defaultSkill = gcsWeapon.defaults?.find(d => d.type === "skill")?.name || gcsWeapon.defaults?.[0]?.type || "DX";
         
-        // ✅ CORREÇÃO: Garante que 'attack_roll' exista
         if (!template.attack_roll) {
             template.attack_roll = { skill_name: "", skill_level_mod: 0 };
         }
@@ -367,7 +384,6 @@ function parseGCSLibrarySpell(gcsSpell) {
         damageFormula = damageFormula.replace("sw", "gdb").replace("thr", "gdp");
         damageFormula = damageFormula.replace(/d(?!b|p|\d)/g, "d6");
         
-        // ✅ CORREÇÃO: Garante que 'damage' exista
         if (!template.damage) {
             template.damage = { formula: "", type: "", armor_divisor: 1 };
         }

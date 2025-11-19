@@ -148,6 +148,14 @@
       "path": "./packs/armor",
       "type": "Item",
       "private": false
+    },
+    {
+      "name": "macros",
+      "label": "[GUM] Macros",
+      "system": "gum",
+      "path": "./packs/macros",
+      "type": "Macro",
+      "private": false
     }
   ],
   "license": "CC BY-NC-ND 4.0",

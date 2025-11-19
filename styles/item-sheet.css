@@ -299,7 +299,7 @@
 /* --- ESTILO PARA INPUTS ESTREITOS --- */
 .gum.sheet.item .form-group.input-narrow input {
     /* Define uma largura máxima para o campo */
-    max-width: 75px; 
+    max-width: 100px; 
     /* Centraliza o próprio campo de input dentro da sua coluna na grid */
     margin-left: auto;
     margin-right: auto;

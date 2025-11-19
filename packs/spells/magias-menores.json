@@ -1,0 +1,3775 @@
+[
+  {
+    "name": "Esguicho",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 segundo",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Água",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador atira um pouco de água com um dedo. O alcance é de três metros. Teste Ataque Inato (Feixe) para acertar. Pode ser bloqueado ou evitado, mas não aparado. Insuficiente para causar projeção ou dano.</p>",
+      "chat_description": "Atira um pequeno esguicho de água de um dedo (alcance 3m).",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "Ataque Inato (Feixe)",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Esponja",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Água",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>As mãos do alvo disposto absorvem líquidos, como toalhas ou esponjas. Torcendo as mãos, espreme o líquido. Cada ciclo leva três segundos e remove 60 mililitros de fluido. Não confere proteção contra ácido, água fervente, etc.</p>",
+      "chat_description": "Faz as mãos do alvo disposto absorverem ou espremerem líquidos.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Fala Subaquática",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Água",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo ganha temporariamente a vantagem Fala Subaquática (p. MB59). Também é uma Magia de Comunicação & Empatia e uma Magia de Som.</p>",
+      "chat_description": "Concede ao alvo a vantagem Fala Subaquática.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Pernas de Marinheiro",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 hora",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Água",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo tem +3 para resistir ao enjoo marítimo (p. B433). Também é uma Magia de Cura.</p>",
+      "chat_description": "O alvo ganha +3 para resistir ao enjoo marítimo.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Sudorese",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Água",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O corpo do conjurador exala água suficiente para neutralizar os efeitos de contatos cíclicos: extinguindo chamas comuns se estiver em chamas, removendo ácido ou veneno, etc. evitando danos futuros.</p>",
+      "chat_description": "Exala água para neutralizar chamas, ácido ou veneno no corpo.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Comer como um Corvo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Alimentos",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Entorpece as papilas gustativas de um sujeito disposto, evitando a náusea ou vómito (pp. MB428) desencadeada pelo gosto. Não evita envenenamento ou outros tipos de náusea. Também é uma magia Controle de Corpo.</p>",
+      "chat_description": "Entorpece as papilas gustativas de um alvo disposto para evitar náusea por gosto.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Encontrar Ingrediente",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Informação",
+      "spell_school": "Alimentos",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Deve ser lançado em espaço dedicado à preparação ou armazenamento de alimentos (cozinha, despensa, etc). O conjurador pode especificar um ingrediente antes de lançar. Se presente, o feitiço o faz se destacar em sua visão.</p>",
+      "chat_description": "Localiza um ingrediente específico em uma cozinha ou laboratório.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Trapaça do Glutão",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Alimentos",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Sujeitos dispostos podem comer como um desleixado, mas não sujar o rosto, as mãos ou as roupas. Desvia a matéria comestível em direção à boca.</p>",
+      "chat_description": "Permite que um alvo disposto coma sem sujar o rosto, mãos ou roupas.",
+      "ref": "MM6",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Chamar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Animal",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador chama qualquer animal conhecido e treinado (como um animal de estimação ou montaria) de longe. A besta recebe +3 em seu teste de Audição para perceber isso. Também é uma Magia de Som.</p>",
+      "chat_description": "Chama um animal treinado conhecido, dando a ele +3 em Audição para perceber.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Escovar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Animal",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo pode usar as mãos nuas para escovar, pentear e, de outra forma, cuidar do pelo de qualquer animal. Não confere nenhuma habilidade especial, apenas elimina a necessidade de ferramentas.</p>",
+      "chat_description": "Permite ao alvo cuidar do pelo de um animal com as mãos nuas.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Anti-Fedor",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Ar",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Filtra o olfato de um sujeito desejoso, evitando a náusea ou vómito (pp. MB428) desencadeada por odores. Não ajuda contra outros efeitos aéreos. Também é uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Filtra o olfato de um alvo disposto, evitando náusea por odores.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Bênção do Mergulhador",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Até que o tempo de respiração duplicado do sujeito expire",
+      "mana_cost": "2",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Ar",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Duplica o tempo de retenção da respiração do objetivo, como um nível de Prender a Respiração (p. MB80). O alvo deve prender a respiração em seu turno imediatamente após o feitiço ser lançado. Também é uma Magia de Controle do Corpo.</p>",
+      "chat_description": "Duplica o tempo de retenção da respiração do alvo.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Respiração poderosa",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 segundo",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Ar",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador exala uma corrente de ar forte o suficiente para espalhar poeira e apagar velas de forma confiável a dois metros. Não tem valor de combate.</p>",
+      "chat_description": "Exala ar forte para espalhar poeira ou apagar velas a dois metros.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Abrigar-se contra Tempestades",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 hora",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Clima",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O mau tempo que afeta o alvo, pessoalmente, comporta-se como se fosse um passo menos grave na tabela em Magia, p. 194. Na maioria das vezes significa -1 em testes para evitar cair no mar, etc. Também é uma Magia de Ar e uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Reduz a gravidade do mau tempo para o alvo em um passo.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Choque",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea (Atordoamento)",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Projétil",
+      "spell_school": "Clima",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT+1 (com bônus de RD)",
+      "effect": "Dispara um choque elétrico (Prec 0, 1/2D 5, Máx 10) que pode atordoar.",
+      "description": "<p>A eletricidade sai da mão do conjurador. Prec 0, 1/2D 5, Máx. 10. Teste Ataque Inato (Projétil). Alvo deve rolar HT+1 para resistir a ficar atordoado (bônus igual a RD; metal=RD 1; +3 além do alcance 1/2D). O MJ pode permitir investir até AM em energia (máx 3s), onde o teste para resistir é HT+2, -1 por ponto de energia. Também é uma Magia de Ar.</p>",
+      "chat_description": "Dispara um choque elétrico (Prec 0, 1/2D 5, Máx 10) que pode atordoar.",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "Ataque Inato (Projétil)",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Nuvenzinha",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Clima",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "Vontade",
+      "effect": "Cria uma nuvem em miniatura sobre um alvo (Resistido por Vontade).",
+      "description": "<p>Resistido por Vontade. Uma nuvem em miniatura se aglutina alguns centímetros acima do objeto e o segue. Concede +1 nos testes de Visão para notar o alvo e -1 na Furtividade dele. Também um feitiço de Ar e uma Magia de Água.</p>",
+      "chat_description": "Cria uma nuvem em miniatura sobre um alvo (Resistido por Vontade).",
+      "ref": "MM7",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Drama",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Comunicação & Empatia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador falsifica uma emoção forte (raiva, medo, alegria, etc). Funciona como Dissimulação, mas perícias como Linguagem Corporal e Detecção de Mentiras não conseguem penetrar. Apenas magias (Aura, Perceber Emoção) detectam. Também é uma Magia de Controle da Mente.</p>",
+      "chat_description": "Falsifica uma emoção forte, indetectável por perícias mundanas.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Ouvi!",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Reação",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Bloqueio",
+      "spell_school": "Comunicação & Empatia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Não bloqueia um ataque, mas envia uma prova instantânea de identidade em resposta a uma mensagem mágica (ex: Mensagem, Telepatia). Permite ao outro conjurador saber que sua mensagem foi recebida e por quem.</p>",
+      "chat_description": "Envia uma confirmação de identidade em resposta a uma magia de mensagem.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Sinal mágico",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "3s",
+      "duration": "Até que o alvo faça um teste de Gestos",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Comunicação & Empatia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Sujeito ignora -3 por falta de Familiaridade Cultural (p. MB23) para um uso de Mímica/Pantomima (p. MB212). Se a Mímica/Pantomima for bem-sucedida, qualquer ser IQ 6+ que possa perceber o gesto apreende seu significado.</p>",
+      "chat_description": "Ignora -3 de penalidade de Familiaridade Cultural para Mímica/Pantomima.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Adjuração",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1 min",
+      "duration": "Permanente",
+      "mana_cost": "4",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Controle da Mente",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Idêntico ao feitiço Juramento (GURPS Magia) mas funciona apenas no conjurador. Um ritual para fazer uma ligação sobrenatural.</p>",
+      "chat_description": "Funciona como a magia Juramento, mas apenas no próprio conjurador.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Hipnotizar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "5s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Controle da Mente",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "Especial",
+      "effect": "Funciona como a perícia Hipnotismo (p. MB203) mas com duração limitada.",
+      "description": "<p>Funciona como a perícia Hipnotismo (p. MB203), sendo mais fácil (IQ/M ao invés de IQ/D), em troca de um custo de energia e duração mais limitada. Resistência Especial.</p>",
+      "chat_description": "Funciona como a perícia Hipnotismo (p. MB203) mas com duração limitada.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Paciência",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Controle da Mente",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo, que deve estar disposto, ganha os efeitos de Atento (pág. MB163) com respeito a uma tarefa específica e longa: +1 para testes para aquela atividade, -3 para notar qualquer outra coisa.</p>",
+      "chat_description": "Alvo disposto ganha +1 em testes para uma tarefa longa e específica, mas -3 para notar outras coisas.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Sobressalto",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Controle da Mente",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "Vontade",
+      "effect": "Alvo que falha em resistir (Vontade) fica assustado. Funciona apenas em ambientes calmos.",
+      "description": "<p>Resistido por Vontade. O sujeito que não consegue resistir fica assustado. Funciona apenas em ambientes calmos, nunca em situações sociais barulhentas, perseguições, combate, etc. Equivalente mágico de gritar \"Boo!\".</p>",
+      "chat_description": "Alvo que falha em resistir (Vontade) fica assustado. Funciona apenas em ambientes calmos.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Volatilidade",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1-3",
+      "mana_maint": "1-3",
+      "spell_class": "Comum",
+      "spell_school": "Controle da Mente",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "Especial (Vontade + energia)",
+      "effect": "Alvo sofre -1 a -3 (baseado no custo) em seu próximo teste de autocontrole.",
+      "description": "<p>Resistência Especial (Vontade + energia). Alvo que falha em resistir sofre penalidade igual ao custo (-1 a -3) para seu próximo teste de autocontrole. Termina após o teste.</p>",
+      "chat_description": "Alvo sofre -1 a -3 (baseado no custo) em seu próximo teste de autocontrole.",
+      "ref": "MM8",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Abafar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Reação",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Bloqueio",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "Magia alvo",
+      "effect": "Suprime um arroto, tosse, espirro, etc. iminente.",
+      "description": "<p>Não para um ataque, mas um arroto, tosse, peido, espirro, etc. Resiste a magias como Arroto. O sucesso (vitória) suprime a emanação. Deve ser lançada a cada segundo contra irritação contínua.</p>",
+      "chat_description": "Suprime um arroto, tosse, espirro, etc. iminente.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Arroto",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT",
+      "effect": "Alvo (Resistido por HT) arrota alto uma vez.",
+      "description": "<p>Resistido por HT. O sujeito arrota alto uma vez. Pode valer +1 para audição para perceber a vítima, ou -1 para reações a ela.</p>",
+      "chat_description": "Alvo (Resistido por HT) arrota alto uma vez.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Destacar-se",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT",
+      "effect": "Aguça as características faciais do alvo (Resistido por HT). -1 para se esconder, +1 para ser reconhecido.",
+      "description": "<p>Resistido por HT. Aguça as características faciais do alvo, revertendo os modificadores de Misturar-se: -1 para esconder-se na multidão, +1 para testes para reconhecê-los ou recuperá-los. Também é uma Magia de Ilusão & Criação.</p>",
+      "chat_description": "Aguça as características faciais do alvo (Resistido por HT). -1 para se esconder, +1 para ser reconhecido.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Flexibilidade",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo se torna um pouco mais flexível: +1 em todos os testes cobertos pela vantagem do mesmo nome (pág. MB60): Escalada, Escapar, libertar-se, etc. O MJ pode permitir bônus maior (até AM) por +1 de energia por +1 de bônus.</p>",
+      "chat_description": "Alvo ganha +1 em testes cobertos pela vantagem Flexibilidade (Escalada, Escapar, etc).",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Incômodo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT",
+      "effect": "Causa desconforto trivial no alvo (Resistido por HT). Sem penalidades, apenas irritante.",
+      "description": "<p>Resistido por HT. O objetivo sofre um desconforto trivial. Não dá penalidades e não causa incapacidade, é apenas um pouco irritante. Hipoalgia e Imunidade à Dor garantem imunidade.</p>",
+      "chat_description": "Causa desconforto trivial no alvo (Resistido por HT). Sem penalidades, apenas irritante.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Misturar-se",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Controle do Corpo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT",
+      "effect": "Traços faciais do alvo (Resistido por HT) perdem distinção. +1 para misturar-se, -1 para ser reconhecido.",
+      "description": "<p>Resistido por HT. Os traços faciais do alvo perdem distinção, concedendo +1 para misturar-se a multidões e dando -1 aos outros a testes para reconhecê-lo. Falha em alvos com aparência incomum. Também é um feitiço de Ilusão e Criação.</p>",
+      "chat_description": "Traços faciais do alvo (Resistido por HT) perdem distinção. +1 para misturar-se, -1 para ser reconhecido.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Analgésico",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O sujeito é mais resistente à dor persistente, ignorando -1 nas penalidades dos efeitos que a causam. Nenhum efeito no choque repentino em combate. O MJ pode permitir remover penalidade até AM, por 1 de energia por -1 removido. Também é uma Magia de Controle de Corpo.</p>",
+      "chat_description": "Alvo ignora -1 em penalidades de dor persistente (não choque de combate).",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Auxiliar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador pode apoiar melhor outros curandeiros mágicos. Quando auxiliar Magias de Cura Cerimoniais (p. MB238), eles podem sempre contribuir com pelo menos 3 energias, independentemente de suas habilidades.</p>",
+      "chat_description": "Permite ao conjurador contribuir com pelo menos 3 energias ao auxiliar Magias de Cura Cerimoniais.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Auxílio",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador pode tentar as tarefas de Primeiros Socorros (p. MB424) sem nenhuma penalidade por falta de equipamento. Não confere perícia Primeiros Socorros (pré-definida como IQ-4).</p>",
+      "chat_description": "Permite ao conjurador tentar tarefas de Primeiros Socorros sem penalidade por falta de equipamento.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Controle de Natalidade",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "7s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O sujeito voluntário ganha o benefício de um controle de natalidade perfeito ao copular com um ser da mesma espécie ou extremamente semelhante. Também é uma Magia de Controle de Corpo.</p>",
+      "chat_description": "Concede ao alvo voluntário controle de natalidade perfeito.",
+      "ref": "MM9",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Suportar Alcool",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo ganha o benefício de Tolerância ao Álcool (pág. MB101) e também Sem Ressaca (pág. MB101), se o feitiço for mantido. Também é uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Alvo ganha os benefícios de Tolerância ao Álcool e Sem Ressaca.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Teste",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "30s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Informação",
+      "spell_school": "Cura",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Revela se uma doença ou veneno específico afetam o alvo. Um feitiço de Teste diferente existe para cada enfermidade: Teste (Lepra), Teste (Veneno de Víbora), etc. Uma tentativa por dia por alvo. Também é uma Magia de Reconhecimento.</p>",
+      "chat_description": "Revela se uma doença ou veneno específico afeta o alvo. (Uma magia por enfermidade)",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Amortecer",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Reação",
+      "duration": "Instantânea",
+      "mana_cost": "Varia",
+      "mana_maint": "0",
+      "spell_class": "Bloqueio",
+      "spell_school": "Deslocamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Encerra uma queda. Lance imediatamente antes do impacto. O custo de energia é igual ao dano de queda rolado. Sucesso significa que o conjurador paga a Fadiga mas não sofre dano. Falha, paga a Fadiga E sofre o dano.</p>",
+      "chat_description": "Encerra uma queda. Custo de energia é igual ao dano de queda rolado.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Escape",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "2-6",
+      "mana_maint": "1-3",
+      "spell_class": "Comum",
+      "spell_school": "Deslocamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Aumenta o movimento do alvo em situações onde Deslocamento Ampliado (p. MB52) ou Disparada (p. MB353) se aplica. Custo: 2 por +1 para mover (máximo +3 para mover). Metade disso para manter.</p>",
+      "chat_description": "Concede +1 a +3 de Deslocamento (custo 2 por +1).",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Porta aberta",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s ou Reação",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum ou Bloqueio",
+      "spell_school": "Deslocamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Faz com que a porta em questão se abra sozinha, como se o conjurador a tivesse empurrado com uma mão. Inútil em portais trancados, presos ou muito pesados. Pode ser lançado como Bloqueio para evitar que uma porta bata na cara.</p>",
+      "chat_description": "Faz uma porta destrancada se abrir sozinha, como se empurrada.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Submergir",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "3s",
+      "duration": "1 minuto",
+      "mana_cost": "3",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Deslocamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O sujeito, que deve estar disposto, ganha temporariamente Incapaz de Flutuar (p. MB165). Pode ser lançado sobre um objeto inanimado, mas se isso mantém alguém à tona, todos os afetados devem estar dispostos. Também é uma Magia de Água.</p>",
+      "chat_description": "Concede ao alvo (disposto) a desvantagem Incapaz de Flutuar.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Bastão Emergencial",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 segundo",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Especial",
+      "spell_school": "Encantamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O Conjurador brevemente impregna um objeto que poderia aceitar la magia Cajado (Magia, p. 70) com a magia similar. Funciona apenas em um item em mãos. Termina se o conjurador perder contato com o alvo.</p>",
+      "chat_description": "Impregna temporariamente um objeto em mãos com a magia 'Cajado' (Magia, p. 70).",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Guarda de Magos",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "5s",
+      "duration": "1 hora",
+      "mana_cost": "3",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Encantamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo pode chegar até 10 metros de um processo de encantamento Rápido e Sujo sem infligir -1 na perícia do conjurador (Magia, pág. 17). Não esconde o alvo da magia... Apenas evita que os guardas e servos comprometam o encantamento.</p>",
+      "chat_description": "Alvo pode ficar a 10m de um encantamento Rápido e Sujo sem dar penalidade.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Substituto de Feiticeiro",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1 min",
+      "duration": "1 dia",
+      "mana_cost": "8",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Encantamento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo pode substituir um assistente (mas nunca o conjurador!) em um local de encantamento Longo e Seguro (Magia, p. 18)... O Substituto de Feiticeiro não contribui com Dias-Mago... O alvo deve estar tocando o assistente que ele substituirá.</p>",
+      "chat_description": "Alvo substitui um assistente em encantamento Longo e Seguro para evitar interrupção.",
+      "ref": "MM10",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Afixar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1 por 30g",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Fazer & Quebrar",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Prende uma folha fina e leve com RD 0 (por exemplo, papel) em uma superfície com no máximo RD 1 por polegada de espessura (como um painel de parede). ... Evita que a folha caia, não seja removida.</p>",
+      "chat_description": "Prende uma folha leve (papel) em uma superfície (parede) (RD 0 em RD 1 max).",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Oficina Mágica",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "5s",
+      "duration": "1 minuto",
+      "mana_cost": "2-10",
+      "mana_maint": "2-10",
+      "spell_class": "Comum",
+      "spell_school": "Fazer & Quebrar",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Reduz a penalidade sofrida por um alvo cujos Modificadores de Equipamentos (p. MB345) com uma perícia de oficio ou reparo (-6 ou pior) sejam reduzidos. Custo 2 por -1 removido (máx 10 energia para -5). ... Também é uma Magia de Deslocamento e uma Magia Tecnológica.</p>",
+      "chat_description": "Reduz a penalidade de Modificadores de Equipamento (-6 ou pior) em 1 a 5 (custo 2 por -1).",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Brasa",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Projétil",
+      "spell_school": "Fogo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Lança uma faísca quente com uma das mãos. Tem Prec 0, 1/2D n/a, Máx 10. Use Ataque Inato (Projétil). Afeta o alvo apenas como um segundo de um feitiço Atear Fogo de um ponto. Pode incendiar alvos Superinflamáveis ou Altamente Inflamáveis.</p>",
+      "chat_description": "Lança uma faísca (Prec 0, Max 10). Acende alvos Super/Altamente Inflamáveis.",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "Ataque Inato (Projétil)",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Fumo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "10 segundos",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Fogo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Cria um fluxo fino e constante de fumaça, comparável ao de um charuto ou cachimbo. Não bloqueia a visão ou sufoca, mas é suficiente para sinalizar no ar parado ou acionar detectores de fumaça.</p>",
+      "chat_description": "Cria um fluxo fino e constante de fumaça (como um charuto).",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Luvas de forno",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Fogo",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>As mãos do alvo (somente!) Ganham RD 1 vs. dano de queima de calor ou fogo. Outras partes do corpo e bens estão desprotegidos. Também é uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Mãos do alvo ganham RD 1 contra dano de calor ou fogo.",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Descrer",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s ou Reação",
+      "duration": "1 segundo",
+      "mana_cost": "1-5",
+      "mana_maint": "0",
+      "spell_class": "Comum ou Bloqueio",
+      "spell_school": "Ilusão & Criação",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Conjurada antes do conjurador tenta 'descrer' Ilusão Simples ou Cobertura Ilusória. O bônus para a Vontade testada no turno seguinte é igual à energia do feitiço: +1 a +5. Também é uma Magia de Controle da Mente.</p>",
+      "chat_description": "Concede +1 a +5 (custo 1 por +1) no teste de Vontade para 'descrer' de Ilusão Simples/Cobertura.",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Imagem",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "Metade",
+      "spell_class": "Área",
+      "spell_school": "Ilusão & Criação",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Projeta uma imagem bidimensional estacionária, imutável, em uma superfície. A qualidade depende de perícia Artista (Ilusão). A descrença é automática, mas não a dissipará; qualquer toque, ataque ou feitiço irá dissipá-la.</p>",
+      "chat_description": "Projeta uma imagem 2D estacionária e imutável em uma superfície.",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Truque de Sombras",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "Metade",
+      "spell_class": "Área",
+      "spell_school": "Ilusão & Criação",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Projeta sombras que se movem, modificam-se, e são bidimensionais como silhuetas de mãos. ... Sendo sombras, faltam cores e detalhes finos. Também é uma Magia Luz & Trevas.</p>",
+      "chat_description": "Projeta sombras 2D que se movem e se modificam (como fantoches de sombra).",
+      "ref": "MM11",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Cintilação",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Luz & Trevas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Produz uma luz muito pequena, como uma estrela no céu noturno ou no máximo um vaga-lume. Qualquer que seja a penalidade que os testes de Visão teriam com apenas o feitiço Luz, Cintilação é -2 pior. Move-se com Deslocamento 1 (requer Concentrar).</p>",
+      "chat_description": "Cria uma luz muito pequena (vaga-lume). Penalidade de Visão é -2 pior que 'Luz'.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Fosforescência",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "Instantânea",
+      "mana_cost": "2",
+      "mana_maint": "0",
+      "spell_class": "Área",
+      "spell_school": "Luz & Trevas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Tudo na área emite luz suave por alguns instantes. Isso dá a todos com uma linha de visão para a área um teste de Visão sem penalidades de escuridão. O sucesso revela um instantâneo do que está na área.</p>",
+      "chat_description": "Tudo na área emite um brilho suave por um instante.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Proteger os Olhos",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Luz & Trevas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo ignora -1 nas penalidades de Visão devido à luz brilhante e recebe +1 nos testes de HT para resistir aos efeitos deslumbrantes (como Lampejo) e nos testes de Vontade para resistir à distração por luzes brilhantes. Também é uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Alvo ignora -1 de penalidade de Visão por luz brilhante e ganha +1 em testes de HT contra cegueira.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Devaneio da Ruína",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Varia (20-perícia)s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Informação",
+      "spell_school": "Necromancia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador medita sobre sua morte e recebe uma premonição como Visão da Morte (Magia, p 149.), mas pior: jogue 3d na Tabela de Verificação de Pânico (p. MB360) para efeitos. ...pode revelar um perigo mortal.</p>",
+      "chat_description": "Conjurador medita sobre a morte e recebe uma premonição (requer Verificação de Pânico).",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Fim Dramático",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Reação (na morte)",
+      "duration": "Permanente",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Especial",
+      "spell_school": "Necromancia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador pode usar este feitiço immediately após morrer... O sucesso dá visuais impressionantes: cabeça explodindo, carne desintegrando, etc. Esses efeitos não causam danos... Duração: Muito permanente - o conjurador não pode ser ressuscitado por nada que requeira um corpo ou cérebro intacto!</p>",
+      "chat_description": "Usado no momento da morte para criar efeitos visuais impressionantes (mas inofensivos).",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Súplica",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Especial",
+      "spell_school": "Necromancia",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Permite que o conjurador pronuncie o nome de um demônio, pessoa morta ou entidade semelhante de uma maneira que seja garantido a ser ouvido no Inferno, no Outro Lado, etc. Também é uma magia de Portal.</p>",
+      "chat_description": "Pronuncia o nome de um demônio, morto, etc. de forma que ele ouça.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Feitiço de Semeadura",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Plantas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>A pessoa pode plantar sementes simplesmente jogando-as no ar enquanto caminha. Estes se dispersam perfeitamente e afundam na profundidade correta.</p>",
+      "chat_description": "Permite plantar sementes jogando-as no ar enquanto caminha.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Ritual de colheita",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Plantas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O indivíduo pode easily colher plantas alimentícias com as mãos nuas... sem danificar o produto ou reunir partes não comestíveis. ...permite um teste extra de Procurando Alimento (p. MB427) por hora. Também é uma Magia de Alimento.</p>",
+      "chat_description": "Permite colher plantas alimentícias facilmente com as mãos nuas, sem danificar o produto.",
+      "ref": "MM12",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Passagem Facilitada",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Portal",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Facilita o transporte de um objeto voluntário com todas as formas de teletransporte, viagem no tempo, etc. ... Testes para usar tais recursos neles recebem +1. ... Também é uma Meta-Mágica.</p>",
+      "chat_description": "Alvo ganha +1 em testes para ser transportado magicamente (teleporte, etc.).",
+      "ref": "MM13",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Reorientar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "Reação",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Bloqueio",
+      "spell_school": "Portal",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Conjurada em resposta ao teletransporte, ou viagem no tempo ou dimensão... no lugar de um teste de Percepção do Corpo na chegada. Aplique -5, a menos que a viagem seja permitida. Também é uma Magia de Deslocamento.</p>",
+      "chat_description": "Usado no lugar de um teste de Percepção do Corpo ao chegar de transporte mágico. Penalidade -5 se a viagem não for permitida.",
+      "ref": "MM13",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Antecipar",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Proteção e Advertência",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo é menos vulnerável a ataques traiçoeiros: A penalidade total para se defender contra ataques laterais, Ataques enganosos, etc. é 1 menos severa. O MJ pode permitir remover penalidade até AM (custo 2 por -1 removido).</p>",
+      "chat_description": "Penalidade total para se defender de ataques (laterais, enganosos, etc.) é 1 menos severa.",
+      "ref": "MM13",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Repelente de insetos",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "1 hora",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Proteção e Advertência",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo torna-se pouco atraente para moscas, mosquitos e vermes naturais semelhantes. Tão eficaz quanto as substâncias repelentes conhecidas no NT do conjurador. Também é uma Magia de Animais.</p>",
+      "chat_description": "Torna o alvo repelente a insetos naturais comuns (moscas, mosquitos, etc.).",
+      "ref": "MM13",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Conhece a Ti Mesmo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "5s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Reconhecimento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Organiza o pensamento do sujeito, dando +1 à Oratória ou Pedagogia com o único propósito de apresentar com veracidade seus conhecimentos. Ouvintes recebem +1 para detectar mentiras. Também é uma Magia de Controle da Mente.</p>",
+      "chat_description": "Concede +1 à Oratória ou Pedagogia para apresentar seus conhecimentos com veracidade.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Doce esquecimento",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "10s",
+      "duration": "Permanente",
+      "mana_cost": "3",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Reconhecimento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador (apenas!) esquece um único fato (nunca uma língua, perícia, feitiço, etc.) - permanentemente. Magias de restauração de memória revertem o efeito. Também é uma Magia de Controle da Mente.</p>",
+      "chat_description": "O conjurador (apenas!) esquece permanentemente um único fato.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Localizar a chave",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "5s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Reconhecimento",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador lembra onde colocou um item que possui, mas não consegue encontrar (nunca fatos, eventos, etc.). Ajuda em testes de IQ para lembrar (especial para Distração). Também é uma Magia de Controle da Mente.</p>",
+      "chat_description": "O conjurador lembra onde colocou um item que possui, mas não consegue encontrar.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Audição Seletiva",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Som",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo ignora -1 nas penalidades de audição devido ao ruído, e recebe +1 nos testes de HT para resistir a ruídos ensurdecedores (como Trovão) e nos testes de Vontade para resistir à distração por sons. Também é uma Magia de Proteção & Advertência.</p>",
+      "chat_description": "Alvo ignora -1 de penalidade de audição por ruído e ganha +1 em testes de HT contra sons ensurdecedores.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Deslocar Voz",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Som",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O sujeito pode fazer o que o ventriloquismo faz: Fazer sua voz emergir literally de um ponto distante. Isso requer um teste de Ventriloquismo (p. MB227), a -1 por metro de distância; um sujeito sem perícia testa com IQ-6. Também é uma Magia de Controle de Corpo.</p>",
+      "chat_description": "Permite ao alvo fazer sua voz emergir de um ponto distante (requer teste de Ventriloquismo).",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Rangido",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 segundo",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Som",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Produz um som breve, de baixa intensidade e agudo semelhante a uma tábua de chão que range, dobradiça precisando de óleo, rato, etc. Use a linha 'farfalhar de folhas' na Tabela de Distância da Audição (p. MB358).</p>",
+      "chat_description": "Produz um som breve e baixo (tábua rangendo, rato, etc.).",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Mãos Impecáveis",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Terra",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Repele a sujeira. O sujeito pode plantar sementes, trabalhar argila ou cavar com as mãos nuas... sem sujar as mãos. Não repele nada além de 'terra', nem fornece proteção.</p>",
+      "chat_description": "Repele sujeira (terra) das mãos do alvo.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Patas de Texugo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 hora",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Terra",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O alvo pode cavar areia ou solo comum com as mãos nuas, como se estivesse equipado com uma pá de metal; ver Escavação (p. MB354). Quadruplica a velocidade de cavar com as mãos nuas.</p>",
+      "chat_description": "Permite ao alvo cavar areia ou solo comum com as mãos nuas, como se tivesse uma pá.",
+      "ref": "MM14",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Pele de Gárgula",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "2s",
+      "duration": "1 minuto",
+      "mana_cost": "2",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Terra",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "HT",
+      "effect": "Pele do alvo (Resistido por HT) assume a aparência (não dureza) de pedra.",
+      "description": "<p>Resistido por HT. A pele do sujeito adquire a aparência (não a dureza!) de pedra. Quando completamente quieto e nu, dá +2 à Camuflagem e Furtividade ao lado de pedra e +2 ao Disfarce para personificar uma estátua. Também é uma magia de Ilusão e Criação.</p>",
+      "chat_description": "Pele do alvo (Resistido por HT) assume a aparência (não dureza) de pedra.",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Seixo",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Projétil",
+      "spell_school": "Terra",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Atira uma pequena pedra com uma das mãos. Tem Prec 1, ½D n/a e Máx 40 e não causa danos. Usa Ataque Inato (Projétil) para acertar.</p>",
+      "chat_description": "Atira uma pequena pedra (Prec 1, Max 40) sem causar dano.",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "Ataque Inato (Projétil)",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Dedo Magnético",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 minuto",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Tecnológicas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Um dos dedos do conjurador torna-se magnético. O ST é 1, eficaz permite que ele atraia e pegue 100 gramas. de objetos que contenham ferro, níquel ou cobalto, desde que estejam a dois centímetros e meio.</p>",
+      "chat_description": "Um dedo do conjurador torna-se magnético (ST 1, alcance 2,5cm) para objetos ferrosos.",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Ligar Remoto/NT",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "Instantânea",
+      "mana_cost": "1",
+      "mana_maint": "0",
+      "spell_class": "Comum",
+      "spell_school": "Tecnológicas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Faz com que a máquina em questão seja ligada ou desligada, se isso não exigir nada mais complicado do que empurrar, puxar ou girar um controle. Qualquer chave deve estar no lugar. O sujeito deve saber como operar o dispositivo.</p>",
+      "chat_description": "Liga ou desliga uma máquina (se for um controle simples).",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Taumatomancia",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1 hora",
+      "duration": "Instantânea",
+      "mana_cost": "10",
+      "mana_maint": "0",
+      "spell_class": "Informação",
+      "spell_school": "Meta-Mágicas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>Uma conjuração responde a uma questão que a perícia Taumatologia (p. MB225) poderia responder sobre uma magia existente. Não pode ser usado para pesquisa original. Penalidades que afetariam o teste de perícia aplicam-se ao feitiço. ...mesmo as falhas custam a energia total! Também é uma Magia de Reconhecimento.</p>",
+      "chat_description": "Responde a uma questão que a perícia Taumatologia poderia responder sobre uma magia existente.",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  },
+  {
+    "name": "Usar Item",
+    "type": "spell",
+    "system": {
+      "points": 2,
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 segundo",
+      "mana_cost": "2",
+      "mana_maint": "2",
+      "spell_class": "Comum",
+      "spell_school": "Meta-Mágicas",
+      "difficulty": "M",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "description": "<p>O conjurador pode usar temporariamente itens mágicos 'Usáveis apenas por magos' como se tivesse Aptidão Mágica 0. No momento em que Usar Item terminar, todos os efeitos mágicas dos artefatos usados... desaparecem... Este feitiço é para não-magos e é inútil para magos.</p>",
+      "chat_description": "Permite a não-magos usar itens 'Usáveis apenas por magos' como se tivessem AM 0.",
+      "ref": "MM15",
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      },
+      "activationEffects": {
+        "success": {},
+        "failure": {}
+      },
+      "onDamageEffects": {},
+      "generalConditions": {},
+      "passiveEffects": {}
+    }
+  }
+]
