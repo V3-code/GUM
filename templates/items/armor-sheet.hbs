@@ -1,10 +1,9 @@
 {{!-- =================================================================== --}}
-{{!-- 1. DEFINIÇÃO DOS PARTIALS (COPIADOS DO SEU ITEM-SHEET.HBS)      --}}
+{{!--           FICHA DE ARMADURA (GURPS ARMOR SHEET) v2                --}}
 {{!-- =================================================================== --}}
 
-{{!-- Partial para a seção "Geral" e "Característica" da aba Detalhes --}}
+{{!-- 1. PARTIAL: DETALHES GERAIS (Atualizado com Custo/Peso Calculados e Novos Campos) --}}
 {{#*inline "itemDetailsGeneral"}}
-    {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
     <div class="form-section"><h4 class="section-title">Geral</h4>
         <div class="form-grid-3">
             <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
@@ -41,9 +40,8 @@
             <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
             <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
             
-            {{!-- Campo REF com botão --}}
             <div class="form-group input-narrow">
-                <label title="Livro e Página de Referência"><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>    REF</label>
+                <label title="Livro e Página de Referência"><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> - REF</label>
                 <div class="input-with-button">
                     <input type="text" name="system.ref" value="{{system.ref}}"/>
                     
@@ -52,12 +50,16 @@
         </div>
     </div>
 
-    {{!-- ✅ NOVA SEÇÃO: PROPRIEDADES FÍSICAS --}}
+    {{!-- SEÇÃO: PROPRIEDADES FÍSICAS (NOVA) --}}
     <div class="form-section"><h4 class="section-title">Propriedades Físicas</h4>
         <div class="form-grid-4">
             <div class="form-group input-narrow" title="Modificador de Tamanho (SM)">
                 <label>MT (SM)</label>
                 <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
+            </div>
+            <div class="form-group input-narrow" title="Resistência a Dano do próprio Item">
+                <label>RD Item</label>
+                <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
             </div>
             <div class="form-group input-narrow" title="Pontos de Vida do Item">
                 <label>PV Item</label>
@@ -67,14 +69,10 @@
                 <label>HT Item</label>
                 <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
             </div>
-            <div class="form-group input-narrow" title="Resistência a Dano do próprio Item">
-                <label>RD Item</label>
-                <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
-            </div>
         </div>
     </div>
 
-    {{!-- ✅ NOVA SEÇÃO: USO E LOGÍSTICA --}}
+    {{!-- SEÇÃO: USO E LOGÍSTICA (NOVA) --}}
     <div class="form-section"><h4 class="section-title">Uso & Defesa</h4>
         <div class="form-grid-3">
             <div class="form-group input-narrow" title="Penalidade de Ocultamento (Holdout)">
@@ -90,7 +88,6 @@
                 <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
             </div>
         </div>
-        {{!-- Campos de Texto Livre --}}
         <div class="form-grid-2" style="margin-top: 10px;">
              <div class="form-group"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/></div>
              <div class="form-group"><label>Material</label><input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/></div>
@@ -98,114 +95,12 @@
     </div>
 {{/inline}}
 
-
-{{!-- Partial para a Aba de Efeitos (reutilizado) --}}
+{{!-- 2. PARTIAL: EFEITOS (Copiado para garantir funcionamento inline) --}}
 {{#*inline "effectsTab"}}
-    {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Teste de Ativação / Ataque</h4>
-        <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
-        {{!-- SUB-SEÇÃO: EM SUCESSO --}}
-        <div class="effect-group success">
-            <div class="group-header">
-                <h5 class="group-title">Em Sucesso</h5>
-                <a class="button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
-            </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.activation.success as |effect|}}
-                    <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                        <div class="contextual-fields">
-                            <div class="form-group">
-                                <label>Destinatário</label>
-                                <select name="system.activationEffects.success.{{effect.id}}.recipient">
-                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                </select>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de sucesso.</p>
-                {{/each}}
-            </ol>
-        </div>
-        {{!-- SUB-SEÇÃO: EM FALHA --}}
-        <div class="effect-group failure">
-            <div class="group-header">
-                <h5 class="group-title">Em Falha</h5>
-                <a class="button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
-            </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.activation.failure as |effect|}}
-                    <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                        <div class="contextual-fields">
-                            <div class="form-group">
-                                <label>Destinatário</label>
-                                <select name="system.activationEffects.failure.{{effect.id}}.recipient">
-                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                </select>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de falha.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
-    {{!-- SEÇÃO: AO CAUSAR DANO --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Ao Causar Dano</h4>
-        <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
-        <div class="effect-group">
-            <div class="group-header">
-                <a class="button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
-            </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.onDamage as |effect|}}
-                    <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                        <div class="contextual-fields grid-3">
-                            <div class="form-group"><label>Lesão Mín.</label><input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/></div>
-                            <div class="form-group"><label>Tipo de Dano</label><input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/></div>
-                            <div class="form-group"><label>Chance (%)</label><input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/></div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de dano.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
-    {{!-- SEÇÃO: EFEITOS PASSIVOS --}}
     <div class="form-section effect-category">
         <h4 class="section-title">Efeitos Passivos</h4>
-        <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
-        <div class="effect-group passive">
+        <p class="hint">Aplicados automaticamente enquanto a armadura estiver EQUIPADA.</p>
+        <div class="effect-group passive"> 
             <div class="group-header">
                 <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
             </div>
@@ -227,41 +122,14 @@
             </ol>
         </div>
     </div>
-    {{!-- SEÇÃO: CONDIÇÕES GERAIS --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Condições Gerais</h4>
-        <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
-        <div class="effect-group">
-            <div class="group-header">
-                <a class="button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
-            </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.general as |condition|}}
-                    <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
-                        <div class="effect-header">
-                            <img src="{{condition.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{condition.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhuma condição geral anexada.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
+    {{!-- Você pode adicionar as outras seções de efeitos aqui se desejar, mas para armadura "Passivo" é o principal --}}
 {{/inline}}
 
-
 {{!-- =================================================================== --}}
-{{!-- 2. ESTRUTURA PRINCIPAL DA FICHA DE ARMADURA                       --}}
+{{!-- 3. ESTRUTURA PRINCIPAL DA FICHA                                   --}}
 {{!-- =================================================================== --}}
 <form class="{{cssClass}} gum-item-sheet" autocomplete="off">
 
-{{!-- Cabeçalho Padrão (consistente com seus outros itens) --}}
 <header class="sheet-header">
   <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
   <div class="header-info">
@@ -272,97 +140,125 @@
   </div>
 </header>
 
-{{!-- Corpo da Ficha (Abas + Conteúdo) --}}
 <section class="sheet-content">
 
-  {{!-- 2.1 Navegação das Abas --}}
+  {{!-- NAVEGAÇÃO: Inclui a nova aba "Mods" --}}
   <nav class="sheet-tabs tabs" data-group="primary">
       <a class="item" data-tab="details">Detalhes</a>
       <a class="item" data-tab="description">Descrição</a>
       <a class="item" data-tab="protection">Proteção</a>
+      <a class="item" data-tab="eqp_modifiers">Mods</a> {{!-- ✅ NOVA ABA --}}
       <a class="item" data-tab="effects">Efeitos</a>
   </nav>
 
-  {{!-- 2.2 Conteúdo das Abas --}}
   <section class="sheet-body-content">
 
-{{!-- ================== ABA "DETALHES" (VERSÃO CORRIGIDA) ================== --}}
-<div class="tab" data-tab="details">
-    
-    {{!-- Reutiliza o partial "GERAL" e "CARACTERÍSTICA" --}}
-    {{> itemDetailsGeneral}}
-       
-</div>
+    {{!-- ABA: DETALHES --}}
+    <div class="tab" data-tab="details">
+        {{> itemDetailsGeneral}}
+    </div>
 
-         {{! ========================================================= }}
-        {{!   ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)       }}
-        {{! ========================================================= }}
+    {{!-- ABA: DESCRIÇÃO --}}
     <div class="tab" data-tab="description">
-    <div class="form-section description-section">
+      <div class="form-section description-section">
         <h4 class="section-title">Descrição Resumida (Chat)</h4>
         <div class="description-view">{{{system.chat_description}}}</div>
         <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
-
         <div class="description-editor" style="display:none;">
-        {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
-        <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
-        <button type="button" class="cancel-description">Cancelar</button>
+          {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+          <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
+          <button type="button" class="cancel-description">Cancelar</button>
         </div>
-    </div>
-
-    <div class="form-section description-section">
+      </div>
+      <div class="form-section description-section">
         <h4 class="section-title">Descrição Completa</h4>
         <div class="description-view">{{{system.description}}}</div>
         <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
-
         <div class="description-editor" style="display:none;">
-        {{editor system.description target="system.description" owner=owner editable=editable}}
-        <button type="button" class="save-description" data-field="system.description">Salvar</button>
-        <button type="button" class="cancel-description">Cancelar</button>
+          {{editor system.description target="system.description" owner=owner editable=editable}}
+          <button type="button" class="save-description" data-field="system.description">Salvar</button>
+          <button type="button" class="cancel-description">Cancelar</button>
         </div>
-    </div>
+      </div>
     </div>
 
-    {{!-- ================== ABA "PROTEÇÃO" ================== --}}
+    {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
     <div class="tab" data-tab="protection">
-
         <div class="form-section">
             <h4 class="section-title">Proteção por Localização</h4>
             <p class="hint" style="margin-top: 5px; font-size: 12px; opacity: 0.8; text-align: center;">
                 Digite a RD para cada local. (ex: <code>5</code>, <code>5, 2 cont</code>, <code>3 pi++</code>).
             </p>
             
-            {{!-- Usamos a classe .hit-locations-grid-inputs do seu item-sheet.css --}}
             <div class="hit-locations-grid-inputs" style="margin-top: 15px;">
-                
                 {{!-- Loop pelos 15 locais de acerto --}}
                 {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
                     <div class="form-group form-group-small">
-                        {{!-- O lookup object para os nomes em Português --}}
                         <label>{{lookup (object 
                             head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
                             arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
                             leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
                         ) loc}}</label>
-                        
-                        {{!-- O input de TEXTO que usa o valor formatado do gurps-armor-sheet.js --}}
                         <input type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" />
                     </div>
                 {{/each}}
             </div>
         </div>
-        
     </div>
 
-    {{!-- ================== ABA "EFEITOS" ================== --}}
+    {{!-- ABA: MODIFICADORES DE EQUIPAMENTO (NOVA) --}}
+    <div class="tab" data-tab="eqp_modifiers">
+        <div class="modifiers-toolbar">
+            <a class="add-eqp-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+        </div>
+
+        <div class="form-section">
+            <p class="hint">Adicione qualidades, materiais ou modificações mágicas aqui. O Custo Final e Peso serão recalculados automaticamente.</p>
+            
+            <ol class="modifier-list">
+                {{#each eqpModifiersList as |mod|}}
+                    <li class="modifier-tag" data-modifier-id="{{mod.id}}" style="background: rgba(0,0,0,0.2); border: 1px solid #777;">
+                        <div class="modifier-info" style="flex-grow: 1;">
+                            <span class="modifier-name">{{mod.name}}</span>
+                            <span class="modifier-divider">|</span>
+                            <span class="modifier-effect" style="font-size: 0.85em; color: #ccc;">
+                                CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
+                            </span>
+                        </div>
+                        <div class="modifier-controls">
+                            {{!-- ✅ Botão de View --}}
+                            <a class="view-eqp-modifier" title="Ver Detalhes" style="margin-right: 5px;"><i class="fas fa-eye"></i></a>
+                            <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                {{else}}
+                    <li class="placeholder-text">
+                        <p>Nenhum modificador de equipamento aplicado.</p>
+                    </li>
+                {{/each}}
+            </ol>
+        </div>
+        
+        {{!-- Exibição dos Efeitos de Texto dos Mods --}}
+        {{#if eqpModifiersList}}
+        <div class="form-section" style="margin-top: 10px;">
+            <h4 class="section-title">Resumo dos Efeitos</h4>
+            <ul style="padding-left: 20px; margin: 5px 0; color: #ccc; font-size: 0.9em;">
+                {{#each eqpModifiersList as |mod|}}
+                    {{#if mod.features}}
+                        <li><strong>{{mod.name}}:</strong> {{mod.features}}</li>
+                    {{/if}}
+                {{/each}}
+            </ul>
+        </div>
+        {{/if}}
+    </div>
+
+    {{!-- ABA: EFEITOS --}}
     <div class="tab" data-tab="effects">
-        
-        {{!-- Simplesmente reutiliza o partial de efeitos que você já tem --}}
         {{> effectsTab}}
-        
     </div>
 
-  </section> {{!-- Fim do .sheet-body-content --}}
-</section> {{!-- Fim do .sheet-content --}}
-
+  </section> 
+</section> 
 </form>
