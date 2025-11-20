@@ -1643,7 +1643,7 @@
 /* --- Estilo do Grupo de Checkboxes no Modo Edição --- */
 .gum.sheet.item .attack-flags-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 3 colunas */
+    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas */
     gap: 8px 10px;
     
     /* Separador sutil */

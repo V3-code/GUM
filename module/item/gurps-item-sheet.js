@@ -1,5 +1,8 @@
 import { EffectBrowser } from "../apps/effect-browser.js";
 import { ConditionBrowser } from "../apps/condition-browser.js";
+import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
+import { ModifierBrowser } from "../apps/modifier-browser.js";
+import { TriggerBrowser } from "../apps/trigger-browser.js";
 
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO CORRIGIDA       //
@@ -8,8 +11,8 @@ export class GurpsItemSheet extends ItemSheet {
 static get defaultOptions() { 
     return foundry.utils.mergeObject(super.defaultOptions, { 
       classes: ["gum", "sheet", "item", "theme-dark"],
-      width: 450,
-      height: 495, // Você pode querer aumentar isso para 550, já que as abas têm mais conteúdo
+      width: 500,
+      height: 600, // Você pode querer aumentar isso para 550, já que as abas têm mais conteúdo
       template: "systems/gum/templates/items/item-sheet.hbs",
       tabs: [{ 
         navSelector: ".sheet-tabs",
@@ -19,11 +22,12 @@ static get defaultOptions() {
     }); 
   }
 
-  async getData(options) { 
+async getData(options) { 
     const context = await super.getData(options); 
     context.system = this.item.system;  
     context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
     
+    // ✅ MANTIDO: Dificuldades para o dropdown de Perícias
     context.skillDifficulties = {
         "F": "Fácil (F)",
         "M": "Média (M)",
@@ -33,7 +37,53 @@ static get defaultOptions() {
         "TecD": "Técnica (Difícil)"
     };
 
-    // Lógica de cálculo de custo final
+    // ✅ NOVO: LÓGICA DE EQUIPAMENTOS E ARMADURAS (Cálculo de CF e Peso)
+    if (['equipment', 'armor'].includes(this.item.type)) {
+        const eqpModsObj = this.item.system.eqp_modifiers || {};
+        
+        // 1. Prepara a lista para o template
+        const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({
+            id, ...data
+        })).sort((a, b) => a.name.localeCompare(b.name));
+        context.eqpModifiersList = modifiersArray;
+
+        // 2. Calcula Custo e Peso Finais
+        let baseCost = Number(this.item.system.cost) || 0;
+        let baseWeight = Number(this.item.system.weight) || 0;
+        let totalCF = 0;
+        let weightMultiplier = 1;
+
+        for (const mod of modifiersArray) {
+            // Soma CF (ex: +1.5)
+            totalCF += Number(mod.cost_factor) || 0;
+            
+            // Multiplica Peso (ex: "x0.75")
+            if (mod.weight_mod) {
+                const wModStr = mod.weight_mod.toString().trim().toLowerCase();
+                if (wModStr.startsWith('x')) {
+                    const mult = parseFloat(wModStr.substring(1));
+                    if (!isNaN(mult)) weightMultiplier *= mult;
+                }
+            }
+        }
+
+        // Aplica as fórmulas do GURPS
+        // Custo Final = Base * (1 + total CF) -> CF não pode reduzir custo abaixo de 0
+        const finalCostMultiplier = Math.max(0, 1 + totalCF);
+        context.calculatedFinalCost = baseCost * finalCostMultiplier;
+        
+        context.calculatedFinalWeight = baseWeight * weightMultiplier;
+        
+        // Formata para exibição bonita (ex: "1.250,00")
+        context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        
+        // Flags para saber se houve alteração (para destacar no HTML)
+        context.hasCostChange = finalCostMultiplier !== 1;
+        context.hasWeightChange = weightMultiplier !== 1;
+    }
+
+    // Lógica de cálculo de custo final (Vantagens/Poderes) - MANTIDA
     const validTypes = ['advantage', 'disadvantage', 'power'];
     if (validTypes.includes(this.item.type)) {
       const basePoints = Number(this.item.system.points) || 0;
@@ -50,7 +100,7 @@ static get defaultOptions() {
       context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
     }
 
-    // Função auxiliar para buscar e preparar os dados dos itens linkados (Efeitos ou Condições)
+    // Função auxiliar para buscar e preparar os dados dos itens linkados
     const _prepareLinkedItems = async (sourceObject) => {       
         const entries = Object.entries(sourceObject || {});
         const promises = entries.map(async ([id, linkData]) => {
@@ -78,7 +128,7 @@ static get defaultOptions() {
         passive: await _prepareLinkedItems(this.item.system.passiveEffects)
     };
 
-    // Lógica de ordenação e preparação dos modificadores
+    // Lógica de ordenação e preparação dos modificadores de Vantagem (MANTIDA)
     const modifiersObj = this.item.system.modifiers || {};
     const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
       const isLimitation = (data.cost || "").includes('-');
@@ -299,6 +349,63 @@ static get defaultOptions() {
    */
   activateListeners(html) {
       super.activateListeners(html);
+
+      html.find('.view-eqp-modifier').on('click', async (ev) => {
+        ev.preventDefault();
+        const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
+        const modData = this.item.system.eqp_modifiers[modId];
+        
+        if (!modData) return;
+
+        // Enriquece o texto (links clicáveis)
+        const features = await TextEditor.enrichHTML(modData.features || "<i>Sem efeitos adicionais.</i>", { async: true });
+        
+        // Monta o conteúdo do diálogo
+        const content = `
+            <div class="sheet-body-content">
+                <div class="form-section">
+                    <h4 class="section-title">Detalhes: ${modData.name}</h4>
+                    <div class="summary-list">
+                        <div class="summary-item">
+                            <label>Fator de Custo (CF):</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modData.cost_factor > 0 ? '+' : ''}${modData.cost_factor}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Mod. Peso:</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modData.weight_mod}</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Nível Tec.:</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modData.tech_level_mod || '-'}</span>
+                        </div>
+                         <div class="summary-item">
+                            <label>Ref.:</label>
+                            <span class="summary-dots"></span>
+                            <span class="value">${modData.ref || '-'}</span>
+                        </div>
+                    </div>
+                    <hr class="summary-divider">
+                    <label style="font-weight:bold; color:#a0a0a0; font-size:11px; text-transform:uppercase;">Efeitos / Notas:</label>
+                    <div class="summary-description rendered-text" style="margin-top:5px;">
+                        ${features}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        new Dialog({
+            title: `Modificador: ${modData.name}`,
+            content: content,
+            buttons: { close: { label: "Fechar", icon: '<i class="fas fa-times"></i>' } },
+            default: "close",
+        }, {
+            width: 400,
+            classes: ["dialog", "modifier-preview-dialog"]
+        }).render(true);
+    });
 
     html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"]').on('change', this._onAutoCalcPoints.bind(this));
 
@@ -624,5 +731,25 @@ static get defaultOptions() {
         section.find(".description-editor").hide();
         section.find(".description-view, .toggle-editor").show();
       });
-  } // Fim do activateListeners
+
+      html.find('.add-eqp-modifier').on('click', (ev) => {
+        ev.preventDefault();
+        new EqpModifierBrowser(this.item).render(true);
+    });
+
+    html.find('.delete-eqp-modifier').on('click', (ev) => {
+        ev.preventDefault();
+        const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
+        const modName = $(ev.currentTarget).closest('.modifier-tag').find('.modifier-name').text();
+        
+        Dialog.confirm({
+            title: "Remover Modificador",
+            content: `<p>Remover <strong>${modName}</strong> deste item?</p>`,
+            yes: () => {
+                this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
+            },
+            defaultYes: false
+        });
+    });
+  } 
 }

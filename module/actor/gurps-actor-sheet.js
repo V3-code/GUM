@@ -195,7 +195,7 @@ async getData(options) {
                 context.itemsByType = itemsByType; // Salva os itens já ordenados no contexto
 
         // ================================================================== //
-        //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (Seu código original)
+        //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (CORRIGIDO)             //
         // ================================================================== //
             const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
             const allEquipment = equipmentTypes.flatMap(type => itemsByType[type] || []);
@@ -203,11 +203,19 @@ async getData(options) {
             allEquipment.forEach(item => {
                 const s = item.system;
                 const q = s.quantity || 1;
-                const w = s.weight || 0;
-                const c = s.cost || 0;
                 
+                // ✅ CORREÇÃO: Usa o valor efetivo (com modificadores) se existir
+                // Se não existir (item sem mods), usa o valor base.
+                const w = (s.effectiveWeight !== undefined) ? s.effectiveWeight : (s.weight || 0);
+                const c = (s.effectiveCost !== undefined) ? s.effectiveCost : (s.cost || 0);
+                
+                // Formata para exibição (Total = Unitário * Quantidade)
                 s.total_weight = (q * w).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-                s.total_cost = (q * c).toLocaleString(); 
+                s.total_cost = (q * c).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                
+                // (Opcional) Você pode salvar os unitários calculados para mostrar no tooltip se quiser
+                s.unit_weight = w;
+                s.unit_cost = c;
             });
             
             const sortingPrefs = this.actor.system.sorting?.equipment || {};

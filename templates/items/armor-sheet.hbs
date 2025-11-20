@@ -7,19 +7,94 @@
     {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
     <div class="form-section"><h4 class="section-title">Geral</h4>
         <div class="form-grid-3">
-                <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
-                <div class="form-group input-narrow"><label>Peso (kg)</label><input type="number" step="0.1" name="system.weight" value="{{system.weight}}"/></div>
-                <div class="form-group input-narrow"><label>Custo ($)</label><input type="number" name="system.cost" value="{{system.cost}}"/></div>
+            <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
+            
+            {{!-- PESO COM CÁLCULO --}}
+            <div class="form-group input-narrow">
+                <label>Peso (kg)</label>
+                {{#if hasWeightChange}}
+                    <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
+                        <input type="number" step="0.01" name="system.weight" value="{{system.weight}}" style="width: 50px; opacity: 0.7;" title="Peso Base"/>
+                        <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
+                        <span style="font-weight:bold; color: #c5a05b;" title="Peso Final">{{finalWeightString}}</span>
+                    </div>
+                {{else}}
+                    <input type="number" step="0.01" name="system.weight" value="{{system.weight}}"/>
+                {{/if}}
+            </div>
+
+            {{!-- CUSTO COM CÁLCULO --}}
+            <div class="form-group input-narrow">
+                <label>Custo ($)</label>
+                {{#if hasCostChange}}
+                    <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
+                        <input type="number" name="system.cost" value="{{system.cost}}" style="width: 50px; opacity: 0.7;" title="Custo Base"/>
+                        <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
+                        <span style="font-weight:bold; color: #c5a05b;" title="Custo Final">{{finalCostString}}</span>
+                    </div>
+                {{else}}
+                    <input type="number" name="system.cost" value="{{system.cost}}"/>
+                {{/if}}
+            </div>
         </div>
         <div class="form-grid-3">
-                <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
-                <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
-                <div class="form-group input-narrow"><label title="Livro e Página de Referência">REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+            <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
+            <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
+            
+            {{!-- Campo REF com botão --}}
+            <div class="form-group input-narrow">
+                <label title="Livro e Página de Referência"><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>    REF</label>
+                <div class="input-with-button">
+                    <input type="text" name="system.ref" value="{{system.ref}}"/>
+                    
+                </div>
+            </div>
         </div>
     </div>
-    <div class="form-section"><h4 class="section-title"> Característica </h4>
-            <div class="form-group layout-inline"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}"/></div>
-            <div class="form-group layout-inline"><label>Material</label><input type="text" name="system.material" value="{{system.material}}"/></div>
+
+    {{!-- ✅ NOVA SEÇÃO: PROPRIEDADES FÍSICAS --}}
+    <div class="form-section"><h4 class="section-title">Propriedades Físicas</h4>
+        <div class="form-grid-4">
+            <div class="form-group input-narrow" title="Modificador de Tamanho (SM)">
+                <label>MT (SM)</label>
+                <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
+            </div>
+            <div class="form-group input-narrow" title="Pontos de Vida do Item">
+                <label>PV Item</label>
+                <input type="number" name="system.item_hp" value="{{system.item_hp}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Vitalidade (HT) do Item">
+                <label>HT Item</label>
+                <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Resistência a Dano do próprio Item">
+                <label>RD Item</label>
+                <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
+            </div>
+        </div>
+    </div>
+
+    {{!-- ✅ NOVA SEÇÃO: USO E LOGÍSTICA --}}
+    <div class="form-section"><h4 class="section-title">Uso & Defesa</h4>
+        <div class="form-grid-3">
+            <div class="form-group input-narrow" title="Penalidade de Ocultamento (Holdout)">
+                <label>Ocultar</label>
+                <input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0"/>
+            </div>
+            <div class="form-group input-narrow" title="Tempo para equipar/vestir em segundos">
+                <label>T. Vestir (s)</label>
+                <input type="number" name="system.equip_time" value="{{system.equip_time}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Bônus de Defesa (DB) para Escudos ou Capas">
+                <label>DB (Escudo)</label>
+                <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
+            </div>
+        </div>
+        {{!-- Campos de Texto Livre --}}
+        <div class="form-grid-2" style="margin-top: 10px;">
+             <div class="form-group"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/></div>
+             <div class="form-group"><label>Material</label><input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/></div>
+        </div>
     </div>
 {{/inline}}
 

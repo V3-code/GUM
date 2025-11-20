@@ -36,6 +36,7 @@
     "module/settings.js",
     "module/apps/modifier-browser.js",
     "module/apps/effect-browser.js",
+    "module/apps/eqp-modifier-browser.js",
     "module/item/gurps-armor-sheet.js",
     "module/apps/trigger-browser.js",
     "module/apps/importers.js" 
@@ -49,6 +50,7 @@
     "styles/conditions.css",
     "styles/condition-builder.css",
     "styles/condition-browser.css",
+    "styles/eqp-modifier-browser.css",
     "styles/trigger-browser.css" 
   ],
   "packs": [
@@ -155,6 +157,14 @@
       "system": "gum",
       "path": "./packs/macros",
       "type": "Macro",
+      "private": false
+    },
+    {
+      "name": "eqp_modifiers",
+      "label": "[GUM] Modificadores de Equipamento",
+      "system": "gum",
+      "path": "./packs/eqp_modifiers",
+      "type": "Item",
       "private": false
     }
   ],

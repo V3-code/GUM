@@ -1,0 +1,130 @@
+<form class="eqp-modifier-browser-form" autocomplete="off">
+    <div class="browser-container">
+        
+        {{!-- Sidebar (Filtros) --}}
+        <div class="browser-sidebar">
+            
+            <div class="filter-group">
+                <h3 class="filter-title">Buscar</h3>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="Nome ou Tags..." value="{{filters.search}}" autocomplete="off">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+
+            {{!-- Checkboxes de Categoria --}}
+            <div class="filter-group">
+                <h3 class="filter-title">Categoria</h3>
+                <div class="radio-filter-list">
+                    
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="all" {{checked filters.categories.all}}>
+                        <span>Todos</span>
+                    </label>
+                    
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="general" {{checked filters.categories.general}}>
+                        <span>Geral / Materiais</span>
+                    </label>
+                    
+                    {{!-- ✅ NOVO FILTRO --}}
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="enchantment" {{checked filters.categories.enchantment}}>
+                        <span>Encantamentos</span>
+                    </label>
+
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="melee" {{checked filters.categories.melee}}>
+                        <span>Armas C.C.</span>
+                    </label>
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="ranged" {{checked filters.categories.ranged}}>
+                        <span>Armas Dist.</span>
+                    </label>
+
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="armor" {{checked filters.categories.armor}}>
+                        <span>Armaduras</span>
+                    </label>
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="shield" {{checked filters.categories.shield}}>
+                        <span>Escudos</span>
+                    </label>
+                    
+                    <label class="filter-radio">
+                        <input type="checkbox" class="category-filter" value="ammo" {{checked filters.categories.ammo}}>
+                        <span>Munição</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3 class="filter-title">Fator de Custo (CF)</h3>
+                <div class="cf-range-inputs" style="display: flex; gap: 5px; align-items: center;">
+                    <input type="number" name="cfMin" placeholder="Min" step="0.1" style="width: 50%; text-align: center;">
+                    <span style="color: var(--c-text-medium);">-</span>
+                    <input type="number" name="cfMax" placeholder="Max" step="0.1" style="width: 50%; text-align: center;">
+                </div>
+            </div>
+        </div>
+
+        {{!-- Lista de Resultados --}}
+        <div class="browser-results">
+            <div class="results-header">
+                <span class="col-check"><i class="fas fa-check"></i></span>
+                <span class="col-name">Modificador</span>
+                <span class="col-cf" title="Fator de Custo">CF</span>
+                <span class="col-weight" title="Modificador de Peso">Peso</span>
+            </div>
+            
+            <div class="results-list">
+                {{#each modifiers}}
+                {{!-- ✅ ADICIONADO data-cat-enchantment --}}
+                <div class="result-item" 
+                     data-id="{{this.id}}" 
+                     data-cf="{{this.system.cost_factor}}"
+                     data-tags="{{this.system.tags}}"
+                     data-cat-general="{{this.system.target_type.general}}"
+                     data-cat-enchantment="{{this.system.target_type.enchantment}}"
+                     data-cat-melee="{{this.system.target_type.melee}}"
+                     data-cat-ranged="{{this.system.target_type.ranged}}"
+                     data-cat-armor="{{this.system.target_type.armor}}"
+                     data-cat-shield="{{this.system.target_type.shield}}"
+                     data-cat-ammo="{{this.system.target_type.ammo}}"
+                     >
+                     
+                    <div class="item-controls">
+                        <input type="checkbox" name="{{this.id}}">
+                    </div>
+                    
+                    <div class="item-main">
+                        <div class="item-info">
+                            <span class="item-name">{{this.name}}</span>
+                            {{#if this.system.tags}}
+                                <span class="item-tags">{{this.system.tags}}</span>
+                            {{/if}}
+                            {{#if this.system.features}}
+                                <span class="item-desc" title="{{this.system.features}}">{{this.system.features}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="item-stat cf-stat {{#if (gt this.system.cost_factor 0)}}positive{{/if}}">
+                        {{this.formattedCF}}
+                    </div>
+                    
+                    <div class="item-stat weight-stat">
+                        {{this.formattedWeight}}
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+    <footer class="browser-footer">
+        <button type="submit" name="submit">
+            <i class="fas fa-plus"></i> Adicionar Selecionados
+        </button>
+    </footer>
+</form>

@@ -3,22 +3,22 @@
     "types": ["character"],
     "character": {
       "attributes": {
-        "st": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "dx": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "iq": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "ht": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "vont": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "per": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
-        "fome": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-        "sede": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-        "sono": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-        "mt": { "value": 0, "mod": 0, "temp": 0, "override": null, "final": 0, "final_computed": 0 },
-        "basic_speed": { "value": 5, "mod": 0, "temp": 0, "override": null, "final": 5, "final_computed": 5 },
-        "basic_move": { "value": 5, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 5, "final_computed": 5 },
-        "dodge": { "value": 8, "mod": 0, "temp": 0, "override": null, "points": 0, "final": 8, "final_computed": 8 },
-        "lifting_st": { "value": 10, "mod": 0, "temp": 0, "override": null, "final": 10, "final_computed": 10 },
+        "st": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "dx": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "iq": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "ht": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "vont": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "per": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "fome": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
+        "sede": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
+        "sono": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
+        "mt": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 10 },
+        "basic_speed": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 5, "final_computed": 10 },
+        "basic_move": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "points": 0, "final": 5, "final_computed": 10 },
+        "dodge": { "value": 8, "mod": 0, "temp": 0, "passive": 0, "points": 0, "final": 8, "final_computed": 8 },
+        "lifting_st": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "basic_lift": { "value": 20 },
         "thrust_damage": "1d6-2",
         "swing_damage": "1d6"
@@ -63,7 +63,7 @@
       }
     }, 
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier"],
     
     "templates": {
       "base": {
@@ -83,10 +83,16 @@
         "cost": 0,
         "weight": 0,
         "location": "carried",
-        "tech_level": "8",
+        "tech_level": "3",
+        "tech_sm": 0, 
         "legality_class": "4",
         "material": "",
-        "quality": ""
+        "quality": "",
+        "item_hp": 0,
+        "item_ht": 12,
+        "item_dr": 0,
+        "holdout": 0,
+        "eqp_modifiers": {} 
       }
     },
 
@@ -131,10 +137,12 @@
 
     "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "modifiers": {} },
     "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "modifiers": {} },
-    "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M" },
-    "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {} },
-"armor": { 
+    "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M", "auto_points": true },
+    "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {}, "defense_bonus": 0, "equip_time": 1 },
+    "armor": { 
         "templates": ["base", "equipment_base"], 
+        "defense_bonus": 0,
+        "equip_time": 10,
         "dr_locations": {
             "torso": { "base": 0 }, 
             "head": { "base": 0 }, 
@@ -155,26 +163,13 @@
     },
     "spell": {
       "templates": ["base"],
-      "points": 4, 
-      "base_attribute": "IQ", 
-      "skill_level": 0, 
-      "other_mods": 0, 
-      "casting_time": "1s", 
-      "duration": "1 min",
-      "mana_cost": "1", 
-      "mana_maint": "1", 
-      "spell_class": "Regular", 
-      "spell_school": "Magia Geral", 
-      "difficulty": "D", 
-      "source": "Arcana", 
-      "resistance": "", 
-      "effect": "",
+      "points": 4, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Regular", "spell_school": "Magia Geral", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "", "auto_points": true,
       "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
       "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
     "power": {
       "templates": ["base"],
-      "points": 10, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "activation_time": "1s", "duration": "1 min", "activation_cost": "2", "maint_cost":"1", "spell_class": "Regular", "difficulty": "D", "source": "Biológico", "resistance": "", "effect": "", "modifiers": {},
+      "points": 10, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "activation_time": "1s", "duration": "1 min", "activation_cost": "2", "maint_cost":"1", "spell_class": "Regular", "difficulty": "D", "source": "Biológico", "resistance": "", "effect": "", "modifiers": {}, "points_skill": 4, "auto_points": true,
        "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
        "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
@@ -186,11 +181,35 @@
       "flags": { "gum": { "manual_override": false } }
     },
     "modifier": { "templates": ["base"], "cost": "0%", "level": 0, "applied_effect": "" },
+    "eqp_modifier": { 
+        "templates": ["base"], 
+        "cost_factor": 0, 
+        "weight_mod": "x1", 
+        "tech_level_mod": "", 
+        "tech_level": "",     
+        "tags": "",           
+        "features": "",
+        "scenario": {         
+            "rarity": "",
+            "location": "",
+            "availability": "",
+            "components": ""
+        },
+        "target_type": {      
+            "melee": false,    
+            "ranged": false,   
+            "armor": false,    
+            "shield": false,   
+            "ammo": false,
+            "enchantment": false,     
+            "general": true    
+        }
+    },
     "trigger": { "templates": ["base"], "code": "" },
     "effect": {
       "templates": ["base"],
       "type": "attribute", 
-      "path": "system.attributes.st.mod", 
+      "path": "system.attributes.st.passive", 
       "operation": "ADD", 
       "value": "1", 
       "key": "", 
@@ -213,7 +232,6 @@
           "inCombat": true,
           "isPermanent": false
       },
-      "//": "NOVO CAMPO PARA O ÍCONE DE STATUS OPCIONAL",
       "statusId": "dead"
     }
   }

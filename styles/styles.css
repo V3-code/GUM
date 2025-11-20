@@ -163,12 +163,35 @@
   justify-content: space-between;
   align-items: center;
 }
-input, textarea {
+/* ========================================================== */
+/* ESTILO ESPECÍFICO PARA INPUTS DE ITEM (TEMA ESCURO)        */
+/* ========================================================== */
 
-  border: 1px solid #444;
-  border-radius: 3px;
-  padding: 0.3rem;
-  font-family: var(--f-corpo);
+.gum.sheet.item input[type="text"],
+.gum.sheet.item input[type="number"],
+.gum.sheet.item select,
+.gum.sheet.item textarea {
+    color: #e1e1e1; /* Cor do texto (Claro) */
+    background-color: rgba(0, 0, 0, 0.2); /* Fundo escuro translúcido */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Borda sutil */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efeito de foco para dar destaque quando o usuário clica */
+.gum.sheet.item input:focus,
+.gum.sheet.item select:focus,
+.gum.sheet.item textarea:focus {
+    border-color: var(--c-accent-gold, #c5a05b);
+    box-shadow: 0 0 5px rgba(197, 160, 91, 0.3);
+    outline: none;
+}
+
+/* Correção para inputs desabilitados (como os pontos automáticos) */
+.gum.sheet.item input:disabled {
+    color: #777;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-color: transparent;
+    cursor: not-allowed;
 }
 .item-row, .attack-item, .bond-row, .meter-card, .table-row, .detail-item, .social-block > .item-list > .item {
   display: flex;

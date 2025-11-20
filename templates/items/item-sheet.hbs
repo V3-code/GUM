@@ -1,212 +1,261 @@
 {{!-- Definindo o partial 'inline' no topo do arquivo --}}
 {{#*inline "itemDetailsGeneral"}}
-            {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
-            <div class="form-section"><h4 class="section-title">Geral</h4>
-                <div class="form-grid-3">
-                        <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
-                        <div class="form-group input-narrow"><label>Peso (kg)</label><input type="number" step="0.1" name="system.weight" value="{{system.weight}}"/></div>
-                        <div class="form-group input-narrow"><label>Custo ($)</label><input type="number" name="system.cost" value="{{system.cost}}"/></div>
-                </div>
-                <div class="form-grid-3">
-                        <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
-                        <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
-                        <div class="form-group input-narrow"><label title="Livro e Página de Referência">REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+    {{!-- Este bloco contém os campos gerais para equipamentos e armas. --}}
+    <div class="form-section"><h4 class="section-title">Geral</h4>
+        <div class="form-grid-3">
+            <div class="form-group input-narrow"><label>Quantidade</label><input type="number" name="system.quantity" value="{{system.quantity}}"/></div>
+            
+            {{!-- PESO COM CÁLCULO --}}
+            <div class="form-group input-narrow">
+                <label>Peso (kg)</label>
+                {{#if hasWeightChange}}
+                    <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
+                        <input type="number" step="0.01" name="system.weight" value="{{system.weight}}" style="width: 50px; opacity: 0.7;" title="Peso Base"/>
+                        <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
+                        <span style="font-weight:bold; color: #c5a05b;" title="Peso Final">{{finalWeightString}}</span>
+                    </div>
+                {{else}}
+                    <input type="number" step="0.01" name="system.weight" value="{{system.weight}}"/>
+                {{/if}}
+            </div>
+
+            {{!-- CUSTO COM CÁLCULO --}}
+            <div class="form-group input-narrow">
+                <label>Custo ($)</label>
+                {{#if hasCostChange}}
+                    <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
+                        <input type="number" name="system.cost" value="{{system.cost}}" style="width: 50px; opacity: 0.7;" title="Custo Base"/>
+                        <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
+                        <span style="font-weight:bold; color: #c5a05b;" title="Custo Final">{{finalCostString}}</span>
+                    </div>
+                {{else}}
+                    <input type="number" name="system.cost" value="{{system.cost}}"/>
+                {{/if}}
+            </div>
+        </div>
+        <div class="form-grid-3">
+            <div class="form-group input-narrow"><label title="Nível Tecnológico">NT</label><input type="text" name="system.tech_level" value="{{system.tech_level}}"/></div>
+            <div class="form-group input-narrow"><label title="Classe de Legalidade">CL</label><input type="text" name="system.legality_class" value="{{system.legality_class}}"/></div>
+            
+            {{!-- Campo REF com botão --}}
+            <div class="form-group input-narrow">
+                <label title="Livro e Página de Referência"><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>         
+                <div class="input-with-button">
+                    <input type="text" name="system.ref" value="{{system.ref}}"/>
                 </div>
             </div>
-            <div class="form-section"><h4 class="section-title"> Característica </h4>
-                    <div class="form-group layout-inline"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}"/></div>
-                    <div class="form-group layout-inline"><label>Material</label><input type="text" name="system.material" value="{{system.material}}"/></div>
+        </div>
+    </div>
+
+    {{!-- ✅ NOVA SEÇÃO: PROPRIEDADES FÍSICAS --}}
+    <div class="form-section"><h4 class="section-title">Propriedades Físicas</h4>
+        <div class="form-grid-4">
+            <div class="form-group input-narrow" title="Modificador de Tamanho (SM)">
+                <label>MT (SM)</label>
+                <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
             </div>
+            <div class="form-group input-narrow" title="Resistência a Dano do próprio Item">
+                <label>RD Item</label>
+                <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Pontos de Vida do Item">
+                <label>PV Item</label>
+                <input type="number" name="system.item_hp" value="{{system.item_hp}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Vitalidade (HT) do Item">
+                <label>HT Item</label>
+                <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
+            </div>
+        </div>
+    </div>
+
+    {{!-- ✅ NOVA SEÇÃO: USO E LOGÍSTICA --}}
+    <div class="form-section"><h4 class="section-title">Uso & Defesa</h4>
+        <div class="form-grid-3">
+            <div class="form-group input-narrow" title="Penalidade de Ocultamento (Holdout)">
+                <label>Ocultar</label>
+                <input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0"/>
+            </div>
+            <div class="form-group input-narrow" title="Tempo para equipar/vestir em segundos">
+                <label>T. Vestir (s)</label>
+                <input type="number" name="system.equip_time" value="{{system.equip_time}}"/>
+            </div>
+            <div class="form-group input-narrow" title="Bônus de Defesa (DB) para Escudos ou Capas">
+                <label>DB (Escudo)</label>
+                <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
+            </div>
+        </div>
+        {{!-- Campos de Texto Livre --}}
+        <div class="form-grid-2" style="margin-top: 10px;">
+             <div class="form-group"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/></div>
+             <div class="form-group"><label>Material</label><input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/></div>
+        </div>
+    </div>
 {{/inline}}
 
 {{!-- ======================================================== --}}
-{{!--       NOVA ABA DE EFEITOS (ESTRUTURA VERSÃO 3)         --}}
+{{!--        NOVA ABA DE EFEITOS (ESTRUTURA VERSÃO 3)        --}}
 {{!-- ======================================================== --}}
-
 {{#*inline "effectsTab"}}
-
-            {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
-            <div class="form-section effect-category">
-                <h4 class="section-title">Teste de Ativação / Ataque</h4>
-                <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
-
-                {{!-- SUB-SEÇÃO: EM SUCESSO --}}
-                <div class="effect-group success">
-                    <div class="group-header">
-                        <h5 class="group-title">Em Sucesso</h5>
-                        <a class="button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
-                    </div>
-                    <ol class="effects-list">
-                        {{#each system.preparedEffects.activation.success as |effect|}}
-                            <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
-                                <div class="effect-header">
-                                    <img src="{{effect.img}}" class="effect-icon"/>
-                                    <span class="effect-name">{{effect.name}}</span>
-                                    <div class="effect-controls">
-                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                <div class="contextual-fields">
-                                    <div class="form-group">
-                                        <label>Destinatário</label>
-                                        <select name="system.activationEffects.success.{{effect.id}}.recipient">
-                                            <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                            <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </li>
-                        {{else}}
-                            <p class="hint small">Nenhum efeito de sucesso.</p>
-                        {{/each}}
-                    </ol>
-                </div>
-
-                {{!-- SUB-SEÇÃO: EM FALHA (AGORA CORRIGIDA) --}}
-                <div class="effect-group failure">
-                    <div class="group-header">
-                        <h5 class="group-title">Em Falha</h5>
-                        <a class="button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
-                    </div>
-                    <ol class="effects-list">
-                        {{#each system.preparedEffects.activation.failure as |effect|}}
-                            <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
-                                {{!-- ✅ CÓDIGO COMPLETO AGORA INSERIDO AQUI --}}
-                                <div class="effect-header">
-                                    <img src="{{effect.img}}" class="effect-icon"/>
-                                    <span class="effect-name">{{effect.name}}</span>
-                                    <div class="effect-controls">
-                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                <div class="contextual-fields">
-                                    <div class="form-group">
-                                        <label>Destinatário</label>
-                                        <select name="system.activationEffects.failure.{{effect.id}}.recipient">
-                                            <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                            <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </li>
-                        {{else}}
-                            <p class="hint small">Nenhum efeito de falha.</p>
-                        {{/each}}
-                    </ol>
-                </div>
+    {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Teste de Ativação / Ataque</h4>
+        <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
+        <div class="effect-group success">
+            <div class="group-header">
+                <h5 class="group-title">Em Sucesso</h5>
+                <a class="button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
             </div>
-
-
-            {{!-- ============================================= --}}
-            {{!-- 2. SEÇÃO: AO CAUSAR DANO                     --}}
-            {{!-- ============================================= --}}
-            <div class="form-section effect-category">
-                <h4 class="section-title">Ao Causar Dano</h4>
-                <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
-
-                <div class="effect-group">
-                    <div class="group-header">
-                        <a class="button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
-                    </div>
-                    <ol class="effects-list">
-                        {{#each system.preparedEffects.onDamage as |effect|}}
-                            <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
-                                <div class="effect-header">
-                                    <img src="{{effect.img}}" class="effect-icon"/>
-                                    <span class="effect-name">{{effect.name}}</span>
-                                    <div class="effect-controls">
-                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                <div class="contextual-fields grid-3">
-                                    <div class="form-group">
-                                        <label>Lesão Mín.</label>
-                                        <input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Tipo de Dano</label>
-                                        <input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Chance (%)</label>
-                                        <input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/>
-                                    </div>
-                                </div>
-                            </li>
-                        {{else}}
-                            <p class="hint small">Nenhum efeito de dano.</p>
-                        {{/each}}
-                    </ol>
-                </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.activation.success as |effect|}}
+                    <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        <div class="contextual-fields">
+                            <div class="form-group">
+                                <label>Destinatário</label>
+                                <select name="system.activationEffects.success.{{effect.id}}.recipient">
+                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de sucesso.</p>
+                {{/each}}
+            </ol>
+        </div>
+        <div class="effect-group failure">
+            <div class="group-header">
+                <h5 class="group-title">Em Falha</h5>
+                <a class="button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
             </div>
-
-            {{!-- ============================================= --}}
-            {{!-- ✅ NOVA SEÇÃO: EFEITOS PASSIVOS               --}}
-            {{!-- ============================================= --}}
-            <div class="form-section effect-category">
-                <h4 class="section-title">Efeitos Passivos</h4>
-                <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
-
-                <div class="effect-group passive"> {{!-- Nova classe 'passive' para estilização opcional --}}
-                    <div class="group-header">
-                        {{!-- Não precisa de título de subgrupo, apenas o botão de adicionar --}}
-                        <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
-                    </div>
-                    <ol class="effects-list">
-                        {{!-- Precisaremos atualizar o getData() para preparar 'system.preparedEffects.passive' --}}
-                        {{#each system.preparedEffects.passive as |effect|}}
-                            <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
-                                <div class="effect-header">
-                                    <img src="{{effect.img}}" class="effect-icon"/>
-                                    <span class="effect-name">{{effect.name}}</span>
-                                    <div class="effect-controls">
-                                        {{!-- O UUID é necessário para o botão de visualização --}}
-                                        <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                                {{!-- Efeitos passivos geralmente não precisam de campos contextuais como 'recipient' --}}
-                            </li>
-                        {{else}}
-                            <p class="hint small">Nenhum efeito passivo definido.</p>
-                        {{/each}}
-                    </ol>
-                </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.activation.failure as |effect|}}
+                    <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        <div class="contextual-fields">
+                            <div class="form-group">
+                                <label>Destinatário</label>
+                                <select name="system.activationEffects.failure.{{effect.id}}.recipient">
+                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de falha.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- 2. SEÇÃO: AO CAUSAR DANO --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Ao Causar Dano</h4>
+        <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
+        <div class="effect-group">
+            <div class="group-header">
+                <a class="button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
             </div>
-
-            {{!-- ============================================= --}}
-            {{!-- 3. SEÇÃO: CONDIÇÕES GERAIS                   --}}
-            {{!-- ============================================= --}}
-            <div class="form-section effect-category">
-                <h4 class="section-title">Condições Gerais</h4>
-                <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
-
-                <div class="effect-group">
-                    <div class="group-header">
-                        <a class="button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
-                    </div>
-                    <ol class="effects-list">
-                        {{#each system.preparedEffects.general as |condition|}}
-                            <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
-                                <div class="effect-header">
-                                    <img src="{{condition.img}}" class="effect-icon"/>
-                                    <span class="effect-name">{{condition.name}}</span>
-                                    <div class="effect-controls">
-                                        <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
-                                        <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
-                                    </div>
-                                </div>
-                            </li>
-                        {{else}}
-                            <p class="hint small">Nenhuma condição geral anexada.</p>
-                        {{/each}}
-                    </ol>
-                </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.onDamage as |effect|}}
+                    <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        <div class="contextual-fields grid-3">
+                            <div class="form-group">
+                                <label>Lesão Mín.</label>
+                                <input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Dano</label>
+                                <input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Chance (%)</label>
+                                <input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito de dano.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- 3. SEÇÃO: EFEITOS PASSIVOS --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Efeitos Passivos</h4>
+        <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
+        <div class="effect-group passive"> 
+            <div class="group-header">
+                <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
             </div>
-
+            <ol class="effects-list">
+                {{#each system.preparedEffects.passive as |effect|}}
+                    <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
+                        <div class="effect-header">
+                            <img src="{{effect.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{effect.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhum efeito passivo definido.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    {{!-- 4. SEÇÃO: CONDIÇÕES GERAIS --}}
+    <div class="form-section effect-category">
+        <h4 class="section-title">Condições Gerais</h4>
+        <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
+        <div class="effect-group">
+            <div class="group-header">
+                <a class="button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
+            </div>
+            <ol class="effects-list">
+                {{#each system.preparedEffects.general as |condition|}}
+                    <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
+                        <div class="effect-header">
+                            <img src="{{condition.img}}" class="effect-icon"/>
+                            <span class="effect-name">{{condition.name}}</span>
+                            <div class="effect-controls">
+                                <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
+                                <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </li>
+                {{else}}
+                    <p class="hint small">Nenhuma condição geral anexada.</p>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
 {{/inline}}
 
 
@@ -220,12 +269,11 @@
   <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
   <div class="header-info">
     <div class="header-main-line">
-      {{!-- Usamos um textarea para permitir quebra de linha no nome --}}
-<textarea name="name" rows="1" placeholder="Nome do Item">{{item.name}}</textarea>
+      <textarea name="name" rows="1" placeholder="Nome do Item">{{item.name}}</textarea>
       <span class="item-tag small-tag">{{lookup (object 
         armor="Armadura" melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
         equipment="Equipamento" skill="Perícia" spell="Magia" 
-        advantage="Vantagem" disadvantage="Desvantagem" power="Poder") item.type}}</span>
+        advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip.") item.type}}</span>
     </div>
   </div>
 </header>
@@ -233,39 +281,165 @@
 {{!-- NOVA ESTRUTURA COM ABAS --}}
 <section class="sheet-content">
 
-  {{!-- 1. Navegação das Abas --}}
+  {{!-- 1. Navegação das Abas (CORRIGIDA) --}}
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="details">Detalhes</a>
         <a class="item" data-tab="description">Descrição</a>
+        
+        {{!-- Bloco 1: Aba "Ataque" para Magias/Poderes --}}
         {{#if (or (eq item.type "spell") (eq item.type "power"))}}
         <a class="item" data-tab="attack">
             <i class="fas fa-bullseye"></i> Ataque
         </a>
         {{/if}}
-    {{#if (eq item.type "equipment")}}
+
+        {{!-- Bloco 2: Aba "Modos de Ataque" para Equipamentos --}}
+        {{#if (eq item.type "equipment")}}
         <a class="item" data-tab="attacks">Modos de Ataque</a>
-    {{/if}}
-    {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        {{/if}}
+        
+        {{!-- Bloco 3: Aba "Efeitos" (lógica original) --}}
+        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="effects">Efeitos</a>
-    {{/if}}
-    {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+        {{/if}}
+        
+        {{!-- Bloco 4: Aba "Modificadores" (lógica original) --}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
         <a class="item" data-tab="modifiers">Modificadores</a>
-    {{/if}}
+        {{/if}}
+
+        {{!-- Aba Mods para Equipamentos e Armaduras --}}
+        {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
+        <a class="item" data-tab="eqp_modifiers">Mods</a>
+        {{/if}}
   </nav>
 
     {{!-- 2. Corpo das Abas --}}
     <section class="sheet-body-content">
 
      {{!-- Aba "Detalhes" --}}
-    <div class="tab" data-tab="details">
-       
+     <div class="tab" data-tab="details">
+        
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM EQUIPAMENTO 				 --}}
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "equipment")}}
-
             {{> itemDetailsGeneral}}
+        {{/if}}
+        
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM ARMADURA 				 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "armor")}}
+            {{> itemDetailsGeneral}}
+        {{/if}}
 
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (ATUALIZADO)	 --}}
+        {{!-- ===================================================================== --}}
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (LAYOUT v2)	 --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "eqp_modifier")}}
+            
+            {{!-- Seção 1: Mecânica (Custo, Peso, TL) --}}
+            <div class="form-section"><h4 class="section-title">Mecânica</h4>
+                <div class="form-grid-4">
+                    <div class="form-group" title="Fator de Custo (ex: +1, +4.5)">
+                        <label>Fator Custo (CF)</label>
+                        <input type="number" step="0.1" name="system.cost_factor" value="{{system.cost_factor}}" placeholder="+0"/>
+                    </div>
+                    <div class="form-group" title="Modificador de Peso (ex: x0.75, x1.5)">
+                        <label>Mod. Peso</label>
+                        <input type="text" name="system.weight_mod" value="{{system.weight_mod}}" placeholder="x1"/>
+                    </div>
+                    <div class="form-group" title="Nível Tecnológico do Modificador">
+                        <label>NT (TL)</label>
+                        <input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="0"/>
+                    </div>
+                    {{!-- Campo REF com botão --}}
+                    <div class="form-group">
+                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> - Ref.</label>
+                        <div class="input-with-button">
+                            <input type="text" name="system.ref" value="{{system.ref}}"/>
+                        </div>
+                    </div>
+                </div>
+                
+                {{!-- Tags para busca --}}
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Tags / Palavras-Chave</label>
+                    <input type="text" name="system.tags" value="{{system.tags}}" placeholder="Ex: Metal, Mágico, Élfico, Qualidade (Separar por vírgula)"/>
+                </div>
+            </div>
+            {{!-- Seção: Tipo de Aplicação (Filtros) --}}
+            <div class="form-section"><h4 class="section-title">Aplica-se a:</h4>
+                <div class="form-grid-3 attack-flags-grid">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.general" {{checked system.target_type.general}}/>
+                        <span>Geral (Todos)</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.melee" {{checked system.target_type.melee}}/>
+                        <span>Arma C.C.</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.ranged" {{checked system.target_type.ranged}}/>
+                        <span>Arma Dist.</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.armor" {{checked system.target_type.armor}}/>
+                        <span>Armadura</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.shield" {{checked system.target_type.shield}}/>
+                        <span>Escudo</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.ammo" {{checked system.target_type.ammo}}/>
+                        <span>Munição</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" name="system.target_type.enchantment" {{checked system.target_type.enchantment}}/>
+                        <span>Encantamento</span>
+                    </label>
+                </div>
+            </div>
+            {{!-- Seção 2: Dados de Cenário (Layout Ajustado) --}}
+            <div class="form-section"><h4 class="section-title">Dados de Cenário</h4>
+                
+                {{!-- Linha 1: Raridade e Disponibilidade (Lado a Lado) --}}
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Raridade</label>
+                        <input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex: Comum, Único"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Disponibilidade</label>
+                        <input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex: Mercado 12-, Apenas Conexão"/>
+                    </div>
+                </div>
+
+                {{!-- Linha 2: Região / Origem (Largura Total) --}}
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Região / Origem</label>
+                    <input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex: Montanhas do Norte, Forjas Reais de Khazad"/>
+                </div>
+                
+                {{!-- Linha 3: Materiais (Largura Total) --}}
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Materiais / Componentes Necessários</label>
+                    <input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex: 1kg de Oricalco Bruto, Forja Vulcânica"/>
+                </div>
+            </div>
+            
+            {{!-- Seção 3: Efeitos e Notas --}}
+            <div class="form-section"><h4 class="section-title">Efeitos e Notas</h4>
+                 <p class="hint">Descreva aqui os efeitos mecânicos (ex: +1 Dano, RD +1) ou narrativos.</p>
+                 <div class="form-group">
+                    <textarea name="system.features" rows="4" placeholder="Ex: +1 de dano no ataque. Trata a RD como se fosse 2 menor.">{{system.features}}</textarea>
+                 </div>
+            </div>
         {{/if}}
 
         {{!-- ===================================================================== --}}
@@ -308,16 +482,19 @@
                     <label>Rolagem de Auto-Controle</label>
                     <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
                 </div>
+                {{!-- Campo REF com botão --}}
                 <div class="form-group">
-                    <label>Ref. Página</label>
-                    <input type="text" name="system.ref" value="{{system.ref}}"/>
+                    <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>Ref. Página</label>
+                    <div class="input-with-button">
+                        <input type="text" name="system.ref" value="{{system.ref}}"/>
+
+                    </div>
                 </div>
             </div>
             </div>
-
         {{/if}}
-      
-{{!-- ===================================================================== --}}
+       
+        {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM PERÍCIAS (COM INPUT HÍBRIDO)				 --}}
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "skill")}} 
@@ -327,7 +504,15 @@
                 <h4 class="section-title">Classificação</h4>
                 <div class="form-grid-2">
                     <div class="form-group"><label>Grupo</label><input type="text" name="system.group" value="{{system.group}}"/></div>
-                    <div class="form-group"><label>Ref. Página</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+                    
+                    {{!-- Campo REF com botão --}}
+                    <div class="form-group">
+                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>Ref. Página</label>
+                        <div class="input-with-button">
+                            <input type="text" name="system.ref" value="{{system.ref}}"/>
+
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -349,7 +534,6 @@
                             <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
                         </div>
                         
-                        {{!-- ✅ INÍCIO DA LÓGICA HÍBRIDA --}}
                         <div class="form-group input-medium">
                             <label>Dificuldade</label>
                             {{#if (ne system.auto_points false)}}
@@ -362,7 +546,6 @@
                                 <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil, Wildcard"/>
                             {{/if}}
                         </div>
-                        {{!-- ✅ FIM DA LÓGICA HÍBRIDA --}}
                         
                         <div class="form-group input-medium">
                             <label>Nível (Relativo)</label>
@@ -398,7 +581,15 @@
                     </div>
                     <div class="ability-col-right">
                         <div class="form-group input-medium"><label>Fonte</label><input type="text" name="system.source" value="{{system.source}}"/></div>
-                        <div class="form-group input-medium"><label>REF</label><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+                        
+                        {{!-- Campo REF com botão --}}
+                        <div class="form-group input-medium">
+                            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
+                            <div class="input-with-button">
+                                <input type="text" name="system.ref" value="{{system.ref}}"/>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -421,7 +612,6 @@
                             <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
                         </div>
                         
-                        {{!-- ✅ INÍCIO DA LÓGICA HÍBRIDA --}}
                         <div class="form-group input-medium">
                             <label>Dificuldade</label>
                             {{#if (ne system.auto_points false)}}
@@ -432,7 +622,6 @@
                                 <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil"/>
                             {{/if}}
                         </div>
-                        {{!-- ✅ FIM DA LÓGICA HÍBRIDA --}}
                         
                         <div class="form-group input-medium">
                             <label>Nível (Relativo)</label>
@@ -507,9 +696,14 @@
                             <label>Fonte</label>
                             <input type="text" name="system.source" value="{{system.source}}"/>
                         </div>
+                        
+                        {{!-- Campo REF com botão --}}
                         <div class="form-group input-medium">
-                            <label>REF</label>
-                            <input type="text" name="system.ref" value="{{system.ref}}"/>
+                            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
+                            <div class="input-with-button">
+                                <input type="text" name="system.ref" value="{{system.ref}}"/>
+                                
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -533,7 +727,6 @@
                             <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
                         </div>
                         
-                        {{!-- ✅ INÍCIO DA LÓGICA HÍBRIDA --}}
                         <div class="form-group input-medium">
                             <label>Dificuldade</label>
                             {{#if (ne system.auto_points false)}}
@@ -544,7 +737,6 @@
                                 <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil"/>
                             {{/if}}
                         </div>
-                        {{!-- ✅ FIM DA LÓGICA HÍBRIDA --}}
                         
                         <div class="form-group input-medium">
                             <label>Nível (Relativo)</label>
@@ -579,8 +771,9 @@
                 </div>
             </div>
         {{/if}}
+
         {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM MODIFICADORES  				 --}}
+        {{!-- 		ABA DETALHES: ITEM MODIFICADORES 				 --}}
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "modifier")}}
         <div class="form-section"><h4 class="section-title">Dados do Modificador</h4>
@@ -593,10 +786,15 @@
             <label>Nível (se aplicável)</label>
             <input type="number" name="system.level" value="{{system.level}}"/>
             </div>
+            
+            {{!-- Campo REF com botão --}}
             <div class="form-group">
-            <label>Ref. Página</label>
-            <input type="text" name="system.ref" value="{{system.ref}}"/>
-        </div>
+                <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>         Ref. Página</label>
+                <div class="input-with-button">
+                    <input type="text" name="system.ref" value="{{system.ref}}"/>
+                    
+                </div>
+            </div>
         </div>
         <div class="form-group">
             <label>Efeito Aplicado</label>
@@ -605,546 +803,588 @@
         
         </div>
         {{/if}}
-</div>
+    </div>
 
-{{! ========================================================= }}
-    {{!   ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)       }}
     {{! ========================================================= }}
-<div class="tab" data-tab="description">
-  <div class="form-section description-section">
-    <h4 class="section-title">Descrição Resumida (Chat)</h4>
-    <div class="description-view">{{{system.chat_description}}}</div>
-    <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
+    {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
+    {{! ========================================================= }}
+    <div class="tab" data-tab="description">
+      <div class="form-section description-section">
+        <h4 class="section-title">Descrição Resumida (Chat)</h4>
+        <div class="description-view">{{{system.chat_description}}}</div>
+        {{#if editable}}
+        <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
+        {{/if}}
 
-    <div class="description-editor" style="display:none;">
-      {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
-      <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
-      <button type="button" class="cancel-description">Cancelar</button>
-    </div>
-  </div>
-
-  <div class="form-section description-section">
-    <h4 class="section-title">Descrição Completa</h4>
-    <div class="description-view">{{{system.description}}}</div>
-    <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
-
-    <div class="description-editor" style="display:none;">
-      {{editor system.description target="system.description" owner=owner editable=editable}}
-      <button type="button" class="save-description" data-field="system.description">Salvar</button>
-      <button type="button" class="cancel-description">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-{{!-- ===================================================================== --}}
-{{!--           ABA ESPECIAL: ATAQUE (apenas para Magias e Poderes) --}}
-{{!-- ===================================================================== --}}
-<div class="tab" data-tab="attack">
-    
-    {{!-- O IF de abertura --}}
-    {{#if (or (eq item.type "spell") (eq item.type "power"))}}
-
-        {{!-- Este é o "Grupo 4" que movemos --}}
-        <div class="form-section">
-            <h4 class="section-title">Modo de Uso</h4>
-
-            {{!-- Sub-seção 1: Rolagem de Ataque --}}
-            <h5 class="subheader">Rolagem de Ataque (para Acertar)</h5>
-            <div class="form-grid-2" style="margin-bottom: 10px;">
-                <div class="form-group">
-                    <label>Perícia de Ataque <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                    <input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14"/>
-                </div>
-                <div class="form-group input-narrow">
-                    <label>Mod. de NH</label>
-                    <input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}"/>
-                </div>
-            </div>
-
-            {{!-- Sub-seção 2: Rolagem de Dano --}}
-            <h5 class="subheader">Rolagem de Dano (ao Acertar)</h5>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
-                <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
-                <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
-            </div>
-
-            {{!-- Sub-seção 3: Efeitos Adicionais --}}
-            <h5 class="subheader">Efeitos Adicionais</h5>
-            <div class="form-grid-2" style="margin-top: 10px;">
-                <div class="form-group">
-                    <label>Resistido Por</label>
-                    <input type="text" name="system.resistance" value="{{system.resistance}}"/>
-                </div>
-                <div class="form-group">
-                    <label>Efeito / Condição Aplicada</label>
-                    <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Ex: Alvo fica Atordoado"/>
-                </div>
-            </div>
-            
-            {{!-- Danos Secundários --}}
-            <details class="advanced-options" style="margin-top: 15px;">
-                <summary>Danos Secundários</summary>
-                <div class="advanced-damage-fields">
-                    <h5 class="subheader">Dano de Acompanhamento</h5>
-                    <div class="form-grid-3">
-                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
-                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
-                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
-                    </div>
-                    <h5 class="subheader">Dano de Fragmentação</h5>
-                    <div class="form-grid-3">
-                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
-                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
-                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
-                    </div>
-                </div>
-            </details>
+        <div class="description-editor" style="display:none;">
+          {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+          <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
+          <button type="button" class="cancel-description">Cancelar</button>
         </div>
+      </div>
 
-    {{/if}} {{!-- ✅ ESTA É A TAG DE FECHAMENTO QUE PROVAVELMENTE FALTAVA --}}
+      <div class="form-section description-section">
+        <h4 class="section-title">Descrição Completa</h4>
+        <div class="description-view">{{{system.description}}}</div>
+        {{#if editable}}
+        <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
+        {{/if}}
 
-</div>
+        <div class="description-editor" style="display:none;">
+          {{editor system.description target="system.description" owner=owner editable=editable}}
+          <button type="button" class="save-description" data-field="system.description">Salvar</button>
+          <button type="button" class="cancel-description">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ===================================================================== --}}
+    {{!--           ABA ESPECIAL: ATAQUE (apenas para Magias e Poderes) --}}
+    {{!-- ===================================================================== --}}
+    <div class="tab" data-tab="attack">
+        
+        {{!-- O IF de abertura --}}
+        {{#if (or (eq item.type "spell") (eq item.type "power"))}}
+
+            {{!-- Este é o "Grupo 4" que movemos --}}
+            <div class="form-section">
+                <h4 class="section-title">Efeitos Ofensivos</h4>
+
+                {{!-- Sub-seção 1: Rolagem de Ataque --}}
+                <h5 class="subheader">Rolagem de Ataque (para Acertar)</h5>
+                <div class="form-grid-2" style="margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label>Perícia de Ataque <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                        <input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14"/>
+                    </div>
+                    <div class="form-group input-narrow">
+                        <label>Mod. de NH</label>
+                        <input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}"/>
+                    </div>
+                </div>
+
+                {{!-- Sub-seção 2: Rolagem de Dano --}}
+                <h5 class="subheader">Rolagem de Dano (ao Acertar)</h5>
+                <div class="form-grid-3">
+                    <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
+                    <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
+                    <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
+                </div>
+
+                {{!-- Sub-seção 3: Efeitos Adicionais --}}
+                <h5 class="subheader">Efeitos Adicionais</h5>
+                <div class="form-grid-2" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label>Resistido Por</label>
+                        <input type="text" name="system.resistance" value="{{system.resistance}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Efeito / Condição Aplicada</label>
+                        <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Ex: Alvo fica Atordoado"/>
+                    </div>
+                </div>
+                
+                {{!-- Danos Secundários --}}
+                <details class="advanced-options" style="margin-top: 15px;">
+                    <summary>Danos Secundários</summary>
+                    <div class="advanced-damage-fields">
+                        <h5 class="subheader">Dano de Acompanhamento</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
+                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
+                            <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
+                        </div>
+                        <h5 class="subheader">Dano de Fragmentação</h5>
+                        <div class="form-grid-3">
+                            <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
+                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
+                            <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+        {{/if}} 
+
+    </div>
 
      {{!-- ===================================================================== --}}
      {{!--    ABA ESPECIAL: MODOS DE ATAQUE (para Equipamentos) --}}
      {{!-- ===================================================================== --}}
      <div class="tab" data-tab="attacks">
-       
-            {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
-       <div class="form-section attacks-editor-section">
+        
+        {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
+        <div class="form-section attacks-editor-section">
          <h4 class="section-title">Ataques Corpo a Corpo</h4>
          <ol class="attack-list">
            {{#each system.melee_attacks as |attack key|}}
            <li class="attack-item melee-attack-item" data-attack-id="{{key}}" data-attack-type="melee">
              
-                            {{!-- ================================== --}}
-                            {{!-- 	MODO EXIBIÇÃO - ATAQUE C.C. V6  --}}
-                            {{!-- ================================== --}}
-                            <div class="attack-display-mode">
-                                <div class="form-section attack-display-card">
-                                    <h4 class="section-title">
-                                        <span class="pill-skill">
-                                            {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
-                                            ({{attack.mode}})
-                                        </span>
-                                        <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
-                                        {{#if (objectValues attack.onDamageEffects)}}
-                                            <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
-                                                <i class="fas fa-magic"></i>
-                                            </span>
-                                        {{/if}}
+                 {{!-- MODO EXIBIÇÃO - ATAQUE C.C. --}}
+                 <div class="attack-display-mode">
+                     <div class="form-section attack-display-card">
+                         <h4 class="section-title">
+                             <span class="pill-skill">
+                                 {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+                                 ({{attack.mode}})
+                             </span>
+                             <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
+                             {{#if (objectValues attack.onDamageEffects)}}
+                                 <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
+                                     <i class="fas fa-magic"></i>
+                                 </span>
+                             {{/if}}
+                             {{#if attack.unbalanced}}
+                                 <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                             {{/if}}
+                             {{#if attack.fencing}}
+                                 <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                             {{/if}}
+                             <div class="attack-controls">
+                                 <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+                                 <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                             </div>
+                         </h4>
+                         <div class="form-grid-3 attack-display-grid melee-grid">
+                             <div class="display-stat damage-stat">
+                                 <label>Dano</label>
+                                 <span>
+                                     ({{attack.damage_formula}}) {{attack.damage_type}}
+                                     {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
+                                     {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
+                                 </span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Aparar</label>
+                                 <span>{{attack.parry}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Alcance</label>
+                                 <span>{{attack.reach}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Bloqueio</label>
+                                 <span>{{attack.block}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>ST Mín.</label>
+                                 <span>{{attack.min_strength}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
 
-                                        {{#if attack.unbalanced}}
-                                            <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                                        {{/if}}
+                 {{!-- MODO EDIÇÃO (O FORMULÁRIO) --}}
+                 <div class="attack-edit-mode" style="display:none;">
+                     
+                     {{!-- GRUPO 1: HABILIDADE --}}
+                     <div class="ability-grid">
+                         <div class="ability-col-left">
+                             <div class="form-group">
+                                 <label>Modo de Uso</label>
+                                 <input type="text" data-name="system.melee_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                             </div>
+                             <div class="form-group">
+                                 <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                                 <input type="text" data-name="system.melee_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                             </div>
+                             <div class="form-group input-narrow">
+                                 <label>Mod. NH</label>
+                                 <input type="number" data-name="system.melee_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
+                             </div>
+                         </div>
+                     </div>
 
-                                        {{#if attack.fencing}}
-                                            <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                                        {{/if}}
+                     {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
+                     <div class="form-grid-3 attack-stats-grid-compact">
+                         <div class="form-group">
+                             <label>Dano</label>
+                             <input type="text" data-name="system.melee_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Tipo</label>
+                             <input type="text" data-name="system.melee_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
+                         </div>
+                         <div class="form-group input-narrow" title="Divisor de Armadura">
+                             <label>Div.</label>
+                             <input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Aparar</label>
+                             <input type="text" data-name="system.melee_attacks.{{key}}.parry" value="{{attack.parry}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Bloqueio</label>
+                             <input type="text" data-name="system.melee_attacks.{{key}}.block" value="{{attack.block}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Alcance</label>
+                             <input type="text" data-name="system.melee_attacks.{{key}}.reach" value="{{attack.reach}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>ST Mín.</label>
+                             <input type="number" data-name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                         </div>
+                     </div>
 
-                                        <div class="attack-controls">
-                                            <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                            <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                                        </div>
-                                    </h4>
+                     {{!-- GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
+                     <div class="form-grid-3 attack-flags-grid">
+                         <label class="custom-checkbox">
+                             <input type="checkbox" data-name="system.melee_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
+                             <span>Desbalanceada (U)</span>
+                         </label>
+                         <label class="custom-checkbox">
+                             <input type="checkbox" data-name="system.melee_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
+                             <span>Esgrima (F)</span>
+                         </label>
+                     </div>  
 
-                                    {{!-- Linha 1: Grade de Stats (com Dano completo) --}}
-                                    <div class="form-grid-3 attack-display-grid melee-grid">
-                                        <div class="display-stat damage-stat">
-                                            <label>Dano</label>
-                                            <span>
-                                                ({{attack.damage_formula}}) {{attack.damage_type}}
-                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
-                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
-                                            </span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Aparar</label>
-                                            <span>{{attack.parry}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Alcance</label>
-                                            <span>{{attack.reach}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Bloqueio</label>
-                                            <span>{{attack.block}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>ST Mín.</label>
-                                            <span>{{attack.min_strength}}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                     {{!-- GRUPO 3: AVANÇADO --}}
+                     <details class="advanced-options item-sheet-advanced">
+                         <summary>Danos Avançados & Efeitos</summary>
+                         <div class="advanced-content">
+                             <h5 class="subheader">Dano de Acompanhamento</h5>
+                             <div class="form-grid-3">
+                                 <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
+                                 <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
+                                 <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
+                             </div>
+                             <h5 class="subheader">Dano de Fragmentação</h5>
+                             <div class="form-grid-3">
+                                 <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
+                                 <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
+                                 <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
+                             </div>
+                             <hr class="section-divider">
+                             <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
+                             <div class="effects-list-container">
+                                 {{#each (objectValues attack.onDamageEffects)}}
+                                 <div class="effect-summary" data-effect-id="{{this.id}}">
+                                     <img src="{{this.img}}" alt="{{this.name}}"/>
+                                     <span>{{this.name}}</span>
+                                     <div class="controls">
+                                         <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
+                                         <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
+                                     </div>
+                                 </div>
+                                 {{/each}}
+                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                             </div>
+                         </div>
+                     </details>
+                     
+                     <div class="attack-controls-edit">
+                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                     </div>
+                 </div>
+                 </li>
+                 {{/each}}
+             </ol>
+         <div class="attack-toolbar">
+             <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
+         </div>
+         </div>
 
-                            {{!-- MODO EDIÇÃO (O FORMULÁRIO) --}}
-                            <div class="attack-edit-mode" style="display:none;">
-                                
-                                {{!-- GRUPO 1: HABILIDADE --}}
-                                <div class="ability-grid">
-                                    <div class="ability-col-left">
-                                        <div class="form-group">
-                                            <label>Modo de Uso</label>
-                                            <input type="text" data-name="system.melee_attacks.{{key}}.mode" value="{{attack.mode}}"/>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                                            <input type="text" data-name="system.melee_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
-                                        </div>
-                                        <div class="form-group input-narrow">
-                                            <label>Mod. NH</label>
-                                            <input type="number" data-name="system.melee_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
-                                <div class="form-grid-3 attack-stats-grid-compact">
-                                    <div class="form-group">
-                                        <label>Dano</label>
-                                        <input type="text" data-name="system.melee_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Tipo</label>
-                                        <input type="text" data-name="system.melee_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow" title="Divisor de Armadura">
-                                        <label>Div.</label>
-                                        <input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Aparar</label>
-                                        <input type="text" data-name="system.melee_attacks.{{key}}.parry" value="{{attack.parry}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Bloqueio</label>
-                                        <input type="text" data-name="system.melee_attacks.{{key}}.block" value="{{attack.block}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Alcance</label>
-                                        <input type="text" data-name="system.melee_attacks.{{key}}.reach" value="{{attack.reach}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>ST Mín.</label>
-                                        <input type="number" data-name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
-                                    </div>
-                                </div>
-
-                                {{!-- ✅ MUDANÇA: GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
-                                <div class="form-grid-3 attack-flags-grid">
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
-                                        <span>Desbalanceada (U)</span>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
-                                        <span>Esgrima (F)</span>
-                                    </label>
-                                </div>    
-
-                                {{!-- GRUPO 3: AVANÇADO --}}
-                                <details class="advanced-options item-sheet-advanced">
-                                    <summary>Danos Avançados & Efeitos</summary>
-                                    <div class="advanced-content">
-                                        <h5 class="subheader">Dano de Acompanhamento</h5>
-                                        <div class="form-grid-3">
-                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
-                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
-                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
-                                        </div>
-                                        <h5 class="subheader">Dano de Fragmentação</h5>
-                                        <div class="form-grid-3">
-                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
-                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.melee_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
-                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.melee_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
-                                        </div>
-                                        <hr class="section-divider">
-                                        <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
-                                        <div class="effects-list-container">
-                                            {{!-- (A lista de efeitos onDamage não tem inputs, então não precisa mudar) --}}
-                                            {{#each (objectValues attack.onDamageEffects)}}
-                                            <div class="effect-summary" data-effect-id="{{this.id}}">
-                                                <img src="{{this.img}}" alt="{{this.name}}"/>
-                                                <span>{{this.name}}</span>
-                                                <div class="controls">
-                                                    <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
-                                                    <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
-                                                </div>
-                                            </div>
-                                            {{/each}}
-                                            <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-                                        </div>
-                                    </div>
-                                </details>
-                                
-                                <div class="attack-controls-edit">
-                                    <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
-                                </div>
-                            </div>
-                            </li>
-                            {{/each}}
-                        </ol>
-                    <div class="attack-toolbar">
-                        <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
-                    </div>
-                </div>
-
-       {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
-       <div class="form-section attacks-editor-section">
+        {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
+        <div class="form-section attacks-editor-section">
          <h4 class="section-title">Ataques à Distância</h4>
          <ol class="attack-list">
            {{#each system.ranged_attacks as |attack key|}}
            <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
              
-                            {{!-- ================================== --}}
-                            {{!-- 	MODO EXIBIÇÃO - ATAQUE L.D. V6  --}}
-                            {{!-- ================================== --}}
-                            <div class="attack-display-mode">
-                                <div class="form-section attack-display-card">
-                                    <h4 class="section-title">
-                                        <span class="pill-skill">
-                                            {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
-                                            ({{attack.mode}})
-                                        </span>
-                                        <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
-                                        {{#if (objectValues attack.onDamageEffects)}}
-                                            <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
-                                                <i class="fas fa-magic"></i>
-                                            </span>
-                                        {{/if}}
-
-                                        {{#if attack.unbalanced}}
-                                            <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                                        {{/if}}
-
-                                        {{#if attack.fencing}}
-                                            <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                                        {{/if}}
-
-                                        <div class="attack-controls">
-                                            <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                            <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                                        </div>
-                                    </h4>
-
-                                    {{!-- Linha 1: Grade de Stats (com Dano completo) --}}
-                                    <div class="form-grid-3 attack-display-grid ranged-grid">
-                                        <div class="display-stat damage-stat">
-                                            <label>Dano</label>
-                                            <span>
-                                                ({{attack.damage_formula}}) {{attack.damage_type}}
-                                                {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
-                                                {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
-                                            </span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Prec.</label>
-                                            <span>{{attack.accuracy}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Alcance</label>
-                                            <span>{{attack.range}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>CdT</label>
-                                            <span>{{attack.rof}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Tiros</label>
-                                            <span>{{attack.shots}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Recuo</label>
-                                            <span>{{attack.rcl}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>Mag.</label>
-                                            <span>{{attack.mag}}</span>
-                                        </div>
-                                        <div class="display-stat">
-                                            <label>ST Mín.</label>
-                                            <span>{{attack.min_strength}}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                 {{!-- MODO EXIBIÇÃO - ATAQUE L.D.  --}}
+                 <div class="attack-display-mode">
+                     <div class="form-section attack-display-card">
+                         <h4 class="section-title">
+                             <span class="pill-skill">
+                                 {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+                                 ({{attack.mode}})
+                             </span>
+                             <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
+                             {{#if (objectValues attack.onDamageEffects)}}
+                                 <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
+                                     <i class="fas fa-magic"></i>
+                                 </span>
+                             {{/if}}
+                             {{#if attack.unbalanced}}
+                                 <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+                             {{/if}}
+                             {{#if attack.fencing}}
+                                 <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+                             {{/if}}
+                             <div class="attack-controls">
+                                 <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+                                 <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
                              </div>
+                         </h4>
+                         <div class="form-grid-3 attack-display-grid ranged-grid">
+                             <div class="display-stat damage-stat">
+                                 <label>Dano</label>
+                                 <span>
+                                     ({{attack.damage_formula}}) {{attack.damage_type}}
+                                     {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
+                                     {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
+                                 </span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Prec.</label>
+                                 <span>{{attack.accuracy}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Alcance</label>
+                                 <span>{{attack.range}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>CdT</label>
+                                 <span>{{attack.rof}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Tiros</label>
+                                 <span>{{attack.shots}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Recuo</label>
+                                 <span>{{attack.rcl}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>Mag.</label>
+                                 <span>{{attack.mag}}</span>
+                             </div>
+                             <div class="display-stat">
+                                 <label>ST Mín.</label>
+                                 <span>{{attack.min_strength}}</span>
+                             </div>
+                         </div>
+                     </div>
+                   </div>
 
-                            {{!-- MODO EDIÇÃO (O FORMULÁRIO) L.D. --}}
-                            <div class="attack-edit-mode" style="display:none;">
-                                
-                                {{!-- GRUPO 1: HABILIDADE --}}
-                                <div class="ability-grid">
-                                    <div class="ability-col-left">
-                                        <div class="form-group">
-                                            <label>Modo de Uso</label>
-                                            <input type="text" data-name="system.ranged_attacks.{{key}}.mode" value="{{attack.mode}}"/>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                                            <input type="text" data-name="system.ranged_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
-                                        </div>
-                                        <div class="form-group input-narrow">
-                                            <label>Mod. NH</label>
-                                            <input type="number" data-name="system.ranged_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
-                                        </div>
-                                    </div>
-                                </div>
+                 {{!-- MODO EDIÇÃO (O FORMULÁRIO) L.D. --}}
+                 <div class="attack-edit-mode" style="display:none;">
+                     
+                     {{!-- GRUPO 1: HABILIDADE --}}
+                     <div class="ability-grid">
+                         <div class="ability-col-left">
+                             <div class="form-group">
+                                 <label>Modo de Uso</label>
+                                 <input type="text" data-name="system.ranged_attacks.{{key}}.mode" value="{{attack.mode}}"/>
+                             </div>
+                             <div class="form-group">
+                                 <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                                 <input type="text" data-name="system.ranged_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                             </div>
+                             <div class="form-group input-narrow">
+                                 <label>Mod. NH</label>
+                                 <input type="number" data-name="system.ranged_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
+                             </div>
+                         </div>
+                     </div>
 
-                                {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
-                                <div class="form-grid-3 attack-stats-grid-compact">
-                                    <div class="form-group">
-                                        <label>Dano</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Tipo</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow" title="Divisor de Armadura">
-                                        <label>Div.</label>
-                                        <input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Prec.</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.accuracy" value="{{attack.accuracy}}"/>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Alcance</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.range" value="{{attack.range}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>CdT</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.rof" value="{{attack.rof}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Tiros</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.shots" value="{{attack.shots}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Recuo</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.rcl" value="{{attack.rcl}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>Mag.</label>
-                                        <input type="text" data-name="system.ranged_attacks.{{key}}.mag" value="{{attack.mag}}"/>
-                                    </div>
-                                    <div class="form-group input-narrow">
-                                        <label>ST Mín.</label>
-                                        <input type="number" data-name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
-                                    </div>
-                                </div>
+                     {{!-- GRUPO 2: ATRIBUTOS DE COMBATE --}}
+                     <div class="form-grid-3 attack-stats-grid-compact">
+                         <div class="form-group">
+                             <label>Dano</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.damage_formula" value="{{attack.damage_formula}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Tipo</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.damage_type" value="{{attack.damage_type}}"/>
+                         </div>
+                         <div class="form-group input-narrow" title="Divisor de Armadura">
+                             <label>Div.</label>
+                             <input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.armor_divisor" value="{{attack.armor_divisor}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Prec.</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.accuracy" value="{{attack.accuracy}}"/>
+                         </div>
+                         <div class="form-group">
+                             <label>Alcance</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.range" value="{{attack.range}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>CdT</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.rof" value="{{attack.rof}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Tiros</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.shots" value="{{attack.shots}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Recuo</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.rcl" value="{{attack.rcl}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>Mag.</label>
+                             <input type="text" data-name="system.ranged_attacks.{{key}}.mag" value="{{attack.mag}}"/>
+                         </div>
+                         <div class="form-group input-narrow">
+                             <label>ST Mín.</label>
+                             <input type="number" data-name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                         </div>
+                     </div>
 
-                                {{!-- ✅ MUDANÇA: GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
-                                <div class="form-grid-3 attack-flags-grid">
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
-                                        <span>Desbalanceada (U)</span>
-                                    </label>
-                                    <label class="custom-checkbox">
-                                        <input type="checkbox" data-name="system.melee_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
-                                        <span>Esgrima (F)</span>
-                                    </label>
-                                </div>
+                     {{!-- GRUPO DE CARACTERÍSTICAS (Checkboxes) --}}
+                     <div class="form-grid-3 attack-flags-grid">
+                         <label class="custom-checkbox">
+                             <input type="checkbox" data-name="system.ranged_attacks.{{key}}.unbalanced" {{checked attack.unbalanced}}/>
+                             <span>Desbalanceada (U)</span>
+                         </label>
+                         <label class="custom-checkbox">
+                             <input type="checkbox" data-name="system.ranged_attacks.{{key}}.fencing" {{checked attack.fencing}}/>
+                             <span>Esgrima (F)</span>
+                         </label>
+                     </div>
 
-                                {{!-- GRUPO 3: AVANÇADO --}}
-                                <details class="advanced-options item-sheet-advanced">
-                                    <summary>Danos Avançados & Efeitos</summary>
-                                    <div class="advanced-content">
-                                        <h5 class="subheader">Dano de Acompanhamento</h5>
-                                        <div class="form-grid-3">
-                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
-                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
-                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
-                                        </div>
-                                        <h5 class="subheader">Dano de Fragmentação</h5>
-                                        <div class="form-grid-3">
-                                            <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
-                                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
-                                            <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
-                                        </div>
-                                        <hr class="section-divider">
-                                        <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
-                                        <div class="effects-list-container">
-                                            {{#each (objectValues attack.onDamageEffects)}}
-                                       <div class="effect-summary" data-effect-id="{{this.id}}">
-                                                <img src="{{this.img}}" alt="{{this.name}}"/>
-                                                <span>{{this.name}}</span>
-                                                <div class="controls">
-                                                    <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
-                                                    <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
-                                                </div>
-                                            </div>
-                                            {{/each}}
-                                            <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
-                                        </div>
-                                    </div>
-                                </details>
-                                
-                                <div class="attack-controls-edit">
-                                    <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
-                                </div>
+                     {{!-- GRUPO 3: AVANÇADO --}}
+                     <details class="advanced-options item-sheet-advanced">
+                         <summary>Danos Avançados & Efeitos</summary>
+                         <div class="advanced-content">
+                             <h5 class="subheader">Dano de Acompanhamento</h5>
+                             <div class="form-grid-3">
+                                 <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.formula" value="{{attack.follow_up_damage.formula}}"/></div>
+                                 <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.follow_up_damage.type" value="{{attack.follow_up_damage.type}}"/></div>
+                                 <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.follow_up_damage.armor_divisor" value="{{attack.follow_up_damage.armor_divisor}}"/></div>
+                             </div>
+                             <h5 class="subheader">Dano de Fragmentação</h5>
+                             <div class="form-grid-3">
+                                 <div class="form-group"><label>Fórmula</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.formula" value="{{attack.fragmentation_damage.formula}}"/></div>
+                                 <div class="form-group input-narrow"><label>Tipo</label><input type="text" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.type" value="{{attack.fragmentation_damage.type}}"/></div>
+                                 <div class="form-group input-narrow" title="Divisor"><label>Div.</label><input type="number" step="0.1" data-name="system.ranged_attacks.{{key}}.fragmentation_damage.armor_divisor" value="{{attack.fragmentation_damage.armor_divisor}}"/></div>
+                             </div>
+                             <hr class="section-divider">
+                             <h5 class="subheader">Efeitos ao Causar Dano (onDamage)</h5>
+                             <div class="effects-list-container">
+                                 {{#each (objectValues attack.onDamageEffects)}}
+                                 <div class="effect-summary" data-effect-id="{{this.id}}">
+                                     <img src="{{this.img}}" alt="{{this.name}}"/>
+                                     <span>{{this.name}}</span>
+                                     <div class="controls">
+                                         <a class="view-original-effect" data-uuid="{{this.effectUuid}}"><i class="fas fa-eye"></i></a>
+                                         <a class="delete-attack-effect" data-list="onDamageEffects"><i class="fas fa-trash"></i></a>
+                                     </div>
+                                 </div>
+                                 {{/each}}
+                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                             </div>
+                         </div>
+                     </details>
+                     
+                     <div class="attack-controls-edit">
+                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                     </div>
+                 </div>
+                 </li>
+                 {{/each}}
+             </ol>
+             <div class="attack-toolbar">
+             <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
+
+             </div>
+             </div>
+         </div>
+     
+     {{!-- ===================================================================== --}}
+     {{!--     ABA ESPECIAL: EFEITO                                  --}}
+     {{!-- ===================================================================== --}}
+     <div class="tab" data-tab="effects">
+         {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
+         {{> effectsTab}}
+     </div>
+
+     {{!-- ===================================================================== --}}
+     {{!--    ABA ESPECIAL: MODIFICADORES (RECUPERADA)                         --}}
+     {{!-- ===================================================================== --}}
+     <div class="tab" data-tab="modifiers">
+         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+         
+             {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
+             <div class="modifiers-toolbar">
+                 <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+             </div>
+
+             {{!-- Envolvemos a lista com a estrutura .form-section --}}
+             <div class="form-section">
+                     
+                 <ol class="modifier-list">
+                     {{#each sortedModifiers as |modifier|}}
+                         <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
+                             
+                             <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
+                                 <span class="modifier-name">{{modifier.name}}</span>
+                                 {{#if modifier.applied_effect}}
+                                     <span class="modifier-divider">|</span>
+                                     <span class="modifier-effect">{{modifier.applied_effect}}</span>
+                                 {{/if}}
+                             </a>
+
+                             <div class="modifier-controls">
+                                 <span class="modifier-cost">{{modifier.cost}}</span>
+
+                                 <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
+                             </div>
+                         </li>
+                     {{else}}
+                         <li class="placeholder-text">
+                             <p>Nenhum modificador aplicado.</p>
+                         </li>
+                     {{/each}}
+                 </ol>
+             </div>
+         {{/if}}
+     </div>
+       
+       {{!-- ===================================================================== --}}
+    {{!--           ABA ESPECIAL: MODIFICADORES DE EQUIPAMENTO                  --}}
+    {{!-- ===================================================================== --}}
+    <div class="tab" data-tab="eqp_modifiers">
+        {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
+            
+            <div class="modifiers-toolbar">
+                <a class="add-eqp-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+            </div>
+
+            <div class="form-section">
+                <p class="hint">Adicione qualidades, materiais ou modificações mágicas aqui. O Custo Final e Peso serão recalculados automaticamente.</p>
+                
+                <ol class="modifier-list">
+                    {{#each eqpModifiersList as |mod|}}
+                        <li class="modifier-tag" data-modifier-id="{{mod.id}}" style="background: rgba(0,0,0,0.2); border: 1px solid #777;">
+                            
+                            <div class="modifier-info" style="flex-grow: 1;">
+                                <span class="modifier-name">{{mod.name}}</span>
+                                <span class="modifier-divider">|</span>
+                                <span class="modifier-effect" style="font-size: 0.85em; color: #ccc;">
+                                    CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
+                                </span>
+                            </div>
+
+                            <div class="modifier-controls">
+                                <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
                             </div>
                         </li>
-                        {{/each}}
-                        </ol>
-                        <div class="attack-toolbar">
-                        <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
-
-                    </div>
-                    </div>
-                </div>
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA ESPECIAL: EFEITO  				 --}}
-        {{!-- ===================================================================== --}}
-        <div class="tab" data-tab="effects">
-            {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
-            {{> effectsTab}}
-        </div>
-
-        {{!-- ===================================================================== --}}
-        {{!--       ABA ESPECIAL: MODIFICADORES (RECUPERADA)                      --}}
-        {{!-- ===================================================================== --}}
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-            <div class="tab" data-tab="modifiers">
-                
-                {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
-                <div class="modifiers-toolbar">
-                    <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-                </div>
-
-                {{!-- Envolvemos a lista com a estrutura .form-section --}}
-                <div class="form-section">
-                            
-                    <ol class="modifier-list">
-                        {{#each sortedModifiers as |modifier|}}
-                            <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
-                                
-                                <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
-                                    <span class="modifier-name">{{modifier.name}}</span>
-                                    {{#if modifier.applied_effect}}
-                                        <span class="modifier-divider">|</span>
-                                        <span class="modifier-effect">{{modifier.applied_effect}}</span>
-                                    {{/if}}
-                                </a>
-
-                                <div class="modifier-controls">
-                                    <span class="modifier-cost">{{modifier.cost}}</span>
-                                    <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                        {{else}}
-                            <li class="placeholder-text">
-                                <p>Nenhum modificador aplicado.</p>
-                            </li>
-                        {{/each}}
-                    </ol>
-                </div>
-                
+                    {{else}}
+                        <li class="placeholder-text">
+                            <p>Nenhum modificador de equipamento aplicado.</p>
+                        </li>
+                    {{/each}}
+                </ol>
             </div>
-        {{/if}}
-        
-  </section>
-</section>
+            
+            {{!-- Exibição dos Efeitos de Texto dos Mods (Opcional, mas útil) --}}
+            {{#if eqpModifiersList}}
+            <div class="form-section" style="margin-top: 10px;">
+                <h4 class="section-title">Resumo dos Efeitos</h4>
+                <ul style="padding-left: 20px; margin: 5px 0; color: #ccc; font-size: 0.9em;">
+                    {{#each eqpModifiersList as |mod|}}
+                        {{#if mod.features}}
+                            <li><strong>{{mod.name}}:</strong> {{mod.features}}</li>
+                        {{/if}}
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
 
+        {{/if}}
+    </div>
+   </section>
+</section>
