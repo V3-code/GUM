@@ -1320,6 +1320,9 @@
                 {{#if (gt group.weight 0)}}
                   <span class="group-weight-tag">{{group.weight}} kg</span>
                 {{/if}}
+                {{#if (gt group.defense_bonus 0)}}
+                    <span class="group-db-tag" title="Bônus de Defesa (Escudo/Arma)">BD +{{group.defense_bonus}}</span>
+                {{/if}}
               </span>
               <div class="group-controls">
                 <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">

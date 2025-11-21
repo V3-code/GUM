@@ -283,6 +283,7 @@ async getData(options) {
                 id: item.id,
                 name: item.name,
                 weight: item.system.weight,
+                defense_bonus: Number(item.system.defense_bonus) || 0,
                 attacks: allAttacks,
                 sort: item.sort || 0,
                 isFromItem: true

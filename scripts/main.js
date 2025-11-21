@@ -27,7 +27,7 @@ class GurpsActor extends Actor {
         this._prepareCharacterItems(); 
     }
 
-    _prepareCharacterItems() {
+_prepareCharacterItems() {
         const actorData = this; 
         const attributes = actorData.system.attributes;
         const combat = actorData.system.combat;
@@ -45,26 +45,20 @@ class GurpsActor extends Actor {
             for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
         }
         
-        // Resetar Bônus de Defesa (DB) vindo de equipamentos
-        combat.defense_bonus = 0;
+        // (Removido: combat.defense_bonus = 0)
 
         // --- ETAPA 1: PRÉ-PROCESSAMENTO DE ITENS (MODIFICADORES DE EQUIPAMENTO) ---
-        // Calcula Peso e Custo efetivos baseados nos modificadores 'eqp_modifier'
         for (const item of this.items) {
             if (['equipment', 'armor'].includes(item.type)) {
-                // Valores Base
                 const baseWeight = Number(item.system.weight) || 0;
                 const baseCost = Number(item.system.cost) || 0;
                 
-                // Acumuladores
                 let totalCF = 0;
                 let weightMultiplier = 1;
 
-                // Itera sobre os modificadores
                 const modifiers = item.system.eqp_modifiers || {};
                 for (const mod of Object.values(modifiers)) {
                     totalCF += Number(mod.cost_factor) || 0;
-                    
                     if (mod.weight_mod) {
                         const wModStr = mod.weight_mod.toString().trim().toLowerCase();
                         if (wModStr.startsWith('x')) {
@@ -74,20 +68,14 @@ class GurpsActor extends Actor {
                     }
                 }
 
-                // Calcula valores efetivos
-                // (Salvamos em variáveis temporárias 'effectiveWeight' e 'effectiveCost' para não sobrescrever o base no DB)
                 item.system.effectiveWeight = baseWeight * weightMultiplier;
                 item.system.effectiveCost = baseCost * Math.max(0, 1 + totalCF);
                 
-                // --- LÓGICA DE DEFESA (DB) ---
-                if (item.system.location === 'equipped') {
-                    const itemDB = Number(item.system.defense_bonus) || 0;
-                    combat.defense_bonus += itemDB;
-                }
+                // (Removido: Lógica de somar DB ao combat.defense_bonus)
             }
         }
 
-        // --- ETAPA 2: MOTOR DE CONDIÇÕES (SEU CÓDIGO ORIGINAL MANTIDO) ---
+        // --- ETAPA 2: MOTOR DE CONDIÇÕES ---
         const add_sub_modifiers = {};
         const set_modifiers = {};
         const conditions = this.items.filter(i => i.type === "condition"); 
@@ -147,15 +135,13 @@ class GurpsActor extends Actor {
 
         // Carga e Levantamento
         const liftingST = attributes.lifting_st.final_computed;
-        const basicLift = (liftingST * liftingST) / 10; // BL = (ST^2)/10
+        const basicLift = (liftingST * liftingST) / 10; 
         attributes.basic_lift = { value: basicLift };
         
-        // ✅ CÁLCULO DE PESO TOTAL (USANDO effectiveWeight)
         let totalWeight = 0;
         const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
         for (let i of this.items) { 
             if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight'))) {
-                // Usa o peso efetivo calculado na Etapa 1, ou o peso base se não houver
                 const weight = i.system.effectiveWeight !== undefined ? i.system.effectiveWeight : (i.system.weight || 0);
                 const quantity = i.system.quantity || 1;
                 const loc = i.system.location;
@@ -190,17 +176,15 @@ class GurpsActor extends Actor {
         ];
 
         // --- DEFESAS ATIVAS ---
-        // Esquiva = Velocidade Básica + 3 + DB
         const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
         attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
+        // ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
         attributes.dodge.final_computed = attributes.dodge.value 
                                         + enc.penalty 
                                         + (attributes.dodge.mod || 0) 
                                         + (attributes.dodge.passive || 0) 
-                                        + (attributes.dodge.temp || 0)
-                                        + combat.defense_bonus; // ✅ SOMA O DB AQUI
+                                        + (attributes.dodge.temp || 0);
 
-        // Deslocamento
         attributes.basic_move.final_computed = Math.floor(attributes.basic_move.final_computed * (1 - (enc.level_value * 0.2)));
 
         // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" ---
@@ -216,13 +200,11 @@ class GurpsActor extends Actor {
             }
         }
 
-        // --- ETAPA 7: CÁLCULO DE RD (Resistência a Dano) ---
+        // --- ETAPA 7: CÁLCULO DE RD ---
         function _mergeDRObjects(target, source) {
             if (!source || typeof source !== 'object') {
                 const value = Number(source) || 0;
-                if (value > 0) {
-                    target.base = (target.base || 0) + value;
-                }
+                if (value > 0) target.base = (target.base || 0) + value;
                 return;
             }
             for (const [type, value] of Object.entries(source)) {
@@ -250,7 +232,7 @@ class GurpsActor extends Actor {
         combat.dr_locations = totalDr; 
         combat.dr_from_armor = drFromArmor;
         
-        // --- ETAPA 8: CÁLCULO DE NH (ATUALIZADO COM DB PARA BLOCK/PARRY) ---
+        // --- ETAPA 8: CÁLCULO DE NH ---
         const getNHBaseValue = (baseAttrStr, skillList) => {
             const baseAttr = (baseAttrStr || "dx").toLowerCase().trim();
             let attrVal = 10;
@@ -271,7 +253,6 @@ class GurpsActor extends Actor {
         const spellsAndPowers = this.items.filter(i => ['spell', 'power'].includes(i.type));
         const equipment = this.items.filter(i => ['melee_weapon', 'ranged_weapon', 'equipment', 'armor'].includes(i.type));
         
-        // 1. Calcula NH de Perícias
         for (let pass = 0; pass < 2; pass++) { 
             for (const i of skills) {
                 try {
@@ -281,7 +262,6 @@ class GurpsActor extends Actor {
             }
         }
         
-        // 2. Calcula NH de Magias/Poderes
         for (const i of spellsAndPowers) {
             try {
                 const conjurationBaseVal = getNHBaseValue(i.system.base_attribute, skills);
@@ -293,51 +273,34 @@ class GurpsActor extends Actor {
             } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
         }
         
-        // 3. Calcula NH de Ataques/Defesas de Equipamento (Aparar/Bloqueio + DB)
         for (const i of equipment) {
             try {
-                // Melee Attacks
                 if (i.system.melee_attacks) {
                     for (let attack of Object.values(i.system.melee_attacks)) {
-                        // NH de Ataque
                         const attackBaseVal = getNHBaseValue(attack.skill_name, skills);
                         attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
                         
-                        // Aparar (Parry)
-                        // Fórmula: (NH / 2) + 3 + Mod.Aparar + DB
-                        // Nota: A 'base' do parry no item já costuma incluir o +3 do cálculo básico se importado
-                        // Mas aqui vamos calcular dinamicamente para garantir
+                        // Aparar (Parry) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
                         if (attack.parry !== "0" && attack.parry !== "No") {
                              const parryBase = Math.floor(attack.final_nh / 2) + 3;
-                             const parryMod = Number(attack.parry) || 0; // O valor "0" no JSON geralmente é o mod
-                             // Mas cuidado: importadores as vezes colocam o valor final no JSON.
-                             // Para o nosso sistema, assumiremos que attack.parry é o modificador do item (ex: +0 ou +1 de uma espada boa)
-                             // Se o valor for muito alto (ex: 10), é um valor fixo.
+                             const parryMod = Number(attack.parry) || 0;
                              let finalParry = 0;
-                             if (parryMod > 5) finalParry = parryMod; // Valor fixo importado
-                             else finalParry = parryBase + parryMod; // Cálculo
-                             
-                             // ✅ SOMA O DB (Bônus de Defesa)
-                             attack.final_parry = finalParry + combat.defense_bonus;
+                             if (parryMod > 5) finalParry = parryMod; 
+                             else finalParry = parryBase + parryMod;
+                             attack.final_parry = finalParry;
                         }
                         
-                        // Bloqueio (Block)
+                        // Bloqueio (Block) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
                         if (attack.block !== "0" && attack.block !== "No") {
-                             // Block baseia-se na perícia Escudo
                              const blockBase = Math.floor(attack.final_nh / 2) + 3;
                              const blockMod = Number(attack.block) || 0;
-                             
                              let finalBlock = 0;
                              if (blockMod > 5) finalBlock = blockMod; 
                              else finalBlock = blockBase + blockMod;
-                             
-                             // ✅ SOMA O DB (Bônus de Defesa)
-                             attack.final_block = finalBlock + combat.defense_bonus;
+                             attack.final_block = finalBlock;
                         }
                     }
                 }
-                
-                // Ranged Attacks (NH apenas)
                 if (i.system.ranged_attacks) {
                     for (let attack of Object.values(i.system.ranged_attacks)) {
                         const attackBaseVal = getNHBaseValue(attack.skill_name, skills);

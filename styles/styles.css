@@ -3848,3 +3848,17 @@ filter:none;
 .gum.sheet.actor .tox-tinymce.expanded .tox-edit-area__iframe {
   height: 550px !important; /* <-- Altura do texto (600px - 50px de barra) */
 }
+
+/* Tag de Bônus de Defesa na Lista de Ataques */
+.combat-tab .group-db-tag {
+    display: inline-block;
+    background-color: #1565c0; /* Azul para defesa */
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-weight: normal;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
