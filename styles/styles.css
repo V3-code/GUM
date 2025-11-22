@@ -126,16 +126,7 @@
  
 }
 
-/* 3.1.1 SIDEBAR */
-.sheet-sidebar {
-  position: relative;
-  background: var(--c-fundo-sidebar);
-  color: var(--c-texto-claro);
-  padding: 1rem 1rem;
-  border-radius: 3px;
-  margin-top: 10px;
-  height: 41.4rem;
-}
+
 
 /* 3.1.1 ÁREA PRINCIPAL */
 .sheet-main-area {
@@ -380,500 +371,188 @@ a:hover { text-decoration: underline; color: #fff; }
 
 
 /* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.1: ESTRUTURA DA NOVA SIDEBAR              */
+/* GUM - SIDEBAR "MEDALHÃO CIRCULAR" (VERSÃO FINAL V4)                 */
 /* =================================================================== */
 
+/* 1. CONTAINER */
 .sheet-sidebar {
-  padding: 0; /* Removemos o padding antigo para o container preencher a área */
+    position: relative; z-index: 2; margin-top: 0; padding: 0 5px; 
+    background: transparent; pointer-events: none; 
 }
 
 .sidebar-design-container {
-  background: var(--c-fundo-painel);
-  border: 1px solid var(--c-borda-dourada);
-  border-radius: 5px;
-  padding: 1rem;
-  height: 40rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-left: 10px;
-  margin-right: 10px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+    background: rgba(20, 20, 20, 0.95); 
+    border: 1px solid var(--c-borda-dourada);
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 40rem;
+    display: flex; flex-direction: column; 
+    gap: 10px; 
+    pointer-events: all;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    color: #ececec; 
+}
+.sidebar-block { background: none; border: none; padding: 0; margin: 0; }
+
+/* 2. FOTO */
+.profile-block { display: flex; justify-content: center; margin-bottom: 0; position: relative; z-index: 1; }
+.profile-img {
+    width: 100%; max-width: 180px; height: auto; max-height: 200px;
+    object-fit: cover; object-position: top;
+    border: 1px solid var(--c-acento-dourado); border-radius: 2px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
-.sidebar-block {
-  /* Removemos o estilo individual dos blocos para um visual integrado */
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-shadow: none;
+/* 3. CARD DE CARGA E ESQUIVA (MEDALHÃO CIRCULAR) */
+.encumbrance-dodge-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.4); 
+    border: 1px solid rgba(197, 160, 91, 0.2);
+    border-radius: 3px; padding: 4px 0; margin-bottom: 5px; position: relative;
+    margin-top: -20px; z-index: 10; box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
 }
 
-/* --- Estilos base para os novos componentes (serão detalhados nos próximos passos) --- */
+/* Colunas */
+.enc-col { display: flex; flex-direction: column; justify-content: center; height: 45px; }
+.left-col { align-items: center; width: 38%; text-align: center; }
+.right-col { align-items: center; width: 38%; text-align: center; }
+.center-col { width: 24%; align-items: center; position: relative; }
 
-.profile-block {
-  position: relative; /* Essencial para posicionar o escudo depois */
-  margin-bottom: 2rem; /* Espaço para o escudo não sobrepor os hexágonos */
+.enc-label {
+    font-family: 'Roboto', sans-serif; font-size: 9px; text-transform: uppercase; 
+    color: var(--c-texto-secundario); font-weight: 700; white-space: nowrap;
 }
-.profile-block .profile-img {
-  width: 100%;
-  height: 180px;
-}
-
-.hex-block {
-  display: flex;
-  justify-content: space-between;
-}
-
-.bars-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.enc-label.link { cursor: pointer; border-bottom: 1px dotted rgba(197, 160, 91, 0.5); }
+.enc-label.link:hover { color: var(--c-acento-dourado); border-bottom-style: solid; }
+.enc-val {
+    font-family: 'Roboto', sans-serif; font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; 
 }
 
-/* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.2: ESTILO DO SELO CIRCULAR (FINAL)        */
-/* =================================================================== */
-
-.profile-container {
-  position: relative;
-  margin-bottom: 3rem; /* Espaço para o selo e o rótulo */
-}
-
-/* O container principal que posiciona o conjunto */
-.dodge-badge-container {
-  position: absolute;
-  bottom: -45px; /* Metade da nova altura (56px) */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-/* O wrapper que define o tamanho do brasão */
+/* Badge Circular (Medalhão) */
 .badge-wrapper {
-  position: relative;
-  /* MUDANÇA: Tamanho geral reduzido */
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
+    position: relative; width: 60px; height: 60px;
+    display: grid; place-items: center;
+    background: #161616; /* Fundo escuro para tapar o card */
+    border-radius: 50%; /* Círculo Perfeito */
+    box-shadow: 0 0 10px rgba(0,0,0,0.8); /* Sombra ao redor */
+    z-index: 10;
 }
+.dodge-badge-svg { position: absolute; width: 100%; height: 100%; }
+.dodge-badge-svg .badge-bg { fill: #1f1e1a; } 
+.dodge-badge-svg .badge-border { fill: none; stroke: var(--c-acento-dourado); stroke-width: 5; }
 
-/* O SVG e suas partes */
-.dodge-badge-svg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  filter: drop-shadow(0 2px 2px var(--c-sombra));
-}
-
-.dodge-badge-svg .badge-center {
-  /* Fundo escuro do círculo */
-  fill: var(--c-borda-escura);
-}
-.dodge-badge-svg .badge-ring {
-  /* Circunferência dourada interna */
-  fill: none;
-  stroke: var(--c-acento-dourado);
-  stroke-width: 5;
-}
-
-/* O valor numérico da Esquiva */
 .dodge-value {
-  position: relative;
-  z-index: 2;
-  font-family: 'Roboto', sans-serif;
-  /* MUDANÇA: Fonte reduzida para caber no novo tamanho */
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--c-texto-principal);
-  text-shadow: 1px 1px 2px #000;
-}
-.dodge-value:hover {
-  text-decoration: none;
-  color: #fff;
-}
-
-/* O rótulo "ESQUIVA" */
-.badge-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  color: var(--c-texto-secundario);
-}
-
-.dodge-value:active {
-  /* No momento do clique, o texto fica mais branco e ganha um brilho vermelho */
-  color: #fff;
-  text-shadow: 0 0 8px rgba(255, 50, 50, 0.9), 1px 1px 2px #000;
-}
-
-/* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.3: ESTILO DOS HEXÁGONOS (LAYOUT DE ENCAIXE) */
-/* =================================================================== */
-
-/* MUDANÇA: O bloco agora é uma 'tela' com posição relativa e altura fixa */
-.hex-block {
-  position: relative;
-  width: 100%;
-  height: 85px; /* Altura total da área dos hexágonos */
-  padding: 0.5rem 0;
-}
-
-/* MUDANÇA: Cada 'stat' agora é posicionado de forma absoluta na 'tela' */
-.hex-stat {
-  position: absolute;
-  top: 0; /* Todos começam alinhados no topo por padrão */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* Posições exatas de cada hexágono */
-.hex-velocidade { 
-  left: 0;
-}
-.hex-deslocamento { 
-  /* O pulo do gato: posicionamos a partir do topo para controlar o encaixe */
-  top: 35px; 
-  left: 50%;
-  transform: translateX(-50%); /* Centraliza horizontalmente */
-}
-.hex-mt { 
-  right: 0;
-}
-
-/* Wrapper que segura o SVG e o valor */
-.hex-wrapper {
-  position: relative;
-  width: 80px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-}
-
-.hex-svg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  filter: drop-shadow(0 2px 2px var(--c-sombra));
-}
-
-.hex-svg .hex-border {
-  fill: var(--c-acento-dourado);
-}
-.hex-svg .hex-fill {
-  fill: var(--c-acento-dourado); 
-  stroke: var(--c-borda-escura);
-  stroke-width: 2;
-}
-
-/* O valor numérico dentro do hexágono */
-.hex-value {
-  position: relative;
-  z-index: 2;
-  font-family: 'Roboto', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--c-borda-escura);
-  width: 80%;
-  text-align: center;
-  border: none !important;
-  background: transparent !important;
-  padding: 0;
-}
-
-/* O rótulo abaixo do hexágono */
-.hex-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-texto-secundario);
-}
-
-/* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.4: BARRAS DE RECURSOS (PV/PF)             */
-/* =================================================================== */
-
-.bars-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.bar-group .bar-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--c-texto-secundario);
-  text-align: left;
-  margin-bottom: 0.2rem;
-}
-
-/* O container principal da barra */
-.resource-bar {
-  position: relative; /* Define o contexto de posicionamento */
-  height: 30px;
-  background-color: var(--c-fundo-input);
-  border-radius: 3px;
-  border: 1px solid #444;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0.5rem;
-}
-
-/* A barra de preenchimento colorida */
-.resource-bar .bar-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  border-radius: 2px;
-  /* A largura é controlada pelo style="..." no HTML */
-  transition: width 0.3s ease-out; /* Animação suave */
-}
-/* --- ESTILOS PARA AS NOVAS BARRAS DE RECURSOS --- */
-.bar-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.bar-label .edit-resource-bar {
-    font-size: 0.9em;
-    color: var(--c-texto-secundario);
-    opacity: 0.5;
-    transition: all 0.2s ease;
-}
-.bar-group:hover .edit-resource-bar {
-    opacity: 1;
-    color: var(--c-acento-dourado);
-}
-.bar-inputs .final-max-value {
+    position: relative; z-index: 2;
+    font-family: 'Roboto', sans-serif; 
+    font-size: 1.4rem; /* Tamanho bom para 2 dígitos */
     font-weight: 700;
-    font-size: 1rem;
-    color: #fff;
-    text-shadow: 1px 1px 2px #000;
+    color: #fff; text-shadow: 0 0 8px rgba(197, 160, 91, 0.6);
 }
-/* Estilos para a janela de diálogo de edição */
-.secondary-stats-dialog .form-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-}
-.secondary-stats-dialog .final-display {
-    font-weight: bold;
-    font-size: 1.1em;
-    background: rgba(0,0,0,0.1);
-    padding: 4px;
-    border-radius: 3px;
+.dodge-value:hover { color: #fff; text-decoration: none; }
+
+.badge-label-curved {
+    position: absolute; bottom: -6px;
+    font-family: 'Roboto Condensed'; font-size: 8px; font-weight: 700; color: var(--c-acento-dourado);
+    background: rgba(0,0,0,0.9); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid rgba(197, 160, 91, 0.3);
+    box-shadow: 0 2px 4px #000;
 }
 
-/* Os inputs de texto, que ficam sobre a barra */
-.resource-bar .bar-inputs,
-.resource-bar .bar-temp {
-  position: relative;
-  z-index: 2; /* Garante que fiquem na frente do preenchimento */
+/* 4. CLUSTER, BARRAS E OUTROS (MANTIDOS) */
+.stats-cluster {
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(197, 160, 91, 0.2);
+    border-radius: 4px; padding: 8px;
+}
+.cluster-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.cluster-title { font-family: 'Cinzel', serif; font-size: 10px; color: var(--c-texto-subtitulo); letter-spacing: 1px; }
+.edit-secondary-stats-btn { color: var(--c-texto-subtitulo); font-size: 12px; cursor: pointer; transition: 0.3s; }
+.edit-secondary-stats-btn:hover { color: var(--c-acento-dourado); transform: rotate(45deg); }
+
+.dice-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+.d6-stat { position: relative; flex: 1; height: 50px; display: flex; justify-content: center; }
+.d6-stat.main-d6 { flex: 1.2; height: 60px; }
+.d6-face {
+    width: 100%; height: 100%;
+    background: linear-gradient(145deg, #2b2a29 0%, #191813 100%);
+    border: 1px solid var(--c-acento-dourado); border-radius: 4px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.d6-stat:hover .d6-face { border-color: #fff; box-shadow: 0 0 8px var(--c-acento-dourado); }
+.d6-val { font-family: 'Roboto', sans-serif; font-size: 1.3rem; font-weight: 700; color: #fff; }
+.main-d6 .d6-val { font-size: 1.6rem; color: var(--c-acento-dourado); }
+.d6-label { font-family: 'Roboto Condensed', sans-serif; font-size: 8px; font-weight: 700; color: #aaa; margin-top: 0px; text-transform: uppercase; }
+
+.senses-container {
+    background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);
+    border-radius: 4px; padding: 5px; display: flex; justify-content: space-between;
+}
+.sense-box { display: flex; flex-direction: column; align-items: center; width: 25%; cursor: pointer; }
+.sense-box:hover a { color: #fff; }
+.sense-box a {
+    color: var(--c-texto-subtitulo); font-family: 'Roboto Condensed', sans-serif;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.sense-box i { font-size: 12px; margin-bottom: 1px; }
+.sense-value {
+    font-family: 'Roboto', sans-serif; font-size: 11px; font-weight: 700;
+    color: #fff; background: rgba(255,255,255,0.1); border: 1px solid #444;
+    border-radius: 3px; padding: 0 5px; min-width: 18px; text-align: center; margin-top: 2px;
 }
 
-.resource-bar .bar-inputs {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #fff;
-  text-shadow: 1px 1px 2px #000;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+/* Barras */
+.bars-block { display: flex; flex-direction: column; gap: 8px; margin-top: 0; }
+.bar-group { display: flex; flex-direction: column; gap: 2px; }
+.bar-label { display: flex; justify-content: space-between; font-family: 'Roboto', sans-serif; font-size: 10px; font-weight: 700; color: var(--c-texto-secundario); }
+.edit-resource-bar { cursor: pointer; opacity: 0.6; color: var(--c-texto-secundario); }
+.edit-resource-bar:hover { opacity: 1; color: var(--c-acento-dourado); }
+.resource-bar.original-style {
+    position: relative; height: 24px; background: #1a1a1a; border: 1px solid #444;
+    border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
 }
-
-.resource-bar input {
-  width: 40px;
-  text-align: center;
-  border: none !important;
-  background: transparent !important;
-  font-weight: 700;
+.bar-fill { position: absolute; left: 0; top: 0; height: 100%; transition: width 0.3s ease; }
+.bar-inputs {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px black; z-index: 2;
 }
+.bar-inputs input { background: transparent; border: none; color: inherit; text-align: right; width: 30px; font-family: inherit; font-weight: 700; padding: 0; font-size: 11px; }
+.bar-inputs .final-max-value { text-align: left; width: 30px; }
 
-.resource-bar .bar-inputs input {
-  font-size: 1rem;
-  color: #fff;
+/* Sobrevivência */
+.sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: 5px; }
+.collapsible-block { border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px; }
+.collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0; }
+.collapsible-header .block-title { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700; color: var(--c-acento-dourado); margin: 0; }
+.collapsible-header .expand-icon { font-size: 10px; color: var(--c-texto-secundario); }
+.collapsible-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+.collapsible-block.active .collapsible-content { max-height: 200px; padding-top: 5px; }
+.survival-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.survival-item {
+    background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 3px; padding: 4px;
+    display: flex; flex-direction: column; align-items: center;
 }
-
-.resource-bar .bar-temp input {
-  width: 50px;
-  background-color: rgba(0,0,0,0.4) !important;
-  border: 1px solid #555 !important;
-  border-radius: 5px;
-  font-size: 0.8rem;
+.survival-item.radiation { border-color: #5a4a20; background: rgba(50, 40, 10, 0.2); }
+.survival-item label {
+    font-size: 9px; font-weight: 700; color: var(--c-texto-subtitulo); margin-bottom: 2px; text-transform: uppercase;
 }
-
-/* Adiciona um espaço extra no topo do bloco das barras de PV/PF */
-.bars-block {
-  margin-top: 2rem; /* Aumente este valor para mais espaço, diminua para menos */
+.survival-item label.warning-label { color: #d4a017; }
+.counter-wrapper { display: flex; align-items: center; gap: 5px; }
+.adjust-survival { color: #777; cursor: pointer; font-size: 10px; transition: 0.2s; }
+.adjust-survival:hover { color: #fff; }
+.counter-wrapper input {
+    width: 30px; text-align: center; background: #111; border: 1px solid #333;
+    color: #fff; font-weight: 700; font-size: 12px; border-radius: 2px; height: 18px;
 }
-
-/* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.6: BLOCO COLAPSÁVEL DE SOBREVIVÊNCIA      */
-/* =================================================================== */
-
-.collapsible-block {
-  /* MUDANÇA: Removemos o fundo, borda e padding para um visual limpo */
-  background: none;
-  border: none;
-  padding: 0.3rem;
-  
-  /* Adicionamos uma borda inferior para separar do próximo bloco */
-  border-bottom: 1px solid var(--c-borda-dourada);
-  padding-bottom: 0.35rem;
-  margin-bottom: 0.35rem;
-  margin-top: 5px;
+/* Inputs Dialog */
+.secondary-stats-dialog input[type="number"], .secondary-stats-dialog input[type="text"] {
+    background-color: rgba(0, 0, 0, 0.3) !important; color: #fff !important; border: 1px solid #555 !important;
 }
-
-.collapsible-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.collapsible-header .block-title {
-  border: none;
-  margin: 0;
-  padding: 0;
-  font-size: 0.8rem; /* Fonte menor para o título "Sobrevivência" */
-}
-
-.collapsible-header .expand-icon {
-  color: var(--c-texto-secundario);
-  transition: transform 0.3s ease-in-out;
-}
-
-/* O conteúdo que abre e fecha */
-.collapsible-content {
-  max-height: 0; /* Começa fechado */
-  overflow: hidden;
-  transition: max-height 0.4s ease-out, padding-top 0.4s ease-out;
-}
-
-/* --- ESTADOS QUANDO O BLOCO ESTÁ ATIVO/ABERTO --- */
-.collapsible-block.active .collapsible-content {
-  max-height: 200px; /* Altura máxima para a animação */
-  padding-top: 0.75rem; /* Adiciona espaço quando aberto */
-}
-
-.collapsible-block.active .expand-icon {
-  transform: rotate(180deg); /* Gira a seta para cima */
-}
-
-
-/* --- Estilos para os marcadores DENTRO do bloco colapsável --- */
-.collapsible-content .trackers-container {
-  display: flex;
-  flex-direction: column; /* Organiza em coluna */
-  align-items: stretch;    /* Ocupa toda a largura */
-  gap: 0.6rem;
-}
-
-.collapsible-content .vitals-tracker {
-  display: flex;
-  justify-content: space-between; /* Nome à esquerda, pontos à direita */
-  align-items: center;
-}
-
-.collapsible-content .tracker-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--c-texto-secundario);
-}
-
-.collapsible-content .tracker-dots {
-  display: flex;
-  flex-direction: row;
-  gap: 4px;
-  flex-wrap: wrap; /* Permite que os círculos quebrem a linha */
-  justify-content: flex-end; /* Alinha os círculos à direita */
-
-}
-
-.collapsible-content .tracker-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid var(--c-texto-secundario);
-  cursor: pointer;
-}
-
-.collapsible-content .tracker-dot.filled {
-  background-color: var(--c-acento-dourado);
-  border-color: var(--c-acento-dourado);
-}
-
-.survival-block .collapsible-header .block-title {
-  /* MUDANÇA: Fonte alterada para Roboto */
-  font-family: 'Roboto', sans-serif;
-  /* MUDANÇA: Tamanho igual ao dos rótulos de PV/PF */
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  /* MUDANÇA: Cor dourada, como solicitado */
-  color: var(--c-acento-dourado);
-  /* O alinhamento à esquerda já é garantido pelo layout do container pai */
-}
-
-/* =================================================================== */
-/* ETAPA DE DESIGN - PASSO 3.7: BLOCO DE CARGA                         */
-/* =================================================================== */
-
-.encumbrance-display-block {
-  display: flex;
-  justify-content: space-around;
-  text-align: center;
-  background: var(--c-fundo-input); /* Fundo escuro sutil */
-  padding: 0.5rem;
-  border-radius: 3px;
-  margin-top: 15px; /* Mantém o bloco ancorado na parte de baixo */
-}
-
-.encumbrance-stat .encumbrance-value {
-  font-family: var(--f-corpo);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--c-texto-principal);
-}
-
-.encumbrance-stat .encumbrance-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-texto-secundario);
-}
-
-/* Garante que o link da Base de Carga pareça um texto normal, mas seja clicável */
-.encumbrance-label a {
-  color: inherit; /* Herda a cor do rótulo */
-  text-decoration: none;
-  border-bottom: 1px dotted var(--c-texto-secundario); /* Adiciona um sublinhado pontilhado para indicar interatividade */
-}
-.encumbrance-label a:hover {
-  color: var(--c-acento-dourado);
-  border-bottom-color: var(--c-acento-dourado);
-}
-
+.secondary-stats-dialog label { color: #333; }
 /* =================================================================== */
 /* AJUSTE DE LAYOUT FINAL: ESTRUTURA DA ÁREA PRINCIPAL                 */
 /* =================================================================== */
@@ -3159,24 +2838,24 @@ filter:none;
 }
 
 /* --- ESTILOS PARA A NOVA ENGRENAGEM DE EDIÇÃO --- */
-.hex-block {
-    position: relative; /* Essencial para posicionar a engrenagem */
-}
 .edit-secondary-stats-btn {
-    position: absolute;
-    top: 16px; /* Ajuste fino vertical */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    font-size: 1.1em;
-    color: var(--c-texto-secundario);
-    opacity: 0.5;
-    transition: all 0.2s ease;
-}
-.hex-block:hover .edit-secondary-stats-btn {
+    /* Garante que ela obedeça o alinhamento do cabeçalho (Flexbox) */
+    position: static; 
+    transform: none;
     opacity: 1;
-    transform: translateX(-50%) rotate(45deg);
+    margin: 0;
+
+    /* Estilo Visual */
+    color: var(--c-texto-subtitulo);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Efeito ao passar o mouse */
+.edit-secondary-stats-btn:hover {
     color: var(--c-acento-dourado);
+    transform: rotate(90deg); /* Rotação suave */
 }
 
 /* --- ESTILOS PARA A JANELA DE DIÁLOGO DE ATRIBUTOS SECUNDÁRIOS --- */
@@ -3862,3 +3541,30 @@ filter:none;
     font-weight: normal;
     box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
+
+/* Estilo dos Sentidos na Ficha */
+.gum.sheet.actor .senses-container .sense-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.9em;
+}
+.gum.sheet.actor .senses-container .sense-box a {
+    color: var(--c-texto-subtitulo);
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+/* Estilo dos Valores dos Sentidos (Ficha do Personagem) */
+.gum.sheet.actor .senses-container .sense-value {
+    display: inline-block;       /* Garante que o span tenha tamanho */
+    min-width: 20px;             /* Garante largura mínima */
+    font-size: 1.2em;            /* Tamanho legível */
+    font-weight: 700;            /* Negrito */
+    color: var(--c-texto-claro);              /* Cor escura (Papiro) */
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.05); /* Fundo sutil para contraste */
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+}
+

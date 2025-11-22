@@ -30,179 +30,173 @@
     {{! ================================================================== }}
     {{! MACRORREGIÃO 2: SIDEBAR (NOVA ESTRUTURA DE DESIGN)               }}
     {{! ================================================================== }}
-    <aside class="sheet-sidebar">
-      <div class="sidebar-design-container">
+<aside class="sheet-sidebar">
+    <div class="sidebar-design-container">
 
-        {{!-- Bloco 1: Imagem e Escudo de Esquiva --}}
+        {{!-- 1. FOTO --}}
         <div class="sidebar-block profile-block">
-          <div class="profile-container">
-            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
-            
-            <div class="dodge-badge-container">
-              <div class="badge-wrapper">
-                {{!-- SVG simplificado para apenas o círculo com borda --}}
-                <svg class="dodge-badge-svg" viewBox="0 0 100 100">
-                  {{!-- Círculo central para o número --}}
-                  <circle class="badge-center" cx="50" cy="50" r="48" />
-                  {{!-- Borda dourada interna --}}
-                  <circle class="badge-ring" cx="50" cy="50" r="42" />
-                </svg>
-                {{!-- O valor da Esquiva --}}
-                <a class="rollable dodge-value" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
-                  {{actor.system.attributes.dodge.final}}
-                </a>
-              </div>
-              <div class="badge-label">ESQUIVA</div>
-            </div>
-          </div>
-
-        {{!-- Bloco 2: Hexágonos de Atributos Secundários (VERSÃO COM ENGRENAGEM) --}}
-<div class="sidebar-block hex-block">
-
-    {{!-- ✅ NOVO BOTÃO DE ENGRENAGEM CENTRAL ✅ --}}
-    <a class="edit-secondary-stats-btn" title="Editar Atributos Secundários">
-        <i class="fas fa-cog"></i>
-    </a>
-
-    {{!-- Velocidade --}}
-    <div class="hex-stat hex-velocidade">
-        <div class="hex-wrapper">
-            <svg class="hex-svg" viewBox="0 0 100 60">
-                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
-                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-            </svg>
-            {{!-- ✅ O valor agora é apenas um display, sem edição direta --}}
-            <span class="hex-value">{{actor.system.attributes.basic_speed.final}}</span>
-        </div>
-        <div class="hex-label">VELOC.</div>
-    </div>
-
-    {{!-- Deslocamento --}}
-    <div class="hex-stat hex-deslocamento">
-        <div class="hex-wrapper">
-            <svg class="hex-svg" viewBox="0 0 100 60">
-                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
-                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-            </svg>
-            <span class="hex-value">{{actor.system.attributes.basic_move.final}}</span>
-        </div>
-        <div class="hex-label">DESLOC.</div>
-    </div>
-
-    {{!-- Modificador de Tamanho --}}
-    <div class="hex-stat hex-mt">
-        <div class="hex-wrapper">
-            <svg class="hex-svg" viewBox="0 0 100 60">
-                <polygon class="hex-border" points="5,30 25,5 75,5 95,30 75,55 25,55" />
-                <polygon class="hex-fill" points="10,30 27,10 73,10 90,30 73,50 27,50" />
-            </svg>
-             <span class="hex-value">{{actor.system.attributes.mt.final}}</span>
-        </div>
-        <div class="hex-label">MT</div>
-    </div>
-    
-</div>
-
-{{!-- Bloco 3: Barras de PV e PF (VERSÃO FINAL E CORRIGIDA) --}}
-<div class="sidebar-block bars-block">
-
-    {{!-- Pontos de Vida --}}
-    <div class="bar-group">
-        <div class="bar-label">
-            <span>PONTOS DE VIDA</span>
-            <a class="edit-resource-bar" data-stat="hp" title="Editar Valores Base de PV"><i class="fas fa-cog"></i></a>
-        </div>
-        <div class="resource-bar">
-            {{!-- ✅ USA O NOVO HELPER 'bar_style' E O VALOR .final PARA O MÁXIMO ✅ --}}
-            <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
-            <div class="bar-inputs">
-                {{!-- ✅ O INPUT DE PV ATUAL CONTINUA EDITÁVEL DIRETAMENTE ✅ --}}
-                <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
-                <span>/</span>
-                {{!-- ✅ O MÁXIMO AGORA É UM DISPLAY DO VALOR FINAL ✅ --}}
-                <span class="final-max-value">{{actor.system.attributes.hp.final}}</span>
+            <div class="profile-frame">
+                <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
             </div>
         </div>
-    </div>
 
-    {{!-- Pontos de Fadiga --}}
-    <div class="bar-group">
-        <div class="bar-label">
-            <span>PONTOS DE FADIGA</span>
-            <a class="edit-resource-bar" data-stat="fp" title="Editar Valores Base de PF"><i class="fas fa-cog"></i></a>
-        </div>
-        <div class="resource-bar">
-            <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
-            <div class="bar-inputs">
-                <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
-                <span>/</span>
-                <span class="final-max-value">{{actor.system.attributes.fp.final}}</span>
+        {{!-- 2. CARD HÍBRIDO: CARGA & ESQUIVA (MEDALHÃO CIRCULAR) --}}
+        <div class="sidebar-block encumbrance-dodge-bar">
+            {{!-- Lado Esquerdo --}}
+            <div class="enc-col left-col">
+                <a class="enc-label link edit-lifting-st">Base Carga</a>
+                <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
             </div>
-        </div>
-    </div>
 
-</div>
-
-        {{! --- Bloco 4: Marcadores de Fome, Sede e Sono --- }}
-
-        <div class="collapsible-block survival-block {{#if survivalBlockWasOpen}}active{{/if}}">
-          {{!-- Este é o cabeçalho que estará sempre visível e será clicável --}}
-          <div class="collapsible-header">
-            <h4 class="block-title">SOBREVIVÊNCIA</h4>
-            <i class="fas fa-chevron-down expand-icon"></i>
-          </div>
-
-          {{!-- Este é o conteúdo que será mostrado/escondido --}}
-          <div class="collapsible-content">
-            <div class="trackers-container">
-              {{!-- Marcador de Fome --}}
-              <div class="vitals-tracker" data-stat="fome">
-                <div class="tracker-label">FOME</div>
-                <div class="tracker-dots">
-                  {{#for 1 13}}
-                    <span class="tracker-dot {{#if (gte actor.system.attributes.fome.value @index)}}filled{{/if}}" data-value="{{@index}}"></span>
-                  {{/for}}
+            {{!-- Centro: Medalhão de Esquiva --}}
+            <div class="enc-col center-col">
+                <div class="badge-wrapper">
+                    <svg class="dodge-badge-svg" viewBox="0 0 100 100">
+                        <circle class="badge-bg" cx="50" cy="50" r="48" />
+                        <circle class="badge-border" cx="50" cy="50" r="44" />
+                    </svg>
+                    <a class="rollable dodge-value" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
+                        {{actor.system.attributes.dodge.final}}
+                    </a>
+                    <div class="badge-label-curved">ESQUIVA</div>
                 </div>
-              </div>
-              {{!-- Marcador de Sede --}}
-              <div class="vitals-tracker" data-stat="sede">
-                <div class="tracker-label">SEDE</div>
-                <div class="tracker-dots">
-                  {{#for 1 13}}
-                    <span class="tracker-dot {{#if (gte actor.system.attributes.sede.value @index)}}filled{{/if}}" data-value="{{@index}}"></span>
-                  {{/for}}
-                </div>
-              </div>
-              {{!-- Marcador de Sono --}}
-              <div class="vitals-tracker" data-stat="sono">
-                <div class="tracker-label">SONO</div>
-                <div class="tracker-dots">
-                  {{#for 1 13}}
-                    <span class="tracker-dot {{#if (gte actor.system.attributes.sono.value @index)}}filled{{/if}}" data-value="{{@index}}"></span>
-                  {{/for}}
-                </div>
-              </div>
             </div>
-          </div>
+
+            {{!-- Lado Direito --}}
+            <div class="enc-col right-col">
+                <span class="enc-label">Nível Carga</span>
+                <span class="enc-val {{actor.system.encumbrance.level_name}}">{{actor.system.encumbrance.level_name}}</span>
+            </div>
         </div>
 
-        {{! --- Bloco 5: Carga (Layout do Rótulo Ajustado) --- }}
-        <div class="sidebar-block encumbrance-display-block">
-          <div class="encumbrance-stat">
-            {{!-- O rótulo agora vem ANTES do valor --}}
-            <div class="encumbrance-label">
-              <a class="edit-lifting-st" title="Editar ST de Carga">Base de Carga</a>
+        {{!-- 3. DADOS QUADRADOS --}}
+        <div class="sidebar-block stats-cluster">
+            <div class="cluster-header">
+                <span class="cluster-title">ATRIBUTOS SECUNDÁRIOS</span>
+                <a class="edit-secondary-stats-btn" title="Editar Atributos"><i class="fas fa-cog"></i></a>
             </div>
-            <div class="encumbrance-value">{{actor.system.attributes.basic_lift.value}} kg</div>
-          </div>
-          <div class="encumbrance-stat">
-            {{!-- O rótulo agora vem ANTES do valor --}}
-            <div class="encumbrance-label">Nível de Carga</div>
-            <div class="encumbrance-value">{{actor.system.encumbrance.level_name}}</div>
-          </div>
-        </div>
-    </aside>
 
+            <div class="dice-row">
+                <div class="d6-stat" title="Velocidade Básica">
+                    <div class="d6-face">
+                        <span class="d6-val">{{actor.system.attributes.basic_speed.final}}</span>
+                        <span class="d6-label">VELOC.</span>
+                    </div>
+                </div>
+                <div class="d6-stat main-d6" title="Deslocamento">
+                     <div class="d6-face">
+                        <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
+                        <span class="d6-label">DESLOC.</span>
+                    </div>
+                </div>
+                <div class="d6-stat" title="Modificador de Tamanho">
+                     <div class="d6-face">
+                        <span class="d6-val">{{actor.system.attributes.mt.final}}</span>
+                        <span class="d6-label">MT</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="senses-container">
+                <div class="sense-box">
+                    <a class="rollable" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
+                    <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
+                </div>
+                <div class="sense-box">
+                    <a class="rollable" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
+                    <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
+                </div>
+                <div class="sense-box">
+                    <a class="rollable" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
+                    <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
+                </div>
+                <div class="sense-box">
+                    <a class="rollable" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
+                    <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
+                </div>
+            </div>
+        </div>
+
+        {{!-- 4. BARRAS --}}
+        <div class="sidebar-block bars-block">
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span>PONTOS DE VIDA</span>
+                    <a class="edit-resource-bar" data-stat="hp"><i class="fas fa-cog"></i></a>
+                </div>
+                <div class="resource-bar original-style">
+                    <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
+                    <div class="bar-inputs">
+                        <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
+                        <span>/</span>
+                        <span class="final-max-value">{{actor.system.attributes.hp.final}}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span>PONTOS DE FADIGA</span>
+                    <a class="edit-resource-bar" data-stat="fp"><i class="fas fa-cog"></i></a>
+                </div>
+                <div class="resource-bar original-style">
+                    <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
+                    <div class="bar-inputs">
+                        <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
+                        <span>/</span>
+                        <span class="final-max-value">{{actor.system.attributes.fp.final}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{!-- 5. SOBREVIVÊNCIA --}}
+        <div class="sidebar-footer">
+            <div class="collapsible-block survival-block {{#if survivalBlockWasOpen}}active{{/if}}">
+                 <div class="collapsible-header">
+                    <h4 class="block-title">SOBREVIVÊNCIA</h4>
+                    <i class="fas fa-chevron-down expand-icon"></i>
+                  </div>
+                  <div class="collapsible-content">
+                    <div class="survival-grid">
+                        <div class="survival-item">
+                            <label>FOME</label>
+                            <div class="counter-wrapper">
+                                <a class="adjust-survival" data-action="decrease" data-attr="fome"><i class="fas fa-minus"></i></a>
+                                <input type="number" name="system.attributes.fome.value" value="{{actor.system.attributes.fome.value}}" min="0"/>
+                                <a class="adjust-survival" data-action="increase" data-attr="fome"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                        <div class="survival-item">
+                            <label>SEDE</label>
+                            <div class="counter-wrapper">
+                                <a class="adjust-survival" data-action="decrease" data-attr="sede"><i class="fas fa-minus"></i></a>
+                                <input type="number" name="system.attributes.sede.value" value="{{actor.system.attributes.sede.value}}" min="0"/>
+                                <a class="adjust-survival" data-action="increase" data-attr="sede"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                        <div class="survival-item">
+                            <label>SONO</label>
+                            <div class="counter-wrapper">
+                                <a class="adjust-survival" data-action="decrease" data-attr="sono"><i class="fas fa-minus"></i></a>
+                                <input type="number" name="system.attributes.sono.value" value="{{actor.system.attributes.sono.value}}" min="0"/>
+                                <a class="adjust-survival" data-action="increase" data-attr="sono"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                        <div class="survival-item radiation">
+                            <label class="warning-label">RADIAÇÃO</label>
+                            <div class="counter-wrapper">
+                                <a class="adjust-survival" data-action="decrease" data-attr="radiation"><i class="fas fa-minus"></i></a>
+                                <input type="number" name="system.attributes.radiation.value" value="{{actor.system.attributes.radiation.value}}" min="0"/>
+                                <a class="adjust-survival" data-action="increase" data-attr="radiation"><i class="fas fa-plus"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+            </div>
+        </div>
+
+    </div>
+</aside>
 {{! ================================================================== }}
 {{! MACRORREGIÃO 3: ÁREA PRINCIPAL (DESIGN RESTAURADO)                 }}
 {{! ================================================================== }}

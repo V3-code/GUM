@@ -273,7 +273,7 @@
       <span class="item-tag small-tag">{{lookup (object 
         armor="Armadura" melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
         equipment="Equipamento" skill="Perícia" spell="Magia" 
-        advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip.") item.type}}</span>
+        advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip." gm_modifier="Mod. Global") item.type}}</span>
     </div>
   </div>
 </header>
@@ -334,9 +334,6 @@
             {{> itemDetailsGeneral}}
         {{/if}}
 
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (ATUALIZADO)	 --}}
-        {{!-- ===================================================================== --}}
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (LAYOUT v2)	 --}}
         {{!-- ===================================================================== --}}
@@ -439,6 +436,95 @@
                  <div class="form-group">
                     <textarea name="system.features" rows="4" placeholder="Ex: +1 de dano no ataque. Trata a RD como se fosse 2 menor.">{{system.features}}</textarea>
                  </div>
+            </div>
+        {{/if}}
+
+        {{!-- ===================================================================== --}}
+        {{!-- 		ABA DETALHES: MODIFICADOR DO MESTRE (COM CHECKBOXES)         --}}
+        {{!-- ===================================================================== --}}
+        {{#if (eq item.type "gm_modifier")}}
+            
+            <div class="form-section">
+                <div class="form-grid-2">
+                    <div class="form-group" title="O valor numérico (ex: -2, +1)">
+                        <label style="font-size: 1.1em; font-weight: bold;">Modificador</label>
+                        <input type="number" name="system.modifier" value="{{system.modifier}}" placeholder="0" style="font-size: 1.3em; text-align: center; font-weight:bold; background: rgba(0,0,0,0.2); color: #fff;"/>
+                    </div>
+                    <div class="form-group" title="Lembrete de duração">
+                        <label>Duração</label>
+                        <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: 1 rodada" style="text-align: center;"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section"><h4 class="section-title">Categorias de Aplicação</h4>
+                <p class="hint" style="text-align: center; margin-bottom: 10px;">Marque todas as situações onde este modificador se aplica.</p>
+                
+                <div class="form-grid-3 attack-flags-grid" style="align-items: start;">
+                    
+                    {{!-- Coluna 1: Combate & Global --}}
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <strong style="color:#c5a05b; font-size:0.8em; border-bottom:1px solid #444; margin-bottom:3px;">GERAL</strong>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.global" {{checked system.target_type.global}}/>
+                            <span>GLOBAL (Tudo)</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.reaction" {{checked system.target_type.reaction}}/>
+                            <span>Testes de Reação</span>
+                        </label>
+
+                        <strong style="color:#c5a05b; font-size:0.8em; border-bottom:1px solid #444; margin: 8px 0 3px 0;">COMBATE</strong>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.attack" {{checked system.target_type.attack}}/>
+                            <span>Ataques</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.defense" {{checked system.target_type.defense}}/>
+                            <span>Defesas Ativas</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.damage" {{checked system.target_type.damage}}/>
+                            <span>Dano</span>
+                        </label>
+                    </div>
+
+                    {{!-- Coluna 2: Atributos & Perícias --}}
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <strong style="color:#c5a05b; font-size:0.8em; border-bottom:1px solid #444; margin-bottom:3px;">TESTES</strong>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.skill" {{checked system.target_type.skill}}/>
+                            <span>Perícias</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.attribute" {{checked system.target_type.attribute}}/>
+                            <span>Atributos (Todos)</span>
+                        </label>
+                        {{!-- Futuramente você pode expandir para ST/DX/IQ/HT individuais aqui --}}
+                    </div>
+
+                    {{!-- Coluna 3: Sentidos --}}
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <strong style="color:#c5a05b; font-size:0.8em; border-bottom:1px solid #444; margin-bottom:3px;">SENTIDOS</strong>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.vision" {{checked system.target_type.vision}}/>
+                            <span>Visão</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.hearing" {{checked system.target_type.hearing}}/>
+                            <span>Audição</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.tastesmell" {{checked system.target_type.tastesmell}}/>
+                            <span>Paladar/Olfato</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.target_type.touch" {{checked system.target_type.touch}}/>
+                            <span>Tato</span>
+                        </label>
+                    </div>
+
+                </div>
             </div>
         {{/if}}
 

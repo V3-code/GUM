@@ -9,11 +9,16 @@
         "ht": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "vont": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "per": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
+        "vision": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
+        "hearing": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
+        "tastesmell": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
+        "touch": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
         "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "fome": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
         "sede": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
         "sono": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
+        "radiation": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
         "mt": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 10 },
         "basic_speed": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 5, "final_computed": 10 },
         "basic_move": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "points": 0, "final": 5, "final_computed": 10 },
@@ -63,7 +68,7 @@
       }
     }, 
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier"],
+    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier", "gm_modifier"],
     
     "templates": {
       "base": {
@@ -203,6 +208,24 @@
             "ammo": false,
             "enchantment": false,     
             "general": true    
+        }
+    },
+    "gm_modifier": { 
+        "templates": ["base"], 
+        "modifier": 0,
+        "duration": "",
+        "target_type": {
+            "global": false,
+            "attack": false,
+            "defense": false,
+            "damage": false,
+            "reaction": false,
+            "attribute": false,
+            "skill": false,
+            "vision": false,
+            "hearing": false,
+            "tastesmell": false,
+            "touch": false
         }
     },
     "trigger": { "templates": ["base"], "code": "" },

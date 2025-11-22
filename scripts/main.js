@@ -33,7 +33,8 @@ _prepareCharacterItems() {
         const combat = actorData.system.combat;
 
         // --- ETAPA 0: RESETAR VALORES ---
-        const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge'];
+        const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge',
+            'vision', 'hearing', 'tastesmell', 'touch'];
         allAttributes.forEach(attr => {
             if (attributes[attr]) {
                 attributes[attr].temp = 0;
@@ -133,6 +134,27 @@ _prepareCharacterItems() {
             }
         }
 
+
+        // --- CÁLCULO DE SENTIDOS (Independentes, Base 10) ---
+        const senses = ['vision', 'hearing', 'tastesmell', 'touch'];
+        
+        for (const sense of senses) {
+            if (attributes[sense]) {
+                // Se o valor for 0 ou nulo (antigo), assume 10. Se não, usa o valor do input.
+                const base = Number(attributes[sense].value) || 10;
+                
+                const mod = (Number(attributes[sense].mod) || 0) + 
+                            (Number(attributes[sense].passive) || 0) + 
+                            (Number(attributes[sense].temp) || 0);
+                
+                attributes[sense].final = base + mod;
+                
+                if (attributes[sense].override !== null && attributes[sense].override !== undefined) {
+                    attributes[sense].final = attributes[sense].override;
+                }
+            }
+        }
+
         // Carga e Levantamento
         const liftingST = attributes.lifting_st.final_computed;
         const basicLift = (liftingST * liftingST) / 10; 
@@ -178,7 +200,6 @@ _prepareCharacterItems() {
         // --- DEFESAS ATIVAS ---
         const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
         attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
-        // ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
         attributes.dodge.final_computed = attributes.dodge.value 
                                         + enc.penalty 
                                         + (attributes.dodge.mod || 0) 
@@ -1162,6 +1183,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
+
 Handlebars.registerHelper('formatDR', function(drObject) {
     if (!drObject || typeof drObject !== 'object') {
         return drObject || 0;
@@ -1216,6 +1238,11 @@ Handlebars.registerHelper('or', function() {
 Handlebars.registerHelper('gt', function (a, b) {
     return a > b;
 });
+
+Handlebars.registerHelper('gte', function (a, b) {
+    return a >= b;
+});
+
     // Ajudante para transformar um objeto em um array de seus valores
     Handlebars.registerHelper('objectValues', function(obj) { return obj ? Object.values(obj) : []; });
     // Ajudante para pegar o primeiro elemento de um array
