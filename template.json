@@ -210,22 +210,73 @@
             "general": true    
         }
     },
-    "gm_modifier": { 
+"gm_modifier": { 
         "templates": ["base"], 
         "modifier": 0,
         "duration": "",
         "target_type": {
             "global": false,
-            "attack": false,
-            "defense": false,
-            "damage": false,
             "reaction": false,
-            "attribute": false,
-            "skill": false,
-            "vision": false,
-            "hearing": false,
-            "tastesmell": false,
-            "touch": false
+
+            "combat_all": false,         
+            "combat_attack_melee": false,
+            "combat_attack_ranged": false,
+            "combat_attack_spell": false,
+            "combat_attack_power": false, 
+            
+            "combat_damage_melee": false,
+            "combat_damage_ranged": false,
+            "combat_damage_spell": false,
+            "combat_damage_power": false,
+
+            "combat_defense_dodge": false,
+            "combat_defense_parry": false,
+            "combat_defense_block": false,
+
+            "attr_all": false, 
+
+            "attr_st_all": false, 
+            "check_st": false,
+            "skill_st": false,
+            "spell_st": false,
+            "power_st": false,
+
+            "attr_dx_all": false,
+            "check_dx": false,
+            "skill_dx": false,
+            "spell_dx": false,
+            "power_dx": false,
+
+            "attr_iq_all": false, 
+            "check_iq": false,
+            "skill_iq": false,
+            "spell_iq": false,
+            "power_iq": false,
+
+            "attr_ht_all": false,
+            "check_ht": false,
+            "skill_ht": false,
+            "spell_ht": false,
+            "power_ht": false,
+
+            "attr_will_all": false, 
+            "check_will": false,
+            "skill_will": false,
+            "spell_will": false,
+            "power_will": false,
+            "check_fright": false,
+
+            "attr_per_all": false, 
+            "check_per": false,
+            "skill_per": false,
+            "spell_per": false,
+            "power_per": false,
+            
+
+            "sense_vision": false,
+            "sense_hearing": false,
+            "sense_tastesmell": false,
+            "sense_touch": false
         }
     },
     "trigger": { "templates": ["base"], "code": "" },

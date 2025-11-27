@@ -159,6 +159,7 @@ async getData(options) {
       return data;
   }
 
+  
   /**
      * Calcula o custo de pontos de uma perícia GURPS.
      * @param {string} difficulty - O código da dificuldade (F, M, D, MD, TecM, TecD).
@@ -258,31 +259,53 @@ async getData(options) {
         }
     }
 
-  async _render(force, options) {
-      await super._render(force, options);
-      
-      if (this._openDetailsState) {
-          this.form.querySelectorAll('details').forEach((detailsEl, index) => {
-              const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
-              if (this._openDetailsState.includes(summaryText)) {
-                  detailsEl.open = true;
-              }
-          });
-          this._openDetailsState = null;
-      }
+/**
+     * @override
+     * Sobrescreve a renderização para preservar estado dos <details> e POSIÇÃO DO SCROLL.
+     */
+    async _render(force, options) {
+        // 1. Captura IDs abertos
+        const openDetailsIds = [];
+        if (this.element && this.element.length > 0) {
+            this.element.find('details').each((index, element) => {
+                if (element.open && element.id) openDetailsIds.push(element.id);
+            });
+        }
 
-      if (this._openAttackModeId) {
-          const attackItem = this.form.querySelector(`.attack-item[data-attack-id="${this._openAttackModeId}"]`);
-          if (attackItem) {
-              const displayMode = attackItem.querySelector('.attack-display-mode');
-              const editMode = attackItem.querySelector('.attack-edit-mode');
-              
-              if (displayMode) displayMode.style.display = 'none';
-              if (editMode) editMode.style.display = 'block';
-          }
-          this._openAttackModeId = null;
-      }
-  }
+        // 2. ✅ CAPTURA A POSIÇÃO DO SCROLL
+        let scrollPositions = [];
+        if (this.element && this.element.length > 0) {
+             this.element.find('.sheet-body-content, form').each((i, el) => {
+                 scrollPositions.push({ selector: el.className, top: el.scrollTop });
+             });
+        }
+
+        // 3. Renderiza
+        await super._render(force, options);
+
+        // 4. Restaura IDs abertos
+        if (openDetailsIds.length > 0) {
+            openDetailsIds.forEach(id => {
+                const el = this.element.find(`#${id}`);
+                if (el.length) el.prop('open', true);
+            });
+        }
+
+        // 5. ✅ RESTAURA A POSIÇÃO DO SCROLL
+        if (scrollPositions.length > 0) {
+             scrollPositions.forEach(pos => {
+                 // Tenta encontrar pelo seletor mais específico possível
+                 // Se for o form principal:
+                 if (pos.selector.includes('gum-item-sheet')) {
+                     this.form.scrollTop = pos.top;
+                 } else {
+                     // Se for um container interno
+                     const el = this.element.find(`.${pos.selector.split(' ')[0]}`); 
+                     if (el.length) el[0].scrollTop = pos.top;
+                 }
+             });
+        }
+    }
     
   /**
    * @override
@@ -349,6 +372,85 @@ async getData(options) {
    */
   activateListeners(html) {
       super.activateListeners(html);
+
+      // [Dentro de activateListeners]
+
+    // ==================================================================
+    // LÓGICA DE CASCATA AVANÇADA (MODIFICADORES DO MESTRE)
+    // ==================================================================
+    if (this.item.type === 'gm_modifier') {
+        
+        // Mapeamento Pai -> Filhos
+        const treeMap = {
+            // GERAL
+            'global': 'ALL', // Código especial para marcar TUDO
+
+            // COMBATE
+            'combat_all': [
+                'combat_attack_melee', 'combat_attack_ranged', 'combat_attack_spell', 'combat_attack_power',
+                'combat_defense_dodge', 'combat_defense_parry', 'combat_defense_block',
+                'combat_damage_melee', 'combat_damage_ranged', 'combat_damage_spell', 'combat_damage_power'
+            ],
+            
+            // ATRIBUTOS (PAI GERAL)
+            'attr_all': ['attr_st_all', 'attr_dx_all', 'attr_iq_all', 'attr_ht_all', 'attr_will_all', 'attr_per_all'],
+
+            // ATRIBUTOS (PAIS ESPECÍFICOS)
+            'attr_st_all': ['check_st', 'skill_st', 'spell_st', 'power_st'],
+            'attr_dx_all': ['check_dx', 'skill_dx', 'spell_dx', 'power_dx'],
+            'attr_iq_all': ['check_iq', 'skill_iq', 'spell_iq', 'power_iq'],
+            'attr_ht_all': ['check_ht', 'skill_ht', 'spell_ht', 'power_ht'],
+            'attr_will_all': ['check_will', 'skill_will', 'spell_will', 'power_will', 'check_fright'],
+            'attr_per_all': ['check_per', 'skill_per', 'spell_per', 'power_per', 'sense_vision', 'sense_hearing', 'sense_tastesmell', 'sense_touch']
+        };
+
+        // Listener Genérico para qualquer Checkbox
+        html.find('input[type="checkbox"]').change(async (ev) => {
+            const checkboxName = ev.currentTarget.name; // ex: "system.target_type.combat_all"
+            const isChecked = ev.currentTarget.checked;
+            
+            // Extrai a chave simples (ex: "combat_all")
+            const key = checkboxName.replace('system.target_type.', '');
+            
+            // Se não for um Pai, não faz nada além do padrão
+            if (!treeMap[key]) return;
+
+            const updates = {};
+            const allTargets = this.item.system.target_type;
+
+            // Função recursiva para marcar filhos
+            const markChildren = (parentKey) => {
+                const children = treeMap[parentKey];
+                if (!children) return;
+
+                if (children === 'ALL') {
+                    // Marca TUDO (exceto a si mesmo para evitar loop)
+                    for (const targetKey in allTargets) {
+                        if (targetKey !== parentKey) {
+                            updates[`system.target_type.${targetKey}`] = isChecked;
+                        }
+                    }
+                    return;
+                }
+
+                children.forEach(childKey => {
+                    updates[`system.target_type.${childKey}`] = isChecked;
+                    // Se o filho também for um pai (ex: attr_all -> attr_st_all), continua descendo
+                    if (treeMap[childKey]) {
+                        markChildren(childKey);
+                    }
+                });
+            };
+
+            // Inicia a cascata
+            markChildren(key);
+
+            // Aplica as mudanças se houver
+            if (Object.keys(updates).length > 0) {
+                await this.item.update(updates);
+            }
+        });
+    }
 
       html.find('.view-eqp-modifier').on('click', async (ev) => {
         ev.preventDefault();

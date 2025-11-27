@@ -553,29 +553,12 @@ _getSubmitData(updateData) {
         return drObject;
     }
 activateListeners(html) {
-    // ... (Todo o seu método activateListeners() permanece exatamente o mesmo) ...
+
     // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]
     super.activateListeners(html);
     if (!this.isEditable) return;
 
-    html.on('click', '.adjust-survival', async ev => {
-        ev.preventDefault();
-        const btn = $(ev.currentTarget);
-        const action = btn.data('action'); // 'increase' ou 'decrease'
-        const attr = btn.data('attr');     // 'fome', 'sede', 'sono', 'radiation'
-        
-        const currentVal = this.actor.system.attributes[attr].value || 0;
-        let newVal = currentVal;
-
-        if (action === 'increase') {
-            newVal++;
-        } else if (action === 'decrease') {
-            newVal = Math.max(0, currentVal - 1); // Não deixa descer abaixo de 0
-        }
-
-        const updatePath = `system.attributes.${attr}.value`;
-        await this.actor.update({ [updatePath]: newVal });
-    });
+    
 
 
     html.on('click', '.equipment-options-btn', ev => {
