@@ -1,0 +1,39 @@
+<form class="gum-roll-prompt" autocomplete="off">
+    
+    {{!-- CABEÇALHO: O que estou rolando? --}}
+    <div class="roll-header">
+        <div class="roll-icon">
+            {{!-- Se tiver imagem, mostra. Senão, ícone genérico --}}
+            {{#if img}}<img src="{{img}}">{{else}}<i class="fas fa-dice-d20"></i>{{/if}}
+        </div>
+        <div class="roll-info">
+            <h2 class="roll-title">{{label}}</h2>
+            <div class="roll-subtitle">
+                <span class="base-value">NH Base: <strong>{{baseValue}}</strong></span>
+            </div>
+        </div>
+    </div>
+
+    {{!-- CORPO: Modificadores (Onde o futuro Escudo do Mestre vai entrar) --}}
+    <div class="roll-body">
+        
+        {{!-- Por enquanto, apenas um modificador manual simples --}}
+        <div class="form-group manual-mod">
+            <label><i class="fas fa-plus-minus"></i> Modificador Manual</label>
+            <input type="number" name="manualMod" value="0" autofocus onfocus="this.select()"/>
+        </div>
+
+        {{!-- Espaço reservado para os futuros botões de Manobra/Localização --}}
+        <div class="roll-modifiers-placeholder" style="margin-top: 10px; padding: 10px; border: 1px dashed #555; text-align: center; font-size: 0.8em; color: #888;">
+            (Botões de Manobra e Localização virão aqui)
+        </div>
+
+    </div>
+
+    {{!-- RODAPÉ: Botão de Rolar --}}
+    <footer class="roll-footer">
+        <button type="submit" class="roll-btn">
+            <i class="fas fa-dice"></i> ROLAR
+        </button>
+    </footer>
+</form>

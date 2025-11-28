@@ -1,4 +1,5 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
+import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet) - EDITOR ATUALIZADO
@@ -613,27 +614,29 @@ activateListeners(html) {
     });
 
     // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
-    html.on('click', '.rollable', (ev) => {
+html.on('click', '.rollable', ev => {
+        ev.preventDefault();
         const element = ev.currentTarget;
-        
+        const dataset = element.dataset;
+
+        // Prepara os dados do teste
+        const rollData = {
+            label: dataset.label || "Teste",
+            value: parseInt(dataset.rollValue) || 10,
+            type: dataset.type || "attribute", // attribute, skill, attack, spell
+            itemId: dataset.itemId || "", // ✅ CRUCIAL: ID do item (se houver)
+            img: dataset.img || ""        // ✅ CRUCIAL: Imagem para a janela
+        };
+
+        // LÓGICA INVERTIDA DE ROLAGEM
         if (ev.shiftKey) {
-            const baseTargetForRoll = parseInt(element.dataset.rollValue);
-            new Dialog({
-                title: "Modificador de Rolagem Situacional",
-                content: `<p><b>Modificadores para ${element.dataset.label} (vs ${baseTargetForRoll}):</b></p>
-                            <input type="number" name="modifier" value="0" style="text-align: center;"/>`,
-                buttons: {
-                    roll: {
-                        label: "Rolar",
-                        callback: (html) => {
-                            const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
-                            performGURPSRoll(element, this.actor, situationalMod);
-                        }
-                    }
-                }
-            }).render(true);
+            // Shift Pressionado -> ROLAGEM RÁPIDA (Fast Forward)
+            performGURPSRoll(this.actor, rollData);
         } else {
-            performGURPSRoll(element, this.actor, 0);
+            // Clique Normal -> ABRE A JANELA DE OPÇÕES
+            // Importante: Se a classe GurpsRollPrompt não estiver importada no topo,
+            // o código quebrará aqui. Certifique-se de ter o import.
+            new GurpsRollPrompt(this.actor, rollData).render(true);
         }
     });
 

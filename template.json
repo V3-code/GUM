@@ -213,6 +213,7 @@
 "gm_modifier": { 
         "templates": ["base"], 
         "modifier": 0,
+        "nh_cap": "",
         "duration": "",
         "target_type": {
             "global": false,

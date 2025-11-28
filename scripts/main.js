@@ -401,110 +401,89 @@ class ContingentEffectBuilder extends Dialog {
 // ================================================================== //
 //  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
 // ================================================================== //
-export async function performGURPSRoll(element, actor, situationalMod = 0) {
-    const itemId = element.dataset.itemId;
-    const item = itemId ? actor.items.get(itemId) : null;
-    const label = element.dataset.label;
-    const attrKey = element.dataset.attributeKey;
-    let attributeData = attrKey ? actor.system.attributes[attrKey] : null;
+/**
+ * Realiza uma rolagem de teste (3d6) baseada nos dados fornecidos.
+ * @param {Actor} actor - O ator realizando o teste.
+ * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
+ */
+export async function performGURPSRoll(actor, rollData) {
+    const baseValue = parseInt(rollData.originalValue || rollData.value) || 10;
+    const modifier = parseInt(rollData.modifier) || 0;
+    const effectiveLevel = baseValue + modifier;
+    const label = rollData.label || "Teste";
 
-    let baseTargetForChat = 0;
-    let tempModForChat = 0;
-    let finalTargetForRoll = 0;
-
-    if (attributeData) {
-        if (attributeData.final_computed !== undefined) {
-            attributeData = {
-                ...attributeData,
-                value: attributeData.final_computed,
-                mod: 0,
-                temp: 0,
-                override: null
-            };
-        }
-        const baseValue = Number(attributeData.value) || 0;
-        const fixedMod = Number(attributeData.mod) || 0;
-        const tempMod = Number(attributeData.temp) || 0;
-        const override = attributeData.override;
-        const final = (override !== undefined && override !== null)
-            ? override
-            : baseValue + fixedMod + tempMod;
-        baseTargetForChat = baseValue + fixedMod;
-        tempModForChat = tempMod;
-        finalTargetForRoll = final;
-    } else {
-        finalTargetForRoll = parseInt(element.dataset.rollValue);
-        baseTargetForChat = finalTargetForRoll;
-        tempModForChat = 0;
-    }
-
-    const finalTarget = finalTargetForRoll + situationalMod;
-    const chatModifier = tempModForChat + situationalMod;
     const roll = new Roll("3d6");
     await roll.evaluate();
+    const total = roll.total;
 
-    const margin = finalTarget - roll.total;
-    let resultText = "";
-    let resultClass = "";
-    let resultIcon = "";
-    let outcome = ""; // Variável para guardar 'success' ou 'failure'
+    // Lógica
+    const isSuccess = total <= effectiveLevel;
+    const margin = Math.abs(effectiveLevel - total);
+    
+    let resultLabel = isSuccess ? "Sucesso" : "Falha";
+    let statusClass = isSuccess ? "success" : "failure";
+    let marginLabel = "Margem";
 
-    if (roll.total <= finalTarget) {
-        resultText = `Sucesso com margem de ${margin}`;
-        resultClass = 'success';
-        resultIcon = 'fas fa-check-circle';
-        outcome = 'success';
-    } else {
-        resultText = `Fracasso por uma margem de ${-margin}`;
-        resultClass = 'failure';
-        resultIcon = 'fas fa-times-circle';
-        outcome = 'failure';
+    // Críticos
+    const isCritSuccess = (total <= 4) || (total === 5 && effectiveLevel >= 15) || (total === 6 && effectiveLevel >= 16);
+    const isCritFailure = (total >= 18) || (total === 17 && effectiveLevel <= 15) || (total - effectiveLevel >= 10);
+
+    if (isCritSuccess) {
+        resultLabel = "Sucesso Crítico";
+        statusClass = "crit-success";
+    } else if (isCritFailure) {
+        resultLabel = "Falha Crítica";
+        statusClass = "crit-failure";
     }
 
-    if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
-        resultText = `Sucesso Crítico!`;
-    } else if (roll.total === 17 || roll.total === 18 || (roll.total === 16 && margin <= -10)) {
-        resultText = `Falha Crítica!`;
-    }
+    // HTML "High-End"
+    const content = `
+        <div class="gurps-roll-card premium">
+            
+            <header class="card-header">
+                <div class="header-icon">
+                    <img src="${rollData.img || actor.img}" />
+                </div>
+                <div class="header-title">
+                    <h3>${label}</h3>
+                </div>
+            </header>
+            
+            <div class="card-body">
+                <div class="roll-meta">
+                    <span class="meta-part">NH <strong>${baseValue}</strong></span>
+                    <span class="meta-mod ${modifier !== 0 ? (modifier > 0 ? 'pos' : 'neg') : ''}">
+                        ${modifier !== 0 ? (modifier > 0 ? '+' : '') + modifier : ''}
+                    </span>
+                    <span class="meta-target">| Alvo <strong>${effectiveLevel}</strong></span>
+                </div>
 
-    const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
-    const flavor = `
-        <div class="gurps-roll-card">
-            <header class="card-header"><h3>${label}</h3></header>
-            <div class="card-content">
-                <div class="card-main-flex">
-                    <div class="roll-column">
-                        <div class="roll-total-value">${roll.total}</div>
-                        <div class="individual-dice">${diceHtml}</div>
-                    </div>
-                    <div class="column-separator"></div>
-                    <div class="target-column">
-                        <div class="roll-target-value">${finalTarget}</div>
-                        <div class="roll-breakdown-pill">
-                            <span>Base: ${baseTargetForChat} &nbsp;|&nbsp; Mod: ${chatModifier >= 0 ? '+' : ''}${chatModifier}</span>
-                        </div>
+                <div class="roll-result">
+                    <span class="dice-total">${total}</span>
+                </div>
+
+                <div class="roll-status-container">
+                    <div class="status-text ${statusClass}">${resultLabel}</div>
+                    <div class="margin-pill ${statusClass}">
+                        ${marginLabel} <strong>${margin}</strong>
                     </div>
                 </div>
+                
+                <div class="dice-breakdown">
+                   ${roll.dice[0].results.map(d => `<span class="die-face">${d.result}</span>`).join('')}
+                </div>
             </div>
-            <footer class="card-footer ${resultClass}">
-                <i class="${resultIcon}"></i> <span>${resultText}</span>
-            </footer>
         </div>
     `;
 
-    // ✅ PASSO 1: A MENSAGEM DO CHAT AGORA É CRIADA PRIMEIRO.
-    // Usamos 'await' para garantir que ela seja enviada antes de continuarmos.
-    await ChatMessage.create({
+    ChatMessage.create({
+        user: game.user.id,
         speaker: ChatMessage.getSpeaker({ actor: actor }),
-        content: flavor,
-        rolls: [roll]
+        content: content,
+        type: CONST.CHAT_MESSAGE_TYPES.ROLL,
+        rolls: [roll],
+        sound: CONFIG.sounds.dice
     });
-
-    // ✅ PASSO 2: SÓ DEPOIS DE A MENSAGEM ESTAR NO CHAT, CHAMAMOS OS EFEITOS.
-    // Isso fará com que as janelas de diálogo apareçam depois do resultado da rolagem.
-    if (item) {
-        await applyActivationEffects(item, actor, outcome);
-    }
 }
 
 /**

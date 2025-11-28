@@ -1,0 +1,190 @@
+/* ================================================================== */
+/* 1. DESIGN DA JANELA DE INPUT (Mantida igual, pois funciona bem)    */
+/* ================================================================== */
+.gum.roll-prompt .window-content { background: var(--c-bg-dark); color: var(--c-text-lightest); padding: 0; overflow: hidden; }
+.gum-roll-prompt { display: flex; flex-direction: column; height: 100%; padding: 15px; gap: 15px; }
+.roll-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--c-border-light); margin-bottom: 5px; }
+.roll-icon { flex: 0 0 64px; height: 64px; display: grid; place-items: center; background: var(--c-bg-darkest); border: 1px solid var(--c-border-light); border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+.roll-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.roll-icon i { font-size: 40px; color: var(--c-accent-gold); }
+.roll-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.roll-title { margin: 0; font-family: var(--font-secondary); font-size: 1.6em; line-height: 1.2; color: var(--c-accent-gold); border: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.roll-subtitle { font-family: var(--font-primary); font-size: 1em; color: var(--c-text-medium); margin-top: 4px; }
+.base-value strong { color: #fff; font-size: 1.1em; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 3px; }
+.roll-body { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.manual-mod label { display: block; font-weight: bold; color: var(--c-text-accent); margin-bottom: 5px; font-size: 0.9em; text-transform: uppercase; }
+.manual-mod input { width: 100%; height: 50px; text-align: center; font-size: 24px; font-weight: bold; font-family: var(--font-primary); color: #fff; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--c-border-light); border-radius: 4px; }
+.roll-modifiers-placeholder { margin-top: 10px; padding: 15px; border: 1px dashed #555; background: rgba(255,255,255,0.02); border-radius: 4px; text-align: center; font-size: 0.85em; color: #777; font-style: italic; }
+.roll-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--c-border-light); }
+.roll-btn { width: 100%; background: var(--c-accent-gold); color: #000; border: 1px solid var(--c-accent-gold); font-family: var(--font-secondary); font-weight: bold; font-size: 1.2em; text-transform: uppercase; padding: 8px; cursor: pointer; transition: all 0.2s; }
+.roll-btn:hover { background: #d4b06d; transform: translateY(-1px); }
+
+
+/* ================================================================== */
+/* 2. DESIGN: CARD DE ROLAGEM "PREMIUM" (CHAT)                        */
+/* ================================================================== */
+
+.chat-message .gurps-roll-card.premium {
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-top: 8px;
+    position: relative;
+}
+
+/* Borda superior dourada elegante */
+.gurps-roll-card.premium::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #a67c00, #ffd700, #a67c00);
+}
+
+/* --- Cabeçalho --- */
+.gurps-roll-card .card-header {
+    padding: 10px 12px;
+    background: #fdfbf7; /* Off-white muito sutil */
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gurps-roll-card .header-icon img {
+    width: 64px; height: 64px;
+    border-radius: 50%; /* Ícone redondo é mais moderno */
+    border: 2px solid #e0e0e0;
+    object-fit: cover;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gurps-roll-card .header-title h3 {
+    margin: 0;
+    font-size: 1em;
+    font-weight: 700;
+    color: #222;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+/* --- Corpo do Card --- */
+.gurps-roll-card .card-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to bottom, #fff, #fafafa);
+}
+
+/* Linha de Cálculo (Sutil) */
+.gurps-roll-card .roll-meta {
+    font-size: 1em;
+    color: #777;
+    margin-bottom: 5px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+.gurps-roll-card .meta-target { color: #444; }
+.gurps-roll-card .meta-mod.pos { color: #2e7d32; font-weight: bold; }
+.gurps-roll-card .meta-mod.neg { color: #c62828; font-weight: bold; }
+
+/* O Resultado Principal (Grande e Limpo) */
+.gurps-roll-card .roll-result {
+    margin: 5px 0 10px 0;
+}
+.gurps-roll-card .dice-total {
+    font-size: 3.2em;
+    font-weight: 900;
+    line-height: 1;
+    color: #222;
+    font-variant-numeric: tabular-nums; /* Alinha números melhor */
+    letter-spacing: -2px;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+}
+
+/* Status e Margem */
+.gurps-roll-card .roll-status-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+/* Texto de Sucesso/Falha */
+.gurps-roll-card .status-text {
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+}
+.status-text.success { color: #2e7d32; }
+.status-text.failure { color: #c62828; }
+.status-text.crit-success { 
+    color: #1b5e20; 
+    background: -webkit-linear-gradient(#4caf50, #1b5e20);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.status-text.crit-failure { 
+    color: #b71c1c;
+    background: -webkit-linear-gradient(#ef5350, #b71c1c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* A PÍLULA DE MARGEM (O Destaque que você pediu) */
+.gurps-roll-card .margin-pill {
+    font-size: 0.95em;
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 20px; /* Pílula arredondada */
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    margin-top: 2px;
+    display: inline-block;
+}
+
+/* Cores da Pílula */
+.margin-pill.success { background-color: #389c68; }
+.margin-pill.failure { background-color: #d32f2f; }
+.margin-pill.crit-success { 
+    background: linear-gradient(135deg, #43a047, #1b5e20);
+    box-shadow: 0 2px 8px rgba(67, 160, 71, 0.4);
+    border: 1px solid #ffd700; /* Borda dourada no crítico */
+}
+.margin-pill.crit-failure { 
+    background: linear-gradient(135deg, #e53935, #b71c1c);
+    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4);
+    border: 1px solid #000;
+}
+
+/* Rodapé com Dados Individuais */
+.gurps-roll-card .dice-breakdown {
+    margin-top: 15px;
+    display: flex;
+    gap: 4px;
+    opacity: 1; /* Bem discreto */
+    transition: opacity 0.2s;
+}
+
+.gurps-roll-card .die-face {
+width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fdfaf8;
+    border: 1px solid #d1c8c4;
+    border-radius: 3px;
+    font-weight: bold;
+}

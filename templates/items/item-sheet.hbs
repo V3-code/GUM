@@ -444,15 +444,24 @@
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "gm_modifier")}}
     
-    <div class="form-section">
-        <div class="form-grid-2">
-            <div class="form-group">
-                <label style="font-size: 1.1em; font-weight: bold;">Modificador</label>
+<div class="form-section">
+        <div class="form-grid-3">
+            {{!-- 1. O Valor (+/-) --}}
+            <div class="form-group" title="O valor que será somado (ex: -2, +1)">
+                <label style="font-size: 1em; font-weight: bold;">Modificador</label>
                 <input type="number" name="system.modifier" value="{{system.modifier}}" placeholder="0" style="font-size: 1.3em; text-align: center; font-weight:bold; background: rgba(0,0,0,0.2); color: #fff;"/>
             </div>
-            <div class="form-group">
+
+            {{!-- 2. O Teto (NH Máximo) --}}
+            <div class="form-group" title="O valor máximo permitido para o teste (ex: 9 para Mover e Atacar). Deixe vazio para sem limite.">
+                <label style="font-size: 1em; font-weight: bold; color: #c5a05b;">NH Máximo</label>
+                <input type="number" name="system.nh_cap" value="{{system.nh_cap}}" placeholder="Ilum." style="font-size: 1.3em; text-align: center; font-weight:bold; border-color: #c5a05b;"/>
+            </div>
+
+            {{!-- 3. A Duração --}}
+            <div class="form-group" title="Lembrete de duração">
                 <label>Duração</label>
-                <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: 1 rodada, Cena" style="text-align: center;"/>
+                <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: 1 rodada" style="text-align: center; height: 35px; margin-top: auto;"/>
             </div>
         </div>
     </div>
