@@ -406,12 +406,6 @@ class ContingentEffectBuilder extends Dialog {
  * @param {Actor} actor - O ator realizando o teste.
  * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
  */
-// ================================================================== //
-//  ✅ FUNÇÃO DE ROLAGEM GLOBAL (CORRIGIDA COM LIMITADOR/TETO)
-// ================================================================== //
-/**
- * Realiza uma rolagem de teste (3d6) baseada nos dados fornecidos.
- */
 export async function performGURPSRoll(actor, rollData) {
     // 1. Lógica de Valores e Teto (Cap)
     // Se veio da Janela, 'originalValue' existe e é a Base. 'value' é o Final (já com teto).

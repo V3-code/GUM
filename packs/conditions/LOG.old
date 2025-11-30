@@ -1,3 +1,7 @@
-2025/11/28-23:07:51.210 4aac Recovering log #187
-2025/11/28-23:07:51.211 4aac Delete type=0 #187
-2025/11/28-23:07:51.211 4aac Delete type=3 #185
+2025/11/29-22:16:38.454 40e4 Recovering log #190
+2025/11/29-22:16:38.461 40e4 Delete type=0 #190
+2025/11/29-22:16:38.461 40e4 Delete type=3 #189
+2025/11/29-23:07:57.230 18b0 Level-0 table #194: started
+2025/11/29-23:07:57.230 18b0 Level-0 table #194: 0 bytes OK
+2025/11/29-23:07:57.231 18b0 Delete type=0 #192
+2025/11/29-23:07:57.235 18b0 Manual compaction at level-0 from '!items!duOqFxiHTsIum16E' @ 72057594037927935 : 1 .. '!items!js0cb5ixRe4GLPBE' @ 0 : 0; will stop at (end)

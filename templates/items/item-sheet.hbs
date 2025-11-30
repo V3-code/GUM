@@ -445,18 +445,28 @@
 {{#if (eq item.type "gm_modifier")}}
     
 <div class="form-section">
-        <div class="form-group" title="Onde este botão vai aparecer na Janela de Rolagem?">
-                <label>Grupo Visual</label>
-                <select name="system.ui_category" style="text-align: center;">
-                    {{selectOptions (object 
-                        location="Localização de Acerto" 
-                        maneuver="Manobras" 
-                        option="Opções de Combate" 
-                        situation="Situação / Condição"
-                        other="Outros"
-                    ) selected=system.ui_category}}
-                </select>
-        </div>
+<div class="form-group" title="Em qual bloco este botão vai aparecer na Janela de Rolagem?">
+    <label>Categoria Visual (Bloco)</label>
+    <select name="system.ui_category" style="text-align: center;">
+        {{selectOptions (object 
+            location="Localização de Acerto" 
+            maneuver="Manobras" 
+            
+            attack_opt="Opções de Ataque" 
+            defense_opt="Opções de Defesa" 
+            
+            posture="Postura"
+            range="Distância / Alcance"
+            
+            ritual="Magia: Ritual & Mana"
+            time="Tempo / Duração"
+            effort="Esforço Extra"
+            
+            situation="Situação / Condição"
+            other="Outros / Customizado"
+        ) selected=system.ui_category}}
+    </select>
+</div>
         <div class="form-grid-3">
             {{!-- 1. O Valor (+/-) --}}
             <div class="form-group" title="O valor que será somado (ex: -2, +1)">
