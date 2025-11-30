@@ -1,0 +1,212 @@
+[
+  {
+    "name": "Local: Torso",
+    "type": "gm_modifier",
+    "img": "icons/svg/target.svg",
+    "system": {
+      "modifier": 0,
+      "ui_category": "location",
+      "description": "<p>Local padrão de acerto. Sem penalidades.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true, "combat_attack_power": true }
+    }
+  },
+  {
+    "name": "Local: Crânio",
+    "type": "gm_modifier",
+    "img": "icons/svg/skull.svg",
+    "system": {
+      "modifier": -7,
+      "ui_category": "location",
+      "description": "<p><strong>Crânio:</strong> Penalidade -7. O alvo recebe DR 2 extra. Dano x4.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Rosto",
+    "type": "gm_modifier",
+    "img": "icons/svg/eye.svg",
+    "system": {
+      "modifier": -5,
+      "ui_category": "location",
+      "description": "<p><strong>Rosto:</strong> Penalidade -5. Ignora armadura de cabeça (exceto máscaras). Bom para Nocaute.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Pescoço",
+    "type": "gm_modifier",
+    "img": "icons/svg/neck.svg",
+    "system": {
+      "modifier": -5,
+      "ui_category": "location",
+      "description": "<p><strong>Pescoço:</strong> Penalidade -5. Aumenta dano de Corte e Esmagamento (x1.5).</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Órgãos Vitais",
+    "type": "gm_modifier",
+    "img": "icons/svg/heart.svg",
+    "system": {
+      "modifier": -3,
+      "ui_category": "location",
+      "description": "<p><strong>Vitais:</strong> Penalidade -3. Aumenta dano de Perfuração e Projéteis (x3).</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Olhos",
+    "type": "gm_modifier",
+    "img": "icons/svg/sun.svg",
+    "system": {
+      "modifier": -9,
+      "ui_category": "location",
+      "description": "<p><strong>Olhos:</strong> Penalidade -9. Dano x4. Cegueira potencial.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Braço/Perna",
+    "type": "gm_modifier",
+    "img": "icons/svg/limb.svg",
+    "system": {
+      "modifier": -2,
+      "ui_category": "location",
+      "description": "<p><strong>Membro:</strong> Penalidade -2. Dano suficiente pode inutilizar o membro.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Local: Mão/Pé",
+    "type": "gm_modifier",
+    "img": "icons/svg/paw.svg",
+    "system": {
+      "modifier": -4,
+      "ui_category": "location",
+      "description": "<p><strong>Extremidade:</strong> Penalidade -4. Dano suficiente inutiliza a mão/pé.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "combat_attack_spell": true }
+    }
+  },
+  {
+    "name": "Manobra: Ataque Total (+4)",
+    "type": "gm_modifier",
+    "img": "icons/svg/sword.svg",
+    "system": {
+      "modifier": 4,
+      "ui_category": "maneuver",
+      "description": "<p><strong>Ataque Total (Determinado):</strong> +4 no ataque. Sem defesas ativas.</p>",
+      "target_type": { "combat_attack_melee": true }
+    }
+  },
+  {
+    "name": "Manobra: Ataque Total (+1 LD)",
+    "type": "gm_modifier",
+    "img": "icons/svg/target.svg",
+    "system": {
+      "modifier": 1,
+      "ui_category": "maneuver",
+      "description": "<p><strong>Ataque Total (Determinado - Distância):</strong> +1 no ataque. Sem defesas ativas.</p>",
+      "target_type": { "combat_attack_ranged": true }
+    }
+  },
+  {
+    "name": "Manobra: Atq. Defensivo",
+    "type": "gm_modifier",
+    "img": "icons/svg/shield.svg",
+    "system": {
+      "modifier": -4,
+      "ui_category": "maneuver",
+      "description": "<p><strong>Ataque Defensivo:</strong> -4 no ataque (ou pior). Ganha bônus na defesa.</p>",
+      "target_type": { "combat_attack_melee": true }
+    }
+  },
+  {
+    "name": "Manobra: Mover e Atacar",
+    "type": "gm_modifier",
+    "img": "icons/svg/run.svg",
+    "system": {
+      "modifier": -4,
+      "nh_cap": "9",
+      "ui_category": "maneuver",
+      "description": "<p><strong>Mover e Atacar:</strong> -4 no ataque e NH máximo ajustado para 9. Sem aparar. Se for LD, penalidade de -2 ou mais.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true }
+    }
+  },
+  {
+    "name": "Opção: Ataque Enganoso (-2)",
+    "type": "gm_modifier",
+    "img": "icons/svg/daze.svg",
+    "system": {
+      "modifier": -2,
+      "ui_category": "option",
+      "description": "<p><strong>Ataque Enganoso:</strong> Aceita -2 no ataque para dar -1 na defesa do inimigo.</p>",
+      "target_type": { "combat_attack_melee": true }
+    }
+  },
+  {
+    "name": "Opção: Ataque Rápido",
+    "type": "gm_modifier",
+    "img": "icons/svg/combat.svg",
+    "system": {
+      "modifier": -6,
+      "ui_category": "option",
+      "description": "<p><strong>Ataque Rápido:</strong> Faz um segundo ataque contra o mesmo alvo. Ambos sofrem -6.</p>",
+      "target_type": { "combat_attack_melee": true }
+    }
+  },
+  {
+    "name": "Situação: Choque 1",
+    "type": "gm_modifier",
+    "img": "icons/svg/lightning.svg",
+    "system": {
+      "modifier": -1,
+      "ui_category": "situation",
+      "description": "<p>Penalidade por ter recebido dano no turno anterior.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "skill_all": true, "attr_dx_all": true, "attr_iq_all": true }
+    }
+  },
+  {
+    "name": "Situação: Choque 2",
+    "type": "gm_modifier",
+    "img": "icons/svg/lightning.svg",
+    "system": {
+      "modifier": -2,
+      "ui_category": "situation",
+      "description": "<p>Penalidade por ter recebido dano no turno anterior.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "skill_all": true, "attr_dx_all": true, "attr_iq_all": true }
+    }
+  },
+   {
+    "name": "Situação: Choque 3",
+    "type": "gm_modifier",
+    "img": "icons/svg/lightning.svg",
+    "system": {
+      "modifier": -3,
+      "ui_category": "situation",
+      "description": "<p>Penalidade por ter recebido dano no turno anterior.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "skill_all": true, "attr_dx_all": true, "attr_iq_all": true }
+    }
+  },
+   {
+    "name": "Situação: Choque 4",
+    "type": "gm_modifier",
+    "img": "icons/svg/lightning.svg",
+    "system": {
+      "modifier": -4,
+      "ui_category": "situation",
+      "description": "<p>Penalidade Máxima por choque.</p>",
+      "target_type": { "combat_attack_melee": true, "combat_attack_ranged": true, "skill_all": true, "attr_dx_all": true, "attr_iq_all": true }
+    }
+  },
+  {
+    "name": "Postura: Deitado",
+    "type": "gm_modifier",
+    "img": "icons/svg/falling.svg",
+    "system": {
+      "modifier": -4,
+      "ui_category": "situation",
+      "description": "<p>Atacando corpo-a-corpo enquanto deitado.</p>",
+      "target_type": { "combat_attack_melee": true }
+    }
+  }
+]

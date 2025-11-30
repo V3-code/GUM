@@ -1,190 +1,300 @@
 /* ================================================================== */
-/* 1. DESIGN DA JANELA DE INPUT (Mantida igual, pois funciona bem)    */
-/* ================================================================== */
-.gum.roll-prompt .window-content { background: var(--c-bg-dark); color: var(--c-text-lightest); padding: 0; overflow: hidden; }
-.gum-roll-prompt { display: flex; flex-direction: column; height: 100%; padding: 15px; gap: 15px; }
-.roll-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--c-border-light); margin-bottom: 5px; }
-.roll-icon { flex: 0 0 64px; height: 64px; display: grid; place-items: center; background: var(--c-bg-darkest); border: 1px solid var(--c-border-light); border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-.roll-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.roll-icon i { font-size: 40px; color: var(--c-accent-gold); }
-.roll-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-.roll-title { margin: 0; font-family: var(--font-secondary); font-size: 1.6em; line-height: 1.2; color: var(--c-accent-gold); border: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-.roll-subtitle { font-family: var(--font-primary); font-size: 1em; color: var(--c-text-medium); margin-top: 4px; }
-.base-value strong { color: #fff; font-size: 1.1em; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 3px; }
-.roll-body { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-.manual-mod label { display: block; font-weight: bold; color: var(--c-text-accent); margin-bottom: 5px; font-size: 0.9em; text-transform: uppercase; }
-.manual-mod input { width: 100%; height: 50px; text-align: center; font-size: 24px; font-weight: bold; font-family: var(--font-primary); color: #fff; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--c-border-light); border-radius: 4px; }
-.roll-modifiers-placeholder { margin-top: 10px; padding: 15px; border: 1px dashed #555; background: rgba(255,255,255,0.02); border-radius: 4px; text-align: center; font-size: 0.85em; color: #777; font-style: italic; }
-.roll-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--c-border-light); }
-.roll-btn { width: 100%; background: var(--c-accent-gold); color: #000; border: 1px solid var(--c-accent-gold); font-family: var(--font-secondary); font-weight: bold; font-size: 1.2em; text-transform: uppercase; padding: 8px; cursor: pointer; transition: all 0.2s; }
-.roll-btn:hover { background: #d4b06d; transform: translateY(-1px); }
-
-
-/* ================================================================== */
-/* 2. DESIGN: CARD DE ROLAGEM "PREMIUM" (CHAT)                        */
+/* 1. DESIGN DA JANELA DE ROLAGEM (LAYOUT "MENU & COMANDA")           */
 /* ================================================================== */
 
-.chat-message .gurps-roll-card.premium {
-    background: #fff;
-    border: 1px solid #d0d0d0;
-    border-radius: 8px;
-    font-family: 'Roboto', sans-serif;
-    color: #333;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    margin-top: 8px;
-    position: relative;
+.gum.roll-prompt .window-content {
+    background: var(--c-bg-dark);
+    color: var(--c-text-lightest);
+    padding: 0;
+    /* MUDANÇA: Altura automática para a janela poder crescer */
+    height: auto !important; 
+    display: block;
 }
 
-/* Borda superior dourada elegante */
-.gurps-roll-card.premium::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #a67c00, #ffd700, #a67c00);
+.gum-roll-prompt.two-column-layout {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr; 
+    /* MUDANÇA: Altura automática, mas com um mínimo saudável */
+    height: auto;
+    min-height: 600px; /* Começa com um bom tamanho vertical */
+    align-items: stretch; /* Faz as colunas terem a mesma altura */
 }
 
-/* --- Cabeçalho --- */
-.gurps-roll-card .card-header {
-    padding: 10px 12px;
-    background: #fdfbf7; /* Off-white muito sutil */
-    border-bottom: 1px solid #eee;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.gurps-roll-card .header-icon img {
-    width: 64px; height: 64px;
-    border-radius: 50%; /* Ícone redondo é mais moderno */
-    border: 2px solid #e0e0e0;
-    object-fit: cover;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.gurps-roll-card .header-title h3 {
-    margin: 0;
-    font-size: 1em;
-    font-weight: 700;
-    color: #222;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-
-/* --- Corpo do Card --- */
-.gurps-roll-card .card-body {
+/* --- COLUNA ESQUERDA: MENU DE OPÇÕES --- */
+.prompt-menu-column {
+    background: var(--c-bg-medium);
     padding: 10px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    background: linear-gradient(to bottom, #fff, #fafafa);
+    gap: 10px;
+    border-right: 1px solid var(--c-border-light);
+    
+    /* MUDANÇA: Como a janela agora cresce, precisamos limitar a esquerda 
+       para que ela tenha scroll se a lista for gigante (ex: 500 itens) */
+    max-height: 80vh; /* Limita a 80% da altura da tela do monitor */
+    overflow-y: auto;
+    scrollbar-width: thin; 
+    scrollbar-color: #555 transparent;
 }
 
-/* Linha de Cálculo (Sutil) */
-.gurps-roll-card .roll-meta {
+.column-header {
+    font-family: var(--font-secondary);
+    font-size: 0.9em;
+    color: var(--c-text-accent);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--c-border-light);
+    padding-bottom: 5px;
+    margin: 0;
+}
+
+/* Blocos Colapsáveis */
+.roll-blocks-container { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; /* Gap levemente aumentado para o Grid respirar */
+}
+
+.option-group {
+    /* Restaurando seu fundo original */
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 4px;
+}
+
+.option-group[open] { 
+    background: rgba(0,0,0,0.1); 
+    border-color: rgba(255,255,255,0.1);
+    padding-bottom: 5px; /* Espaço extra quando aberto */
+}
+
+.group-summary {
+    padding: 8px 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    color: #ccc;
+    /* Restaurando a barra lateral colorida que você usava */
+    border-left: 4px solid #777; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    list-style: none; 
+    transition: background 0.2s;
+}
+
+.group-summary:hover { 
+    background: rgba(255,255,255,0.05); 
+    color: #fff; 
+}
+.group-summary::-webkit-details-marker { display: none; }
+
+/* Animaçãozinha na seta */
+.option-group[open] .group-summary i { transform: rotate(180deg); }
+.group-summary i { transition: transform 0.2s; }
+
+.group-content { 
+    padding: 8px; 
+}
+
+/* ✅ O GRID NOVO (Mantido) */
+.block-buttons { 
+    display: grid;
+    /* Grid responsivo */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px; 
+}
+
+/* Botões - Cores Originais + Layout Novo */
+.mod-btn {
+    /* Suas cores originais */
+    background: #2b2a29; 
+    border: 1px solid #444; 
+    color: #bbb; 
+    
+    /* Layout Novo Compacto */
+    border-radius: 3px;
+    padding: 4px 8px; 
+    cursor: pointer;
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    font-size: 0.85em; /* Fonte ajustada para o Grid */
+    min-height: 28px; 
+    transition: all 0.1s;
+}
+
+.mod-btn:hover { 
+    /* Seu hover original */
+    border-color: var(--c-accent-gold); 
+    color: #fff; 
+    background: #3a3836; 
+    transform: translateY(-1px); /* Mantive o elevação sutil pois ajuda na UX do grid */
+}
+
+.mod-btn.active { 
+    /* Seu active original */
+    background: var(--c-accent-gold); 
+    color: #000; 
+    border-color: var(--c-accent-gold); 
+    font-weight: bold; 
+    box-shadow: 0 0 5px rgba(197, 160, 91, 0.3);
+}
+
+.mod-btn .btn-label { 
+    flex: 1; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    padding-right: 5px; 
+}
+
+.mod-btn .btn-value { 
+    /* Seu estilo de valor original */
+    background: rgba(0,0,0,0.2); 
+    padding: 0px 6px; 
+    border-radius: 2px; 
+    min-width: 22px; 
+    text-align: center; 
+    font-weight: 700;
+}
+
+/* Info View (Oculto até hover, para limpar o visual) */
+.mod-view { 
+    opacity: 0; 
+    width: 0;
+    margin: 0;
+    overflow: hidden;
+    transition: opacity 0.2s;
     font-size: 1em;
-    color: #777;
-    margin-bottom: 5px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    background: #f0f0f0;
-    padding: 2px 10px;
-    border-radius: 12px;
 }
-.gurps-roll-card .meta-target { color: #444; }
-.gurps-roll-card .meta-mod.pos { color: #2e7d32; font-weight: bold; }
-.gurps-roll-card .meta-mod.neg { color: #c62828; font-weight: bold; }
+.mod-btn:hover .mod-view { 
+    opacity: 0.5; 
+    width: auto;
+    margin-left: 6px;
+    overflow: visible;
+}
+.mod-view:hover { opacity: 1 !important; color: #fff; }
 
-/* O Resultado Principal (Grande e Limpo) */
-.gurps-roll-card .roll-result {
-    margin: 5px 0 10px 0;
-}
-.gurps-roll-card .dice-total {
-    font-size: 3.2em;
-    font-weight: 900;
-    line-height: 1;
-    color: #222;
-    font-variant-numeric: tabular-nums; /* Alinha números melhor */
-    letter-spacing: -2px;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
-}
 
-/* Status e Margem */
-.gurps-roll-card .roll-status-container {
+/* --- COLUNA DIREITA: COMANDA (DASHBOARD) --- */
+/* Mantendo suas cores e sombras originais */
+.prompt-command-column {
+    background: var(--c-bg-darkest);
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 15px;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+    z-index: 2;
+    
+    /* MUDANÇA: Removemos travas de altura aqui */
+    height: auto;
+}
+.command-header { 
+    display: flex; align-items: center; gap: 10px; 
+    padding-bottom: 10px; 
+    border-bottom: 1px solid var(--c-border-light); 
+}
+
+.roll-icon-small { 
+    width: 40px; height: 40px; background: #222; 
+    border: 1px solid var(--c-accent-gold); 
+    border-radius: 4px; display: grid; place-items: center; flex-shrink: 0;
+}
+.roll-icon-small img { width: 100%; height: 100%; object-fit: cover; }
+.roll-icon-small i { font-size: 24px; color: var(--c-accent-gold); }
+
+.roll-info-compact { overflow: hidden; }
+.roll-title-compact { 
+    margin: 0; font-family: var(--font-secondary); font-size: 1.1em; 
+    color: var(--c-accent-gold); line-height: 1.1; 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+}
+.roll-subtitle { font-size: 0.8em; opacity: 0.7; font-style: italic; }
+
+/* Valor Base */
+.base-value-box {
+    background: rgba(255,255,255,0.05); border: 1px solid #444;
+    padding: 5px 10px; border-radius: 4px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.base-value-box .label { font-size: 0.8em; text-transform: uppercase; color: #aaa; font-weight: bold; }
+.base-value-box .value { font-size: 1.2em; font-weight: bold; color: #fff; }
+
+/* Modificador Manual */
+.manual-mod-panel.compact {
+    background: rgba(0,0,0,0.2); border: 1px solid #444; border-radius: 4px; padding: 8px;
+}
+.mod-controls-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 5px; }
+.manual-input-wrapper { text-align: center; }
+.manual-input-wrapper label { display: block; font-size: 0.6em; text-transform: uppercase; color: #777; font-weight: bold; margin-bottom: 2px; }
+.manual-input { 
+    width: 60px; height: 32px; text-align: center; font-size: 1.3em; font-weight: bold; 
+    background: #111; border: 1px solid #555; color: #fff; border-radius: 3px; 
+}
+.step-btn { 
+    width: 26px; height: 26px; border-radius: 50%; background: #333; border: 1px solid #555; 
+    color: #fff; cursor: pointer; display: grid; place-items: center; font-size: 0.8em;
+}
+.step-btn:hover { background: var(--c-accent-gold); color: #000; }
+
+.presets-row { display: flex; justify-content: center; gap: 4px; }
+.quick-btn { 
+    background: rgba(255,255,255,0.05); border: 1px solid #555; color: #aaa; 
+    padding: 2px 8px; font-size: 0.75em; border-radius: 3px; cursor: pointer; flex: 1;
+}
+.quick-btn:hover { background: #fff; color: #000; }
+
+/* Pilha de Modificadores Ativos */
+.active-mods-container {
+    /* MUDANÇA: Não usa mais overflow, deixa crescer */
+    display: flex; 
+    flex-direction: column; 
     gap: 5px;
-    width: 100%;
+    
+    /* Garante um espaço visual mínimo generoso */
+    min-height: 150px; 
+    
+    border-top: 1px solid var(--c-border-light);
+    padding-top: 10px;
+    
+    /* "Empurra" o rodapé para baixo se crescer, 
+       mas também preenche o espaço se estiver vazio */
+    flex-grow: 1; 
+}
+.section-label { font-size: 0.7em; text-transform: uppercase; color: #777; font-weight: bold; }
+.active-mods-list { display: flex; flex-wrap: wrap; gap: 4px; align-content: start; }
+
+.mod-tag {
+    background: #333; border: 1px solid #555; color: #ddd; font-size: 0.75em;
+    padding: 2px 6px; border-radius: 3px; display: flex; align-items: center; gap: 5px;
+    cursor: pointer;
+}
+.mod-tag:hover { background: #a53541; border-color: #a53541; color: #fff; text-decoration: line-through; }
+.mod-tag strong { color: var(--c-accent-gold); }
+.mod-tag.locked { cursor: default; border-style: dashed; opacity: 0.7; }
+
+/* Rodapé */
+.command-footer {
+    /* margin-top: auto; <- Remova ou mantenha, o flex do active-mods já resolve */
+    border-top: 1px solid var(--c-accent-gold);
+    padding-top: 15px;
+    flex-shrink: 0; /* Garante que o rodapé nunca encolha/suma */
 }
 
-/* Texto de Sucesso/Falha */
-.gurps-roll-card .status-text {
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 0.9em;
-    letter-spacing: 1px;
-}
-.status-text.success { color: #2e7d32; }
-.status-text.failure { color: #c62828; }
-.status-text.crit-success { 
-    color: #1b5e20; 
-    background: -webkit-linear-gradient(#4caf50, #1b5e20);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.status-text.crit-failure { 
-    color: #b71c1c;
-    background: -webkit-linear-gradient(#ef5350, #b71c1c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+.calc-display { text-align: right; margin-bottom: 10px; }
+.calc-row { display: flex; justify-content: space-between; align-items: baseline; }
+.calc-row.final { font-size: 1.1em; color: #fff; font-weight: bold; }
+.calc-label { color: #aaa; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; }
+.final-val { font-size: 1.8em; color: var(--c-accent-gold); line-height: 1; }
+.calc-row.detail { font-size: 0.8em; color: #666; justify-content: flex-end; margin-top: 2px; }
+.cap-warning { color: #e57373; font-size: 0.8em; margin-top: 2px; }
 
-/* A PÍLULA DE MARGEM (O Destaque que você pediu) */
-.gurps-roll-card .margin-pill {
-    font-size: 0.95em;
-    color: #fff;
-    padding: 4px 16px;
-    border-radius: 20px; /* Pílula arredondada */
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    margin-top: 2px;
-    display: inline-block;
+.roll-big-btn {
+    width: 100%; background: var(--c-accent-gold); color: #000; border: none;
+    font-family: var(--font-secondary); font-weight: bold; font-size: 1.3em; 
+    text-transform: uppercase; padding: 12px 0; border-radius: 4px; cursor: pointer;
+    transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
-
-/* Cores da Pílula */
-.margin-pill.success { background-color: #389c68; }
-.margin-pill.failure { background-color: #d32f2f; }
-.margin-pill.crit-success { 
-    background: linear-gradient(135deg, #43a047, #1b5e20);
-    box-shadow: 0 2px 8px rgba(67, 160, 71, 0.4);
-    border: 1px solid #ffd700; /* Borda dourada no crítico */
-}
-.margin-pill.crit-failure { 
-    background: linear-gradient(135deg, #e53935, #b71c1c);
-    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4);
-    border: 1px solid #000;
-}
-
-/* Rodapé com Dados Individuais */
-.gurps-roll-card .dice-breakdown {
-    margin-top: 15px;
-    display: flex;
-    gap: 4px;
-    opacity: 1; /* Bem discreto */
-    transition: opacity 0.2s;
-}
-
-.gurps-roll-card .die-face {
-width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #fdfaf8;
-    border: 1px solid #d1c8c4;
-    border-radius: 3px;
-    font-weight: bold;
-}
+.roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--c-accent-gold); }

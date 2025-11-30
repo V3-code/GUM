@@ -445,6 +445,18 @@
 {{#if (eq item.type "gm_modifier")}}
     
 <div class="form-section">
+        <div class="form-group" title="Onde este botão vai aparecer na Janela de Rolagem?">
+                <label>Grupo Visual</label>
+                <select name="system.ui_category" style="text-align: center;">
+                    {{selectOptions (object 
+                        location="Localização de Acerto" 
+                        maneuver="Manobras" 
+                        option="Opções de Combate" 
+                        situation="Situação / Condição"
+                        other="Outros"
+                    ) selected=system.ui_category}}
+                </select>
+        </div>
         <div class="form-grid-3">
             {{!-- 1. O Valor (+/-) --}}
             <div class="form-group" title="O valor que será somado (ex: -2, +1)">

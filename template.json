@@ -215,6 +215,7 @@
         "modifier": 0,
         "nh_cap": "",
         "duration": "",
+        "ui_category": "situation",
         "target_type": {
             "global": false,
             "reaction": false,

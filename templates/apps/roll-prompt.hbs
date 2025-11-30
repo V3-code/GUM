@@ -1,39 +1,100 @@
-<form class="gum-roll-prompt" autocomplete="off">
-    
-    {{!-- CABEÇALHO: O que estou rolando? --}}
-    <div class="roll-header">
-        <div class="roll-icon">
-            {{!-- Se tiver imagem, mostra. Senão, ícone genérico --}}
-            {{#if img}}<img src="{{img}}">{{else}}<i class="fas fa-dice-d20"></i>{{/if}}
+<form class="gum-roll-prompt two-column-layout" autocomplete="off">
+
+    {{!-- COLUNA DA ESQUERDA: MENU DE OPÇÕES (SCROLL) --}}
+    <div class="prompt-menu-column">
+        <h3 class="column-header"><i class="fas fa-list"></i> Modificadores</h3>
+        
+        <div class="roll-blocks-container">
+            {{#each blocks as |block|}}
+            <details class="option-group">
+                <summary class="group-summary" style="border-left-color: {{block.color}};">
+                    <span class="summary-title">{{block.title}}</span>
+                    <i class="fas fa-chevron-down"></i>
+                </summary>
+                <div class="group-content">
+                    <div class="block-buttons">
+                        {{#each block.items as |btn|}}
+                        <button type="button" class="mod-btn {{#if btn.active}}active{{/if}}" 
+                                data-id="{{btn.id}}" data-value="{{btn.value}}" 
+                                data-label="{{btn.label}}" data-cap="{{btn.nh_cap}}">
+                            <span class="btn-label">{{btn.label}}</span>
+                            <span class="btn-value">{{#if (gt btn.value 0)}}+{{/if}}{{btn.value}}</span>
+                            <span class="mod-view" data-desc="{{btn.desc}}" data-title="{{btn.label}}"><i class="fas fa-info-circle"></i></span>
+                        </button>
+                        {{/each}}
+                    </div>
+                </div>
+            </details>
+            {{/each}}
         </div>
-        <div class="roll-info">
-            <h2 class="roll-title">{{label}}</h2>
-            <div class="roll-subtitle">
-                <span class="base-value">NH Base: <strong>{{baseValue}}</strong></span>
+    </div>
+
+    {{!-- COLUNA DA DIREITA: COMANDA / DASHBOARD (FIXO) --}}
+    <div class="prompt-command-column">
+
+        {{!-- 1. CABEÇALHO (Compacto) --}}
+        <div class="command-header">
+            <div class="roll-icon-small">
+                {{#if img}}<img src="{{img}}">{{else}}<i class="fas fa-dice-d20"></i>{{/if}}
+            </div>
+            <div class="roll-info-compact">
+                <h2 class="roll-title-compact">{{label}}</h2>
+                <div class="roll-subtitle">{{actor.name}}</div>
             </div>
         </div>
-    </div>
 
-    {{!-- CORPO: Modificadores (Onde o futuro Escudo do Mestre vai entrar) --}}
-    <div class="roll-body">
-        
-        {{!-- Por enquanto, apenas um modificador manual simples --}}
-        <div class="form-group manual-mod">
-            <label><i class="fas fa-plus-minus"></i> Modificador Manual</label>
-            <input type="number" name="manualMod" value="0" autofocus onfocus="this.select()"/>
+        {{!-- 2. NH BASE (Destaque) --}}
+        <div class="base-value-box">
+            <span class="label">NH Base</span>
+            <span class="value">{{baseValue}}</span>
         </div>
 
-        {{!-- Espaço reservado para os futuros botões de Manobra/Localização --}}
-        <div class="roll-modifiers-placeholder" style="margin-top: 10px; padding: 10px; border: 1px dashed #555; text-align: center; font-size: 0.8em; color: #888;">
-            (Botões de Manobra e Localização virão aqui)
+        {{!-- 3. MODIFICADOR MANUAL --}}
+        <div class="manual-mod-panel compact">
+            <div class="mod-controls-row">
+                <button type="button" class="step-btn" data-action="decrease"><i class="fas fa-minus"></i></button>
+                <div class="manual-input-wrapper">
+                    <label>Manual</label>
+                    <input type="number" name="manualMod" value="0" class="manual-input"/>
+                </div>
+                <button type="button" class="step-btn" data-action="increase"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="presets-row">
+                <button type="button" class="quick-btn" data-value="-6">-6</button>
+                <button type="button" class="quick-btn" data-value="-4">-4</button>
+                <button type="button" class="quick-btn" data-value="-2">-2</button>
+                <button type="button" class="quick-btn" data-value="2">+2</button>
+                <button type="button" class="quick-btn" data-value="4">+4</button>
+                <button type="button" class="quick-btn" data-value="6">+6</button>
+            </div>
+        </div>
+
+        {{!-- 4. PILHA DE ATIVOS (Stack) --}}
+        <div class="active-mods-container">
+            <label class="section-label">Ativos</label>
+            <div class="active-mods-list">
+                {{!-- O JS vai injetar as tags aqui --}}
+                <span class="empty-stack-msg">...</span>
+            </div>
+        </div>
+
+        {{!-- 5. RODAPÉ DE AÇÃO (Fixo no fundo da coluna direita) --}}
+        <div class="command-footer">
+            <div class="calc-display">
+                <div class="calc-row final">
+                    <span class="calc-label">NH FINAL</span>
+                    <span class="calc-val final-val">{{baseValue}}</span>
+                </div>
+                <div class="calc-row detail">
+                    <span class="detail-text">Base {{baseValue}} <span class="total-mod-val" style="color:var(--c-accent-gold);">+0</span></span>
+                </div>
+                <div class="cap-warning" style="display:none;">(Teto <span class="cap-val"></span>)</div>
+            </div>
+
+            <button type="submit" class="roll-big-btn">
+                <i class="fas fa-dice"></i> ROLAR
+            </button>
         </div>
 
     </div>
-
-    {{!-- RODAPÉ: Botão de Rolar --}}
-    <footer class="roll-footer">
-        <button type="submit" class="roll-btn">
-            <i class="fas fa-dice"></i> ROLAR
-        </button>
-    </footer>
 </form>

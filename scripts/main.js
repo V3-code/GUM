@@ -406,17 +406,39 @@ class ContingentEffectBuilder extends Dialog {
  * @param {Actor} actor - O ator realizando o teste.
  * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
  */
+// ================================================================== //
+//  ✅ FUNÇÃO DE ROLAGEM GLOBAL (CORRIGIDA COM LIMITADOR/TETO)
+// ================================================================== //
+/**
+ * Realiza uma rolagem de teste (3d6) baseada nos dados fornecidos.
+ */
 export async function performGURPSRoll(actor, rollData) {
-    const baseValue = parseInt(rollData.originalValue || rollData.value) || 10;
+    // 1. Lógica de Valores e Teto (Cap)
+    // Se veio da Janela, 'originalValue' existe e é a Base. 'value' é o Final (já com teto).
+    // Se veio de Shift+Click, 'value' é a Base e não tem 'originalValue'.
+    const hasProcessedData = rollData.originalValue !== undefined;
+    
+    const baseValue = parseInt(hasProcessedData ? rollData.originalValue : rollData.value) || 10;
     const modifier = parseInt(rollData.modifier) || 0;
-    const effectiveLevel = baseValue + modifier;
     const label = rollData.label || "Teste";
 
+    // Cálculo Matemático Puro (Base + Mod)
+    const mathLevel = baseValue + modifier;
+
+    // Nível Efetivo (Meta)
+    // Se veio processado da janela, usamos o valor que ela mandou (que respeita o teto).
+    // Se não, usamos a soma matemática.
+    const effectiveLevel = hasProcessedData ? parseInt(rollData.value) : mathLevel;
+
+    // Detecta se houve corte por Teto (Se o efetivo é menor que a soma matemática)
+    const isCapped = effectiveLevel < mathLevel;
+
+    // 2. Rolagem
     const roll = new Roll("3d6");
     await roll.evaluate();
     const total = roll.total;
 
-    // Lógica
+    // 3. Lógica de Sucesso/Margem
     const isSuccess = total <= effectiveLevel;
     const margin = Math.abs(effectiveLevel - total);
     
@@ -436,7 +458,7 @@ export async function performGURPSRoll(actor, rollData) {
         statusClass = "crit-failure";
     }
 
-    // HTML "High-End"
+    // 4. HTML "High-End" (Com indicador de Teto)
     const content = `
         <div class="gurps-roll-card premium">
             
@@ -455,7 +477,12 @@ export async function performGURPSRoll(actor, rollData) {
                     <span class="meta-mod ${modifier !== 0 ? (modifier > 0 ? 'pos' : 'neg') : ''}">
                         ${modifier !== 0 ? (modifier > 0 ? '+' : '') + modifier : ''}
                     </span>
-                    <span class="meta-target">| Alvo <strong>${effectiveLevel}</strong></span>
+                    <span class="meta-target">
+                        | Alvo 
+                        ${isCapped ? `<span style="text-decoration:line-through; opacity:0.5; font-size:0.8em; margin-right:2px;">${mathLevel}</span>` : ''}
+                        <strong>${effectiveLevel}</strong>
+                        ${isCapped ? `<i class="fas fa-arrow-down" title="Limitado por Teto (Cap)" style="font-size:0.7em; color:#a53541; margin-left:2px;"></i>` : ''}
+                    </span>
                 </div>
 
                 <div class="roll-result">

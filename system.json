@@ -168,6 +168,14 @@
       "path": "./packs/eqp_modifiers",
       "type": "Item",
       "private": false
+    },
+        {
+      "name": "gm_modifiers",
+      "label": "[GUM] Modificadores Básicos",
+      "system": "gum",
+      "path": "./packs/gm_modifiers",
+      "type": "Item",
+      "private": false
     }
   ],
   "license": "CC BY-NC-ND 4.0",
