@@ -235,6 +235,113 @@ export class GurpsRollPrompt extends FormApplication {
 
         inputManual.on('input change', () => this._updateTotals(html));
 
+        // =========================================================
+        // VISUALIZAÇÃO RÁPIDA (QUICK VIEW) NO PROMPT - CORRIGIDO
+        // =========================================================
+        html.find('.mod-view').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation(); 
+
+            const icon = $(ev.currentTarget);
+            
+            // ✅ CORREÇÃO 1: O botão agora é um IRMÃO (sibling), não um pai.
+            // Tentamos pegar o valor do próprio ícone primeiro (se o HTML tiver data-value)
+            // Se não, pegamos do botão ao lado.
+            const button = icon.siblings('.mod-btn'); 
+            
+            let rawValue = icon.data('value');
+            if (rawValue === undefined || rawValue === null) {
+                rawValue = button.data('value');
+            }
+
+            // Coleta dados com fallback robusto
+            const data = {
+                name: icon.data('title') || button.data('label') || "Modificador",
+                value: parseInt(rawValue) || 0, // ✅ Agora lê o valor corretamente
+                cap: icon.data('cap') || button.data('cap'),
+                duration: icon.data('duration') || button.data('duration'),
+                desc: icon.data('desc') || "<i>Sem descrição.</i>",
+                type: "Modificador" 
+            };
+
+            // Função auxiliar de tags (Mantida)
+            const createTag = (label, value) => {
+                if (value !== null && value !== undefined && value !== "") {
+                    return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+                }
+                return '';
+            };
+
+            // Monta as Tags
+            let tagsHtml = '';
+            const modSign = data.value > 0 ? '+' : '';
+            tagsHtml += createTag('MOD:', `${modSign}${data.value}`);
+            
+            if (data.cap) tagsHtml += createTag('Teto (Cap):', data.cap);
+            if (data.duration) tagsHtml += createTag('Duração:', data.duration);
+
+            const enrichedDesc = await TextEditor.enrichHTML(data.desc, { async: true });
+
+            // Conteúdo do Dialog
+            const content = `
+                <div class="gurps-dialog-canvas">
+                    <div class="gurps-item-preview-card" style="border:none; box-shadow:none;">
+                        
+                        <header class="preview-header">
+                            <h3>${data.name}</h3>
+                            <div class="header-controls">
+                                <span class="preview-item-type">${data.type}</span>
+                                <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                            </div>
+                        </header>
+                        
+                        <div class="preview-content">
+                            <div class="preview-properties">
+                                ${tagsHtml}
+                            </div>
+
+                            <hr class="preview-divider">
+
+                            <div class="preview-description">
+                                ${enrichedDesc}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            new Dialog({
+                title: `Detalhes: ${data.name}`,
+                content: content,
+                buttons: {
+                    close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" }
+                },
+                default: "close",
+                options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
+                
+                render: (dlgHtml) => {
+                    dlgHtml.on('click', '.send-to-chat', (e) => {
+                        e.preventDefault();
+                        const cardElement = $(e.currentTarget).closest('.gurps-item-preview-card');
+                        let cardHTML = cardElement.html();
+                        
+                        cardHTML = cardHTML.replace(
+                            /<div class="header-controls">.*?<\/div>/s, 
+                            `<span class="preview-item-type" style="float:right;">${data.type}</span>`
+                        );
+
+                        const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML}</div>`;
+
+                        ChatMessage.create({
+                            user: game.user.id,
+                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                            content: chatContent
+                        });
+                    });
+                }
+            }).render(true);
+        });
+
         html.find('.mod-btn').click(ev => {
             ev.preventDefault();
             if ($(ev.target).closest('.mod-view').length) return;

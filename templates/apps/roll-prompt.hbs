@@ -13,14 +13,23 @@
                 </summary>
                 <div class="group-content">
                     <div class="block-buttons">
-                        {{#each block.items as |btn|}}
-                        <button type="button" class="mod-btn {{#if btn.active}}active{{/if}}" 
-                                data-id="{{btn.id}}" data-value="{{btn.value}}" 
-                                data-label="{{btn.label}}" data-cap="{{btn.nh_cap}}">
-                            <span class="btn-label">{{btn.label}}</span>
-                            <span class="btn-value">{{#if (gt btn.value 0)}}+{{/if}}{{btn.value}}</span>
-                            <span class="mod-view" data-desc="{{btn.desc}}" data-title="{{btn.label}}"><i class="fas fa-info-circle"></i></span>
-                        </button>
+                    {{#each block.items as |btn|}}
+                        <div class="mod-item-wrapper">
+                            {{!-- Botão de Seleção (Principal) --}}
+                            <button type="button" class="mod-btn {{#if btn.active}}active{{/if}}" 
+                                    data-id="{{btn.id}}" 
+                                    data-value="{{btn.value}}" 
+                                    data-label="{{btn.label}}" 
+                                    data-cap="{{btn.nh_cap}}">
+                                <span class="btn-label">{{btn.label}}</span>
+                                <span class="btn-value">{{#if (gt btn.value 0)}}+{{/if}}{{btn.value}}</span>
+                            </button>
+
+                            {{!-- Botão de Informação (Separado) --}}
+                            <div class="mod-view" data-desc="{{btn.desc}}" data-title="{{btn.label}}" data-value="{{btn.value}}" data-cap="{{btn.nh_cap}}" data-duration="{{btn.duration}}">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                        </div>
                         {{/each}}
                     </div>
                 </div>

@@ -97,84 +97,98 @@
     padding: 8px; 
 }
 
-/* ✅ O GRID NOVO (Mantido) */
+/* Container da Grade */
 .block-buttons { 
     display: grid;
-    /* Grid responsivo */
+    /* Colunas responsivas */
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 6px; 
 }
 
-/* Botões - Cores Originais + Layout Novo */
-.mod-btn {
-    /* Suas cores originais */
+/* O Wrapper que segura o Botão e o Ícone */
+.mod-item-wrapper {
+    display: flex;
+    align-items: stretch; /* Mesma altura */
     background: #2b2a29; 
     border: 1px solid #444; 
-    color: #bbb; 
-    
-    /* Layout Novo Compacto */
     border-radius: 3px;
+    overflow: hidden; /* Garante bordas arredondadas */
+    transition: all 0.1s;
+}
+
+.mod-item-wrapper:hover {
+    border-color: var(--c-accent-gold);
+    transform: translateY(-1px);
+}
+
+/* O Botão de Seleção (Esquerda) */
+.mod-btn {
+    flex-grow: 1; /* Ocupa todo o espaço restante */
+    background: transparent;
+    border: none;
+    color: #bbb; 
     padding: 4px 8px; 
     cursor: pointer;
     display: flex; 
     align-items: center; 
     justify-content: space-between;
-    font-size: 0.85em; /* Fonte ajustada para o Grid */
-    min-height: 28px; 
-    transition: all 0.1s;
+    font-size: 0.85em; 
+    text-align: left;
 }
 
-.mod-btn:hover { 
-    /* Seu hover original */
-    border-color: var(--c-accent-gold); 
-    color: #fff; 
-    background: #3a3836; 
-    transform: translateY(-1px); /* Mantive o elevação sutil pois ajuda na UX do grid */
+.mod-btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
 }
 
-.mod-btn.active { 
-    /* Seu active original */
-    background: var(--c-accent-gold); 
-    color: #000; 
-    border-color: var(--c-accent-gold); 
-    font-weight: bold; 
-    box-shadow: 0 0 5px rgba(197, 160, 91, 0.3);
+/* Estado Ativo (Selecionado) */
+.mod-btn.active {
+    background: var(--c-accent-gold);
+    color: #000;
+    font-weight: bold;
+}
+/* Quando ativo, muda a cor do valor também */
+.mod-btn.active .btn-value {
+    background: rgba(0,0,0,0.2);
+    color: #000;
 }
 
-.mod-btn .btn-label { 
-    flex: 1; 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    padding-right: 5px; 
+/* O Botão de Info (Direita) - AGORA INDEPENDENTE */
+.mod-view {
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.2);
+    border-left: 1px solid #444;
+    cursor: help;
+    color: #777;
+    transition: all 0.2s;
 }
 
-.mod-btn .btn-value { 
-    /* Seu estilo de valor original */
-    background: rgba(0,0,0,0.2); 
-    padding: 0px 6px; 
-    border-radius: 2px; 
-    min-width: 22px; 
-    text-align: center; 
-    font-weight: 700;
+.mod-view:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--c-accent-gold);
 }
 
-/* Info View (Oculto até hover, para limpar o visual) */
-.mod-view { 
-    opacity: 0; 
-    width: 0;
-    margin: 0;
+/* Valores dentro do botão */
+.mod-btn .btn-label {
+    flex: 1;
+    white-space: nowrap;
     overflow: hidden;
-    transition: opacity 0.2s;
-    font-size: 1em;
+    text-overflow: ellipsis;
+    padding-right: 5px;
 }
-.mod-btn:hover .mod-view { 
-    opacity: 0.5; 
-    width: auto;
-    margin-left: 6px;
-    overflow: visible;
+
+.mod-btn .btn-value {
+    background: rgba(0,0,0,0.3);
+    padding: 0px 5px;
+    border-radius: 2px;
+    min-width: 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9em;
 }
-.mod-view:hover { opacity: 1 !important; color: #fff; }
 
 
 /* --- COLUNA DIREITA: COMANDA (DASHBOARD) --- */
