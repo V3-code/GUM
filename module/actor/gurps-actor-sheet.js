@@ -1104,11 +1104,12 @@ activateListeners(html) {
     });
 
 
-    html.on('click', '.item-quick-view', async (ev) => {
+html.on('click', '.item-quick-view', async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
 
-        const itemId = $(ev.currentTarget).closest('.item').data('itemId');
+        // Tenta pegar o ID do item mais próximo
+        const itemId = $(ev.currentTarget).closest('.item, .item-row').data('itemId');
         if (!itemId) return;
 
         const item = this.actor.items.get(itemId);
@@ -1119,7 +1120,8 @@ activateListeners(html) {
                 equipment: "Equipamento", melee_weapon: "Arma C. a C.",
                 ranged_weapon: "Arma à Dist.", armor: "Armadura",
                 advantage: "Vantagem", disadvantage: "Desvantagem",
-                skill: "Perícia", spell: "Magia", power: "Poder"
+                skill: "Perícia", spell: "Magia", power: "Poder",
+                gm_modifier: "Modificador" // ✅ Adicionado
             };
             return typeMap[type] || type;
         };
@@ -1132,6 +1134,8 @@ activateListeners(html) {
 
         let mechanicalTagsHtml = '';
         const s = data.system;
+        
+        // Função auxiliar para criar tags HTML
         const createTag = (label, value) => {
             if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
                 return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
@@ -1139,6 +1143,7 @@ activateListeners(html) {
             return '';
         };
 
+        // Lógica de Tags por Tipo
         switch (item.type) {
             case 'melee_weapon':
                 mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
@@ -1169,6 +1174,26 @@ activateListeners(html) {
                 mechanicalTagsHtml += createTag('Tempo', s.casting_time);
                 mechanicalTagsHtml += createTag('Duração', s.duration);
                 mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+                break;
+            case 'power': // ✅ Adicionado Poderes
+                mechanicalTagsHtml += createTag('Custo', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
+                mechanicalTagsHtml += createTag('Tempo', s.activation_time);
+                mechanicalTagsHtml += createTag('Duração', s.duration);
+                break;
+            case 'gm_modifier': // ✅ Adicionado Modificadores
+                const modVal = Number(s.modifier);
+                const modSign = modVal > 0 ? '+' : '';
+                mechanicalTagsHtml += createTag('Valor', `${modSign}${modVal}`);
+                
+                // Traduz a categoria visual para exibir
+                const catLabels = { 
+                    location: "Localização", maneuver: "Manobra", attack_opt: "Opção Atq.", 
+                    defense_opt: "Opção Def.", posture: "Postura", range: "Distância", 
+                    ritual: "Ritual", time: "Tempo", effort: "Esforço", situation: "Situação" 
+                };
+                mechanicalTagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
+                
+                if (s.nh_cap) mechanicalTagsHtml += createTag('Teto (Cap)', s.nh_cap);
                 break;
         }
 

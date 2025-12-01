@@ -957,11 +957,19 @@ a:hover { text-decoration: underline; color: #fff; }
     background: #1565c0; /* Azul */
     color: #fff;
 }
+.group-tag.pw {
+    background: #389c68; /* Verde poder padrão */
+    color: #fff;
+}
+.group-tag.sp_cl {
+    background: #6a0dad; /* Roxo mágico padrão */
+    color: #fff;
+}
 
 /* O Conteúdo (Lista de Ataques) */
-.group-content {
+.attack-group-details .group-content {
     border-top: 1px solid var(--c-borda);
-    background: #fff; /* Fundo branco para destacar os ataques */
+    background: var(--c-text-lightest); /* Fundo branco para destacar os ataques */
 }
 
 /* Linha de Ataque Individual */
@@ -1351,150 +1359,176 @@ a.rollable-damage.value:hover {
   font-size: 11px;
 }
 
-/* ================================================== */
-/* ✅ NOVO LAYOUT DE GRADE PARA MAGIAS/PODERES        */
-/* ================================================== */
+/* =================================================================== */
+/* DESIGN: LISTA DE MAGIAS E PODERES V2 (ACORDEÃO COMPACTO)            */
+/* =================================================================== */
 
-.tab[data-tab="spells"] .item-list,
-.tab[data-tab="powers"] .item-list {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-}
-
-/* ✅ MUDANÇA: A linha agora é uma GRADE */
-.tab[data-tab="spells"] .item-row.spell-row,
-.tab[data-tab="powers"] .item-row.spell-row {
-  display: grid;
-  /* Colunas: [Nome] [Stats] [Controles] */
-  grid-template-columns: auto 1fr auto;
-  gap: 0.75rem; /* Espaço entre as colunas */
-  
-  border-bottom: 1px solid var(--c-borda);
-  padding: 0.4rem 0.25rem; 
-  align-items: flex-start; 
-}
-.tab[data-tab="spells"] .item-row.spell-row:last-child,
-.tab[data-tab="powers"] .item-row.spell-row:last-child {
-  border-bottom: none;
+.spell-list-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-/* Coluna 1: Nome (não tem mais 140px) */
-.tab[data-tab="spells"] .spell-main-info,
-.tab[data-tab="powers"] .spell-main-info {
-  flex-basis: auto; /* Remove a largura fixa */
-  flex-shrink: 1;   /* Permite encolher se necessário */
+/* --- CARD BASE (MAGIA) --- */
+.spell-card-details {
+    background: var(--c-fundo-card-claro);
+    border: 1px solid var(--c-borda);
+    border-left: 3px solid #6a0dad; /* Roxo Mágico Padrão */
+    border-radius: 3px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+.spell-card-details[open] {
+    box-shadow: 0 2px 5px rgba(106, 13, 173, 0.15);
+    border-color: rgba(106, 13, 173, 0.3);
 }
 
-/* Coluna 2: Stats (ocupa o espaço livre) */
-.spell-stats-and-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 3px; 
-  align-items: flex-start;
-  flex-grow: 1;
-  /* Garante que o alinhamento das tags seja à esquerda */
-  justify-content: flex-start; 
+/* --- CARD PODERES (VARIAÇÃO VERDE) --- */
+.spell-card-details.power-card {
+    border-left-color: var(--c-accent-green, #389c68);
 }
-.stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 6px; 
-}
-.effect-stat {
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.spell-card-details.power-card[open] {
+    box-shadow: 0 2px 5px rgba(56, 156, 104, 0.15);
+    border-color: rgba(56, 156, 104, 0.3);
 }
 
-/* Coluna 3: Controles (continua igual) */
-.tab[data-tab="spells"] .item-controls,
-.tab[data-tab="powers"] .item-controls {
-    align-self: center; /* Centraliza os controles verticalmente */
+/* --- CABEÇALHO (SUMMARY) --- */
+.spell-summary {
+    padding: 6px 8px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.02);
+    transition: background 0.2s;
+}
+.spell-summary:hover {
+    background: rgba(0,0,0,0.06);
+}
+.spell-summary::-webkit-details-marker { display: none; }
+
+/* Título e Ícone */
+.spell-main-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.spell-main-info .indicator {
+    font-size: 0.8em;
+    color: #888;
+    transition: transform 0.2s;
+}
+.spell-card-details[open] .indicator { transform: rotate(90deg); }
+
+.spell-name {
+    font-weight: 700;
+    color: var(--c-texto-escuro);
+    font-size: 0.95em;
 }
 
-
-/* --- 6. Tags de Stat (Genérico) --- */
-.tab[data-tab="spells"] .stat,
-.tab[data-tab="powers"] .stat {
-  background: rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.1);
-  color: var(--c-texto-escuro);
-  padding: 3px 6px; /* ✅ AUMENTADO (de 1px 4px) */
-  border-radius: 3px;
-  font-size: 12px; /* ✅ AUMENTADO (de 10px) */
-  white-space: nowrap;
-}
-.tab[data-tab="spells"] .stat label,
-.tab[data-tab="powers"] .stat label {
-  color: var(--c-texto-subtitulo);
-  margin-right: 3px; /* ✅ AUMENTADO (de 2px) */
-  font-weight: 700;
-  font-size: 10px; /* ✅ AUMENTADO (de 9px) */
+/* Stats Rápidos (Direita) */
+.spell-quick-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* --- 7. CORES ESPECÍFICAS (MAGIAS - Roxo) --- */
-.tab[data-tab="spells"] .item-name.spell-name a {
-  display: inline-block;
-  background: rgba(106, 0, 173, 0.1);
-  border: 1px solid rgba(106, 0, 173, 0.25);
-  border-left: 3px solid #6a0dad; /* Roxo */
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 700;
-  color: #191813; 
-  text-decoration: none;
-  font-size: 12px; /* Fonte do nome */
-  transition: all 0.2s ease;
-  white-space: nowrap; /* Impede que o nome quebre */
+/* NH em destaque (Caixinha) */
+.quick-stat.nh {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 0.8em;
+    overflow: hidden;
 }
-.tab[data-tab="spells"] .item-name.spell-name a:hover {
-  background: rgba(106, 0, 173, 0.2);
-  border-color: rgba(106, 0, 173, 0.5);
+.quick-stat.nh label {
+    background: #eee;
+    color: #666;
+    padding: 1px 5px;
+    font-weight: 700;
+    font-size: 0.9em;
+    border-right: 1px solid #ddd;
 }
-.tab[data-tab="spells"] .spell-stats-and-actions .stat {
-  border-left-color: #6a0dad; /* Roxo */
+.quick-stat.nh .value {
+    background: #fff;
+    padding: 1px 6px;
+    font-weight: 700;
+    color: #333;
 }
-/* Destaque para tags roláveis (Magias) */
-.tab[data-tab="spells"] .spell-stats-and-actions .stat:has(a.rollable) {
-  border-left-color: rgba(106, 0, 173, 0.5);
-  cursor: pointer;
-}
-.tab[data-tab="spells"] .spell-stats-and-actions .stat:has(a.rollable):hover {
-  background: rgba(197, 160, 91, 0.1);
+.quick-stat.nh .value:hover {
+    background: var(--c-accent-gold);
+    color: #fff;
 }
 
+/* Custo Simples */
+.quick-stat.cost {
+    font-size: 0.85em;
+    color: #666;
+    font-weight: 500;
+    text-align: right;
+}
 
-/* --- 8. CORES ESPECÍFICAS (PODERES - Verde) --- */
-.tab[data-tab="powers"] .item-name.spell-name a {
-  display: inline-block;
-  background: rgba(56, 156, 104, 0.08); /* Verde */
-  border: 1px solid rgba(56, 156, 104, 0.2);
-  border-left: 3px solid var(--c-hp-bar); /* Verde */
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 700;
-  color: #191813; 
-  text-decoration: none;
-  font-size: 12px; /* Fonte do nome */
-  transition: all 0.2s ease;
-  white-space: nowrap; /* Impede que o nome quebre */
+/* --- CONTEÚDO EXPANDIDO --- */
+.spell-expanded-content {
+    padding: 8px 10px;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.05);
 }
-.tab[data-tab="powers"] .item-name.spell-name a:hover {
-  background: rgba(56, 156, 104, 0.2);
-  border-color: rgba(56, 156, 104, 0.5);
+
+.spell-tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 5px;
 }
-.tab[data-tab="powers"] .spell-stats-and-actions .stat {
-  border-left-color: var(--c-hp-bar); /* Verde */
+
+/* Reutilizando estilo 'tag-box' dos ataques (se já existir) */
+/* Se não, aqui está a definição local para garantir: */
+.tag-box {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 0.8em;
+    background: #fcfcfc;
 }
-/* Destaque para tags roláveis (Poderes) */
-.tab[data-tab="powers"] .spell-stats-and-actions .stat:has(a.rollable) {
-  border-left-color: var(--c-accent-gold, #c5a05b);
-  cursor: pointer;
+.tag-box label {
+    background: #eee;
+    color: #666;
+    padding: 1px 5px;
+    font-weight: 600;
+    border-right: 1px solid #ddd;
 }
-.tab[data-tab="powers"] .spell-stats-and-actions .stat:has(a.rollable):hover {
-  background: rgba(197, 160, 91, 0.1);
+.tag-box .value {
+    padding: 1px 6px;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Cores específicas para tags */
+.tag-box.attack label {
+    color: #d35400; /* Laranja */
+}
+.tag-box.damage label {
+    color: #c0392b; /* Vermelho */
+}
+.tag-box.resistance {
+    border-color: #f5b7b1;
+}
+.tag-box.resistance label {
+    background: #fadbd8;
+    color: #c0392b;
+}
+
+.spell-effect-text {
+    font-size: 0.85em;
+    color: #555;
+    font-style: italic;
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed #eee;
 }
 
 /* =================================================================== */
