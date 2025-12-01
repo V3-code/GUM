@@ -219,6 +219,7 @@
         "target_type": {
             "global": false,
             "reaction": false,
+            "skill_all": false,
 
             "combat_all": false,         
             "combat_attack_melee": false,

@@ -3700,3 +3700,314 @@ width: 22px;
 .modifiers-list-box .item-control:hover {
     color: var(--c-texto-escuro);
 }
+
+/* ================================================================== */
+/* DESIGN: ABA MODIFICADORES (HIERARQUIA COMPACTA v3)                 */
+/* ================================================================== */
+
+.modifiers-tab {
+    padding: 8px;
+    overflow-y: auto;
+    background-color: #e8e8e8; /* Fundo levemente cinza p/ contraste */
+}
+
+/* 1. LAYOUT DE COLUNAS (MASONRY SIMULADO) */
+.modifiers-masonry-layout {
+    display: grid;
+    /* Duas colunas se houver espaço, senão 1 */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 10px;
+    align-items: start; /* Impede que estiquem a altura */
+}
+
+/* 2. NÍVEL 1: CONTEXTO (CARD PRINCIPAL) */
+.context-wrapper {
+    background: var(--c-fundo-card-claro);
+    border: 1px solid var(--c-borda);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.context-summary {
+    background: #3a3836; /* Cabeçalho Escuro */
+    color: #f0f0e8;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.context-summary:hover { background: #4a4846; }
+.context-summary::-webkit-details-marker { display: none; }
+
+.ctx-add-btn {
+    font-size: 0.9em;
+    color: var(--c-accent-gold);
+    transition: transform 0.2s;
+}
+.ctx-add-btn:hover { transform: scale(1.2); color: #fff; }
+
+.context-body {
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* 3. NÍVEL 2: SUBGRUPO (CATEGORIA) */
+.subgroup-details {
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.5);
+}
+
+.subgroup-summary {
+    background: rgba(0,0,0,0.05);
+    padding: 3px 6px;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #555;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.subgroup-details[open] .subgroup-summary {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 2px;
+}
+
+/* 4. NÍVEL 3: ITENS (GRID MINIATURA) */
+.mod-mini-grid {
+    display: grid;
+    /* Colunas automáticas super pequenas */
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 2px;
+    padding: 2px;
+}
+
+/* CARD ULTRA COMPACTO */
+.mod-mini-card {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 22px; /* Altura fixa super baixa */
+    transition: all 0.1s;
+}
+.mod-mini-card:hover {
+    background: #fdfdfd;
+    border-color: var(--c-accent-gold);
+    z-index: 1;
+    transform: scale(1.02);
+}
+
+.mod-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.mod-info img {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: none;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.mod-name {
+    font-size: 10px; /* Fonte minúscula */
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Tag de Valor Pequena */
+.mod-val {
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--c-accent-green);
+    padding: 0 3px;
+    border-radius: 2px;
+    min-width: 12px;
+    text-align: center;
+    margin-left: 2px;
+    flex-shrink: 0;
+}
+.mod-val.neg { background: var(--c-accent-red); }
+
+/* Controles Escondidos */
+.mod-controls {
+    display: none;
+    margin-left: 4px;
+    gap: 3px;
+}
+.mod-mini-card:hover .mod-controls {
+    display: flex;
+}
+.mod-controls a {
+    font-size: 9px;
+    color: #999;
+}
+.mod-controls a:hover { color: #333; }
+
+/* ================================================================== */
+/* DESIGN: BARRA DE FERRAMENTAS DA ABA MODIFICADORES (PREMIUM)        */
+/* ================================================================== */
+
+.modifiers-toolbar {
+    /* (Mantém o background e border anteriores) */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* O Input de Busca */
+.search-wrapper {
+    position: relative;
+    flex-grow: 1; /* Ocupa o espaço central */
+    max-width: 300px;
+}
+
+.search-wrapper .search-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 0.8em;
+    pointer-events: none;
+}
+
+.modifier-search {
+    width: 100%;
+    padding: 4px 8px 4px 26px; /* Espaço para o ícone */
+    border-radius: 15px;
+    border: 1px solid var(--c-borda);
+    background: rgba(0,0,0,0.1);
+    color: var(--c-texto-escuro);
+    font-size: 0.85em;
+    transition: all 0.2s;
+}
+.modifier-search:focus {
+    background: #fff;
+    border-color: var(--c-accent-gold);
+    box-shadow: 0 0 5px rgba(197, 160, 91, 0.2);
+}
+
+/* Ajuste nos botões da direita (apenas ícones para economizar espaço se quiser, ou mantenha texto) */
+.toolbar-group.right button {
+    padding: 4px 8px;
+}
+
+/* --- Toggle / Checkbox --- */
+.modifiers-toolbar .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85em;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--c-texto-escuro); /* Adapta-se ao tema */
+    transition: color 0.2s;
+    user-select: none;
+}
+
+.modifiers-toolbar .toggle-label:hover {
+    color: var(--c-accent-gold, #c5a05b);
+}
+
+/* Estiliza a cor do checkbox nativo (Navegadores Modernos) */
+.modifiers-toolbar .toggle-label input[type="checkbox"] {
+    accent-color: var(--c-accent-gold, #c5a05b);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* --- Botões de Ação --- */
+.modifiers-toolbar .toolbar-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.modifiers-toolbar button {
+    /* Base Sóbria */
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--c-borda);
+    color: #666; /* Texto discreto */
+    
+    /* Tipografia e Espaçamento */
+    font-family: var(--font-primary, sans-serif);
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+    
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.modifiers-toolbar button i {
+    font-size: 1.1em; /* Ícone levemente maior */
+}
+
+/* --- Cores de Hover (O "Pulo do Gato") --- */
+
+/* Importar: Verde Sucesso */
+.modifiers-toolbar .import-modifiers-btn:hover {
+    background: rgba(46, 204, 113, 0.1);
+    border-color: #2ecc71;
+    color: #27ae60;
+    box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
+}
+
+/* Resetar: Laranja Alerta */
+.modifiers-toolbar .reset-modifiers-btn:hover {
+    background: rgba(243, 156, 18, 0.1);
+    border-color: #f39c12;
+    color: #d35400;
+    box-shadow: 0 0 5px rgba(243, 156, 18, 0.2);
+}
+
+/* Limpar: Vermelho Perigo */
+.modifiers-toolbar .clear-modifiers-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: #e74c3c;
+    color: #c0392b;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.2);
+}
+
+/* Estado de Clique (Active) */
+.modifiers-toolbar button:active {
+    transform: translateY(1px); /* Efeito de pressão */
+    box-shadow: none;
+}

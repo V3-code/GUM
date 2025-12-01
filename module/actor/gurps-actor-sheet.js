@@ -45,8 +45,116 @@ async getData(options) {
           return acc;
         }, {});
         context.itemsByType = itemsByType;
-        context.myModifiers = (itemsByType.gm_modifier || []).sort((a, b) => a.name.localeCompare(b.name));
+// ---------------------------------------------------------
+        // PREPARAÇÃO DA ABA DE MODIFICADORES (ORGANIZAÇÃO POR TIPO)
+        // ---------------------------------------------------------
+        const myMods = itemsByType.gm_modifier || [];
+        
+        const categoryLabels = {
+            location: "Pontos de Impacto",
+            maneuver: "Manobras",
+            attack_opt: "Opções de Ataque",
+            defense_opt: "Opções de Defesa",
+            posture: "Postura",
+            range: "Distância / Alcance",
+            ritual: "Ritual & Mana",
+            time: "Tempo / Duração",
+            effort: "Esforço Extra",
+            situation: "Situação / Condição",
+            other: "Customizado / Outros"
+        };
 
+        const getSubgroup = (contextObj, catKey) => {
+            if (!contextObj.subgroups[catKey]) {
+                contextObj.subgroups[catKey] = {
+                    key: catKey,
+                    label: categoryLabels[catKey] || "Outros",
+                    items: []
+                };
+            }
+            return contextObj.subgroups[catKey];
+        };
+
+// 1. Inicializa os contextos (AGORA COM SKILL/ATTR)
+        context.modifiersBySection = {
+            melee:   { label: "ATAQUE CORPO A CORPO", icon: "fas fa-swords", subgroups: {} },
+            ranged:  { label: "ATAQUE À DISTÂNCIA",   icon: "fas fa-bullseye", subgroups: {} },
+            defense: { label: "DEFESA ATIVA",         icon: "fas fa-shield-alt", subgroups: {} },
+            magic:   { label: "MAGIA",                icon: "fas fa-magic", subgroups: {} }, 
+            power:   { label: "PODERES",              icon: "fas fa-bolt", subgroups: {} },
+            skill:   { label: "ATRIBUTOS & PERÍCIAS", icon: "fas fa-person-digging", subgroups: {} },
+            general: { label: "GERAL / SITUAÇÃO",     icon: "fas fa-globe", subgroups: {} }
+        };
+
+        // 2. Distribuição Estrita
+        myMods.forEach(mod => {
+            const targets = mod.system.target_type || {};
+            const cat = mod.system.ui_category || "other";
+            let placed = false;
+
+            // Combat (Melee)
+            if (targets.combat_attack_melee || targets.combat_all) { 
+                getSubgroup(context.modifiersBySection.melee, cat).items.push(mod);
+                placed = true; 
+            }
+            // Combat (Ranged)
+            if (targets.combat_attack_ranged || targets.combat_all) { 
+                getSubgroup(context.modifiersBySection.ranged, cat).items.push(mod);
+                placed = true; 
+            }
+            // Defense
+            if (targets.combat_defense_all || targets.combat_defense_dodge || targets.combat_defense_parry || targets.combat_all) {
+                getSubgroup(context.modifiersBySection.defense, cat).items.push(mod);
+                placed = true;
+            }
+            // Magic
+            if (targets.combat_attack_spell || targets.spell_iq || targets.spell_all) {
+                getSubgroup(context.modifiersBySection.magic, cat).items.push(mod);
+                placed = true;
+            }
+            // Power
+            if (targets.combat_attack_power || targets.power_iq || targets.power_ht || targets.power_will) {
+                getSubgroup(context.modifiersBySection.power, cat).items.push(mod);
+                placed = true;
+            }
+// ✅ LÓGICA DE ATRIBUTOS E PERÍCIAS (CORRIGIDA)
+            // Verifica se afeta qualquer atributo ou perícia específica
+            if (
+                // Genéricos
+                targets.skill_all || targets.attr_all || 
+                
+                // ST
+                targets.attr_st_all || targets.check_st || targets.skill_st || 
+                // DX
+                targets.attr_dx_all || targets.check_dx || targets.skill_dx || 
+                // IQ
+                targets.attr_iq_all || targets.check_iq || targets.skill_iq || 
+                // HT
+                targets.attr_ht_all || targets.check_ht || targets.skill_ht || 
+                // Vontade (Will)
+                targets.attr_will_all || targets.check_will || targets.skill_will || targets.check_fright ||
+                // Percepção
+                targets.attr_per_all || targets.check_per || targets.skill_per ||
+                // Sentidos
+                targets.sense_vision || targets.sense_hearing || targets.sense_tastesmell || targets.sense_touch
+            ) {
+                getSubgroup(context.modifiersBySection.skill, cat).items.push(mod);
+                placed = true;
+            }
+
+            // Geral / Fallback
+            if (targets.global || (!placed && (targets.reaction))) {
+                 getSubgroup(context.modifiersBySection.general, cat).items.push(mod);
+            }
+        });
+
+        // Ordenação
+        for (const section of Object.values(context.modifiersBySection)) {
+            section.subgroupsArray = Object.values(section.subgroups).sort((a, b) => a.label.localeCompare(b.label));
+            section.subgroupsArray.forEach(sub => {
+                sub.items.sort((a, b) => a.name.localeCompare(b.name));
+            });
+        }
         
        // ================================================================== //
         // ✅ LÓGICA "CASTELO SÓLIDO" ATUALIZADA PARA A ABA DE CONDIÇÕES (INÍCIO)
@@ -554,9 +662,45 @@ _getSubmitData(updateData) {
         
         return drObject;
     }
-activateListeners(html) {
 
-    // [NENHUMA ALTERAÇÃO NECESSÁRIA AQUI]
+    /**
+     * Função auxiliar para importar modificadores do compêndio.
+     * @param {boolean} reset - Se true, apaga os existentes antes de importar.
+     */
+    async _importModifiersFromCompendium(reset = false) {
+        const pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
+        if (!pack) return ui.notifications.warn("Compêndio de Modificadores não encontrado.");
+
+        const sourceItems = await pack.getDocuments();
+        if (sourceItems.length === 0) return ui.notifications.warn("O Compêndio está vazio.");
+
+        // 1. Se for Reset, apaga tudo primeiro
+        if (reset) {
+            const currentIds = this.actor.items.filter(i => i.type === 'gm_modifier').map(i => i.id);
+            if (currentIds.length > 0) await this.actor.deleteEmbeddedDocuments("Item", currentIds);
+        }
+
+        // 2. Filtra duplicatas (se não for reset, não queremos adicionar o que já tem)
+        const currentModsNames = new Set(this.actor.items.filter(i => i.type === 'gm_modifier').map(i => i.name));
+        const toCreate = [];
+
+        sourceItems.forEach(item => {
+            if (reset || !currentModsNames.has(item.name)) {
+                const data = item.toObject();
+                data._stats = { compendiumSource: item.uuid };
+                toCreate.push(data);
+            }
+        });
+
+        if (toCreate.length > 0) {
+            await this.actor.createEmbeddedDocuments("Item", toCreate);
+            ui.notifications.info(`${toCreate.length} modificadores importados.`);
+        } else {
+            ui.notifications.info("Nenhum modificador novo para importar.");
+        }
+    }
+    
+activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
@@ -3016,6 +3160,139 @@ html.on('click', '.item-edit', ev => {
     // =============================================================
     // ✅ FIM: LISTENERS DO EDITOR DE TEXTO (BIOGRAFIA)
     // =============================================================
+
+    // =============================================================
+    // LISTENERS DA NOVA ABA DE MODIFICADORES
+    // =============================================================
+    
+    // 1. Criar Novo Modificador (Botão +)
+    html.find('.item-create[data-type="gm_modifier"]').click(async ev => {
+        ev.preventDefault();
+        const header = $(ev.currentTarget);
+        // Tenta pre-configurar baseado na seção (ex: melee, ranged)
+        const section = header.data("section"); 
+        
+        let initialData = {
+            name: "Novo Modificador",
+            type: "gm_modifier",
+            img: "icons/svg/dice-target.svg",
+            system: { target_type: {} }
+        };
+
+        // Pré-configura os checkboxes baseado onde clicou
+        if (section === 'melee') initialData.system.target_type.combat_attack_melee = true;
+        if (section === 'ranged') initialData.system.target_type.combat_attack_ranged = true;
+        if (section === 'defense') initialData.system.target_type.combat_defense_all = true;
+        if (section === 'magic') initialData.system.target_type.combat_attack_spell = true;
+        if (section === 'power') initialData.system.target_type.combat_attack_power = true;
+
+        await Item.create(initialData, {parent: this.actor});
+    });
+
+    // 2. Editar e Deletar (Usando delegação de evento para garantir funcionamento)
+    // Nota: Usamos o ID do próprio botão ou procuramos no pai mais próximo com data-item-id
+    html.find('.item-edit').click(ev => {
+        const btn = $(ev.currentTarget);
+        const itemId = btn.closest('[data-item-id]').data('itemId');
+        const item = this.actor.items.get(itemId);
+        if (item) item.sheet.render(true);
+    });
+
+    html.find('.item-delete').click(ev => {
+        const btn = $(ev.currentTarget);
+        const itemId = btn.closest('[data-item-id]').data('itemId');
+        const item = this.actor.items.get(itemId);
+        if (item) {
+            Dialog.confirm({
+                title: "Excluir Item",
+                content: `<p>Tem certeza que deseja excluir <strong>${item.name}</strong>?</p>`,
+                yes: () => item.delete(),
+                defaultYes: false
+            });
+        }
+    });
+
+    // =============================================================
+    // FERRAMENTAS DA ABA MODIFICADORES (RESET / IMPORT / TOGGLE)
+    // =============================================================
+
+    // 1. Toggle "Usar Padrões do Sistema nas Rolagens"
+    html.find('.toggle-default-mods').change(async ev => {
+        const checked = ev.currentTarget.checked;
+        await this.actor.setFlag('gum', 'useDefaultModifiers', checked);
+    });
+
+    // 2. Botão LIMPAR TUDO
+    html.find('.clear-modifiers-btn').click(async ev => {
+        ev.preventDefault();
+        Dialog.confirm({
+            title: "Limpar Modificadores",
+            content: "<p>Tem certeza? Isso apagará <strong>TODOS</strong> os modificadores personalizados desta ficha.</p>",
+            yes: async () => {
+                const ids = this.actor.items.filter(i => i.type === 'gm_modifier').map(i => i.id);
+                await this.actor.deleteEmbeddedDocuments("Item", ids);
+            }
+        });
+    });
+
+    // 3. Botão IMPORTAR (Adiciona faltantes)
+    html.find('.import-modifiers-btn').click(async ev => {
+        ev.preventDefault();
+        await this._importModifiersFromCompendium(false); // false = não deletar antes
+    });
+
+    // 4. Botão RESETAR (Apaga tudo e restaura do compêndio)
+    html.find('.reset-modifiers-btn').click(async ev => {
+        ev.preventDefault();
+        Dialog.confirm({
+            title: "Resetar para Padrão",
+            content: "<p>Isso apagará seus modificadores atuais e restaurará o pacote básico do sistema. Continuar?</p>",
+            yes: async () => {
+                await this._importModifiersFromCompendium(true); // true = deletar antes (reset)
+            }
+        });
+    });
+
+// =============================================================
+    // FILTRO DE BUSCA DE MODIFICADORES (LIVE SEARCH)
+    // =============================================================
+    html.find('.modifier-search').on('keyup', ev => {
+        const query = ev.target.value.toLowerCase().trim();
+        const tab = html.find('.modifiers-tab');
+        
+        // 1. Seleciona todos os cards de modificadores
+        const allCards = tab.find('.mod-mini-card');
+        const allDetails = tab.find('details'); // Todos os grupos e subgrupos
+
+        if (query === "") {
+            // Se limpou a busca, mostra tudo mas NÃO fecha os detalhes (para não irritar)
+            allCards.show();
+            // Opcional: Se quiser fechar tudo ao limpar, descomente abaixo:
+            // allDetails.prop('open', false); 
+            // tab.find('.context-details').prop('open', true); // Mantém apenas os principais abertos
+            return;
+        }
+
+        // 2. Loop de Filtragem
+        allCards.each((i, el) => {
+            const card = $(el);
+            const name = card.find('.mod-name').text().toLowerCase();
+            
+            if (name.includes(query)) {
+                card.show();
+                // A Mágica: Se achou, abre todos os <details> pais até o topo
+                card.parents('details').prop('open', true);
+                // Garante que o contexto pai (ex: "Ataque CC") esteja visível
+                card.closest('.context-wrapper').show();
+            } else {
+                card.hide();
+            }
+        });
+
+        // 3. (Opcional) Esconder grupos vazios
+        // Esta parte é mais pesada, pode pular se quiser performance máxima.
+        // Basicamente verifica se um <details> ficou sem nenhum filho visível e esconde ele.
+    });
 
 }
 

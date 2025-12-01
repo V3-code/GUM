@@ -282,11 +282,102 @@
           <a class="item" data-tab="conditions" title="Condições">
             <i class="fas fa-heart-pulse"></i>
           </a>
+          <a class="item" data-tab="modifiers" title="Modificadores de Rolagens">
+              <i class="fas fa-sliders-h"></i>
+          </a>
         </nav>
 
   {{!-- ============   ESSE É O BODY DA FICHA - O QUE FICA DENTRO DE CADA ABA  =============== --}}
   <section class="sheet-body">
+
+{{! ========================================================= }}
+{{!  ABA DE CONFIGURAÇÃO DE MODIFICADORES (HIERARQUIA V3)     }}
+{{! ========================================================= }}
+<div class="tab modifiers-tab" data-group="primary" data-tab="modifiers">
     
+    {{!-- BARRA DE FERRAMENTAS DE MODIFICADORES --}}
+    <div class="modifiers-toolbar gum-block">
+        
+        {{!-- Esquerda: Toggle --}}
+        <div class="toolbar-group left">
+            <label class="toggle-label" title="Se marcado, a janela de rolagem mostrará itens do Compêndio ALÉM dos itens desta ficha.">
+                <input type="checkbox" class="toggle-default-mods" {{checked (lookup actor.flags.gum 'useDefaultModifiers')}}/>
+                <span>Ler Compêndio</span>
+            </label>
+        </div>
+
+        {{!-- Centro: Busca (NOVO) --}}
+        <div class="toolbar-group center search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="modifier-search" placeholder="Filtrar Modificadores..." autocomplete="off"/>
+        </div>
+
+        {{!-- Direita: Ações --}}
+        <div class="toolbar-group right">
+            <button type="button" class="import-modifiers-btn" title="Importar"><i class="fas fa-file-import"></i></button>
+            <button type="button" class="reset-modifiers-btn" title="Resetar"><i class="fas fa-undo"></i></button>
+            <button type="button" class="clear-modifiers-btn" title="Limpar"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+
+    <div class="modifiers-masonry-layout">
+     {{!-- Loop Nível 1: Contextos (Melee, Ranged, etc.) --}}
+        {{#each modifiersBySection as |section key|}}
+            {{!-- Só mostra o contexto se tiver subgrupos dentro --}}
+            {{#if section.subgroupsArray.length}}
+            <div class="context-wrapper">
+                <details class="context-details">
+                    <summary class="context-summary">
+                        <span class="ctx-title"><i class="{{section.icon}}"></i> {{section.label}}</span>
+                        
+                        {{!-- Botão Rápido para criar item neste contexto --}}
+                        <a class="item-create ctx-add-btn" data-type="gm_modifier" data-section="{{key}}" title="Novo Modificador aqui">
+                            <i class="fas fa-plus"></i>
+                        </a>
+                    </summary>
+                    
+                    <div class="context-body">
+                        {{!-- Loop Nível 2: Categorias (Manobras, Localização...) --}}
+                        {{#each section.subgroupsArray as |subgroup|}}
+                            <details class="subgroup-details">
+                                <summary class="subgroup-summary">{{subgroup.label}}</summary>
+                                
+                                {{!-- Loop Nível 3: Itens (Grid Compacto) --}}
+                                <div class="mod-mini-grid">
+                                    {{#each subgroup.items}}
+                                        <div class="mod-mini-card item-row" data-item-id="{{this.id}}">
+                                            <div class="mod-info" title="{{this.name}}">
+                                                <img src="{{this.img}}"/>
+                                                <span class="mod-name">{{this.name}}</span>
+                                            </div>
+                                            <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
+                                                {{numberFormat this.system.modifier sign=true}}
+                                            </span>
+                                            
+                                            {{!-- Controles Invisíveis (aparecem no hover) --}}
+                                            <div class="mod-controls">
+                                                <a class="item-edit"><i class="fas fa-edit"></i></a>
+                                                <a class="item-delete"><i class="fas fa-trash"></i></a>
+                                            </div>
+                                        </div>
+                                    {{/each}}
+                                </div>
+                            </details>
+                        {{/each}}
+                    </div>
+                </details>
+            </div>
+            {{/if}}
+        {{/each}}
+
+        {{!-- Mensagem se tudo estiver vazio --}}
+        {{#unless actor.items}}
+             <div class="empty-state">
+                <p>Nenhum modificador encontrado. Importe do Compêndio ou crie novos.</p>
+             </div>
+        {{/unless}}
+     </div>
+</div>
 {{! ============================================================= }}
 {{!  ABA DE ASPECTOS SOCIAIS (ESTRUTURA REFINADA E PADRONIZADA)   }}
 {{! ============================================================= }}
@@ -1290,43 +1381,6 @@
           {{/each}}
           {{#unless preparedCombatMeters}}
             <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
-          {{/unless}}
-        </div>
-      </div>
-
-      {{!-- Bloco de Meus Modificadores --}}
-      <div class="gum-block modifiers-list-box">
-        <div class="block-header">
-          <h4>Meus Modificadores</h4>
-          <div class="header-controls">
-             <a class="item-create" data-type="gm_modifier" title="Criar Novo Modificador"><i class="fas fa-plus"></i></a>
-          </div>
-        </div>
-        
-        <div class="item-list">
-          {{#each myModifiers}}
-            <div class="item-row item" data-item-id="{{this.id}}">
-              <div class="item-name" title="{{this.name}}">
-                 <img src="{{this.img}}"/>
-                 {{this.name}}
-              </div>
-              
-              {{!-- Tag de Valor (Verde/Vermelho/Dourado) --}}
-              <span class="mod-value-tag {{#if (lt this.system.modifier 0)}}negative{{/if}}">
-                  {{numberFormat this.system.modifier sign=true}}
-              </span>
-
-              <div class="item-controls">
-                <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-              </div>
-            </div>
-          {{/each}}
-          
-          {{#unless myModifiers}}
-            <div class="placeholder-text" style="grid-column: 1 / -1; padding: 5px; opacity: 0.6; font-size: 11px; text-align: center;">
-                Arraste itens "Modificador do Mestre" para cá.
-            </div>
           {{/unless}}
         </div>
       </div>

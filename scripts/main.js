@@ -591,58 +591,54 @@ Hooks.once('init', async function() {
     // ▼▼▼ BLOCO DE HOOKS CENTRALIZADOS AQUI ▼▼▼
     // ==================================================================
     
-    // ✅ HOOK DE CRIAÇÃO DE ATOR (IMPLEMENTAÇÃO DA IDEIA 4)
+// ✅ HOOK DE CRIAÇÃO DE ATOR (POPULA CONDIÇÕES E MODIFICADORES)
     Hooks.on("createActor", async (actor, options, userId) => {
-        // Só executa para o usuário que criou o ator
         if (game.user.id !== userId) return;
+        if (actor.type !== "character") return;
         
-        // Só executa se for um 'character' e se a configuração do mundo estiver ativada
-        if (actor.type !== "character" || !game.settings.get("gum", "addDefaultRules")) { //
-            return;
-        }
+        // Verifica configuração global (se existir)
+        if (!game.settings.get("gum", "addDefaultRules")) return;
     
-        console.log(`GUM | Adicionando regras padrão ao novo ator: ${actor.name}`);
-    
-        // Pega o compêndio. O ID 'Regras' do system.json é prefixado com o ID do sistema 'gum'.
-        const pack = game.packs.get("gum.Regras"); //
-        if (!pack) {
-            return ui.notifications.warn("Compêndio de regras padrão [GUM] Regras (gum.Regras) não encontrado.");
-        }
-    
-        // Carrega todos os itens do compêndio
-        const rules = await pack.getDocuments();
-        if (!rules || rules.length === 0) {
-            console.log("GUM | Compêndio de regras padrão está vazio. Nenhum item adicionado.");
-            return;
-        }
-    
-        // Prepara os dados do item para criar "links" (não cópias)
-        // Usamos o "sourceId" para criar um vínculo. Isso garante que o item
-        // no ator seja sempre atualizado quando o item no compêndio mudar.
-        const newRulesData = rules.map(item => {
-            // 1. Pega os dados do item (nome, img, system)
-            const itemData = item.toObject();
+        console.log(`GUM | Populando novo ator: ${actor.name}`);
+        const itemsToCreate = [];
 
-            // 2. Adiciona o vínculo usando o método moderno _stats.compendiumSource
-            //    Isso substitui o antigo 'flags.core.sourceId'
-            itemData._stats = {
-                compendiumSource: item.uuid
-            };
+        // 1. REGRAS / CONDIÇÕES PASSIVAS
+        const rulesPack = game.packs.get("gum.Regras"); 
+        if (rulesPack) {
+            const rules = await rulesPack.getDocuments();
+            rules.forEach(item => {
+                const data = item.toObject();
+                // Vincula ao compêndio para futuras atualizações
+                data._stats = { compendiumSource: item.uuid }; 
+                itemsToCreate.push(data);
+            });
+        }
 
-            // 3. Remove a flag antiga (se existir) para evitar o aviso
-            if (itemData.flags?.core?.sourceId) {
-                delete itemData.flags.core.sourceId;
+        // 2. MODIFICADORES BÁSICOS (A Correção que você pediu)
+        // Tenta achar pelo ID do sistema ou pelo Nome
+        const modsPack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
+        
+        if (modsPack) {
+            const mods = await modsPack.getDocuments();
+            mods.forEach(item => {
+                const data = item.toObject();
+                // Vincula ao compêndio
+                data._stats = { compendiumSource: item.uuid };
+                itemsToCreate.push(data);
+            });
+            console.log(`GUM | Preparados ${mods.length} modificadores básicos para cópia.`);
+        } else {
+            console.warn("GUM | Compêndio de Modificadores Básicos não encontrado.");
+        }
+
+        // 3. CRIAÇÃO EM LOTE (Muito mais rápido)
+        if (itemsToCreate.length > 0) {
+            try {
+                await actor.createEmbeddedDocuments("Item", itemsToCreate);
+                console.log(`GUM | Sucesso! ${itemsToCreate.length} itens iniciais adicionados a ${actor.name}.`);
+            } catch (err) {
+                console.error("GUM | Falha ao popular ator:", err);
             }
-
-            return itemData;
-        });
-
-        // Adiciona os itens (com seus dados E o vínculo moderno) ao ator
-        try {
-            await actor.createEmbeddedDocuments("Item", newRulesData);
-            console.log(`GUM | ${newRulesData.length} regras padrão (V12+) adicionadas a ${actor.name}.`);
-        } catch (err) {
-            console.error("GUM | Falha ao adicionar regras padrão:", err);
         }
     });
 

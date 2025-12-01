@@ -507,7 +507,7 @@
             </div>
 
             {{!-- 1. COMBATE --}}
-            <details class="tree-group" id="details-combat" open>
+            <details class="tree-group" id="details-combat">
                 <summary class="group-header"><i class="fas fa-fist-raised"></i> COMBATE</summary>
                 <div class="group-content">
                     <label class="custom-checkbox parent-check">
@@ -520,7 +520,7 @@
                             <strong class="subgroup-title">Ataque</strong>
                             <label class="custom-checkbox"><input type="checkbox" name="system.target_type.combat_attack_melee" {{checked system.target_type.combat_attack_melee}}/> <span>Corpo a Corpo</span></label>
                             <label class="custom-checkbox"><input type="checkbox" name="system.target_type.combat_attack_ranged" {{checked system.target_type.combat_attack_ranged}}/> <span>Distância</span></label>
-                            <label class="custom-checkbox"><input type="checkbox" name="system.target_type.combat_attack_spell" {{checked system.target_type.combat_attack_spell}}/> <span>Mágico/Poder</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" name="system.target_type.combat_attack_spell" {{checked system.target_type.combat_attack_spell}}/> <span>Magia</span></label>
                             <label class="custom-checkbox"><input type="checkbox" name="system.target_type.combat_attack_power" {{checked system.target_type.combat_attack_power}}/> <span>Poder</span></label>
                         </div>
                          <div class="subgroup">
@@ -544,9 +544,17 @@
             <details class="tree-group" id="details-attributes" open>
                 <summary class="group-header"><i class="fas fa-brain"></i> ATRIBUTOS & HABILIDADES</summary>
                 <div class="group-content">
-                    <label class="custom-checkbox parent-check" style="margin-bottom: 10px; display:block;">
+                    
+                    {{!-- Checkbox Genérico de Atributos --}}
+                    <label class="custom-checkbox parent-check" style="margin-bottom: 5px; display:block;">
                         <input type="checkbox" name="system.target_type.attr_all" {{checked system.target_type.attr_all}}/>
-                        <span>Marcar Todos os Atributos</span>
+                        <span>Todos os Atributos</span>
+                    </label>
+
+                    {{!-- Checkbox Genérico de Perícias (NOVO) --}}
+                    <label class="custom-checkbox parent-check" style="margin-bottom: 10px; display:block;">
+                        <input type="checkbox" name="system.target_type.skill_all" {{checked system.target_type.skill_all}}/>
+                        <span style="color: var(--c-accent-gold);">Todas as Perícias</span>
                     </label>
 
                     <div class="attributes-grid">

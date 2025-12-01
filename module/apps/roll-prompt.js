@@ -77,7 +77,7 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
 /**
-     * 2. Busca e Prepara modificadores (Compêndio + Ator)
+     * 2. Busca e Prepara modificadores (Compêndio [Opcional] + Ator)
      */
     async _fetchAndOrganizeModifiers() {
         const contextKey = this.context;
@@ -92,25 +92,40 @@ export class GurpsRollPrompt extends FormApplication {
         // LISTA MESTRA DE ITENS
         const allModifierItems = [];
 
-        // 1. COMPÊNDIO (Regras Globais do Mundo)
-        let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
-        if (pack) {
-            const packIndex = await pack.getDocuments(); 
-            allModifierItems.push(...packIndex);
+        // -------------------------------------------------------
+        // 1. COMPÊNDIO (CONDICIONAL - Só se a flag estiver ativa)
+        // -------------------------------------------------------
+        const useDefaults = this.actor.getFlag("gum", "useDefaultModifiers");
+
+        if (useDefaults) {
+            let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
+            
+            if (pack) {
+                const packIndex = await pack.getDocuments(); 
+                allModifierItems.push(...packIndex);
+                console.log(`GUM | Lendo Compêndio (Flag Ativa): ${pack.metadata.label}`);
+            }
+        } else {
+            // Debug opcional para saber que ignorou
+            // console.log("GUM | Ignorando Compêndio (Flag Inativa).");
         }
 
-        // 2. ITENS DO ATOR (Regras Pessoais - Sobrescrevem ou Adicionam)
-        // Filtra apenas os itens do tipo gm_modifier que estão na ficha do ator
+        // -------------------------------------------------------
+        // 2. ITENS DO ATOR (Sempre carrega)
+        // -------------------------------------------------------
         const actorModifiers = this.actor.items.filter(i => i.type === "gm_modifier");
         allModifierItems.push(...actorModifiers);
 
-        // 3. FILTRAGEM E DEDUPLICAÇÃO INTELIGENTE
-        // Se o ator tem um item com o mesmo nome do compêndio (ex: "Ataque Total"), usamos o do ator.
+        // -------------------------------------------------------
+        // 3. DEDUPLICAÇÃO (Prioridade para o Ator)
+        // -------------------------------------------------------
+        // Se o compêndio foi carregado e o ator tem um item com mesmo nome,
+        // o item do ator deve sobrescrever o do compêndio.
         const uniqueItemsMap = new Map();
 
         for (const item of allModifierItems) {
-            // A chave é o nome. Se já existir, sobrescreve. 
-            // Como adicionamos o Ator POR ÚLTIMO, ele terá prioridade.
+            // A chave é o nome. Como adicionamos o Ator POR ÚLTIMO na lista,
+            // ele sobrescreve qualquer item anterior com o mesmo nome.
             uniqueItemsMap.set(item.name, item);
         }
 
@@ -131,11 +146,11 @@ export class GurpsRollPrompt extends FormApplication {
                 nh_cap: item.system.nh_cap,
                 duration: item.system.duration,
                 active: this.selectedModifiers.some(m => m.id === item.id),
-                isNative: false // Agora tudo é tratado como item
+                isNative: false 
             });
         }
 
-        // Ordena alfabeticamente dentro de cada bloco para ficar bonito
+        // Ordena alfabeticamente dentro de cada bloco
         for (const blockKey in blocksMap) {
             blocksMap[blockKey].items.sort((a, b) => a.label.localeCompare(b.label));
         }
