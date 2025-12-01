@@ -30,125 +30,97 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
     /**
-     * LÓGICA CORRIGIDA: Inspeciona o Item para garantir o contexto correto
+     * LÓGICA CORRIGIDA: Obedece explicitamente ao botão clicado.
      */
     _determineContext() {
-        const type = this.rollData.type; // O que a ficha disse que é
-        const itemId = this.rollData.itemId; // O ID do item real
-
-        // 1. Prioridade Absoluta: Defesa (geralmente bem definida)
+        const type = this.rollData.type; // ex: "attack", "defense"
+        const itemId = this.rollData.itemId;
+        
+        // --- 1. DEFINIÇÕES EXPLÍCITAS (O Botão Manda) ---
+        
+        // Se for Defesa, não há ambiguidade
         if (type === 'defense') return 'defense';
 
-        // 2. Inspeção do Item (A Correção Principal)
-        // Se temos um ID, buscamos o item para saber o que ele REALMENTE é.
+        // Se for Ataque, verifique as flags do botão PRIMEIRO
+        if (type === 'attack') {
+            // Se o botão diz "ranged", é Ranged. Ponto final.
+            if (this.rollData.attackType === 'ranged') return 'attack_ranged';
+            if (this.rollData.isRanged === true) return 'attack_ranged'; // Suporte legado
+            
+            // Se o botão diz "melee", é Melee.
+            if (this.rollData.attackType === 'melee') return 'attack_melee';
+        }
+
+        // --- 2. INSPEÇÃO DO ITEM (Fallback / Detetive) ---
+        // Só entra aqui se o botão não foi específico (ex: macro antiga, item arrastado)
         if (itemId) {
             const item = this.actor.items.get(itemId);
             if (item) {
-                // Se é Magia -> Contexto Spell
                 if (item.type === 'spell') return 'spell';
-                
-                // Se é Poder -> Contexto Power
                 if (item.type === 'power') return 'power';
                 
-                // Se é Arma/Ataque -> Contexto Attack
-                // (Verifica se é arma ou se o tipo passado foi 'attack')
-                if (item.type === 'melee_weapon' || (type === 'attack' && !this.rollData.isRanged)) return 'attack_melee';
-                if (item.type === 'ranged_weapon' || (type === 'attack' && this.rollData.isRanged)) return 'attack_ranged';
-                
-                // Se é Perícia -> Contexto Skill
-                if (item.type === 'skill') return 'skill';
+                // Se o item é nativamente de distância (ex: Arco), sugere ranged
+                if (item.type === 'ranged_weapon') return 'attack_ranged';
             }
         }
 
-        // 3. Fallbacks (se não tiver item ou for genérico)
+        // --- 3. PADRÕES FINAIS ---
+        if (type === 'attack') return 'attack_melee'; // Se for ataque e ninguém disse nada, assume espada.
         
-        // Se a ficha gritou "attack" explicitamente
-        if (type === 'attack') {
-            if (this.rollData.attackType === 'ranged' || this.rollData.isRanged) return 'attack_ranged';
-            return 'attack_melee';
-        }
-
-        // Atributos Puros (ST, DX, IQ, HT) usam layout de Perícia
-        if (type === 'attribute' || type === 'skill') return 'skill';
+        // Atributos e Perícias usam o layout de Perícia
+        if (type === 'skill' || type === 'attribute') return 'skill';
+        
+        if (type === 'spell') return 'spell';
+        if (type === 'power') return 'power';
 
         return 'default';
     }
 
 /**
-     * 2. Busca e Prepara todos os modificadores (Nativos + Compêndio)
+     * 2. Busca e Prepara modificadores (Compêndio + Ator)
      */
     async _fetchAndOrganizeModifiers() {
         const contextKey = this.context;
-        // Pega o layout ou usa o Default como fallback seguro
         const layoutConfig = GUM_DEFAULTS.layouts[contextKey] || GUM_DEFAULTS.layouts['default'];
         
-        // Mapa para guardar os itens de cada bloco
+        // Mapa para guardar os itens
         const blocksMap = {};
         layoutConfig.forEach(block => {
             blocksMap[block.id] = { ...block, items: [] };
         });
 
-        // 1. MODIFICADORES NATIVOS (GUM-DEFAULTS)
-        // Estes são hardcoded e aparecem sempre (ex: Localização, Manobras Padrão)
-        for (const [key, mod] of Object.entries(GUM_DEFAULTS.modifiers)) {
-            const category = this._getNativeCategory(key);
-            
-            if (blocksMap[category]) {
-                blocksMap[category].items.push({
-                    id: mod.id,
-                    label: mod.label,
-                    value: mod.value,
-                    desc: mod.desc,
-                    nh_cap: null, 
-                    active: this.selectedModifiers.some(m => m.id === mod.id),
-                    isNative: true
-                });
-            }
-        }
-
-        // 2. MODIFICADORES CUSTOMIZADOS (APENAS COMPÊNDIO)
+        // LISTA MESTRA DE ITENS
         const allModifierItems = [];
 
-        /* --- DESATIVADO: LEITURA DE ITENS SOLTOS NO MUNDO ---
-           Isso evita poluição. Se quiser reativar para testes rápidos, descomente as linhas abaixo.
-        
-        const worldItems = game.items.filter(i => i.type === "gm_modifier");
-        allModifierItems.push(...worldItems);
-        ---------------------------------------------------- */
-
-        // B) Itens do Compêndio (FONTE PRINCIPAL)
-        // Busca pelo ID do sistema "gum.gm_modifiers" OU pelo nome visual
+        // 1. COMPÊNDIO (Regras Globais do Mundo)
         let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
-        
         if (pack) {
-            // Carrega o índice do compêndio
             const packIndex = await pack.getDocuments(); 
             allModifierItems.push(...packIndex);
-            // console.log(`GUM | Carregados ${packIndex.length} modificadores do compêndio.`);
         }
 
-        // Filtra duplicatas pelo nome, caso existam
-        const uniqueItems = [];
-        const seenNames = new Set();
+        // 2. ITENS DO ATOR (Regras Pessoais - Sobrescrevem ou Adicionam)
+        // Filtra apenas os itens do tipo gm_modifier que estão na ficha do ator
+        const actorModifiers = this.actor.items.filter(i => i.type === "gm_modifier");
+        allModifierItems.push(...actorModifiers);
+
+        // 3. FILTRAGEM E DEDUPLICAÇÃO INTELIGENTE
+        // Se o ator tem um item com o mesmo nome do compêndio (ex: "Ataque Total"), usamos o do ator.
+        const uniqueItemsMap = new Map();
+
         for (const item of allModifierItems) {
-            if (!seenNames.has(item.name)) {
-                seenNames.add(item.name);
-                uniqueItems.push(item);
-            }
+            // A chave é o nome. Se já existir, sobrescreve. 
+            // Como adicionamos o Ator POR ÚLTIMO, ele terá prioridade.
+            uniqueItemsMap.set(item.name, item);
         }
 
-        // 3. DISTRIBUIÇÃO NOS BLOCOS
-        for (const item of uniqueItems) {
-            // Verifica se o item serve para este contexto (Checkboxes)
+        // 4. DISTRIBUIÇÃO NOS BLOCOS
+        for (const item of uniqueItemsMap.values()) {
+            // Verifica contexto (Target Type)
             if (!this._isValidForContext(item, contextKey)) continue;
 
-            // Descobre em qual bloco visual ele vai (Dropdown ui_category)
             let uiCat = item.system.ui_category || "other";
-            
-            // Se o layout atual não tem esse bloco, joga para "Customizado" (other)
             if (!blocksMap[uiCat]) uiCat = "other";
-            
-            // Se mesmo "other" não existir (layouts muito restritos), ignora
             if (!blocksMap[uiCat]) continue;
 
             blocksMap[uiCat].items.push({
@@ -159,11 +131,15 @@ export class GurpsRollPrompt extends FormApplication {
                 nh_cap: item.system.nh_cap,
                 duration: item.system.duration,
                 active: this.selectedModifiers.some(m => m.id === item.id),
-                isNative: false
+                isNative: false // Agora tudo é tratado como item
             });
         }
 
-        // Retorna apenas os blocos que têm itens
+        // Ordena alfabeticamente dentro de cada bloco para ficar bonito
+        for (const blockKey in blocksMap) {
+            blocksMap[blockKey].items.sort((a, b) => a.label.localeCompare(b.label));
+        }
+
         return layoutConfig.map(block => blocksMap[block.id]).filter(b => b.items.length > 0);
     }
 

@@ -45,6 +45,7 @@ async getData(options) {
           return acc;
         }, {});
         context.itemsByType = itemsByType;
+        context.myModifiers = (itemsByType.gm_modifier || []).sort((a, b) => a.name.localeCompare(b.name));
 
         
        // ================================================================== //
@@ -613,8 +614,8 @@ activateListeners(html) {
         }
     });
 
-    // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA ✅
-html.on('click', '.rollable', ev => {
+// ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA (CORRIGIDO) ✅
+    html.on('click', '.rollable', ev => {
         ev.preventDefault();
         const element = ev.currentTarget;
         const dataset = element.dataset;
@@ -624,8 +625,12 @@ html.on('click', '.rollable', ev => {
             label: dataset.label || "Teste",
             value: parseInt(dataset.rollValue) || 10,
             type: dataset.type || "attribute", // attribute, skill, attack, spell
-            itemId: dataset.itemId || "", // ✅ CRUCIAL: ID do item (se houver)
-            img: dataset.img || ""        // ✅ CRUCIAL: Imagem para a janela
+            itemId: dataset.itemId || "", 
+            img: dataset.img || "",
+            
+            // ✅ CORREÇÃO AQUI: Captura explicitamente o tipo de ataque
+            attackType: dataset.attackType || null, // Lê "melee" ou "ranged" do HTML
+            isRanged: dataset.isRanged === "true"   // Suporte a flag booleana se houver
         };
 
         // LÓGICA INVERTIDA DE ROLAGEM
@@ -634,8 +639,6 @@ html.on('click', '.rollable', ev => {
             performGURPSRoll(this.actor, rollData);
         } else {
             // Clique Normal -> ABRE A JANELA DE OPÇÕES
-            // Importante: Se a classe GurpsRollPrompt não estiver importada no topo,
-            // o código quebrará aqui. Certifique-se de ter o import.
             new GurpsRollPrompt(this.actor, rollData).render(true);
         }
     });

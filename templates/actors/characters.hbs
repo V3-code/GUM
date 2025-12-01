@@ -99,19 +99,19 @@
 
             <div class="senses-container">
                 <div class="sense-box">
-                    <a class="rollable" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
+                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
                     <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
                 </div>
                 <div class="sense-box">
-                    <a class="rollable" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
+                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
                     <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
                 </div>
                 <div class="sense-box">
-                    <a class="rollable" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
+                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
                     <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
                 </div>
                 <div class="sense-box">
-                    <a class="rollable" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
+                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
                     <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
                 </div>
             </div>
@@ -1294,7 +1294,44 @@
         </div>
       </div>
 
-      {{!-- Bloco da Lista de Ataques (Abaixo dos Registros) --}}
+      {{!-- Bloco de Meus Modificadores --}}
+      <div class="gum-block modifiers-list-box">
+        <div class="block-header">
+          <h4>Meus Modificadores</h4>
+          <div class="header-controls">
+             <a class="item-create" data-type="gm_modifier" title="Criar Novo Modificador"><i class="fas fa-plus"></i></a>
+          </div>
+        </div>
+        
+        <div class="item-list">
+          {{#each myModifiers}}
+            <div class="item-row item" data-item-id="{{this.id}}">
+              <div class="item-name" title="{{this.name}}">
+                 <img src="{{this.img}}"/>
+                 {{this.name}}
+              </div>
+              
+              {{!-- Tag de Valor (Verde/Vermelho/Dourado) --}}
+              <span class="mod-value-tag {{#if (lt this.system.modifier 0)}}negative{{/if}}">
+                  {{numberFormat this.system.modifier sign=true}}
+              </span>
+
+              <div class="item-controls">
+                <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+              </div>
+            </div>
+          {{/each}}
+          
+          {{#unless myModifiers}}
+            <div class="placeholder-text" style="grid-column: 1 / -1; padding: 5px; opacity: 0.6; font-size: 11px; text-align: center;">
+                Arraste itens "Modificador do Mestre" para cá.
+            </div>
+          {{/unless}}
+        </div>
+      </div>
+
+      {{!-- Bloco da Lista de Ataques  --}}
       <div class="attacks-list-box gum-block">
         <div class="block-header">
           <h4>Lista de Ataques</h4>

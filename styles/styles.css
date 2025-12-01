@@ -3603,3 +3603,100 @@ width: 22px;
     border-radius: 3px;
     font-weight: bold;
 }
+
+/* ================================================================== */
+/* ESTILO: BLOCO "MEUS MODIFICADORES" (INTEGRADO AO TEMA)            */
+/* ================================================================== */
+
+/* Usa a classe padrão .gum-block para consistência */
+.combat-tab .modifiers-list-box {
+}
+
+/* Lista de Itens com Grid para economizar espaço */
+.modifiers-list-box .item-list {
+    display: grid;
+    /* Cria 2 colunas se houver espaço (responsivo) */
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+    padding-top: 5px;
+}
+
+/* Card Individual de Modificador */
+.modifiers-list-box .item-row {
+    background: rgba(0, 0, 0, 0.05); /* Fundo sutil igual aos meters */
+    border: 1px solid var(--c-borda);
+    border-radius: 3px;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    transition: all 0.2s ease;
+    
+    /* Remove a borda inferior padrão de lista se houver */
+    border-bottom: 1px solid var(--c-borda); 
+}
+
+.modifiers-list-box .item-row:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: var(--c-accent-gold);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Nome do Modificador */
+.modifiers-list-box .item-name {
+    font-size: 11px; /* Fonte compacta como o resto da aba combate */
+    color: var(--c-texto-escuro);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+/* Ícone do Modificador */
+.modifiers-list-box .item-name img {
+    width: 20px; 
+    height: 20px;
+    border-radius: 3px;
+    border: none;
+    flex-shrink: 0;
+}
+
+/* Valor Destacado (+2) */
+.modifiers-list-box .mod-value-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--c-accent-gold); /* Dourado do tema */
+    padding: 1px 5px;
+    border-radius: 3px;
+    min-width: 18px;
+    text-align: center;
+}
+/* Cor diferente para penalidades */
+.modifiers-list-box .mod-value-tag.negative {
+    background: var(--c-accent-red); /* Vermelho para penalidades */
+}
+
+/* Controles (Editar/Deletar) - Só aparecem no hover */
+.modifiers-list-box .item-controls {
+    display: flex;
+    gap: 4px;
+    opacity: 0; 
+    transition: opacity 0.2s;
+    font-size: 10px;
+}
+.modifiers-list-box .item-row:hover .item-controls {
+    opacity: 1;
+}
+.modifiers-list-box .item-control {
+    color: var(--c-texto-subtitulo);
+    cursor: pointer;
+}
+.modifiers-list-box .item-control:hover {
+    color: var(--c-texto-escuro);
+}
