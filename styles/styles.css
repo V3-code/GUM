@@ -877,105 +877,197 @@ a:hover { text-decoration: underline; color: #fff; }
 }
 
 /* =================================================================== */
-/* DESIGN: LISTA DE ATAQUES ANINHADA (VERSÃO REFINADA)                 */
+/* DESIGN: LISTA DE ATAQUES V3 (ACORDEÃO MODERNO)                      */
 /* =================================================================== */
 
-.attacks-list-box .block-header a {
-  font-size: 0.8rem;
-  font-family: var(--f-corpo);
-  text-transform: uppercase;
-  font-weight: 700;
+.attack-group-list-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Espaço entre as armas */
 }
 
-.attack-group-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* O Container do Grupo (Detalhes) */
+.attack-group-details {
+    background: var(--c-fundo-card-claro);
+    border: 1px solid var(--c-borda);
+    border-radius: 4px;
+    overflow: hidden; /* Para os cantos arredondados funcionarem */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.attack-group-card {
-  background: rgba(0,0,0,0.02);
-  border: 1px solid var(--c-borda);
-  border-radius: 3px;
-  padding: 0.5rem 0.75rem;
+/* O Cabeçalho Clicável (Summary) */
+.group-summary {
+    background: rgba(0,0,0,0.05); /* Cinza leve */
+    padding: 6px 10px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+.group-summary:hover {
+    background: rgba(0,0,0,0.08);
+}
+.group-summary::-webkit-details-marker { display: none; }
+
+/* Lado Esquerdo do Cabeçalho */
+.summary-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.summary-left .indicator {
+    font-size: 0.8em;
+    color: #888;
+    transition: transform 0.2s;
+}
+/* Rotação da seta quando aberto */
+.attack-group-details[open] .indicator {
+    transform: rotate(90deg);
 }
 
-.attack-group-card .group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--c-borda);
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
+.summary-left .item-icon {
+    color: var(--c-texto-subtitulo);
+}
+.summary-left .group-name {
+    font-family: 'Roboto Condensed';
+    font-weight: 700;
+    color: var(--c-texto-escuro);
+    font-size: 0.8rem;
 }
 
-/* MUDANÇA: Tamanho do título do grupo reduzido */
-.attack-group-card .group-name {
-  font-family: var(--f-titulos);
-  font-size: 1rem;
-  font-weight: 700;
+/* Lado Direito do Cabeçalho */
+.summary-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.group-tag {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+.group-tag.weight {
+    color: #777;
+    background: rgba(0,0,0,0.05);
+}
+.group-tag.db {
+    background: #1565c0; /* Azul */
+    color: #fff;
 }
 
-.attacks-in-group {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* O Conteúdo (Lista de Ataques) */
+.group-content {
+    border-top: 1px solid var(--c-borda);
+    background: #fff; /* Fundo branco para destacar os ataques */
 }
 
-/* Linha de cada ataque individual */
-.attack-item .attack-type-icon {
-  color: var(--c-texto-subtitulo);
+/* Linha de Ataque Individual */
+.attack-row {
+    display: flex;
+    align-items: flex-start; /* Alinha no topo */
+    gap: 10px;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.attack-row:last-child { border-bottom: none; }
+
+.attack-icon {
+    padding-top: 2px;
+    color: var(--c-accent-gold);
+    font-size: 1.1em;
+    width: 20px;
+    text-align: center;
 }
 
-.attack-item .attack-main-info {
-  flex-grow: 1;
+.attack-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.attack-item .attack-name-row {
-  font-size: 0.9rem;
-  font-weight: 500;
+/* Nome do Modo (ex: Balanço) */
+.attack-header {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
 }
-.attack-item .attack-name-row small {
-  color: var(--c-texto-subtitulo);
-  font-size: 0.8em;
+.attack-mode {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: #333;
 }
-
-/* MUDANÇA: Container das tags agora quebra a linha */
-.attack-details-row {
-  display: flex;
-  flex-wrap: wrap; /* Impede a sobreposição */
-  gap: 0.4rem;
-  margin-top: 0.25rem;
-}
-
-/* MUDANÇA: Novo design para as "tags" no tema claro */
-.attack-details-row .stat {
-  background: rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.1);
-  color: var(--c-texto-escuro);
-  border-left: 3px solid var(--c-texto-subtitulo);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.8rem;
-}
-.attack-details-row .stat label {
-  color: var(--c-texto-subtitulo);
-  margin-right: 0.3rem;
-  font-weight: 700;
+.attack-submode {
+    font-size: 0.85em;
+    color: #777;
+    font-style: italic;
 }
 
-.add-attack-footer {
-  text-align: right;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed var(--c-borda);
+/* Flags (U, F) */
+.attack-flag {
+    font-size: 0.7em;
+    font-weight: bold;
+    color: #fff;
+    padding: 0 4px;
+    border-radius: 2px;
+    line-height: 1.4;
 }
-.add-attack-footer a {
-  font-size: 0.8rem;
-  font-weight: 700;
+.attack-flag.u { background: #d35400; }
+.attack-flag.f { background: #2980b9; }
+
+/* Container de Tags (NH, Dano, etc) */
+.attack-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Design da Tag "Caixinha" */
+.tag-box {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 0.8em;
+    background: #fcfcfc;
+    overflow: hidden;
+}
+.tag-box label {
+    background: #eee;
+    color: #666;
+    padding: 1px 5px;
+    font-weight: 600;
+    font-size: 0.9em;
+    border-right: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+}
+.tag-box .value {
+    padding: 1px 6px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+/* Links Roláveis dentro das tags */
+a.rollable.value:hover, 
+a.rollable-damage.value:hover {
+    background: var(--c-accent-gold);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Destaque para Dano */
+.tag-box.damage {
+    border-color: #dcb;
+}
+.tag-box.damage label {
+    background: #f5f0e6;
+    color: #8a6d3b;
 }
  
 /* =================================================================== */

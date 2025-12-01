@@ -1385,95 +1385,99 @@
         </div>
       </div>
 
-      {{!-- Bloco da Lista de Ataques  --}}
-      <div class="attacks-list-box gum-block">
-        <div class="block-header">
-          <h4>Lista de Ataques</h4>
-          <div class="header-controls">
-            <a class="sort-control" data-item-type="equipment" title="Ordenar Ataques">
-              <i class="fas fa-sort-alpha-down"></i>
-            </a>
-          </div>
-        </div>
-        <ol class="attack-group-list">
+     <div class="attack-group-list-v2">
           {{#each attackGroups as |group|}}
-          <li class="attack-group-card item-generated" data-group-id="{{group.id}}" draggable="false">
-            <div class="group-header">
-              <span class="group-name">
-                <i class="fas fa-khanda-alt" title="Ataque do Item '{{group.name}}'"></i> 
-                {{group.name}}
+          <details class="attack-group-details">
+            
+            {{!-- CABEÇALHO DO GRUPO (RESUMO) --}}
+            <summary class="group-summary">
+              <div class="summary-left">
+                <i class="fas fa-chevron-right indicator"></i>
+                <i class="fas fa-khanda-alt item-icon"></i> 
+                <span class="group-name">{{group.name}}</span>
+              </div>
+              
+              <div class="summary-right">
                 {{#if (gt group.weight 0)}}
-                  <span class="group-weight-tag">{{group.weight}} kg</span>
+                  <span class="group-tag weight">{{group.weight}} kg</span>
                 {{/if}}
                 {{#if (gt group.defense_bonus 0)}}
-                    <span class="group-db-tag" title="Bônus de Defesa (Escudo/Arma)">BD +{{group.defense_bonus}}</span>
+                   <span class="group-tag db" title="Bônus de Defesa">BD +{{group.defense_bonus}}</span>
                 {{/if}}
-              </span>
-              <div class="group-controls">
                 <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
                   <i class="fas fa-cog"></i>
                 </a>
               </div>
-            </div>
-            <ol class="attacks-in-group">
-              {{#each group.attacks as |attack|}}
-              <li class="item-row attack-item" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
-                <span class="attack-type-icon">
-                  {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
-                  {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
-                </span>
-                <div class="attack-main-info">
-                  <div class="attack-name-row">
-                    <strong>{{attack.skill_name}}</strong>
-                    <small>({{attack.name}})</small>
-                    {{#if this.unbalanced}}
-                    <span class="attack-flag-tag flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                    {{/if}}
-                    {{#if this.fencing}}
-                    <span class="attack-flag-tag flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                    {{/if}}
-                  </div>
-            <div class="attack-details-row">
-                <span class="stat"><label>NH:</label> 
-                    {{!-- ✅ MUDANÇA AQUI: de attack.skill_level para attack.final_nh --}}
-                    <a class="rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
-                </span>
-                <span class="stat">
-                    <label>Dano:</label>
-                    <a class="rollable-damage" title="Clique para rolar o dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
-                        ({{attack.damage_formula}}){{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
-                        {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}){{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}{{/if}}{{/with}}
-                        {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}}{{#if (gt this.armor_divisor 1)}}({{this.armor_divisor}}){{/if}} {{this.type}}]{{/if}}{{/with}}
-                    </a>
-                </span>
-                {{#if (eq attack.attack_type "melee")}}
-                    <span class="stat melee-stat"><label>Aparar:</label> 
-                        <a class="rollable" data-type="defense" data-roll-value="{{attack.parry}}" data-roll-value="{{attack.parry}}" data-label="Aparar com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.parry}}</a>
-                    </span>
-                    <span class="stat melee-stat"><label>Bloqueio:</label> 
-                        <a class="rollable" data-type="defense" data-roll-value="{{attack.block}}" data-roll-value="{{attack.block}}" data-label="Bloquear com {{group.name}}" data-item-id="{{attack.itemId}}">{{attack.block}}</a>
-                    </span>
-                    <span class="stat melee-stat"><label>Alcance:</label> {{attack.reach}}</span>
-                {{/if}}
-                {{#if (eq attack.attack_type "ranged")}}
-                    <span class="stat ranged-stat"><label>Prec:</label> {{attack.accuracy}}</span>
-                    <span class="stat ranged-stat"><label>Alcance:</label> {{attack.range}}</span>
-                    <span class="stat ranged-stat"><label>CdT:</label> {{attack.rof}}</span>
-                    <span class="stat ranged-stat"><label>Tiros:</label> {{attack.shots}}</span>
-                    <span class="stat ranged-stat"><label>RCO:</label> {{attack.rcl}}</span>
-                {{/if}}
-            </div>
+            </summary>
+
+            {{!-- CONTEÚDO DO GRUPO (LISTA DE ATAQUES) --}}
+            <div class="group-content">
+                {{#each group.attacks as |attack|}}
+                <div class="attack-row item-row" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+                    
+                    {{!-- Ícone do Tipo (Espada/Alvo) --}}
+                    <div class="attack-icon">
+                        {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
+                        {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+                    </div>
+
+                    {{!-- Info Principal --}}
+                    <div class="attack-info">
+                        <div class="attack-header">
+                            <span class="attack-mode">{{attack.skill_name}}</span>
+                            <span class="attack-submode">({{attack.name}})</span>
+                            
+                            {{!-- Flags (U, F) --}}
+                            {{#if this.unbalanced}}
+                                <span class="attack-flag u" title="Desbalanceada">U</span>
+                            {{/if}}
+                            {{#if this.fencing}}
+                                <span class="attack-flag f" title="Esgrima">F</span>
+                            {{/if}}
+                        </div>
+
+                        {{!-- Tags de Dados --}}
+                        <div class="attack-tags">
+                             {{!-- NH --}}
+                             <span class="tag-box">
+                                <label>NH</label>
+                                <a class="rollable value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
+                             </span>
+
+                             {{!-- Dano --}}
+                             <span class="tag-box damage">
+                                <label>Dano</label>
+                                <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+                                    {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                                    {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
+                                </a>
+                             </span>
+
+                             {{!-- Stats Específicos --}}
+                             {{#if (eq attack.attack_type "melee")}}
+                                <span class="tag-box"><label>Aparar</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a></span>
+                                <span class="tag-box"><label>Alcance</label><span class="value">{{attack.reach}}</span></span>
+                             {{/if}}
+
+                             {{#if (eq attack.attack_type "ranged")}}
+                                <span class="tag-box"><label>Prec</label><span class="value">{{attack.accuracy}}</span></span>
+                                <span class="tag-box"><label>Alcance</label><span class="value">{{attack.range}}</span></span>
+                                <span class="tag-box"><label>CdT</label><span class="value">{{attack.rof}}</span></span>
+                                <span class="tag-box"><label>Tiros</label><span class="value">{{attack.shots}}</span></span>
+                                <span class="tag-box"><label>RCO</label><span class="value">{{attack.rcl}}</span></span>
+                             {{/if}}
+                        </div>
+                    </div>
                 </div>
-              </li>
-              {{/each}}
-            </ol>
-          </li>
+                {{/each}}
+            </div>
+          </details>
           {{/each}}
+
           {{#unless attackGroups}}
-            <li class="placeholder-text" style="padding: 10px 10px; opacity: 0.7;">Nenhum ataque de item equipado.</li>
+            <div class="placeholder-text">Nenhum ataque disponível.</div>
           {{/unless}}
-        </ol>
-      </div>
+        </div>
 
     </div>
     
