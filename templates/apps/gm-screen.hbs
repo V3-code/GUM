@@ -24,7 +24,7 @@
                     {{#if this.activeGMMods.length}}
                         {{#each this.activeGMMods}}
                         <span class="active-mod-tag" data-index="{{@index}}" title="Clique no X para remover">
-                            {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
+                            {{this.name}} <strong >{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
                             <i class="fas fa-times remove-mod"></i>
                         </span>
                         {{/each}}
@@ -38,41 +38,82 @@
         </div>
     </aside>
 
-    {{!-- COLUNA DIREITA: PALETA --}}
+{{!-- COLUNA DIREITA: DASHBOARD MODULAR --}}
     <section class="screen-main controls-column">
         <nav class="screen-tabs tabs" data-group="primary">
-            <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Paleta de Modificadores</a>
+            <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
             <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
         </nav>
 
         <section class="screen-body">
             
-            {{!-- ABA MODIFICADORES --}}
-            <div class="tab modifiers-palette" data-tab="modifiers">
-                <p class="instruction">Clique em um modificador para selecionar, depois clique no personagem à esquerda para aplicar.</p>
-                
-                <div class="palette-grid">
-                    {{#each modifiers as |section key|}}
-                        <div class="palette-section">
-                            <h4 class="section-header">{{section.label}}</h4>
-                            <div class="buttons-container">
-                                {{#each section.items}}
-                                <button class="palette-mod" data-id="{{this.id}}" data-value="{{this.system.modifier}}">
-                                    <span class="mod-name">{{this.name}}</span>
-                                    <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
-                                        {{numberFormat this.system.modifier sign=true}}
-                                    </span>
-                                </button>
-                                {{/each}}
-                            </div>
+            {{!-- ABA DASHBOARD --}}
+            <div class="tab modifiers-dashboard" data-tab="modifiers">
+                <div class="modular-grid">
+                    
+                    {{!-- Loop das 3 Colunas --}}
+                    {{#each columns as |column|}}
+                    <div class="modular-column" data-col-id="{{column.id}}">
+                        
+                        {{!-- Ferramentas da Coluna --}}
+                        <div class="column-tools">
+                            <button class="add-group-btn" data-col="{{column.id}}" title="Criar Grupo Nesta Coluna">
+                                <i class="fas fa-plus"></i> Novo Grupo
+                            </button>
                         </div>
+
+                        {{!-- Lista de Grupos Criados --}}
+                        <div class="column-groups">
+                            {{#each column.groups as |group|}}
+                            <div class="modifier-group" data-group-id="{{group.id}}">
+                                <div class="group-header">
+                                    <span class="group-title">{{group.name}}</span>
+                                    <div class="group-actions">
+                                        {{!-- Botão para abrir o Navegador --}}
+                                        <a class="add-mod-to-group-btn" data-group-id="{{group.id}}" title="Adicionar Modificador"><i class="fas fa-search-plus"></i></a>
+                                        <a class="delete-group-btn" data-group-id="{{group.id}}" title="Excluir Grupo"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                                
+                                {{!-- Área Droppable --}}
+                                <div class="group-content-area">
+                                    {{#each group.enrichedItems}}
+                                    <div class="palette-mod" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}">
+                                        <div class="mod-left">
+                                            <img src="{{this.img}}" class="mod-icon"/>
+                                            <span class="mod-name">{{this.name}}</span>
+                                        </div>
+                                        <div class="mod-right">
+                                            <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
+                                                {{numberFormat this.system.modifier sign=true}}
+                                            </span>
+                                            <div class="mod-hover-controls">
+                                                {{!--  Botão de Visualizar --}}
+                                                <a class="mod-quick-view" title="Ver Regras"><i class="fas fa-eye"></i></a>
+                                                {{!-- Botão X para remover do grupo --}}
+                                                <a class="delete-mod-btn"><i class="fas fa-times"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{/each}}
+                                    
+                                    {{#unless group.enrichedItems}}
+                                        <div class="empty-group-hint">Arraste itens ou clique na lupa.</div>
+                                    {{/unless}}
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+
+                    </div>
                     {{/each}}
+
                 </div>
             </div>
 
             {{!-- ABA MACROS --}}
             <div class="tab" data-tab="macros">
-                <p>Espaço para macros (Em breve).</p>
+                <p class="instruction">Área reservada para Macros.</p>
             </div>
 
         </section>

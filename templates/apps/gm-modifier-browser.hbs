@@ -1,0 +1,83 @@
+<form class="modifier-browser-form" autocomplete="off">
+    <div class="browser-container">
+        
+        {{!-- SIDEBAR DE FILTROS --}}
+        <aside class="browser-sidebar">
+            
+            {{!-- Busca --}}
+            <div class="filter-group">
+                <h3 class="filter-title">Busca</h3>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="Nome...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+
+            {{!-- Filtro de Valor --}}
+            <div class="filter-group">
+                <h3 class="filter-title">Tipo</h3>
+                <label><input type="checkbox" name="filter-bonus" checked> Bônus (+)</label>
+                <label><input type="checkbox" name="filter-penalty" checked> Penalidade (-)</label>
+            </div>
+            
+            {{!-- Filtro de Categorias --}}
+            <div class="filter-group category-filter">
+                <h3 class="filter-title">Categorias</h3>
+                <label><input type="checkbox" value="location"> Localização</label>
+                <label><input type="checkbox" value="maneuver"> Manobras</label>
+                <label><input type="checkbox" value="situation"> Situação</label>
+                <label><input type="checkbox" value="attack_opt"> Opções de Ataque</label>
+                <label><input type="checkbox" value="defense_opt"> Opções de Defesa</label>
+                <label><input type="checkbox" value="posture"> Postura</label>
+                <label><input type="checkbox" value="range"> Distância</label>
+                <label><input type="checkbox" value="time"> Tempo</label>
+                <label><input type="checkbox" value="effort"> Esforço Extra</label>
+            </div>
+
+        </aside>
+
+        {{!-- LISTA DE RESULTADOS --}}
+        <div class="browser-results">
+            <div class="browser-content">
+                <ul class="results-list">
+                    {{#each modifiers}}
+<li class="result-item" data-id="{{this.id}}">
+                        <div class="item-controls">
+                            <input type="checkbox" name="{{this.id}}"/>
+                        </div>
+                        
+                        {{!-- Área clicável para expandir --}}
+                        <div class="item-info">
+                            <div class="info-line-1">
+                                <span class="item-name">{{this.name}}</span>
+                                
+                                <div class="right-info">
+                                    <span class="item-cost" style="font-weight:bold; color:{{#if (gte this.system.modifier 0)}}#4caf50{{else}}#e57373{{/if}};">{{this.formattedVal}}</span>
+                                    {{!-- NOVO ÍCONE DE OLHO --}}
+                                    <a class="browser-quick-view" title="Ver Detalhes"><i class="fas fa-eye"></i></a>
+                                </div>
+                            </div>
+                            {{#if this.system.description}}
+                            <div class="info-line-2">
+                                <span class="item-details">{{{this.system.description}}}</span>
+                            </div>
+                            {{/if}}
+                        </div>
+                    </li>
+                    {{/each}}
+                    
+                    {{#unless modifiers}}
+                    <li class="placeholder-text" style="padding:20px; text-align:center; color:#777;">
+                        Nenhum modificador encontrado no compêndio "[GUM] Modificadores Básicos".
+                    </li>
+                    {{/unless}}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {{!-- RODAPÉ FIXO --}}
+    <footer class="browser-footer">
+        <button type="submit"><i class="fas fa-plus-circle"></i> Adicionar Selecionados</button>
+    </footer>
+</form>

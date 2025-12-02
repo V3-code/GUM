@@ -58,6 +58,21 @@ import { importFromJson, importFromGCS } from "./apps/importers.js";
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
 export const registerSystemSettings = function() {
+
+// --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
+    game.settings.register("gum", "gmScreenConfig", {
+        name: "Layout do Escudo",
+        scope: "world",
+        config: false, // Invisível no menu, gerenciado via código
+        type: Object,
+        default: {
+            columns: [
+                { id: "col1", groups: [] },
+                { id: "col2", groups: [] },
+                { id: "col3", groups: [] }
+            ]
+        }
+    });
     
     // --- FÓRMULA DE INICIATIVA CORRIGIDA ---
     game.settings.register("gum", "initiativeFormula", {
