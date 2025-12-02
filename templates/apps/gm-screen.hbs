@@ -1,0 +1,80 @@
+<div class="gm-screen-layout">
+    
+    {{!-- COLUNA ESQUERDA: MONITOR --}}
+    <aside class="screen-sidebar monitor-column">
+        <div class="column-header"><i class="fas fa-users"></i> Personagens</div>
+        <div class="monitor-list">
+            {{#each actors}}
+            <div class="monitor-card" data-actor-id="{{this.id}}">
+                
+                {{!-- Topo: Identidade e Barras --}}
+                <div class="card-top">
+                    <div class="actor-identity">
+                        <img src="{{this.img}}" />
+                        <span class="actor-name">{{this.name}}</span>
+                    </div>
+                    <div class="vital-bars">
+                        <div class="mini-bar hp"><div class="fill" style="width: {{this.hp.percent}}%;"></div></div>
+                        <div class="mini-bar fp"><div class="fill" style="width: {{this.fp.percent}}%;"></div></div>
+                    </div>
+                </div>
+
+                {{!-- Modificadores Ativos (DROP ZONE) --}}
+                <div class="active-mods-zone">
+                    {{#if this.activeGMMods.length}}
+                        {{#each this.activeGMMods}}
+                        <span class="active-mod-tag" data-index="{{@index}}" title="Clique no X para remover">
+                            {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
+                            <i class="fas fa-times remove-mod"></i>
+                        </span>
+                        {{/each}}
+                    {{else}}
+                        <span class="hint-text">Sem modificadores ativos.</span>
+                    {{/if}}
+                </div>
+
+            </div>
+            {{/each}}
+        </div>
+    </aside>
+
+    {{!-- COLUNA DIREITA: PALETA --}}
+    <section class="screen-main controls-column">
+        <nav class="screen-tabs tabs" data-group="primary">
+            <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Paleta de Modificadores</a>
+            <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
+        </nav>
+
+        <section class="screen-body">
+            
+            {{!-- ABA MODIFICADORES --}}
+            <div class="tab modifiers-palette" data-tab="modifiers">
+                <p class="instruction">Clique em um modificador para selecionar, depois clique no personagem à esquerda para aplicar.</p>
+                
+                <div class="palette-grid">
+                    {{#each modifiers as |section key|}}
+                        <div class="palette-section">
+                            <h4 class="section-header">{{section.label}}</h4>
+                            <div class="buttons-container">
+                                {{#each section.items}}
+                                <button class="palette-mod" data-id="{{this.id}}" data-value="{{this.system.modifier}}">
+                                    <span class="mod-name">{{this.name}}</span>
+                                    <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
+                                        {{numberFormat this.system.modifier sign=true}}
+                                    </span>
+                                </button>
+                                {{/each}}
+                            </div>
+                        </div>
+                    {{/each}}
+                </div>
+            </div>
+
+            {{!-- ABA MACROS --}}
+            <div class="tab" data-tab="macros">
+                <p>Espaço para macros (Em breve).</p>
+            </div>
+
+        </section>
+    </section>
+</div>

@@ -7,7 +7,8 @@ export class GurpsRollPrompt extends FormApplication {
         super(options);
         this.actor = actor;
         this.rollData = rollData;
-        this.selectedModifiers = []; 
+        this.selectedModifiers = [];
+        this._loadGMModifiers(); 
         this.context = this._determineContext();
         
         console.log("GUM | Roll Prompt Iniciado");
@@ -29,6 +30,23 @@ export class GurpsRollPrompt extends FormApplication {
         });
     }
 
+    /**
+     * Lê as flags do ator e adiciona aos modificadores selecionados
+     */
+    _loadGMModifiers() {
+        const gmMods = this.actor.getFlag("gum", "gm_modifiers") || [];
+        
+        gmMods.forEach(mod => {
+            this.selectedModifiers.push({
+                id: mod.id || foundry.utils.randomID(),
+                label: mod.name,
+                value: parseInt(mod.value) || 0,
+                nh_cap: null,
+                isGM: true // Marca para estilizar diferente se quiser
+            });
+        });
+    }
+    
     /**
      * LÓGICA CORRIGIDA: Obedece explicitamente ao botão clicado.
      */

@@ -1,0 +1,368 @@
+/* ================================================================== */
+/* ESCUDO DO MESTRE (GM SCREEN) - DESIGN FINAL REFINADO               */
+/* ================================================================== */
+
+/* Container Principal da Janela */
+.gum.gm-screen .window-content {
+    padding: 0;
+    background: #1a1a1a; /* Fundo base escuro */
+    color: #e0e0e0;      /* Texto claro */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;    /* Impede scroll na janela inteira */
+}
+
+/* Grid de Layout (Esquerda Fixa / Direita Flexível) */
+.gm-screen-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr; /* Aumentei um pouco a esquerda */
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ================================================================== */
+/* COLUNA ESQUERDA: MONITOR DE VITAIS                                 */
+/* ================================================================== */
+.monitor-column {
+    background: #151515; /* Mais escuro que o fundo */
+    border-right: 1px solid #444;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.gm-screen .column-header {
+    background: linear-gradient(to bottom, #222, #1a1a1a);
+    padding: 10px 12px;
+    font-family: var(--font-secondary, 'Cinzel', serif);
+    font-weight: 700;
+    color: var(--c-accent-gold, #c5a05b);
+    text-transform: uppercase;
+    border-bottom: 1px solid #444;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+.monitor-list {
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1; /* Ocupa o espaço restante */
+}
+
+/* Card do Personagem */
+.monitor-card {
+    background: #2b2a29;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Efeito de Hover e Seleção */
+.monitor-card:hover {
+    border-color: #888;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+}
+
+/* Topo do Card: Identidade + Barras */
+.monitor-card .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Identidade */
+.actor-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex-grow: 1;
+    overflow: hidden;
+}
+.actor-identity img {
+    width: 36px; height: 36px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.actor-identity .actor-name {
+    font-weight: 700;
+    font-size: 1em;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Barras Vitais */
+.vital-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 80px; /* Largura fixa para as barras */
+    flex-shrink: 0;
+}
+.mini-bar {
+    height: 12px;
+    background: #000;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+.mini-bar .fill { height: 100%; transition: width 0.5s ease; }
+.mini-bar.hp .fill { background: var(--c-accent-green, #389c68); }
+.mini-bar.fp .fill { background: var(--c-accent-blue, #56819c); }
+
+/* Defesas Passivas */
+.passive-defenses {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.3);
+    padding: 3px 6px;
+    border-radius: 3px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.def-tag {
+    font-size: 0.85em;
+    color: #ccc;
+    font-weight: 600;
+}
+.def-tag i { color: var(--c-accent-gold, #c5a05b); margin-right: 3px; }
+
+/* Zona de Drop / Modificadores Ativos */
+.active-mods-zone {
+    min-height: 28px;
+    background: rgba(0,0,0,0.15);
+    border: 1px dashed #555;
+    border-radius: 3px;
+    padding: 3px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+}
+.hint-text {
+    font-size: 0.75em;
+    color: #666;
+    width: 100%;
+    text-align: center;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* Tags de Modificador Ativo */
+.active-mod-tag {
+    background: var(--c-accent-blue, #56819c);
+    color: #fff;
+    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.active-mod-tag strong { color: #ffeb3b; } /* Amarelo para o valor */
+.active-mod-tag .remove-mod {
+    cursor: pointer;
+    font-size: 0.9em;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.active-mod-tag .remove-mod:hover { opacity: 1; color: #ffcccc; }
+
+/* ================================================================== */
+/* COLUNA DIREITA: PAINEL DE CONTROLE                                 */
+/* ================================================================== */
+.controls-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #222;
+}
+
+/* Abas de Navegação */
+.gm-screen .screen-tabs {
+    flex: 0 0 auto; /* Não cresce nem encolhe */
+    display: flex;
+    background: #181818;
+    border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
+    padding: 0 10px;
+}
+.gm-screen .screen-tabs .item {
+    padding: 10px 15px;
+    color: #888;
+    cursor: pointer;
+    border-right: 1px solid #333;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.gm-screen .screen-tabs .item:hover { color: #fff; background: #252525; }
+.gm-screen .screen-tabs .item.active {
+    color: var(--c-accent-gold, #c5a05b);
+    background: #2b2a29;
+    border-bottom: none; /* A borda inferior é coberta */
+}
+
+/* Corpo da Aba */
+.gm-screen .screen-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #222;
+}
+
+/* ================================================================== */
+/* ABA MODIFICADORES (PALETA) - VISUAL MODERNO                        */
+/* ================================================================== */
+
+/* Instrução no topo */
+.modifiers-palette .instruction {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    padding: 8px;
+    background: rgba(255,255,255,0.05); /* Fundo sutil */
+    border-radius: 4px;
+    border: 1px dashed #444;
+}
+
+/* Grid de Categorias */
+.palette-grid {
+    display: grid;
+    /* Colunas responsivas */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+/* Cartão da Categoria (Box cinza) */
+.palette-section {
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Título da Categoria */
+.section-header {
+    margin: 0 0 8px 0;
+    font-size: 0.85em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #aaa; /* Cinza claro */
+    border-bottom: 2px solid #333;
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+/* Container dos Botões */
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Espaço entre botões */
+}
+
+/* BOTÃO DE MODIFICADOR (REESTILIZADO) */
+.palette-mod {
+    /* Fundo mais claro para contraste */
+    background: #e0e0e0; 
+    border: 1px solid #ccc;
+    color: #333; /* Texto escuro */
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    font-family: var(--font-primary, sans-serif);
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Hover: Levemente mais escuro */
+.palette-mod:hover {
+    background: #fff;
+    border-color: var(--c-accent-gold, #c5a05b);
+    transform: translateX(2px); /* Animação de deslize */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Selecionado: Dourado com texto escuro */
+.palette-mod.active {
+    background: var(--c-accent-gold, #c5a05b);
+    color: #111;
+    border-color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(197, 160, 91, 0.6);
+}
+
+/* Nome do Modificador */
+.palette-mod .mod-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    text-align: left;
+    margin-right: 8px;
+}
+
+/* Valor (+2, -4) */
+.palette-mod .mod-val {
+    background: rgba(0,0,0,0.1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+/* Valor Negativo (Vermelho escuro) */
+.palette-mod .mod-val.neg {
+    color: #c0392b; 
+    background: rgba(192, 57, 43, 0.1);
+}
+
+/* Valor Selecionado (ajusta cor para legibilidade no fundo dourado) */
+.palette-mod.active .mod-val {
+    background: rgba(0,0,0,0.2);
+    color: #000;
+}
+
+/* ================================================================== */
+/* ANIMAÇÕES E FEEDBACK                                               */
+/* ================================================================== */
+@keyframes flash-green {
+    0% { background-color: rgba(46, 204, 113, 0.6); }
+    100% { background-color: #2b2a29; }
+}
+
+.flash-success {
+    animation: flash-green 0.6s ease-out;
+}
+
+.placeholder-box {
+    text-align: center;
+    margin-top: 60px;
+    color: #555;
+}

@@ -16,6 +16,7 @@ import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect } from './effects-engine.js';
 import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
+import { GumGMScreen } from "../module/apps/gm-screen.js";
 
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
@@ -1176,6 +1177,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 });
 
 
+
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
@@ -1531,6 +1533,86 @@ export async function applyContingentCondition(targetActor, contingentEffect, ev
     ui.notifications.info(`${targetActor.name} foi afetado por: ${conditionItem.name}!`);
 }
 
+// ================================================================== //
+//  HOOK DO ESCUDO DO MESTRE (GM SCREEN) - BLINDADO PARA V13
+// ================================================================== //
 
+Hooks.on("getSceneControlButtons", (controls) => {
+    // 1. Verificação de Segurança
+    if (!game.user.isGM) return;
 
+    let targetLayer = null;
 
+    // 2. BUSCA DA CAMADA (Suporta V12 Array e V13 Object/Map)
+    
+    // Tenta acesso direto por chave (comum em V13 Objetos)
+    if (controls.tokens) targetLayer = controls.tokens;
+    else if (controls.token) targetLayer = controls.token;
+    
+    // Se não achou, tenta acesso por Mapa (Map)
+    else if (controls instanceof Map) {
+        targetLayer = controls.get("tokens") || controls.get("token");
+    }
+    
+    // Se não achou, tenta iterar (Array ou Object.values)
+    else {
+        const list = Array.isArray(controls) ? controls : Object.values(controls);
+        targetLayer = list.find(c => c.name === "tokens" || c.name === "token");
+    }
+
+    // 3. SE AINDA NÃO ACHOU, LOGA O ERRO E PARA
+    if (!targetLayer) {
+        console.error("GUM | ERRO CRÍTICO: Não foi possível encontrar a camada de Tokens. Estrutura recebida:", controls);
+        return;
+    }
+
+    // 4. DEFINIÇÃO DA FERRAMENTA
+    const gmScreenTool = {
+        name: "gm-screen",
+        title: "Escudo do Mestre (GUM)",
+        icon: "fas fa-book-open",
+        visible: true,
+        onClick: () => {
+            // Lógica Singleton
+            if (game.gum.gmScreen) {
+                game.gum.gmScreen.render(true);
+            } else {
+                game.gum.gmScreen = new GumGMScreen();
+                game.gum.gmScreen.render(true);
+            }
+        },
+        button: true
+    };
+
+    // 5. INJEÇÃO SEGURA NA LISTA DE FERRAMENTAS
+    const toolsCollection = targetLayer.tools;
+
+    if (Array.isArray(toolsCollection)) {
+        // V12: É um Array
+        toolsCollection.push(gmScreenTool);
+    } 
+    else if (toolsCollection instanceof Map) {
+        // V13 (Possível): É um Map
+        toolsCollection.set("gm-screen", gmScreenTool);
+    } 
+    else if (typeof toolsCollection === 'object') {
+        // V13 (Provável): É um Objeto
+        // Verifica se já existe para evitar loop
+        if (!toolsCollection["gm-screen"]) {
+            toolsCollection["gm-screen"] = gmScreenTool;
+        }
+    } 
+    else {
+        console.error("GUM | Formato desconhecido para 'layer.tools':", toolsCollection);
+    }
+});
+
+// Hook para atualizar o escudo em tempo real quando atores mudam
+Hooks.on("updateActor", (actor) => {
+    // Só atualiza se o escudo estiver aberto e o ator for relevante
+    if (game.gum && game.gum.gmScreen && game.gum.gmScreen.rendered) {
+        if (actor.hasPlayerOwner) {
+            game.gum.gmScreen.render(false);
+        }
+    }
+});
