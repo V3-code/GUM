@@ -6,7 +6,7 @@
 
 ---
 
-**GUM (GURPS Universal Module)** é um sistema de RPG desenvolvido para usar as mecânicas e estilo do GURPS dentro da plataforma virtual **Foundry VTT**, com inspiração visual nos sistemas D&D e Pathfinder.
+**GUM (GURPS Universal Module)** é um sistema de RPG desenvolvido para usar as mecânicas e estilo do GURPS dentro da plataforma virtual **Foundry VTT**.
 
 > ⚠️ Este é um projeto **não oficial** e **sem fins lucrativos**.  
 > GURPS é uma marca registrada de **Steve Jackson Games**, e este sistema não é afiliado, endossado ou licenciado por ela.
@@ -17,7 +17,7 @@
 
 Este sistema foi criado com os seguintes objetivos:
 
-- Permitir jogar GURPS no Foundry VTT com maior fluidez.
+- Permitir jogar GURPS no Foundry VTT com fluidez e uso integral no foundry.
 - Manter a fidelidade ao estilo GURPS sem infringir os direitos da editora original.
 - Disponibilizar uma ferramenta gratuita e útil para outros mestres e jogadores.
 
@@ -26,16 +26,7 @@ Este sistema foi criado com os seguintes objetivos:
 ## 🗂️ Estrutura do Projeto
 
 ```
-GUM/
-├── system.json          # Manifesto do sistema
-├── template.json        # Modelos de dados
-├── scripts/
-│   └── main.js          # Lógica do sistema
-├── templates/
-│   ├── actors/characters.hbs # Ficha do PdJ
-│   └── items/item-sheet.hbs  # Fichas dos "Items Foundry"
-└── styles/styles.css    # Estilos personalizados
-```
+em construção
 
 ---
 
@@ -62,8 +53,8 @@ Este projeto está licenciado sob a **Creative Commons BY-NC-ND 4.0**.
 
 ## 📬 Contato
 
-Dúvidas, sugestões ou solicitações de autorização:  
-✉️ **victor.v.valentim@gmail.com**
+Dúvidas, sugestões ou solicitações entrar em contato via gitHub
+✉️ ****
 
 ---
 
@@ -71,3 +62,4 @@ Dúvidas, sugestões ou solicitações de autorização:
 
 GURPS © Steve Jackson Games.  
 Este sistema é uma adaptação **feita por fãs**, distribuída gratuitamente sob os princípios de uso justo (fair use).
+
