@@ -435,3 +435,84 @@
 .flash-success {
     animation: flash-green 0.6s ease-out;
 }
+
+/* ================================================================== */
+/* BARRA DE MODIFICADOR MANUAL (TOPO DIREITA)                         */
+/* ================================================================== */
+
+.manual-mod-toolbar {
+    background: #222;
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+/* Estado Ativo (Selecionado) */
+.manual-mod-toolbar.active {
+    background: rgba(197, 160, 91, 0.1); /* Fundo Dourado Sutil */
+    border-bottom: 2px solid var(--c-accent-gold);
+}
+
+.manual-inputs {
+    display: flex;
+    gap: 5px;
+    flex-grow: 1;
+}
+
+/* Input de Texto (Nome) */
+.manual-mod-toolbar input[type="text"] {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 0.9em;
+    flex-grow: 1;
+}
+
+/* Input Numérico (Valor) */
+.manual-mod-toolbar input[type="number"] {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    color: var(--c-accent-gold);
+    font-weight: 700;
+    border-radius: 3px;
+    width: 50px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* Botão Ativar */
+.activate-manual-btn {
+    background: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 0 15px;
+    height: 32px; /* Altura igual aos inputs */
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.activate-manual-btn:hover {
+    color: #fff;
+    border-color: var(--c-accent-gold);
+}
+
+/* Botão quando a barra está ativa */
+.manual-mod-toolbar.active .activate-manual-btn {
+    background: var(--c-accent-gold);
+    color: #111;
+    border-color: #fff;
+    box-shadow: 0 0 8px var(--c-accent-gold);
+}

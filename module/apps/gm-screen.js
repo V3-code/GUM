@@ -1,13 +1,14 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
-import { GUM_DEFAULTS } from "../gum-defaults.js"; // Certifique-se do import
 
 export class GumGMScreen extends Application {
     
     constructor(options = {}) {
         super(options);
-        // ✅ MUDANÇA: Agora usamos um MAP para guardar múltiplos modificadores selecionados
-        // Chave: UUID, Valor: Objeto de dados {name, value, uuid}
+        // Mapa central de seleção (UUID -> Objeto)
         this.selectedModifiers = new Map();
+        
+        // Cache para os inputs manuais não resetarem ao renderizar
+        this.manualCache = { name: "Manual", value: 0 };
     }
 
     static get defaultOptions() {
@@ -48,7 +49,10 @@ export class GumGMScreen extends Application {
         // 2. DASHBOARD (Direita)
         const config = game.settings.get("gum", "gmScreenConfig");
         
-        // Enriquece os itens e marca se estão selecionados
+        // Verifica se o modo manual está ativo no MAP
+        const isManualActive = this.selectedModifiers.has("manual");
+
+        // Enriquece os itens e marca visualmente se estão selecionados
         for (const col of config.columns) {
             for (const group of col.groups) {
                 group.enrichedItems = [];
@@ -56,9 +60,9 @@ export class GumGMScreen extends Application {
                     try {
                         const item = await fromUuid(itemUuid);
                         if (item) {
-                            // Clona para não alterar o original e adiciona flag de seleção
                             const itemData = item.toObject();
-                            itemData.uuid = itemUuid; // Garante UUID
+                            itemData.uuid = itemUuid;
+                            // O HBS vai ler isso para adicionar a classe .active
                             itemData.isSelected = this.selectedModifiers.has(itemUuid);
                             group.enrichedItems.push(itemData);
                         }
@@ -69,17 +73,44 @@ export class GumGMScreen extends Application {
 
         return {
             actors: monitorData,
-            columns: config.columns
+            columns: config.columns,
+            // Passa os estados para o template
+            isManualActive: isManualActive,
+            manualCache: this.manualCache
         };
     }
 
     activateListeners(html) {
         super.activateListeners(html);
         
-        // 1. SELEÇÃO MÚLTIPLA (Toggle)
+        // --- MODIFICADOR MANUAL ---
+
+        // Atualiza o cache quando digita (para não perder ao renderizar)
+        html.find('.manual-name').on('input', ev => this.manualCache.name = ev.target.value);
+        html.find('.manual-value').on('input', ev => this.manualCache.value = parseInt(ev.target.value) || 0);
+
+        // Botão ATIVAR Manual
+        html.find('.activate-manual-btn').click(ev => {
+            ev.preventDefault();
+            
+            if (this.selectedModifiers.has("manual")) {
+                // Desativar
+                this.selectedModifiers.delete("manual");
+            } else {
+                // Ativar (Limpa a paleta primeiro para evitar confusão)
+                this.selectedModifiers.clear();
+                this.selectedModifiers.set("manual", { 
+                    name: this.manualCache.name, 
+                    value: this.manualCache.value 
+                });
+            }
+            this.render(false); // Redesenha para atualizar as classes CSS
+        });
+
+        // --- MODIFICADOR DA PALETA ---
+
         html.find('.palette-mod').click(ev => {
             ev.preventDefault();
-            // Se clicou nos controles (olho/x), ignora a seleção
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
@@ -87,23 +118,24 @@ export class GumGMScreen extends Application {
             const modValue = btn.data('value');
             const modName = btn.find('.mod-name').text().trim();
 
+            // Se clicar na paleta, remove o Manual automaticamente
+            this.selectedModifiers.delete("manual");
+
             if (this.selectedModifiers.has(modUuid)) {
-                // Desselecionar
                 this.selectedModifiers.delete(modUuid);
-                btn.removeClass('active');
             } else {
-                // Selecionar (Adiciona à lista)
                 this.selectedModifiers.set(modUuid, { name: modName, value: modValue });
-                btn.addClass('active');
             }
+            this.render(false); // Redesenha para manter o visual syncado
         });
 
-        // 2. APLICAR EM MASSA (Clique no Personagem)
+
+        // --- APLICAÇÃO (Clique no Personagem) ---
+        
         html.find('.monitor-card').click(async ev => {
-            // Ignora se clicou em remover ou link
             if ($(ev.target).closest('.remove-mod, .actor-identity').length) return;
             
-            // Verifica se tem algo selecionado
+            // Se nada selecionado, não faz nada
             if (this.selectedModifiers.size === 0) return;
 
             const card = $(ev.currentTarget);
@@ -111,7 +143,14 @@ export class GumGMScreen extends Application {
             const actor = game.actors.get(actorId);
 
             if (actor) {
-                // Aplica TODOS os selecionados
+                // Atualiza dados do manual caso tenham mudado sem re-render
+                if (this.selectedModifiers.has("manual")) {
+                    this.selectedModifiers.set("manual", { 
+                        name: this.manualCache.name, 
+                        value: this.manualCache.value 
+                    });
+                }
+
                 await this._applyModifiersToActor(actor);
                 
                 // Feedback visual
@@ -120,13 +159,12 @@ export class GumGMScreen extends Application {
             }
         });
 
-        // 3. Remover Modificador do Personagem
+        // Remover Modificador
         html.find('.remove-mod').click(async ev => {
             ev.stopPropagation();
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
             const index = tag.data('index');
-            const actorId = tag.closest('.monitor-card').data('actor-id');
-            const actor = game.actors.get(actorId);
+            const actor = game.actors.get(tag.closest('.monitor-card').data('actor-id'));
 
             if (actor) {
                 const mods = actor.getFlag("gum", "gm_modifiers") || [];
@@ -135,42 +173,32 @@ export class GumGMScreen extends Application {
                 this.render(false);
             }
         });
-        
-        // 4. Visualização Rápida (Olho no Dashboard)
+
+        // --- GESTÃO DE GRUPOS (Mantido igual) ---
         html.find('.mod-quick-view').click(async ev => {
-            ev.stopPropagation();
-            // Pega o UUID do item no elemento pai (.palette-mod)
+            ev.stopPropagation(); ev.preventDefault();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
-            
-            // Busca o item real
             const item = await fromUuid(uuid);
             if (item) this._showQuickView(item);
         });
-
-        // --- GESTÃO DE GRUPOS ---
-        // (Mantive igual ao anterior, apenas listando para clareza)
-        html.find('.add-group-btn').click(async ev => { /* ... */
+        
+        html.find('.add-group-btn').click(async ev => {
             const colId = $(ev.currentTarget).data('col');
             new Dialog({
                 title: "Novo Grupo", content: `<div class="form-group"><label>Nome:</label><input type="text" id="group-name" autofocus/></div>`,
                 buttons: { create: { label: "Criar", callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(colId, name); } } }, default: "create"
             }).render(true);
         });
-
         html.find('.delete-group-btn').click(async ev => {
             const groupId = $(ev.currentTarget).data('group-id');
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             Dialog.confirm({ title: "Excluir Grupo", content: "<p>Tem certeza?</p>", yes: () => this._removeGroup(colId, groupId) });
         });
-
         html.find('.add-mod-to-group-btn').click(ev => {
             const groupId = $(ev.currentTarget).data('group-id');
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
-            new GMModifierBrowser({
-                onSelect: async (selectedItems) => { await this._addItemsToGroup(colId, groupId, selectedItems); }
-            }).render(true);
+            new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
         });
-        
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
@@ -180,8 +208,7 @@ export class GumGMScreen extends Application {
         });
     }
 
-    // --- MÉTODOS AUXILIARES ---
-
+    // --- LÓGICA DE APLICAÇÃO ---
     async _applyModifiersToActor(actor) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
         let count = 0;
@@ -198,53 +225,31 @@ export class GumGMScreen extends Application {
 
         await actor.setFlag("gum", "gm_modifiers", currentMods);
         ui.notifications.info(`Aplicado(s) ${count} modificador(es) em ${actor.name}.`);
-        // Opcional: Limpar seleção após aplicar? 
-        // this.selectedModifiers.clear(); this.render(false); 
-        // (Eu prefiro manter selecionado para aplicar em vários atores)
-    }
-
-/**
-     * Exibe o card de detalhes do modificador com opção de Chat
-     */
-    async _showQuickView(item) {
-        const s = item.system;
         
-        // Helper para tags
+        // NÃO limpamos this.selectedModifiers aqui para permitir aplicação múltipla contínua!
+    }
+    
+        async _showQuickView(item) {
+        const s = item.system;
         const createTag = (label, value) => {
              if (value !== null && value !== undefined && value !== "") 
                 return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
              return '';
         };
-        
-        // Monta as tags
         let tagsHtml = '';
         const modSign = s.modifier > 0 ? '+' : '';
-        tagsHtml += createTag('MOD:', `${modSign}${s.modifier}`);
-        
-        // Tradução de categorias
-        const catLabels = { 
-            location: "Localização", maneuver: "Manobra", situation: "Situação", 
-            attack_opt: "Opção Atq.", defense_opt: "Opção Def.", posture: "Postura", 
-            range: "Distância", time: "Tempo", effort: "Esforço", lighting: "Iluminação", 
-            cover: "Cobertura", difficulty: "Dificuldade"
-        };
-        tagsHtml += createTag('Categoria:', catLabels[s.ui_category] || "Outros");
-        
+        tagsHtml += createTag('Valor', `${modSign}${s.modifier}`);
+        const catLabels = { location: "Localização", maneuver: "Manobra", situation: "Situação", attack_opt: "Opção Atq.", defense_opt: "Opção Def.", posture: "Postura", range: "Distância", time: "Tempo", effort: "Esforço", lighting: "Iluminação", cover: "Cobertura", difficulty: "Dificuldade" };
+        tagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
         if (s.nh_cap) tagsHtml += createTag('Teto (Cap)', s.nh_cap);
         if (s.duration) tagsHtml += createTag('Duração', s.duration);
-
         const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
-
-        // HTML do Card
         const content = `
             <div class="gurps-dialog-canvas">
                 <div class="gurps-item-preview-card" style="border:none; box-shadow:none;">
                     <header class="preview-header">
                         <h3>${item.name}</h3>
-                        <div class="header-controls">
-                            <span class="preview-item-type">Modificador</span>
-                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
-                        </div>
+                        <div class="header-controls"><span class="preview-item-type">Modificador</span><a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a></div>
                     </header>
                     <div class="preview-content">
                         <div class="preview-properties">${tagsHtml}</div>
@@ -252,45 +257,24 @@ export class GumGMScreen extends Application {
                         <div class="preview-description">${description}</div>
                     </div>
                 </div>
-            </div>
-        `;
-
+            </div>`;
         new Dialog({
-            title: `Detalhes: ${item.name}`,
-            content: content,
-            buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
-            default: "close",
-            options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
-            
-            // Lógica do Botão de Chat
+            title: `Detalhes: ${item.name}`, content: content, buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } }, default: "close", options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
             render: (dlgHtml) => {
                 dlgHtml.on('click', '.send-to-chat', (e) => {
                     e.preventDefault();
-                    // 1. Pega o HTML do card
                     let cardHTML = $(e.currentTarget).closest('.gurps-item-preview-card').html();
-                    
-                    // 2. Remove os botões de controle para não ficarem no chat
-                    cardHTML = cardHTML.replace(
-                        /<div class="header-controls">.*?<\/div>/s, 
-                        `<span class="preview-item-type" style="float:right;">Modificador</span>`
-                    );
-
-                    // 3. Envia
-                    ChatMessage.create({ 
-                        content: `<div class="gurps-item-preview-card chat-card">${cardHTML}</div>`,
-                        user: game.user.id,
-                        speaker: { alias: "Escudo do Mestre" } // Remetente elegante
-                    });
-                    
+                    cardHTML = cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type" style="float:right;">Modificador</span>`);
+                    ChatMessage.create({ content: `<div class="gurps-item-preview-card chat-card">${cardHTML}</div>`, user: game.user.id, speaker: { alias: "Escudo do Mestre" } });
                     ui.notifications.info("Regra enviada para o chat.");
                 });
             }
         }).render(true);
     }
-
-    // Métodos de Persistência (Mesmos de antes)
+    
+    // Métodos de Persistência
     async _saveConfig(newConfig) { await game.settings.set("gum", "gmScreenConfig", newConfig); this.render(false); }
-    async _addGroup(colId, name) { /* ...mesmo código... */ 
+    async _addGroup(colId, name) { 
         const config = game.settings.get("gum", "gmScreenConfig");
         const col = config.columns.find(c => c.id === colId);
         if (col) { col.groups.push({ id: foundry.utils.randomID(), name: name, items: [] }); await this._saveConfig(config); }
@@ -312,7 +296,7 @@ export class GumGMScreen extends Application {
         const group = col?.groups.find(g => g.id === groupId);
         if (group) { group.items = group.items.filter(u => u !== itemUuid); await this._saveConfig(config); }
     }
-    async _onDrop(event) { /* ...mesmo código... */ 
+    async _onDrop(event) { 
         const data = TextEditor.getDragEventData(event);
         if (data.type !== "Item") return;
         const dropTarget = event.target.closest(".group-content-area");
@@ -323,18 +307,11 @@ export class GumGMScreen extends Application {
         if (!item || item.type !== "gm_modifier") return ui.notifications.warn("Apenas Modificadores.");
         await this._addItemsToGroup(colId, groupId, [item]);
     }
-    
-    // Helpers auxiliares
-    _getBestDefense(actor, type) { /* (Mesmo código de antes) */ return 0; }
-    async _applyModifierToActor(actor, modData) {
-        const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
-        currentMods.push({
-            name: modData.name,
-            value: modData.value,
-            id: foundry.utils.randomID(),
-            source: "GM Screen"
+    _getBestDefense(actor, type) { 
+        let best = 0;
+        actor.items.filter(i => i.system.equipped).forEach(i => {
+            if (i.system.melee_attacks) { Object.values(i.system.melee_attacks).forEach(atk => { const val = type === 'parry' ? atk.final_parry : atk.final_block; if (Number(val) > best) best = Number(val); }); }
         });
-        await actor.setFlag("gum", "gm_modifiers", currentMods);
-        ui.notifications.info(`Aplicado: ${modData.name}`);
+        return best || "-"; 
     }
 }

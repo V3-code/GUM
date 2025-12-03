@@ -40,6 +40,22 @@
 
 {{!-- COLUNA DIREITA: DASHBOARD MODULAR --}}
     <section class="screen-main controls-column">
+        
+{{!-- NOVO: BARRA DE MODIFICADOR MANUAL --}}
+        {{!-- Adicionada a classe 'active' condicional --}}
+        <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+            <div class="manual-inputs">
+                <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
+                <div class="value-wrapper">
+                    <input type="number" class="manual-value" value="{{manualCache.value}}">
+                </div>
+            </div>
+            <button class="activate-manual-btn" title="Ativar">
+                <i class="fas fa-crosshairs"></i> ATIVAR
+            </button>
+        </div>
+
+        {{!-- MENU DE ABAS DO ESCUDO DO MESTRE --}}
         <nav class="screen-tabs tabs" data-group="primary">
             <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
             <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
@@ -78,7 +94,7 @@
                                 {{!-- Área Droppable --}}
                                 <div class="group-content-area">
                                     {{#each group.enrichedItems}}
-                                    <div class="palette-mod" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}">
+                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}">
                                         <div class="mod-left">
                                             <img src="{{this.img}}" class="mod-icon"/>
                                             <span class="mod-name">{{this.name}}</span>
