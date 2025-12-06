@@ -1,13 +1,46 @@
 <div class="gm-screen-layout">
     
-    {{!-- COLUNA ESQUERDA: MONITOR --}}
+    {{!-- COLUNA ESQUERDA: MONITOR + MANUAL --}}
     <aside class="screen-sidebar monitor-column">
+        
+        {{!-- 1. Cabeçalho --}}
         <div class="column-header"><i class="fas fa-users"></i> Personagens</div>
+
+        {{!-- 2. BARRA MANUAL (MOVIDA PARA CÁ) --}}
+        <div class="manual-mod-section">
+            <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+                
+                {{!-- Linha 1: Motivo --}}
+                <input type="text" class="manual-name" placeholder="Motivo (ex: Terreno)" value="{{manualCache.name}}">
+                
+                {{!-- Linha 2: Valor e Controles --}}
+                <div class="manual-row-middle">
+                    <div class="value-controls">
+                        <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
+                        <input type="number" class="manual-value" value="{{manualCache.value}}">
+                        <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <button class="activate-manual-btn" title="Ativar Manual">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+
+                {{!-- Linha 3: Presets (Grid Compacto) --}}
+                <div class="manual-presets">
+                    <button class="preset-btn" data-val="-6">-6</button>
+                    <button class="preset-btn" data-val="-4">-4</button>
+                    <button class="preset-btn" data-val="-2">-2</button>
+                    <button class="preset-btn" data-val="2">+2</button>
+                    <button class="preset-btn" data-val="4">+4</button>
+                    <button class="preset-btn" data-val="6">+6</button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- 3. Lista de Personagens --}}
         <div class="monitor-list">
             {{#each actors}}
             <div class="monitor-card" data-actor-id="{{this.id}}">
-                
-                {{!-- Topo: Identidade e Barras --}}
                 <div class="card-top">
                     <div class="actor-identity">
                         <img src="{{this.img}}" />
@@ -18,80 +51,62 @@
                         <div class="mini-bar fp"><div class="fill" style="width: {{this.fp.percent}}%;"></div></div>
                     </div>
                 </div>
-
-                {{!-- Modificadores Ativos (DROP ZONE) --}}
                 <div class="active-mods-zone">
                     {{#if this.activeGMMods.length}}
                         {{#each this.activeGMMods}}
-                        <span class="active-mod-tag" data-index="{{@index}}" title="Clique no X para remover">
-                            {{this.name}} <strong >{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
+                        <span class="active-mod-tag" data-index="{{@index}}">
+                            {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
                             <i class="fas fa-times remove-mod"></i>
                         </span>
                         {{/each}}
                     {{else}}
-                        <span class="hint-text">Sem modificadores ativos.</span>
+                        <span class="hint-text">. . .</span>
                     {{/if}}
                 </div>
-
             </div>
             {{/each}}
         </div>
     </aside>
 
-{{!-- COLUNA DIREITA: DASHBOARD MODULAR --}}
+    {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
     <section class="screen-main controls-column">
         
-{{!-- NOVO: BARRA DE MODIFICADOR MANUAL --}}
-        {{!-- Adicionada a classe 'active' condicional --}}
-        <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
-            <div class="manual-inputs">
-                <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
-                <div class="value-wrapper">
-                    <input type="number" class="manual-value" value="{{manualCache.value}}">
+        {{!-- Barra de Ferramentas da Paleta --}}
+        <div class="palette-tools-bar">
+            <nav class="screen-tabs tabs" data-group="primary">
+                <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
+                <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
+            </nav>
+            
+            <div class="palette-actions">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
                 </div>
+                <button class="clear-selection-btn" title="Desmarcar Todos">
+                    <i class="fas fa-eraser"></i>
+                </button>
             </div>
-            <button class="activate-manual-btn" title="Ativar">
-                <i class="fas fa-crosshairs"></i> ATIVAR
-            </button>
         </div>
 
-        {{!-- MENU DE ABAS DO ESCUDO DO MESTRE --}}
-        <nav class="screen-tabs tabs" data-group="primary">
-            <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
-            <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
-        </nav>
-
         <section class="screen-body">
-            
-            {{!-- ABA DASHBOARD --}}
             <div class="tab modifiers-dashboard" data-tab="modifiers">
                 <div class="modular-grid">
-                    
-                    {{!-- Loop das 3 Colunas --}}
                     {{#each columns as |column|}}
                     <div class="modular-column" data-col-id="{{column.id}}">
-                        
-                        {{!-- Ferramentas da Coluna --}}
                         <div class="column-tools">
-                            <button class="add-group-btn" data-col="{{column.id}}" title="Criar Grupo Nesta Coluna">
-                                <i class="fas fa-plus"></i> Novo Grupo
-                            </button>
+                            <button class="add-group-btn" data-col="{{column.id}}" title="Criar Grupo"><i class="fas fa-plus"></i></button>
                         </div>
-
-                        {{!-- Lista de Grupos Criados --}}
                         <div class="column-groups">
                             {{#each column.groups as |group|}}
                             <div class="modifier-group" data-group-id="{{group.id}}">
                                 <div class="group-header">
                                     <span class="group-title">{{group.name}}</span>
                                     <div class="group-actions">
-                                        {{!-- Botão para abrir o Navegador --}}
-                                        <a class="add-mod-to-group-btn" data-group-id="{{group.id}}" title="Adicionar Modificador"><i class="fas fa-search-plus"></i></a>
-                                        <a class="delete-group-btn" data-group-id="{{group.id}}" title="Excluir Grupo"><i class="fas fa-trash"></i></a>
+                                        <a class="add-mod-to-group-btn" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i></a>
+                                        <a class="delete-group-btn" data-group-id="{{group.id}}"><i class="fas fa-trash"></i></a>
                                     </div>
                                 </div>
-                                
-                                {{!-- Área Droppable --}}
                                 <div class="group-content-area">
                                     {{#each group.enrichedItems}}
                                     <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}">
@@ -104,34 +119,22 @@
                                                 {{numberFormat this.system.modifier sign=true}}
                                             </span>
                                             <div class="mod-hover-controls">
-                                                {{!--  Botão de Visualizar --}}
-                                                <a class="mod-quick-view" title="Ver Regras"><i class="fas fa-eye"></i></a>
-                                                {{!-- Botão X para remover do grupo --}}
+                                                <a class="mod-quick-view"><i class="fas fa-eye"></i></a>
                                                 <a class="delete-mod-btn"><i class="fas fa-times"></i></a>
                                             </div>
                                         </div>
                                     </div>
                                     {{/each}}
-                                    
-                                    {{#unless group.enrichedItems}}
-                                        <div class="empty-group-hint">Arraste itens ou clique na lupa.</div>
-                                    {{/unless}}
+                                    {{#unless group.enrichedItems}}<div class="empty-group-hint">Vazio</div>{{/unless}}
                                 </div>
                             </div>
                             {{/each}}
                         </div>
-
                     </div>
                     {{/each}}
-
                 </div>
             </div>
-
-            {{!-- ABA MACROS --}}
-            <div class="tab" data-tab="macros">
-                <p class="instruction">Área reservada para Macros.</p>
-            </div>
-
+            <div class="tab" data-tab="macros"><p class="instruction">Macros em breve.</p></div>
         </section>
     </section>
 </div>

@@ -437,82 +437,171 @@
 }
 
 /* ================================================================== */
-/* BARRA DE MODIFICADOR MANUAL (TOPO DIREITA)                         */
+/* BARRA DE MODIFICADOR MANUAL (COLUNA ESQUERDA)                      */
 /* ================================================================== */
 
-.manual-mod-toolbar {
-    background: #222;
+.manual-mod-section {
     padding: 10px;
     border-bottom: 1px solid #444;
+    background: #181818;
+}
+
+.manual-mod-toolbar {
+    background: #2b2a29;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
     display: flex;
-    gap: 10px;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    flex-direction: column;
+    gap: 6px;
     transition: all 0.3s ease;
 }
 
 /* Estado Ativo (Selecionado) */
 .manual-mod-toolbar.active {
-    background: rgba(197, 160, 91, 0.1); /* Fundo Dourado Sutil */
-    border-bottom: 2px solid var(--c-accent-gold);
+    background: rgba(197, 160, 91, 0.15);
+    border-color: var(--c-accent-gold);
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.2);
 }
 
-.manual-inputs {
+/* Input de Nome (Motivo) */
+.manual-name {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    color: #ccc;
+    border-radius: 3px;
+    padding: 4px 6px;
+    font-size: 0.9em;
+}
+.manual-name:focus {
+    border-color: var(--c-accent-gold);
+    color: #fff;
+}
+
+/* Linha do Meio (Controles de Valor + Ativar) */
+.manual-row-middle {
     display: flex;
     gap: 5px;
-    flex-grow: 1;
+    height: 30px;
 }
 
-/* Input de Texto (Nome) */
-.manual-mod-toolbar input[type="text"] {
+.value-controls {
+    display: flex;
+    align-items: center;
     background: rgba(0,0,0,0.3);
     border: 1px solid #555;
-    color: #fff;
     border-radius: 3px;
-    padding: 4px 8px;
-    font-size: 0.9em;
     flex-grow: 1;
 }
 
-/* Input Numérico (Valor) */
 .manual-mod-toolbar input[type="number"] {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #555;
+    background: transparent;
+    border: none;
     color: var(--c-accent-gold);
     font-weight: 700;
-    border-radius: 3px;
-    width: 50px;
+    width: 100%;
     text-align: center;
     font-size: 1.1em;
 }
 
-/* Botão Ativar */
-.activate-manual-btn {
-    background: #333;
-    color: #ccc;
-    border: 1px solid #555;
-    border-radius: 3px;
-    padding: 0 15px;
-    height: 32px; /* Altura igual aos inputs */
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.8em;
+.step-btn {
+    background: transparent;
+    border: none;
+    color: #777;
     cursor: pointer;
+    padding: 0 8px;
+    height: 100%;
     display: flex;
     align-items: center;
-    gap: 6px;
+}
+.step-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+/* Botão de Mira (Ativar) */
+.activate-manual-btn {
+    width: 36px;
+    background: #333;
+    color: #888;
+    border: 1px solid #555;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
 }
-
 .activate-manual-btn:hover {
     color: #fff;
-    border-color: var(--c-accent-gold);
+    border-color: #fff;
 }
-
-/* Botão quando a barra está ativa */
+/* Quando ativo, o botão fica dourado */
 .manual-mod-toolbar.active .activate-manual-btn {
     background: var(--c-accent-gold);
-    color: #111;
-    border-color: #fff;
-    box-shadow: 0 0 8px var(--c-accent-gold);
+    color: #000;
+    border-color: var(--c-accent-gold);
+    box-shadow: 0 0 5px var(--c-accent-gold);
 }
+
+/* Linha de Baixo (Presets) */
+.manual-presets {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+}
+
+.preset-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #444;
+    color: #aaa;
+    border-radius: 2px;
+    padding: 2px 0;
+    font-size: 0.75em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.preset-btn:hover {
+    background: #fff;
+    color: #000;
+}
+
+/* ================================================================== */
+/* BARRA DE FERRAMENTAS DA PALETA (NAVEGAÇÃO + BUSCA)                 */
+/* ================================================================== */
+
+.palette-tools-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #181818;
+    border-bottom: 2px solid var(--c-accent-gold);
+    padding-right: 10px;
+}
+
+/* Abas (Reajuste) */
+.gm-screen .screen-tabs { border-bottom: none; flex-grow: 1; }
+
+/* Busca e Limpeza */
+.palette-actions {
+    display: flex; align-items: center; gap: 8px;
+}
+
+.search-wrapper {
+    position: relative;
+}
+.mod-search {
+    background: #252525; border: 1px solid #444; color: #ccc;
+    padding: 2px 5px 2px 22px; border-radius: 10px; width: 120px; font-size: 0.8em;
+    transition: width 0.2s;
+}
+.mod-search:focus { width: 180px; border-color: var(--c-accent-gold); color: #fff; }
+.search-wrapper i {
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 0.7em; color: #666;
+}
+
+.clear-selection-btn {
+    background: transparent; border: none; color: #666; cursor: pointer;
+    font-size: 0.9em; transition: color 0.2s;
+}
+.clear-selection-btn:hover { color: #ff6b6b; }

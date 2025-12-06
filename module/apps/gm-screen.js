@@ -8,7 +8,7 @@ export class GumGMScreen extends Application {
         this.selectedModifiers = new Map();
         
         // Cache para os inputs manuais não resetarem ao renderizar
-        this.manualCache = { name: "Manual", value: 0 };
+        this.manualCache = { name: "GM.MOD", value: 0 };
     }
 
     static get defaultOptions() {
@@ -82,29 +82,96 @@ export class GumGMScreen extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+
         
-        // --- MODIFICADOR MANUAL ---
+        
+// Botões de Passo (+/-)
+        html.find('.step-btn').click(ev => {
+            ev.preventDefault();
+            const action = $(ev.currentTarget).data('action');
+            let current = parseInt(this.manualCache.value) || 0;
+            
+            if (action === 'inc') current += 1;
+            if (action === 'dec') current -= 1;
+            
+            this.manualCache.value = current;
+            
+            // Atualiza visualmente sem re-renderizar tudo
+            html.find('.manual-value').val(current);
+            
+            // Se estiver ativo, atualiza a seleção
+            if (this.selectedModifiers.has("manual")) {
+                this.selectedModifiers.get("manual").value = current;
+            }
+        });
 
-        // Atualiza o cache quando digita (para não perder ao renderizar)
-        html.find('.manual-name').on('input', ev => this.manualCache.name = ev.target.value);
-        html.find('.manual-value').on('input', ev => this.manualCache.value = parseInt(ev.target.value) || 0);
+        // Botões de Preset (-6, +4...)
+        html.find('.preset-btn').click(ev => {
+            ev.preventDefault();
+            const val = parseInt($(ev.currentTarget).data('val'));
+            this.manualCache.value = val;
+            
+            html.find('.manual-value').val(val);
+            
+            // Ativa automaticamente o modo manual ao clicar num preset
+            this.selectedModifiers.clear(); // Limpa paleta
+            this.selectedModifiers.set("manual", { 
+                name: this.manualCache.name, 
+                value: val, 
+                isManual: true 
+            });
+            this.render(false);
+        });
 
-        // Botão ATIVAR Manual
+        // Input Manual (Nome/Valor)
+        html.find('.manual-name').on('input', ev => {
+            this.manualCache.name = ev.target.value;
+            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").name = ev.target.value;
+        });
+        html.find('.manual-value').on('change', ev => { // Use change para inputs manuais
+            this.manualCache.value = parseInt(ev.target.value) || 0;
+            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = this.manualCache.value;
+        });
+
+        // Botão Ativar Manual
         html.find('.activate-manual-btn').click(ev => {
             ev.preventDefault();
-            
             if (this.selectedModifiers.has("manual")) {
-                // Desativar
                 this.selectedModifiers.delete("manual");
             } else {
-                // Ativar (Limpa a paleta primeiro para evitar confusão)
                 this.selectedModifiers.clear();
                 this.selectedModifiers.set("manual", { 
                     name: this.manualCache.name, 
-                    value: this.manualCache.value 
+                    value: this.manualCache.value,
+                    isManual: true
                 });
             }
-            this.render(false); // Redesenha para atualizar as classes CSS
+            this.render(false);
+        });
+
+        // --- 2. FERRAMENTAS DA PALETA (BUSCA & LIMPEZA) ---
+
+        // Limpar Seleção
+        html.find('.clear-selection-btn').click(ev => {
+            ev.preventDefault();
+            this.selectedModifiers.clear();
+            this.render(false);
+        });
+
+        // Busca (Filtro em Tempo Real)
+        html.find('.mod-search').on('keyup', ev => {
+            const query = ev.target.value.toLowerCase();
+            const items = html.find('.palette-mod');
+
+            items.each((i, el) => {
+                const name = $(el).find('.mod-name').text().toLowerCase();
+                // Mostra se o nome der match
+                if (name.includes(query)) {
+                    $(el).show();
+                } else {
+                    $(el).hide();
+                }
+            });
         });
 
         // --- MODIFICADOR DA PALETA ---
