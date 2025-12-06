@@ -605,3 +605,129 @@
     font-size: 0.9em; transition: color 0.2s;
 }
 .clear-selection-btn:hover { color: #ff6b6b; }
+
+/* Container do Rodapé */
+.quick-rollers {
+    background: #111;
+    border-top: 1px solid #444;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0; /* Garante que não suma */
+    z-index: 5;
+}
+
+/* ================================================================== */
+/* ROLADOR RÁPIDO (RODAPÉ ESQUERDO)                                   */
+/* ================================================================== */
+
+.quick-rollers {
+    background: #151515;
+    border-top: 1px solid #444;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    z-index: 5;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+}
+
+.roller-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Labels e Ícones Fixos */
+.roller-label {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: #888;
+    width: 25px;
+    text-align: center;
+}
+
+/* Inputs Gerais */
+.quick-rollers input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 3px;
+    height: 26px;
+    font-size: 0.9em;
+    text-align: center;
+}
+.quick-rollers input:focus { border-color: var(--c-accent-gold); }
+
+/* Tamanhos Específicos */
+.qr-nh { width: 40px; font-weight: 700; color: var(--c-accent-gold) !important; }
+.qr-formula { flex-grow: 1; text-align: left !important; padding-left: 5px; }
+.qr-type { width: 45px; font-size: 0.8em !important; color: #aaa !important; }
+
+/* Botões de Ação */
+.qr-btn {
+    width: 30px; height: 26px;
+    background: #333; border: 1px solid #555; color: #ccc;
+    border-radius: 3px; cursor: pointer;
+    transition: all 0.2s;
+}
+.qr-btn:hover { background: #eee; color: #000; border-color: #fff; }
+
+/* Botão Toggle (Olho) */
+.qr-toggle-mode {
+    width: 26px; height: 26px;
+    background: transparent; border: none; color: #555;
+    cursor: pointer; font-size: 0.9em;
+}
+.qr-toggle-mode:hover { color: #fff; }
+/* Quando ativo (Modo Privado/Secreto) */
+.qr-toggle-mode.active { color: var(--c-accent-blue, #56819c); }
+
+/* Área de Resultado Local (Private) */
+.qr-result-display {
+    margin-top: 4px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 0.85em;
+    text-align: center;
+    color: #fff;
+    animation: fadeIn 0.2s ease;
+}
+.qr-result-display strong { font-size: 1.1em; }
+.qr-result-display.success { border-left: 3px solid var(--c-accent-green); }
+.qr-result-display.failure { border-left: 3px solid var(--c-accent-red); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+/* Mostrador de Modificadores (Live Update) */
+.qr-mod-display {
+    min-width: 30px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    color: #888; /* Cor neutra padrão */
+    font-size: 0.9em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: help;
+}
+
+/* Cores Dinâmicas (Aplicadas via JS) */
+.qr-mod-display.pos {
+    color: #4caf50; /* Verde */
+    border-color: #2e7d32;
+    background: rgba(46, 204, 113, 0.1);
+}
+.qr-mod-display.neg {
+    color: #e57373; /* Vermelho */
+    border-color: #c62828;
+    background: rgba(229, 57, 53, 0.1);
+}

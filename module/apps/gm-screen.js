@@ -1,4 +1,5 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
+import { performGURPSRoll } from "../../scripts/main.js";
 
 export class GumGMScreen extends Application {
     
@@ -82,6 +83,7 @@ export class GumGMScreen extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+        this._updateQRDisplay(html);
 
         
         
@@ -103,6 +105,7 @@ export class GumGMScreen extends Application {
             if (this.selectedModifiers.has("manual")) {
                 this.selectedModifiers.get("manual").value = current;
             }
+            this._updateQRDisplay(html);
         });
 
         // Botões de Preset (-6, +4...)
@@ -131,6 +134,7 @@ export class GumGMScreen extends Application {
         html.find('.manual-value').on('change', ev => { // Use change para inputs manuais
             this.manualCache.value = parseInt(ev.target.value) || 0;
             if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = this.manualCache.value;
+            this._updateQRDisplay(html);
         });
 
         // Botão Ativar Manual
@@ -273,8 +277,178 @@ export class GumGMScreen extends Application {
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             await this._removeItemFromGroup(colId, groupId, uuid);
         });
+// -----------------------------------------------------------
+        // ROLADOR RÁPIDO (QUICK ROLLER) - ATUALIZADO
+        // -----------------------------------------------------------
+
+        // Toggle do Modo Privado (Olho)
+        html.find('.qr-toggle-mode').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            btn.toggleClass('active');
+            
+            // Muda ícone visualmente para feedback
+            const icon = btn.find('i');
+            if (btn.hasClass('active')) {
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                btn.attr('title', 'Modo Privado (Apenas Local)');
+            } else {
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                btn.attr('title', 'Modo Público (Enviar ao Chat)');
+            }
+        });
+
+        // 1. ROLAR TESTE (NH + Modificadores Ativos)
+        html.find('.roll-test').click(async ev => {
+            ev.preventDefault();
+            
+            const nhBase = parseInt(html.find('.qr-nh').val()) || 10;
+            const activeModsTotal = this._getTotalActiveModifier(); // Soma Manual + Paleta
+            const isPrivate = html.find('.qr-toggle-mode').hasClass('active');
+            
+            // Rola os dados
+            const roll = new Roll("3d6");
+            await roll.evaluate();
+            const total = roll.total;
+            
+            // Cálculo Matemático
+            const effectiveLevel = nhBase + activeModsTotal;
+            const isSuccess = total <= effectiveLevel;
+            const margin = Math.abs(effectiveLevel - total);
+            
+            // AÇÃO A: Modo Privado (Exibe no Escudo)
+            if (isPrivate) {
+                const resultBox = html.find('.qr-result-display');
+                const colorClass = isSuccess ? "success" : "failure";
+                const text = isSuccess ? "Sucesso" : "Falha";
+                
+                // Monta o HTML do resultado local
+                const resultHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fas fa-dice"></i> <strong>${total}</strong></span>
+                        <span>vs <strong>${effectiveLevel}</strong> <small>(${activeModsTotal >= 0 ? '+' : ''}${activeModsTotal})</small></span>
+                        <span class="${colorClass}" style="text-transform:uppercase; font-weight:bold;">
+                            ${text} (${margin})
+                        </span>
+                    </div>
+                `;
+                
+                resultBox.removeClass("success failure").addClass(colorClass).html(resultHTML).slideDown(100);
+            
+            // AÇÃO B: Modo Público (Envia ao Chat)
+            } else {
+                // Cria um objeto fake de ator para o template de chat funcionar
+                const gmActor = { name: "Mestre", img: "icons/svg/mystery-man.svg", id: null };
+                
+                // Reusa a função global de rolagem do sistema
+                /* Importante: certifique-se de importar performGURPSRoll no topo deste arquivo */
+                performGURPSRoll(gmActor, {
+                    label: "Teste Rápido (EM)",
+                    value: effectiveLevel, // Manda o valor já calculado
+                    originalValue: nhBase, // Para mostrar a base original
+                    modifier: activeModsTotal, // Para mostrar o modificador
+                    img: "icons/svg/d20.svg"
+                });
+            }
+        });
+
+        // 2. ROLAR DANO (Fórmula + Tipo)
+        html.find('.roll-damage').click(async ev => {
+            ev.preventDefault();
+            const formula = html.find('.qr-formula').val();
+            const type = html.find('.qr-type').val() || ""; // Pega o tipo (ex: cut, imp)
+            
+            if (!formula) return;
+
+            const roll = new Roll(formula);
+            await roll.evaluate();
+
+            const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-face" style="font-size:0.8em; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:2px; margin:0 1px;">${r.result}</span>`).join('');
+            
+            const content = `
+                <div class="gurps-damage-card">
+                    <header class="card-header"><h3>Dano Rápido</h3></header>
+                    <div class="card-formula-container">
+                        <span class="formula-pill">${formula} ${type}</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-main-flex">
+                            <div class="roll-column">
+                                <span class="column-label">Dados</span>
+                                <div class="individual-dice-damage">${diceHtml}</div>
+                            </div>
+                            <div class="column-separator"></div>
+                            <div class="target-column">
+                                <span class="column-label">Total</span>
+                                <div class="damage-total">
+                                    <span class="damage-value">${roll.total}</span>
+                                    <span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <footer class="card-actions">
+                        <button type="button" class="apply-damage-button" data-damage='${JSON.stringify({
+                            attackerId: null, 
+                            sourceName: "Dano Rápido",
+                            main: { total: roll.total, type: type, armorDivisor: 1 }, // ✅ Passa o tipo aqui!
+                            onDamageEffects: {}, generalConditions: {}
+                        })}'>
+                            <i class="fas fa-crosshairs"></i> Aplicar
+                        </button>
+                    </footer>
+                </div>
+            `;
+
+            ChatMessage.create({
+                user: game.user.id,
+                speaker: { alias: "Mestre" },
+                content: content,
+                rolls: [roll]
+            });
+        });
     }
 
+    /**
+     * Atualiza o visual do mostrador de modificadores no rodapé
+     */
+    _updateQRDisplay(html) {
+        // Usa o html passado ou o elemento da janela
+        const root = html || this.element;
+        const total = this._getTotalActiveModifier();
+        const display = root.find('.qr-mod-display');
+        
+        // Formata o texto (+2, -5, 0)
+        const sign = total > 0 ? '+' : '';
+        display.text(`${sign}${total}`);
+        
+        // Remove classes antigas
+        display.removeClass('pos neg');
+        
+        // Adiciona cor
+        if (total > 0) display.addClass('pos');
+        if (total < 0) display.addClass('neg');
+    }
+    /**
+     * Helper: Soma todos os modificadores atualmente selecionados no EM
+     */
+    _getTotalActiveModifier() {
+        let total = 0;
+        
+        // 1. Modificador Manual
+        if (this.selectedModifiers.has("manual")) {
+            total += parseInt(this.manualCache.value) || 0;
+        }
+
+        // 2. Modificadores da Paleta
+        this.selectedModifiers.forEach((mod, key) => {
+            if (key !== "manual") {
+                total += parseInt(mod.value) || 0;
+            }
+        });
+
+        return total;
+    }
     
     // --- LÓGICA DE APLICAÇÃO ---
     async _applyModifiersToActor(actor) {

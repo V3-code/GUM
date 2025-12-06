@@ -66,6 +66,44 @@
             </div>
             {{/each}}
         </div>
+{{!-- FUNDO: ROLADOR RÁPIDO (ATUALIZADO) --}}
+        <div class="quick-rollers">
+            
+            {{!-- 1. ROLADOR DE TESTE (INTEGRADO) --}}
+            <div class="roller-section test-section">
+                <div class="roller-row">
+                    <span class="roller-label">NH</span>
+                    <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
+                    
+                    {{!-- NOVO: Mostrador de Modificador Total --}}
+                    <div class="qr-mod-display" title="Total de Modificadores Ativos (Manual + Paleta)">+0</div>
+
+                    {{!-- Toggle Privado --}}
+                    <button class="qr-toggle-mode active" title="Modo: Apenas para mim">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                    
+                    <button class="qr-btn roll-test" title="Rolar Teste">
+                        <i class="fas fa-dice"></i>
+                    </button>
+                </div>
+                <div class="qr-result-display" style="display:none;"></div>
+            </div>
+
+            {{!-- 2. ROLADOR DE DANO (COM TIPO) --}}
+            <div class="roller-section damage-section">
+                <div class="roller-row">
+                    <span class="roller-label"><i class="fas fa-skull"></i></span>
+                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d+1)" value="1d6">
+                    <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
+                    
+                    <button class="qr-btn roll-damage" title="Rolar Dano">
+                        <i class="fas fa-bolt"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </aside>
 
     {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
