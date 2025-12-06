@@ -275,6 +275,7 @@ export class GumGMScreen extends Application {
         });
     }
 
+    
     // --- LÓGICA DE APLICAÇÃO ---
     async _applyModifiersToActor(actor) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
@@ -380,5 +381,82 @@ export class GumGMScreen extends Application {
             if (i.system.melee_attacks) { Object.values(i.system.melee_attacks).forEach(atk => { const val = type === 'parry' ? atk.final_parry : atk.final_block; if (Number(val) > best) best = Number(val); }); }
         });
         return best || "-"; 
+    }
+/**
+     * Adiciona botões ao cabeçalho da janela (Ao lado do X)
+     */
+    _getHeaderButtons() {
+        const buttons = super._getHeaderButtons();
+        
+        // Botão Exportar
+        buttons.unshift({
+            label: "Exportar Layout",
+            class: "export-config",
+            icon: "fas fa-download",
+            onclick: () => this._exportConfig()
+        });
+
+        // Botão Importar
+        buttons.unshift({
+            label: "Importar Layout",
+            class: "import-config",
+            icon: "fas fa-upload",
+            onclick: () => this._importConfig()
+        });
+
+        return buttons;
+    }
+    /**
+     * Exporta a configuração atual para um arquivo JSON
+     */
+    async _exportConfig() {
+        const config = game.settings.get("gum", "gmScreenConfig");
+        const filename = `gum-gm-screen-config.json`;
+        saveDataToFile(JSON.stringify(config, null, 2), "text/json", filename);
+    }
+
+    /**
+     * Importa um arquivo JSON e substitui a configuração
+     */
+    async _importConfig() {
+        new Dialog({
+            title: "Importar Layout do Escudo",
+            content: `
+                <div class="form-group">
+                    <p class="notes">Isso substituirá todo o layout atual do seu escudo.</p>
+                    <label>Arquivo JSON:</label>
+                    <input type="file" name="import-file" accept=".json">
+                </div>
+            `,
+            buttons: {
+                import: {
+                    label: "Importar",
+                    icon: "<i class='fas fa-file-import'></i>",
+                    callback: async (html) => {
+                        const input = html.find('[name="import-file"]')[0];
+                        if (!input.files[0]) return ui.notifications.warn("Selecione um arquivo.");
+                        
+                        const file = input.files[0];
+                        const text = await file.text();
+                        
+                        try {
+                            const json = JSON.parse(text);
+                            // Validação simples
+                            if (!json.columns || !Array.isArray(json.columns)) {
+                                throw new Error("Formato inválido.");
+                            }
+                            
+                            await game.settings.set("gum", "gmScreenConfig", json);
+                            this.render(true);
+                            ui.notifications.info("Layout do Escudo importado com sucesso!");
+                        } catch (err) {
+                            console.error(err);
+                            ui.notifications.error("Erro ao ler o arquivo JSON.");
+                        }
+                    }
+                }
+            },
+            default: "import"
+        }).render(true);
     }
 }
