@@ -920,8 +920,6 @@ Hooks.on("createItem", async (item, options, userId) => {
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
-// [Em scripts/main.js -> Hooks.once('init', ...)]
-
     Hooks.on("updateCombat", async (combat, changed, options, userId) => {
         
         // ==========================================================
@@ -1607,12 +1605,36 @@ Hooks.on("getSceneControlButtons", (controls) => {
     }
 });
 
-// Hook para atualizar o escudo em tempo real quando atores mudam
-Hooks.on("updateActor", (actor) => {
-    // Só atualiza se o escudo estiver aberto e o ator for relevante
+// ================================================================== //
+//  HOOKS DE ATUALIZAÇÃO DO ESCUDO DO MESTRE (GM SCREEN)
+// ================================================================== //
+
+// Função auxiliar para renderizar apenas se aberto
+function refreshGMScreen() {
     if (game.gum && game.gum.gmScreen && game.gum.gmScreen.rendered) {
-        if (actor.hasPlayerOwner) {
-            game.gum.gmScreen.render(false);
-        }
+        game.gum.gmScreen.render(false);
+    }
+}
+
+// 1. MUDANÇAS NO COMBATE (Turno, Rodada, Ativação)
+Hooks.on("updateCombat", refreshGMScreen);
+
+// 2. CRIAÇÃO E FIM DE COMBATE (Para limpar/popular a lista)
+Hooks.on("createCombat", refreshGMScreen);
+Hooks.on("deleteCombat", refreshGMScreen); // ✅ Resolve o problema da lista não limpar
+
+// 3. MUDANÇAS NOS ATORES (HP, FP, Flags de Modificadores)
+Hooks.on("updateActor", (actor) => {
+    // Renderiza se for PJ ou se houver um combate rolando (para monstros)
+    if (actor.hasPlayerOwner || game.combat) {
+        refreshGMScreen();
     }
 });
+
+// 4. MUDANÇAS NOS TOKENS (Para garantir sincronia visual imediata)
+Hooks.on("updateToken", (tokenDocument) => {
+    if (game.combat) refreshGMScreen();
+});
+
+// 5. MUDANÇAS NA CENA (Adicionar/Remover tokens)
+Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa

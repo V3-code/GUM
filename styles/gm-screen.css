@@ -1,733 +1,345 @@
 /* ================================================================== */
-/* ESCUDO DO MESTRE (GM SCREEN) - DESIGN FINAL REFINADO               */
+/* ESCUDO DO MESTRE (GM SCREEN) - ISOLAMENTO TOTAL                    */
 /* ================================================================== */
 
-/* Container Principal da Janela */
+/* Container Principal */
 .gum.gm-screen .window-content {
     padding: 0;
-    background: #1a1a1a; /* Fundo base escuro */
-    color: #e0e0e0;      /* Texto claro */
+    background: #1a1a1a;
+    color: #e0e0e0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;    /* Impede scroll na janela inteira */
+    overflow: hidden;
 }
 
-/* Grid de Layout (Esquerda Fixa / Direita Flexível) */
-.gm-screen-layout {
+/* Grid de Layout */
+.gum.gm-screen .gm-screen-layout {
     display: grid;
-    grid-template-columns: 320px 1fr; /* Aumentei um pouco a esquerda */
+    grid-template-columns: 320px 1fr;
     height: 100%;
     overflow: hidden;
 }
 
 /* ================================================================== */
-/* COLUNA ESQUERDA: MONITOR DE VITAIS                                 */
+/* COLUNA ESQUERDA: MONITOR                                           */
 /* ================================================================== */
-.monitor-column {
-    background: #151515; /* Mais escuro que o fundo */
+.gum.gm-screen .monitor-column {
+    background: #151515;
     border-right: 1px solid #444;
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
+    z-index: 10;
 }
 
-.gm-screen .column-header {
-    background: linear-gradient(to bottom, #222, #1a1a1a);
-    padding: 10px 12px;
-    font-family: var(--font-secondary, 'Cinzel', serif);
-    font-weight: 700;
-    color: var(--c-accent-gold, #c5a05b);
-    text-transform: uppercase;
+/* --- Abas de Navegação (Renomeado para evitar conflito com Core) --- */
+.gum.gm-screen .gum-monitor-tabs {
+    display: flex;
+    background: #111;
     border-bottom: 1px solid #444;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 2;
+    flex-shrink: 0;
+}
+.gum.gm-screen .gum-monitor-tabs .item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+.gum.gm-screen .gum-monitor-tabs .item:hover { color: #fff; background: #1a1a1a; }
+.gum.gm-screen .gum-monitor-tabs .item.active {
+    color: var(--c-accent-gold, #c5a05b);
+    background: #1a1a1a;
+    border-bottom-color: var(--c-accent-gold, #c5a05b);
 }
 
-.monitor-list {
-    padding: 12px;
+/* --- Área de Scroll --- */
+.gum.gm-screen .monitor-body {
+    flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    flex: 1; /* Ocupa o espaço restante */
 }
 
-/* Card do Personagem */
-.monitor-card {
-    background: #2b2a29;
-    border: 1px solid #444;
-    border-radius: 5px;
-    padding: 8px;
+.gum.gm-screen .monitor-list {
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+/* --- Card do Personagem --- */
+.gum.gm-screen .monitor-card {
+    background: #2b2a29;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     transition: all 0.2s ease;
     position: relative;
 }
-
-/* Efeito de Hover e Seleção */
-.monitor-card:hover {
+.gum.gm-screen .monitor-card:hover {
     border-color: #888;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     transform: translateY(-1px);
 }
 
-/* Topo do Card: Identidade + Barras */
-.monitor-card .card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+/* DESTAQUE DE TURNO (CORRIGIDO) */
+.gum.gm-screen .monitor-card.active-turn {
+    border: 2px solid #4caf50 !important; /* Força a borda verde */
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4) !important;
+    background: rgba(76, 175, 80, 0.1);
+    position: relative;
+    z-index: 2; /* Traz para frente */
 }
+
+.gum.gm-screen .monitor-card.defeated { opacity: 0.5; filter: grayscale(1); }
 
 /* Identidade */
-.actor-identity {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    flex-grow: 1;
-    overflow: hidden;
-}
-.actor-identity img {
-    width: 36px; height: 36px;
-    border-radius: 4px;
-    border: 1px solid #555;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-.actor-identity .actor-name {
-    font-weight: 700;
-    font-size: 1em;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+.gum.gm-screen .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.gum.gm-screen .actor-identity { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; overflow: hidden; }
+.gum.gm-screen .actor-identity img { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #555; object-fit: cover; flex-shrink: 0; }
+.gum.gm-screen .actor-identity .actor-name { font-weight: 700; font-size: 1em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Barras Vitais */
-.vital-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    width: 80px; /* Largura fixa para as barras */
-    flex-shrink: 0;
-}
-.mini-bar {
-    height: 12px;
-    background: #000;
-    border-radius: 6px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid #333;
-}
-.mini-bar .fill { height: 100%; transition: width 0.5s ease; }
-.mini-bar.hp .fill { background: var(--c-accent-green, #389c68); }
-.mini-bar.fp .fill { background: var(--c-accent-blue, #56819c); }
+/* Barras */
+.gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 70px; flex-shrink: 0; }
+.gum.gm-screen .mini-bar { height: 10px; background: #000; border-radius: 5px; position: relative; overflow: hidden; border: 1px solid #333; }
+.gum.gm-screen .mini-bar .fill { height: 100%; transition: width 0.5s ease; }
+.gum.gm-screen .mini-bar.hp .fill { background: var(--c-accent-green, #389c68); }
+.gum.gm-screen .mini-bar.fp .fill { background: var(--c-accent-blue, #56819c); }
 
-/* Zona de Drop / Modificadores Ativos */
-.active-mods-zone {
-    min-height: 28px;
-    background: rgba(0,0,0,0.15);
-    border: 1px dashed #555;
-    border-radius: 3px;
-    padding: 3px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-content: flex-start;
+/* Defesas */
+.gum.gm-screen .passive-defenses {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 3px; border-top: 1px solid rgba(255,255,255,0.05);
 }
-.hint-text {
-    font-size: 0.75em;
-    color: #666;
-    width: 100%;
-    text-align: center;
-    font-style: italic;
-    margin-top: 4px;
-}
+.gum.gm-screen .def-tag { font-size: 0.8em; color: #ccc; font-weight: 500; }
+.gum.gm-screen .def-tag i { color: #888; margin-right: 2px; }
+.gum.gm-screen .def-tag.init { color: var(--c-accent-gold, #c5a05b); font-weight: 700; }
+.gum.gm-screen .def-tag.init i { color: var(--c-accent-gold, #c5a05b); }
 
-/* Tags de Modificador Ativo */
-.active-mod-tag {
-    background: var(--c-accent-blue, #56819c);
-    color: #fff;
-    font-size: 0.8em;
-    padding: 2px 6px;
-    border-radius: 3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+/* Tags Ativas */
+.gum.gm-screen .active-mods-zone {
+    min-height: 24px; background: rgba(0,0,0,0.15); border: 1px dashed #555;
+    border-radius: 3px; padding: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
+}
+.gum.gm-screen .active-mod-tag {
+    background: var(--c-accent-blue, #56819c); color: #fff; font-size: 0.8em;
+    padding: 1px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px;
     border: 1px solid rgba(255,255,255,0.2);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
-.active-mod-tag strong { color: #ffeb3b; } /* Amarelo para o valor */
-.active-mod-tag .remove-mod {
-    cursor: pointer;
-    font-size: 0.9em;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.active-mod-tag .remove-mod:hover { opacity: 1; color: #ffcccc; }
+.gum.gm-screen .active-mod-tag strong { color: #ffeb3b; }
+.gum.gm-screen .active-mod-tag .remove-mod { cursor: pointer; opacity: 0.7; }
+.gum.gm-screen .active-mod-tag .remove-mod:hover { opacity: 1; color: #ffcccc; }
+.gum.gm-screen .hint-text { font-size: 0.75em; color: #666; width: 100%; text-align: center; font-style: italic; margin-top: 4px; }
 
-/* ================================================================== */
-/* COLUNA DIREITA: PAINEL DE CONTROLE                                 */
-/* ================================================================== */
-.controls-column {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: #222;
-}
 
-/* Abas de Navegação */
-.gm-screen .screen-tabs {
-    flex: 0 0 auto; /* Não cresce nem encolhe */
-    display: flex;
-    background: #181818;
-    border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
-    padding: 0 10px;
+/* --- BARRA MANUAL (ESQUERDA) --- */
+.gum.gm-screen .manual-mod-section { padding: 8px 10px; background: #181818; border-bottom: 1px solid #444; flex-shrink: 0; }
+.gum.gm-screen .manual-mod-toolbar {
+    background: #2b2a29; padding: 6px; border: 1px solid #444; border-radius: 4px;
+    display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
 }
-.gm-screen .screen-tabs .item {
-    padding: 10px 15px;
-    color: #888;
-    cursor: pointer;
-    border-right: 1px solid #333;
-    font-weight: 600;
+.gum.gm-screen .manual-mod-toolbar.active { background: rgba(197, 160, 91, 0.15); border-color: var(--c-accent-gold, #c5a05b); box-shadow: 0 0 10px rgba(197, 160, 91, 0.2); }
+.gum.gm-screen .manual-name {
+    width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc;
+    border-radius: 3px; padding: 3px 6px; font-size: 0.9em;
+}
+.gum.gm-screen .manual-name:focus { border-color: var(--c-accent-gold, #c5a05b); color: #fff; }
+.gum.gm-screen .manual-row-middle { display: flex; gap: 5px; height: 28px; }
+.gum.gm-screen .value-controls {
+    display: flex; align-items: center; background: rgba(0,0,0,0.3);
+    border: 1px solid #555; border-radius: 3px; flex-grow: 1;
+}
+.gum.gm-screen .manual-mod-toolbar input[type="number"] {
+    background: transparent; border: none; color: var(--c-accent-gold, #c5a05b);
+    font-weight: 700; width: 100%; text-align: center; font-size: 1.1em;
+}
+.gum.gm-screen .step-btn {
+    background: transparent; border: none; color: #777; cursor: pointer;
+    padding: 0 8px; height: 100%; display: flex; align-items: center;
+}
+.gum.gm-screen .step-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.gum.gm-screen .activate-manual-btn {
+    width: 32px; background: #333; color: #888; border: 1px solid #555;
+    border-radius: 3px; cursor: pointer; font-size: 1.1em;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.gum.gm-screen .activate-manual-btn:hover { color: #fff; border-color: #fff; }
+.gum.gm-screen .manual-mod-toolbar.active .activate-manual-btn {
+    background: var(--c-accent-gold, #c5a05b); color: #000; border-color: var(--c-accent-gold, #c5a05b);
+}
+.gum.gm-screen .manual-presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.gum.gm-screen .preset-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa;
+    border-radius: 2px; padding: 2px 0; font-size: 0.75em; font-weight: 600; cursor: pointer;
+}
+.gum.gm-screen .preset-btn:hover { background: #fff; color: #000; }
+
+/* --- ROLADOR RÁPIDO (RODAPÉ) --- */
+.gum.gm-screen .quick-rollers {
+    background: #151515; border-top: 1px solid #444; padding: 8px;
+    display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; z-index: 5;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+}
+.gum.gm-screen .roller-row { display: flex; align-items: center; gap: 4px; }
+.gum.gm-screen .roller-label { font-size: 0.75em; font-weight: 700; color: #888; width: 25px; text-align: center; }
+.gum.gm-screen .quick-rollers input {
+    background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff;
+    border-radius: 3px; height: 26px; font-size: 0.9em; text-align: center;
+}
+.gum.gm-screen .quick-rollers input:focus { border-color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .qr-nh { width: 40px; font-weight: 700; color: var(--c-accent-gold, #c5a05b) !important; }
+.gum.gm-screen .qr-formula { flex-grow: 1; text-align: left !important; padding-left: 5px; }
+.gum.gm-screen .qr-type { width: 45px; font-size: 0.8em !important; color: #aaa !important; }
+.gum.gm-screen .qr-mod-display {
+    min-width: 30px; height: 26px; padding: 0 8px; border-radius: 3px;
+    background: rgba(0,0,0,0.5); border: 1px solid #555; color: #888;
+    font-size: 0.9em; font-weight: 700; display: flex; align-items: center;
+    justify-content: center; cursor: help;
+}
+.gum.gm-screen .qr-mod-display.pos { color: #4caf50; border-color: #2e7d32; background: rgba(46, 204, 113, 0.1); }
+.gum.gm-screen .qr-mod-display.neg { color: #e57373; border-color: #c62828; background: rgba(229, 57, 53, 0.1); }
+.gum.gm-screen .qr-btn, .gum.gm-screen .qr-toggle-mode {
+    width: 30px; height: 26px; background: #333; border: 1px solid #555; color: #ccc;
+    border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
 }
-.gm-screen .screen-tabs .item:hover { color: #fff; background: #252525; }
-.gm-screen .screen-tabs .item.active {
-    color: var(--c-accent-gold, #c5a05b);
-    background: #2b2a29;
-    border-bottom: none; /* A borda inferior é coberta */
+.gum.gm-screen .qr-btn:hover { background: #eee; color: #000; border-color: #fff; }
+.gum.gm-screen .qr-toggle-mode { background: transparent; border: none; }
+.gum.gm-screen .qr-toggle-mode:hover { color: #fff; }
+.gum.gm-screen .qr-toggle-mode.active { color: var(--c-accent-blue, #56819c); }
+.gum.gm-screen .roll-test:hover { background: var(--c-accent-blue, #56819c); border-color: var(--c-accent-blue, #56819c); }
+.gum.gm-screen .roll-damage:hover { background: var(--c-accent-red, #a53541); border-color: var(--c-accent-red, #a53541); }
+.gum.gm-screen .qr-result-display {
+    margin-top: 4px; background: rgba(0,0,0,0.4); border: 1px solid #333;
+    border-radius: 3px; padding: 4px 8px; font-size: 0.85em; text-align: center;
+    color: #fff; animation: fadeIn 0.2s ease;
 }
+.gum.gm-screen .qr-result-display strong { font-size: 1.1em; }
+.gum.gm-screen .qr-result-display.success { border-left: 3px solid var(--c-accent-green, #389c68); }
+.gum.gm-screen .qr-result-display.failure { border-left: 3px solid var(--c-accent-red, #a53541); }
 
-/* Corpo da Aba */
-.gm-screen .screen-body {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #555 #222;
+/* --- CONTROLES DE COMBATE (RODAPÉ) --- */
+.gum.gm-screen .combat-controls {
+    display: flex; justify-content: space-between; padding: 8px 10px;
+    background: #111; border-top: 1px solid #444; margin-top: auto; gap: 10px;
 }
-
-/* Grid de 3 Colunas */
-.modifiers-dashboard .modular-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    height: 100%;
+.gum.gm-screen .combat-btn {
+    flex: 1; background: #252525; border: 1px solid #444; color: #ccc;
+    border-radius: 3px; padding: 5px; cursor: pointer; transition: all 0.2s;
 }
-
-.modular-column {
-    display: flex;
-    flex-direction: column;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 5px;
-    height: 100%;
-    overflow-y: auto;
-}
-
-/* Ferramentas da Coluna */
-.column-tools {
-    text-align: center;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 5px;
-}
-.add-group-btn {
-    width: 100%;
-    background: #222;
-    border: 1px dashed #555;
-    color: #888;
-    font-size: 0.8em;
-    cursor: pointer;
-    padding: 4px;
-}
-.add-group-btn:hover {
-    border-color: var(--c-accent-gold);
-    color: var(--c-accent-gold);
-}
-
-/* Grupo de Modificadores */
-.modifier-group {
-    background: #2b2a29;
-    border: 1px solid #444;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-.modifier-group .group-header {
-    background: #181818;
-    padding: 4px 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #333;
-}
-.group-title {
-    font-weight: 700;
-    font-size: 0.85em;
-    color: var(--c-accent-gold);
-    text-transform: uppercase;
-}
-.group-actions a {
-    color: #666;
-    font-size: 0.85em;
-    margin-left: 5px;
-    cursor: pointer;
-}
-.group-actions a:hover { color: #fff; }
-
-/* Área de Drop */
-.group-content-area {
-    min-height: 30px;
-    padding: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.empty-group-hint {
-    text-align: center;
-    font-size: 0.75em;
-    color: #555;
-    font-style: italic;
-    padding: 5px;
-}
+.gum.gm-screen .combat-btn:hover { background: #333; color: #fff; }
+.gum.gm-screen .combat-btn.next-turn:hover { background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
+.gum.gm-screen .combat-btn.prev-turn:hover { color: var(--c-accent-gold, #c5a05b); border-color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .combat-btn.end-combat:hover { color: #e57373; border-color: #e57373; }
 
 /* ================================================================== */
-/* ITEM MODIFICADOR NO ESCUDO DO MESTRE                               */
+/* COLUNA DIREITA: DASHBOARD                                          */
 /* ================================================================== */
-/* Item Modificador (Visual Dark - Isolado) */
-.palette-mod {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
-    /* Cores Dark (Fundo Escuro) */
-    background: #333;
-    border: 1px solid #555;
-    color: #ccc; /* Texto claro */
-    
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 0.9em;
-    font-weight: 500;
+.gum.gm-screen .controls-column {
+    display: flex; flex-direction: column; height: 100%; background: #222;
 }
 
-/* Hover: Levemente mais claro */
-.palette-mod:hover {
-    background: #444;
-    color: #fff;
-    border-color: #777;
-    transform: translateX(2px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+/* Barra de Ferramentas da Direita */
+.gum.gm-screen .palette-tools-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #181818; border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
+    padding-right: 10px; flex-shrink: 0;
 }
+/* Abas Renomeadas */
+.gum.gm-screen .gum-screen-tabs { border-bottom: none; flex-grow: 1; display: flex; }
+.gum.gm-screen .gum-screen-tabs .item {
+    padding: 10px 15px; color: #888; cursor: pointer; border-right: 1px solid #333; font-weight: 600;
+}
+.gum.gm-screen .gum-screen-tabs .item:hover { color: #fff; background: #252525; }
+.gum.gm-screen .gum-screen-tabs .item.active { color: var(--c-accent-gold, #c5a05b); background: #2b2a29; }
 
-/* Selecionado: Dourado com texto escuro */
-.palette-mod.active {
-    background: var(--c-accent-gold, #c5a05b);
-    color: #111; /* Texto escuro no fundo dourado */
-    border-color: #fff;
-    font-weight: 700;
-    box-shadow: 0 0 8px rgba(197, 160, 91, 0.5);
-}
-
-/* Lado Esquerdo (Ícone + Nome) - ESCOPO CORRIGIDO */
-.palette-mod .mod-left {
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
-    overflow: hidden; 
-    flex-grow: 1;
-}
-
-.palette-mod .mod-icon { 
-    width: 18px; 
-    height: 18px; 
-    border-radius: 2px; 
-    flex-shrink: 0; 
-    opacity: 0.8; /* Levemente transparente no escuro */
-}
-
-.palette-mod .mod-name { 
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--c-text-lightest);
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-}
-
-/* Lado Direito (Valor + Controles) - ESCOPO CORRIGIDO */
-.palette-mod .mod-right {
-    display: flex; 
-    align-items: center; 
-    gap: 6px;
-}
-
-/* Valor do Modificador - ESCOPO CORRIGIDO */
-.palette-mod .mod-val {
-    font-size: 0.85em; 
-    font-weight: 700; 
-    background: rgba(0,0,0,0.3); /* Fundo mais escuro sobre o cinza */
-    padding: 0 5px; 
-    border-radius: 2px; 
-    min-width: 20px; 
-    text-align: center;
-}
-
-/* Penalidade (Vermelho Claro para ler no escuro) */
-.palette-mod .mod-val.neg { 
-    color: #ffcccc; 
-    background: rgba(192, 57, 43, 0.3);
-}
-
-/* Ajuste de cor do valor quando selecionado (Fundo Dourado) */
-.palette-mod.active .mod-val {
-    background: rgba(0,0,0,0.15);
-    color: #000;
-}
-.palette-mod.active .mod-val.neg {
-    color: #a53541; /* Vermelho escuro para ler no dourado */
-    background: rgba(255,255,255,0.2);
-}
-
-/* Controles no Hover (Olho / X) - ESCOPO CORRIGIDO */
-.palette-mod .mod-hover-controls {
-    display: none; /* Escondido por padrão */
-    gap: 6px;
-    align-items: center;
-}
-.palette-mod:hover .mod-hover-controls {
-    display: flex;
-}
-
-/* Ícones de Controle - ESCOPO CORRIGIDO */
-.palette-mod .mod-quick-view {
-    color: #888;
-    font-size: 0.9em;
-    transition: color 0.2s;
-}
-.palette-mod .mod-quick-view:hover { 
-    color: var(--c-accent-gold); 
-}
-
-.palette-mod .delete-mod-btn {
-    color: #888;
-    font-size: 0.9em;
-}
-.palette-mod .delete-mod-btn:hover { 
-    color: #ff6b6b; /* Vermelho vivo */
-}
-
-/* ================================================================== */
-/* ANIMAÇÕES E FEEDBACK                                               */
-/* ================================================================== */
-@keyframes flash-green {
-    0% { background-color: rgba(46, 204, 113, 0.6); }
-    100% { background-color: #2b2a29; }
-}
-.flash-success {
-    animation: flash-green 0.6s ease-out;
-}
-
-/* ================================================================== */
-/* BARRA DE MODIFICADOR MANUAL (COLUNA ESQUERDA)                      */
-/* ================================================================== */
-
-.manual-mod-section {
-    padding: 10px;
-    border-bottom: 1px solid #444;
-    background: #181818;
-}
-
-.manual-mod-toolbar {
-    background: #2b2a29;
-    padding: 8px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: all 0.3s ease;
-}
-
-/* Estado Ativo (Selecionado) */
-.manual-mod-toolbar.active {
-    background: rgba(197, 160, 91, 0.15);
-    border-color: var(--c-accent-gold);
-    box-shadow: 0 0 10px rgba(197, 160, 91, 0.2);
-}
-
-/* Input de Nome (Motivo) */
-.manual-name {
-    width: 100%;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #555;
-    color: #ccc;
-    border-radius: 3px;
-    padding: 4px 6px;
-    font-size: 0.9em;
-}
-.manual-name:focus {
-    border-color: var(--c-accent-gold);
-    color: #fff;
-}
-
-/* Linha do Meio (Controles de Valor + Ativar) */
-.manual-row-middle {
-    display: flex;
-    gap: 5px;
-    height: 30px;
-}
-
-.value-controls {
-    display: flex;
-    align-items: center;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #555;
-    border-radius: 3px;
-    flex-grow: 1;
-}
-
-.manual-mod-toolbar input[type="number"] {
-    background: transparent;
-    border: none;
-    color: var(--c-accent-gold);
-    font-weight: 700;
-    width: 100%;
-    text-align: center;
-    font-size: 1.1em;
-}
-
-.step-btn {
-    background: transparent;
-    border: none;
-    color: #777;
-    cursor: pointer;
-    padding: 0 8px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-}
-.step-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
-
-/* Botão de Mira (Ativar) */
-.activate-manual-btn {
-    width: 36px;
-    background: #333;
-    color: #888;
-    border: 1px solid #555;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 1.1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-.activate-manual-btn:hover {
-    color: #fff;
-    border-color: #fff;
-}
-/* Quando ativo, o botão fica dourado */
-.manual-mod-toolbar.active .activate-manual-btn {
-    background: var(--c-accent-gold);
-    color: #000;
-    border-color: var(--c-accent-gold);
-    box-shadow: 0 0 5px var(--c-accent-gold);
-}
-
-/* Linha de Baixo (Presets) */
-.manual-presets {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 3px;
-}
-
-.preset-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid #444;
-    color: #aaa;
-    border-radius: 2px;
-    padding: 2px 0;
-    font-size: 0.75em;
-    font-weight: 600;
-    cursor: pointer;
-}
-.preset-btn:hover {
-    background: #fff;
-    color: #000;
-}
-
-/* ================================================================== */
-/* BARRA DE FERRAMENTAS DA PALETA (NAVEGAÇÃO + BUSCA)                 */
-/* ================================================================== */
-
-.palette-tools-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #181818;
-    border-bottom: 2px solid var(--c-accent-gold);
-    padding-right: 10px;
-}
-
-/* Abas (Reajuste) */
-.gm-screen .screen-tabs { border-bottom: none; flex-grow: 1; }
-
-/* Busca e Limpeza */
-.palette-actions {
-    display: flex; align-items: center; gap: 8px;
-}
-
-.search-wrapper {
-    position: relative;
-}
-.mod-search {
+/* Busca */
+.gum.gm-screen .palette-actions { display: flex; align-items: center; gap: 8px; }
+.gum.gm-screen .search-wrapper { position: relative; }
+.gum.gm-screen .mod-search {
     background: #252525; border: 1px solid #444; color: #ccc;
     padding: 2px 5px 2px 22px; border-radius: 10px; width: 120px; font-size: 0.8em;
     transition: width 0.2s;
 }
-.mod-search:focus { width: 180px; border-color: var(--c-accent-gold); color: #fff; }
-.search-wrapper i {
-    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
-    font-size: 0.7em; color: #666;
+.gum.gm-screen .mod-search:focus { width: 180px; border-color: var(--c-accent-gold, #c5a05b); color: #fff; }
+.gum.gm-screen .search-wrapper i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: #666; }
+.gum.gm-screen .clear-selection-btn { background: transparent; border: none; color: #666; cursor: pointer; font-size: 0.9em; transition: color 0.2s; }
+.gum.gm-screen .clear-selection-btn:hover { color: #ff6b6b; }
+
+/* Corpo Principal */
+.gum.gm-screen .screen-body {
+    flex: 1; padding: 15px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #555 #222;
 }
 
-.clear-selection-btn {
-    background: transparent; border: none; color: #666; cursor: pointer;
-    font-size: 0.9em; transition: color 0.2s;
+/* Grid de 3 Colunas */
+.gum.gm-screen .modifiers-dashboard .modular-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; height: 100%;
 }
-.clear-selection-btn:hover { color: #ff6b6b; }
-
-/* Container do Rodapé */
-.quick-rollers {
-    background: #111;
-    border-top: 1px solid #444;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex-shrink: 0; /* Garante que não suma */
-    z-index: 5;
+.gum.gm-screen .modular-column {
+    display: flex; flex-direction: column; background: rgba(0,0,0,0.2);
+    border: 1px solid #444; border-radius: 4px; padding: 5px; height: 100%; overflow-y: auto;
 }
-
-/* ================================================================== */
-/* ROLADOR RÁPIDO (RODAPÉ ESQUERDO)                                   */
-/* ================================================================== */
-
-.quick-rollers {
-    background: #151515;
-    border-top: 1px solid #444;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
-    z-index: 5;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+.gum.gm-screen .column-tools { text-align: center; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+.gum.gm-screen .add-group-btn {
+    width: 100%; background: #222; border: 1px dashed #555; color: #888;
+    font-size: 0.8em; cursor: pointer; padding: 4px;
 }
+.gum.gm-screen .add-group-btn:hover { border-color: var(--c-accent-gold, #c5a05b); color: var(--c-accent-gold, #c5a05b); }
 
-.roller-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+/* Grupo */
+.gum.gm-screen .modifier-group {
+    background: #2b2a29; border: 1px solid #444; border-radius: 4px; margin-bottom: 10px; overflow: hidden;
 }
-
-/* Labels e Ícones Fixos */
-.roller-label {
-    font-size: 0.75em;
-    font-weight: 700;
-    color: #888;
-    width: 25px;
-    text-align: center;
+.gum.gm-screen .modifier-group .group-header {
+    background: #181818; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;
 }
+.gum.gm-screen .group-title { font-weight: 700; font-size: 0.85em; color: var(--c-accent-gold, #c5a05b); text-transform: uppercase; }
+.gum.gm-screen .group-actions a { color: #666; font-size: 0.85em; margin-left: 5px; cursor: pointer; }
+.gum.gm-screen .group-actions a:hover { color: #fff; }
+.gum.gm-screen .group-content-area { min-height: 30px; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+.gum.gm-screen .empty-group-hint { text-align: center; font-size: 0.75em; color: #555; font-style: italic; padding: 5px; }
 
-/* Inputs Gerais */
-.quick-rollers input {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #555;
-    color: #fff;
-    border-radius: 3px;
-    height: 26px;
-    font-size: 0.9em;
-    text-align: center;
-}
-.quick-rollers input:focus { border-color: var(--c-accent-gold); }
-
-/* Tamanhos Específicos */
-.qr-nh { width: 40px; font-weight: 700; color: var(--c-accent-gold) !important; }
-.qr-formula { flex-grow: 1; text-align: left !important; padding-left: 5px; }
-.qr-type { width: 45px; font-size: 0.8em !important; color: #aaa !important; }
-
-/* Botões de Ação */
-.qr-btn {
-    width: 30px; height: 26px;
+/* Item da Paleta */
+.gum.gm-screen .palette-mod {
+    display: flex; justify-content: space-between; align-items: center;
     background: #333; border: 1px solid #555; color: #ccc;
-    border-radius: 3px; cursor: pointer;
-    transition: all 0.2s;
+    padding: 4px 8px; border-radius: 3px; cursor: pointer; transition: all 0.15s ease;
+    font-size: 0.9em; font-weight: 500;
 }
-.qr-btn:hover { background: #eee; color: #000; border-color: #fff; }
-
-/* Botão Toggle (Olho) */
-.qr-toggle-mode {
-    width: 26px; height: 26px;
-    background: transparent; border: none; color: #555;
-    cursor: pointer; font-size: 0.9em;
-}
-.qr-toggle-mode:hover { color: #fff; }
-/* Quando ativo (Modo Privado/Secreto) */
-.qr-toggle-mode.active { color: var(--c-accent-blue, #56819c); }
-
-/* Área de Resultado Local (Private) */
-.qr-result-display {
-    margin-top: 4px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid #333;
-    border-radius: 3px;
-    padding: 4px 8px;
-    font-size: 0.85em;
-    text-align: center;
-    color: #fff;
-    animation: fadeIn 0.2s ease;
-}
-.qr-result-display strong { font-size: 1.1em; }
-.qr-result-display.success { border-left: 3px solid var(--c-accent-green); }
-.qr-result-display.failure { border-left: 3px solid var(--c-accent-red); }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
-/* Mostrador de Modificadores (Live Update) */
-.qr-mod-display {
-    min-width: 30px;
-    height: 26px;
-    padding: 0 8px;
-    border-radius: 3px;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid #555;
-    color: #888; /* Cor neutra padrão */
-    font-size: 0.9em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    cursor: help;
+.gum.gm-screen .palette-mod:hover { background: #444; color: #fff; border-color: #777; transform: translateX(2px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+.gum.gm-screen .palette-mod.active {
+    background: var(--c-accent-gold, #c5a05b); color: #111; border-color: #fff; font-weight: 700; box-shadow: 0 0 8px rgba(197, 160, 91, 0.5);
 }
 
-/* Cores Dinâmicas (Aplicadas via JS) */
-.qr-mod-display.pos {
-    color: #4caf50; /* Verde */
-    border-color: #2e7d32;
-    background: rgba(46, 204, 113, 0.1);
+.gum.gm-screen .mod-left { display: flex; align-items: center; gap: 6px; overflow: hidden; flex-grow: 1; }
+.gum.gm-screen .mod-icon { width: 18px; height: 18px; border-radius: 2px; flex-shrink: 0; opacity: 0.8; }
+.gum.gm-screen .mod-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.gum.gm-screen .mod-right { display: flex; align-items: center; gap: 6px; }
+.gum.gm-screen .mod-val {
+    font-size: 0.85em; font-weight: 700; background: rgba(0,0,0,0.3); padding: 0 5px; border-radius: 2px; min-width: 20px; text-align: center;
 }
-.qr-mod-display.neg {
-    color: #e57373; /* Vermelho */
-    border-color: #c62828;
-    background: rgba(229, 57, 53, 0.1);
-}
+.gum.gm-screen .mod-val.neg { color: #ffcccc; background: rgba(192, 57, 43, 0.3); }
+.gum.gm-screen .palette-mod.active .mod-val { background: rgba(0,0,0,0.15); color: #000; }
+.gum.gm-screen .palette-mod.active .mod-val.neg { color: #a53541; background: rgba(255,255,255,0.2); }
+
+.gum.gm-screen .mod-hover-controls { display: none; gap: 6px; align-items: center; }
+.gum.gm-screen .palette-mod:hover .mod-hover-controls { display: flex; }
+.gum.gm-screen .mod-quick-view { color: #888; font-size: 0.9em; transition: color 0.2s; }
+.gum.gm-screen .mod-quick-view:hover { color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .delete-mod-btn { color: #888; font-size: 0.9em; }
+.gum.gm-screen .delete-mod-btn:hover { color: #ff6b6b; }
+
+@keyframes flash-green { 0% { background-color: rgba(46, 204, 113, 0.6); } 100% { background-color: #2b2a29; } }
+.gum.gm-screen .flash-success { animation: flash-green 0.6s ease-out; }

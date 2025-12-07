@@ -21,39 +21,64 @@ export class GumGMScreen extends Application {
             height: 750,
             resizable: true,
             classes: ["gum", "gm-screen"],
-            tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" }],
+            tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" },
+                { navSelector: ".monitor-tabs", contentSelector: ".monitor-body", initial: "characters" }
+            ],
             dragDrop: [{ dragSelector: ".palette-mod", dropSelector: ".group-content-area" }]
         });
     }
 
-    async getData() {
-        // 1. MONITOR (Esquerda)
+async getData() {
+        // 1. DADOS DO POOL (Personagens de Jogadores)
+        // Busca apenas atores de jogadores
         const actors = game.actors.filter(a => a.type === 'character' && a.hasPlayerOwner);
-        const monitorData = actors.map(actor => {
-            const attr = actor.system.attributes;
-            return {
-                id: actor.id,
-                name: actor.name,
-                img: actor.img,
-                hp: { value: attr.hp.value, max: attr.hp.max, percent: Math.min(100, (attr.hp.value / attr.hp.max) * 100) },
-                fp: { value: attr.fp.value, max: attr.fp.max, percent: Math.min(100, (attr.fp.value / attr.fp.max) * 100) },
-                defenses: {
-                    dodge: attr.dodge.final,
-                    parry: this._getBestDefense(actor, 'parry'),
-                    block: this._getBestDefense(actor, 'block')
-                },
-                activeGMMods: actor.getFlag("gum", "gm_modifiers") || []
-            };
-        });
+        const monitorData = actors.map(actor => this._prepareActorData(actor));
         monitorData.sort((a, b) => a.name.localeCompare(b.name));
 
-        // 2. DASHBOARD (Direita)
-        const config = game.settings.get("gum", "gmScreenConfig");
+        // 2. DADOS DO COMBATE (Iniciativa)
+        let combatData = [];
+        const combat = game.combat;
         
-        // Verifica se o modo manual está ativo no MAP
-        const isManualActive = this.selectedModifiers.has("manual");
+        if (combat && combat.combatants.size > 0) {
+            combatData = combat.turns.map(c => {
+                let actor = c.actor;
+                
+                // --- CORREÇÃO DE SINCRONIA VISUAL ---
+                // Se o ator não for um token sintético (ou seja, é um PJ Linkado),
+                // forçamos o uso da instância global do game.actors.
+                // Isso garante que os modificadores aplicados na aba 'PJs' apareçam aqui instantaneamente.
+                if (actor && !actor.isToken) {
+                    actor = game.actors.get(actor.id) || actor;
+                }
 
-        // Enriquece os itens e marca visualmente se estão selecionados
+                if (!actor) return null; 
+                
+                // Prepara os dados base (Lê HP, FP e Modificadores do ator correto)
+                const data = this._prepareActorData(actor);
+                
+                // Adiciona dados específicos do combate
+                data.combatantId = c.id;
+                data.tokenId = c.tokenId; // Essencial para identificar o token na cena
+                
+                // --- AJUSTE DE INICIATIVA (5 CASAS DECIMAIS) ---
+                if (c.initiative !== null && c.initiative !== undefined) {
+                    // toFixed(5) fixa 5 casas. Number() remove zeros extras à direita.
+                    // Ex: 14.20000 vira 14.2
+                    data.initiative = Number(c.initiative.toFixed(5));
+                } else {
+                    data.initiative = "-";
+                }
+
+                data.isTurn = combat.combatant?.id === c.id; 
+                data.isHidden = c.hidden;
+                data.isDefeated = c.isDefeated;
+                
+                return data;
+            }).filter(c => c !== null);
+        }
+
+        // 3. DASHBOARD (Direita) - Configuração
+        const config = game.settings.get("gum", "gmScreenConfig");
         for (const col of config.columns) {
             for (const group of col.groups) {
                 group.enrichedItems = [];
@@ -63,7 +88,6 @@ export class GumGMScreen extends Application {
                         if (item) {
                             const itemData = item.toObject();
                             itemData.uuid = itemUuid;
-                            // O HBS vai ler isso para adicionar a classe .active
                             itemData.isSelected = this.selectedModifiers.has(itemUuid);
                             group.enrichedItems.push(itemData);
                         }
@@ -74,136 +98,44 @@ export class GumGMScreen extends Application {
 
         return {
             actors: monitorData,
+            combatants: combatData,
+            hasCombat: !!combat, 
             columns: config.columns,
-            // Passa os estados para o template
-            isManualActive: isManualActive,
+            isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache
         };
     }
 
-    activateListeners(html) {
+    /**
+     * Helper para extrair dados vitais de um ator (Reuso de código)
+     */
+    _prepareActorData(actor) {
+        const attr = actor.system.attributes;
+        return {
+            id: actor.id,
+            name: actor.name,
+            img: actor.img,
+            hp: { value: attr.hp.value, max: attr.hp.max, percent: Math.min(100, Math.max(0, (attr.hp.value / attr.hp.max) * 100)) },
+            fp: { value: attr.fp.value, max: attr.fp.max, percent: Math.min(100, Math.max(0, (attr.fp.value / attr.fp.max) * 100)) },
+            defenses: {
+                dodge: attr.dodge.final,
+                parry: this._getBestDefense(actor, 'parry'),
+                block: this._getBestDefense(actor, 'block')
+            },
+            activeGMMods: actor.getFlag("gum", "gm_modifiers") || []
+        };
+    }
+activateListeners(html) {
         super.activateListeners(html);
+        
+        // Atualiza display do rolador assim que abre
         this._updateQRDisplay(html);
 
-        
-        
-// Botões de Passo (+/-)
-        html.find('.step-btn').click(ev => {
-            ev.preventDefault();
-            const action = $(ev.currentTarget).data('action');
-            let current = parseInt(this.manualCache.value) || 0;
-            
-            if (action === 'inc') current += 1;
-            if (action === 'dec') current -= 1;
-            
-            this.manualCache.value = current;
-            
-            // Atualiza visualmente sem re-renderizar tudo
-            html.find('.manual-value').val(current);
-            
-            // Se estiver ativo, atualiza a seleção
-            if (this.selectedModifiers.has("manual")) {
-                this.selectedModifiers.get("manual").value = current;
-            }
-            this._updateQRDisplay(html);
-        });
-
-        // Botões de Preset (-6, +4...)
-        html.find('.preset-btn').click(ev => {
-            ev.preventDefault();
-            const val = parseInt($(ev.currentTarget).data('val'));
-            this.manualCache.value = val;
-            
-            html.find('.manual-value').val(val);
-            
-            // Ativa automaticamente o modo manual ao clicar num preset
-            this.selectedModifiers.clear(); // Limpa paleta
-            this.selectedModifiers.set("manual", { 
-                name: this.manualCache.name, 
-                value: val, 
-                isManual: true 
-            });
-            this.render(false);
-        });
-
-        // Input Manual (Nome/Valor)
-        html.find('.manual-name').on('input', ev => {
-            this.manualCache.name = ev.target.value;
-            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").name = ev.target.value;
-        });
-        html.find('.manual-value').on('change', ev => { // Use change para inputs manuais
-            this.manualCache.value = parseInt(ev.target.value) || 0;
-            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = this.manualCache.value;
-            this._updateQRDisplay(html);
-        });
-
-        // Botão Ativar Manual
-        html.find('.activate-manual-btn').click(ev => {
-            ev.preventDefault();
-            if (this.selectedModifiers.has("manual")) {
-                this.selectedModifiers.delete("manual");
-            } else {
-                this.selectedModifiers.clear();
-                this.selectedModifiers.set("manual", { 
-                    name: this.manualCache.name, 
-                    value: this.manualCache.value,
-                    isManual: true
-                });
-            }
-            this.render(false);
-        });
-
-        // --- 2. FERRAMENTAS DA PALETA (BUSCA & LIMPEZA) ---
-
-        // Limpar Seleção
-        html.find('.clear-selection-btn').click(ev => {
-            ev.preventDefault();
-            this.selectedModifiers.clear();
-            this.render(false);
-        });
-
-        // Busca (Filtro em Tempo Real)
-        html.find('.mod-search').on('keyup', ev => {
-            const query = ev.target.value.toLowerCase();
-            const items = html.find('.palette-mod');
-
-            items.each((i, el) => {
-                const name = $(el).find('.mod-name').text().toLowerCase();
-                // Mostra se o nome der match
-                if (name.includes(query)) {
-                    $(el).show();
-                } else {
-                    $(el).hide();
-                }
-            });
-        });
-
-        // --- MODIFICADOR DA PALETA ---
-
-        html.find('.palette-mod').click(ev => {
-            ev.preventDefault();
-            if ($(ev.target).closest('.mod-hover-controls').length) return;
-
-            const btn = $(ev.currentTarget);
-            const modUuid = btn.data('uuid');
-            const modValue = btn.data('value');
-            const modName = btn.find('.mod-name').text().trim();
-
-            // Se clicar na paleta, remove o Manual automaticamente
-            this.selectedModifiers.delete("manual");
-
-            if (this.selectedModifiers.has(modUuid)) {
-                this.selectedModifiers.delete(modUuid);
-            } else {
-                this.selectedModifiers.set(modUuid, { name: modName, value: modValue });
-            }
-            this.render(false); // Redesenha para manter o visual syncado
-        });
-
-
-        // --- APLICAÇÃO (Clique no Personagem) ---
-        
+        // ===========================================================
+        // 1. APLICAÇÃO DE MODIFICADOR (CLIQUE NO CARD)
+        // ===========================================================
         html.find('.monitor-card').click(async ev => {
+            // Ignora cliques em botões internos (remover, link, etc)
             if ($(ev.target).closest('.remove-mod, .actor-identity').length) return;
             
             // Se nada selecionado, não faz nada
@@ -211,10 +143,25 @@ export class GumGMScreen extends Application {
 
             const card = $(ev.currentTarget);
             const actorId = card.data('actor-id');
-            const actor = game.actors.get(actorId);
+            const tokenId = card.data('token-id'); // IMPORTANTE: Pega o Token ID se existir
 
+            // --- BUSCA INTELIGENTE (Token > Ator) ---
+            let actor;
+
+            // 1. Tenta pegar pelo Token na Cena Atual (Prioridade para Monstros/Combate)
+            if (tokenId) {
+                const token = canvas.tokens.get(tokenId);
+                if (token) actor = token.actor;
+            }
+
+            // 2. Se falhou (token em outra cena ou aba PJs), pega pelo ID do Ator Global
+            if (!actor && actorId) {
+                actor = game.actors.get(actorId);
+            }
+
+            // 3. Aplica
             if (actor) {
-                // Atualiza dados do manual caso tenham mudado sem re-render
+                // Atualiza cache do manual se necessário (caso tenha digitado e não ativado)
                 if (this.selectedModifiers.has("manual")) {
                     this.selectedModifiers.set("manual", { 
                         name: this.manualCache.name, 
@@ -224,28 +171,158 @@ export class GumGMScreen extends Application {
 
                 await this._applyModifiersToActor(actor);
                 
-                // Feedback visual
+                // Feedback visual (Piscar Verde)
                 card.addClass('flash-success');
                 setTimeout(() => card.removeClass('flash-success'), 500);
+            } else {
+                ui.notifications.warn("Ator não encontrado na cena atual.");
             }
         });
 
-        // Remover Modificador
+        // ===========================================================
+        // 2. REMOÇÃO DE MODIFICADOR (CLIQUE NO X DA TAG)
+        // ===========================================================
         html.find('.remove-mod').click(async ev => {
-            ev.stopPropagation();
+            ev.stopPropagation(); // Não ativa o clique do card
+            
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
             const index = tag.data('index');
-            const actor = game.actors.get(tag.closest('.monitor-card').data('actor-id'));
+            
+            // Busca o card pai para pegar os IDs
+            const card = tag.closest('.monitor-card');
+            const actorId = card.data('actor-id');
+            const tokenId = card.data('token-id'); 
+
+            // --- BUSCA INTELIGENTE (Mesma lógica do Apply) ---
+            let actor;
+            
+            if (tokenId) {
+                const token = canvas.tokens.get(tokenId);
+                if (token) actor = token.actor;
+            }
+            if (!actor && actorId) {
+                actor = game.actors.get(actorId);
+            }
 
             if (actor) {
+                // Remove o item do array de flags
                 const mods = actor.getFlag("gum", "gm_modifiers") || [];
                 mods.splice(index, 1);
+                
+                // Salva de volta
                 await actor.setFlag("gum", "gm_modifiers", mods);
-                this.render(false);
+                
+                // O Hook 'updateActor' no main.js vai cuidar de renderizar a tela
+            } else {
+                ui.notifications.warn("Não foi possível encontrar o ator para remover o modificador.");
             }
         });
 
-        // --- GESTÃO DE GRUPOS (Mantido igual) ---
+        // ===========================================================
+        // 3. SELEÇÃO NA PALETA E MANUAL
+        // ===========================================================
+
+        // Seleção na Paleta (Toggle)
+        html.find('.palette-mod').click(ev => {
+            ev.preventDefault();
+            if ($(ev.target).closest('.mod-hover-controls').length) return;
+
+            const btn = $(ev.currentTarget);
+            const modUuid = btn.data('uuid');
+            const modValue = btn.data('value');
+            const modName = btn.find('.mod-name').text().trim();
+
+            // Se clicar na paleta, desativa o Manual para evitar confusão
+            this.selectedModifiers.delete("manual");
+
+            if (this.selectedModifiers.has(modUuid)) {
+                this.selectedModifiers.delete(modUuid);
+            } else {
+                this.selectedModifiers.set(modUuid, { name: modName, value: modValue });
+            }
+            this.render(false); // Redesenha para atualizar visual (.active)
+        });
+
+        // Ativar Manual
+        html.find('.activate-manual-btn').click(ev => {
+            ev.preventDefault();
+            if (this.selectedModifiers.has("manual")) {
+                this.selectedModifiers.delete("manual");
+            } else {
+                this.selectedModifiers.clear(); // Limpa paleta
+                this.selectedModifiers.set("manual", { 
+                    name: this.manualCache.name, 
+                    value: this.manualCache.value,
+                    isManual: true
+                });
+            }
+            this.render(false);
+        });
+
+        // Inputs Manuais (Nome/Valor)
+        html.find('.manual-name').on('input', ev => {
+            this.manualCache.name = ev.target.value;
+            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").name = ev.target.value;
+        });
+        
+        html.find('.manual-value').on('input', ev => { 
+            this.manualCache.value = parseInt(ev.target.value) || 0; 
+            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = this.manualCache.value; 
+            this._updateQRDisplay(html); 
+        });
+
+        // Botões de Passo (+/-)
+        html.find('.step-btn').click(ev => {
+            ev.preventDefault();
+            const action = $(ev.currentTarget).data('action');
+            let current = parseInt(this.manualCache.value) || 0;
+            if (action === 'inc') current += 1;
+            if (action === 'dec') current -= 1;
+            
+            this.manualCache.value = current;
+            html.find('.manual-value').val(current);
+            if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = current;
+            this._updateQRDisplay(html);
+        });
+
+        // Botões de Preset (-6, +4...)
+        html.find('.preset-btn').click(ev => {
+            ev.preventDefault();
+            const val = parseInt($(ev.currentTarget).data('val'));
+            this.manualCache.value = val;
+            html.find('.manual-value').val(val);
+            
+            this.selectedModifiers.clear();
+            this.selectedModifiers.set("manual", { 
+                name: this.manualCache.name, 
+                value: val, 
+                isManual: true 
+            });
+            this.render(false);
+        });
+
+        // Limpar Seleção
+        html.find('.clear-selection-btn').click(ev => {
+            ev.preventDefault();
+            this.selectedModifiers.clear();
+            this.render(false);
+        });
+
+        // Busca (Filtro)
+        html.find('.mod-search').on('keyup', ev => {
+            const query = ev.target.value.toLowerCase();
+            const items = html.find('.palette-mod');
+            items.each((i, el) => {
+                const name = $(el).find('.mod-name').text().toLowerCase();
+                if (name.includes(query)) $(el).show();
+                else $(el).hide();
+            });
+        });
+
+        // ===========================================================
+        // 4. GESTÃO DE GRUPOS (CRUD)
+        // ===========================================================
+        
         html.find('.mod-quick-view').click(async ev => {
             ev.stopPropagation(); ev.preventDefault();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
@@ -260,16 +337,19 @@ export class GumGMScreen extends Application {
                 buttons: { create: { label: "Criar", callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(colId, name); } } }, default: "create"
             }).render(true);
         });
+        
         html.find('.delete-group-btn').click(async ev => {
             const groupId = $(ev.currentTarget).data('group-id');
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             Dialog.confirm({ title: "Excluir Grupo", content: "<p>Tem certeza?</p>", yes: () => this._removeGroup(colId, groupId) });
         });
+        
         html.find('.add-mod-to-group-btn').click(ev => {
             const groupId = $(ev.currentTarget).data('group-id');
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
         });
+        
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
@@ -277,17 +357,40 @@ export class GumGMScreen extends Application {
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             await this._removeItemFromGroup(colId, groupId, uuid);
         });
-// -----------------------------------------------------------
-        // ROLADOR RÁPIDO (QUICK ROLLER) - ATUALIZADO
-        // -----------------------------------------------------------
 
-        // Toggle do Modo Privado (Olho)
+        // ===========================================================
+        // 5. CONTROLES DE COMBATE
+        // ===========================================================
+        
+        html.find('.next-turn').click(async ev => {
+            ev.preventDefault();
+            if (game.combat) await game.combat.nextTurn();
+        });
+
+        html.find('.prev-turn').click(async ev => {
+            ev.preventDefault();
+            if (game.combat) await game.combat.previousTurn();
+        });
+
+        html.find('.end-combat').click(async ev => {
+            ev.preventDefault();
+            if (game.combat) {
+                Dialog.confirm({
+                    title: "Encerrar Combate",
+                    content: "<p>Deseja realmente encerrar este encontro?</p>",
+                    yes: () => game.combat.endCombat()
+                });
+            }
+        });
+
+        // ===========================================================
+        // 6. ROLADOR RÁPIDO
+        // ===========================================================
+
         html.find('.qr-toggle-mode').click(ev => {
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             btn.toggleClass('active');
-            
-            // Muda ícone visualmente para feedback
             const icon = btn.find('i');
             if (btn.hasClass('active')) {
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
@@ -298,117 +401,52 @@ export class GumGMScreen extends Application {
             }
         });
 
-        // 1. ROLAR TESTE (NH + Modificadores Ativos)
         html.find('.roll-test').click(async ev => {
             ev.preventDefault();
-            
             const nhBase = parseInt(html.find('.qr-nh').val()) || 10;
-            const activeModsTotal = this._getTotalActiveModifier(); // Soma Manual + Paleta
+            const activeModsTotal = this._getTotalActiveModifier(); 
             const isPrivate = html.find('.qr-toggle-mode').hasClass('active');
             
-            // Rola os dados
             const roll = new Roll("3d6");
             await roll.evaluate();
             const total = roll.total;
-            
-            // Cálculo Matemático
             const effectiveLevel = nhBase + activeModsTotal;
             const isSuccess = total <= effectiveLevel;
             const margin = Math.abs(effectiveLevel - total);
             
-            // AÇÃO A: Modo Privado (Exibe no Escudo)
             if (isPrivate) {
                 const resultBox = html.find('.qr-result-display');
                 const colorClass = isSuccess ? "success" : "failure";
                 const text = isSuccess ? "Sucesso" : "Falha";
-                
-                // Monta o HTML do resultado local
-                const resultHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span><i class="fas fa-dice"></i> <strong>${total}</strong></span>
-                        <span>vs <strong>${effectiveLevel}</strong> <small>(${activeModsTotal >= 0 ? '+' : ''}${activeModsTotal})</small></span>
-                        <span class="${colorClass}" style="text-transform:uppercase; font-weight:bold;">
-                            ${text} (${margin})
-                        </span>
-                    </div>
-                `;
-                
+                const resultHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-dice"></i> <strong>${total}</strong></span><span>vs <strong>${effectiveLevel}</strong> <small>(${activeModsTotal >= 0 ? '+' : ''}${activeModsTotal})</small></span><span class="${colorClass}" style="text-transform:uppercase; font-weight:bold;">${text} (${margin})</span></div>`;
                 resultBox.removeClass("success failure").addClass(colorClass).html(resultHTML).slideDown(100);
-            
-            // AÇÃO B: Modo Público (Envia ao Chat)
             } else {
-                // Cria um objeto fake de ator para o template de chat funcionar
                 const gmActor = { name: "Mestre", img: "icons/svg/mystery-man.svg", id: null };
-                
-                // Reusa a função global de rolagem do sistema
-                /* Importante: certifique-se de importar performGURPSRoll no topo deste arquivo */
                 performGURPSRoll(gmActor, {
                     label: "Teste Rápido (EM)",
-                    value: effectiveLevel, // Manda o valor já calculado
-                    originalValue: nhBase, // Para mostrar a base original
-                    modifier: activeModsTotal, // Para mostrar o modificador
+                    value: effectiveLevel, 
+                    originalValue: nhBase,
+                    modifier: activeModsTotal,
                     img: "icons/svg/d20.svg"
                 });
             }
         });
 
-        // 2. ROLAR DANO (Fórmula + Tipo)
         html.find('.roll-damage').click(async ev => {
             ev.preventDefault();
             const formula = html.find('.qr-formula').val();
-            const type = html.find('.qr-type').val() || ""; // Pega o tipo (ex: cut, imp)
-            
+            const type = html.find('.qr-type').val() || ""; 
             if (!formula) return;
 
             const roll = new Roll(formula);
             await roll.evaluate();
-
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-face" style="font-size:0.8em; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:2px; margin:0 1px;">${r.result}</span>`).join('');
             
-            const content = `
-                <div class="gurps-damage-card">
-                    <header class="card-header"><h3>Dano Rápido</h3></header>
-                    <div class="card-formula-container">
-                        <span class="formula-pill">${formula} ${type}</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="card-main-flex">
-                            <div class="roll-column">
-                                <span class="column-label">Dados</span>
-                                <div class="individual-dice-damage">${diceHtml}</div>
-                            </div>
-                            <div class="column-separator"></div>
-                            <div class="target-column">
-                                <span class="column-label">Total</span>
-                                <div class="damage-total">
-                                    <span class="damage-value">${roll.total}</span>
-                                    <span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                     <footer class="card-actions">
-                        <button type="button" class="apply-damage-button" data-damage='${JSON.stringify({
-                            attackerId: null, 
-                            sourceName: "Dano Rápido",
-                            main: { total: roll.total, type: type, armorDivisor: 1 }, // ✅ Passa o tipo aqui!
-                            onDamageEffects: {}, generalConditions: {}
-                        })}'>
-                            <i class="fas fa-crosshairs"></i> Aplicar
-                        </button>
-                    </footer>
-                </div>
-            `;
+            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>Dano Rápido</h3></header><div class="card-formula-container"><span class="formula-pill">${formula} ${type}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: null, sourceName: "Dano Rápido", main: { total: roll.total, type: type, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
 
-            ChatMessage.create({
-                user: game.user.id,
-                speaker: { alias: "Mestre" },
-                content: content,
-                rolls: [roll]
-            });
+            ChatMessage.create({ user: game.user.id, speaker: { alias: "Mestre" }, content: content, rolls: [roll] });
         });
     }
-
     /**
      * Atualiza o visual do mostrador de modificadores no rodapé
      */

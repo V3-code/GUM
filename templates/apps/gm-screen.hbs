@@ -1,117 +1,105 @@
 <div class="gm-screen-layout">
     
-    {{!-- COLUNA ESQUERDA: MONITOR + MANUAL --}}
-    <aside class="screen-sidebar monitor-column">
-        
-        {{!-- 1. Cabeçalho --}}
-        <div class="column-header"><i class="fas fa-users"></i> Personagens</div>
+{{!-- COLUNA ESQUERDA: MONITOR + MANUAL --}}
+<aside class="screen-sidebar monitor-column">
+        {{!-- NAVEGAÇÃO RENOMEADA --}}
+        <nav class="gum-monitor-tabs monitor-tabs tabs" data-group="monitor">
+            <a class="item" data-tab="characters"><i class="fas fa-users"></i> PJs</a>
+            <a class="item" data-tab="combat"><i class="fas fa-swords"></i> Combate</a>
+        </nav>
 
-        {{!-- 2. BARRA MANUAL (MOVIDA PARA CÁ) --}}
+        {{!-- MANUAL MOD (Mantido igual) --}}
         <div class="manual-mod-section">
-            <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
-                
-                {{!-- Linha 1: Motivo --}}
-                <input type="text" class="manual-name" placeholder="Motivo (ex: Terreno)" value="{{manualCache.name}}">
-                
-                {{!-- Linha 2: Valor e Controles --}}
+             <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+                <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
                 <div class="manual-row-middle">
                     <div class="value-controls">
                         <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
                         <input type="number" class="manual-value" value="{{manualCache.value}}">
                         <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
                     </div>
-                    <button class="activate-manual-btn" title="Ativar Manual">
-                        <i class="fas fa-crosshairs"></i>
-                    </button>
+                    <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
                 </div>
-
-                {{!-- Linha 3: Presets (Grid Compacto) --}}
                 <div class="manual-presets">
-                    <button class="preset-btn" data-val="-6">-6</button>
                     <button class="preset-btn" data-val="-4">-4</button>
                     <button class="preset-btn" data-val="-2">-2</button>
+                    <button class="preset-btn" data-val="-1">-1</button>
+                    <button class="preset-btn" data-val="1">+1</button>
                     <button class="preset-btn" data-val="2">+2</button>
                     <button class="preset-btn" data-val="4">+4</button>
-                    <button class="preset-btn" data-val="6">+6</button>
                 </div>
             </div>
         </div>
 
-        {{!-- 3. Lista de Personagens --}}
-        <div class="monitor-list">
-            {{#each actors}}
-            <div class="monitor-card" data-actor-id="{{this.id}}">
-                <div class="card-top">
-                    <div class="actor-identity">
-                        <img src="{{this.img}}" />
-                        <span class="actor-name">{{this.name}}</span>
-                    </div>
-                    <div class="vital-bars">
-                        <div class="mini-bar hp"><div class="fill" style="width: {{this.hp.percent}}%;"></div></div>
-                        <div class="mini-bar fp"><div class="fill" style="width: {{this.fp.percent}}%;"></div></div>
-                    </div>
-                </div>
-                <div class="active-mods-zone">
-                    {{#if this.activeGMMods.length}}
-                        {{#each this.activeGMMods}}
-                        <span class="active-mod-tag" data-index="{{@index}}">
-                            {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
-                            <i class="fas fa-times remove-mod"></i>
-                        </span>
-                        {{/each}}
-                    {{else}}
-                        <span class="hint-text">. . .</span>
-                    {{/if}}
+        {{!-- CONTEÚDO --}}
+        <section class="monitor-body">
+            
+            {{!-- ABA PJs --}}
+            <div class="tab" data-tab="characters">
+                <div class="monitor-list">
+                    {{#each actors}}
+                        {{> monitorCard actor=this}}
+                    {{/each}}
                 </div>
             </div>
-            {{/each}}
-        </div>
-{{!-- FUNDO: ROLADOR RÁPIDO (ATUALIZADO) --}}
+
+            {{!-- ABA COMBATE --}}
+            <div class="tab" data-tab="combat">
+                <div class="monitor-list">
+                    {{#if hasCombat}}
+                        {{#each combatants}}
+                            {{!-- Passamos o objeto inteiro pois ele já tem as props do actor + combat data --}}
+                            {{> monitorCard actor=this}}
+                        {{/each}}
+                    {{else}}
+                        <div class="placeholder-text" style="margin-top:20px;">
+                            <p>Nenhum combate ativo.</p>
+                        </div>
+                    {{/if}}
+                </div>
+
+                {{!-- NOVO: CONTROLES DE COMBATE (RODAPÉ) --}}
+                {{#if hasCombat}}
+                <div class="combat-controls">
+                    <button class="combat-btn prev-turn" title="Turno Anterior"><i class="fas fa-backward"></i></button>
+                    <button class="combat-btn end-combat" title="Encerrar Combate"><i class="fas fa-stop"></i></button>
+                    <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i></button>
+                </div>
+                {{/if}}
+            </div>
+
+        </section>
+
+        {{!-- ROLADORES (Mantido igual) --}}
         <div class="quick-rollers">
-            
-            {{!-- 1. ROLADOR DE TESTE (INTEGRADO) --}}
-            <div class="roller-section test-section">
+             <div class="roller-section test-section">
                 <div class="roller-row">
                     <span class="roller-label">NH</span>
                     <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
-                    
-                    {{!-- NOVO: Mostrador de Modificador Total --}}
-                    <div class="qr-mod-display" title="Total de Modificadores Ativos (Manual + Paleta)">+0</div>
-
-                    {{!-- Toggle Privado --}}
-                    <button class="qr-toggle-mode active" title="Modo: Apenas para mim">
-                        <i class="fas fa-eye-slash"></i>
-                    </button>
-                    
-                    <button class="qr-btn roll-test" title="Rolar Teste">
-                        <i class="fas fa-dice"></i>
-                    </button>
+                    <div class="qr-mod-display" title="Total de Modificadores Ativos">+0</div>
+                    <button class="qr-toggle-mode active" title="Modo: Apenas para mim"><i class="fas fa-eye-slash"></i></button>
+                    <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
                 </div>
                 <div class="qr-result-display" style="display:none;"></div>
             </div>
-
-            {{!-- 2. ROLADOR DE DANO (COM TIPO) --}}
             <div class="roller-section damage-section">
                 <div class="roller-row">
                     <span class="roller-label"><i class="fas fa-skull"></i></span>
-                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d+1)" value="1d6">
+                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d+1)" value="1d">
                     <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
-                    
-                    <button class="qr-btn roll-damage" title="Rolar Dano">
-                        <i class="fas fa-bolt"></i>
-                    </button>
+                    <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
                 </div>
             </div>
-
         </div>
+
     </aside>
 
     {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
     <section class="screen-main controls-column">
         
         {{!-- Barra de Ferramentas da Paleta --}}
-        <div class="palette-tools-bar">
-            <nav class="screen-tabs tabs" data-group="primary">
+<div class="palette-tools-bar">
+            <nav class="gum-screen-tabs screen-tabs tabs" data-group="primary">
                 <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
                 <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
             </nav>
@@ -176,3 +164,48 @@
         </section>
     </section>
 </div>
+
+{{!-- PARTIAL ATUALIZADO: INICIATIVA DENTRO DO CARD --}}
+{{#*inline "monitorCard"}}
+<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}" 
+     data-actor-id="{{actor.id}}" 
+     data-token-id="{{actor.tokenId}}">
+       
+    <div class="card-top">
+        <div class="actor-identity">
+            <img src="{{actor.img}}" />
+            <span class="actor-name">{{actor.name}}</span>
+        </div>
+        <div class="vital-bars">
+            <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
+            <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
+        </div>
+    </div>
+    
+    {{!-- LINHA DE DEFESAS + INICIATIVA --}}
+    <div class="passive-defenses">
+        {{!-- Só mostra iniciativa se existir (ou seja, se estiver na aba de combate) --}}
+        {{#if actor.initiative}}
+            <span class="def-tag init" title="Iniciativa"><i class="fas fa-bolt"></i> {{actor.initiative}}</span>
+            <span class="sep">|</span>
+        {{/if}}
+        
+        <span class="def-tag" title="Esquiva"><i class="fas fa-running"></i> {{actor.defenses.dodge}}</span>
+        <span class="def-tag" title="Aparar"><i class="fas fa-swords"></i> {{actor.defenses.parry}}</span>
+        <span class="def-tag" title="Bloqueio"><i class="fas fa-shield-alt"></i> {{actor.defenses.block}}</span>
+    </div>
+
+    <div class="active-mods-zone">
+        {{#if actor.activeGMMods.length}}
+            {{#each actor.activeGMMods}}
+            <span class="active-mod-tag" data-index="{{@index}}">
+                {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
+                <i class="fas fa-times remove-mod"></i>
+            </span>
+            {{/each}}
+        {{else}}
+            <span class="hint-text">. . .</span>
+        {{/if}}
+    </div>
+</div>
+{{/inline}}
