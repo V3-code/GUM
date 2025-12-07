@@ -312,3 +312,43 @@
     transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 .roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--c-accent-gold); }
+
+/* ================================================================== */
+/* AVISO DE TETO NA JANELA DE ROLAGEM                                 */
+/* ================================================================== */
+
+/* A tarja de aviso abaixo do valor */
+.gum.roll-prompt .cap-warning {
+    margin-top: 8px;
+    background: rgba(165, 53, 65, 0.2); /* Fundo avermelhado */
+    border: 1px solid rgba(165, 53, 65, 0.5);
+    color: #ffcccc; /* Texto vermelho claro */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 700;
+    text-align: center;
+    display: none; /* Controlado pelo JS */
+    animation: fadeIn 0.2s;
+}
+
+.gum.roll-prompt .cap-warning i {
+    margin-right: 5px;
+    color: #e57373;
+}
+
+/* O Valor Final quando cortado */
+.gum.roll-prompt .final-val.is-capped {
+    position: relative;
+    /* Adiciona um sublinhado pontilhado para indicar que algo mudou */
+    text-decoration: underline dotted #e57373;
+    text-underline-offset: 4px;
+}
+
+/* Badge do Teto na lista de ativos (Opcional, para reforçar) */
+.stack-cap {
+    background: rgba(0,0,0,0.4);
+    border-radius: 3px;
+    padding: 0 4px;
+    color: #ffb74d; /* Laranja para diferenciar */
+}

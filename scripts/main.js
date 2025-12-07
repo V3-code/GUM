@@ -396,9 +396,6 @@ class ContingentEffectBuilder extends Dialog {
     }
 }
 
-
-
-
 // ================================================================== //
 //  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
 // ================================================================== //
@@ -408,32 +405,67 @@ class ContingentEffectBuilder extends Dialog {
  * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
  */
 export async function performGURPSRoll(actor, rollData) {
-    // 1. Lógica de Valores e Teto (Cap)
-    // Se veio da Janela, 'originalValue' existe e é a Base. 'value' é o Final (já com teto).
+    
+    // --- 1. LÓGICA DE VALORES BASE ---
+    
+    // Se veio da Janela, 'originalValue' existe e é a Base.
     // Se veio de Shift+Click, 'value' é a Base e não tem 'originalValue'.
     const hasProcessedData = rollData.originalValue !== undefined;
     
+    // Valor Base (Atributo Puro)
     const baseValue = parseInt(hasProcessedData ? rollData.originalValue : rollData.value) || 10;
-    const modifier = parseInt(rollData.modifier) || 0;
+    
+    // Modificador Pontual (Quick Roll ou Prompt)
+    const promptMod = parseInt(rollData.modifier) || 0;
+    
     const label = rollData.label || "Teste";
 
-    // Cálculo Matemático Puro (Base + Mod)
-    const mathLevel = baseValue + modifier;
+    // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---
+    
+    // Busca modificadores "grudados" no ator
+    const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
+    
+    let globalModValue = 0;
+    let lowestCap = Infinity; // Começa infinito
 
-    // Nível Efetivo (Meta)
-    // Se veio processado da janela, usamos o valor que ela mandou (que respeita o teto).
-    // Se não, usamos a soma matemática.
-    const effectiveLevel = hasProcessedData ? parseInt(rollData.value) : mathLevel;
+    globalMods.forEach(m => {
+        // Soma o valor
+        globalModValue += (parseInt(m.value) || 0);
+        
+        // Verifica o Teto (Cap)
+        // Se o modificador tiver um teto (ex: Escuridão = 9) e ele for menor que o atual, atualiza
+        if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
+            const capVal = parseInt(m.cap);
+            if (!isNaN(capVal) && capVal < lowestCap) {
+                lowestCap = capVal;
+            }
+        }
+    });
 
-    // Detecta se houve corte por Teto (Se o efetivo é menor que a soma matemática)
+    // Modificador Total (Prompt + Global)
+    const totalModifier = promptMod + globalModValue;
+
+    // --- 3. CÁLCULO DO NÍVEL EFETIVO ---
+
+    // Soma matemática simples
+    const mathLevel = baseValue + totalModifier;
+
+    // Aplica a regra do Teto (Clamp)
+    // Se a soma ultrapassar o menor teto ativo, reduz para o teto.
+    let effectiveLevel = mathLevel;
+    if (lowestCap !== Infinity && effectiveLevel > lowestCap) {
+        effectiveLevel = lowestCap;
+    }
+
+    // Flag visual para o template saber se cortou
     const isCapped = effectiveLevel < mathLevel;
 
-    // 2. Rolagem
+    // --- 4. ROLAGEM ---
     const roll = new Roll("3d6");
     await roll.evaluate();
     const total = roll.total;
 
-    // 3. Lógica de Sucesso/Margem
+    // --- 5. RESULTADO ---
     const isSuccess = total <= effectiveLevel;
     const margin = Math.abs(effectiveLevel - total);
     
@@ -453,7 +485,7 @@ export async function performGURPSRoll(actor, rollData) {
         statusClass = "crit-failure";
     }
 
-    // 4. HTML "High-End" (Com indicador de Teto)
+    // --- 6. HTML DO CARD ---
     const content = `
         <div class="gurps-roll-card premium">
             
@@ -469,14 +501,17 @@ export async function performGURPSRoll(actor, rollData) {
             <div class="card-body">
                 <div class="roll-meta">
                     <span class="meta-part">NH <strong>${baseValue}</strong></span>
-                    <span class="meta-mod ${modifier !== 0 ? (modifier > 0 ? 'pos' : 'neg') : ''}">
-                        ${modifier !== 0 ? (modifier > 0 ? '+' : '') + modifier : ''}
+                    
+                    <span class="meta-mod ${totalModifier !== 0 ? (totalModifier > 0 ? 'pos' : 'neg') : ''}" 
+                          title="Mod. Prompt: ${promptMod}, Mod. Global: ${globalModValue}">
+                        ${totalModifier !== 0 ? (totalModifier > 0 ? '+' : '') + totalModifier : ''}
                     </span>
+                    
                     <span class="meta-target">
                         | Alvo 
                         ${isCapped ? `<span style="text-decoration:line-through; opacity:0.5; font-size:0.8em; margin-right:2px;">${mathLevel}</span>` : ''}
                         <strong>${effectiveLevel}</strong>
-                        ${isCapped ? `<i class="fas fa-arrow-down" title="Limitado por Teto (Cap)" style="font-size:0.7em; color:#a53541; margin-left:2px;"></i>` : ''}
+                        ${isCapped ? `<i class="fas fa-arrow-down" title="Limitado por Teto (Cap: ${lowestCap})" style="font-size:0.7em; color:#a53541; margin-left:2px;"></i>` : ''}
                     </span>
                 </div>
 

@@ -222,7 +222,7 @@ activateListeners(html) {
         // 3. SELEÇÃO NA PALETA E MANUAL
         // ===========================================================
 
-        // Seleção na Paleta (Toggle)
+// Seleção na Paleta (Toggle)
         html.find('.palette-mod').click(ev => {
             ev.preventDefault();
             if ($(ev.target).closest('.mod-hover-controls').length) return;
@@ -230,17 +230,22 @@ activateListeners(html) {
             const btn = $(ev.currentTarget);
             const modUuid = btn.data('uuid');
             const modValue = btn.data('value');
+            const modCap = btn.data('cap'); // ✅ LÊ O TETO DO HTML
             const modName = btn.find('.mod-name').text().trim();
 
-            // Se clicar na paleta, desativa o Manual para evitar confusão
             this.selectedModifiers.delete("manual");
 
             if (this.selectedModifiers.has(modUuid)) {
                 this.selectedModifiers.delete(modUuid);
             } else {
-                this.selectedModifiers.set(modUuid, { name: modName, value: modValue });
+                // ✅ SALVA O TETO NO MAPA DE SELEÇÃO
+                this.selectedModifiers.set(modUuid, { 
+                    name: modName, 
+                    value: modValue,
+                    cap: modCap 
+                });
             }
-            this.render(false); // Redesenha para atualizar visual (.active)
+            this.render(false);
         });
 
         // Ativar Manual
@@ -446,6 +451,324 @@ activateListeners(html) {
 
             ChatMessage.create({ user: game.user.id, speaker: { alias: "Mestre" }, content: content, rolls: [roll] });
         });
+    
+        // ===========================================================
+        // MENU DE CONTEXTO (CLIQUE DIREITO)
+        // ===========================================================
+        html.find('.monitor-card').contextmenu(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            // Remove menus antigos se existirem
+            $('.gum-ctx-menu').remove();
+
+            const card = $(ev.currentTarget);
+            const actorId = card.data('actor-id');
+            const tokenId = card.data('token-id');
+
+            // Busca Inteligente (Mesma do Apply)
+            let actor;
+            if (tokenId) {
+                const token = canvas.tokens.get(tokenId);
+                if (token) actor = token.actor;
+            }
+            if (!actor && actorId) actor = game.actors.get(actorId);
+
+            if (actor) {
+                this._createContextMenu(actor, ev.clientX, ev.clientY);
+            }
+        });
+
+        // Fechar menu ao clicar em qualquer lugar
+        $(document).on('click.gum-ctx', (e) => {
+            if (!$(e.target).closest('.gum-ctx-menu').length) {
+                $('.gum-ctx-menu').remove();
+            }
+        });
+    
+    }
+
+/**
+     * Helper: Resolve fórmulas como "GdP+1" para "1d6-1" usando os dados do ator
+     */
+    _resolveDamageFormula(actor, rawFormula) {
+        if (!rawFormula) return null;
+        
+        const formulaStr = String(rawFormula).toLowerCase();
+        const attrs = actor.system.attributes || {};
+        const thrust = (attrs.thrust_damage || "0").toLowerCase(); // GdP
+        const swing = (attrs.swing_damage || "0").toLowerCase();   // GdB (GeB)
+
+        // Substitui (gdp ou thr) e (gdb ou sw ou geb)
+        let resolved = formulaStr
+            .replace(/gdp|thr/g, `(${thrust})`)
+            .replace(/gdb|sw|geb/g, `(${swing})`);
+            
+        // (Opcional) Poderíamos usar Roll.replaceFormulaData se tivéssemos dados complexos,
+        // mas a substituição de string simples resolve 99% dos casos do GURPS.
+        return resolved;
+    }
+
+/**
+     * Constrói e exibe o menu de contexto flutuante (OTIMIZADO EM GRADE)
+     */
+    _createContextMenu(actor, x, y) {
+        const system = actor.system || {};
+        const attr = system.attributes || {};
+        const itemsArray = actor.items.contents || (Array.isArray(actor.items) ? actor.items : []);
+
+        let html = `<div class="gum-ctx-menu" style="top:${y}px; left:${x}px;">`;
+        html += `<div class="gum-ctx-header">${actor.name}</div>`;
+        
+        // ---------------------------------------------------------
+        // 1. ATRIBUTOS (GRADE COMPACTA)
+        // ---------------------------------------------------------
+        
+        // Helper seguro para valor
+        const getVal = (obj) => {
+            if (!obj) return 10;
+            return (obj.final !== undefined && obj.final !== null) ? obj.final : (obj.value !== undefined ? obj.value : 10);
+        };
+
+        // --- LINHA 1: PRINCIPAIS (ST, DX, IQ, HT) ---
+        html += `<div class="gum-ctx-stats-grid">`;
+        ['st', 'dx', 'iq', 'ht'].forEach(key => {
+            const obj = attr[key] || attr[key.toUpperCase()];
+            // Mesmo se não achar, mostra 10 para manter o grid alinhado
+            const val = obj ? getVal(obj) : 10; 
+            html += `<div class="gum-ctx-stat-box roll-attr" data-attr="${key.toUpperCase()}" data-val="${val}">
+                        <span class="stat-label">${key.toUpperCase()}</span>
+                        <span class="stat-value">${val}</span>
+                     </div>`;
+        });
+        html += `</div>`;
+
+        // --- LINHA 2: SECUNDÁRIOS (Per, Vont, Esq) ---
+        // Busca robusta por Percepção e Vontade
+        const perObj = attr.per || attr.Per || attr.PER || attr.perception;
+        const willObj = attr.will || attr.Will || attr.WILL || attr.willpower;
+        const dodgeObj = attr.dodge;
+
+        const perVal = perObj ? getVal(perObj) : 10;
+        const willVal = willObj ? getVal(willObj) : 10;
+        const dodgeVal = dodgeObj ? getVal(dodgeObj) : 0;
+
+        html += `<div class="gum-ctx-stats-grid secondary">`;
+        
+        // Percepção
+        html += `<div class="gum-ctx-stat-box roll-attr" data-attr="Percepção" data-val="${perVal}">
+                    <span class="stat-label">PER</span>
+                    <span class="stat-value">${perVal}</span>
+                 </div>`;
+        
+        // Vontade
+        html += `<div class="gum-ctx-stat-box roll-attr" data-attr="Vontade" data-val="${willVal}">
+                    <span class="stat-label">VONT</span>
+                    <span class="stat-value">${willVal}</span>
+                 </div>`;
+                 
+        // Esquiva
+        html += `<div class="gum-ctx-stat-box roll-def" data-def="Esquiva" data-val="${dodgeVal}">
+                    <span class="stat-label">ESQ</span>
+                    <span class="stat-value">${dodgeVal}</span>
+                 </div>`;
+        html += `</div>`;
+
+        // ---------------------------------------------------------
+        // 2. ATAQUES (AGRUPADOS)
+        // ---------------------------------------------------------
+        const attackGroups = {};
+
+        const processAttack = (item, atk) => {
+            if (!atk || !atk.mode) return;
+            if (!attackGroups[item.id]) attackGroups[item.id] = { name: item.name, modes: [] };
+            
+            const nh = atk.final_nh !== undefined ? atk.final_nh : atk.level;
+            const rawDmg = atk.damage || atk.damage_formula || "";
+            const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
+            
+            const parry = (atk.parry && atk.parry != "0" && atk.parry != "-") ? atk.parry : null;
+            const block = (atk.block && atk.block != "0" && atk.block != "-") ? atk.block : null;
+
+            attackGroups[item.id].modes.push({
+                label: atk.mode,
+                nh: nh,
+                damage: resolvedDmg,
+                damageDisplay: rawDmg,
+                type: atk.damage_type || "",
+                parry: parry,
+                block: block,
+                fullLabel: `${item.name} (${atk.mode})`
+            });
+        };
+
+        itemsArray.forEach(item => {
+            if (item.system.melee_attacks) Object.values(item.system.melee_attacks).forEach(atk => processAttack(item, atk));
+            if (item.system.ranged_attacks) Object.values(item.system.ranged_attacks).forEach(atk => processAttack(item, atk));
+        });
+
+        if (Object.keys(attackGroups).length > 0) {
+            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-swords"></i> Ataques</div>`;
+            for (const [itemId, group] of Object.entries(attackGroups)) {
+                html += `
+                <div class="gum-ctx-item has-submenu">
+                    <span>${group.name}</span> <i class="fas fa-caret-right gum-ctx-caret"></i>
+                    <div class="gum-ctx-submenu">
+                        ${group.modes.map(mode => `
+                            <div class="gum-ctx-item" style="cursor:default;">
+                                <div class="gum-ctx-attack-row">
+                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${mode.fullLabel}" data-nh="${mode.nh}">
+                                        <span>${mode.label}</span> <span class="gum-ctx-val skill">${mode.nh}</span>
+                                    </div>
+                                    <div class="ctx-actions-right">
+                                        ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="Dano: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
+                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="Aparar" data-val="${mode.parry}" title="Aparar"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
+                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="Bloqueio" data-val="${mode.block}" title="Bloqueio"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+            html += `</div>`;
+        }
+
+        // ---------------------------------------------------------
+        // 3. PODERES & MAGIAS
+        // ---------------------------------------------------------
+        const renderPowerSpell = (item) => {
+            const level = item.system.level || item.system.skill_level || item.system.points || 0;
+            if (!level) return "";
+            
+            const dmgData = item.system.damage || {};
+            const rawDmg = dmgData.formula || "";
+            const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
+            const dmgType = dmgData.type || "";
+
+            return `
+                <div class="gum-ctx-item">
+                    <div class="gum-ctx-attack-row">
+                        <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${item.name}" data-nh="${level}">
+                            <span>${item.name}</span> <span class="gum-ctx-val skill">${level}</span>
+                        </div>
+                        <div class="ctx-actions-right">
+                            ${resolvedDmg ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${resolvedDmg}" data-type="${dmgType}" data-label="${item.name}" title="Dano"><i class="fas fa-bolt"></i> ${rawDmg}</div>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+        };
+
+        const powers = itemsArray.filter(i => i.type === 'power');
+        if(powers.length > 0) {
+             html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-bolt"></i> Poderes</div>`;
+             powers.forEach(p => html += renderPowerSpell(p));
+             html += `</div>`;
+        }
+
+        const spells = itemsArray.filter(i => i.type === 'spell');
+        if (spells.length > 0) {
+            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-magic"></i> Magias</div>`;
+            spells.sort((a,b) => a.name.localeCompare(b.name)).slice(0, 15).forEach(s => html += renderPowerSpell(s));
+            if (spells.length > 15) html += `<div style="text-align:center; color:#666; font-size:0.8em;">...mais ${spells.length - 15}</div>`;
+            html += `</div>`;
+        }
+
+        html += `</div>`; // Fim
+
+        $('body').append(html);
+        const menu = $('.gum-ctx-menu');
+        
+        // --- LISTENERS ---
+        
+        menu.find('.roll-attr').click(ev => {
+            const el = $(ev.currentTarget);
+            this._performContextRoll(actor, el.data('attr'), parseInt(el.data('val')));
+            menu.remove();
+        });
+
+        menu.find('.roll-def').click(ev => {
+            ev.stopPropagation();
+            const el = $(ev.currentTarget);
+            this._performContextRoll(actor, el.data('def'), parseInt(el.data('val')));
+            menu.remove();
+        });
+
+        menu.find('.roll-attack-ctx').click(ev => {
+            ev.stopPropagation();
+            const el = $(ev.currentTarget);
+            this._performContextRoll(actor, el.data('label'), parseInt(el.data('nh')));
+            menu.remove();
+        });
+
+        menu.find('.roll-damage-ctx').click(async ev => {
+            ev.stopPropagation();
+            const el = $(ev.currentTarget);
+            const dmgFormula = el.data('damage');
+            const dmgType = el.data('type');
+            const label = el.data('label');
+            
+            const roll = new Roll(dmgFormula);
+            await roll.evaluate();
+            
+            const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
+            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>Dano: ${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${dmgFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
+
+            ChatMessage.create({ user: game.user.id, speaker: { alias: actor.name }, content: content, rolls: [roll] });
+            menu.remove();
+        });
+    }
+
+/**
+     * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
+     */
+    _performContextRoll(actor, label, targetValue) {
+        
+        let totalMod = 0;
+        let lowestCap = Infinity; // Começa infinito (sem teto)
+
+        // 1. Processa Modificadores da TELA (Selecionados agora)
+        this.selectedModifiers.forEach(mod => {
+            totalMod += (parseInt(mod.value) || 0);
+            
+            // Verifica se tem teto e se é menor que o atual
+            if (mod.cap !== undefined && mod.cap !== null && mod.cap !== "") {
+                const capVal = parseInt(mod.cap);
+                if (!isNaN(capVal) && capVal < lowestCap) lowestCap = capVal;
+            }
+        });
+
+        // 2. Processa Modificadores do ATOR (Flags já aplicadas)
+        const actorFlags = actor.getFlag("gum", "gm_modifiers") || [];
+        actorFlags.forEach(mod => {
+            totalMod += (parseInt(mod.value) || 0);
+            
+            // Verifica teto nas flags
+            if (mod.cap !== undefined && mod.cap !== null && mod.cap !== "") {
+                const capVal = parseInt(mod.cap);
+                if (!isNaN(capVal) && capVal < lowestCap) lowestCap = capVal;
+            }
+        });
+
+        // 3. Calcula NH Efetivo Preliminar
+        let effectiveLevel = targetValue + totalMod;
+
+        // 4. Aplica a Regra do Teto (Cap)
+        // Se houver um teto definido e o NH for maior que ele, reduz para o teto.
+        if (lowestCap !== Infinity && effectiveLevel > lowestCap) {
+            effectiveLevel = lowestCap;
+            // Opcional: Avisar no chat que o teto foi aplicado?
+            // Por enquanto, o sistema de rolagem mostra o valor final.
+        }
+        
+        // 5. Rola
+        performGURPSRoll(actor, {
+            label: label + " (EM)",
+            value: effectiveLevel,      // NH Final (com Teto aplicado)
+            originalValue: targetValue, // NH Base
+            modifier: totalMod,         // Soma dos modificadores (para exibir no detalhe)
+            img: actor.img || "icons/svg/d20.svg"
+        });
     }
     /**
      * Atualiza o visual do mostrador de modificadores no rodapé
@@ -489,7 +812,7 @@ activateListeners(html) {
     }
     
     // --- LÓGICA DE APLICAÇÃO ---
-    async _applyModifiersToActor(actor) {
+async _applyModifiersToActor(actor) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
         let count = 0;
 
@@ -497,6 +820,7 @@ activateListeners(html) {
             currentMods.push({
                 name: mod.name,
                 value: mod.value,
+                cap: mod.cap, // ✅ AGORA SALVAMOS O TETO NA FLAG DO ATOR
                 id: foundry.utils.randomID(),
                 source: "GM Screen"
             });
@@ -505,8 +829,6 @@ activateListeners(html) {
 
         await actor.setFlag("gum", "gm_modifiers", currentMods);
         ui.notifications.info(`Aplicado(s) ${count} modificador(es) em ${actor.name}.`);
-        
-        // NÃO limpamos this.selectedModifiers aqui para permitir aplicação múltipla contínua!
     }
     
         async _showQuickView(item) {

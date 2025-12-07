@@ -343,3 +343,255 @@
 
 @keyframes flash-green { 0% { background-color: rgba(46, 204, 113, 0.6); } 100% { background-color: #2b2a29; } }
 .gum.gm-screen .flash-success { animation: flash-green 0.6s ease-out; }
+
+/* ================================================================== */
+/* MENU DE CONTEXTO (CLIQUE DIREITO) - VERSÃO CLASSICA                */
+/* ================================================================== */
+
+/* Container Principal */
+.gum-ctx-menu {
+    position: fixed; /* Essencial para seguir o mouse */
+    background: #1a1a1a;
+    border: 1px solid var(--c-accent-gold, #c5a05b);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+    border-radius: 4px;
+    z-index: 9999; /* Acima de tudo */
+    width: 240px;
+    font-size: 0.85em;
+    color: #e0e0e0;
+    
+    /* IMPORTANTE: Sem overflow/scroll para permitir submenus laterais */
+    overflow: visible; 
+    animation: fadeIn 0.1s ease-out;
+}
+
+/* Cabeçalho (Nome do Personagem) */
+.gum-ctx-header {
+    background: linear-gradient(to right, #222, #333);
+    padding: 8px 10px;
+    font-weight: 700;
+    color: var(--c-accent-gold, #c5a05b);
+    border-bottom: 1px solid #444;
+    text-transform: uppercase;
+    font-size: 0.95em;
+}
+
+/* Grupos (Atributos, Ataques, etc) */
+.gum-ctx-group {
+    border-bottom: 1px solid #333;
+    padding-bottom: 2px;
+}
+
+/* Título do Grupo (ex: DEFESA) */
+.gum-ctx-group-title {
+    background: rgba(255,255,255,0.05);
+    padding: 4px 10px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    color: #888;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Item Clicável */
+.gum-ctx-item {
+    position: relative; /* Necessário para ancorar o submenu */
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.1s;
+}
+
+.gum-ctx-item:hover {
+    background: var(--c-accent-blue, #56819c);
+    color: #fff;
+}
+
+/* Seta indicando submenu (>) */
+.gum-ctx-caret {
+    font-size: 0.8em;
+    color: #666;
+    margin-left: 10px;
+}
+.gum-ctx-item:hover .gum-ctx-caret { color: #fff; }
+
+/* Valores (NH, Pontos) */
+.gum-ctx-val {
+    background: rgba(0,0,0,0.3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 0.9em;
+}
+.gum-ctx-val.skill { color: #ccffcc; }
+
+/* Separador (Linha fina) */
+.gum-ctx-separator {
+    border-top: 1px solid #444;
+    margin: 4px 0;
+}
+
+/* ================================================================== */
+/* SUBMENU EM CASCATA (POP-OUT LATERAL)                               */
+/* ================================================================== */
+
+.gum-ctx-submenu {
+    display: none; /* Escondido por padrão */
+    position: absolute;
+    
+    /* Posicionamento: Sai para a direita do pai */
+    left: 100%; 
+    top: -1px; /* Alinha com o topo da linha pai */
+    margin-left: -2px; /* Pequena sobreposição visual */
+    
+    width: 280px; /* Largura suficiente para botões de dano/defesa */
+    background: #1a1a1a;
+    border: 1px solid var(--c-accent-gold, #c5a05b);
+    box-shadow: 4px 4px 15px rgba(0,0,0,0.8);
+    border-radius: 4px;
+    z-index: 10000;
+}
+
+/* Mostra ao passar o mouse no item pai */
+.gum-ctx-item:hover > .gum-ctx-submenu {
+    display: block;
+}
+
+/* Layout da Linha de Ataque no Submenu */
+.gum-ctx-attack-row {
+    display: grid;
+    /* Colunas: Nome/NH (Flexível) | Dano (Auto) | Defesas (Auto) */
+    grid-template-columns: 1fr auto auto; 
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Botão Esquerdo: Rolar Ataque (Nome + NH) */
+.attack-roll-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    padding-right: 5px;
+    flex-grow: 1;
+}
+.attack-roll-btn span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+}
+.attack-roll-btn:hover span {
+    text-shadow: 0 0 5px var(--c-accent-gold);
+    color: #fff;
+}
+
+/* Grupo da Direita: Botões de Ação */
+.ctx-actions-right {
+    display: flex;
+    gap: 4px;
+}
+
+/* Botão de Dano (Vermelho) */
+.damage-roll-btn {
+    font-size: 0.8em;
+    color: #ffcccc;
+    background: rgba(165, 53, 65, 0.3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(165, 53, 65, 0.5);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.damage-roll-btn:hover {
+    background: #a53541;
+    color: #fff;
+    border-color: #fff;
+    transform: scale(1.05);
+}
+
+/* Botão de Defesa (Verde) */
+.def-roll-btn-ctx {
+    font-size: 0.8em;
+    color: #ccffcc;
+    background: rgba(46, 204, 113, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.def-roll-btn-ctx:hover {
+    background: #2ecc71;
+    color: #000;
+    border-color: #fff;
+    transform: scale(1.05);
+}
+/* ================================================================== */
+/* MENU DE CONTEXTO - GRADE DE ATRIBUTOS (OTIMIZAÇÃO)                 */
+/* ================================================================== */
+
+/* Container da Grade de Atributos */
+.gum-ctx-stats-grid {
+    display: grid;
+    /* 4 colunas para ST, DX, IQ, HT */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 2px;
+    padding: 4px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid #333;
+}
+
+/* Linha Secundária (Per, Will, Dodge) */
+.gum-ctx-stats-grid.secondary {
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas para Per, Will, Dodge */
+    background: transparent;
+}
+
+/* Item da Grade (Caixinha) */
+.gum-ctx-stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 3px 0;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gum-ctx-stat-box:hover {
+    background: var(--c-accent-gold);
+    color: #000;
+    border-color: #fff;
+}
+
+/* Rótulo (ST, DX...) */
+.stat-label {
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.gum-ctx-stat-box:hover .stat-label { color: #000; }
+
+/* Valor (10, 14...) */
+.stat-value {
+    font-size: 1em;
+    font-weight: 700;
+    line-height: 1;
+}

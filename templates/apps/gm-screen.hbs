@@ -135,7 +135,7 @@
                                 </div>
                                 <div class="group-content-area">
                                     {{#each group.enrichedItems}}
-                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}">
+                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}"data-cap="{{this.system.nh_cap}}">
                                         <div class="mod-left">
                                             <img src="{{this.img}}" class="mod-icon"/>
                                             <span class="mod-name">{{this.name}}</span>
@@ -170,7 +170,7 @@
 <div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}" 
      data-actor-id="{{actor.id}}" 
      data-token-id="{{actor.tokenId}}">
-       
+
     <div class="card-top">
         <div class="actor-identity">
             <img src="{{actor.img}}" />

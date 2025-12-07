@@ -89,16 +89,25 @@
 
         {{!-- 5. RODAPÉ DE AÇÃO (Fixo no fundo da coluna direita) --}}
         <div class="command-footer">
-            <div class="calc-display">
-                <div class="calc-row final">
-                    <span class="calc-label">NH FINAL</span>
-                    <span class="calc-val final-val">{{baseValue}}</span>
-                </div>
-                <div class="calc-row detail">
-                    <span class="detail-text">Base {{baseValue}} <span class="total-mod-val" style="color:var(--c-accent-gold);">+0</span></span>
-                </div>
-                <div class="cap-warning" style="display:none;">(Teto <span class="cap-val"></span>)</div>
+<div class="calc-display">
+            <div class="calc-row final">
+                <span class="calc-label">NH FINAL</span>
+                {{!-- Adicionamos classes para riscar se tiver cap --}}
+                <span class="calc-val final-val">{{baseValue}}</span>
             </div>
+            
+            {{!-- LINHA DE DETALHE --}}
+            <div class="calc-row detail">
+                <span class="detail-text">Base {{baseValue}} <span class="total-mod-val">+0</span></span>
+            </div>
+
+            {{!-- LINHA DE TETO (CAP) --}}
+            {{!-- Escondida por padrão, o JS vai mostrar --}}
+            <div class="cap-info-row" style="display:none;">
+                <span class="cap-label"><i class="fas fa-arrow-down"></i> Teto Máximo:</span>
+                <span class="cap-val">--</span>
+            </div>
+        </div>
 
             <button type="submit" class="roll-big-btn">
                 <i class="fas fa-dice"></i> ROLAR
