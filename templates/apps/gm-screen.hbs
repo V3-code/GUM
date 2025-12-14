@@ -1,19 +1,41 @@
 <div class="gm-screen-layout">
     
-{{!-- COLUNA ESQUERDA: MONITOR + FERRAMENTAS --}}
-    <aside class="screen-sidebar monitor-column">
-        
-        {{!-- 1. NAVEGAÇÃO (TOPO FIXO) --}}
+{{!-- COLUNA ESQUERDA: MONITOR + MANUAL --}}
+<aside class="screen-sidebar monitor-column">
+        {{!-- NAVEGAÇÃO RENOMEADA --}}
         <nav class="gum-monitor-tabs monitor-tabs tabs" data-group="monitor">
             <a class="item" data-tab="characters"><i class="fas fa-users"></i> PJs</a>
             <a class="item" data-tab="combat"><i class="fas fa-swords"></i> Combate</a>
         </nav>
 
-        {{!-- 2. ÁREA DE CONTEÚDO (EXPANSÍVEL/ROLÁVEL) --}}
+        {{!-- MANUAL MOD (Mantido igual) --}}
+        <div class="manual-mod-section">
+             <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+                <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
+                <div class="manual-row-middle">
+                    <div class="value-controls">
+                        <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
+                        <input type="number" class="manual-value" value="{{manualCache.value}}">
+                        <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
+                </div>
+                <div class="manual-presets">
+                    <button class="preset-btn" data-val="-4">-4</button>
+                    <button class="preset-btn" data-val="-2">-2</button>
+                    <button class="preset-btn" data-val="-1">-1</button>
+                    <button class="preset-btn" data-val="1">+1</button>
+                    <button class="preset-btn" data-val="2">+2</button>
+                    <button class="preset-btn" data-val="4">+4</button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- CONTEÚDO --}}
         <section class="monitor-body">
             
             {{!-- ABA PJs --}}
-            <div class="tab characters-tab" data-tab="characters">
+            <div class="tab" data-tab="characters">
                 <div class="monitor-list">
                     {{#each actors}}
                         {{> monitorCard actor=this}}
@@ -22,20 +44,11 @@
             </div>
 
             {{!-- ABA COMBATE --}}
-            <div class="tab combat-tab" data-tab="combat">
-                {{!-- Controles de Combate (Fixo no Topo desta aba) --}}
-                {{#if hasCombat}}
-                <div class="combat-controls-header">
-                    <button class="combat-btn prev-turn" title="Turno Anterior"><i class="fas fa-backward"></i></button>
-                    <button class="combat-btn end-combat" title="Encerrar Combate"><i class="fas fa-stop"></i> Fim</button>
-                    <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i> Próximo</button>
-                </div>
-                {{/if}}
-
-                {{!-- Lista de Combatentes (Rola separadamente) --}}
+            <div class="tab" data-tab="combat">
                 <div class="monitor-list">
                     {{#if hasCombat}}
                         {{#each combatants}}
+                            {{!-- Passamos o objeto inteiro pois ele já tem as props do actor + combat data --}}
                             {{> monitorCard actor=this}}
                         {{/each}}
                     {{else}}
@@ -44,58 +57,39 @@
                         </div>
                     {{/if}}
                 </div>
+
+                {{!-- NOVO: CONTROLES DE COMBATE (RODAPÉ) --}}
+                {{#if hasCombat}}
+                <div class="combat-controls">
+                    <button class="combat-btn prev-turn" title="Turno Anterior"><i class="fas fa-backward"></i></button>
+                    <button class="combat-btn end-combat" title="Encerrar Combate"><i class="fas fa-stop"></i></button>
+                    <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i></button>
+                </div>
+                {{/if}}
             </div>
 
         </section>
 
-        {{!-- 3. PAINEL DE FERRAMENTAS (RODAPÉ FIXO UNIFICADO) --}}
-        <div class="sidebar-tools-footer">
-            
-            {{!-- A. Modificador Manual --}}
-            <div class="manual-mod-section">
-                 <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
-                    <div class="manual-row-top">
-                        <input type="text" class="manual-name" placeholder="Motivo (ex: Terreno)" value="{{manualCache.name}}">
-                        <div class="value-controls">
-                            <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
-                            <input type="number" class="manual-value" value="{{manualCache.value}}">
-                            <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
-                        </div>
-                        <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
-                    </div>
-                    <div class="manual-presets">
-                        <button class="preset-btn" data-val="-4">-4</button>
-                        <button class="preset-btn" data-val="-2">-2</button>
-                        <button class="preset-btn" data-val="-1">-1</button>
-                        <button class="preset-btn" data-val="1">+1</button>
-                        <button class="preset-btn" data-val="2">+2</button>
-                        <button class="preset-btn" data-val="4">+4</button>
-                    </div>
+        {{!-- ROLADORES (Mantido igual) --}}
+        <div class="quick-rollers">
+             <div class="roller-section test-section">
+                <div class="roller-row">
+                    <span class="roller-label">NH</span>
+                    <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
+                    <div class="qr-mod-display" title="Total de Modificadores Ativos">+0</div>
+                    <button class="qr-toggle-mode active" title="Modo: Apenas para mim"><i class="fas fa-eye-slash"></i></button>
+                    <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
+                </div>
+                <div class="qr-result-display" style="display:none;"></div>
+            </div>
+            <div class="roller-section damage-section">
+                <div class="roller-row">
+                    <span class="roller-label"><i class="fas fa-skull"></i></span>
+                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d+1)" value="1d">
+                    <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
+                    <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
                 </div>
             </div>
-
-            {{!-- B. Rolador Rápido --}}
-            <div class="quick-rollers">
-                 <div class="roller-section test-section">
-                    <div class="roller-row">
-                        <span class="roller-label">NH</span>
-                        <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível Base">
-                        <div class="qr-mod-display" title="Total Modificadores">+0</div>
-                        <button class="qr-toggle-mode active" title="Modo Privado"><i class="fas fa-eye-slash"></i></button>
-                        <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
-                    </div>
-                    <div class="qr-result-display" style="display:none;"></div>
-                </div>
-                <div class="roller-section damage-section">
-                    <div class="roller-row">
-                        <span class="roller-label"><i class="fas fa-skull"></i></span>
-                        <input type="text" class="qr-formula" placeholder="2d+1" value="1d">
-                        <input type="text" class="qr-type" placeholder="Tipo" value="cont">
-                        <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
-                    </div>
-                </div>
-            </div>
-            
         </div>
 
     </aside>
