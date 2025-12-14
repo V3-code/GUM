@@ -20,16 +20,22 @@ export class GurpsRollPrompt extends FormApplication {
         console.log(" -> Contexto Calculado:", this.context);
     }
 
-    static get defaultOptions() {
+static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: "Configurar Rolagem",
-            id: "gurps-roll-prompt",
-            template: "systems/gum/templates/apps/roll-prompt.hbs",
-            width: 780, 
-            height: "auto",
-            classes: ["gum", "roll-prompt", "theme-dark"],
-            closeOnSubmit: true,
-            scrollY: [".prompt-menu-column", ".active-mods-container"]
+            id: "gum-gm-screen",
+            title: "Escudo do Mestre (GUM)",
+            template: "systems/gum/templates/apps/gm-screen.hbs",
+            
+            // LARGURA E ALTURA
+            width: 1200, 
+            height: 800, // ✅ Define uma altura fixa inicial (antes era 'auto' ou não tinha limite)
+            resizable: true, // O mestre pode arrastar a borda para ajustar
+            
+            classes: ["gum", "gm-screen"],
+            tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" },
+                { navSelector: ".monitor-tabs", contentSelector: ".monitor-body", initial: "characters" }
+            ],
+            dragDrop: [{ dragSelector: ".palette-mod", dropSelector: ".group-content-area" }]
         });
     }
 

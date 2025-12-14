@@ -1,45 +1,29 @@
 /* ================================================================== */
-/* ESCUDO DO MESTRE (GM SCREEN) - ISOLAMENTO TOTAL                    */
+/* COLUNA ESQUERDA: MONITOR + FERRAMENTAS                             */
 /* ================================================================== */
 
-/* Container Principal */
-.gum.gm-screen .window-content {
-    padding: 0;
-    background: #1a1a1a;
-    color: #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Grid de Layout */
-.gum.gm-screen .gm-screen-layout {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    height: 100%;
-    overflow: hidden;
-}
-
-/* ================================================================== */
-/* COLUNA ESQUERDA: MONITOR                                           */
-/* ================================================================== */
+/* Container Principal da Esquerda */
 .gum.gm-screen .monitor-column {
     background: #151515;
     border-right: 1px solid #444;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100%;       /* Ocupa 100% da altura da janela */
     position: relative;
     z-index: 10;
+    overflow: hidden;   /* Impede scroll na coluna inteira */
 }
 
-/* --- Abas de Navegação (Renomeado para evitar conflito com Core) --- */
+/* ----------------------------------------------------------- */
+/* 1. NAVEGAÇÃO (ABAS) - FIXO NO TOPO                          */
+/* ----------------------------------------------------------- */
 .gum.gm-screen .gum-monitor-tabs {
+    flex: 0 0 auto; /* Tamanho fixo, não encolhe */
     display: flex;
     background: #111;
     border-bottom: 1px solid #444;
-    flex-shrink: 0;
 }
+
 .gum.gm-screen .gum-monitor-tabs .item {
     flex: 1;
     text-align: center;
@@ -59,22 +43,69 @@
     border-bottom-color: var(--c-accent-gold, #c5a05b);
 }
 
-/* --- Área de Scroll --- */
+/* ----------------------------------------------------------- */
+/* 2. CORPO CENTRAL (LISTAS) - FLEXÍVEL E ROLÁVEL              */
+/* ----------------------------------------------------------- */
 .gum.gm-screen .monitor-body {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1;            /* Ocupa todo o espaço disponível no meio */
+    overflow: hidden;   /* O scroll é gerenciado dentro da aba */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;      /* Permite encolher corretamente */
+    position: relative;
+}
+
+/* Configuração da Aba Interna */
+.gum.gm-screen .monitor-body .tab {
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
 
+/* --- Cabeçalho de Controles de Combate (Fixo dentro da aba) --- */
+.gum.gm-screen .combat-controls-header {
+    flex: 0 0 auto; /* Fixo no topo da lista */
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 8px 10px;
+    background: #202020;
+    border-bottom: 1px solid #333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 5;
+}
+
+.gum.gm-screen .combat-btn {
+    flex: 1;
+    background: #333;
+    border: 1px solid #555;
+    color: #ccc;
+    border-radius: 3px;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.gum.gm-screen .combat-btn:hover { background: #444; color: #fff; }
+.gum.gm-screen .combat-btn.next-turn:hover { background: rgba(46, 204, 113, 0.2); border-color: #2ecc71; color: #fff; }
+.gum.gm-screen .combat-btn.end-combat:hover { background: rgba(231, 76, 60, 0.2); border-color: #e74c3c; color: #fff; }
+
+/* --- A Lista de Personagens (Onde acontece o Scroll) --- */
 .gum.gm-screen .monitor-list {
+    flex: 1;            /* Ocupa o resto do espaço da aba */
+    overflow-y: auto;   /* Barra de rolagem AQUI */
     padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    
+    /* Scrollbar Fina */
+    scrollbar-width: thin;
+    scrollbar-color: #555 #151515;
 }
 
-/* --- Card do Personagem --- */
+/* Card do Personagem (Visual) */
 .gum.gm-screen .monitor-card {
     background: #2b2a29;
     border: 1px solid #444;
@@ -85,6 +116,7 @@
     gap: 6px;
     transition: all 0.2s ease;
     position: relative;
+    flex-shrink: 0; /* Garante que o card não seja esmagado */
 }
 .gum.gm-screen .monitor-card:hover {
     border-color: #888;
@@ -92,41 +124,35 @@
     transform: translateY(-1px);
 }
 
-/* DESTAQUE DE TURNO (CORRIGIDO) */
+/* Destaque de Turno */
 .gum.gm-screen .monitor-card.active-turn {
-    border: 2px solid #4caf50 !important; /* Força a borda verde */
+    border: 2px solid #4caf50 !important;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.4) !important;
     background: rgba(76, 175, 80, 0.1);
     position: relative;
-    z-index: 2; /* Traz para frente */
+    z-index: 2;
 }
-
 .gum.gm-screen .monitor-card.defeated { opacity: 0.5; filter: grayscale(1); }
 
-/* Identidade */
+/* Conteúdo do Card */
 .gum.gm-screen .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .gum.gm-screen .actor-identity { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; overflow: hidden; }
 .gum.gm-screen .actor-identity img { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #555; object-fit: cover; flex-shrink: 0; }
 .gum.gm-screen .actor-identity .actor-name { font-weight: 700; font-size: 1em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Barras */
 .gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 70px; flex-shrink: 0; }
 .gum.gm-screen .mini-bar { height: 10px; background: #000; border-radius: 5px; position: relative; overflow: hidden; border: 1px solid #333; }
 .gum.gm-screen .mini-bar .fill { height: 100%; transition: width 0.5s ease; }
 .gum.gm-screen .mini-bar.hp .fill { background: var(--c-accent-green, #389c68); }
 .gum.gm-screen .mini-bar.fp .fill { background: var(--c-accent-blue, #56819c); }
 
-/* Defesas */
 .gum.gm-screen .passive-defenses {
     display: flex; justify-content: space-between; align-items: center;
     background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 3px; border-top: 1px solid rgba(255,255,255,0.05);
 }
 .gum.gm-screen .def-tag { font-size: 0.8em; color: #ccc; font-weight: 500; }
-.gum.gm-screen .def-tag i { color: #888; margin-right: 2px; }
 .gum.gm-screen .def-tag.init { color: var(--c-accent-gold, #c5a05b); font-weight: 700; }
-.gum.gm-screen .def-tag.init i { color: var(--c-accent-gold, #c5a05b); }
 
-/* Tags Ativas */
 .gum.gm-screen .active-mods-zone {
     min-height: 24px; background: rgba(0,0,0,0.15); border: 1px dashed #555;
     border-radius: 3px; padding: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
@@ -142,111 +168,124 @@
 .gum.gm-screen .hint-text { font-size: 0.75em; color: #666; width: 100%; text-align: center; font-style: italic; margin-top: 4px; }
 
 
-/* --- BARRA MANUAL (ESQUERDA) --- */
-.gum.gm-screen .manual-mod-section { padding: 8px 10px; background: #181818; border-bottom: 1px solid #444; flex-shrink: 0; }
+/* ----------------------------------------------------------- */
+/* 3. RODAPÉ DE FERRAMENTAS (FIXO EMBAIXO)                     */
+/* ----------------------------------------------------------- */
+.gum.gm-screen .sidebar-tools-footer {
+    flex: 0 0 auto; /* Tamanho fixo baseado no conteúdo */
+    background: #181818;
+    border-top: 1px solid #444;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+}
+
+/* Ajustes: Modificador Manual */
+.gum.gm-screen .manual-mod-section {
+    padding: 8px 10px 4px 10px;
+    background: transparent;
+    border-bottom: none;
+}
 .gum.gm-screen .manual-mod-toolbar {
     background: #2b2a29; padding: 6px; border: 1px solid #444; border-radius: 4px;
     display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
 }
-.gum.gm-screen .manual-mod-toolbar.active { background: rgba(197, 160, 91, 0.15); border-color: var(--c-accent-gold, #c5a05b); box-shadow: 0 0 10px rgba(197, 160, 91, 0.2); }
-.gum.gm-screen .manual-name {
-    width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc;
-    border-radius: 3px; padding: 3px 6px; font-size: 0.9em;
-}
-.gum.gm-screen .manual-name:focus { border-color: var(--c-accent-gold, #c5a05b); color: #fff; }
-.gum.gm-screen .manual-row-middle { display: flex; gap: 5px; height: 28px; }
-.gum.gm-screen .value-controls {
-    display: flex; align-items: center; background: rgba(0,0,0,0.3);
-    border: 1px solid #555; border-radius: 3px; flex-grow: 1;
-}
-.gum.gm-screen .manual-mod-toolbar input[type="number"] {
-    background: transparent; border: none; color: var(--c-accent-gold, #c5a05b);
-    font-weight: 700; width: 100%; text-align: center; font-size: 1.1em;
-}
-.gum.gm-screen .step-btn {
-    background: transparent; border: none; color: #777; cursor: pointer;
-    padding: 0 8px; height: 100%; display: flex; align-items: center;
-}
+.gum.gm-screen .manual-mod-toolbar.active { background: rgba(197, 160, 91, 0.15); border-color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .manual-row-top { display: flex; gap: 5px; align-items: center; }
+.gum.gm-screen .manual-name { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc; border-radius: 3px; padding: 3px 6px; font-size: 0.9em; }
+.gum.gm-screen .value-controls { display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid #555; border-radius: 3px; flex-grow: 1; }
+.gum.gm-screen .manual-mod-toolbar input[type="number"] { background: transparent; border: none; color: var(--c-accent-gold, #c5a05b); font-weight: 700; width: 100%; text-align: center; font-size: 1.1em; }
+.gum.gm-screen .step-btn { background: transparent; border: none; color: #777; cursor: pointer; padding: 0 8px; height: 100%; display: flex; align-items: center; }
 .gum.gm-screen .step-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
-.gum.gm-screen .activate-manual-btn {
-    width: 32px; background: #333; color: #888; border: 1px solid #555;
-    border-radius: 3px; cursor: pointer; font-size: 1.1em;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-}
+.gum.gm-screen .activate-manual-btn { width: 32px; background: #333; color: #888; border: 1px solid #555; border-radius: 3px; cursor: pointer; font-size: 1.1em; display: flex; align-items: center; justify-content: center; }
 .gum.gm-screen .activate-manual-btn:hover { color: #fff; border-color: #fff; }
-.gum.gm-screen .manual-mod-toolbar.active .activate-manual-btn {
-    background: var(--c-accent-gold, #c5a05b); color: #000; border-color: var(--c-accent-gold, #c5a05b);
-}
+.gum.gm-screen .manual-mod-toolbar.active .activate-manual-btn { background: var(--c-accent-gold, #c5a05b); color: #000; border-color: var(--c-accent-gold, #c5a05b); }
 .gum.gm-screen .manual-presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
-.gum.gm-screen .preset-btn {
-    background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa;
-    border-radius: 2px; padding: 2px 0; font-size: 0.75em; font-weight: 600; cursor: pointer;
-}
+.gum.gm-screen .preset-btn { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; border-radius: 2px; padding: 2px 0; font-size: 0.75em; font-weight: 600; cursor: pointer; }
 .gum.gm-screen .preset-btn:hover { background: #fff; color: #000; }
 
-/* --- ROLADOR RÁPIDO (RODAPÉ) --- */
+/* Ajustes: Rolador Rápido */
 .gum.gm-screen .quick-rollers {
-    background: #151515; border-top: 1px solid #444; padding: 8px;
-    display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; z-index: 5;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    padding: 4px 10px 8px 10px;
+    background: transparent;
+    border-top: 1px dashed #333;
+    box-shadow: none;
+    display: flex; flex-direction: column; gap: 6px;
 }
 .gum.gm-screen .roller-row { display: flex; align-items: center; gap: 4px; }
 .gum.gm-screen .roller-label { font-size: 0.75em; font-weight: 700; color: #888; width: 25px; text-align: center; }
-.gum.gm-screen .quick-rollers input {
-    background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff;
-    border-radius: 3px; height: 26px; font-size: 0.9em; text-align: center;
-}
+.gum.gm-screen .quick-rollers input { background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff; border-radius: 3px; height: 26px; font-size: 0.9em; text-align: center; }
 .gum.gm-screen .quick-rollers input:focus { border-color: var(--c-accent-gold, #c5a05b); }
 .gum.gm-screen .qr-nh { width: 40px; font-weight: 700; color: var(--c-accent-gold, #c5a05b) !important; }
 .gum.gm-screen .qr-formula { flex-grow: 1; text-align: left !important; padding-left: 5px; }
 .gum.gm-screen .qr-type { width: 45px; font-size: 0.8em !important; color: #aaa !important; }
-.gum.gm-screen .qr-mod-display {
-    min-width: 30px; height: 26px; padding: 0 8px; border-radius: 3px;
-    background: rgba(0,0,0,0.5); border: 1px solid #555; color: #888;
-    font-size: 0.9em; font-weight: 700; display: flex; align-items: center;
-    justify-content: center; cursor: help;
-}
+.gum.gm-screen .qr-mod-display { min-width: 30px; height: 26px; padding: 0 8px; border-radius: 3px; background: rgba(0,0,0,0.5); border: 1px solid #555; color: #888; font-size: 0.9em; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: help; }
 .gum.gm-screen .qr-mod-display.pos { color: #4caf50; border-color: #2e7d32; background: rgba(46, 204, 113, 0.1); }
 .gum.gm-screen .qr-mod-display.neg { color: #e57373; border-color: #c62828; background: rgba(229, 57, 53, 0.1); }
-.gum.gm-screen .qr-btn, .gum.gm-screen .qr-toggle-mode {
-    width: 30px; height: 26px; background: #333; border: 1px solid #555; color: #ccc;
-    border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-}
+.gum.gm-screen .qr-btn, .gum.gm-screen .qr-toggle-mode { width: 30px; height: 26px; background: #333; border: 1px solid #555; color: #ccc; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .gum.gm-screen .qr-btn:hover { background: #eee; color: #000; border-color: #fff; }
-.gum.gm-screen .qr-toggle-mode { background: transparent; border: none; }
 .gum.gm-screen .qr-toggle-mode:hover { color: #fff; }
 .gum.gm-screen .qr-toggle-mode.active { color: var(--c-accent-blue, #56819c); }
 .gum.gm-screen .roll-test:hover { background: var(--c-accent-blue, #56819c); border-color: var(--c-accent-blue, #56819c); }
 .gum.gm-screen .roll-damage:hover { background: var(--c-accent-red, #a53541); border-color: var(--c-accent-red, #a53541); }
-.gum.gm-screen .qr-result-display {
-    margin-top: 4px; background: rgba(0,0,0,0.4); border: 1px solid #333;
-    border-radius: 3px; padding: 4px 8px; font-size: 0.85em; text-align: center;
-    color: #fff; animation: fadeIn 0.2s ease;
-}
+.gum.gm-screen .qr-result-display { margin-top: 4px; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 3px; padding: 4px 8px; font-size: 0.85em; text-align: center; color: #fff; animation: fadeIn 0.2s ease; }
 .gum.gm-screen .qr-result-display strong { font-size: 1.1em; }
 .gum.gm-screen .qr-result-display.success { border-left: 3px solid var(--c-accent-green, #389c68); }
 .gum.gm-screen .qr-result-display.failure { border-left: 3px solid var(--c-accent-red, #a53541); }
 
-/* --- CONTROLES DE COMBATE (RODAPÉ) --- */
-.gum.gm-screen .combat-controls {
-    display: flex; justify-content: space-between; padding: 8px 10px;
-    background: #111; border-top: 1px solid #444; margin-top: auto; gap: 10px;
-}
-.gum.gm-screen .combat-btn {
-    flex: 1; background: #252525; border: 1px solid #444; color: #ccc;
-    border-radius: 3px; padding: 5px; cursor: pointer; transition: all 0.2s;
-}
-.gum.gm-screen .combat-btn:hover { background: #333; color: #fff; }
-.gum.gm-screen .combat-btn.next-turn:hover { background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
-.gum.gm-screen .combat-btn.prev-turn:hover { color: var(--c-accent-gold, #c5a05b); border-color: var(--c-accent-gold, #c5a05b); }
-.gum.gm-screen .combat-btn.end-combat:hover { color: #e57373; border-color: #e57373; }
-
 /* ================================================================== */
 /* COLUNA DIREITA: DASHBOARD                                          */
 /* ================================================================== */
+
 .gum.gm-screen .controls-column {
-    display: flex; flex-direction: column; height: 100%; background: #222;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #222;
+    overflow: hidden; /* Garante scroll interno */
+}
+
+/* Barra de Ferramentas da Direita (Fixa) */
+.gum.gm-screen .palette-tools-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #181818;
+    border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
+    padding-right: 10px;
+    flex: 0 0 auto; /* Tamanho fixo */
+}
+
+/* Corpo Principal (Scrollável) */
+.gum.gm-screen .screen-body {
+    flex: 1;            /* Ocupa o resto */
+    padding: 15px;
+    overflow-y: auto;   /* Scroll aqui */
+    min-height: 0;      /* Permite encolher */
+    
+    scrollbar-width: thin;
+    scrollbar-color: #555 #222;
+}
+
+/* Grid de 3 Colunas */
+.gum.gm-screen .modifiers-dashboard .modular-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    height: 100%; /* Ocupa a altura do pai scrollável */
+}
+
+.gum.gm-screen .modular-column {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 5px;
+    height: 100%;
+    overflow-y: auto; /* Scroll individual por coluna se necessário */
+    scrollbar-width: thin;
 }
 
 /* Barra de Ferramentas da Direita */
