@@ -397,61 +397,62 @@ class ContingentEffectBuilder extends Dialog {
 }
 
 // ================================================================== //
-//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL ✅
+//  ✅ FUNÇÃO DE ROLAGEM GLOBAL E REUTILIZÁVEL (VERSÃO CORRIGIDA) ✅
 // ================================================================== //
 /**
  * Realiza uma rolagem de teste (3d6) baseada nos dados fornecidos.
  * @param {Actor} actor - O ator realizando o teste.
  * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
+ * @param {Object} extraOptions - Opções extras { ignoreGlobals: boolean }
  */
-export async function performGURPSRoll(actor, rollData) {
+export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     
     // --- 1. LÓGICA DE VALORES BASE ---
-    
-    // Se veio da Janela, 'originalValue' existe e é a Base.
-    // Se veio de Shift+Click, 'value' é a Base e não tem 'originalValue'.
     const hasProcessedData = rollData.originalValue !== undefined;
     
     // Valor Base (Atributo Puro)
     const baseValue = parseInt(hasProcessedData ? rollData.originalValue : rollData.value) || 10;
     
-    // Modificador Pontual (Quick Roll ou Prompt)
+    // Modificador que veio do Prompt (Manual)
     const promptMod = parseInt(rollData.modifier) || 0;
     
     const label = rollData.label || "Teste";
 
     // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---
     
-    // Busca modificadores "grudados" no ator
-    const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
-    
     let globalModValue = 0;
     let lowestCap = Infinity; // Começa infinito
 
-    globalMods.forEach(m => {
-        // Soma o valor
-        globalModValue += (parseInt(m.value) || 0);
+    // Só processa globais se NÃO tivermos instrução para ignorar
+    // (Útil se o Prompt já tiver embutido os globais no valor final)
+    if (!extraOptions.ignoreGlobals) {
+        const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
         
-        // Verifica o Teto (Cap)
-        // Se o modificador tiver um teto (ex: Escuridão = 9) e ele for menor que o atual, atualiza
-        if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
-            const capVal = parseInt(m.cap);
-            if (!isNaN(capVal) && capVal < lowestCap) {
-                lowestCap = capVal;
+        globalMods.forEach(m => {
+            // Soma o valor
+            globalModValue += (parseInt(m.value) || 0);
+            
+            // Verifica o Teto (Cap)
+            if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
+                const capVal = parseInt(m.cap);
+                if (!isNaN(capVal) && capVal < lowestCap) {
+                    lowestCap = capVal;
+                }
             }
-        }
-    });
+        });
+    }
 
-    // Modificador Total (Prompt + Global)
+    // --- 3. CÁLCULO FINAL (EVITA DUPLICAÇÃO) ---
+    
+    // Se o Prompt estiver enviando o valor total (base + globais + manual) no 'value',
+    // nós devemos tomar cuidado. Mas assumindo que 'value' é base e 'modifier' é extra:
+    
     const totalModifier = promptMod + globalModValue;
-
-    // --- 3. CÁLCULO DO NÍVEL EFETIVO ---
 
     // Soma matemática simples
     const mathLevel = baseValue + totalModifier;
 
     // Aplica a regra do Teto (Clamp)
-    // Se a soma ultrapassar o menor teto ativo, reduz para o teto.
     let effectiveLevel = mathLevel;
     if (lowestCap !== Infinity && effectiveLevel > lowestCap) {
         effectiveLevel = lowestCap;
@@ -503,7 +504,7 @@ export async function performGURPSRoll(actor, rollData) {
                     <span class="meta-part">NH <strong>${baseValue}</strong></span>
                     
                     <span class="meta-mod ${totalModifier !== 0 ? (totalModifier > 0 ? 'pos' : 'neg') : ''}" 
-                          title="Mod. Prompt: ${promptMod}, Mod. Global: ${globalModValue}">
+                          title="Manual: ${promptMod}, Global: ${globalModValue}">
                         ${totalModifier !== 0 ? (totalModifier > 0 ? '+' : '') + totalModifier : ''}
                     </span>
                     
@@ -1214,6 +1215,13 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 // ================================================================== //
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
+
+// Helper para controlar estado de Detalhes
+// Se 'collapsedData[id]' for true, significa que o usuário fechou -> retorna "" (vazio = fechado)
+// Se for false/null/undefined -> retorna "open" (aberto)
+Handlebars.registerHelper('collapsibleState', function(id, collapsedData) {
+    return (collapsedData && collapsedData[id]) ? "" : "open";
+});
 
 Handlebars.registerHelper('formatDR', function(drObject) {
     if (!drObject || typeof drObject !== 'object') {

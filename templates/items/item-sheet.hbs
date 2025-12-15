@@ -703,29 +703,105 @@
             </div>
         {{/if}}
        
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM PERÍCIAS (COM INPUT HÍBRIDO)				 --}}
-        {{!-- ===================================================================== --}}
-        {{#if (eq item.type "skill")}} 
+ {{!-- ===================================================================== --}}
+{{!--       ABA DETALHES: ITEM PERÍCIAS (SKILL TREE POWER-UPS 10)           --}}
+{{!-- ===================================================================== --}}
+{{#if (eq item.type "skill")}} 
 
-            {{!-- Seção Classificação --}}
-            <div class="form-section">
-                <h4 class="section-title">Classificação</h4>
-                <div class="form-grid-2">
-                    <div class="form-group"><label>Grupo</label><input type="text" name="system.group" value="{{system.group}}"/></div>
-                    
-                    {{!-- Campo REF com botão --}}
-                    <div class="form-group">
-                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>Ref. Página</label>
-                        <div class="input-with-button">
-                            <input type="text" name="system.ref" value="{{system.ref}}"/>
-
-                        </div>
-                    </div>
-                </div>
+    {{!-- SEÇÃO 1: ORGANIZAÇÃO & HIERARQUIA --}}
+    <div class="form-section">
+        <h4 class="section-title">Organização (Skill Trees)</h4>
+        
+        {{!-- Linha 1: Grupo e Página --}}
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label>Grupo / Tronco</label>
+                {{!-- O Grupo define a "Pasta" na aba de perícias --}}
+                <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
+                <datalist id="groups-list">
+                    <option value="Animais">
+                    <option value="Artes">
+                    <option value="Atléticas">
+                    <option value="Combate Corpo a Corpo">
+                    <option value="Combate à Distância">
+                    <option value="Conhecimento">
+                    <option value="Criminosas">
+                    <option value="Influência">
+                    <option value="Mágicas">
+                    <option value="M militares">
+                    <option value="Natureza">
+                    <option value="Outras">
+                    <option value="Pessoais">
+                    <option value="Plantas">
+                    <option value="Profissionais">
+                    <option value="Sociais">
+                    <option value="Técnicas">
+                    <option value="Veículos">
+                </datalist>
             </div>
             
-            {{!-- SEÇÃO HABILIDADE (COM AUTOMAÇÃO) --}}
+            <div class="form-group">
+                <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
+                <div class="input-with-button">
+                    <input type="text" name="system.ref" value="{{system.ref}}"/>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.1); margin: 8px 0;">
+
+        {{!-- Linha 2: Definição da Árvore (Tier) --}}
+        <div class="form-group">
+            <label>Nível na Árvore (Tier)</label>
+            <select name="system.hierarchy_type">
+                {{selectOptions hierarchyTypes selected=system.hierarchy_type}}
+            </select>
+        </div>
+
+        {{!-- CONDICIONAIS DE VÍNCULO (Inputs dinâmicos baseados na escolha acima) --}}
+        
+        {{!-- TRUNK (Tronco): Apenas informativo --}}
+        {{#if (eq system.hierarchy_type "trunk")}}
+        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
+            <p class="hint-text" style="font-size:0.8em; color:var(--c-accent-gold);">
+                <i class="fas fa-info-circle"></i> Este item define um <strong>Tronco</strong>. Outras perícias usarão o nome deste grupo ("{{system.group}}") para se agrupar aqui.
+            </p>
+        </div>
+        {{/if}}
+
+        {{!-- BRANCH (Galho): Pode vincular a um Tronco específico --}}
+        {{#if (eq system.hierarchy_type "branch")}}
+        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
+            <label style="color:var(--c-accent-blue);">Vinculado ao Tronco (Opcional)</label>
+            <input type="text" name="system.root_parent" value="{{system.root_parent}}" placeholder="Nome do Tronco Pai (se diferente do Grupo)"/>
+        </div>
+        {{/if}}
+
+        {{!-- TWIG (Graveto): Precisa de um Branch Pai --}}
+        {{#if (eq system.hierarchy_type "twig")}}
+        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
+            <label style="color:#ce93d8;">Vinculado ao Ramo (Branch)</label>
+            <div class="input-with-button">
+                <input type="text" name="system.branch_parent" value="{{system.branch_parent}}" placeholder="Nome exato da perícia Ramo"/>
+                <a class="link-skill-button" title="Buscar Ramo"><i class="fas fa-link"></i></a>
+            </div>
+        </div>
+        {{/if}}
+
+        {{!-- LEAF (Folha/Técnica): Precisa de um Pai --}}
+        {{#if (eq system.hierarchy_type "leaf")}}
+        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
+            <label style="color:var(--c-accent-green);">Vinculado ao Pai (Twig/Branch)</label>
+            <div class="input-with-button">
+                <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
+                <a class="link-skill-button" title="Buscar Pai"><i class="fas fa-link"></i></a>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+
+            
+            {{!-- SEÇÃO HABILIDADE (COM AUTOMAÇÃO - MANTIDA IGUAL) --}}
             <div class="form-section">
                 <h4 class="section-title">Habilidade</h4>
                 

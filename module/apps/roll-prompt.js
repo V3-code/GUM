@@ -401,16 +401,14 @@ _updateTotals(html) {
             if (finalValue > lowestCap) finalValue = lowestCap;
         }
 
-        // Importante: performGURPSRoll também lê as flags globais.
-        // Se passarmos apenas 'modifier', ele vai somar as flags DE NOVO (duplicando).
-        // SOLUÇÃO: Passamos 'value' (final calculado) e 'originalValue' (base).
-        // A performGURPSRoll sabe que se receber 'originalValue', deve confiar no 'value' recebido.
+// Importante: Como o Prompt já calculou TUDO (incluindo globais e tetos),
+        // nós enviamos o valor FINAL já pronto e pedimos para o main.js NÃO somar globais de novo.
         
         performGURPSRoll(this.actor, {
             ...this.rollData,
-            value: finalValue,          // Valor Final (Com Teto)
-            originalValue: this.rollData.value, // Valor Base
-            modifier: totalMod          // Soma dos modificadores (para exibição)
-        });
+            value: finalValue,          // Valor Final (Já com Base + Manual + Globais + Teto)
+            originalValue: this.rollData.value, // Valor Base Original
+            modifier: totalMod          // Soma total dos modificadores (para exibição no chat)
+        }, { ignoreGlobals: true }); // <--- A CORREÇÃO MÁGICA
     }
 }

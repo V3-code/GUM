@@ -523,30 +523,126 @@ a:hover { text-decoration: underline; color: #fff; }
 .bar-inputs input { background: transparent; border: none; color: inherit; text-align: right; width: 30px; font-family: inherit; font-weight: 700; padding: 0; font-size: 11px; }
 .bar-inputs .final-max-value { text-align: left; width: 30px; }
 
-/* Sobrevivência */
-.sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: 5px; }
-.collapsible-block { border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px; }
-.collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0; }
-.collapsible-header .block-title { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700; color: var(--c-acento-dourado); margin: 0; }
-.collapsible-header .expand-icon { font-size: 10px; color: var(--c-texto-secundario); }
-.collapsible-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-.collapsible-block.active .collapsible-content { max-height: 200px; padding-top: 5px; }
-.survival-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.survival-item {
-    background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 3px; padding: 4px;
-    display: flex; flex-direction: column; align-items: center;
+/* =================================================================== */
+/* SIDEBAR: SOBREVIVÊNCIA (VISUAL CLÁSSICO + NOVA LÓGICA)              */
+/* =================================================================== */
+
+.gum.sheet.actor .sidebar-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
 }
-.survival-item.radiation { border-color: #5a4a20; background: rgba(50, 40, 10, 0.2); }
-.survival-item label {
-    font-size: 9px; font-weight: 700; color: var(--c-texto-subtitulo); margin-bottom: 2px; text-transform: uppercase;
+
+/* O container principal (Agora é <details>) */
+.gum.sheet.actor .sidebar-collapsible {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 5px;
+    display: block;
 }
-.survival-item label.warning-label { color: #d4a017; }
-.counter-wrapper { display: flex; align-items: center; gap: 5px; }
-.adjust-survival { color: #777; cursor: pointer; font-size: 10px; transition: 0.2s; }
-.adjust-survival:hover { color: #fff; }
-.counter-wrapper input {
-    width: 30px; text-align: center; background: #111; border: 1px solid #333;
-    color: #fff; font-weight: 700; font-size: 12px; border-radius: 2px; height: 18px;
+
+/* O Cabeçalho (Agora é <summary>) */
+.gum.sheet.actor .sidebar-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 4px 0;
+    list-style: none; /* Remove marcador padrão */
+    outline: none;
+}
+/* Remove a setinha nativa do navegador */
+.gum.sheet.actor .sidebar-summary::-webkit-details-marker { display: none; }
+
+/* Título (Fonte Cinzel Dourada) */
+.gum.sheet.actor .sidebar-summary .block-title {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--c-acento-dourado);
+    margin: 0;
+}
+
+/* Ícone (Seta) */
+.gum.sheet.actor .sidebar-summary .expand-icon {
+    font-size: 10px;
+    color: var(--c-texto-secundario);
+    transition: transform 0.2s;
+}
+/* Rotaciona a seta quando aberto */
+.gum.sheet.actor .sidebar-collapsible[open] .expand-icon {
+    transform: rotate(180deg);
+}
+
+/* Conteúdo Interno */
+.gum.sheet.actor .collapsible-content {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* Grid e Itens (Mantendo estilo exato do original) */
+.gum.sheet.actor .survival-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.gum.sheet.actor .survival-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gum.sheet.actor .survival-item.radiation {
+    border-color: #5a4a20;
+    background: rgba(50, 40, 10, 0.2);
+}
+
+.gum.sheet.actor .survival-item label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--c-texto-subtitulo);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+.gum.sheet.actor .survival-item label.warning-label {
+    color: #d4a017;
+}
+
+/* Controles de Valor */
+.gum.sheet.actor .counter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.gum.sheet.actor .adjust-survival {
+    color: #777;
+    cursor: pointer;
+    font-size: 10px;
+    transition: 0.2s;
+}
+.gum.sheet.actor .adjust-survival:hover {
+    color: #fff;
+}
+
+.gum.sheet.actor .counter-wrapper input {
+    width: 30px;
+    text-align: center;
+    background: #111; /* Fundo escuro original */
+    border: 1px solid #333;
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    border-radius: 2px;
+    height: 18px;
+    padding: 0;
 }
 /* Inputs Dialog */
 .secondary-stats-dialog input[type="number"], .secondary-stats-dialog input[type="text"] {
@@ -1079,97 +1175,239 @@ a.rollable-damage.value:hover {
 }
  
 /* =================================================================== */
-/* DESIGN: ABA DE PERÍCIAS (LAYOUT FINAL E REFINADO)                   */
+/* DESIGN: ABA DE PERÍCIAS (LAYOUT HÍBRIDO INTELIGENTE)                */
 /* =================================================================== */
 
-/* Layout de 2 colunas com proporção ajustada */
-.skills-layout-container {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr; /* Coluna da esquerda ~60%, Direita ~40% */
-  gap: 1rem;
-  align-items: start;
+/* 1. Container da Aba */
+.gum.sheet.actor .tab[data-tab="skills"] {
+    
+    padding-right: 4px;
 }
 
-/* Coluna da direita com blocos e espaçamento reduzido */
-.skill-side-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem; /* MUDANÇA: Distância entre os blocos diminuída */
+/* 2. Barra de Ferramentas (Sticky) */
+.gum.sheet.actor .skills-header-tools {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--c-fundo-papiro); 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--c-borda);
+    margin-bottom: 10px;
 }
 
-/* Estilo padrão para todos os blocos de perícia */
-.tab[data-tab="skills"] .gum-block {
-  background: var(--c-fundo-card-claro);
-  border: 1px solid var(--c-borda);
-  padding: 0.75rem;
+/* Busca e Botões (Mantidos iguais) */
+.gum.sheet.actor .skills-search-wrapper { position: relative; flex: 1; max-width: 240px; }
+.gum.sheet.actor .skills-search-wrapper input {
+    width: 100%; height: 28px; padding-left: 26px; border-radius: 14px;
+    background: rgba(0,0,0,0.05); border: 1px solid var(--c-borda);
+    font-size: 12px; color: var(--c-texto-escuro); margin: 0;
+}
+.gum.sheet.actor .skills-search-wrapper input:focus { background: #fff; border-color: var(--c-acento-dourado); }
+.gum.sheet.actor .skills-search-wrapper i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 11px; pointer-events: none; }
+.gum.sheet.actor .skills-header-buttons { display: flex; gap: 12px; }
+.gum.sheet.actor .skills-header-buttons a {
+    font-family: var(--font-secondary); font-size: 11px; font-weight: 700;
+    color: var(--c-texto-subtitulo); text-transform: uppercase;
+    cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.gum.sheet.actor .skills-header-buttons a:hover { color: var(--c-acento-vermelho); }
+
+/* =================================================================== */
+/* 3. LÓGICA DE COLUNAS (O PULO DO GATO)                               */
+/* =================================================================== */
+
+/* CONFIGURAÇÃO COMUM */
+.gum.sheet.actor .skills-scroll-area {
+    overflow: visible; flex: none; height: auto; padding-bottom: 20px;
 }
 
-/* Cabeçalhos de bloco menores, especialmente na coluna da direita */
-.skill-side-column .block-header input {
-  font-size: 0.9rem !important;
+/* --- MODO GRUPO: 2 COLUNAS (Masonry) --- */
+.gum.sheet.actor .skills-scroll-area.group {
+    column-count: 2;        
+    column-gap: 10px;       
+    column-fill: balance;
+    display: block;
 }
 
-.tab[data-tab="skills"] .item-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* Espaço entre cada linha de perícia */
+/* --- MODO ÁRVORE: 1 COLUNA (Lista Expandida) --- */
+.gum.sheet.actor .skills-scroll-area.tree {
+    column-count: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-/* Estilo para cada linha de perícia */
-.tab[data-tab="skills"] .skill-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0;
-  border: none;
-  font-size: 12px
+/* Garante que os cards não quebrem no meio */
+.gum.sheet.actor .skill-tree-group {
+    background: var(--c-fundo-card-claro);
+    border: 1px solid var(--c-borda);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    break-inside: avoid; /* Essencial para o modo 2 colunas */
+    page-break-inside: avoid;
+    display: inline-block; /* Fix para Chrome em colunas */
+    width: 100%;
 }
 
-/* A "tag" do nome da perícia */
-.tab[data-tab="skills"] .skill-name-tag {
-  background: rgba(0,0,0,0.03);
-  border: 1px solid var(--c-borda);
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-weight: 700;
-  flex-grow: 1; /* Faz o nome ocupar o espaço disponível */
+/* =================================================================== */
+/* 4. ESTILO DA LISTA E ITENS                                          */
+/* =================================================================== */
+
+/* Cabeçalho do Grupo (Summary) */
+.gum.sheet.actor .skill-tree-summary {
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer; display: flex; align-items: center;
+    list-style: none; outline: none; transition: background 0.2s;
+}
+.gum.sheet.actor .skill-tree-summary:hover { background: rgba(0,0,0,0.08); }
+.gum.sheet.actor .skill-tree-summary::-webkit-details-marker { display: none; }
+
+.gum.sheet.actor .st-group-title {
+    font-weight: 700; font-size: 12px; text-transform: uppercase;
+    color: var(--c-texto-escuro); flex-grow: 1; font-family: var(--font-secondary);
+}
+.gum.sheet.actor .st-group-count {
+    font-size: 10px; color: var(--c-texto-subtitulo); margin-right: 8px;
+    background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 8px;
+}
+.gum.sheet.actor .st-icon { font-size: 10px; color: var(--c-texto-subtitulo); transition: transform 0.2s; }
+.gum.sheet.actor .skill-tree-group[open] .st-icon { transform: rotate(180deg); }
+
+.gum.sheet.actor .skill-tree-list { list-style: none; padding: 0; margin: 0; }
+
+/* LINHA DA PERÍCIA */
+.gum.sheet.actor .skill-tree-item {
+    display: flex; align-items: center; gap: 8px; padding: 3px 6px;
+    border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.1s;
+    position: relative; /* Necessário para as linhas guia */
+}
+.gum.sheet.actor .skill-tree-item:last-child { border-bottom: none; }
+.gum.sheet.actor .skill-tree-item:hover { background: rgba(0,0,0,0.02); }
+
+/* Ícone */
+.gum.sheet.actor .st-item-icon {
+    width: 24px; height: 24px; border-radius: 3px; border: 1px solid var(--c-borda);
+    background-size: cover; background-position: center; cursor: pointer; flex-shrink: 0;
+    opacity: 0.9; transition: all 0.2s; position: relative; z-index: 2;
+}
+.gum.sheet.actor .st-item-icon:hover { opacity: 1; box-shadow: 0 0 5px var(--c-acento-dourado); border-color: var(--c-acento-dourado); }
+
+/* Nome e Informações */
+.gum.sheet.actor .st-item-name {
+    flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
+    line-height: 1.1; overflow: hidden; min-width: 0;
+}
+.gum.sheet.actor .st-item-name h4 {
+    margin: 0; font-size: 12px; font-weight: 600; color: var(--c-texto-escuro);
+    cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gum.sheet.actor .st-item-name h4:hover { color: var(--c-acento-dourado); }
+
+/* Breadcrumbs (Caminho de Herança) */
+.gum.sheet.actor .st-inheritance-path {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 3px;
+    font-size: 9px; margin-top: 2px; color: var(--c-texto-subtitulo);
+}
+.gum.sheet.actor .path-node {
+    background: rgba(0,0,0,0.05); padding: 0 4px; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1); white-space: nowrap; display: flex; gap: 3px;
+}
+.gum.sheet.actor .path-node.trunk { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
+.gum.sheet.actor .path-val { font-weight: 700; color: var(--c-texto-escuro); }
+.gum.sheet.actor .path-separator { font-size: 8px; opacity: 0.5; }
+
+/* Controles e Valores (Alinhados à direita) */
+.gum.sheet.actor .st-nh-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 32px; height: 30px; background: rgba(0,0,0,0.03); border: 1px solid var(--c-borda);
+    border-radius: 3px; flex-shrink: 0;
+}
+.gum.sheet.actor .st-nh-box span { font-size: 8px; font-weight: 700; color: #888; line-height: 1; }
+.gum.sheet.actor .st-nh-box a { font-size: 13px; font-weight: 700; color: var(--c-texto-escuro); line-height: 1; }
+.gum.sheet.actor .st-nh-box a:hover { color: var(--c-acento-vermelho); text-decoration: none; }
+
+.gum.sheet.actor .st-pts-box {
+    width: 28px; text-align: center; font-size: 11px; color: #666;
+    display: flex; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;
+}
+.gum.sheet.actor .st-pts-box i { font-size: 8px; opacity: 0.5; }
+
+.gum.sheet.actor .st-controls {
+    display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; flex-shrink: 0;
+}
+.gum.sheet.actor .skill-tree-item:hover .st-controls { opacity: 1; }
+.gum.sheet.actor .st-controls a { color: var(--c-texto-subtitulo); font-size: 11px; }
+.gum.sheet.actor .st-controls a:hover { color: var(--c-texto-escuro); }
+
+/* =================================================================== */
+/* 5. LINHAS GUIA E INDENTAÇÃO (HIERARQUIA VISUAL)                     */
+/* =================================================================== */
+
+/* Indentação (Padding) - Menor que antes para economizar espaço */
+.gum.sheet.actor .skill-tree-item.indent-1 { padding-left: 20px; }
+.gum.sheet.actor .skill-tree-item.indent-2 { padding-left: 35px; }
+.gum.sheet.actor .skill-tree-item.indent-3 { padding-left: 50px; }
+
+/* Linhas Guia (Só aparecem no modo Tree) */
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::before,
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::before,
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::before {
+    content: '';
+    position: absolute;
+    left: 10px; /* Posição da linha vertical */
+    top: -50%;  /* Começa do item anterior */
+    height: 100%; /* Vai até a metade deste item */
+    width: 1px;
+    border-left: 1px solid rgba(0,0,0,0.1);
+    z-index: 1;
 }
 
-/* O container para as tags de detalhes (Atributo e NH) */
-.tab[data-tab="skills"] .skill-details {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0; /* Impede que encolham */
-  
+/* Conector Horizontal (L) */
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::after,
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::after,
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::after {
+    content: '';
+    position: absolute;
+    height: 1px;
+    width: 8px; /* Comprimento do tracinho horizontal */
+    border-top: 1px solid rgba(0,0,0,0.15);
+    top: 50%;
+    z-index: 1;
 }
 
-/* Estilo de "tag" para Atributo e NH */
-.tab[data-tab="skills"] .skill-details .stat {
-  display: inline-block;
-  background: rgba(0,0,0,0.03);
-  border: 1px solid var(--c-borda);
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 10px;
-  color: var(--c-texto-subtitulo);
+/* Ajustes de posição para cada nível */
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::after { left: 10px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::before { left: 25px; } /* Desloca a linha 2 */
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::after { left: 25px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::before { left: 40px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::after { left: 40px; }
+
+/* Tronco Destacado */
+.gum.sheet.actor .skill-tree-item.is-trunk {
+    background: rgba(0,0,0,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.1);
 }
-.tab[data-tab="skills"] .skill-details a.stat {
-  font-weight: 700;
-  color: var(--c-texto-escuro);
-  font-size: 10px
-}
-.tab[data-tab="skills"] .skill-details a.stat:hover {
-  border-color: var(--c-texto-subtitulo);
-  text-decoration: none;
+.gum.sheet.actor .skill-tree-item.is-trunk .st-item-name h4 {
+    font-weight: 800; font-size: 13px; text-transform: uppercase;
 }
 
-/* Ícones de controle menores */
-.tab[data-tab="skills"] .item-control {
-  font-size: 10px;
+/* Nova Tag de Modificadores (Aba Perícias) */
+.gum.sheet.actor .path-node.mod {
+    border-color: rgba(86, 129, 156, 0.3); /* Azul acinzentado */
+    background: rgba(86, 129, 156, 0.1);
+    color: #4a6572;
 }
+.gum.sheet.actor .path-node.mod i {
+    font-size: 0.9em;
+    margin-right: 2px;
+}
+
 
 
 /* =================================================================== */
@@ -2519,6 +2757,21 @@ a.rollable-damage.value:hover {
 }
 .gurps-item-preview-card .send-to-chat:hover {
     color: #a53541;
+}
+
+.gurps-item-preview-card .preview-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    background: #000;
+    flex-shrink: 0;
+}
+
+/* Garante que o título se alinhe com a imagem */
+.gurps-item-preview-card .preview-header h3 {
+    margin: 0;
+    /* Removemos margem porque o flex gap cuida do espaço */
 }
 
 /* BOTÃO APLICAR DANO*/
@@ -4136,4 +4389,22 @@ width: 22px;
 .modifiers-toolbar button:active {
     transform: translateY(1px); /* Efeito de pressão */
     box-shadow: none;
+}
+
+/* Remove o cursor de "mãozinha" da barra inteira */
+.gum.sheet.actor .spell-summary {
+    cursor: default !important; 
+}
+
+/* Coloca a "mãozinha" APENAS no nome e na seta */
+.gum.sheet.actor .spell-main-info {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 5px;
+    transition: background 0.2s;
+}
+
+/* Efeito visual ao passar o mouse no gatilho */
+.gum.sheet.actor .spell-main-info:hover {
+    background: rgba(255,255,255,0.1);
 }

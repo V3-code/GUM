@@ -37,6 +37,15 @@ async getData(options) {
         "TecD": "Técnica (Difícil)"
     };
 
+    // ✅ NOVO: Tipos de Hierarquia (Baseado no Power-Ups 10)
+    context.hierarchyTypes = {
+        "normal": "Padrão (Sem Árvore)",
+        "trunk": "Tronco (Trunk)",   // 7 pts
+        "branch": "Ramo (Branch)",   // 3 pts
+        "twig": "Graveto (Twig)",    // 2 pts
+        "leaf": "Folha (Leaf)"       // 1 pt
+    };
+
     // ✅ NOVO: LÓGICA DE EQUIPAMENTOS E ARMADURAS (Cálculo de CF e Peso)
     if (['equipment', 'armor'].includes(this.item.type)) {
         const eqpModsObj = this.item.system.eqp_modifiers || {};

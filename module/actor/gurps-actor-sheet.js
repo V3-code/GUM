@@ -273,24 +273,168 @@ async getData(options) {
                                     };
                                 };
 
+// ================================================================== //
+        //    AGRUPAMENTO DE PERÍCIAS (MODO HÍBRIDO: GRUPO OU ÁRVORE)         //
         // ================================================================== //
-        //    AGRUPAMENTO DE PERÍCIAS (Seu código original)
-        // ================================================================== //
-        context.skillsByBlock = (itemsByType.skill || []).reduce((acc, skill) => {
-                // Usa o block_id do item para agrupar. O padrão é 'block1'.
-                const blockId = skill.system.block_id || 'block1';
-                if (!acc[blockId]) {
-                    acc[blockId] = [];
-                }
-                acc[blockId].push(skill);
-                return acc;
-                }, {});
         
-        // Ordena as perícias dentro de cada bloco
-        const skillSortPref = this.actor.system.sorting?.skill || 'manual';
-                for (const blockId in context.skillsByBlock) {
-                    context.skillsByBlock[blockId].sort(getSortFunction(skillSortPref));
-                }
+        // 1. Pegar o modo atual (padrão é 'group')
+        // Se a flag não existir, assume 'group' para manter compatibilidade
+        const skillsViewMode = this.actor.getFlag('gum', 'skillsViewMode') || 'group';
+        context.skillsViewMode = skillsViewMode; // Passa para o HTML saber qual ícone mostrar
+
+        // 2. Separar apenas os itens do tipo 'skill'
+        let skills = itemsByType.skill || [];
+
+        // Objeto final que vai para o HTML
+        let skillsByGroup = {};
+
+        if (skillsViewMode === 'group') {
+            // -------------------------------------------------------
+            // MODO 1: AGRUPAMENTO SIMPLES (Padrão / Legado)
+            // -------------------------------------------------------
+            skills.forEach(skill => {
+                // Normaliza o nome do grupo
+                let groupName = (skill.system.group || "Geral").trim();
+                if (!groupName) groupName = "Geral";
+
+                if (!skillsByGroup[groupName]) skillsByGroup[groupName] = [];
+                
+                // No modo grupo, limpamos a indentação para ficar tudo alinhado
+                skill.indentClass = ""; 
+                skill.isTrunk = false; 
+                
+                skillsByGroup[groupName].push(skill);
+            });
+
+       } else {
+            // -------------------------------------------------------
+            // MODO 2: ÁRVORE HIERÁRQUICA (Power-Ups 10) - COM RASTREIO DE CAMINHO
+            // -------------------------------------------------------
+            
+            const normalize = (str) => str ? str.toLowerCase().trim() : "";
+            const trunks = skills.filter(s => s.system.hierarchy_type === 'trunk');
+
+            // =========================================================
+            // FUNÇÃO RECURSIVA APRIMORADA (Soma + Histórico)
+            // =========================================================
+            // parentName: Nome do pai
+            // depth: Profundidade visual
+            // inheritedLevel: Soma matemática acumulada
+            // pathTrace: Array com o histórico [{name: "Espada", val: 2, type: "trunk"}, ...]
+            const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = []) => {
+                let childrenList = [];
+                
+                // Filtra quem é filho deste pai
+                let directChildren = skills.filter(s => {
+                    const p = s.system;
+                    const pName = normalize(parentName);
+                    return normalize(p.root_parent) === pName ||
+                           normalize(p.branch_parent) === pName ||
+                           normalize(p.twig_parent) === pName ||
+                           normalize(p.parent_skill) === pName;
+                });
+
+                directChildren.sort((a, b) => a.name.localeCompare(b.name));
+
+                directChildren.forEach(child => {
+                    // 1. Configuração Visual
+                    child.indentClass = `indent-${depth}`;
+                    child.isTrunk = false;
+                    
+                    // 2. Salva o histórico para o HTML desenhar as "pílulas"
+                    child.inheritancePath = pathTrace; 
+
+                    // 3. Cálculo Matemático (Soma ao NH Final para rolagem)
+                    if (child.system.final_nh) {
+                        child.system.final_nh += inheritedLevel;
+                    }
+
+                    // 4. Preparar dados para os filhos deste filho (Netos)
+                    const myRelativeLevel = Number(child.system.skill_level) || 0;
+                    const nextInheritedLevel = inheritedLevel + myRelativeLevel;
+                    
+                    // Adiciona a si mesmo ao histórico dos descendentes
+                    const myNodeInfo = {
+                        name: child.name,
+                        value: myRelativeLevel,
+                        type: child.system.hierarchy_type // trunk, branch, etc.
+                    };
+                    const nextPathTrace = [...pathTrace, myNodeInfo];
+
+                    childrenList.push(child);
+                    
+                    // Recursão
+                    childrenList = childrenList.concat(processChildren(child.name, depth + 1, nextInheritedLevel, nextPathTrace));
+                });
+
+                return childrenList;
+            };
+
+            // --- A. Processar Troncos ---
+            trunks.forEach(trunk => {
+                let groupName = trunk.name; 
+                skillsByGroup[groupName] = [];
+
+                trunk.indentClass = "";
+                trunk.isTrunk = true;
+                trunk.inheritancePath = []; // Tronco não herda de ninguém
+                skillsByGroup[groupName].push(trunk);
+
+                // Pega o nível do Tronco para iniciar a cascata
+                const trunkLevel = Number(trunk.system.skill_level) || 0;
+                
+                // Cria o histórico inicial (O Tronco é o primeiro ancestral)
+                const trunkNodeInfo = {
+                    name: trunk.name,
+                    value: trunkLevel,
+                    type: "trunk"
+                };
+
+                // Busca descendentes
+                let descendants = processChildren(trunk.name, 1, trunkLevel, [trunkNodeInfo]);
+                skillsByGroup[groupName] = skillsByGroup[groupName].concat(descendants);
+            });
+
+            // --- B. Processar Órfãos ---
+            let handledIds = new Set();
+            Object.values(skillsByGroup).flat().forEach(s => handledIds.add(s.id));
+            let orphans = skills.filter(s => !handledIds.has(s.id));
+            
+            if (orphans.length > 0) {
+                orphans.forEach(skill => {
+                    let g = (skill.system.group || "Geral").trim();
+                    if (!g) g = "Geral";
+                    if (!skillsByGroup[g]) skillsByGroup[g] = [];
+                    
+                    skill.indentClass = "";
+                    skill.isTrunk = false;
+                    skill.inheritancePath = []; // Órfão não tem herança
+                    
+                    skillsByGroup[g].push(skill);
+                });
+            }
+        }
+
+      // Salvamos no contexto antes de tentar ler
+        context.skillsByGroup = skillsByGroup;
+
+        // 3. Ordenar as Chaves dos Grupos (A-Z) para exibir na ordem certa
+        context.skillGroupsKeys = Object.keys(context.skillsByGroup).sort((a, b) => {
+            if (a === "Geral") return -1;
+            if (b === "Geral") return 1;
+            return a.localeCompare(b);
+        });
+
+        // 4. Ordenação Interna (apenas se estiver no modo grupo, pois árvore tem ordem própria)
+        if (skillsViewMode === 'group') {
+            const skillSortPref = this.actor.system.sorting?.skill || 'manual';
+            const sortFn = getSortFunction(skillSortPref); // Usa sua função auxiliar existente
+            
+            for (const groupName in context.skillsByGroup) {
+                context.skillsByGroup[groupName].sort(sortFn);
+            }
+        }
+        
 
         // ================================================================== //
         //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
@@ -452,6 +596,10 @@ async getData(options) {
 
                 // Salva a lista pronta no contexto
                 context.preparedCombatMeters = preparedCombatMeters;
+
+                // Lê o estado dos grupos colapsáveis para serem salvos
+                context.collapsedData = this.actor.getFlag("gum", "collapsedState") || {};
+
         return context;
     }
 
@@ -703,8 +851,83 @@ _getSubmitData(updateData) {
 activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
-
     
+// ================================================================== //
+        //  CONTROLE MANUAL DE ACORDEÃO (A SOLUÇÃO DEFINITIVA)
+        // ================================================================== //
+        
+        // 1. DESATIVA O COMPORTAMENTO NATIVO
+        // Isso impede que clicar em QUALQUER lugar do cabeçalho abra/feche a caixa.
+        // Agora a caixa está "travada" visualmente para o navegador.
+        html.find('.spell-summary, .group-summary').click(ev => {
+            ev.preventDefault();
+        });
+
+        // 2. CRIA O GATILHO MANUAL APENAS NA ÁREA SEGURA
+        // Só vai abrir se clicar no Nome ou na Seta (.spell-main-info)
+        // Adicionei também .summary-left para o combate funcionar igual
+        html.find('.spell-main-info, .summary-left').click(async (ev) => {
+            ev.stopPropagation(); // Garante isolamento
+
+            // Localiza o elemento <details> pai
+            const trigger = $(ev.currentTarget);
+            const details = trigger.closest('details');
+            
+            // LÓGICA MANUAL DE TOGGLE
+            // Se tem o atributo 'open', removemos. Se não tem, colocamos.
+            const wasOpen = details[0].hasAttribute('open');
+            
+            if (wasOpen) {
+                details.removeAttr('open');
+            } else {
+                details.attr('open', '');
+            }
+
+            // SALVA O ESTADO NO BANCO DE DADOS (PERSISTÊNCIA)
+            const id = details.data('groupId');
+            if (id) {
+                // Se estava aberto (wasOpen=true), agora fechou -> salvamos TRUE (flag de fechado)
+                // Se estava fechado (wasOpen=false), agora abriu -> salvamos FALSE (flag de aberto)
+                let currentState = foundry.utils.duplicate(this.actor.getFlag("gum", "collapsedState") || {});
+                currentState[id] = !wasOpen ? false : true; // Lógica invertida do helper: true = colapsado
+                await this.actor.setFlag("gum", "collapsedState", currentState);
+            }
+        });
+
+// ================================================================== //
+        //  LISTENER DE SOBREVIVÊNCIA (+ e -)
+        // ================================================================== //
+        html.find('.adjust-survival').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            const action = btn.data('action'); // 'increase' ou 'decrease'
+            const attrKey = btn.data('attr');  // 'fome', 'sede', etc.
+            
+            // Localiza o input irmão deste botão
+            const input = btn.siblings('input');
+            let value = parseInt(input.val()) || 0;
+
+            // Calcula novo valor
+            if (action === 'increase') value++;
+            else value = Math.max(0, value - 1);
+
+            // Atualiza o input visualmente
+            input.val(value);
+
+            // Salva no banco de dados (dispara updateActor)
+            // Nota: O caminho deve bater com o name="" do input no HTML
+            this.actor.update({ [`system.attributes.${attrKey}.value`]: value });
+        });
+
+
+
+
+    // Alternar Modo de Visualização de Perícias (Grupos vs Árvore)
+html.find('.toggle-skills-view').click(async ev => {
+    const currentMode = this.actor.getFlag('gum', 'skillsViewMode') || 'group';
+    const newMode = currentMode === 'group' ? 'tree' : 'group';
+    await this.actor.setFlag('gum', 'skillsViewMode', newMode);
+});
 
 
     html.on('click', '.equipment-options-btn', ev => {
@@ -757,6 +980,34 @@ activateListeners(html) {
             this.actor.deleteEmbeddedDocuments("ActiveEffect", [effectId]);
         }
     });
+
+    // ================================================================== //
+        //  LISTENER: ROLAGENS GERAIS (ROLLABLE)
+        // ================================================================== //
+        html.find('.rollable').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation(); // Importante para não fechar o card
+
+            const el = $(ev.currentTarget);
+            const type = el.data('type');
+            
+            // Monta o objeto de dados da rolagem
+            const rollData = {
+                type: type,
+                value: el.data('rollValue'), // Nota: jQuery lê data-roll-value como rollValue
+                label: el.data('label') || "Teste",
+                modifier: 0, // Inicia zerado, o prompt/função cuidam do resto
+                itemId: el.data('itemId') || el.closest('.item').data('itemId'),
+                // Adicione outros campos se necessário (attackType, etc.)
+                attackType: el.data('attackType') 
+            };
+
+            // Chama o Prompt ou a Rolagem Direta
+            // (Dependendo de como você implementou: new GurpsRollPrompt ou performGURPSRoll direto)
+            
+            // Exemplo chamando o Prompt (ajuste conforme seu import):
+            new GurpsRollPrompt(this.actor, rollData).render(true);
+        });
 
 // ✅ LISTENER ESPECIALISTA APENAS PARA A FICHA (CORRIGIDO) ✅
     html.on('click', '.rollable', ev => {
@@ -1104,158 +1355,160 @@ activateListeners(html) {
     });
 
 
-html.on('click', '.item-quick-view', async (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
+// ================================================================== //
+        //  LISTENER: VISUALIZAÇÃO RÁPIDA (ROBUSTO + IMAGEM)
+        // ================================================================== //
+        html.on('click', '.item-quick-view', async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation(); 
+            ev.stopImmediatePropagation(); // 🛑 MATA O CLIQUE AQUI (Salva o Acordeão)
 
-        // Tenta pegar o ID do item mais próximo
-        const itemId = $(ev.currentTarget).closest('.item, .item-row').data('itemId');
-        if (!itemId) return;
+            // Tenta pegar o ID do item mais próximo
+            const itemId = $(ev.currentTarget).closest('.item, .item-row').data('itemId') || $(ev.currentTarget).data('itemId');
+            if (!itemId) return;
 
-        const item = this.actor.items.get(itemId);
-        if (!item) return;
+            const item = this.actor.items.get(itemId);
+            if (!item) return;
 
-        const getTypeName = (type) => {
-            const typeMap = {
-                equipment: "Equipamento", melee_weapon: "Arma C. a C.",
-                ranged_weapon: "Arma à Dist.", armor: "Armadura",
-                advantage: "Vantagem", disadvantage: "Desvantagem",
-                skill: "Perícia", spell: "Magia", power: "Poder",
-                gm_modifier: "Modificador" // ✅ Adicionado
-            };
-            return typeMap[type] || type;
-        };
-
-        const data = {
-            name: item.name,
-            type: getTypeName(item.type),
-            system: item.system
-        };
-
-        let mechanicalTagsHtml = '';
-        const s = data.system;
-        
-        // Função auxiliar para criar tags HTML
-        const createTag = (label, value) => {
-            if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
-                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
-            }
-            return '';
-        };
-
-        // Lógica de Tags por Tipo
-        switch (item.type) {
-            case 'melee_weapon':
-                mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
-                mechanicalTagsHtml += createTag('Alcance', s.reach);
-                mechanicalTagsHtml += createTag('Aparar', s.parry);
-                mechanicalTagsHtml += createTag('ST', s.min_strength);
-                break;
-            case 'ranged_weapon':
-                mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
-                mechanicalTagsHtml += createTag('Prec.', s.accuracy);
-                mechanicalTagsHtml += createTag('Alcance', s.range);
-                mechanicalTagsHtml += createTag('CdT', s.rof);
-                mechanicalTagsHtml += createTag('Tiros', s.shots);
-                mechanicalTagsHtml += createTag('RCO', s.rcl);
-                mechanicalTagsHtml += createTag('ST', s.min_strength);
-                break;
-            case 'armor':
-                mechanicalTagsHtml += createTag('RD', s.dr);
-                mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
-                break;
-            case 'skill':
-                mechanicalTagsHtml += createTag('Attr.', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
-                mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
-                mechanicalTagsHtml += createTag('Grupo', s.group);
-                break;
-            case 'spell':
-                mechanicalTagsHtml += createTag('Classe', s.spell_class);
-                mechanicalTagsHtml += createTag('Tempo', s.casting_time);
-                mechanicalTagsHtml += createTag('Duração', s.duration);
-                mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
-                break;
-            case 'power': // ✅ Adicionado Poderes
-                mechanicalTagsHtml += createTag('Custo', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
-                mechanicalTagsHtml += createTag('Tempo', s.activation_time);
-                mechanicalTagsHtml += createTag('Duração', s.duration);
-                break;
-            case 'gm_modifier': // ✅ Adicionado Modificadores
-                const modVal = Number(s.modifier);
-                const modSign = modVal > 0 ? '+' : '';
-                mechanicalTagsHtml += createTag('Valor', `${modSign}${modVal}`);
-                
-                // Traduz a categoria visual para exibir
-                const catLabels = { 
-                    location: "Localização", maneuver: "Manobra", attack_opt: "Opção Atq.", 
-                    defense_opt: "Opção Def.", posture: "Postura", range: "Distância", 
-                    ritual: "Ritual", time: "Tempo", effort: "Esforço", situation: "Situação" 
+            const getTypeName = (type) => {
+                const typeMap = {
+                    equipment: "Equipamento", melee_weapon: "Arma C. a C.",
+                    ranged_weapon: "Arma à Dist.", armor: "Armadura",
+                    advantage: "Vantagem", disadvantage: "Desvantagem",
+                    skill: "Perícia", spell: "Magia", power: "Poder",
+                    gm_modifier: "Modificador"
                 };
-                mechanicalTagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
-                
-                if (s.nh_cap) mechanicalTagsHtml += createTag('Teto (Cap)', s.nh_cap);
-                break;
-        }
+                return typeMap[type] || type;
+            };
 
-        const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
-            secrets: this.actor.isOwner,
-            async: true
-        });
-        
-        const content = `
-            <div class="gurps-dialog-canvas">
-                <div class="gurps-item-preview-card" data-item-id="${item.id}">
-                    <header class="preview-header">
-                        <h3>${data.name}</h3>
-                        <div class="header-controls">
-                            <span class="preview-item-type">${data.type}</span>
-                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
-                        </div>
-                    </header>
-                    
-                    <div class="preview-content">
-                        <div class="preview-properties">
-                            ${createTag('Pontos', s.points)}
-                            ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
-                            ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
-                            ${mechanicalTagsHtml}
-                        </div>
+            const data = {
+                name: item.name,
+                img: item.img, // ✅ Captura a imagem
+                type: getTypeName(item.type),
+                system: item.system
+            };
 
-                        ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
+            let mechanicalTagsHtml = '';
+            const s = data.system;
+            
+            // Função auxiliar para criar tags HTML
+            const createTag = (label, value) => {
+                if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+                    return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+                }
+                return '';
+            };
 
-                        <div class="preview-description">
-                            ${description}
+
+            switch (item.type) {
+                case 'melee_weapon':
+                    mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+                    mechanicalTagsHtml += createTag('Alcance', s.reach);
+                    mechanicalTagsHtml += createTag('Aparar', s.parry);
+                    mechanicalTagsHtml += createTag('ST', s.min_strength);
+                    break;
+                case 'ranged_weapon':
+                    mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+                    mechanicalTagsHtml += createTag('Prec.', s.accuracy);
+                    mechanicalTagsHtml += createTag('Alcance', s.range);
+                    mechanicalTagsHtml += createTag('CdT', s.rof);
+                    mechanicalTagsHtml += createTag('Tiros', s.shots);
+                    mechanicalTagsHtml += createTag('RCO', s.rcl);
+                    mechanicalTagsHtml += createTag('ST', s.min_strength);
+                    break;
+                case 'armor':
+                    mechanicalTagsHtml += createTag('RD', s.dr);
+                    mechanicalTagsHtml += createTag('Local', `<span class="capitalize">${s.worn_location || 'N/A'}</span>`);
+                    break;
+                case 'skill':
+                    mechanicalTagsHtml += createTag('Attr.', `<span class="uppercase">${s.base_attribute || '--'}</span>`);
+                    mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
+                    mechanicalTagsHtml += createTag('Grupo', s.group);
+                    break;
+                case 'spell':
+                    mechanicalTagsHtml += createTag('Classe', s.spell_class);
+                    mechanicalTagsHtml += createTag('Tempo', s.casting_time);
+                    mechanicalTagsHtml += createTag('Duração', s.duration);
+                    mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+                    break;
+                case 'power':
+                    mechanicalTagsHtml += createTag('Custo', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
+                    mechanicalTagsHtml += createTag('Tempo', s.activation_time);
+                    mechanicalTagsHtml += createTag('Duração', s.duration);
+                    break;
+                case 'gm_modifier':
+                    const modVal = Number(s.modifier);
+                    const modSign = modVal > 0 ? '+' : '';
+                    mechanicalTagsHtml += createTag('Valor', `${modSign}${modVal}`);
+                    const catLabels = { location: "Localização", maneuver: "Manobra", attack_opt: "Opção Atq.", defense_opt: "Opção Def.", posture: "Postura", range: "Distância", ritual: "Ritual", time: "Tempo", effort: "Esforço", situation: "Situação" };
+                    mechanicalTagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
+                    if (s.nh_cap) mechanicalTagsHtml += createTag('Teto (Cap)', s.nh_cap);
+                    break;
+            }
+
+            const description = await TextEditor.enrichHTML(item.system.chat_description || item.system.description || "<i>Sem descrição.</i>", {
+                secrets: this.actor.isOwner,
+                async: true
+            });
+            
+            // ✅ HTML Atualizado com Imagem
+            const content = `
+                <div class="gurps-dialog-canvas">
+                    <div class="gurps-item-preview-card" data-item-id="${item.id}">
+                        <header class="preview-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <img src="${data.img}" class="preview-img"/> 
+                                <h3>${data.name}</h3>
+                            </div>
+                            <div class="header-controls">
+                                <span class="preview-item-type">${data.type}</span>
+                                <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                            </div>
+                        </header>
+                        
+                        <div class="preview-content">
+                            <div class="preview-properties">
+                                ${createTag('Pontos', s.points)}
+                                ${createTag('Custo', s.total_cost ? `$${s.total_cost}`: null)}
+                                ${createTag('Peso', s.total_weight ? `${s.total_weight} kg`: null)}
+                                ${mechanicalTagsHtml}
+                            </div>
+
+                            ${description && description.trim() !== "<i>Sem descrição.</i>" ? '<hr class="preview-divider">' : ''}
+
+                            <div class="preview-description">
+                                ${description}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        new Dialog({
-            content: content,
-            buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
-            default: "close",
-            options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
-            render: (html) => {
-                html.on('click', '.send-to-chat', (event) => {
-                    event.preventDefault();
-                    const card = $(event.currentTarget).closest('.gurps-item-preview-card');
-                    const chatItemId = card.data('itemId');
-                    const chatItem = this.actor.items.get(chatItemId);
-                    if (chatItem) {
-                        const cardHTML = card.html();
-                        const chatDataType = getTypeName(chatItem.type);
-                        const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
-                        ChatMessage.create({
-                            user: game.user.id,
-                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                            content: chatContent
-                        });
-                    }
-                });
-            }
-        }).render(true);
-    });
+            new Dialog({
+                content: content,
+                buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
+                default: "close",
+                options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 450, height: "auto" },
+                render: (html) => {
+                    html.on('click', '.send-to-chat', (event) => {
+                        event.preventDefault();
+                        const card = $(event.currentTarget).closest('.gurps-item-preview-card');
+                        const chatItemId = card.data('itemId');
+                        const chatItem = this.actor.items.get(chatItemId);
+                        if (chatItem) {
+                            const cardHTML = card.html();
+                            const chatDataType = getTypeName(chatItem.type);
+                            const chatContent = `<div class="gurps-item-preview-card chat-card">${cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type">${chatDataType}</span>`)}</div>`;
+                            ChatMessage.create({
+                                user: game.user.id,
+                                speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                content: chatContent
+                            });
+                        }
+                    });
+                }
+            }).render(true);
+        });
         
 html.on('click', '.edit-basic-damage', ev => {
         ev.preventDefault();
@@ -1600,10 +1853,6 @@ html.on('click', '.item-edit', ev => {
     }
 });
  html.on('click', '.item-delete', ev => { const li = $(ev.currentTarget).parents(".item"); this.actor.deleteEmbeddedDocuments("Item", [li.data("itemId")]); });
-    
-    // (O resto dos seus listeners .add-social-item, .edit-social-entry, etc. estão todos aqui e parecem corretos)
-    // ... (Seu código dos listeners sociais) ...
-    // (O código continua até o final do seu arquivo)
     
         html.on('click', '.add-social-item', ev => {
           ev.preventDefault();
@@ -3183,7 +3432,7 @@ html.on('click', '.item-edit', ev => {
     });
     
     // =============================================================
-    // ✅ FIM: LISTENERS DO EDITOR DE TEXTO (BIOGRAFIA)
+    // FIM: LISTENERS DO EDITOR DE TEXTO (BIOGRAFIA)
     // =============================================================
 
     // =============================================================
@@ -3318,6 +3567,8 @@ html.on('click', '.item-edit', ev => {
         // Esta parte é mais pesada, pode pular se quiser performance máxima.
         // Basicamente verifica se um <details> ficou sem nenhum filho visível e esconde ele.
     });
+
+
 
 }
 
