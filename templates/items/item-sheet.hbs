@@ -703,7 +703,7 @@
             </div>
         {{/if}}
        
- {{!-- ===================================================================== --}}
+{{!-- ===================================================================== --}}
 {{!--       ABA DETALHES: ITEM PERÍCIAS (SKILL TREE POWER-UPS 10)           --}}
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "skill")}} 
@@ -716,7 +716,6 @@
         <div class="form-grid-2">
             <div class="form-group">
                 <label>Grupo / Tronco</label>
-                {{!-- O Grupo define a "Pasta" na aba de perícias --}}
                 <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
                 <datalist id="groups-list">
                     <option value="Animais">
@@ -753,31 +752,32 @@
         {{!-- Linha 2: Definição da Árvore (Tier) --}}
         <div class="form-group">
             <label>Nível na Árvore (Tier)</label>
-            <select name="system.hierarchy_type">
-                {{selectOptions hierarchyTypes selected=system.hierarchy_type}}
+            <select name="system.hierarchy_type" class="hierarchy-select">
+                {{!-- CORREÇÃO: Usando config.hierarchyTypes --}}
+                {{selectOptions config.hierarchyTypes selected=system.hierarchy_type localize=true}}
             </select>
         </div>
 
-        {{!-- CONDICIONAIS DE VÍNCULO (Inputs dinâmicos baseados na escolha acima) --}}
+        {{!-- CONDICIONAIS DE VÍNCULO --}}
         
-        {{!-- TRUNK (Tronco): Apenas informativo --}}
+        {{!-- TRUNK --}}
         {{#if (eq system.hierarchy_type "trunk")}}
         <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <p class="hint-text" style="font-size:0.8em; color:var(--c-accent-gold);">
+            <p class="hint-text" style="font-size:0.8em; color:var(--c-acento-dourado);">
                 <i class="fas fa-info-circle"></i> Este item define um <strong>Tronco</strong>. Outras perícias usarão o nome deste grupo ("{{system.group}}") para se agrupar aqui.
             </p>
         </div>
         {{/if}}
 
-        {{!-- BRANCH (Galho): Pode vincular a um Tronco específico --}}
+        {{!-- BRANCH --}}
         {{#if (eq system.hierarchy_type "branch")}}
         <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <label style="color:var(--c-accent-blue);">Vinculado ao Tronco (Opcional)</label>
+            <label style="color:var(--c-acento-azul);">Vinculado ao Tronco (Opcional)</label>
             <input type="text" name="system.root_parent" value="{{system.root_parent}}" placeholder="Nome do Tronco Pai (se diferente do Grupo)"/>
         </div>
         {{/if}}
 
-        {{!-- TWIG (Graveto): Precisa de um Branch Pai --}}
+        {{!-- TWIG --}}
         {{#if (eq system.hierarchy_type "twig")}}
         <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
             <label style="color:#ce93d8;">Vinculado ao Ramo (Branch)</label>
@@ -788,10 +788,10 @@
         </div>
         {{/if}}
 
-        {{!-- LEAF (Folha/Técnica): Precisa de um Pai --}}
+        {{!-- LEAF --}}
         {{#if (eq system.hierarchy_type "leaf")}}
         <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <label style="color:var(--c-accent-green);">Vinculado ao Pai (Twig/Branch)</label>
+            <label style="color:var(--c-acento-verde);">Vinculado ao Pai (Twig/Branch)</label>
             <div class="input-with-button">
                 <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
                 <a class="link-skill-button" title="Buscar Pai"><i class="fas fa-link"></i></a>
@@ -800,56 +800,96 @@
         {{/if}}
     </div>
 
+    {{!-- SEÇÃO 2: HABILIDADE & CUSTO --}}
+    <div class="form-section">
+        <h4 class="section-title">Habilidade</h4>
+        
+        <div class="form-group" style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+            <label class="custom-checkbox">
+                <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
+                <span>Calcular Pontos Automaticamente</span>
+            </label>
+        </div>
+
+        <div class="ability-grid">
             
-            {{!-- SEÇÃO HABILIDADE (COM AUTOMAÇÃO - MANTIDA IGUAL) --}}
-            <div class="form-section">
-                <h4 class="section-title">Habilidade</h4>
-                
-                <div class="form-group" style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
-                        <span>Calcular Pontos Automaticamente</span>
-                    </label>
+            {{!-- Coluna Esquerda: Definições --}}
+            <div class="ability-col-left">
+                <div class="form-group">
+                    <label>Modo de Custo</label>
+                    <div class="form-fields">
+                        <select name="system.cost_mode" class="cost-mode-select">
+                            {{selectOptions config.costModes selected=system.cost_mode localize=true}}
+                        </select>
+                    </div>
                 </div>
 
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group input-medium">
-                            <label>Atributo Base <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                            <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
-                        </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Dificuldade</label>
-                            {{#if (ne system.auto_points false)}}
-                                {{!-- Se Auto-Calc está LIGADO, mostra o dropdown --}}
-                                <select name="system.difficulty">
-                                    {{selectOptions skillDifficulties selected=system.difficulty}}
-                                </select>
-                            {{else}}
-                                {{!-- Se Auto-Calc está DESLIGADO, mostra um campo de texto --}}
-                                <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil, Wildcard"/>
-                            {{/if}}
-                        </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Nível (Relativo)</label>
-                            <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
+                {{!-- MODO PADRÃO --}}
+                {{#if (eq system.cost_mode "standard")}}
+                    <div class="form-group">
+                        <label>Dificuldade</label>
+                        <div class="form-fields">
+                            <select name="system.difficulty">
+                                {{selectOptions config.difficulties selected=system.difficulty localize=true}}
+                            </select>
                         </div>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-narrow">
-                            <label>Pontos</label>
-                            <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                {{/if}}
+
+                {{!-- MODO LINEAR --}}
+                {{#if (eq system.cost_mode "linear")}}
+                    <div class="form-group">
+                        <label>Custo por Nível</label>
+                        <div class="form-fields">
+                            <input type="number" name="system.cost_per_level" value="{{system.cost_per_level}}" class="short-input cost-input">
+                            <span class="hint">pts/nível</span>
                         </div>
-                        <div class="form-group input-narrow">
-                            <label>Modificadores</label>
-                            <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
-                        </div>
+                    </div>
+                {{/if}}
+
+                {{!-- Atributo Base --}}
+                <div class="form-group">
+                    <label>Atributo Base</label>
+                    <div class="form-fields">
+                        <select name="system.base_attribute">
+                            {{#select system.base_attribute}}
+                            <option value="dx">DX</option>
+                            <option value="iq">IQ</option>
+                            <option value="ht">HT</option>
+                            <option value="per">Per</option>
+                            <option value="will">Vont</option>
+                            {{/select}}
+                        </select>
                     </div>
                 </div>
             </div>
-        {{/if}}
+
+            {{!-- Coluna Direita: Valores --}}
+            <div class="ability-col-right">
+                
+                {{!-- Nível Relativo com Botões --}}
+                <div class="form-group">
+                    <label>Nível Relativo</label>
+                    <div class="form-fields counter-wrapper">
+                        <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
+                        <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
+                        <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
+                    </div>
+                </div>
+
+                <div class="form-group input-narrow">
+                    <label>Pontos</label>
+                    <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                </div>
+                
+                <div class="form-group input-narrow">
+                    <label>Mods. NH</label>
+                    <input type="number" name="system.other_mods" value="{{system.other_mods}}" placeholder="+0"/>
+                </div>
+            </div>
+        </div>
+    </div>
+{{/if}}
         
         {{!-- ===================================================================== --}}
         {{!--           ABA DETALHES: ITEM MAGIAS (COM INPUT HÍBRIDO)                   --}}

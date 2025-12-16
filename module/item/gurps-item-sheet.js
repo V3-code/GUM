@@ -25,48 +25,57 @@ static get defaultOptions() {
 async getData(options) { 
     const context = await super.getData(options); 
     context.system = this.item.system;  
-    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
     
-    // ✅ MANTIDO: Dificuldades para o dropdown de Perícias
-    context.skillDifficulties = {
-        "F": "Fácil (F)",
-        "M": "Média (M)",
-        "D": "Difícil (D)",
-        "MD": "Muito Difícil (MD)",
-        "TecM": "Técnica (Média)",
-        "TecD": "Técnica (Difícil)"
+    // =======================================================
+    // 1. CONFIGURAÇÕES (Listas para Dropdowns)
+    // =======================================================
+    // Agrupamos em 'config' para o HTML ficar mais limpo e organizado
+    context.config = {
+        costModes: {
+            "standard": "Padrão (GURPS Basic)",
+            "linear": "Linear (Árvore/Técnica)"
+        },
+
+        // Dificuldades (Sem as Técnicas, como você decidiu)
+        difficulties: {
+            "E": "Fácil (E)",
+            "A": "Média (A)",
+            "H": "Difícil (H)",
+            "VH": "Muito Difícil (VH)"
+        },
+
+        // Tipos de Hierarquia
+        hierarchyTypes: {
+            "normal": "Padrão (Sem Árvore)",
+            "trunk": "Tronco (Trunk)",   // 7 pts
+            "branch": "Galho (Branch)",   // 3 pts
+            "twig": "Graveto (Twig)",    // 2 pts
+            "leaf": "Folha (Leaf)"       // 1 pt
+        }
     };
 
-    // ✅ NOVO: Tipos de Hierarquia (Baseado no Power-Ups 10)
-    context.hierarchyTypes = {
-        "normal": "Padrão (Sem Árvore)",
-        "trunk": "Tronco (Trunk)",   // 7 pts
-        "branch": "Ramo (Branch)",   // 3 pts
-        "twig": "Graveto (Twig)",    // 2 pts
-        "leaf": "Folha (Leaf)"       // 1 pt
-    };
+    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
 
-    // ✅ NOVO: LÓGICA DE EQUIPAMENTOS E ARMADURAS (Cálculo de CF e Peso)
+    // =======================================================
+    // 2. LÓGICA DE EQUIPAMENTOS (Cálculo de CF e Peso)
+    // =======================================================
     if (['equipment', 'armor'].includes(this.item.type)) {
         const eqpModsObj = this.item.system.eqp_modifiers || {};
         
-        // 1. Prepara a lista para o template
+        // Prepara lista ordenada
         const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({
             id, ...data
         })).sort((a, b) => a.name.localeCompare(b.name));
         context.eqpModifiersList = modifiersArray;
 
-        // 2. Calcula Custo e Peso Finais
+        // Cálculos
         let baseCost = Number(this.item.system.cost) || 0;
         let baseWeight = Number(this.item.system.weight) || 0;
         let totalCF = 0;
         let weightMultiplier = 1;
 
         for (const mod of modifiersArray) {
-            // Soma CF (ex: +1.5)
             totalCF += Number(mod.cost_factor) || 0;
-            
-            // Multiplica Peso (ex: "x0.75")
             if (mod.weight_mod) {
                 const wModStr = mod.weight_mod.toString().trim().toLowerCase();
                 if (wModStr.startsWith('x')) {
@@ -76,23 +85,21 @@ async getData(options) {
             }
         }
 
-        // Aplica as fórmulas do GURPS
-        // Custo Final = Base * (1 + total CF) -> CF não pode reduzir custo abaixo de 0
         const finalCostMultiplier = Math.max(0, 1 + totalCF);
         context.calculatedFinalCost = baseCost * finalCostMultiplier;
-        
         context.calculatedFinalWeight = baseWeight * weightMultiplier;
         
-        // Formata para exibição bonita (ex: "1.250,00")
+        // Formatação visual
         context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         
-        // Flags para saber se houve alteração (para destacar no HTML)
         context.hasCostChange = finalCostMultiplier !== 1;
         context.hasWeightChange = weightMultiplier !== 1;
     }
 
-    // Lógica de cálculo de custo final (Vantagens/Poderes) - MANTIDA
+    // =======================================================
+    // 3. CUSTO DE VANTAGENS (Modificadores %)
+    // =======================================================
     const validTypes = ['advantage', 'disadvantage', 'power'];
     if (validTypes.includes(this.item.type)) {
       const basePoints = Number(this.item.system.points) || 0;
@@ -104,29 +111,33 @@ async getData(options) {
       const cappedModPercent = Math.max(-80, totalModPercent);
       const multiplier = 1 + (cappedModPercent / 100);
       let finalCost = Math.round(basePoints * multiplier);
+      
+      // Regra de mínimo 1 ponto (ou -1)
       if (basePoints > 0 && finalCost < 1) finalCost = 1;
       if (basePoints < 0 && finalCost > -1) finalCost = -1;
+      
       context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
     }
 
-    // Função auxiliar para buscar e preparar os dados dos itens linkados
+    // =======================================================
+    // 4. PREPARAÇÃO DE EFEITOS (Links)
+    // =======================================================
     const _prepareLinkedItems = async (sourceObject) => {       
         const entries = Object.entries(sourceObject || {});
         const promises = entries.map(async ([id, linkData]) => {
             const uuid = linkData.effectUuid || linkData.uuid; 
-            const originalItem = await fromUuid(uuid);
+            const originalItem = await fromUuid(uuid).catch(() => null); // Catch erro se não achar
             return {
                 id: id,
                 uuid: uuid,
-                ...linkData, // Inclui os campos contextuais (recipient, minInjury, etc.)
-                name: originalItem ? originalItem.name : "Item não encontrado",
+                ...linkData,
+                name: originalItem ? originalItem.name : "Item não encontrado/excluído",
                 img: originalItem ? originalItem.img : "icons/svg/mystery-man.svg"
             };
         });
         return Promise.all(promises);
     };
 
-    // Prepara os dados para o template
     context.system.preparedEffects = {
         activation: {
             success: await _prepareLinkedItems(this.item.system.activationEffects?.success),
@@ -137,14 +148,19 @@ async getData(options) {
         passive: await _prepareLinkedItems(this.item.system.passiveEffects)
     };
 
-    // Lógica de ordenação e preparação dos modificadores de Vantagem (MANTIDA)
+    // =======================================================
+    // 5. LISTA DE MODIFICADORES (Ordenação)
+    // =======================================================
     const modifiersObj = this.item.system.modifiers || {};
     const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
       const isLimitation = (data.cost || "").includes('-');
       return { id, ...data, isLimitation: isLimitation };
     });
+    
     modifiersArray.sort((a, b) => {
-      const costA = parseInt(a.cost) || 0; const costB = parseInt(b.cost) || 0;
+      // Ordena Vantagens primeiro por custo maior, depois nome
+      const costA = parseInt(a.cost) || 0; 
+      const costB = parseInt(b.cost) || 0;
       if (costB !== costA) return costB - costA;
       return a.name.localeCompare(b.name);
     });
@@ -152,7 +168,6 @@ async getData(options) {
 
     return context; 
   }
-
   async _updateObject(event, formData) {
     for (const key in formData) {
       if (typeof formData[key] === 'string' && formData[key].includes(',')) {
@@ -375,14 +390,99 @@ async getData(options) {
    * @override
    * Ativa todos os listeners de interatividade da ficha de item.
    */
-/**
-   * @override
-   * Ativa todos os listeners de interatividade da ficha de item.
-   */
-  activateListeners(html) {
-      super.activateListeners(html);
+activateListeners(html) {
+        super.activateListeners(html);
 
-      // [Dentro de activateListeners]
+        // 1. AUTOMAÇÃO: HIERARQUIA -> CUSTO (MANTIDO)
+        html.find('.hierarchy-select').change(ev => {
+            const costMode = this.item.system.cost_mode;
+            if (costMode !== 'linear') return;
+
+            const hierarchy = ev.target.value; 
+            const costMap = {
+                'trunk': 7,
+                'branch': 3,
+                'twig': 2,
+                'leaf': 1
+            };
+
+            if (costMap[hierarchy]) {
+                html.find('input[name="system.cost_per_level"]').val(costMap[hierarchy]);
+                this.item.update({ 'system.cost_per_level': costMap[hierarchy] });
+            }
+        });
+
+        // 2. BOTÕES +/- NO NÍVEL RELATIVO (CORRIGIDO)
+        html.find('.adjust-value').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            const action = btn.data('action');
+            const targetField = btn.data('target'); 
+            
+            // Pega o valor atual
+            let currentLevel = getProperty(this.item, targetField) || 0;
+            
+            // Calcula novo nível
+            let newLevel = action === 'increase' ? currentLevel + 1 : currentLevel - 1;
+
+            // Objeto de atualização
+            let updateData = { [targetField]: newLevel };
+
+            // 3. LÓGICA DE CÁLCULO DE PONTOS
+            const sys = this.item.system;
+            
+            // Verifica se o cálculo automático está ligado (checkbox)
+            // Se estiver desligado (false), mudamos o nível mas NÃO os pontos.
+            // Nota: Se 'auto_points' for undefined, assumimos true (padrão).
+            const autoCalc = sys.auto_points !== false; 
+
+            if (autoCalc) {
+                if (sys.cost_mode === 'linear') {
+                    // --- MODO LINEAR (ÁRVORE) ---
+                    const cost = sys.cost_per_level || 1;
+                    const newPoints = Math.max(0, newLevel * cost);
+                    updateData['system.points'] = newPoints;
+                
+                } else {
+                    // --- MODO PADRÃO (GURPS BASIC) ---
+                    // Tabela:
+                    // Fácil (E):   0 (1pt), +1 (2pts), +2 (4pts)...
+                    // Médio (A):  -1 (1pt),  0 (2pts), +1 (4pts)...
+                    // Difícil (H): -2 (1pt), -1 (2pts),  0 (4pts)...
+                    // M. Dif (VH): -3 (1pt), -2 (2pts), -1 (4pts)...
+
+                    const diff = sys.difficulty || "A"; 
+                    const diffOffsets = { "E": 0, "A": -1, "H": -2, "VH": -3 };
+                    // Se a dificuldade não estiver no mapa, assume Médio (-1)
+                    const offset = diffOffsets[diff] !== undefined ? diffOffsets[diff] : -1;
+                    
+                    // 'Delta' representa quantos degraus estamos na escada de custo
+                    const delta = newLevel - offset;
+
+                    let calculatedPoints = 0;
+
+                    if (delta < 0) {
+                        calculatedPoints = 0; // Nível muito baixo (ex: atributo-4), custo 0
+                    } else if (delta === 0) {
+                        calculatedPoints = 1;
+                    } else if (delta === 1) {
+                        calculatedPoints = 2;
+                    } else if (delta === 2) {
+                        calculatedPoints = 4;
+                    } else {
+                        // A partir daqui, a progressão é linear (+4 pontos por nível)
+                        // Delta 3 (8pts) = 4 + 4
+                        // Delta 4 (12pts) = 4 + 8
+                        // Fórmula: 4 * (delta - 1)
+                        calculatedPoints = 4 * (delta - 1);
+                    }
+                    
+                    updateData['system.points'] = calculatedPoints;
+                }
+            }
+
+            this.item.update(updateData);
+        });
 
     // ==================================================================
     // LÓGICA DE CASCATA AVANÇADA (MODIFICADORES DO MESTRE)
