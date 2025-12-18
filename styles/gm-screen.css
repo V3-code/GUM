@@ -5,32 +5,32 @@
 /* Container Principal - A Janela */
 .gum.gm-screen .window-content {
     padding: 0;
-    background: #1a1a1a;
-    color: #e0e0e0;
+    background: var(--gum-bg-sidebar);
+    color: var(--gum-text-claro);
     display: flex;
     flex-direction: column;
-    height: 100%; /* Garante que ocupe a altura definida no JS */
-    overflow: hidden; /* Impede que qualquer coisa vaze da janela */
+    height: 100%; 
+    overflow: hidden; 
 }
 
 /* Grid de Layout (Colunas) */
 .gum.gm-screen .gm-screen-layout {
     display: grid;
     grid-template-columns: 320px 1fr;
-    height: 100%; /* Ocupa todo o espaço vertical disponível */
-    overflow: hidden; /* Trava o grid */
+    height: 100%; 
+    overflow: hidden; 
 }
 
 /* ================================================================== */
-/* COLUNA ESQUERDA: MONITOR (TRAVADA PARA NÃO EMPURRAR O RODAPÉ)      */
+/* COLUNA ESQUERDA: MONITOR                                           */
 /* ================================================================== */
 .gum.gm-screen .monitor-column {
     background: #151515;
-    border-right: 1px solid #444;
+    border-right: 1px solid var(--gum-border-light);
     display: flex;
     flex-direction: column;
-    height: 100%; /* Força altura total */
-    overflow: hidden; /* IMPORTANTE: Impede que a coluna cresça */
+    height: 100%; 
+    overflow: hidden; 
     position: relative;
     z-index: 10;
 }
@@ -39,14 +39,14 @@
 .gum.gm-screen .gum-monitor-tabs {
     display: flex;
     background: #111;
-    border-bottom: 1px solid #444;
-    flex-shrink: 0; /* Impede que as abas sejam esmagadas */
+    border-bottom: 1px solid var(--gum-border-light);
+    flex-shrink: 0;
 }
 .gum.gm-screen .gum-monitor-tabs .item {
     flex: 1;
     text-align: center;
     padding: 10px 0;
-    color: #888;
+    color: var(--gum-text-medio);
     cursor: pointer;
     font-size: 0.85em;
     font-weight: 600;
@@ -54,22 +54,20 @@
     transition: all 0.2s;
     border-bottom: 2px solid transparent;
 }
-.gum.gm-screen .gum-monitor-tabs .item:hover { color: #fff; background: #1a1a1a; }
+.gum.gm-screen .gum-monitor-tabs .item:hover { color: #fff; background: var(--gum-bg-sidebar); }
 .gum.gm-screen .gum-monitor-tabs .item.active {
-    color: var(--c-accent-gold, #c5a05b);
-    background: #1a1a1a;
-    border-bottom-color: var(--c-accent-gold, #c5a05b);
+    color: var(--gum-accent-gold);
+    background: var(--gum-bg-sidebar);
+    border-bottom-color: var(--gum-accent-gold);
 }
 
-/* --- Área de Scroll (CORREÇÃO DO BUG DE EMPURRAR) --- */
+/* --- Área de Scroll --- */
 .gum.gm-screen .monitor-body {
-    flex: 1; /* Ocupa o espaço restante */
+    flex: 1; 
     display: flex;
     flex-direction: column;
-    
-    /* AS DUAS LINHAS MÁGICAS: */
-    overflow-y: auto; /* Ativa a rolagem */
-    min-height: 0;    /* Permite que o flex item encolha para ativar o scroll */
+    overflow-y: auto; 
+    min-height: 0;    
 }
 
 .gum.gm-screen .monitor-list {
@@ -81,8 +79,8 @@
 
 /* --- Card do Personagem --- */
 .gum.gm-screen .monitor-card {
-    background: #2b2a29;
-    border: 1px solid #444;
+    background: var(--gum-bg-dark);
+    border: 1px solid var(--gum-border-light);
     border-radius: 5px;
     padding: 6px;
     display: flex;
@@ -90,19 +88,19 @@
     gap: 6px;
     transition: all 0.2s ease;
     position: relative;
-    flex-shrink: 0; /* Impede que o card seja esmagado se houver muitos */
+    flex-shrink: 0;
 }
 .gum.gm-screen .monitor-card:hover {
     border-color: #888;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: var(--gum-shadow-sutil);
     transform: translateY(-1px);
 }
 
 /* Destaque de Turno */
 .gum.gm-screen .monitor-card.active-turn {
-    border: 2px solid #4caf50 !important;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4) !important;
-    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid var(--gum-accent-green) !important;
+    box-shadow: 0 0 10px rgba(56, 156, 104, 0.4) !important;
+    background: rgba(56, 156, 104, 0.1);
     position: relative;
     z-index: 2;
 }
@@ -119,8 +117,8 @@
 .gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 70px; flex-shrink: 0; }
 .gum.gm-screen .mini-bar { height: 10px; background: #000; border-radius: 5px; position: relative; overflow: hidden; border: 1px solid #333; }
 .gum.gm-screen .mini-bar .fill { height: 100%; transition: width 0.5s ease; }
-.gum.gm-screen .mini-bar.hp .fill { background: var(--c-accent-green, #389c68); }
-.gum.gm-screen .mini-bar.fp .fill { background: var(--c-accent-blue, #56819c); }
+.gum.gm-screen .mini-bar.hp .fill { background: var(--gum-accent-green); }
+.gum.gm-screen .mini-bar.fp .fill { background: var(--gum-accent-blue); }
 
 /* Defesas */
 .gum.gm-screen .passive-defenses {
@@ -129,8 +127,8 @@
 }
 .gum.gm-screen .def-tag { font-size: 0.8em; color: #ccc; font-weight: 500; }
 .gum.gm-screen .def-tag i { color: #888; margin-right: 2px; }
-.gum.gm-screen .def-tag.init { color: var(--c-accent-gold, #c5a05b); font-weight: 700; }
-.gum.gm-screen .def-tag.init i { color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .def-tag.init { color: var(--gum-accent-gold); font-weight: 700; }
+.gum.gm-screen .def-tag.init i { color: var(--gum-accent-gold); }
 
 /* Tags Ativas */
 .gum.gm-screen .active-mods-zone {
@@ -138,7 +136,7 @@
     border-radius: 3px; padding: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
 }
 .gum.gm-screen .active-mod-tag {
-    background: var(--c-accent-blue, #56819c); color: #fff; font-size: 0.8em;
+    background: var(--gum-accent-blue); color: #fff; font-size: 0.8em;
     padding: 1px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px;
     border: 1px solid rgba(255,255,255,0.2);
 }
@@ -148,30 +146,34 @@
 .gum.gm-screen .hint-text { font-size: 0.75em; color: #666; width: 100%; text-align: center; font-style: italic; margin-top: 4px; }
 
 
-/* --- BARRA MANUAL (FIXA NO RODAPÉ DA LISTA) --- */
+/* --- BARRA MANUAL --- */
 .gum.gm-screen .manual-mod-section { 
     padding: 8px 10px; 
     background: #181818; 
-    border-bottom: 1px solid #444; 
-    flex-shrink: 0; /* Não encolhe */
+    border-bottom: 1px solid var(--gum-border-light); 
+    flex-shrink: 0; 
 }
 .gum.gm-screen .manual-mod-toolbar {
-    background: #2b2a29; padding: 6px; border: 1px solid #444; border-radius: 4px;
+    background: var(--gum-bg-dark); padding: 6px; border: 1px solid var(--gum-border-light); border-radius: 4px;
     display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
 }
-.gum.gm-screen .manual-mod-toolbar.active { background: rgba(197, 160, 91, 0.15); border-color: var(--c-accent-gold, #c5a05b); box-shadow: 0 0 10px rgba(197, 160, 91, 0.2); }
+.gum.gm-screen .manual-mod-toolbar.active { 
+    background: rgba(197, 160, 91, 0.15); 
+    border-color: var(--gum-accent-gold); 
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.2); 
+}
 .gum.gm-screen .manual-name {
     width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc;
     border-radius: 3px; padding: 3px 6px; font-size: 0.9em;
 }
-.gum.gm-screen .manual-name:focus { border-color: var(--c-accent-gold, #c5a05b); color: #fff; }
+.gum.gm-screen .manual-name:focus { border-color: var(--gum-accent-gold); color: #fff; }
 .gum.gm-screen .manual-row-middle { display: flex; gap: 5px; height: 28px; }
 .gum.gm-screen .value-controls {
     display: flex; align-items: center; background: rgba(0,0,0,0.3);
     border: 1px solid #555; border-radius: 3px; flex-grow: 1;
 }
 .gum.gm-screen .manual-mod-toolbar input[type="number"] {
-    background: transparent; border: none; color: var(--c-accent-gold, #c5a05b);
+    background: transparent; border: none; color: var(--gum-accent-gold);
     font-weight: 700; width: 100%; text-align: center; font-size: 1.1em;
 }
 .gum.gm-screen .step-btn {
@@ -186,7 +188,7 @@
 }
 .gum.gm-screen .activate-manual-btn:hover { color: #fff; border-color: #fff; }
 .gum.gm-screen .manual-mod-toolbar.active .activate-manual-btn {
-    background: var(--c-accent-gold, #c5a05b); color: #000; border-color: var(--c-accent-gold, #c5a05b);
+    background: var(--gum-accent-gold); color: #000; border-color: var(--gum-accent-gold);
 }
 .gum.gm-screen .manual-presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
 .gum.gm-screen .preset-btn {
@@ -195,11 +197,11 @@
 }
 .gum.gm-screen .preset-btn:hover { background: #fff; color: #000; }
 
-/* --- ROLADOR RÁPIDO (FIXO NO RODAPÉ) --- */
+/* --- ROLADOR RÁPIDO --- */
 .gum.gm-screen .quick-rollers {
-    background: #151515; border-top: 1px solid #444; padding: 8px;
+    background: #151515; border-top: 1px solid var(--gum-border-light); padding: 8px;
     display: flex; flex-direction: column; gap: 8px; 
-    flex-shrink: 0; /* GARANTE QUE NÃO SEJA EMPURRADO/ESMAGADO */
+    flex-shrink: 0; 
     z-index: 5;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
 }
@@ -209,8 +211,8 @@
     background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff;
     border-radius: 3px; height: 26px; font-size: 0.9em; text-align: center;
 }
-.gum.gm-screen .quick-rollers input:focus { border-color: var(--c-accent-gold, #c5a05b); }
-.gum.gm-screen .qr-nh { width: 40px; font-weight: 700; color: var(--c-accent-gold, #c5a05b) !important; }
+.gum.gm-screen .quick-rollers input:focus { border-color: var(--gum-accent-gold); }
+.gum.gm-screen .qr-nh { width: 40px; font-weight: 700; color: var(--gum-accent-gold) !important; }
 .gum.gm-screen .qr-formula { flex-grow: 1; text-align: left !important; padding-left: 5px; }
 .gum.gm-screen .qr-type { width: 45px; font-size: 0.8em !important; color: #aaa !important; }
 .gum.gm-screen .qr-mod-display {
@@ -219,8 +221,8 @@
     font-size: 0.9em; font-weight: 700; display: flex; align-items: center;
     justify-content: center; cursor: help;
 }
-.gum.gm-screen .qr-mod-display.pos { color: #4caf50; border-color: #2e7d32; background: rgba(46, 204, 113, 0.1); }
-.gum.gm-screen .qr-mod-display.neg { color: #e57373; border-color: #c62828; background: rgba(229, 57, 53, 0.1); }
+.gum.gm-screen .qr-mod-display.pos { color: var(--gum-accent-green); border-color: var(--gum-accent-green); background: rgba(46, 204, 113, 0.1); }
+.gum.gm-screen .qr-mod-display.neg { color: var(--gum-accent-red); border-color: var(--gum-accent-red); background: rgba(229, 57, 53, 0.1); }
 .gum.gm-screen .qr-btn, .gum.gm-screen .qr-toggle-mode {
     width: 30px; height: 26px; background: #333; border: 1px solid #555; color: #ccc;
     border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -229,37 +231,37 @@
 .gum.gm-screen .qr-btn:hover { background: #eee; color: #000; border-color: #fff; }
 .gum.gm-screen .qr-toggle-mode { background: transparent; border: none; }
 .gum.gm-screen .qr-toggle-mode:hover { color: #fff; }
-.gum.gm-screen .qr-toggle-mode.active { color: var(--c-accent-blue, #56819c); }
-.gum.gm-screen .roll-test:hover { background: var(--c-accent-blue, #56819c); border-color: var(--c-accent-blue, #56819c); }
-.gum.gm-screen .roll-damage:hover { background: var(--c-accent-red, #a53541); border-color: var(--c-accent-red, #a53541); }
+.gum.gm-screen .qr-toggle-mode.active { color: var(--gum-accent-blue); }
+.gum.gm-screen .roll-test:hover { background: var(--gum-accent-blue); border-color: var(--gum-accent-blue); }
+.gum.gm-screen .roll-damage:hover { background: var(--gum-accent-red); border-color: var(--gum-accent-red); }
 .gum.gm-screen .qr-result-display {
     margin-top: 4px; background: rgba(0,0,0,0.4); border: 1px solid #333;
     border-radius: 3px; padding: 4px 8px; font-size: 0.85em; text-align: center;
     color: #fff; animation: fadeIn 0.2s ease;
 }
 .gum.gm-screen .qr-result-display strong { font-size: 1.1em; }
-.gum.gm-screen .qr-result-display.success { border-left: 3px solid var(--c-accent-green, #389c68); }
-.gum.gm-screen .qr-result-display.failure { border-left: 3px solid var(--c-accent-red, #a53541); }
+.gum.gm-screen .qr-result-display.success { border-left: 3px solid var(--gum-accent-green); }
+.gum.gm-screen .qr-result-display.failure { border-left: 3px solid var(--gum-accent-red); }
 
-/* --- CONTROLES DE COMBATE (FIXO NO FINAL) --- */
+/* --- CONTROLES DE COMBATE --- */
 .gum.gm-screen .combat-controls {
     display: flex; justify-content: space-between; padding: 8px 10px;
-    background: #111; border-top: 1px solid #444; 
-    margin-top: auto; /* Empurra para o fundo se houver espaço extra */
+    background: #111; border-top: 1px solid var(--gum-border-light); 
+    margin-top: auto; 
     gap: 10px;
-    flex-shrink: 0; /* Impede encolhimento */
+    flex-shrink: 0; 
 }
 .gum.gm-screen .combat-btn {
     flex: 1; background: #252525; border: 1px solid #444; color: #ccc;
     border-radius: 3px; padding: 5px; cursor: pointer; transition: all 0.2s;
 }
 .gum.gm-screen .combat-btn:hover { background: #333; color: #fff; }
-.gum.gm-screen .combat-btn.next-turn:hover { background: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
-.gum.gm-screen .combat-btn.prev-turn:hover { color: var(--c-accent-gold, #c5a05b); border-color: var(--c-accent-gold, #c5a05b); }
-.gum.gm-screen .combat-btn.end-combat:hover { color: #e57373; border-color: #e57373; }
+.gum.gm-screen .combat-btn.next-turn:hover { background: rgba(46, 204, 113, 0.1); border-color: var(--gum-accent-green); color: var(--gum-accent-green); }
+.gum.gm-screen .combat-btn.prev-turn:hover { color: var(--gum-accent-gold); border-color: var(--gum-accent-gold); }
+.gum.gm-screen .combat-btn.end-combat:hover { color: var(--gum-accent-red); border-color: var(--gum-accent-red); }
 
 /* ================================================================== */
-/* COLUNA DIREITA: DASHBOARD (TRAVADA)                                */
+/* COLUNA DIREITA: DASHBOARD                                          */
 /* ================================================================== */
 .gum.gm-screen .controls-column {
     display: flex; 
@@ -269,10 +271,10 @@
     overflow: hidden;
 }
 
-/* Barra de Ferramentas da Direita */
+/* Barra de Ferramentas */
 .gum.gm-screen .palette-tools-bar {
     display: flex; justify-content: space-between; align-items: center;
-    background: #181818; border-bottom: 2px solid var(--c-accent-gold, #c5a05b);
+    background: #181818; border-bottom: 2px solid var(--gum-accent-gold);
     padding-right: 10px; flex-shrink: 0;
 }
 /* Abas */
@@ -281,7 +283,7 @@
     padding: 10px 15px; color: #888; cursor: pointer; border-right: 1px solid #333; font-weight: 600;
 }
 .gum.gm-screen .gum-screen-tabs .item:hover { color: #fff; background: #252525; }
-.gum.gm-screen .gum-screen-tabs .item.active { color: var(--c-accent-gold, #c5a05b); background: #2b2a29; }
+.gum.gm-screen .gum-screen-tabs .item.active { color: var(--gum-accent-gold); background: var(--gum-bg-dark); }
 
 /* Busca */
 .gum.gm-screen .palette-actions { display: flex; align-items: center; gap: 8px; }
@@ -291,17 +293,17 @@
     padding: 2px 5px 2px 22px; border-radius: 10px; width: 120px; font-size: 0.8em;
     transition: width 0.2s;
 }
-.gum.gm-screen .mod-search:focus { width: 180px; border-color: var(--c-accent-gold, #c5a05b); color: #fff; }
+.gum.gm-screen .mod-search:focus { width: 180px; border-color: var(--gum-accent-gold); color: #fff; }
 .gum.gm-screen .search-wrapper i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: #666; }
 .gum.gm-screen .clear-selection-btn { background: transparent; border: none; color: #666; cursor: pointer; font-size: 0.9em; transition: color 0.2s; }
 .gum.gm-screen .clear-selection-btn:hover { color: #ff6b6b; }
 
-/* Corpo Principal (SCROLL AQUI TAMBÉM) */
+/* Corpo Principal */
 .gum.gm-screen .screen-body {
     flex: 1; 
     padding: 15px; 
     overflow-y: auto;
-    min-height: 0; /* Garante que role */
+    min-height: 0; 
     scrollbar-width: thin; scrollbar-color: #555 #222;
 }
 
@@ -318,16 +320,16 @@
     width: 100%; background: #222; border: 1px dashed #555; color: #888;
     font-size: 0.8em; cursor: pointer; padding: 4px;
 }
-.gum.gm-screen .add-group-btn:hover { border-color: var(--c-accent-gold, #c5a05b); color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .add-group-btn:hover { border-color: var(--gum-accent-gold); color: var(--gum-accent-gold); }
 
 /* Grupo */
 .gum.gm-screen .modifier-group {
-    background: #2b2a29; border: 1px solid #444; border-radius: 4px; margin-bottom: 10px; overflow: hidden;
+    background: var(--gum-bg-dark); border: 1px solid #444; border-radius: 4px; margin-bottom: 10px; overflow: hidden;
 }
 .gum.gm-screen .modifier-group .group-header {
     background: #181818; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;
 }
-.gum.gm-screen .group-title { font-weight: 700; font-size: 0.85em; color: var(--c-accent-gold, #c5a05b); text-transform: uppercase; }
+.gum.gm-screen .group-title { font-weight: 700; font-size: 0.85em; color: var(--gum-accent-gold); text-transform: uppercase; }
 .gum.gm-screen .group-actions a { color: #666; font-size: 0.85em; margin-left: 5px; cursor: pointer; }
 .gum.gm-screen .group-actions a:hover { color: #fff; }
 .gum.gm-screen .group-content-area { min-height: 30px; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
@@ -342,7 +344,7 @@
 }
 .gum.gm-screen .palette-mod:hover { background: #444; color: #fff; border-color: #777; transform: translateX(2px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 .gum.gm-screen .palette-mod.active {
-    background: var(--c-accent-gold, #c5a05b); color: #111; border-color: #fff; font-weight: 700; box-shadow: 0 0 8px rgba(197, 160, 91, 0.5);
+    background: var(--gum-accent-gold); color: #111; border-color: #fff; font-weight: 700; box-shadow: 0 0 8px rgba(197, 160, 91, 0.5);
 }
 
 .gum.gm-screen .mod-left { display: flex; align-items: center; gap: 6px; overflow: hidden; flex-grow: 1; }
@@ -355,12 +357,12 @@
 }
 .gum.gm-screen .mod-val.neg { color: #ffcccc; background: rgba(192, 57, 43, 0.3); }
 .gum.gm-screen .palette-mod.active .mod-val { background: rgba(0,0,0,0.15); color: #000; }
-.gum.gm-screen .palette-mod.active .mod-val.neg { color: #a53541; background: rgba(255,255,255,0.2); }
+.gum.gm-screen .palette-mod.active .mod-val.neg { color: var(--gum-accent-red); background: rgba(255,255,255,0.2); }
 
 .gum.gm-screen .mod-hover-controls { display: none; gap: 6px; align-items: center; }
 .gum.gm-screen .palette-mod:hover .mod-hover-controls { display: flex; }
 .gum.gm-screen .mod-quick-view { color: #888; font-size: 0.9em; transition: color 0.2s; }
-.gum.gm-screen .mod-quick-view:hover { color: var(--c-accent-gold, #c5a05b); }
+.gum.gm-screen .mod-quick-view:hover { color: var(--gum-accent-gold); }
 .gum.gm-screen .delete-mod-btn { color: #888; font-size: 0.9em; }
 .gum.gm-screen .delete-mod-btn:hover { color: #ff6b6b; }
 
@@ -368,44 +370,43 @@
 .gum.gm-screen .flash-success { animation: flash-green 0.6s ease-out; }
 
 /* ================================================================== */
-/* MENU DE CONTEXTO (CLIQUE DIREITO) - VERSÃO CLASSICA                */
+/* MENU DE CONTEXTO (CLIQUE DIREITO) - BLINDADO PARA BODY             */
 /* ================================================================== */
 
-/* Container Principal */
+/* Nota: Como o menu é anexado ao body via JS, ele precisa da classe raiz no próprio elemento.
+   No seu JS, você cria a div com class="gum-ctx-menu". Então o seletor é direto. */
+
 .gum-ctx-menu {
-    position: fixed; /* Essencial para seguir o mouse */
+    position: fixed; 
     background: #1a1a1a;
-    border: 1px solid var(--c-accent-gold, #c5a05b);
+    border: 1px solid var(--gum-accent-gold);
     box-shadow: 0 4px 15px rgba(0,0,0,0.8);
     border-radius: 4px;
-    z-index: 9999; /* Acima de tudo */
+    z-index: 9999; 
     width: 240px;
     font-size: 0.85em;
     color: #e0e0e0;
+    font-family: var(--gum-font-primary); /* Garante fonte correta fora da janela */
     
-    /* IMPORTANTE: Sem overflow/scroll para permitir submenus laterais */
     overflow: visible; 
     animation: fadeIn 0.1s ease-out;
 }
 
-/* Cabeçalho (Nome do Personagem) */
 .gum-ctx-header {
     background: linear-gradient(to right, #222, #333);
     padding: 8px 10px;
     font-weight: 700;
-    color: var(--c-accent-gold, #c5a05b);
+    color: var(--gum-accent-gold);
     border-bottom: 1px solid #444;
     text-transform: uppercase;
     font-size: 0.95em;
 }
 
-/* Grupos (Atributos, Ataques, etc) */
 .gum-ctx-group {
     border-bottom: 1px solid #333;
     padding-bottom: 2px;
 }
 
-/* Título do Grupo (ex: DEFESA) */
 .gum-ctx-group-title {
     background: rgba(255,255,255,0.05);
     padding: 4px 10px;
@@ -418,9 +419,8 @@
     border-bottom: 1px solid rgba(0,0,0,0.2);
 }
 
-/* Item Clicável */
 .gum-ctx-item {
-    position: relative; /* Necessário para ancorar o submenu */
+    position: relative; 
     padding: 6px 12px;
     cursor: pointer;
     display: flex;
@@ -430,11 +430,10 @@
 }
 
 .gum-ctx-item:hover {
-    background: var(--c-accent-blue, #56819c);
+    background: var(--gum-accent-blue);
     color: #fff;
 }
 
-/* Seta indicando submenu (>) */
 .gum-ctx-caret {
     font-size: 0.8em;
     color: #666;
@@ -442,7 +441,6 @@
 }
 .gum-ctx-item:hover .gum-ctx-caret { color: #fff; }
 
-/* Valores (NH, Pontos) */
 .gum-ctx-val {
     background: rgba(0,0,0,0.3);
     padding: 1px 6px;
@@ -452,49 +450,38 @@
 }
 .gum-ctx-val.skill { color: #ccffcc; }
 
-/* Separador (Linha fina) */
 .gum-ctx-separator {
     border-top: 1px solid #444;
     margin: 4px 0;
 }
 
-/* ================================================================== */
-/* SUBMENU EM CASCATA (POP-OUT LATERAL)                               */
-/* ================================================================== */
-
+/* Submenu */
 .gum-ctx-submenu {
-    display: none; /* Escondido por padrão */
+    display: none; 
     position: absolute;
-    
-    /* Posicionamento: Sai para a direita do pai */
     left: 100%; 
-    top: -1px; /* Alinha com o topo da linha pai */
-    margin-left: -2px; /* Pequena sobreposição visual */
-    
-    width: 280px; /* Largura suficiente para botões de dano/defesa */
+    top: -1px; 
+    margin-left: -2px; 
+    width: 280px; 
     background: #1a1a1a;
-    border: 1px solid var(--c-accent-gold, #c5a05b);
+    border: 1px solid var(--gum-accent-gold);
     box-shadow: 4px 4px 15px rgba(0,0,0,0.8);
     border-radius: 4px;
     z-index: 10000;
 }
 
-/* Mostra ao passar o mouse no item pai */
 .gum-ctx-item:hover > .gum-ctx-submenu {
     display: block;
 }
 
-/* Layout da Linha de Ataque no Submenu */
 .gum-ctx-attack-row {
     display: grid;
-    /* Colunas: Nome/NH (Flexível) | Dano (Auto) | Defesas (Auto) */
     grid-template-columns: 1fr auto auto; 
     align-items: center;
     gap: 8px;
     width: 100%;
 }
 
-/* Botão Esquerdo: Rolar Ataque (Nome + NH) */
 .attack-roll-btn {
     display: flex;
     justify-content: space-between;
@@ -510,17 +497,15 @@
     font-size: 0.9em;
 }
 .attack-roll-btn:hover span {
-    text-shadow: 0 0 5px var(--c-accent-gold);
+    text-shadow: 0 0 5px var(--gum-accent-gold);
     color: #fff;
 }
 
-/* Grupo da Direita: Botões de Ação */
 .ctx-actions-right {
     display: flex;
     gap: 4px;
 }
 
-/* Botão de Dano (Vermelho) */
 .damage-roll-btn {
     font-size: 0.8em;
     color: #ffcccc;
@@ -535,13 +520,12 @@
     gap: 4px;
 }
 .damage-roll-btn:hover {
-    background: #a53541;
+    background: var(--gum-accent-red);
     color: #fff;
     border-color: #fff;
     transform: scale(1.05);
 }
 
-/* Botão de Defesa (Verde) */
 .def-roll-btn-ctx {
     font-size: 0.8em;
     color: #ccffcc;
@@ -556,19 +540,15 @@
     gap: 4px;
 }
 .def-roll-btn-ctx:hover {
-    background: #2ecc71;
+    background: var(--gum-accent-green);
     color: #000;
     border-color: #fff;
     transform: scale(1.05);
 }
-/* ================================================================== */
-/* MENU DE CONTEXTO - GRADE DE ATRIBUTOS (OTIMIZAÇÃO)                 */
-/* ================================================================== */
 
-/* Container da Grade de Atributos */
+/* Grade de Atributos */
 .gum-ctx-stats-grid {
     display: grid;
-    /* 4 colunas para ST, DX, IQ, HT */
     grid-template-columns: repeat(4, 1fr); 
     gap: 2px;
     padding: 4px;
@@ -576,13 +556,11 @@
     border-bottom: 1px solid #333;
 }
 
-/* Linha Secundária (Per, Will, Dodge) */
 .gum-ctx-stats-grid.secondary {
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas para Per, Will, Dodge */
+    grid-template-columns: repeat(3, 1fr); 
     background: transparent;
 }
 
-/* Item da Grade (Caixinha) */
 .gum-ctx-stat-box {
     display: flex;
     flex-direction: column;
@@ -596,12 +574,11 @@
     transition: all 0.15s;
 }
 .gum-ctx-stat-box:hover {
-    background: var(--c-accent-gold);
+    background: var(--gum-accent-gold);
     color: #000;
     border-color: #fff;
 }
 
-/* Rótulo (ST, DX...) */
 .stat-label {
     font-size: 0.7em;
     font-weight: 700;
@@ -612,7 +589,6 @@
 }
 .gum-ctx-stat-box:hover .stat-label { color: #000; }
 
-/* Valor (10, 14...) */
 .stat-value {
     font-size: 1em;
     font-weight: 700;

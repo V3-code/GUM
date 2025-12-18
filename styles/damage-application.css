@@ -1,742 +1,465 @@
-/* Estilo Principal */
-.dialog.damage-application-dialog .window-content { background: #28282b !important; color: #e1e1e1; padding: 10px; }
-.dialog.damage-application-dialog .dialog-buttons { margin-top: 10px; text-align: right; }
-.damage-application-dialog .dialog-buttons button { margin-left: 5px; }
+/* =================================================================== */
+/* JANELA DE APLICAÇÃO DE DANO (Refatorado & Blindado)                 */
+/* =================================================================== */
 
-/* --- 1. CABEÇALHO --- */
+/* --- 1. ESTRUTURA DA JANELA --- */
 
-.damage-application-dialog .actor-portrait { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Força o fundo escuro padrão do sistema GUM */
+.damage-application-dialog .window-content {
+    background: var(--gum-bg-dark) !important;
+    color: var(--gum-text-claro);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-.damage-application-dialog .actor-portrait span { font-size: 11px; text-transform: uppercase; }
-.damage-application-dialog .damage-cards-area { display: flex; gap: 8px; justify-content: center; }
-.damage-application-dialog .damage-card { border: 2px solid; padding: 10px 10px; border-radius: 4px; text-align: center; cursor: pointer; transition: all 0.2s ease; opacity: 0.6; }
-.damage-application-dialog .damage-card.active, .damage-application-dialog .damage-card:hover { box-shadow: 0 0 10px; transform: scale(1.05); opacity: 1; }
-.damage-application-dialog .damage-card .damage-value { font-size: 1.8em; font-weight: bold; }
-.damage-application-dialog .damage-card .damage-label { font-size: 0.8em; text-transform: uppercase; }
-.damage-application-dialog .damage-card { border-color: var(--c-accent-gold, #c5a05b); }
-.damage-application-dialog .damage-card.follow-up { border-color: var(--c-accent-blue, #5b9ec5); }
-.damage-application-dialog .damage-card.fragmentation { border-color: var(--c-accent-red, #a53541); }
+/* Área de botões padrão do Foundry (se houver) */
+.damage-application-dialog .dialog-buttons {
+    margin-top: 10px;
+    text-align: right;
+    border-top: 1px solid var(--gum-border-light);
+    padding-top: 10px;
+}
 
-/* --- 2. CORPO E COLUNAS --- */
-.damage-application-dialog .damage-app-body { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 15px; margin-top: 15px; }
-.damage-application-dialog .panel-header { font-weight: bold; text-transform: uppercase; font-size: 11px; text-align: center; color: #c5a05b; margin-bottom: 8px; }
-.damage-application-dialog .placeholder { display: flex; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.2); border-radius: 3px; color: #888; font-style: italic; }
+/* --- 2. CABEÇALHO (RETRATOS E CARDS DE DANO) --- */
 
-/* ✅ TABELA DE LOCAIS DE ACERTO (RD) ESTILIZADA ✅ */
-.damage-application-dialog .locations-table { display: flex; flex-direction: column; background: rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.4); border-radius: 3px; }
-.damage-application-dialog .location-header, .damage-application-dialog .location-row { display: grid; grid-template-columns: 70px 1fr 30px; padding: 5px 8px; align-items: center; font-size: 12px; }
-.damage-application-dialog .location-header { font-size: 10px; font-weight: bold; color: #a0a0a0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.damage-application-dialog .location-header span:last-child { text-align: right; }
-.damage-application-dialog .location-row { cursor: pointer; transition: background-color 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.damage-application-dialog .location-row:last-child { border-bottom: none; }
-.damage-application-dialog .location-row:hover { background-color: rgba(255,255,255,0.05); }
-.damage-application-dialog .location-row.active { background-color: var(--c-accent-gold, #c5a05b); color: #111; font-weight: bold; }
-.damage-application-dialog .location-row .roll { color: #ccc; }
-.damage-application-dialog .location-row.active .roll, .damage-application-dialog .location-row.active .label, .damage-application-dialog .location-row.active .dr { color: #111; }
+.damage-application-dialog .damage-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.damage-application-dialog .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* Retratos */
+.damage-application-dialog .actor-portrait {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--gum-text-medio);
+}
+
+.damage-application-dialog .actor-portrait img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gum-border-gold);
+    box-shadow: var(--gum-shadow-sutil);
+}
+
+.damage-application-dialog .actor-portrait span {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* Cards de Dano (Central) */
+.damage-application-dialog .damage-cards-area {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex: 1;
+}
+
+.damage-application-dialog .damage-card {
+    border: 2px solid var(--gum-accent-gold);
+    background: rgba(0,0,0,0.2);
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+    min-width: 80px;
+}
+
+.damage-application-dialog .damage-card.active,
+.damage-application-dialog .damage-card:hover {
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.4);
+    transform: scale(1.05);
+    opacity: 1;
+    background: rgba(197, 160, 91, 0.1);
+}
+
+.damage-application-dialog .damage-card .damage-value {
+    font-size: 1.6em;
+    font-weight: bold;
+    color: var(--gum-text-claro);
+    line-height: 1.2;
+}
+
+.damage-application-dialog .damage-card .damage-label {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    color: var(--gum-accent-gold);
+    font-weight: 700;
+}
+
+/* Variações de Cor dos Cards */
+.damage-application-dialog .damage-card.follow-up { 
+    border-color: var(--gum-accent-blue); 
+}
+.damage-application-dialog .damage-card.follow-up .damage-label { 
+    color: var(--gum-accent-blue); 
+}
+
+.damage-application-dialog .damage-card.fragmentation { 
+    border-color: var(--gum-accent-red); 
+}
+.damage-application-dialog .damage-card.fragmentation .damage-label { 
+    color: var(--gum-accent-red); 
+}
+
+/* Seletor de Pool (PV/PF) */
+.damage-application-dialog .selector-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.damage-application-dialog select[name="damage_target_pool"] {
+    background-color: rgba(0,0,0,0.3);
+    color: var(--gum-text-claro);
+    border: 1px solid var(--gum-border-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 200px;
+    text-align: center;
+}
+
+/* --- 3. CORPO (3 COLUNAS) --- */
+
+.damage-application-dialog .damage-app-body {
+    display: grid;
+    grid-template-columns: 240px 1fr 1fr;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.damage-application-dialog .panel-header {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+    text-align: center;
+    color: var(--gum-accent-gold);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--gum-border-light);
+    padding-bottom: 2px;
+}
+
+/* --- Tabela de Locais de Acerto (RD) --- */
+.damage-application-dialog .locations-table {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 3px;
+}
+
+.damage-application-dialog .location-header,
+.damage-application-dialog .location-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 30px;
+    padding: 4px 8px;
+    align-items: center;
+    font-size: 12px;
+}
+
+.damage-application-dialog .location-header {
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--gum-text-medio);
+    border-bottom: 1px solid var(--gum-border-light);
+    background: rgba(0,0,0,0.2);
+}
+
+.damage-application-dialog .location-row {
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.damage-application-dialog .location-row:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Linha Selecionada */
+.damage-application-dialog .location-row.active {
+    background-color: var(--gum-accent-gold);
+    color: var(--gum-bg-darkest);
+    font-weight: 700;
+}
+
+.damage-application-dialog .location-row .roll { color: var(--gum-text-medio); }
 .damage-application-dialog .location-row .dr { text-align: right; font-weight: bold; }
-.damage-application-dialog .damage-options { margin-top: 10px; }
 
-/* Tabela de Multiplicadores */
-.wounding-mods-panel .wounding-table { font-size: 12px; }
-.wounding-mods-panel .wounding-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.wounding-mods-panel .wounding-row .type { font-weight: bold; }
-.wounding-mods-panel .wounding-row .mult { font-weight: bold; color: var(--c-accent-gold, #c5a05b); }
-.wounding-mods-panel .custom-radio { display: flex; align-items: center; }
-.wounding-mods-panel .custom-mod-input { width: 50px; margin-left: 5px; }
+/* Ajuste de cor quando ativo */
+.damage-application-dialog .location-row.active .roll { color: var(--gum-bg-darkest); opacity: 0.7; }
 
-/* Rodapé */
-.damage-application-dialog .damage-app-footer { margin-top: 15px; padding-top: 15px; padding-bottom: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 3fr 1.2fr; gap: 15px; }
-.damage-application-dialog .calculation-summary .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
-.damage-application-dialog .calculation-summary .summary-row label { color: #a0a0a0; }
-.damage-application-dialog .calculation-summary .final-injury { font-weight: bold; font-size: 1.2em; color: var(--c-accent-red, #a53541); }
-.damage-application-dialog .action-buttons { display: flex; flex-direction: row; gap: 5px; }
+/* --- Tabela de Multiplicadores (Wounding) --- */
+.damage-application-dialog .wounding-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+}
 
-/* =================================================================== */
-/* ESTILO UNIFICADO E FINAL PARA TODOS OS CHECKBOXES CUSTOMIZADOS      */
-/* =================================================================== */
+.damage-application-dialog .wounding-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 3px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
 
-/* Define a aparência base para TODAS as labels de checkbox */
+/* Zebrado sutil para grupos */
+.damage-application-dialog .wounding-row.mod-group-1 { background: rgba(255,255,255,0.05); }
+.damage-application-dialog .wounding-row.mod-group-2 { background: rgba(255,255,255,0.02); }
+
+.damage-application-dialog .custom-radio {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.damage-application-dialog .wounding-row .type { flex-grow: 1; }
+.damage-application-dialog .wounding-row .mult { font-weight: bold; color: var(--gum-accent-gold); }
+
+/* Input customizado dentro da tabela */
+.damage-application-dialog .custom-mod-input {
+    width: 50px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--gum-border-light);
+    color: white;
+    text-align: center;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+/* --- Coluna de Opções e Efeitos --- */
+.damage-application-dialog .damage-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* --- 4. CHECKBOXES CUSTOMIZADOS (Estilo Unificado) --- */
 .damage-application-dialog .custom-checkbox {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding-left: 22px; /* Espaço para a caixinha */
+    padding-left: 24px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
+    user-select: none;
+    color: var(--gum-text-medio);
+    transition: color 0.2s;
 }
 
-/* Esconde o checkbox padrão do navegador */
-.damage-application-dialog .custom-checkbox input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
+.damage-application-dialog .custom-checkbox:hover { color: var(--gum-text-claro); }
+
+.damage-application-dialog .custom-checkbox input {
+    position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;
 }
 
-/* Desenha a CAIXINHA VISUAL (o 'box') para todos */
+/* Caixa */
 .damage-application-dialog .custom-checkbox::before {
     content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background-color: rgba(0, 0, 0, 0.2);
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 14px; width: 14px;
+    background-color: rgba(0,0,0,0.3);
+    border: 1px solid var(--gum-border-light);
     border-radius: 3px;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
 }
 
-/* Desenha o "✓" (check) para todos, mas o deixa invisível por padrão */
+/* Check */
 .damage-application-dialog .custom-checkbox::after {
     content: '';
-    position: absolute;
-    left: 5px;
-    
-    
-    width: 3px;
-    height: 7px;
-    border: solid #111; /* Cor preta para o check */
+    position: absolute; left: 5px; top: 4px;
+    width: 4px; height: 8px;
+    border: solid var(--gum-bg-darkest);
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
-    opacity: 0; /* Começa invisível */
-    transition: opacity 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 
-/* Esta regra se aplica a QUALQUER label que tenha a classe .is-checked */
-.damage-application-dialog .custom-checkbox.is-checked::before {
-    background-color: var(--c-accent-gold, #c5a05b);
-    border-color: var(--c-accent-gold, #c5a05b);
+/* Estado Marcado */
+.damage-application-dialog .custom-checkbox.is-checked::before,
+.damage-application-dialog .custom-checkbox input:checked ~ span::before { /* Fallback */
+    background-color: var(--gum-accent-gold);
+    border-color: var(--gum-accent-gold);
 }
 
-.damage-application-dialog .custom-checkbox.is-checked::after {
-    opacity: 1; /* Torna o "✓" visível */
+.damage-application-dialog .custom-checkbox.is-checked::after,
+.damage-application-dialog .custom-checkbox input:checked ~ span::after { /* Fallback */
+    opacity: 1;
 }
 
-/* =================================================================== */
-/* ESTILO FINAL PARA OS BOTÕES DE AÇÃO DA JANELA DE DANO             */
-/* =================================================================== */
+/* --- 5. RODAPÉ (CÁLCULOS E AÇÕES) --- */
 
-/* Container que alinha os botões verticalmente */
-.damage-application-dialog .action-buttons {
+.damage-application-dialog .damage-app-footer {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--gum-border-light);
+    background: rgba(0,0,0,0.1);
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Coluna de Cálculo */
+.damage-application-dialog .calculation-summary {
     display: flex;
-    
+    flex-direction: column;
     gap: 5px;
-    justify-content: flex-end; /* Alinha os botões à base do rodapé */
 }
 
-/* Estilo base para cada um dos três botões */
-.damage-application-dialog .action-buttons button {
-    font-family: 'Roboto', sans-serif;
-    font-size: 13px;
-    font-weight: bold;
-    text-align: left;
-    color: #dcdcdc;
-    
-    background: var(--c-accent-gold, #c5a05b);
-    border: 1px solid rgba(255,255,255,0.15);
+.damage-application-dialog .calc-group-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.damage-application-dialog .calc-item-compact {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--gum-border-light);
     border-radius: 3px;
-    
-    padding: 8px 10px;
-    margin: 0; /* Reseta qualquer margem padrão */
-    cursor: pointer;
-    
-    display: flex; /* Permite alinhar o ícone e o texto */
-    align-items: center;
-    gap: 8px; /* Espaço entre o ícone e o texto */
-    
-    transition: all 0.2s ease;
-}
-
-/* Efeito ao passar o mouse */
-.damage-application-dialog .action-buttons button:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: var(--c-accent-gold, #c5a05b);
-    color: #fff;
-}
-
-/* Estilo para o ícone dentro do botão */
-.damage-application-dialog .action-buttons button i {
-    font-size: 14px;
-    width: 16px; /* Garante que os ícones tenham o mesmo alinhamento */
+    padding: 4px;
     text-align: center;
-    color: rgba(255,255,255,0.5);
 }
 
-.damage-application-dialog .action-buttons button:hover i {
-    color: var(--c-accent-gold, #c5a05b);
-}
-
-/* --- Estilo para o Seletor de Alvo de Dano --- */
-
-.damage-application-dialog .target-pool-selector {
-    margin-top: 10px;
-    margin-bottom: 15px;
-}
-
-.damage-application-dialog .target-pool-selector label {
-    font-size: 11px;
-    font-weight: bold;
+.damage-application-dialog .calc-item-compact label {
+    font-size: 9px;
     text-transform: uppercase;
-    color: #a0a0a0;
-    margin-bottom: 4px;
+    color: var(--gum-text-medio);
     display: block;
 }
 
-.damage-application-dialog .target-pool-selector select {
+.damage-application-dialog .calc-input-compact {
     width: 100%;
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #e1e1e1;
-    padding: 6px;
-    border-radius: 3px;
-    font-family: 'Roboto', sans-serif;
-}
-
-/* --- Estilo para a Tabela de Modificadores de Ferimento --- */
-
-.damage-application-dialog .wounding-table {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.damage-application-dialog .wounding-row {
-    padding: 4px 6px;
-    border-radius: 2px;
-}
-.damage-application-dialog .wounding-row label.custom-radio {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    width: 100%;
-    cursor: pointer;
-}
-.damage-application-dialog .wounding-row .dots {
-    flex-grow: 1;
-    border-bottom: 1px dotted rgba(255,255,255,0.2);
-    margin-bottom: 4px;
-}
-.damage-application-dialog .wounding-row .mult {
+    background: transparent;
+    border: none;
+    color: var(--gum-text-claro);
     font-weight: bold;
-    color: var(--c-accent-gold, #c5a05b);
-}
-.damage-application-dialog .custom-mod-input {
-    width: 60px;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(0,0,0,0.5);
     text-align: center;
-}
-
-/* --- Estilo para Tabela de Locais e Resumo de Cálculo --- */
-
-/* Restaura o visual da Tabela de Locais de Acerto */
-.damage-application-dialog .locations-table {
-    display: flex;
-    flex-direction: column;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(0,0,0,0.4);
-    border-radius: 3px;
-    font-size: 12px;
-}
-.damage-application-dialog .location-header, 
-.damage-application-dialog .location-row {
-    display: grid;
-    grid-template-columns: 70px 1fr 30px;
-    padding: 5px 8px;
-    align-items: center;
-}
-.damage-application-dialog .location-header {
-    font-weight: bold;
-    color: #a0a0a0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.damage-application-dialog .location-row {
-    cursor: pointer;
-}
-.damage-application-dialog .location-row:hover {
-    background-color: rgba(255,255,255,0.05);
-}
-.damage-application-dialog .location-row.active {
-    background-color: var(--c-accent-gold, #c5a05b);
-    color: #111;
-    font-weight: bold;
-}
-.damage-application-dialog .location-row .dr {
-    text-align: right;
-}
-
-/* Estilo para a nova Tabela de Resumo no Rodapé */
-.damage-application-dialog .calculation-summary .summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 4px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.damage-application-dialog .calculation-summary .summary-row label {
-    color: #a0a0a0;
-}
-.damage-application-dialog .calculation-summary .summary-row span {
-    font-weight: bold;
-    color: #fff;
-}
-.damage-application-dialog .calculation-summary .final-injury label {
     font-size: 1.1em;
 }
-.damage-application-dialog .calculation-summary .final-injury span {
-    font-size: 1.4em;
-    color: var(--c-accent-red, #a53541);
-}
-.damage-application-dialog .calculation-summary hr {
-    margin: 5px 0;
-    border-color: rgba(255,255,255,0.2);
-}
-.damage-application-dialog .calc-input {
-  width: 60px;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 3px;
-  color: #fff;
-  font-size: 13px;
-  padding: 2px 6px;
-  text-align: right;
-}
-.mod-group-header {
-  font-weight: bold;
-  font-size: 0.85rem;
-  color: var(--color-text-light-3);
-  margin-top: 0.75rem;
-  margin-bottom: 0.25rem;
-  border-bottom: 1px dashed var(--color-border-light-2);
-  padding-bottom: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.damage-application-dialog .calc-input-compact:focus { border-bottom: 1px solid var(--gum-accent-gold); }
+
+/* Resultado Final */
+.damage-application-dialog .final-injury-compact {
+    text-align: center;
+    background: rgba(165, 53, 65, 0.1); /* Fundo avermelhado sutil */
+    border: 1px solid var(--gum-accent-red);
+    border-radius: 4px;
+    padding: 5px;
+    margin-top: 5px;
 }
 
-/*Gradiente da tabela de Modificadores de Dano*/
-.wounding-row.mod-group-1 {
-  background-color: rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
-}
-.wounding-row.mod-group-2 {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-.wounding-row.mod-group-3 {
-  background-color: rgba(255, 255, 255, 0.055);
-  border-radius: 4px;
+.damage-application-dialog .final-injury-compact label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--gum-accent-red);
+    font-weight: bold;
 }
 
-/*ESTILO DO CABEÇALHO*/
-/* Estilo geral do cabeçalho reorganizado */
-.damage-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  width: 100%;
+.damage-application-dialog .final-injury-compact span {
+    display: block;
+    font-size: 1.8em;
+    font-weight: 900;
+    color: var(--gum-accent-red);
+    line-height: 1;
 }
 
-/* Linha com retratos e cards */
-.damage-header .header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0 12px;
-}
-
-/* Linha do seletor (pools de lesão) */
-.damage-header .selector-row {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: -2px;
-}
-
-/* Estilo do select para se ajustar melhor */
-.damage-header select[name="damage_target_pool"] {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  background: var(--color-bg-light-2, #1e1e1e);
-  color: var(--color-text-light-1, #eee);
-  border: 1px solid var(--color-border-light-2, #444);
-  max-width: 240px;
-  text-align: center;
-}
-
-/* Estilo dos retratos */
-.actor-portrait {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 0.75rem;
-  color: var(--color-text-light-3);
-}
-
-.actor-portrait img {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%; /* já circular */
-  object-fit: cover;
-  border: 2px solid var(--color-border-light-highlight, #999);
-  margin-bottom: 2px;
-}
-
-
-/* Cards de dano centralizados */
-.damage-cards-area {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-}
-.damage-header select[name="damage_target_pool"] {
-  background-color: #2a2a2a;
-  color: #f0f0f0;
-}
-
-.damage-header select[name="damage_target_pool"] option {
-  color: #111;
-  background-color: #f8f8f8;
-}
-
-.damage-app-footer .action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: stretch;
-  justify-content: center;
-  margin-top: 4px; 
-}
-
-/* Estilo dos botões */
-.damage-app-footer .action-buttons button {
-  background: var(--color-button-background, #c5a05b); 
-  color: #000;
-  border: 1px solid #999;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.damage-app-footer .action-buttons button:hover {
-  background: #c5a05b; /* tom mais claro ao passar o mouse */
-  box-shadow: 0 0 4px #c5a05b;
-}
-
-/*situações especiais*/
-
-.situational-options {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 0.85rem;
-}
-
-.situational-options label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.situational-options input[type="number"] {
-  background: #1a1a1a;
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 2px 4px;
-  width: 50px;
-}
-
-/* --- Estilo para o Seletor de Tolerância a Ferimentos --- */
-.damage-application-dialog .injury-tolerance-section {
-    margin-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 10px;
-}
-.damage-application-dialog .custom-select {
+/* Coluna de Efeitos */
+.damage-application-dialog .effects-summary {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 3px;
+    padding: 5px;
+    overflow-y: auto;
+    max-height: 150px;
     display: flex;
-    flex-direction: column; 
-    align-items: flex-start; 
-    gap: 4px; 
+    flex-direction: column;
+    gap: 4px;
 }
-.damage-application-dialog .custom-select span {
+
+.damage-application-dialog .effect-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    padding: 4px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.damage-application-dialog .effect-card .effect-status.success { color: var(--gum-accent-green); }
+.damage-application-dialog .effect-card .effect-status.failure { color: var(--gum-accent-red); }
+
+/* Coluna de Botões de Ação */
+.damage-application-dialog .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+}
+
+.damage-application-dialog .action-buttons button {
+    background: var(--gum-bg-medium);
+    border: 1px solid var(--gum-border-light);
+    color: var(--gum-text-claro);
+    padding: 8px;
+    border-radius: 3px;
     font-size: 11px;
     font-weight: bold;
-    text-transform: uppercase;
-    color: #a0a0a0;
-    flex-shrink: 0;
-    margin-right: 10px;
-}
-.damage-application-dialog .custom-select select {
-    width: 100%;
-    flex-grow: 1;
-}
-.damage-application-dialog .custom-select select option {
-    color: #111;
-  background-color: #f8f8f8;
-}
-
-/* ============================================= */
-/* ESTILO FINAL DO RODAPÉ (LAYOUT DE 3 COLUNAS)  */
-/* ============================================= */
-
-.damage-app-footer {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr; /* Layout de 3 colunas */
-  gap: 15px;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Coluna 1: Cálculos (VERSÃO COMPACTA E ESTILIZADA) */
-.calculation-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.calc-group-compact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.calc-item-compact {
-  background: rgba(0, 0, 0, 0.15);
-  padding: 4px 6px;
-  border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  text-align: center;
-}
-.calc-item-compact.single {
-  grid-column: span 2; /* Faz o item ocupar as duas colunas */
-}
-.calc-item-compact label {
-  font-size: 10px; /* Fonte menor */
-  text-transform: uppercase;
-  color: #a0a0a0;
-  display: block;
-  margin-bottom: 2px;
-}
-.calc-input-compact, .calc-field-compact {
-  font-size: 16px; /* Fonte menor */
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
-  background: none;
-  border: none;
-  color: #fff;
-  border-radius: 0;
-  padding: 0;
-}
-.final-injury-compact {
-  text-align: center;
-  margin-top: auto;
-  padding-top: 5px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
-.final-injury-compact label {
-  font-size: 12px;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: #c53434;
-}
-.final-injury-compact span {
-  display: block;
-  font-size: 36px; /* Fonte menor */
-  font-weight: bold;
-  color: #c53434;
-  line-height: 1;
-}
-
-/* Adicione estas regras para destacar os inputs */
-.calc-item-compact .calc-input-compact {
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); /* Sombra interna */
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  border-radius: 2px;
-  padding: 1px 0; /* Pequeno ajuste de padding */
-  transition: all 0.2s ease;
-}
-
-.calc-item-compact .calc-input-compact:focus {
-  background: rgba(0, 0, 0, 0.4);
-  border-bottom-color: var(--c-accent-gold, #c5a05b); /* Borda dourada ao focar */
-}
-
-/* Estilos para a nova área de notas de cálculo */
-.calculation-notes {
-  
-  margin-top: 5px;
-}
-.calculation-notes ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 11px;
-  color: #a0a0a0;
-  text-align: left;
-}
-.calculation-notes ul li {
-  padding: 2px 0;
-}
-
-.calculation-notes .feedback-note {
-  color: var(--c-accent-gold, #c5a05b);
-  font-style: italic;
-}
-
-/* Coluna 3: Botões de Ação */
-.damage-application-dialog .action-buttons {
-  display: flex;
-  flex-direction: row-reverse;
-  gap: 5px;
-  justify-content: center; /* Centraliza os botões verticalmente */
-}
-
-/* Coluna 2: Efeitos */
-.effects-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background-color: rgba(0,0,0,0.15);
-  border-radius: 4px;
-  padding: 8px;
-  border: 1px solid rgba(0,0,0,0.3);
-}
-.effect-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-  font-size: 13px;
-}
-.effect-card .eff-type {
-  margin-left: auto;
-  font-size: 11px;
-  color: #a0a0a0;
-  font-style: italic;
-}
-
-.effect-card .effect-status {
-    font-style: italic;
-    font-size: 0.9em;
-    font-weight: bold;
-    opacity: 0.9;
-    text-align: right;
-}
-
-/* ✅ ESTILO PARA O RESULTADO DO TESTE */
-.effect-card .effect-status.success {
-    color: #4dbd4d; /* Verde para Sucesso */
-}
-
-.effect-card .effect-status.failure {
-    color: #ff6b6b; /* Vermelho para Falha */
-}
-
-.effect-card {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 10px;
-    padding: 5px;
-    background: var(--c-bg-medium);
-    border-radius: 3px;
-    border-left: 3px solid var(--c-text-accent);
-}
-.effect-card .effect-main { display: flex; align-items: center; gap: 8px; }
-.effect-card .effect-icon { width: 24px; height: 24px; }
-.effect-card .effect-status { font-style: italic; font-size: 0.9em; opacity: 0.8; }
-
-.final-action-bar {
+    cursor: pointer;
+    text-align: left;
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
 }
 
-
-/* --- ✅ NOVO ESTILO PARA O BOTÃO ✅ --- */
-.gurps-roll-card .card-actions {
-    padding: 0;
-    border-top: 1px solid #d1c8c4;
-}
-.gurps-roll-card .resistance-roll-button {
-    width: 100%;
-    padding: 8px;
-    font-size: 0.9em;
-    font-weight: bold;
-    border: none;
-    background: #e9e3e0;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.gurps-roll-card .resistance-roll-button:hover {
-    background: #d1c8c4;
+.damage-application-dialog .action-buttons button:hover {
+    background: var(--gum-accent-gold);
+    color: var(--gum-bg-darkest);
+    border-color: var(--gum-accent-gold);
 }
 
-.gurps-roll-card .card-actions {
-    padding: 5px;
-    background: #e9e3e0;
-    border-top: 1px solid #d1c8c4;
-    text-align: right;
-}
-.gurps-roll-card .resistance-roll-button {
-    border: 1px solid #b5b5b5;
-    background: #f0f0f0;
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-}
-.gurps-roll-card .resistance-roll-button:hover {
-    background: #e0e0e0;
-    border-color: #999;
+.damage-application-dialog .action-buttons button i {
+    width: 16px;
+    text-align: center;
+    font-size: 1.1em;
 }
 
-/* ============================================= */
-/* Estilos para a Janela de Aplicação de Dano   */
-/* ============================================= */
-
-/* O contêiner dos ícones de ação (olho, dado, etc.) */
-.damage-application-dialog .effect-controls {
-    display: flex; /* Alinha os ícones lado a lado */
-    align-items: center; /* Centraliza verticalmente */
-    justify-content: flex-end; /* Alinha à direita */
-    gap: 8px; /* Adiciona um espaço de 8px entre cada ícone */
-}
-
-/* Regra geral para todos os botões e links dentro do contêiner */
-.damage-application-dialog .effect-controls a,
-.damage-application-dialog .effect-controls button {
-    /* Remove o estilo padrão de botão */
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    
-    /* Estilo do ícone */
-    font-size: 16px; /* Tamanho do ícone */
-    color: #b5b5b5; /* Cor cinza sutil */
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.2s ease; /* Transição suave de cor */
-}
-
-/* Efeito ao passar o mouse por cima */
-.damage-application-dialog .effect-controls a:hover,
-.damage-application-dialog .effect-controls button:hover {
-    color: #ffffff; /* Ícone fica branco */
-    text-shadow: 0 0 5px var(--c-accent-orange, #ff6400); /* Adiciona um brilho sutil */
+/* --- Placeholder para áreas vazias --- */
+.damage-application-dialog .placeholder {
+    padding: 20px;
+    text-align: center;
+    color: var(--gum-text-medio);
+    font-style: italic;
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
 }

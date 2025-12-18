@@ -3,10 +3,9 @@
 /* ================================================================== */
 
 .gum.roll-prompt .window-content {
-    background: var(--c-bg-dark);
-    color: var(--c-text-lightest);
+    background: var(--gum-bg-dark);
+    color: var(--gum-text-claro);
     padding: 0;
-    /* MUDANÇA: Altura automática para a janela poder crescer */
     height: auto !important; 
     display: block;
 }
@@ -14,35 +13,31 @@
 .gum-roll-prompt.two-column-layout {
     display: grid;
     grid-template-columns: 1.8fr 1fr; 
-    /* MUDANÇA: Altura automática, mas com um mínimo saudável */
     height: auto;
-    min-height: 600px; /* Começa com um bom tamanho vertical */
-    align-items: stretch; /* Faz as colunas terem a mesma altura */
+    min-height: 600px; 
+    align-items: stretch; 
 }
 
 /* --- COLUNA ESQUERDA: MENU DE OPÇÕES --- */
 .prompt-menu-column {
-    background: var(--c-bg-medium);
+    background: var(--gum-bg-sidebar);
     padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border-right: 1px solid var(--c-border-light);
-    
-    /* MUDANÇA: Como a janela agora cresce, precisamos limitar a esquerda 
-       para que ela tenha scroll se a lista for gigante (ex: 500 itens) */
-    max-height: 80vh; /* Limita a 80% da altura da tela do monitor */
+    border-right: 1px solid var(--gum-border-light);
+    max-height: 80vh; 
     overflow-y: auto;
     scrollbar-width: thin; 
     scrollbar-color: #555 transparent;
 }
 
 .column-header {
-    font-family: var(--font-secondary);
+    font-family: var(--gum-font-secondary);
     font-size: 0.9em;
-    color: var(--c-text-accent);
+    color: var(--gum-accent-gold);
     text-transform: uppercase;
-    border-bottom: 1px solid var(--c-border-light);
+    border-bottom: 1px solid var(--gum-border-light);
     padding-bottom: 5px;
     margin: 0;
 }
@@ -51,11 +46,10 @@
 .roll-blocks-container { 
     display: flex; 
     flex-direction: column; 
-    gap: 8px; /* Gap levemente aumentado para o Grid respirar */
+    gap: 8px; 
 }
 
 .option-group {
-    /* Restaurando seu fundo original */
     background: rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.05);
     border-radius: 4px;
@@ -64,7 +58,7 @@
 .option-group[open] { 
     background: rgba(0,0,0,0.1); 
     border-color: rgba(255,255,255,0.1);
-    padding-bottom: 5px; /* Espaço extra quando aberto */
+    padding-bottom: 5px; 
 }
 
 .group-summary {
@@ -74,7 +68,6 @@
     font-size: 0.85em;
     text-transform: uppercase;
     color: #ccc;
-    /* Restaurando a barra lateral colorida que você usava */
     border-left: 4px solid #777; 
     display: flex; 
     justify-content: space-between; 
@@ -89,7 +82,6 @@
 }
 .group-summary::-webkit-details-marker { display: none; }
 
-/* Animaçãozinha na seta */
 .option-group[open] .group-summary i { transform: rotate(180deg); }
 .group-summary i { transition: transform 0.2s; }
 
@@ -100,7 +92,6 @@
 /* Container da Grade */
 .block-buttons { 
     display: grid;
-    /* Colunas responsivas */
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 6px; 
 }
@@ -108,22 +99,22 @@
 /* O Wrapper que segura o Botão e o Ícone */
 .mod-item-wrapper {
     display: flex;
-    align-items: stretch; /* Mesma altura */
-    background: #2b2a29; 
+    align-items: stretch; 
+    background: var(--gum-bg-dark); 
     border: 1px solid #444; 
     border-radius: 3px;
-    overflow: hidden; /* Garante bordas arredondadas */
+    overflow: hidden; 
     transition: all 0.1s;
 }
 
 .mod-item-wrapper:hover {
-    border-color: var(--c-accent-gold);
+    border-color: var(--gum-accent-gold);
     transform: translateY(-1px);
 }
 
 /* O Botão de Seleção (Esquerda) */
 .mod-btn {
-    flex-grow: 1; /* Ocupa todo o espaço restante */
+    flex-grow: 1; 
     background: transparent;
     border: none;
     color: #bbb; 
@@ -143,17 +134,16 @@
 
 /* Estado Ativo (Selecionado) */
 .mod-btn.active {
-    background: var(--c-accent-gold);
+    background: var(--gum-accent-gold);
     color: #000;
     font-weight: bold;
 }
-/* Quando ativo, muda a cor do valor também */
 .mod-btn.active .btn-value {
     background: rgba(0,0,0,0.2);
     color: #000;
 }
 
-/* O Botão de Info (Direita) - AGORA INDEPENDENTE */
+/* O Botão de Info (Direita) */
 .mod-view {
     width: 24px;
     display: flex;
@@ -168,7 +158,7 @@
 
 .mod-view:hover {
     background: rgba(255,255,255,0.1);
-    color: var(--c-accent-gold);
+    color: var(--gum-accent-gold);
 }
 
 /* Valores dentro do botão */
@@ -192,37 +182,34 @@
 
 
 /* --- COLUNA DIREITA: COMANDA (DASHBOARD) --- */
-/* Mantendo suas cores e sombras originais */
 .prompt-command-column {
-    background: var(--c-bg-darkest);
+    background: var(--gum-bg-darkest);
     padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     box-shadow: -5px 0 15px rgba(0,0,0,0.3);
     z-index: 2;
-    
-    /* MUDANÇA: Removemos travas de altura aqui */
     height: auto;
 }
 .command-header { 
     display: flex; align-items: center; gap: 10px; 
     padding-bottom: 10px; 
-    border-bottom: 1px solid var(--c-border-light); 
+    border-bottom: 1px solid var(--gum-border-light); 
 }
 
 .roll-icon-small { 
     width: 40px; height: 40px; background: #222; 
-    border: 1px solid var(--c-accent-gold); 
+    border: 1px solid var(--gum-accent-gold); 
     border-radius: 4px; display: grid; place-items: center; flex-shrink: 0;
 }
 .roll-icon-small img { width: 100%; height: 100%; object-fit: cover; }
-.roll-icon-small i { font-size: 24px; color: var(--c-accent-gold); }
+.roll-icon-small i { font-size: 24px; color: var(--gum-accent-gold); }
 
 .roll-info-compact { overflow: hidden; }
 .roll-title-compact { 
-    margin: 0; font-family: var(--font-secondary); font-size: 1.1em; 
-    color: var(--c-accent-gold); line-height: 1.1; 
+    margin: 0; font-family: var(--gum-font-secondary); font-size: 1.1em; 
+    color: var(--gum-accent-gold); line-height: 1.1; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
 }
 .roll-subtitle { font-size: 0.8em; opacity: 0.7; font-style: italic; }
@@ -251,7 +238,7 @@
     width: 26px; height: 26px; border-radius: 50%; background: #333; border: 1px solid #555; 
     color: #fff; cursor: pointer; display: grid; place-items: center; font-size: 0.8em;
 }
-.step-btn:hover { background: var(--c-accent-gold); color: #000; }
+.step-btn:hover { background: var(--gum-accent-gold); color: #000; }
 
 .presets-row { display: flex; justify-content: center; gap: 4px; }
 .quick-btn { 
@@ -262,19 +249,12 @@
 
 /* Pilha de Modificadores Ativos */
 .active-mods-container {
-    /* MUDANÇA: Não usa mais overflow, deixa crescer */
     display: flex; 
     flex-direction: column; 
     gap: 5px;
-    
-    /* Garante um espaço visual mínimo generoso */
     min-height: 150px; 
-    
-    border-top: 1px solid var(--c-border-light);
+    border-top: 1px solid var(--gum-border-light);
     padding-top: 10px;
-    
-    /* "Empurra" o rodapé para baixo se crescer, 
-       mas também preenche o espaço se estiver vazio */
     flex-grow: 1; 
 }
 .section-label { font-size: 0.7em; text-transform: uppercase; color: #777; font-weight: bold; }
@@ -285,33 +265,32 @@
     padding: 2px 6px; border-radius: 3px; display: flex; align-items: center; gap: 5px;
     cursor: pointer;
 }
-.mod-tag:hover { background: #a53541; border-color: #a53541; color: #fff; text-decoration: line-through; }
-.mod-tag strong { color: var(--c-accent-gold); }
+.mod-tag:hover { background: var(--gum-accent-red); border-color: var(--gum-accent-red); color: #fff; text-decoration: line-through; }
+.mod-tag strong { color: var(--gum-accent-gold); }
 .mod-tag.locked { cursor: default; border-style: dashed; opacity: 0.7; }
 
 /* Rodapé */
 .command-footer {
-    /* margin-top: auto; <- Remova ou mantenha, o flex do active-mods já resolve */
-    border-top: 1px solid var(--c-accent-gold);
+    border-top: 1px solid var(--gum-accent-gold);
     padding-top: 15px;
-    flex-shrink: 0; /* Garante que o rodapé nunca encolha/suma */
+    flex-shrink: 0; 
 }
 
 .calc-display { text-align: right; margin-bottom: 10px; }
 .calc-row { display: flex; justify-content: space-between; align-items: baseline; }
 .calc-row.final { font-size: 1.1em; color: #fff; font-weight: bold; }
 .calc-label { color: #aaa; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; }
-.final-val { font-size: 1.8em; color: var(--c-accent-gold); line-height: 1; }
+.final-val { font-size: 1.8em; color: var(--gum-accent-gold); line-height: 1; }
 .calc-row.detail { font-size: 0.8em; color: #666; justify-content: flex-end; margin-top: 2px; }
-.cap-warning { color: #e57373; font-size: 0.8em; margin-top: 2px; }
+.cap-warning { color: var(--gum-accent-red); font-size: 0.8em; margin-top: 2px; }
 
 .roll-big-btn {
-    width: 100%; background: var(--c-accent-gold); color: #000; border: none;
-    font-family: var(--font-secondary); font-weight: bold; font-size: 1.3em; 
+    width: 100%; background: var(--gum-accent-gold); color: #000; border: none;
+    font-family: var(--gum-font-secondary); font-weight: bold; font-size: 1.3em; 
     text-transform: uppercase; padding: 12px 0; border-radius: 4px; cursor: pointer;
     transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
-.roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--c-accent-gold); }
+.roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--gum-accent-gold); }
 
 /* ================================================================== */
 /* AVISO DE TETO NA JANELA DE ROLAGEM                                 */
@@ -320,35 +299,33 @@
 /* A tarja de aviso abaixo do valor */
 .gum.roll-prompt .cap-warning {
     margin-top: 8px;
-    background: rgba(165, 53, 65, 0.2); /* Fundo avermelhado */
+    background: rgba(165, 53, 65, 0.2); 
     border: 1px solid rgba(165, 53, 65, 0.5);
-    color: #ffcccc; /* Texto vermelho claro */
+    color: #ffcccc; 
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.85em;
     font-weight: 700;
     text-align: center;
-    display: none; /* Controlado pelo JS */
+    display: none; 
     animation: fadeIn 0.2s;
 }
 
 .gum.roll-prompt .cap-warning i {
     margin-right: 5px;
-    color: #e57373;
+    color: var(--gum-accent-red);
 }
 
 /* O Valor Final quando cortado */
 .gum.roll-prompt .final-val.is-capped {
     position: relative;
-    /* Adiciona um sublinhado pontilhado para indicar que algo mudou */
-    text-decoration: underline dotted #e57373;
+    text-decoration: underline dotted var(--gum-accent-red);
     text-underline-offset: 4px;
 }
 
-/* Badge do Teto na lista de ativos (Opcional, para reforçar) */
 .stack-cap {
     background: rgba(0,0,0,0.4);
     border-radius: 3px;
     padding: 0 4px;
-    color: #ffb74d; /* Laranja para diferenciar */
+    color: #ffb74d; 
 }

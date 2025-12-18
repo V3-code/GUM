@@ -1,187 +1,203 @@
 /* ================================================= */
-/* DESIGN FINAL DO ASSISTENTE (MINIMALISTA E OTIMIZADO) */
+/* DESIGN DO ASSISTENTE (CONDITION BUILDER)          */
+/* Refatorado & Blindado                             */
 /* ================================================= */
 
-/* --- A CAMADA "ADESIVO" --- */
-/* Força a janela padrão a não ter padding */
-.dialog.condition-builder .window-content {
+/* --- 1. JANELA DO CONDITION BUILDER --- */
+
+.gum-dialog.condition-builder .window-content {
     padding: 0;
-    overflow: hidden; /* Garante que nada vaze */
+    overflow: hidden;
 }
-/* Nosso formulário se torna a camada principal, preenchendo 100% da janela */
-.dialog.condition-builder .condition-builder-form {
+
+.gum-dialog.condition-builder .condition-builder-form {
     display: flex;
     flex-direction: column;
     height: 100%;
     padding: 10px;
-    background: #2b2a29; /* Fundo escuro do tema */
-    color: #f0f0e8;
+    background: var(--gum-bg-dark);
+    color: var(--gum-text-claro);
 }
 
-/* --- PAINEL DE EDIÇÃO (CAIXA DE TEXTO) --- */
-.editor-panel {
-    flex-grow: 1; /* ✅ Faz a área de texto esticar para preencher o espaço */
+/* --- 2. PAINEL DE EDIÇÃO (TEXTAREA) --- */
+
+.gum-dialog.condition-builder .editor-panel {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    min-height: 150px; /* Altura mínima para a caixa de texto */
+    min-height: 150px;
+    margin-bottom: 10px;
 }
-.editor-panel textarea {
+
+.gum-dialog.condition-builder textarea {
     width: 100%;
     height: 100%;
-    resize: vertical; /* ✅ Caixa de texto ajustável verticalmente */
+    resize: none; /* O painel flex cuida disso */
     font-family: monospace;
-    font-size: 0.8em;
-    border: 1px solid #191813; /* Borda mais escura */
-    background: #191813;
-    color: #f0f0e8;
+    font-size: 0.9em;
+    border: 1px solid var(--gum-border-light);
+    background: var(--gum-bg-darkest);
+    color: var(--gum-text-claro);
     padding: 8px;
     border-radius: 3px;
-    min-height: 150px
+}
+.gum-dialog.condition-builder textarea:focus {
+    border-color: var(--gum-accent-gold);
+    outline: none;
 }
 
-/* --- PALETA DE FERRAMENTAS --- */
-.palette {
+/* --- 3. PALETA DE FERRAMENTAS --- */
+
+.gum-dialog.condition-builder .palette {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px; /* ✅ Espaçamento reduzido */
+    grid-template-columns: 1fr 1fr; /* Duas colunas */
+    gap: 8px;
     flex-shrink: 0;
-    margin-top: 5px; /* ✅ Espaçamento reduzido */
 }
-.palette-group {
-    background: #191813;
-    border: 1px solid #4a4846;
-    border-radius: 5px;
-    padding: 4px;
+
+.gum-dialog.condition-builder .palette-group {
+    background: var(--gum-bg-darkest);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    padding: 6px;
 }
-.palette-header {
-    font-family: 'Cinzel', serif;
-    color: #c5a05b;
+
+.gum-dialog.condition-builder .palette-header {
+    font-family: var(--gum-font-secondary);
+    color: var(--gum-accent-gold);
     font-weight: 700;
-    margin-bottom: 5px;
-    font-size: 0.9em; /* ✅ Fonte otimizada */
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border-bottom: 1px solid #4a4846;
-    padding-bottom: 5px;
+    font-size: 0.9em;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--gum-border-light);
+    padding-bottom: 4px;
+    text-transform: uppercase;
 }
-.palette-buttons {
+
+.gum-dialog.condition-builder .palette-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-}
-.palette-button {
-    background: #3a3836;
-    border: 1px solid #4a4846;
-    color: #f0f0e8;
-    border-radius: 3px;
-    padding: 3px 6px; /* Padding reduzido */
-    cursor: pointer;
-    font-family: 'Roboto', sans-serif;
-    font-size: 0.85em; /* ✅ Fonte otimizada */
-    flex: 1;
-    text-align: center;
-}
-.palette-button:hover {
-    border-color: #c5a05b;
-    color: #c5a05b;
+    gap: 4px;
 }
 
-/* --- BOTÃO SALVAR REFINADO --- */
-.dialog-footer-actions {
-    margin-top: 5px; /* ✅ Espaçamento superior reduzido */
-    padding-top: 0;
-    border-top: none; /* ✅ Linha superior removida */
+.gum-dialog.condition-builder .palette-button {
+    background: var(--gum-bg-medium);
+    border: 1px solid var(--gum-border-light);
+    color: var(--gum-text-claro);
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-family: var(--gum-font-primary);
+    font-size: 0.85em;
+    flex: 1 0 auto; /* Cresce, não encolhe, base auto */
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.gum-dialog.condition-builder .palette-button:hover {
+    border-color: var(--gum-accent-gold);
+    color: var(--gum-accent-gold);
+    background: rgba(255,255,255,0.05);
+}
+
+/* --- 4. RODAPÉ (BOTÕES) --- */
+
+.gum-dialog.condition-builder .dialog-footer-actions {
+    margin-top: 10px;
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     flex-shrink: 0;
 }
-.dialog-footer-actions button {
-    background: #3a3836; /* ✅ COR CINZA PADRÃO DO TEMA */
-    color: #f0f0e8;
+
+.gum-dialog.condition-builder button {
+    background: var(--gum-bg-medium);
+    color: var(--gum-text-claro);
     font-weight: bold;
-    border: 1px solid #4a4846;
-    padding: 6px 12px;
+    border: 1px solid var(--gum-border-light);
+    padding: 6px 15px;
     border-radius: 3px;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-.dialog-footer-actions button:hover {
-    border-color: #c5a05b; /* Destaque dourado no hover */
-    color: #c5a05b;
-    box-shadow: 0 0 5px #c5a05b;
+    font-family: var(--gum-font-primary);
 }
 
-/* --- JANELAS DE SELEÇÃO (PICKERS) --- */
-/* ✅ FONTES PEQUENAS E OTIMIZADAS PARA AS JANELAS DE OPÇÕES */
-.structure-picker-dialog .category summary {
-    font-size: 1.1em;
+.gum-dialog.condition-builder button:hover {
+    border-color: var(--gum-accent-gold);
+    color: var(--gum-accent-gold);
+    box-shadow: 0 0 5px rgba(197, 160, 91, 0.2);
 }
-.structure-picker-dialog .options a,
-.parameter-assistant .param-button {
-    font-family: 'Roboto', sans-serif;
-    font-size: 0.9em;
-}
-/* ======================================== */
-/* --- JANELAS DE SELEÇÃO (PICKERS) ---     */
-/* ======================================== */
 
-/* --- JANELA DE ESTRUTURAS --- */
-.structure-picker-dialog .dialog-content {
+/* ================================================= */
+/* JANELAS DE SELEÇÃO (PICKERS)                      */
+/* Classes: .structure-picker-dialog, .parameter-assistant */
+/* ================================================= */
+
+/* --- Picker de Estrutura --- */
+.gum-dialog.structure-picker-dialog .dialog-content {
+    background: var(--gum-bg-dark);
+    color: var(--gum-text-claro);
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    font-size: 0.9em; /* ✅ FONTE MENOR */
- }
-.structure-picker-dialog .category summary {
-    font-family: var(--f-titulos);
-    font-size: 1.2em;
+}
+
+.gum-dialog.structure-picker-dialog .category summary {
+    font-family: var(--gum-font-secondary);
+    font-size: 1.1em;
     font-weight: bold;
     cursor: pointer;
     padding: 5px;
-    border-bottom: 1px solid var(--c-border-light);
+    border-bottom: 1px solid var(--gum-border-light);
+    color: var(--gum-accent-gold);
 }
-.structure-picker-dialog .options {
+
+.gum-dialog.structure-picker-dialog .options {
     display: flex;
     flex-direction: column;
     padding: 5px 0 5px 15px;
+    gap: 2px;
 }
-.structure-picker-dialog .options a {
-    padding: 6px;
+
+.gum-dialog.structure-picker-dialog .options a {
+    padding: 4px 8px;
     border-radius: 3px;
     cursor: pointer;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--gum-font-primary);
     font-size: 0.9em;
-    /* ✅ COR DO TEXTO ALTERADA PARA PRETO */
-    color: #191813;
-    font-weight: 500; /* Um pouco mais de peso para legibilidade */
-}
-.structure-picker-dialog .options a:hover {
-    background: var(--c-bg-medium);
-    color: var(--c-text-lightest);
+    color: var(--gum-text-medio);
     text-decoration: none;
 }
 
-/* --- JANELA DE ATRIBUTOS/OPERADORES --- */
-.parameter-assistant {
-    padding: 5px;
+.gum-dialog.structure-picker-dialog .options a:hover {
+    background: var(--gum-bg-medium);
+    color: var(--gum-text-claro);
 }
-.parameter-assistant .buttons {
+
+/* --- Picker de Parâmetros --- */
+.gum-dialog.parameter-assistant .dialog-content {
+    background: var(--gum-bg-dark);
+    padding: 10px;
+}
+
+.gum-dialog.parameter-assistant .buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     justify-content: center;
 }
-.parameter-assistant .param-button {
-    background: var(--c-bg-medium);
-    border: 1px solid var(--c-border-light);
+
+.gum-dialog.parameter-assistant .param-button {
+    background: var(--gum-bg-medium);
+    border: 1px solid var(--gum-border-light);
     border-radius: 4px;
     padding: 4px 8px;
     cursor: pointer;
-    color: var(--c-text-lightest);
-    font-size: 0.9em; /* ✅ FONTE MENOR */
+    color: var(--gum-text-claro);
+    font-size: 0.9em;
+    transition: all 0.2s;
 }
-.parameter-assistant .param-button:hover {
-    border-color: var(--c-accent-gold);
-    color: var(--c-accent-gold);
+
+.gum-dialog.parameter-assistant .param-button:hover {
+    border-color: var(--gum-accent-gold);
+    color: var(--gum-accent-gold);
 }

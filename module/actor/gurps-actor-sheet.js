@@ -598,7 +598,7 @@ async getData(options) {
                 context.preparedCombatMeters = preparedCombatMeters;
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
-                context.collapsedData = this.actor.getFlag("gum", "collapsedState") || {};
+                context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
 
         return context;
     }
@@ -852,16 +852,53 @@ activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
     
+    
 // ================================================================== //
-        //  CONTROLE MANUAL DE ACORDEÃO (A SOLUÇÃO DEFINITIVA)
-        // ================================================================== //
-        
-        // 1. DESATIVA O COMPORTAMENTO NATIVO
-        // Isso impede que clicar em QUALQUER lugar do cabeçalho abra/feche a caixa.
-        // Agora a caixa está "travada" visualmente para o navegador.
-        html.find('.spell-summary, .group-summary').click(ev => {
-            ev.preventDefault();
-        });
+//  CONTROLE MANUAL DE ACORDEÃO (VERSÃO 3.0 - FINAL)
+// ================================================================== //
+
+html.find('.spell-summary, .group-summary').click(async (ev) => {
+    const target = $(ev.target);
+
+    // 1. CASO ESPECIAL: INPUTS (Texto/Número)
+    // Se clicar num input, não fazemos preventDefault, senão você não consegue digitar/focar.
+    // Apenas retornamos para não ativar o abrir/fechar.
+    if (target.closest('input, select, textarea').length) {
+        return; 
+    }
+
+    // 2. CASO BOTÕES (Editar, Deletar, Dados, Links)
+    // Aqui está o pulo do gato: chamamos preventDefault() para impedir o <details> 
+    // de se mexer nativamente, e damos return para não rodar nossa lógica de abrir/fechar.
+    // O clique ainda será registrado pelos listeners dos botões (editar/rolar).
+    if (target.closest('a, button, .item-control, .rollable').length) {
+        ev.preventDefault(); 
+        return; 
+    }
+
+    // 3. CASO GERAL (Clique no resto da barra para Abrir/Fechar)
+    ev.preventDefault(); // Impede o nativo
+    ev.stopPropagation();
+
+    // Localiza o <details> pai
+    const details = $(ev.currentTarget).closest('details');
+    const groupId = details.data('groupId');
+
+    // Lógica de Toggle Visual
+    const wasOpen = details[0].hasAttribute('open');
+
+    if (wasOpen) {
+        details.removeAttr('open'); // Fecha
+    } else {
+        details.attr('open', '');   // Abre
+    }
+
+    // Salvamento
+    if (groupId) {
+        const newState = !wasOpen; // Se estava aberto, agora é fechado (false), e vice-versa
+        await this.actor.setFlag("gum", `sheetCollapsedState.${groupId}`, newState);
+    }
+});
 
         // 2. CRIA O GATILHO MANUAL APENAS NA ÁREA SEGURA
         // Só vai abrir se clicar no Nome ou na Seta (.spell-main-info)
@@ -888,9 +925,9 @@ activateListeners(html) {
             if (id) {
                 // Se estava aberto (wasOpen=true), agora fechou -> salvamos TRUE (flag de fechado)
                 // Se estava fechado (wasOpen=false), agora abriu -> salvamos FALSE (flag de aberto)
-                let currentState = foundry.utils.duplicate(this.actor.getFlag("gum", "collapsedState") || {});
+                let currentState = foundry.utils.duplicate(this.actor.getFlag("gum", "sheetCollapsedState") || {});
                 currentState[id] = !wasOpen ? false : true; // Lógica invertida do helper: true = colapsado
-                await this.actor.setFlag("gum", "collapsedState", currentState);
+                await this.actor.setFlag("gum", "sheetCollapsedState", currentState);
             }
         });
 
@@ -1612,7 +1649,7 @@ html.on('click', '.edit-basic-damage', ev => {
                             height: html.find('[name="height"]').val(),
                             weight: html.find('[name="weight"]').val(),
                             skin: html.find('[name="skin"]').val(),
-                            hair: html.find('[name_config"hair"]').val(),
+                            hair: html.find('[name="hair"]').val(),
                             eyes: html.find('[name="eyes"]').val(),
                             alignment: html.find('[name="alignment"]').val(),
                             belief: html.find('[name="belief"]').val(),
@@ -3568,8 +3605,24 @@ html.on('click', '.item-edit', ev => {
         // Basicamente verifica se um <details> ficou sem nenhum filho visível e esconde ele.
     });
 
+html.find('details').on('toggle', this._onDetailsToggle.bind(this));
+  }
 
+  /**
+   * Salva o estado (aberto/fechado) das caixas colapsáveis nas Flags do ator
+   */
+  async _onDetailsToggle(event) {
+    const details = event.currentTarget;
+    
+    // Verifica se o elemento tem um ID de grupo para salvar
+    const groupId = details.dataset.groupId;
+    if (!groupId) return; // Se não tiver ID, não salva
 
-}
+    const isOpen = details.open; // True se aberto, False se fechado
+
+    // Salva dentro de 'flags.gum.sheetCollapsedState'
+    // O 'gum' é o ID do seu sistema/módulo. Se for outro nome, troque aqui.
+    await this.actor.setFlag('gum', `sheetCollapsedState.${groupId}`, isOpen);
+  }
 
 }

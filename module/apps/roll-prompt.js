@@ -379,36 +379,40 @@ _updateTotals(html) {
         }
     }
 
-    async _updateObject(event, formData) {
+async _updateObject(event, formData) {
         const manualMod = parseInt(formData.manualMod) || 0;
         let buttonsMod = 0;
         let activeCaps = [];
 
         this.selectedModifiers.forEach(m => {
             buttonsMod += m.value;
-            if (m.nh_cap) {
+            // Verifica o cap de forma segura
+            if (m.nh_cap !== undefined && m.nh_cap !== null && m.nh_cap !== "") {
                 const cap = parseInt(m.nh_cap);
                 if (!isNaN(cap)) activeCaps.push(cap);
             }
         });
 
         const totalMod = manualMod + buttonsMod;
-        let finalValue = parseInt(this.rollData.value) + totalMod;
         
-        // Aplica Teto na hora de enviar
+        // Calcula qual é o teto mais baixo (ou Infinity se não tiver nenhum)
+        let lowestCap = Infinity;
         if (activeCaps.length > 0) {
-            const lowestCap = Math.min(...activeCaps);
-            if (finalValue > lowestCap) finalValue = lowestCap;
+            lowestCap = Math.min(...activeCaps);
         }
 
-// Importante: Como o Prompt já calculou TUDO (incluindo globais e tetos),
-        // nós enviamos o valor FINAL já pronto e pedimos para o main.js NÃO somar globais de novo.
+        // Importante: Não precisamos calcular o 'finalValue' cortado aqui,
+        // pois vamos mandar o 'lowestCap' para o main.js fazer a matemática visual correta.
         
         performGURPSRoll(this.actor, {
             ...this.rollData,
-            value: finalValue,          // Valor Final (Já com Base + Manual + Globais + Teto)
-            originalValue: this.rollData.value, // Valor Base Original
-            modifier: totalMod          // Soma total dos modificadores (para exibição no chat)
-        }, { ignoreGlobals: true }); // <--- A CORREÇÃO MÁGICA
+            // Enviamos o valor matemático puro, o performGURPSRoll aplica o corte visualmente
+            value: parseInt(this.rollData.value) + totalMod, 
+            originalValue: this.rollData.value, 
+            modifier: totalMod          
+        }, { 
+            ignoreGlobals: true, // Já processamos os globais aqui no prompt
+            effectiveCap: lowestCap // ✅ O SEGREDO: Enviamos o teto calculado aqui!
+        }); 
     }
 }

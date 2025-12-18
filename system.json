@@ -46,18 +46,13 @@
   ],
   "styles": [
     "styles/styles.css",
-    "styles/modifier-browser.css",
-    "styles/effect-browser.css",
+    "styles/browsers.css",
     "styles/item-sheet.css",
     "styles/damage-application.css",
     "styles/roll-prompt.css",
     "styles/gm-screen.css",
-    "styles/gm-modifier-browser.css",
     "styles/conditions.css",
-    "styles/condition-builder.css",
-    "styles/condition-browser.css",
-    "styles/eqp-modifier-browser.css",
-    "styles/trigger-browser.css" 
+    "styles/condition-builder.css"
   ],
   "packs": [
     {

@@ -2,965 +2,455 @@ import { EffectBrowser } from "../apps/effect-browser.js";
 import { ConditionBrowser } from "../apps/condition-browser.js";
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
-import { TriggerBrowser } from "../apps/trigger-browser.js";
 
 // ================================================================== //
-//  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO CORRIGIDA       //
+//  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    //
 // ================================================================== //
 export class GurpsItemSheet extends ItemSheet {
-static get defaultOptions() { 
-    return foundry.utils.mergeObject(super.defaultOptions, { 
-      classes: ["gum", "sheet", "item", "theme-dark"],
-      width: 500,
-      height: 600, // Você pode querer aumentar isso para 550, já que as abas têm mais conteúdo
-      template: "systems/gum/templates/items/item-sheet.hbs",
-      tabs: [{ 
-        navSelector: ".sheet-tabs",
-        contentSelector: ".sheet-body-content",
-        initial: "details"
-      }]
-    }); 
-  }
 
-async getData(options) { 
-    const context = await super.getData(options); 
-    context.system = this.item.system;  
-    
-    // =======================================================
-    // 1. CONFIGURAÇÕES (Listas para Dropdowns)
-    // =======================================================
-    // Agrupamos em 'config' para o HTML ficar mais limpo e organizado
-    context.config = {
-        costModes: {
-            "standard": "Padrão (GURPS Basic)",
-            "linear": "Linear (Árvore/Técnica)"
-        },
-
-        // Dificuldades (Sem as Técnicas, como você decidiu)
-        difficulties: {
-            "E": "Fácil (E)",
-            "A": "Média (A)",
-            "H": "Difícil (H)",
-            "VH": "Muito Difícil (VH)"
-        },
-
-        // Tipos de Hierarquia
-        hierarchyTypes: {
-            "normal": "Padrão (Sem Árvore)",
-            "trunk": "Tronco (Trunk)",   // 7 pts
-            "branch": "Galho (Branch)",   // 3 pts
-            "twig": "Graveto (Twig)",    // 2 pts
-            "leaf": "Folha (Leaf)"       // 1 pt
-        }
-    };
-
-    context.characteristic_blocks = { "block1": "Traços Raciais", "block2": "Vantagens", "block3": "Desvantagens", "block4": "Especiais" };
-
-    // =======================================================
-    // 2. LÓGICA DE EQUIPAMENTOS (Cálculo de CF e Peso)
-    // =======================================================
-    if (['equipment', 'armor'].includes(this.item.type)) {
-        const eqpModsObj = this.item.system.eqp_modifiers || {};
-        
-        // Prepara lista ordenada
-        const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({
-            id, ...data
-        })).sort((a, b) => a.name.localeCompare(b.name));
-        context.eqpModifiersList = modifiersArray;
-
-        // Cálculos
-        let baseCost = Number(this.item.system.cost) || 0;
-        let baseWeight = Number(this.item.system.weight) || 0;
-        let totalCF = 0;
-        let weightMultiplier = 1;
-
-        for (const mod of modifiersArray) {
-            totalCF += Number(mod.cost_factor) || 0;
-            if (mod.weight_mod) {
-                const wModStr = mod.weight_mod.toString().trim().toLowerCase();
-                if (wModStr.startsWith('x')) {
-                    const mult = parseFloat(wModStr.substring(1));
-                    if (!isNaN(mult)) weightMultiplier *= mult;
-                }
-            }
-        }
-
-        const finalCostMultiplier = Math.max(0, 1 + totalCF);
-        context.calculatedFinalCost = baseCost * finalCostMultiplier;
-        context.calculatedFinalWeight = baseWeight * weightMultiplier;
-        
-        // Formatação visual
-        context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        
-        context.hasCostChange = finalCostMultiplier !== 1;
-        context.hasWeightChange = weightMultiplier !== 1;
-    }
-
-    // =======================================================
-    // 3. CUSTO DE VANTAGENS (Modificadores %)
-    // =======================================================
-    const validTypes = ['advantage', 'disadvantage', 'power'];
-    if (validTypes.includes(this.item.type)) {
-      const basePoints = Number(this.item.system.points) || 0;
-      const modifiers = this.item.system.modifiers || {};
-      let totalModPercent = 0;
-      for (const modifier of Object.values(modifiers)) {
-        totalModPercent += parseInt(modifier.cost, 10) || 0;
-      }
-      const cappedModPercent = Math.max(-80, totalModPercent);
-      const multiplier = 1 + (cappedModPercent / 100);
-      let finalCost = Math.round(basePoints * multiplier);
-      
-      // Regra de mínimo 1 ponto (ou -1)
-      if (basePoints > 0 && finalCost < 1) finalCost = 1;
-      if (basePoints < 0 && finalCost > -1) finalCost = -1;
-      
-      context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
-    }
-
-    // =======================================================
-    // 4. PREPARAÇÃO DE EFEITOS (Links)
-    // =======================================================
-    const _prepareLinkedItems = async (sourceObject) => {       
-        const entries = Object.entries(sourceObject || {});
-        const promises = entries.map(async ([id, linkData]) => {
-            const uuid = linkData.effectUuid || linkData.uuid; 
-            const originalItem = await fromUuid(uuid).catch(() => null); // Catch erro se não achar
-            return {
-                id: id,
-                uuid: uuid,
-                ...linkData,
-                name: originalItem ? originalItem.name : "Item não encontrado/excluído",
-                img: originalItem ? originalItem.img : "icons/svg/mystery-man.svg"
-            };
+    static get defaultOptions() {
+        return foundry.utils.mergeObject(super.defaultOptions, {
+            classes: ["gum", "sheet", "item", "theme-dark"],
+            width: 550,
+            height: 600,
+            template: "systems/gum/templates/items/item-sheet.hbs",
+            tabs: [{
+                navSelector: ".sheet-tabs",
+                contentSelector: ".sheet-body-content",
+                initial: "details"
+            }],
+            scrollY: [".sheet-body-content", ".sheet-body"]
         });
-        return Promise.all(promises);
-    };
-
-    context.system.preparedEffects = {
-        activation: {
-            success: await _prepareLinkedItems(this.item.system.activationEffects?.success),
-            failure: await _prepareLinkedItems(this.item.system.activationEffects?.failure)
-        },
-        onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects),
-        general: await _prepareLinkedItems(this.item.system.generalConditions),
-        passive: await _prepareLinkedItems(this.item.system.passiveEffects)
-    };
-
-    // =======================================================
-    // 5. LISTA DE MODIFICADORES (Ordenação)
-    // =======================================================
-    const modifiersObj = this.item.system.modifiers || {};
-    const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
-      const isLimitation = (data.cost || "").includes('-');
-      return { id, ...data, isLimitation: isLimitation };
-    });
-    
-    modifiersArray.sort((a, b) => {
-      // Ordena Vantagens primeiro por custo maior, depois nome
-      const costA = parseInt(a.cost) || 0; 
-      const costB = parseInt(b.cost) || 0;
-      if (costB !== costA) return costB - costA;
-      return a.name.localeCompare(b.name);
-    });
-    context.sortedModifiers = modifiersArray;
-
-    return context; 
-  }
-  async _updateObject(event, formData) {
-    for (const key in formData) {
-      if (typeof formData[key] === 'string' && formData[key].includes(',')) {
-        formData[key] = formData[key].replace(',', '.');
-      }
-    }
-    return this.object.update(formData);
-  }
-
-  _getSubmitData(updateData) {
-      const data = super._getSubmitData(updateData);
-      this._saveUIState(); 
-      return data;
-  }
-
-  
-  /**
-     * Calcula o custo de pontos de uma perícia GURPS.
-     * @param {string} difficulty - O código da dificuldade (F, M, D, MD, TecM, TecD).
-     * @param {number} relativeLevel - O nível relativo ao atributo (ex: -1, 0, +1).
-     * @returns {number} - O custo em pontos.
-     */
-    _calculateSkillPoints(difficulty, relativeLevel) {
-        const rl = parseInt(relativeLevel) || 0;
-
-        // Lógica para Técnicas (rl = níveis comprados)
-        if (difficulty === "TecM") {
-            return Math.max(0, rl * 1); // Custo de 1 por nível
-        }
-        if (difficulty === "TecD") {
-            return Math.max(0, rl * 2); // Custo de 2 por nível
-        }
-
-        // Lógica para Perícias Padrão (rl = nível relativo ao atributo)
-        let defaultLevel = 0;
-        switch (difficulty) {
-            case "F":  defaultLevel = 0;  break;
-            case "M":  defaultLevel = -1; break;
-            case "D":  defaultLevel = -2; break;
-            case "MD": defaultLevel = -3; break;
-            default: return 0; // Dificuldade não reconhecida
-        }
-
-        // 'pointLevel' é o número de "passos" acima do nível de 1 ponto
-        const pointLevel = rl - defaultLevel;
-
-        if (pointLevel < 0) return 0; // Não custa pontos (está abaixo do nível de 1 ponto)
-        
-        // Tabela de custo [Nível 0=1pt, Nível 1=2pt, Nível 2=4pt, Nível 3=8pt]
-        const costs = [1, 2, 4, 8];
-        if (pointLevel < costs.length) {
-            return costs[pointLevel];
-        }
-        
-        // A partir do Nível 3 (8 pts), são +4 pontos por nível
-        return 8 + (pointLevel - 3) * 4;
     }
 
-/**
-     * Manipulador de eventos para o cálculo automático de pontos. (Versão CORRIGIDA)
-     * Disparado quando os campos de automação mudam.
-     */
-    async _onAutoCalcPoints(event) {
-        // Pega o formulário como um objeto
-        const formData = new FormDataExtended(this.form).object;
-        
-        // 1. Pega o estado do checkbox (um checkbox desmarcado não aparece no formData,
-        //    então `|| false` garante que ele seja 'false' se não estiver presente)
-        const autoPoints = formData["system.auto_points"] || false;
-        
-        // 2. Descobre qual campo disparou o evento
-        const changedElementName = event.currentTarget.name;
+    async getData(options) {
+        // Recupera os dados básicos
+        const context = await super.getData(options);
+        const itemData = context.item; 
 
-        // 3. Prepara um objeto para salvar todas as mudanças de uma vez
-        const updateData = {};
-        const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points";
+        // Garante acesso fácil ao system e flags
+        context.system = itemData.system;
+        context.flags = itemData.flags;
 
-        // --- Caso A: O *próprio checkbox* foi alterado ---
-        if (changedElementName === "system.auto_points") {
-            // A primeira coisa a fazer é salvar o novo estado do checkbox
-            updateData["system.auto_points"] = autoPoints;
-
-            // Se o usuário acabou de LIGAR a automação,
-            // devemos recalcular os pontos imediatamente
-            if (autoPoints === true) {
-                const difficulty = formData["system.difficulty"];
-                const relativeLevel = formData["system.skill_level"];
-                updateData[pointsField] = this._calculateSkillPoints(difficulty, relativeLevel);
+        // =======================================================
+        // 1. LISTAS DE CONFIGURAÇÃO (DEFINIÇÃO EXPLÍCITA)
+        // =======================================================
+        // Definimos o objeto config DIRETAMENTE no contexto para garantir que exista.
+        context.config = {
+            costModes: {
+                "standard": "Padrão (GURPS Basic)",
+                "linear": "Linear (Árvore/Técnica)"
+            },
+            difficulties: {
+                "E": "Fácil (E)",
+                "A": "Média (A)",
+                "H": "Difícil (H)",
+                "VH": "Muito Difícil (VH)"
+            },
+            attributes: {
+                "st": "ST", "dx": "DX", "iq": "IQ", "ht": "HT", 
+                "per": "Per", "vont": "Vont"
+            },
+            hierarchyTypes: {
+                "normal": "Padrão (Sem Árvore)",
+                "trunk": "Tronco (Trunk)",
+                "branch": "Galho (Branch)",
+                "twig": "Graveto (Twig)",
+                "leaf": "Folha (Leaf)"
             }
-            // Se o usuário DESLIGOU, não fazemos nada (apenas salvar o estado 'false')
-        } 
-        // --- Caso B: O Nível ou a Dificuldade mudaram ---
-        else {
-            // Só calculamos se a automação estiver LIGADA
-            if (autoPoints) {
-                const difficulty = formData["system.difficulty"];
-                const relativeLevel = formData["system.skill_level"];
-                const newPoints = this._calculateSkillPoints(difficulty, relativeLevel);
-                
-                // Só atualiza se o valor realmente mudou
-                if (foundry.utils.getProperty(this.item, pointsField) !== newPoints) {
-                    updateData[pointsField] = newPoints;
+        };
+
+        // Disponibiliza as listas também na raiz para facilitar (opcional, mas seguro)
+        context.skillDifficulties = context.config.difficulties;
+        context.hierarchyTypes = context.config.hierarchyTypes;
+
+        context.characteristic_blocks = { 
+            "block1": "Traços Raciais", 
+            "block2": "Vantagens", 
+            "block3": "Desvantagens", 
+            "block4": "Especiais" 
+        };
+
+        // =======================================================
+        // 2. LÓGICA DE EQUIPAMENTOS
+        // =======================================================
+        if (['equipment', 'armor', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
+            const eqpModsObj = this.item.system.eqp_modifiers || {};
+            const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({
+                id, ...data
+            })).sort((a, b) => a.name.localeCompare(b.name));
+            context.eqpModifiersList = modifiersArray;
+
+            let baseCost = Number(this.item.system.cost) || 0;
+            let baseWeight = Number(this.item.system.weight) || 0;
+            let totalCF = 0;
+            let weightMultiplier = 1;
+
+            for (const mod of modifiersArray) {
+                totalCF += Number(mod.cost_factor) || 0;
+                if (mod.weight_mod) {
+                    const wModStr = mod.weight_mod.toString().trim().toLowerCase();
+                    if (wModStr.startsWith('x')) {
+                        const mult = parseFloat(wModStr.substring(1));
+                        if (!isNaN(mult)) weightMultiplier *= mult;
+                    }
                 }
             }
+
+            const finalCostMultiplier = Math.max(0, 1 + totalCF);
+            context.calculatedFinalCost = baseCost * finalCostMultiplier;
+            context.calculatedFinalWeight = baseWeight * weightMultiplier;
+            
+            context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            context.hasCostChange = finalCostMultiplier !== 1;
+            context.hasWeightChange = weightMultiplier !== 1;
         }
 
-        // 4. Se houver *qualquer coisa* para atualizar (o checkbox ou os pontos),
-        //    envia UMA ÚNICA atualização para o banco de dados.
-        if (Object.keys(updateData).length > 0) {
-            // Esta atualização salvará os dados E disparará o re-render,
-            // garantindo que o HTML reflita os dados corretos.
-            await this.item.update(updateData);
+        // =======================================================
+        // 3. CUSTO DE VANTAGENS
+        // =======================================================
+        if (['advantage', 'disadvantage', 'power'].includes(this.item.type)) {
+            const basePoints = Number(this.item.system.points) || 0;
+            const modifiers = this.item.system.modifiers || {};
+            let totalModPercent = 0;
+            for (const modifier of Object.values(modifiers)) {
+                totalModPercent += parseInt(modifier.cost, 10) || 0;
+            }
+            const cappedModPercent = Math.max(-80, totalModPercent);
+            const multiplier = 1 + (cappedModPercent / 100);
+            let finalCost = Math.round(basePoints * multiplier);
+            
+            if (basePoints > 0 && finalCost < 1) finalCost = 1;
+            if (basePoints < 0 && finalCost > -1) finalCost = -1;
+            
+            context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost };
         }
+
+        // =======================================================
+        // 4. PREPARAÇÃO DE EFEITOS
+        // =======================================================
+        const _prepareLinkedItems = async (sourceObject) => {       
+            const entries = Object.entries(sourceObject || {});
+            const promises = entries.map(async ([id, linkData]) => {
+                const uuid = linkData.effectUuid || linkData.uuid; 
+                const originalItem = await fromUuid(uuid).catch(() => null);
+                return {
+                    id: id,
+                    uuid: uuid,
+                    ...linkData,
+                    name: originalItem ? originalItem.name : "Item não encontrado/excluído",
+                    img: originalItem ? originalItem.img : "icons/svg/mystery-man.svg"
+                };
+            });
+            return Promise.all(promises);
+        };
+
+        context.system.preparedEffects = {
+            activation: {
+                success: await _prepareLinkedItems(this.item.system.activationEffects?.success),
+                failure: await _prepareLinkedItems(this.item.system.activationEffects?.failure)
+            },
+            onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects),
+            general: await _prepareLinkedItems(this.item.system.generalConditions),
+            passive: await _prepareLinkedItems(this.item.system.passiveEffects)
+        };
+
+        // =======================================================
+        // 5. LISTA DE MODIFICADORES
+        // =======================================================
+        const modifiersObj = this.item.system.modifiers || {};
+        const modifiersArray = Object.entries(modifiersObj).map(([id, data]) => {
+            const isLimitation = (data.cost || "").includes('-');
+            return { id, ...data, isLimitation: isLimitation };
+        });
+        
+        modifiersArray.sort((a, b) => {
+            const costA = parseInt(a.cost) || 0; 
+            const costB = parseInt(b.cost) || 0;
+            if (costB !== costA) return costB - costA;
+            return a.name.localeCompare(b.name);
+        });
+        context.sortedModifiers = modifiersArray;
+
+        return context; 
     }
 
-/**
-     * @override
-     * Sobrescreve a renderização para preservar estado dos <details> e POSIÇÃO DO SCROLL.
-     */
-    async _render(force, options) {
-        // 1. Captura IDs abertos
-        const openDetailsIds = [];
-        if (this.element && this.element.length > 0) {
-            this.element.find('details').each((index, element) => {
-                if (element.open && element.id) openDetailsIds.push(element.id);
-            });
-        }
+    /* -------------------------------------------- */
+    /* Listeners e Callbacks                       */
+    /* -------------------------------------------- */
 
-        // 2. ✅ CAPTURA A POSIÇÃO DO SCROLL
-        let scrollPositions = [];
-        if (this.element && this.element.length > 0) {
-             this.element.find('.sheet-body-content, form').each((i, el) => {
-                 scrollPositions.push({ selector: el.className, top: el.scrollTop });
-             });
-        }
-
-        // 3. Renderiza
-        await super._render(force, options);
-
-        // 4. Restaura IDs abertos
-        if (openDetailsIds.length > 0) {
-            openDetailsIds.forEach(id => {
-                const el = this.element.find(`#${id}`);
-                if (el.length) el.prop('open', true);
-            });
-        }
-
-        // 5. ✅ RESTAURA A POSIÇÃO DO SCROLL
-        if (scrollPositions.length > 0) {
-             scrollPositions.forEach(pos => {
-                 // Tenta encontrar pelo seletor mais específico possível
-                 // Se for o form principal:
-                 if (pos.selector.includes('gum-item-sheet')) {
-                     this.form.scrollTop = pos.top;
-                 } else {
-                     // Se for um container interno
-                     const el = this.element.find(`.${pos.selector.split(' ')[0]}`); 
-                     if (el.length) el[0].scrollTop = pos.top;
-                 }
-             });
-        }
-    }
-    
-  /**
-   * @override
-   * Configuração do editor de texto (TinyMCE)
-   */
-  activateEditor(name, options = {}, ...args) {
-    options.plugins = "link lists";
-    options.toolbar = "styleselect | bold italic | bullist numlist | link | gurpsExpand | removeformat";
-    options.menubar = false;
-
-    // ✅ MUDANÇA: Altura padrão aumentada de 200 para 300
-    options.height = (name === "system.chat_description") ? 300 : 400;
-
-    options.content_style = `
-        body {
-            color: var(--c-bg-dark, #2b2a29);
-        }
-        p { 
-            margin: 0.2em 0 !important;
-            line-height: 1em !important;
-        }
-        h4, h5 {
-            margin: 0.5em 0 0.2em 0 !important;
-        }
-    `;
-
-    options.setup = function (editor) {
-      editor.ui.registry.addButton("gurpsExpand", {
-        tooltip: "Expandir área de edição",
-        icon: "fullscreen",
-        onAction: function () {
-          const container = editor.getContainer();
-          container.classList.toggle("expanded");
-        }
-      });
-    };
-
-    return super.activateEditor(name, options, ...args);
-  }
-
-  _saveUIState() {
-      const openDetails = [];
-      this.form.querySelectorAll('details[open]').forEach((detailsEl, index) => {
-          const summaryText = detailsEl.querySelector('summary')?.innerText || `details-${index}`;
-          openDetails.push(summaryText);
-      });
-      this._openDetailsState = openDetails;
-
-      const openAttack = this.form.querySelector('.attack-edit-mode[style*="display: block;"], .attack-edit-mode:not([style*="display: none;"])');
-      if (openAttack) {
-          this._openAttackModeId = openAttack.closest('.attack-item').dataset.attackId;
-      } else {
-          this._openAttackModeId = null;
-      }
-  }
-  
-/**
-   * @override
-   * Ativa todos os listeners de interatividade da ficha de item.
-   */
-activateListeners(html) {
+    activateListeners(html) {
         super.activateListeners(html);
+        if (!this.isEditable) return;
 
-        // 1. AUTOMAÇÃO: HIERARQUIA -> CUSTO (MANTIDO)
-        html.find('.hierarchy-select').change(ev => {
-            const costMode = this.item.system.cost_mode;
-            if (costMode !== 'linear') return;
-
-            const hierarchy = ev.target.value; 
-            const costMap = {
-                'trunk': 7,
-                'branch': 3,
-                'twig': 2,
-                'leaf': 1
-            };
-
-            if (costMap[hierarchy]) {
-                html.find('input[name="system.cost_per_level"]').val(costMap[hierarchy]);
-                this.item.update({ 'system.cost_per_level': costMap[hierarchy] });
-            }
-        });
-
-        // 2. BOTÕES +/- NO NÍVEL RELATIVO (CORRIGIDO)
+        // Auto-Cálculo
+        html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"]').on('change', this._onAutoCalcPoints.bind(this));
+        
+        // Ajuste de Valor (+/-)
         html.find('.adjust-value').click(ev => {
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             const action = btn.data('action');
             const targetField = btn.data('target'); 
-            
-            // Pega o valor atual
-            let currentLevel = getProperty(this.item, targetField) || 0;
-            
-            // Calcula novo nível
+            let currentLevel = foundry.utils.getProperty(this.item, targetField) || 0;
             let newLevel = action === 'increase' ? currentLevel + 1 : currentLevel - 1;
-
-            // Objeto de atualização
+            
             let updateData = { [targetField]: newLevel };
-
-            // 3. LÓGICA DE CÁLCULO DE PONTOS
             const sys = this.item.system;
             
-            // Verifica se o cálculo automático está ligado (checkbox)
-            // Se estiver desligado (false), mudamos o nível mas NÃO os pontos.
-            // Nota: Se 'auto_points' for undefined, assumimos true (padrão).
-            const autoCalc = sys.auto_points !== false; 
-
-            if (autoCalc) {
+            if (sys.auto_points !== false && targetField === "system.skill_level") {
                 if (sys.cost_mode === 'linear') {
-                    // --- MODO LINEAR (ÁRVORE) ---
                     const cost = sys.cost_per_level || 1;
-                    const newPoints = Math.max(0, newLevel * cost);
-                    updateData['system.points'] = newPoints;
-                
+                    updateData['system.points'] = Math.max(0, newLevel * cost);
                 } else {
-                    // --- MODO PADRÃO (GURPS BASIC) ---
-                    // Tabela:
-                    // Fácil (E):   0 (1pt), +1 (2pts), +2 (4pts)...
-                    // Médio (A):  -1 (1pt),  0 (2pts), +1 (4pts)...
-                    // Difícil (H): -2 (1pt), -1 (2pts),  0 (4pts)...
-                    // M. Dif (VH): -3 (1pt), -2 (2pts), -1 (4pts)...
-
                     const diff = sys.difficulty || "A"; 
-                    const diffOffsets = { "E": 0, "A": -1, "H": -2, "VH": -3 };
-                    // Se a dificuldade não estiver no mapa, assume Médio (-1)
-                    const offset = diffOffsets[diff] !== undefined ? diffOffsets[diff] : -1;
-                    
-                    // 'Delta' representa quantos degraus estamos na escada de custo
-                    const delta = newLevel - offset;
-
-                    let calculatedPoints = 0;
-
-                    if (delta < 0) {
-                        calculatedPoints = 0; // Nível muito baixo (ex: atributo-4), custo 0
-                    } else if (delta === 0) {
-                        calculatedPoints = 1;
-                    } else if (delta === 1) {
-                        calculatedPoints = 2;
-                    } else if (delta === 2) {
-                        calculatedPoints = 4;
-                    } else {
-                        // A partir daqui, a progressão é linear (+4 pontos por nível)
-                        // Delta 3 (8pts) = 4 + 4
-                        // Delta 4 (12pts) = 4 + 8
-                        // Fórmula: 4 * (delta - 1)
-                        calculatedPoints = 4 * (delta - 1);
-                    }
-                    
-                    updateData['system.points'] = calculatedPoints;
+                    const newPoints = this._calculateSkillPoints(diff, newLevel);
+                    updateData['system.points'] = newPoints;
                 }
             }
-
             this.item.update(updateData);
         });
 
-    // ==================================================================
-    // LÓGICA DE CASCATA AVANÇADA (MODIFICADORES DO MESTRE)
-    // ==================================================================
-    if (this.item.type === 'gm_modifier') {
+        // Editor de Descrição
+        html.find(".toggle-editor").on("click", ev => {
+            const section = $(ev.currentTarget).closest(".description-section");
+            section.find(".description-view, .toggle-editor").hide();
+            section.find(".description-editor").show();
+        });
+        html.find(".cancel-description").on("click", ev => {
+            const section = $(ev.currentTarget).closest(".description-section");
+            section.find(".description-editor").hide();
+            section.find(".description-view, .toggle-editor").show();
+        });
+        html.find(".save-description").on("click", async ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            const section = btn.closest(".description-section");
+            const field = btn.data("field");
+            const editor = this.editors?.[field];
+            if (!editor) return;
+            
+            const content = editor.instance.getContent();
+            await this.item.update({[field]: content});
+            
+            const enriched = await TextEditor.enrichHTML(content, {async: true});
+            section.find(".description-view").html(enriched);
+            section.find(".description-editor").hide();
+            section.find(".description-view, .toggle-editor").show();
+        });
+
+        // Adicionar/Remover Ataques
+        html.find('.add-attack').click(this._onAddAttack.bind(this));
+        html.find('.delete-attack').click(this._onDeleteAttack.bind(this));
         
-        // Mapeamento Pai -> Filhos
-        const treeMap = {
-            // GERAL
-            'global': 'ALL', // Código especial para marcar TUDO
+        // Vincular Perícia
+        html.find('.link-skill-button').click(this._onLinkSkill.bind(this));
 
-            // COMBATE
-            'combat_all': [
-                'combat_attack_melee', 'combat_attack_ranged', 'combat_attack_spell', 'combat_attack_power',
-                'combat_defense_dodge', 'combat_defense_parry', 'combat_defense_block',
-                'combat_damage_melee', 'combat_damage_ranged', 'combat_damage_spell', 'combat_damage_power'
-            ],
-            
-            // ATRIBUTOS (PAI GERAL)
-            'attr_all': ['attr_st_all', 'attr_dx_all', 'attr_iq_all', 'attr_ht_all', 'attr_will_all', 'attr_per_all'],
+        // Modificadores de Equipamento
+        html.find('.add-eqp-modifier').click(ev => {
+            ev.preventDefault();
+            new EqpModifierBrowser(this.item).render(true);
+        });
+        html.find('.delete-eqp-modifier').click(ev => {
+            const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
+            this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
+        });
+        html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this));
 
-            // ATRIBUTOS (PAIS ESPECÍFICOS)
-            'attr_st_all': ['check_st', 'skill_st', 'spell_st', 'power_st'],
-            'attr_dx_all': ['check_dx', 'skill_dx', 'spell_dx', 'power_dx'],
-            'attr_iq_all': ['check_iq', 'skill_iq', 'spell_iq', 'power_iq'],
-            'attr_ht_all': ['check_ht', 'skill_ht', 'spell_ht', 'power_ht'],
-            'attr_will_all': ['check_will', 'skill_will', 'spell_will', 'power_will', 'check_fright'],
-            'attr_per_all': ['check_per', 'skill_per', 'spell_per', 'power_per', 'sense_vision', 'sense_hearing', 'sense_tastesmell', 'sense_touch']
-        };
-
-        // Listener Genérico para qualquer Checkbox
-        html.find('input[type="checkbox"]').change(async (ev) => {
-            const checkboxName = ev.currentTarget.name; // ex: "system.target_type.combat_all"
-            const isChecked = ev.currentTarget.checked;
-            
-            // Extrai a chave simples (ex: "combat_all")
-            const key = checkboxName.replace('system.target_type.', '');
-            
-            // Se não for um Pai, não faz nada além do padrão
-            if (!treeMap[key]) return;
-
-            const updates = {};
-            const allTargets = this.item.system.target_type;
-
-            // Função recursiva para marcar filhos
-            const markChildren = (parentKey) => {
-                const children = treeMap[parentKey];
-                if (!children) return;
-
-                if (children === 'ALL') {
-                    // Marca TUDO (exceto a si mesmo para evitar loop)
-                    for (const targetKey in allTargets) {
-                        if (targetKey !== parentKey) {
-                            updates[`system.target_type.${targetKey}`] = isChecked;
-                        }
+        // Modificadores (Vantagens)
+        html.find('.add-modifier').click(ev => {
+            ev.preventDefault();
+            new ModifierBrowser(this.item).render(true);
+        });
+        html.find('.delete-modifier').click(ev => {
+            const modId = $(ev.currentTarget).data('modifier-id');
+            this.item.update({ [`system.modifiers.-=${modId}`]: null });
+        });
+        html.find('.view-modifier').click(ev => {
+            // Lógica de visualização rápida
+        });
+        
+        // Efeitos
+        html.find('.add-effect').click(async (ev) => {
+            const targetList = $(ev.currentTarget).data('target-list');
+            new EffectBrowser(this.item, {
+                onSelect: (selectedEffects) => {
+                    const updates = {};
+                    for (const effect of selectedEffects) {
+                        const newId = foundry.utils.randomID();
+                        updates[`system.${targetList}.${newId}`] = { id: newId, effectUuid: effect.uuid, recipient: 'target', name: effect.name, img: effect.img };
                     }
-                    return;
+                    this.item.update(updates);
                 }
-
-                children.forEach(childKey => {
-                    updates[`system.target_type.${childKey}`] = isChecked;
-                    // Se o filho também for um pai (ex: attr_all -> attr_st_all), continua descendo
-                    if (treeMap[childKey]) {
-                        markChildren(childKey);
+            }).render(true);
+        });
+        html.find('.delete-effect').click(ev => {
+            const target = $(ev.currentTarget);
+            const listName = target.closest('.effect-entry').data('list-name');
+            const effectId = target.closest('.effect-entry').data('effect-id');
+            this.item.update({ [`system.${listName}.-=${effectId}`]: null });
+        });
+        html.find('.add-general-condition').click(ev => {
+             new ConditionBrowser(this.item, {
+                onSelect: (selectedConditions) => {
+                    const updates = {};
+                    for (const condition of selectedConditions) {
+                        const newId = foundry.utils.randomID();
+                        updates[`system.generalConditions.${newId}`] = { id: newId, uuid: condition.uuid, name: condition.name, img: condition.img };
                     }
-                });
-            };
-
-            // Inicia a cascata
-            markChildren(key);
-
-            // Aplica as mudanças se houver
-            if (Object.keys(updates).length > 0) {
-                await this.item.update(updates);
-            }
+                    this.item.update(updates);
+                }
+            }).render(true);
+        });
+        
+        // Modo Edição de Ataque
+        html.find('.edit-attack-mode').click(ev => {
+             ev.preventDefault();
+             $(ev.currentTarget).closest('.attack-item').find('.attack-display-mode').hide();
+             $(ev.currentTarget).closest('.attack-item').find('.attack-edit-mode').show();
+        });
+        html.find('.save-attack-mode').click(ev => {
+             ev.preventDefault();
+             $(ev.currentTarget).closest('.attack-item').find('.attack-edit-mode').hide();
+             $(ev.currentTarget).closest('.attack-item').find('.attack-display-mode').show();
         });
     }
 
-      html.find('.view-eqp-modifier').on('click', async (ev) => {
-        ev.preventDefault();
+    /* -------------------------------------------- */
+    /* Métodos Auxiliares                          */
+    /* -------------------------------------------- */
+
+    _calculateSkillPoints(difficulty, relativeLevel) {
+        const rl = parseInt(relativeLevel) || 0;
+        if (difficulty === "TecM") return Math.max(0, rl * 1);
+        if (difficulty === "TecD") return Math.max(0, rl * 2);
+        
+        let defaultLevel = 0;
+        switch (difficulty) {
+            case "F": defaultLevel = 0; break;
+            case "M": defaultLevel = -1; break;
+            case "D": defaultLevel = -2; break;
+            case "MD": defaultLevel = -3; break;
+            default: return 0;
+        }
+        const pointLevel = rl - defaultLevel;
+        if (pointLevel < 0) return 0;
+        const costs = [1, 2, 4, 8];
+        if (pointLevel < costs.length) return costs[pointLevel];
+        return 8 + (pointLevel - 3) * 4;
+    }
+
+    async _onAutoCalcPoints(event) {
+        const formData = new FormDataExtended(this.form).object;
+        const autoPoints = formData["system.auto_points"] || false;
+        
+        if (event.currentTarget.name === "system.auto_points") {
+             await this.item.update({"system.auto_points": autoPoints});
+             if (!autoPoints) return;
+        }
+
+        if (autoPoints) {
+            const difficulty = formData["system.difficulty"];
+            const relativeLevel = formData["system.skill_level"];
+            const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points";
+            const newPoints = this._calculateSkillPoints(difficulty, relativeLevel);
+            
+            if (foundry.utils.getProperty(this.item, pointsField) !== newPoints) {
+                await this.item.update({[pointsField]: newPoints});
+            }
+        }
+    }
+
+    _onAddAttack(ev) {
+        const attackType = $(ev.currentTarget).data('type');
+        const newAttackId = foundry.utils.randomID(16);
+        const newAttackData = (attackType === 'melee') 
+            ? { "mode": "Novo Ataque", "damage_formula": "GdB", "damage_type": "cort", "reach": "C", "parry": "0", "skill_name": "" }
+            : { "mode": "Novo Tiro", "damage_formula": "GdP", "damage_type": "perf", "range": "100/200", "rof": "1", "shots": "1", "skill_name": "" };
+        
+        this.item.update({ [`system.${attackType}_attacks.${newAttackId}`]: newAttackData });
+    }
+
+    _onDeleteAttack(ev) {
+        const target = $(ev.currentTarget);
+        const attackId = target.closest('.attack-item').data('attack-id');
+        const listName = target.data('list'); 
+        Dialog.confirm({
+            title: "Deletar Modo de Ataque",
+            content: "<p>Tem certeza?</p>",
+            yes: () => this.item.update({ [`system.${listName}.-=${attackId}`]: null })
+        });
+    }
+
+    _onLinkSkill(ev) {
+        if (!this.item.isOwned) return ui.notifications.warn("Item precisa estar em um ator.");
+        const actor = this.item.parent;
+        const skills = actor.items.filter(i => i.type === 'skill').sort((a,b) => a.name.localeCompare(b.name));
+        
+        const input = $(ev.currentTarget).closest('.form-group').find('input[type="text"]');
+        let path = input.attr('name') || input.data('name');
+        if (!path) return;
+
+        let options = skills.map(s => `<option value="${s.name}">${s.name} (NH ${s.system.final_nh})</option>`).join('');
+        new Dialog({
+            title: "Vincular Perícia",
+            content: `<div class="form-group"><label>Escolha:</label><select name="skill_selector">${options}</select></div>`,
+            buttons: {
+                ok: {
+                    label: "Vincular",
+                    callback: (html) => this.item.update({ [path]: html.find('select').val() })
+                }
+            }
+        }).render(true);
+    }
+    
+    async _onViewEqpModifier(ev) {
         const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
         const modData = this.item.system.eqp_modifiers[modId];
-        
         if (!modData) return;
-
-        // Enriquece o texto (links clicáveis)
-        const features = await TextEditor.enrichHTML(modData.features || "<i>Sem efeitos adicionais.</i>", { async: true });
-        
-        // Monta o conteúdo do diálogo
-        const content = `
-            <div class="sheet-body-content">
-                <div class="form-section">
-                    <h4 class="section-title">Detalhes: ${modData.name}</h4>
-                    <div class="summary-list">
-                        <div class="summary-item">
-                            <label>Fator de Custo (CF):</label>
-                            <span class="summary-dots"></span>
-                            <span class="value">${modData.cost_factor > 0 ? '+' : ''}${modData.cost_factor}</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Mod. Peso:</label>
-                            <span class="summary-dots"></span>
-                            <span class="value">${modData.weight_mod}</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Nível Tec.:</label>
-                            <span class="summary-dots"></span>
-                            <span class="value">${modData.tech_level_mod || '-'}</span>
-                        </div>
-                         <div class="summary-item">
-                            <label>Ref.:</label>
-                            <span class="summary-dots"></span>
-                            <span class="value">${modData.ref || '-'}</span>
-                        </div>
-                    </div>
-                    <hr class="summary-divider">
-                    <label style="font-weight:bold; color:#a0a0a0; font-size:11px; text-transform:uppercase;">Efeitos / Notas:</label>
-                    <div class="summary-description rendered-text" style="margin-top:5px;">
-                        ${features}
-                    </div>
-                </div>
-            </div>
-        `;
-
+        const desc = await TextEditor.enrichHTML(modData.features || "", { async: true });
         new Dialog({
-            title: `Modificador: ${modData.name}`,
-            content: content,
-            buttons: { close: { label: "Fechar", icon: '<i class="fas fa-times"></i>' } },
-            default: "close",
-        }, {
-            width: 400,
-            classes: ["dialog", "modifier-preview-dialog"]
+            title: modData.name,
+            content: `<div class="gum-dialog-content"><b>CF:</b> ${modData.cost_factor} | <b>Peso:</b> ${modData.weight_mod}<hr>${desc}</div>`,
+            buttons: { close: { label: "Fechar" } }
         }).render(true);
-    });
+    }
 
-    html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"]').on('change', this._onAutoCalcPoints.bind(this));
+    activateEditor(name, options = {}, ...args) {
+        options.plugins = "link lists";
+        options.toolbar = "styleselect | bold italic | bullist numlist | link | gurpsExpand | removeformat";
+        options.height = (name === "system.chat_description") ? 300 : 400;
+        options.setup = (editor) => {
+            editor.ui.registry.addButton("gurpsExpand", {
+                tooltip: "Expandir", icon: "fullscreen",
+                onAction: () => editor.getContainer().classList.toggle("expanded")
+            });
+        };
+        return super.activateEditor(name, options, ...args);
+    }
 
-      // Listener para ADICIONAR um Modo de Ataque (Melee ou Ranged)
-      html.find('.add-attack').on('click', (ev) => {
-          const attackType = $(ev.currentTarget).data('type');
-          const newAttackId = foundry.utils.randomID(16);
-          let newAttackData;
-          let path;
+    _saveUIState() {
+        const openDetails = [];
+        this.form.querySelectorAll('details[open]').forEach((el, i) => openDetails.push(el.id || `details-${i}`));
+        this._openDetailsState = openDetails;
+    }
 
-          if (attackType === 'melee') {
-              path = `system.melee_attacks.${newAttackId}`;
-              newAttackData = {
-                  "mode": "Novo Ataque C.C.", "unbalanced": false, "fencing": false, "skill_name": "", "skill_level_mod": 0,
-                  "damage_formula": "GdB", "damage_type": "cort", "armor_divisor": 1, "reach": "C", "parry": "0", "block": "0",
-                  "min_strength": 0, "onDamageEffects": {},
-                  "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
-                  "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
-              };
-          } else {
-              path = `system.ranged_attacks.${newAttackId}`;
-              newAttackData = {
-                  "mode": "Novo Ataque L.D.", "unbalanced": false, "fencing": false, "skill_name": "", "skill_level_mod": 0,
-                  "damage_formula": "GdP", "damage_type": "perf", "armor_divisor": 1, "accuracy": "0", "range": "100/1500",
-                  "rof": "1", "shots": "1(3i)", "rcl": "1", "mag": "1", "min_strength": 0, "onDamageEffects": {},
-                  "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
-                  "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
-              };
-          }
-          this.item.update({ [path]: newAttackData });
-      });
-
-      // Listener para DELETAR um Modo de Ataque (Melee ou Ranged)
-      html.find('.delete-attack').on('click', (ev) => {
-          const target = $(ev.currentTarget);
-          const attackId = target.closest('.attack-item').data('attack-id');
-          const listName = target.data('list'); // 'melee_attacks' ou 'ranged_attacks'
-          const attack = this.item.system[listName][attackId];
-
-          if (!attackId || !attack) return;
-
-          Dialog.confirm({
-              title: `Deletar Modo de Ataque "${attack.mode}"`,
-              content: "<p>Você tem certeza?</p>",
-              yes: () => {
-                  this.item.update({ [`system.${listName}.-=${attackId}`]: null });
-              },
-              no: () => {},
-              defaultYes: false
-          });
-      });
-
-// Listener para VINCULAR PERÍCIA (VERSÃO UNIVERSAL)
-      html.find('.link-skill-button').on('click', (ev) => {
-          if (!this.item.isOwned) {
-              return ui.notifications.warn("Este item precisa estar em um ator para vincular uma perícia.");
-          }
-          const actor = this.item.parent;
-          const skills = actor.items.filter(i => i.type === 'skill');
-          if (skills.length === 0) {
-              return ui.notifications.warn("Este ator não possui nenhuma perícia para vincular.");
-          }
-          
-          // ✅ INÍCIO DA CORREÇÃO: Lógica de seletor universal
-          
-          // 1. Encontra o input de texto mais próximo dentro do mesmo grupo
-          const input = $(ev.currentTarget).closest('.form-group').find('input[type="text"]');
-          if (!input.length) {
-              console.error("GUM | .link-skill-button: Não foi possível encontrar o input de texto adjacente.");
-              return; 
-          }
-
-          // 2. Tenta pegar o 'data-name' (usado em Modos de Ataque)
-          let path = input.data('name'); 
-          
-          // 3. Se não houver 'data-name', pega o 'name' (usado em Magias, Poderes, etc.)
-          if (!path) {
-              path = input.attr('name');
-          }
-
-          if (!path) {
-              console.error("GUM | .link-skill-button: O input adjacente não tem 'name' nem 'data-name'.");
-              return;
-          }
-          // ✅ FIM DA CORREÇÃO
-
-          let content = `<div class="dialog-skill-list"><select name="skill_selector">`;
-          content += `<option value="">-- Nenhuma --</option>`;
-          
-          skills.sort((a,b) => a.name.localeCompare(b.name)).forEach(skill => {
-              content += `<option value="${skill.name}">${skill.name} (NH ${skill.system.final_nh})</option>`;
-          });
-          content += `</select></div>`;
-
-          new Dialog({
-              title: "Vincular Perícia do Ator",
-              content: content,
-              buttons: {
-                  select: {
-                      icon: '<i class="fas fa-link"></i>',
-                      label: "Vincular",
-                      callback: (html) => {
-                          const selectedSkillName = html.find('select[name="skill_selector"]').val();
-                          // 'path' agora conterá o atributo correto (data-name ou name)
-                          this.item.update({ [path]: selectedSkillName });
-                      }
-                  }
-              },
-              default: "select"
-          }).render(true);
-      });
-
-      // Listener para ADICIONAR um Efeito *dentro* de um Modo de Ataque
-      html.find('.add-attack-effect').on('click', (ev) => {
-          this._saveUIState(); 
-          const target = $(ev.currentTarget);
-          const list = target.data('list'); // "onDamageEffects"
-          const attackType = target.closest('.attack-item').data('attack-type');
-          const attackId = target.closest('.attack-item').data('attack-id');
-          const basePath = `system.${attackType}_attacks.${attackId}.${list}`;
-
-          new EffectBrowser(this.item, {
-              onSelect: (selectedEffects) => {
-                  const updates = {};
-                  for (const effect of selectedEffects) {
-                      const newId = foundry.utils.randomID();
-                      const newLinkData = { id: newId, effectUuid: effect.uuid, name: effect.name, img: effect.img };
-                      updates[`${basePath}.${newId}`] = newLinkData;
-                  }
-                  this.item.update(updates);
-              }
-          }).render(true);
-      });
-
-      // Listener para DELETAR um Efeito *dentro* de um Modo de Ataque
-      html.find('.delete-attack-effect').on('click', (ev) => {
-          this._saveUIState();
-          const target = $(ev.currentTarget);
-          const list = target.data('list');
-          const effectId = target.closest('.effect-summary').data('effect-id');
-          const attackType = target.closest('.attack-item').data('attack-type');
-          const attackId = target.closest('.attack-item').data('attack-id');
-          const path = `system.${attackType}_attacks.${attackId}.${list}.-=${effectId}`;
-
-          Dialog.confirm({
-              title: "Remover Efeito do Ataque",
-              content: "<p>Você tem certeza?</p>",
-              yes: () => { this.item.update({ [path]: null }); },
-              no: () => {
-                  this._openAttackModeId = null;
-                  this._openDetailsState = null;
-              }
-          });
-      });
-
-      // Listeners da "effectsTab" e Modificadores (ANTIGOS)
-      html.find('.view-original-effect, .view-original-condition').on('click', async (ev) => {
-          ev.preventDefault();
-          const target = $(ev.currentTarget);
-          const effectEntry = target.closest('.effect-entry, .effect-summary');
-          const listName = effectEntry.data('list-name');
-          const effectId = effectEntry.data('effect-id');
-          let uuid = target.data('uuid');
-          if (!uuid) {
-              const effectData = getProperty(this.item, `system.${listName}.${effectId}`);
-              uuid = effectData.effectUuid || effectData.uuid;
-          }
-          if (uuid) {
-              const originalItem = await fromUuid(uuid);
-              if (originalItem) { originalItem.sheet.render(true); } 
-              else { ui.notifications.warn("O item original não foi encontrado."); }
-          } else { ui.notifications.error("Não foi possível encontrar o UUID para este item."); }
-      });
-
-      if (!this.isEditable) return;
-
-      // --- Modificadores ---
-      html.find('.add-modifier').on('click', (ev) => {
-          ev.preventDefault();
-          new ModifierBrowser(this.item).render(true);
-      });
-      html.find('.delete-modifier').on('click', (ev) => {
-          ev.preventDefault();
-          const modifierId = $(ev.currentTarget).data('modifier-id');
-          if (modifierId) {
-              Dialog.confirm({
-                  title: "Remover Modificador",
-                  content: "<p>Você tem certeza?</p>",
-                  yes: () => { this.item.update({ [`system.modifiers.-=${modifierId}`]: null }); },
-                  no: () => {}
-              });
-          }
-      });
-      html.find('.view-modifier').on('click', async (ev) => {
-          ev.preventDefault();
-          const modifierId = $(ev.currentTarget).data('modifier-id');
-          const modifierData = this.item.system.modifiers[modifierId];
-          if (!modifierData) return;
-          const description = await TextEditor.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
-          const content = `
-              <div class="sheet-body-content">
-                  <div class="form-section">
-                      <h4 class="section-title">Detalhes do Modificador</h4>
-                      <div class="summary-list">
-                          <div class="summary-item"><label>Custo:</label><span class="summary-dots"></span><span class="value">${modifierData.cost}</span></div>
-                          <div class="summary-item"><label>Referência:</label><span class="summary-dots"></span><span class="value">${modifierData.ref || 'N/A'}</span></div>
-                      </div>
-                      <hr class="summary-divider">
-                      <div class="summary-description rendered-text">${description}</div>
-                  </div>
-              </div>`;
-          new Dialog({
-              title: `Detalhes: ${modifierData.name}`, content: content,
-              buttons: { close: { label: "Fechar", icon: '<i class="fas fa-times"></i>' } },
-              default: "close",
-          }, { width: 420, height: "auto", resizable: true, classes: ["dialog", "modifier-preview-dialog"] }).render(true);
-      });
-
-      // --- Aba de Efeitos (Padrão) ---
-      html.find('.add-effect').on('click', async (ev) => {
-          const targetList = $(ev.currentTarget).data('target-list');
-          if (!targetList) return;
-          new EffectBrowser(this.item, {
-              onSelect: (selectedEffects) => {
-                  const updates = {};
-                  for (const effect of selectedEffects) {
-                      const newId = foundry.utils.randomID();
-                      const newLinkData = { id: newId, effectUuid: effect.uuid, recipient: 'target', name: effect.name, img: effect.img };
-                      updates[`system.${targetList}.${newId}`] = newLinkData;
-                  }
-                  this.item.update(updates);
-              }
-          }).render(true);
-      });
-      html.find('.add-general-condition').on('click', (ev) => {
-          new ConditionBrowser(this.item, {
-              onSelect: (selectedConditions) => {
-                  const updates = {};
-                  for (const condition of selectedConditions) {
-                      const newId = foundry.utils.randomID();
-                      const newLinkData = { id: newId, uuid: condition.uuid, name: condition.name, img: condition.img };
-                      updates[`system.generalConditions.${newId}`] = newLinkData;
-                  }
-                  this.item.update(updates);
-              }
-          }).render(true);
-      });
-      html.find('.delete-effect').on('click', (ev) => {
-          const target = $(ev.currentTarget);
-          const listName = target.closest('.effect-entry').data('list-name');
-          const effectId = target.closest('.effect-entry').data('effect-id');
-          Dialog.confirm({
-              title: "Remover Efeito", content: "<p>Você tem certeza?</p>",
-              yes: () => { this.item.update({ [`system.${listName}.-=${effectId}`]: null }); },
-              no: () => {}
-          });
-      });
-
-      // --- Modo Edição/Visualização de Ataque ---
-      html.find('.edit-attack-mode').on('click', (ev) => {
-          ev.preventDefault();
-          const attackItem = $(ev.currentTarget).closest('.attack-item');
-          attackItem.find('.attack-display-mode').hide();
-          attackItem.find('.attack-edit-mode').show();
-      });
-      html.find('.save-attack-mode').on('click', (ev) => {
-          ev.preventDefault();
-          const attackItem = $(ev.currentTarget).closest('.attack-item');
-          const updateData = {};
-          let hasChanges = false; 
-          attackItem.find('input[data-name], select[data-name], textarea[data-name]').each((i, el) => {
-              const name = el.dataset.name;
-              const value = (el.type === 'checkbox') ? el.checked : el.value;
-              if (foundry.utils.getProperty(this.item, name) != value) {
-                  hasChanges = true;
-              }
-              updateData[name] = value;
-          });
-          this._openAttackModeId = null; 
-          if (hasChanges) {
-              this.item.update(updateData);
-          } else {
-              attackItem.find('.attack-edit-mode').hide();
-              attackItem.find('.attack-display-mode').show();
-          }
-      });
-      
-      // --- Listeners do Editor de Texto ---
-      html.find(".toggle-editor").on("click", ev => {
-        const section = $(ev.currentTarget).closest(".description-section");
-        section.find(".description-view, .toggle-editor").hide();
-        section.find(".description-editor").show();
-      });
-
-      html.find(".cancel-description").on("click", ev => {
-        const section = $(ev.currentTarget).closest(".description-section");
-        section.find(".description-editor").hide();
-        section.find(".description-view, .toggle-editor").show();
-      });
-
-      html.find(".save-description").on("click", async ev => {
-        ev.preventDefault();
-        const btn = $(ev.currentTarget);
-        const section = btn.closest(".description-section");
-        const field = btn.data("field"); 
-        if (!field) return ui.notifications.error("Campo de descrição não identificado.");
-        const editor = this.editors?.[field];
-        if (!editor) {
-          ui.notifications.warn("Editor não encontrado.");
-          return;
+    async _render(force, options) {
+        await super._render(force, options);
+        if (this._openDetailsState) {
+            this._openDetailsState.forEach(id => {
+                const el = this.form.querySelector(`#${id}`) || this.form.querySelectorAll('details')[parseInt(id.split('-')[1])];
+                if (el) el.open = true;
+            });
         }
-        let content = "";
-        try {
-          content = editor.instance.getContent();
-        } catch (err) {
-          console.warn("Erro ao ler conteúdo:", err);
+    }
+    
+    async _updateObject(event, formData) {
+        for (const [k, v] of Object.entries(formData)) {
+            if (typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
         }
-        const update = {};
-        update[field] = content;
-        await this.object.update(update);
-        const enriched = await TextEditor.enrichHTML(content, { async: true });
-        section.find(".description-view").html(enriched);
-        section.find(".description-editor").hide();
-        section.find(".description-view, .toggle-editor").show();
-      });
-
-      html.find('.add-eqp-modifier').on('click', (ev) => {
-        ev.preventDefault();
-        new EqpModifierBrowser(this.item).render(true);
-    });
-
-    html.find('.delete-eqp-modifier').on('click', (ev) => {
-        ev.preventDefault();
-        const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
-        const modName = $(ev.currentTarget).closest('.modifier-tag').find('.modifier-name').text();
-        
-        Dialog.confirm({
-            title: "Remover Modificador",
-            content: `<p>Remover <strong>${modName}</strong> deste item?</p>`,
-            yes: () => {
-                this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
-            },
-            defaultYes: false
-        });
-    });
-  } 
+        this._saveUIState();
+        return super._updateObject(event, formData);
+    }
 }

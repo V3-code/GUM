@@ -1,8 +1,8 @@
 /* =================================================================== */
-/* GUM - ARQUIVO DE ESTILO FINAL E CONSOLIDADO                       */
+/* GURPS GUM - ITEM SHEET STYLES (Refatorado & Blindado)              */
 /* =================================================================== */
 
-/* --- 0. IMPORTAÇÃO DE FONTES --- */
+/* --- 0. IMPORTAÇÃO DE FONTES (Já importadas no styles.css, mas mantidas por segurança) --- */
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto:wght@400;700&display=swap');
 
 /* =================================================================== */
@@ -12,1856 +12,468 @@
 /* Força o container do Foundry a se adaptar ao nosso layout flexível */
 .gum.sheet.item.app.window-app .window-content {
     padding: 0;
+    overflow: hidden; /* O scroll é interno, não na janela */
+    background: var(--gum-bg-dark); /* Fundo padrão escuro */
+    color: var(--gum-text-claro);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Transforma a ficha inteira em um container flexível vertical */
-.gum.sheet.item {
+/* Transforma o formulário em um container flexível vertical */
+.gum.sheet.item form {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden; /* Impede scroll duplo */
 }
 
-/* O cabeçalho tem altura fixa */
+/* O cabeçalho tem altura fixa (auto) */
 .gum.sheet.item .sheet-header {
     flex: 0 0 auto;
+    z-index: 10; /* Fica acima do conteúdo ao rolar (se necessário) */
 }
 
-/* A área de conteúdo principal (abas + corpo) deve esticar para preencher o espaço */
+/* A área de conteúdo principal (abas + corpo) deve esticar */
 .gum.sheet.item .sheet-content {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Propriedade chave que faz a área esticar verticalmente */
-    overflow: hidden; /* Previne barras de rolagem duplas */
-    background: #28282b; /* Cor de fundo unificada */
+    flex: 1; /* Ocupa todo o espaço restante */
+    overflow: hidden; 
+    min-height: 0; /* Fix crítico para o Firefox/Flexbox */
 }
 
-/* O corpo das abas é a única área que pode rolar, se necessário */
+/* Navegação das Abas (Fixo no topo da section) */
+.gum.sheet.item .sheet-tabs {
+    flex: 0 0 auto; /* Não encolhe nem estica */
+}
+
+/* O corpo das abas é a única área que pode rolar */
 .gum.sheet.item .sheet-body-content {
     flex: 1;
-    overflow-y: auto; /* Adiciona rolagem vertical apenas se o conteúdo for maior */
-    padding: 5px; /* Padding geral para o conteúdo de todas as abas */
-    color: #e1e1e1; /* Cor de texto padrão para o conteúdo */
+    overflow-y: auto; /* Scroll vertical */
+    padding: 10px;
+    
+    /* Configuração da barra de rolagem para combinar com o tema */
+    scrollbar-width: thin;
+    scrollbar-color: var(--gum-accent-gold) rgba(0,0,0,0.1);
 }
 
 /* =================================================================== */
-/* 2. CABEÇALHO E TÍTULO                                             */
+/* 2. CABEÇALHO E TÍTULO                                               */
 /* =================================================================== */
 
 .gum.sheet.item .sheet-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--c-bg-darkest, #191813);
-  color: var(--c-text-lightest, #f0f0f0);
-  padding: 8px 10px;
+    flex: 0 0 auto; /* Altura fixa */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--gum-bg-darkest);
+    color: var(--gum-text-claro);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gum-border-light);
 }
+
 .gum.sheet.item .sheet-header .profile-img {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 3px solid var(--c-accent-gold, #c5a05b);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
-  object-fit: cover;
-  background: var(--c-bg-dark, #2b2a29);
-  transition: all 0.2s ease-in-out;
+    width: 64px; height: 64px;
+    flex-shrink: 0;
+    border-radius: 4px; /* Quadrado arredondado p/ itens */
+    border: 2px solid var(--gum-accent-gold);
+    box-shadow: var(--gum-shadow-sutil);
+    object-fit: cover;
+    background: var(--gum-bg-dark);
 }
-.gum.sheet.item .sheet-header .profile-img:hover {
-  transform: scale(1.05);
-  border-color: var(--c-text-lightest, #f0f0f8);
-}
+
 .gum.sheet.item .sheet-header .header-info {
-  flex-grow: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
-.gum.sheet.item .sheet-header .header-main-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.gum.sheet.item .sheet-header textarea[name="name"] {
-    font-family: 'Roboto Condensed', sans-serif;
-    text-align: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: #fff;
-    font-size: 1.6em;
+
+/* Input do Nome do Item */
+.gum.sheet.item .sheet-header input[name="name"] {
+    font-family: var(--gum-font-secondary);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--gum-accent-gold);
+    font-size: 1.4em;
     font-weight: 700;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 3px;
-    margin: 0 10px;
-    resize: none;
-    overflow: hidden;
-    line-height: 1.2;
-    padding: 4px 6px;
-    display: block;
     width: 100%;
+    padding: 2px 6px;
 }
-.gum.sheet.item .item-tag.small-tag {
-  font-size: 0.7em;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: #313131;
-  background: #dacdca;
-  padding: 3px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
+.gum.sheet.item .sheet-header input[name="name"]:focus {
+    border-color: var(--gum-accent-gold);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Tags de Tipo (Ex: Vantagem, Perícia) */
+.gum.sheet.item .item-type-tag {
+    font-size: 0.75em;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--gum-bg-darkest);
+    background: var(--gum-text-medio);
+    padding: 2px 6px;
+    border-radius: 3px;
+    align-self: flex-start;
 }
 
 /* =================================================================== */
-/* 3. NAVEGAÇÃO DAS ABAS (TABS)                                      */
+/* 3. NAVEGAÇÃO DAS ABAS (TABS)                                        */
 /* =================================================================== */
 
 .gum.sheet.item .sheet-tabs {
-    background: var(--c-bg-darkest, #191813);
+    flex: 0 0 auto;
+    background: var(--gum-bg-sidebar);
     display: flex;
-    justify-content: space-around;
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--c-border-light, #4a4846);
-    border-bottom: 1px solid var(--c-border-light, #4a4846);
-    flex: 0 0 auto; /* Garante que as abas não estiquem */
-    margin-bottom: 8px;
+    justify-content: flex-start;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--gum-border-gold);
 }
+
 .gum.sheet.item .sheet-tabs .item {
-    flex: 1;
-    text-align: center;
-    border-radius: 0;
-    font-family: 'Roboto', sans-serif;
-    font-size: 13px;
+    padding: 8px 12px;
+    color: var(--gum-text-medio);
+    font-family: var(--gum-font-primary);
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--c-text-medium, #a9a6a0);
-    padding: 6px 12px;
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-bottom: none;
+    cursor: pointer;
+    transition: all 0.2s;
 }
+
 .gum.sheet.item .sheet-tabs .item:hover {
-    background: var(--c-bg-medium, #3a3836);
-    color: var(--c-text-lightest, #f0f0e8);
+    color: var(--gum-text-claro);
+    background: rgba(255,255,255,0.05);
 }
+
 .gum.sheet.item .sheet-tabs .item.active {
-    background: transparent;
-    color: var(--c-text-lightest, #f0f0e8);
-    font-weight: bold;
-    border-bottom-color: var(--c-accent-gold, #c5a05b);
-    text-shadow: none;
+    color: var(--gum-accent-gold);
+    background: var(--gum-bg-dark); /* Conecta com o fundo do corpo */
+    border-color: var(--gum-border-gold);
+    border-bottom: 1px solid var(--gum-bg-dark); /* "Apaga" a borda inferior */
+    margin-bottom: -1px; /* Sobrepõe a borda do container */
 }
-
 
 /* =================================================================== */
-/* 4. ESTILOS DE CONTEÚDO DAS ABAS                                   */
+/* 4. COMPONENTES DE FORMULÁRIO (ESPECÍFICOS DE ITEM)                  */
 /* =================================================================== */
 
-/* --- 4.1. ABA DE SUMÁRIO --- */
-.gum.sheet.item .tab[data-tab="summary"] {
-    padding: 0; /* O padding geral vem do .sheet-body-content */
-}
-.gum.sheet.item .summary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.gum.sheet.item .summary-item {
-  display: flex;
-  align-items: baseline;
-}
-.gum.sheet.item .summary-item label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  color: #e1e1e1;
-  flex-shrink: 0;
-  margin-right: 5px;
-}
-.gum.sheet.item .summary-dots {
-  flex-grow: 1;
-  border-bottom: 2px dotted rgba(255, 255, 255, 0.2);
-  margin-bottom: 4px;
-}
-.gum.sheet.item .summary-item .value {
-  flex-shrink: 0;
-  font-weight: bold;
-  font-size: 14px;
-  color: #fff;
-  margin-left: 5px;
-}
-.gum.sheet.item .summary-item .value small {
-    font-size: 0.8em;
-    font-weight: normal;
-    opacity: 0.7;
-}
-.gum.sheet.item .summary-divider {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.15);
-    margin: 20px 0;
-}
-.gum.sheet.item .summary-description.rendered-text {
-    /* Estilo da caixa */
-    background: rgba(0,0,0,0.15);
-    border: 1px solid rgba(0,0,0,0.3);
-    border-radius: 3px;
-
-    /* Estilo do Texto (Corrigido) */
-    color: #dcdcdc;
-    font-size: 13px;
-    line-height: 1;
-    white-space: pre-line; /* Garante a quebra de linha ("Enter") */
-
-    /* Espaçamento Interno (Corrigido) */
-    padding: 2px 2px; /* Padding sutil, sem a indentação exagerada */
-
-    user-select: text;
-    text-align: start;
-
-}
-
-/* --- 4.2. ABA DE DETALHES E SEÇÕES ("FIELDSET") --- */
+/* Seções (Cards) */
 .gum.sheet.item .form-section {
-  position: relative;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 5px;
-  padding: 15px 15px 15px 15px; /* Aumenta o padding de cima para dar espaço ao título */
-  margin-bottom: 10px;
-  
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    position: relative;
 }
-.gum.sheet.item .form-section:last-child {
-   
-    margin-bottom: 5px;
-}
-.gum.sheet.item .form-section .section-title {
-  position: absolute;
-  top: 0;
-  left: 12px;
-  transform: translateY(-50%);
-  background: #28282b;
-  color: var(--c-accent-gold, #c5a05b);
-  padding: 0 5px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: none;
-  margin: 0;
-  font-weight: 700;
-}
-.gum.sheet.item .form-grid-2, 
-.gum.sheet.item .form-grid-3,
-.gum.sheet.item .form-grid-4 {
-    display: grid;
-    row-gap: 12px;    
-    column-gap: 4px;
-}
-.gum.sheet.item .form-grid-2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-.gum.sheet.item .form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); }
-.gum.sheet.item .form-grid-4 { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
 
+/* Títulos de Seção */
+.gum.sheet.item .section-title {
+    font-family: var(--gum-font-secondary);
+    color: var(--gum-accent-gold);
+    font-size: 1.1em;
+    border-bottom: 1px solid var(--gum-border-light);
+    margin-bottom: 8px;
+    padding-bottom: 2px;
+}
+
+/* Grids de Formulário */
+.gum.sheet.item .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gum.sheet.item .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.gum.sheet.item .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+/* Grupo de Input (Label + Campo) */
 .gum.sheet.item .form-group {
-  display: space-between;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .gum.sheet.item .form-group label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 11px;
-  text-transform: uppercase;
-  line-height: 1;
-  margin-bottom: -5px;
-  color: #a0a0a0;
-}
-.gum.sheet.item .form-group input[type="text"],
-.gum.sheet.item .form-group input[type="number"],
-.gum.sheet.item .form-group select {
-  background-color: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #e1e1e1;
-  padding: 3px;
-  border-radius: 3px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  text-align: center;
-}
-.gum.sheet.item .form-group input:focus, 
-.gum.sheet.item .form-group select:focus {
-    border-color: var(--c-accent-gold, #c5a05b);
-    box-shadow: 0 0 5px rgba(197, 160, 91, 0.5);
-    outline: none;
-}
-.gum.sheet.item .calculated-cost .value {
-    padding: 6px;
-    border-radius: 3px;
-    font-size: 1em;
-    font-weight: bold;
-    display: flex;
-    align-items: baseline;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(0,0,0,0.3);
-}
-
-/* --- ESTILO PARA INPUTS ESTREITOS --- */
-.gum.sheet.item .form-group.input-narrow input {
-    /* Define uma largura máxima para o campo */
-    max-width: 100px; 
-    /* Centraliza o próprio campo de input dentro da sua coluna na grid */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.gum.sheet.item .form-group.input-medium input,
-.gum.sheet.item .form-group.input-medium select {
-    /* Define uma largura máxima intermediária */
-    max-width: 140px; 
-    /* Centraliza o próprio campo de input dentro da sua coluna na grid */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* --- ESTILO PARA LAYOUT HORIZONTAL (INLINE) --- */
-.gum.sheet.item .form-group.layout-inline {
-    /* A mudança principal: alinha os itens em uma linha */
-    flex-direction: row;
-    
-    /* Alinha o texto do rótulo e o texto do input pela base, para um visual limpo */
-    align-items: baseline;
-    
-    /* Garante que o rótulo e o input fiquem em extremidades opostas */
-    justify-content: flex-start;
-}
-
-/* Pequeno ajuste para o rótulo no modo inline */
-.gum.sheet.item .form-group.layout-inline label {
-    /* Impede que o rótulo quebre a linha se for muito grande */
-    white-space: nowrap;
-    /* Garante que ele não encolha */
-    flex-shrink: 0;
-}
-
-/* No modo inline, o input deve ocupar o espaço restante */
-.gum.sheet.item .form-group.layout-inline input,
-.gum.sheet.item .form-group.layout-inline select {
-    flex-grow: 1; /* Faz o input esticar */
-}
-
-/* --- 4.3. SEÇÃO DE PROTEÇÃO DA ARMADURA --- */
-.gum.sheet.item .protection-grid {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 20px;
-  align-items: flex-start;
-}
-.gum.sheet.item .hit-locations-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 15px;
-}
-.gum.sheet.item .custom-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #d1d1d1;
-  transition: color 0.2s ease;
-}
-.gum.sheet.item .custom-checkbox:hover {
-  color: #fff;
-}
-.gum.sheet.item .custom-checkbox input[type="checkbox"] {
-  display: none;
-}
-.gum.sheet.item .custom-checkbox span {
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 5px;
-}
-.gum.sheet.item .custom-checkbox span::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  vertical-align: middle;
-  transition: all 0.2s ease;
-}
-.gum.sheet.item .custom-checkbox input[type="checkbox"]:checked + span::before {
-  background-color: var(--c-accent-gold, #c5a05b);
-  border-color: var(--c-accent-gold, #c5a05b);
-  box-shadow: 0 0 5px var(--c-accent-gold, #c5a05b);
-}
-.gum.sheet.item .custom-checkbox input[type="checkbox"]:checked + span::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  top: 8px;
-  width: 3px;
-  height: 7px;
-  border: solid #111;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-/* =================================================================== */
-/* 12. CORREÇÕES FINAIS DE POLIMENTO                                 */
-/* =================================================================== */
-
-/* --- Posição do Ícone de Edição na Descrição do Sumário --- */
-/* Garante que o container relativo funcione dentro do novo layout */
-.gum.sheet.item .summary-description + .edit-text-btn {
-    /* Ajusta a cor para ser visível no fundo escuro */
-    color: rgba(255, 255, 255, 0.4);
-        
-}
-.gum.sheet.item .summary-description + .edit-text-btn:hover {
-    color: #fff;
-}
-
-
-/* --- Redimensionamento Vertical das Abas --- */
-/* Faz com que a aba visível ocupe todo o espaço vertical disponível */
-.gum.sheet.item .sheet-body-content .tab {
-    height: 100%;
-}
-
-/* =================================================================== */
-/* 13. CORREÇÃO FINAL DE LAYOUT (SUMÁRIO RESPONSIVO)                 */
-/* =================================================================== */
-
-/* Faz a seção principal da aba sumário ocupar toda a altura */
-.gum.sheet.item .tab[data-tab="summary"] .form-section {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Garante que a lista de stats não estique */
-.gum.sheet.item .tab[data-tab="summary"] .summary-list {
-    flex-shrink: 0;
-}
-.gum.sheet.item .tab[data-tab="summary"] .summary-divider {
-    flex-shrink: 0;
-}
-
-/* Faz o container da descrição esticar para preencher o resto do espaço */
-.gum.sheet.item .tab[data-tab="summary"] .editable-text-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Faz a caixa de texto em si esticar junto com seu container */
-.gum.sheet.item .tab[data-tab="summary"] .summary-description.rendered-text {
-    flex-grow: 1;
-}
-
-/* --- 5. ABA DE MODIFICADORES (ESTILO ORIGINAL PRESERVADO) --- */
-.gum.sheet.item .tab[data-tab="modifiers"] {
-    padding: 15px;
-}
-.modifiers-toolbar {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-}
-.modifiers-toolbar .button {
-  background: var(--c-bg-medium);
-  color: var(--c-text-lightest);
-  border: 1px solid var(--c-border-light);
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 0.9em;
-  text-decoration: none;
-}
-.modifiers-toolbar .button:hover {
-  border-color: var(--c-border-accent);
-}
-.modifier-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.modifier-tag {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 4px;
-  font-size: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  border: 1px solid var(--c-border-light);
-  overflow: hidden;
-}
-.modifier-tag.is-enhancement {
-  background-color: var(--c-accent-green);
-  border-color: rgba(179, 255, 179, 0.4);
-}
-.modifier-tag.is-limitation {
-  background-color: var(--c-accent-red);
-  border-color: rgba(245, 150, 150, 0.4);
-}
-.modifier-tag .modifier-info {
-  padding: 5px 10px;
-  cursor: help;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-.modifier-tag .modifier-info:hover {
-  background: rgba(255,255,255,0.1);
-}
-.modifier-tag .modifier-name { font-weight: bold; }
-.modifier-tag .modifier-divider { opacity: 0.6; }
-.modifier-tag .modifier-effect { font-style: italic; opacity: 0.8; }
-.modifier-tag .modifier-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
-  background: rgba(0,0,0,0.3);
-}
-.modifier-tag .modifier-cost {
-  font-weight: bold;
-  white-space: nowrap;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-.modifier-tag .delete-modifier {
-  color: rgba(255,255,255,0.7);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.modifier-tag .delete-modifier:hover {
-  color: #fff;
-}
-
-.gum.sheet.item .editable-text-container .rendered-text {
-    min-height: 45px; 
-}
-
-/* =================================================================== */
-/* 15. ESTILO DO DIÁLOGO DE VISUALIZAÇÃO DE MODIFICADOR              */
-/* =================================================================== */
-
-.dialog.modifier-preview-dialog .window-content {
-    background: #28282b !important; /* Fundo escuro consistente */
-    color: #e1e1e1;                 /* Texto claro padrão */
-}
-
-/* Garante que o conteúdo da nossa ficha ocupe o espaço corretamente */
-.dialog.modifier-preview-dialog .sheet-body-content {
-    padding: 10px;
-}
-
-/* Remove margens desnecessárias dentro do diálogo */
-.dialog.modifier-preview-dialog .form-section {
-    margin-bottom: 0;
-}
-
-/* Garante que os rótulos do sumário fiquem com a cor de destaque correta */
-.dialog.modifier-preview-dialog .summary-item label {
-    color: var(--c-accent-gold, #c5a05b);
-}
-
-/* Garante que o título da seção também use o fundo correto para o efeito de "recorte" */
-.dialog.modifier-preview-dialog .form-section .section-title {
-    background: #28282b;
-}
-
-/* =================================================================== */
-/* 16. COMPONENTE CUSTOMIZADO: BLOCO DE STATS (STAT BLOCK)           */
-/* =================================================================== */
-
-.gum.sheet.item .stat-block {
-    display: grid;
-    gap: 5px 10px; /* Espaçamento vertical e horizontal pequeno */
-    padding: 10px;
-    background: rgba(0,0,0,0.15);
-    border-radius: 3px;
-    margin-bottom: 10px; /* Espaço entre os dois blocos */
-}
-
-/* Define as colunas para o primeiro bloco de 4 stats */
-.gum.sheet.item .stat-block:has(input[name="system.damage_formula"]) {
-    grid-template-columns: 3fr 1fr 1fr 3fr; /* Dano e Distância maiores, resto menor */
-}
-
-/* Define as colunas para o segundo bloco de 4 stats */
-.gum.sheet.item .stat-block:has(input[name="system.rof"]) {
-    grid-template-columns: 1fr 1fr 1fr 1fr; /* Colunas de tamanho igual */
-}
-
-/* Estilo dos cabeçalhos das colunas (DANO, PREC, etc.) */
-.gum.sheet.item .stat-block label {
-    text-align: center;
-    font-size: 10px;
-    font-weight: bold;
-    color: #a0a0a0;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    color: var(--gum-text-medio);
 }
 
-/* Garante que os inputs se alinhem corretamente */
-.gum.sheet.item .stat-block input {
-    text-align: center;
+/* Inputs Específicos de Item (Sobrescrevendo estilo base se necessário) */
+.gum.sheet.item input,
+.gum.sheet.item select {
+    width: 100%;
+    background: rgba(0,0,0,0.3); /* Mais escuro para itens */
 }
 
-/* Define as colunas para o bloco de 5 stats (Arma Corpo a Corpo) */
-.gum.sheet.item .stat-block:has(input[name="system.parry"]) {
-    grid-template-columns: 3fr 1fr 1fr 1fr 1.5fr; /* Dano maior, ST um pouco maior, resto menor */
+/* Layout Inline (Label ao lado do Input) */
+.gum.sheet.item .form-group.inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
-
-/* =================================================================== */
-/* 17. LISTA DE ATAQUES DINÂMICOS (COM DELETE FLUTUANTE)             */
-/* =================================================================== */
-
-.gum.sheet.item .attack-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px; 
-}
-
-/* --- Layout de cada MODO DE ATAQUE (a linha inteira) --- */
-.gum.sheet.item .attack-item {
-    position: relative; /* Essencial para posicionar o botão de deletar */
-    display: block; /* Mudamos de grid para block */
-    background: rgba(0,0,0,0.15);
-    padding: 5px;
-    border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0.3);
-}
-
-/* O container para as duas linhas de stats (nenhuma mudança aqui) */
-.gum.sheet.item .attack-stat-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* A grid para cada linha de stats (nenhuma mudança aqui) */
-.gum.sheet.item .stat-row {
-    display: grid;
-    gap: 10px;
-    align-items: end;
-    grid-template-columns: repeat(4, 1fr);
-}
-/* Ajuste para a linha de stats Corpo a Corpo (5 colunas) */
-.gum.sheet.item .melee-attack-item .stat-row {
-    grid-template-columns: 2fr 3fr 1fr 1fr 1.5fr;
-}
-
-
-/* --- A MÁGICA DO BOTÃO DE DELETAR FLUTUANTE --- */
-
-/* O container do botão agora não faz parte da grid */
-.gum.sheet.item .attack-controls {
-    position: relative;
-}
-
-.gum.sheet.item .delete-attack {
-    color: rgba(255,255,255,0.4);
-    cursor: pointer;
-    
-    /* Por padrão, o botão é invisível e não pode ser clicado */
-    opacity: 1;
-    pointer-events: none;
-    transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
-}
-
-/* QUANDO passar o mouse sobre QUALQUER LUGAR do item de ataque... */
-.gum.sheet.item .attack-item:hover .delete-attack {
-    /* ...o botão se torna visível e clicável */
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.gum.sheet.item .delete-attack:hover {
-    color: var(--c-accent-red, #a53541);
-}
-
-/* A barra de ferramentas com o botão de Adicionar (nenhuma mudança aqui) */
-.attack-toolbar {
-    margin-top: 15px;
+.gum.sheet.item .form-group.inline input {
+    width: auto;
     text-align: right;
 }
 
 /* =================================================================== */
-/* 19. LAYOUT DE DANOS AVANÇADOS & EFEITOS (POLIMENTO DO <summary>)    */
+/* 5. ABA DE DETALHES (SUMÁRIO)                                        */
 /* =================================================================== */
 
-/* --- O Container <details> ("Sanfona") --- */
-.gum.sheet.item details.advanced-options {
-    margin-top: 15px;
-    /* MUDANÇA: Fundo mais sutil, sem borda por padrão */
-    background: rgba(0,0,0,0.1);
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 3px;
-    padding: 0; /* Remove o padding antigo */
+.gum.sheet.item .summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
-
-/* --- O Título clicável <summary> (O NOVO DESIGN) --- */
-.gum.sheet.item details.advanced-options summary {
-    /* MUDANÇA: Usando a fonte de rótulo padrão */
-    font-family: 'Roboto', sans-serif;
-    font-size: 11px; /* Fonte menor, como a de um rótulo */
+.gum.sheet.item .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px dotted rgba(255,255,255,0.1);
+    padding-bottom: 2px;
+}
+.gum.sheet.item .summary-item label {
+    color: var(--gum-text-medio);
+}
+.gum.sheet.item .summary-item .value {
+    color: var(--gum-text-claro);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--c-accent-gold, #c5a05b); /* ✅ Cor de destaque Dourada */
-    cursor: pointer;
-    outline: none;
-    padding: 8px 12px; /* Padding interno do título */
-    transition: background-color 0.2s ease;
-    border-radius: 3px; /* Arredonda os cantos */
-}
-/* Efeito de hover */
-.gum.sheet.item details.advanced-options:hover summary {
-    background: rgba(255,255,255,0.05);
-}
-/* Estilo quando "aberto" */
-.gum.sheet.item details.advanced-options[open] > summary {
-    border-bottom: 1px solid rgba(0,0,0,0.3);
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px 3px 0 0; /* Remove arredondamento inferior ao abrir */
-}
-/* Seta customizada */
-.gum.sheet.item details.advanced-options summary::-webkit-details-marker,
-.gum.sheet.item details.advanced-options summary::marker {
-    display:none;
-}
-.gum.sheet.item details.advanced-options summary::before {
-    font-size: 0.8em;
-    margin-right: 8px;
-    transition: transform 0.2s ease-in-out;
-    color: var(--c-text-medium, #a9a6a0); /* Cor da seta */
-}
-.gum.sheet.item details.advanced-options[open] > summary::before {
-    transform: rotate(90deg);
 }
 
-/* --- O Conteúdo Interno (O restante do seu CSS antigo, 100% preservado) --- */
-.gum.sheet.item .advanced-content {
-    padding: 12px;
-}
-.gum.sheet.item .advanced-content .subheader {
-    font-size: 0.9em;
-    font-weight: bold;
-    color: #a0a0a0;
-    margin: 10px 0 8px 0;
-    padding-bottom: 3px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.gum.sheet.item .advanced-content .subheader:first-child {
-    margin-top: 0;
-}
-.gum.sheet.item .advanced-content .stat-row,
-.gum.sheet.item .advanced-content .form-grid-3 {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 10px 8px;
-    align-items: end;
-}
-.gum.sheet.item .advanced-content hr {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin: 15px 0;
-}
-.gum.sheet.item .advanced-content .effects-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 8px;
-}
-.gum.sheet.item .advanced-content .effect-summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.2);
+/* Descrição (Rich Text) */
+.gum.sheet.item .description-view {
+    min-height: 100px;
+    padding: 8px;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid var(--gum-border-light);
     border-radius: 3px;
-    padding: 4px 6px;
-}
-.gum.sheet.item .advanced-content .effect-summary img {
-    width: 20px;
-    height: 20px;
-    border: none;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-.gum.sheet.item .advanced-content .effect-summary span {
-    flex-grow: 1;
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--c-text-lightest, #f0f0e8);
-}
-.gum.sheet.item .advanced-content .effect-summary .controls {
-    display: flex;
-    gap: 5px;
-}
-.gum.sheet.item .advanced-content .effect-summary .controls a {
-    color: var(--c-text-medium, #a9a6a0);
-    font-size: 0.9em;
-}
-.gum.sheet.item .advanced-content .effect-summary .controls a:hover {
-    color: #fff;
-}
-.gum.sheet.item .advanced-content .add-attack-effect.button {
-    margin-top: 8px;
-    background: var(--c-bg-medium, #3a3836);
-    color: var(--c-text-lightest, #f0f0e8);
-    border: 1px solid var(--c-border-light, #4a4846);
-    padding: 5px;
-    font-size: 0.9em;
-    text-align: center;
-}
-.gum.sheet.item .advanced-content .add-attack-effect.button:hover {
-    border-color: var(--c-border-accent, #c5a05b);
-}
-
-/* =================================================================== */
-/* 20. LAYOUT DA SEÇÃO DE HABILIDADE (COM DESTAQUE NA ESQUERDA)      */
-/* =================================================================== */
-
-.gum.sheet.item .ability-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr; 
-    gap: 25px;
-    align-items: start;
-}
-
-/* Coluna da esquerda (AGORA COM O DESTAQUE) */
-.gum.sheet.item .ability-col-left {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    
-    background: rgba(0,0,0,0.1);
-    padding: 10px;
-    border-radius: 3px;
-}
-
-/* Coluna da direita (AGORA COM O FUNDO PADRÃO) */
-.gum.sheet.item .ability-col-right {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    
-}
-
-/* ============================================= */
-/* DESIGN DA FICHA DE EFEITO (LAYOUT VERTICAL)   */
-/* ============================================= */
-
-/* 1. Corrige a cor de fundo da ficha */
-.gum.sheet.item.effect-sheet .sheet-body-content {
-    background: var(--c-bg-dark, #2b2a29);
-}
-
-/* 2. Garante que as seções tenham o visual padrão do tema escuro */
-.gum.sheet.item.effect-sheet .form-section {
-    background: var(--c-bg-darkest, #191813);
-    border: 1px solid var(--c-border-light, #4a4846);
-}
-
-/* 3. Ativa o layout em grid para os campos condicionais */
-.gum.sheet.item.effect-sheet .form-grid-2,
-.gum.sheet.item.effect-sheet .form-grid-3 {
-    display: grid;
-    
-    gap: 10px;
-    align-items: end;
-}
-.gum.sheet.item.effect-sheet .form-grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-}
-.gum.sheet.item.effect-sheet .form-grid-3 {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.effect-sheet .indented {
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* ✅ ESTA É A LINHA QUE CONTROLA O ESPAÇO VERTICAL */
-    
-    /* Mantém o estilo de recuo que já tínhamos */
-    padding-left: 15px;
-    border-left: 2px solid var(--c-accent-gold, #c5a05b);
-    margin-top: 10px;
-}
-
-/* Faz o container dos botões ocupar o espaço e se alinhar */
-.effect-sheet .form-row .radio-group.horizontal {
-    flex-grow: 1;
-    display: flex;
-    justify-content: space-around;
-}
-
-/* Faz cada botão individual crescer e ocupar o espaço disponível */
-.effect-sheet .form-row .radio-group .custom-radio {
-    flex: 1; /* Mantém o alinhamento de esticar para ocupar o espaço proporcionalmente */
-    display: flex;
-    justify-content: center; /* Centraliza o círculo e o texto */
-    align-items: center;
-    gap: 8px; /* ✅ MANTÉM O ESPAÇO ENTRE A "BOLINHA" E O TEXTO */
-}
-
-/* Muda a cor do texto para o cinza padrão */
-.effect-sheet .form-row .radio-group .custom-radio span {
-    color: #a9a6a0; /* ✅ COR CINZA PADRÃO */
-    font-weight: normal;
-}
-
-
-/* Garante que os inputs dentro da ficha de efeito usem o tema escuro */
-.gum.sheet.item.effect-sheet input,
-.gum.sheet.item.effect-sheet select,
-.gum.sheet.item.effect-sheet textarea {
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--c-accent-gold, #c5a05b);
-}
-
-/* Garante que o fundo e o padding sejam aplicados corretamente */
-.gum-item-sheet.effect-sheet .sheet-body-content {
-    padding: 15px;
-}
-
-/* Nova classe para alinhar rótulos e inputs na mesma linha */
-.effect-sheet .form-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.effect-sheet .form-row .row-label {
-    font-weight: bold;
-    flex-shrink: 0; /* Impede que o rótulo encolha */
-}
-.effect-sheet .form-row > input,
-.effect-sheet .form-row > select {
-    flex-grow: 1; /* Faz o campo de input/select ocupar o espaço restante */
-}
-
-/* Garante que o grupo de radio buttons não ocupe espaço extra */
-.effect-sheet .form-row .radio-group {
-    flex-grow: 1;
-}
-
-/* Herda o estilo de "recuo" que já usamos */
-.effect-sheet .indented {
-    padding-left: 15px;
-    border-left: 2px solid var(--c-accent-gold, #c5a05b);
-    margin-top: 10px;
-}
-
-/* Remove o espaçamento do container 'pai' na ficha de efeito */
-.gum.sheet.item.effect-sheet .sheet-body {
-    padding: 0;
-}
-
-/* Garante que o container 'filho' tenha o espaçamento correto e o fundo escuro */
-.gum.sheet.item.effect-sheet .sheet-body-content {
-    background: var(--c-bg-dark, #2b2a29);
-    padding: 15px; /* Mantém um espaçamento interno para o conteúdo não colar nas bordas */
-}
-
-/* ============================================================= */
-/* ESTILOS PARA O LAYOUT DO EFEITO DE ATRIBUTO                   */
-/* ============================================================= */
-
-.effect-sheet .attribute-effect-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* Espaço vertical entre cada linha */
-}
-
-/* Garante que os textareas sejam redimensionáveis verticalmente */
-.effect-sheet .attribute-effect-layout textarea {
-    resize: vertical;
-}
-
-/* Alinha os radio buttons da Operação */
-.effect-sheet .attribute-effect-layout .radio-group.horizontal {
-    justify-content: flex-start; /* Alinha os botões à esquerda */
-    gap: 15px;
-}
-
-/* ============================================================= */
-/* ESTILOS PARA O LAYOUT HORIZONTAL DO EFEITO DE ATRIBUTO        */
-/* ============================================================= */
-
-.effect-sheet .attribute-effect-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Espaço vertical entre cada linha */
-}
-
-/* Garante que o textarea comece com uma linha e cresça conforme o necessário */
-.effect-sheet .attribute-effect-layout textarea {
-    resize: vertical;
-    min-height: 28px; /* Altura mínima para se alinhar com outros inputs */
+    color: var(--gum-text-medio);
     line-height: 1.4;
 }
 
-/* Alinha os radio buttons da Operação */
-.effect-sheet .attribute-effect-layout .radio-group.horizontal {
-    justify-content: flex-start; 
-    gap: 15px;
-}
-
-/* A regra principal para o alinhamento horizontal das linhas */
-.effect-sheet .attribute-effect-layout .form-row {
-    display: flex;
-    align-items: center; /* Alinha o rótulo e o input verticalmente */
-    gap: 10px;
-}
-
-.effect-sheet .attribute-effect-layout .form-row .row-label {
-    flex: 0 0 90px; /* Define uma largura fixa para os rótulos */
-    font-weight: bold;
-    text-align: left;
-}
-
-.effect-sheet .attribute-effect-layout .form-row > textarea,
-.effect-sheet .attribute-effect-layout .form-row > .radio-group {
-    flex-grow: 1; /* Faz o campo/grupo de botões ocupar o resto do espaço */
-}
-
-/* ============================================================= */
-/* ESTILOS PARA O ÍCONE DE VALIDAÇÃO DE MACRO                    */
-/* ============================================================= */
-.input-with-validation {
-    position: relative;
-    display: flex; /* Para o input e o ícone ficarem lado a lado */
-    align-items: center;
-    gap: 8px; /* ✅ ESPAÇO ENTRE O INPUT E O ÍCONE */
-}
-.input-with-validation input {
-    flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
-}
-.validation-icon {
-    font-size: 0.9em;
-    flex-shrink: 0; /* Impede que o ícone encolha */
-}
-.validation-icon i {
-    text-shadow: 0 0 3px #000;
-}
-
 /* =================================================================== */
-/* ESTRUTURA FLEXÍVEL E ALTURA CORRETA PARA A FICHA DE EFEITO          */
+/* 6. MODOS DE ATAQUE (ARMAS E PODERES)                                */
 /* =================================================================== */
 
-/* Garante que o container principal da janela não tenha padding indesejado */
-.gum.sheet.item.effect-sheet .window-content {
-    padding: 0;
-}
-
-/* Transforma o formulário em um container flex que ocupa 100% da altura */
-.gum.sheet.item.effect-sheet form {
-    height: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Faz o corpo principal (abaixo do cabeçalho) crescer para preencher o espaço */
-.gum.sheet.item.effect-sheet .sheet-body {
-    flex-grow: 1;
-    overflow: hidden; /* Controla barras de rolagem indesejadas */
-}
-
-/* Garante que a área de conteúdo tenha a altura total e uma barra de rolagem interna se necessário */
-.gum.sheet.item.effect-sheet .sheet-body-content {
-    height: 100%;
-    overflow-y: auto;
-}
-
-/* ============================================= */
-/* DESIGN FUNCIONAL PARA O EFFECT BUILDER        */
-/* ============================================= */
-
-/* 1. Estrutura geral do formulário */
-.dialog.effect-builder .window-content {
-    /* Garante que o conteúdo não cole nas bordas da janela */
-    padding: 10px;
-}
-.effect-builder-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espaço entre as seções principais */
-}
-
-/* 2. Estilo para as seções (Barreira, Configuração, Descrição) */
-.effect-builder .form-section {
-    border: 1px solid #c9c7b8; /* Borda padrão do Foundry */
-    border-radius: 5px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.05); /* Fundo sutil para agrupar o conteúdo */
-}
-.effect-builder .form-section .section-title {
-    font-family: 'Cinzel', serif;
-    font-weight: 700;
-    color: #333;
-    border-bottom: 1px solid #c9c7b8;
-    margin: -10px -10px 10px -10px; /* Faz o título se esticar */
-    padding: 8px 10px;
-    background: rgba(0, 0, 0, 0.05);
-}
-
-/* 3. Layout para linhas horizontais (Tipo de Efeito, etc.) */
-.effect-builder .form-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.effect-builder .form-row .row-label {
-    font-weight: bold;
-    flex: 0 0 120px; /* Largura fixa para os rótulos */
-}
-.effect-builder .form-row > select {
-    flex-grow: 1;
-}
-
-/* 4. Layout para os grids de campos */
-.effect-builder .form-grid-2,
-.effect-builder .form-grid-3 {
-    display: grid;
-    gap: 10px;
-}
-.effect-builder .form-grid-2 { grid-template-columns: 1fr 1fr; }
-.effect-builder .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-
-/* 5. Estilo para os grupos de formulário (rótulo acima do campo) */
-.effect-builder .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.effect-builder .form-group label {
-    font-weight: bold;
-    font-size: 12px;
-    color: #555;
-}
-
-/* 6. Rodapé */
-.effect-builder .sheet-footer {
-    text-align: right;
-    margin-top: 10px;
-}
-
-/* Garante que o recuo da Barreira de Resistência funcione */
-.effect-builder .indented {
-    padding-left: 15px;
-    margin-top: 10px;
-    border-left: 2px solid rgba(0,0,0,0.2);
-}
-
-
-/* =================================================================== */
-/* LAYOUT E ESTILO FINAL PARA A FICHA DE TRIGGER                       */
-/* =================================================================== */
-
-/* 1. Remove a "moldura" da janela e define a estrutura flexível */
-.gum.sheet.item.trigger-sheet .window-content {
-    padding: 0;
-}
-.gum.sheet.item.trigger-sheet form {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 2. Faz o corpo principal (abas + conteúdo) crescer e define o fundo */
-.gum.sheet.item.trigger-sheet .sheet-body {
-    flex-grow: 1;
-    overflow: hidden;
-    background: var(--c-bg-dark, #2b2a29);
-}
-
-/* 3. Garante que a área de conteúdo tenha padding e rolagem interna */
-.gum.sheet.item.trigger-sheet .sheet-body-content {
-    height: 100%;
-    overflow-y: auto;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espaço entre as seções */
-}
-
-/* 4. Garante que as abas e seu conteúdo ocupem toda a altura disponível */
-.gum.sheet.item.trigger-sheet .tab.item.active {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-.gum.sheet.item.trigger-sheet .tab > .form-section {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-.gum.sheet.item.trigger-sheet .tab > .form-section .rendered-text,
-.gum.sheet.item.trigger-sheet .tab > .form-section textarea {
-    flex-grow: 1;
-}
-
-/* 5. Estilos para a paleta de botões na aba "Código" */
-.trigger-sheet .palette {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 15px;
-    flex-shrink: 0; /* Impede que a paleta encolha */
-}
-.trigger-sheet .palette-group {
-    background: rgba(0,0,0,0.15);
-    border: 1px solid rgba(0,0,0,0.3);
-    border-radius: 3px;
-    padding: 8px;
-}
-.trigger-sheet .palette-header {
-    font-weight: bold;
-    color: #c0c0c0;
-    margin-bottom: 8px;
-}
-.trigger-sheet .palette-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-/* 6. Altura mínima para o textarea do código */
-.gum.sheet.item.trigger-sheet textarea[name="system.code"] {
-    min-height: 150px;
-}
-
-/* Define uma altura mínima para a área de texto da descrição na aba "Detalhes" */
-.gum.sheet.item.trigger-sheet .tab[data-tab="detalhes"] .rendered-text {
-    min-height: 150px; /* <-- Altere este valor para a altura desejada */
-}
-
-/* ======================================================== */
-/* NOVO ESTILO PARA A ABA DE EFEITOS (ITEM SHEET)          */
-/* ======================================================== */
-
-/* Container principal de cada categoria (Teste de Ativação, etc.) */
-.gum.sheet.item .effect-category {
-    margin-bottom: 20px;
-}
-
-/* Grupo de efeitos (ex: Em Sucesso, Em Falha) */
-.gum.sheet.item .effect-group {
-    background: rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 10px;
-}
-.gum.sheet.item .effect-group.success {
-    border-left: 3px solid var(--c-success, #4CAF50);
-}
-.gum.sheet.item .effect-group.failure {
-    border-left: 3px solid var(--c-failure, #F44336);
-}
-
-/* Cabeçalho de cada grupo (título + botão adicionar) */
-.gum.sheet.item .group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.gum.sheet.item .group-header .group-title {
-    margin: 0;
-    font-size: 1.1em;
-    font-family: var(--font-secondary);
-}
-.gum.sheet.item .group-header .button {
-    flex-shrink: 0; /* Impede que o botão encolha */
-}
-
-/* A lista de efeitos */
-.gum.sheet.item .effects-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* Cada item individual na lista ("card" do efeito) */
-.gum.sheet.item .effect-entry {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-    padding: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-/* Cabeçalho do card (ícone, nome, controles) */
-.gum.sheet.item .effect-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.gum.sheet.item .effect-icon {
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-.gum.sheet.item .effect-name {
-    font-weight: bold;
-    flex-grow: 1; /* Faz o nome ocupar o espaço disponível */
-}
-.gum.sheet.item .effect-controls {
-    display: flex;
-    gap: 8px;
-}
-.gum.sheet.item .effect-controls a {
-    color: rgba(255, 255, 255, 0.7);
-    transition: color 0.2s;
-}
-.gum.sheet.item .effect-controls a:hover {
-    color: #fff;
-}
-
-/* Campos contextuais (dropdowns, inputs, etc.) */
-.gum.sheet.item .contextual-fields {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.gum.sheet.item .contextual-fields.grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-.gum.sheet.item .contextual-fields .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.gum.sheet.item .contextual-fields .form-group label {
-    font-size: 11px;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #a0a0a0;
-}
-.gum.sheet.item .contextual-fields .form-group input,
-.gum.sheet.item .contextual-fields .form-group select {
-    width: 100%;
-}
-
-/* =================================================================== */
-/* CSS CONSOLIDADO: LAYOUT DOS MODOS DE ATAQUE (v5 - TEMA PAPIRO)      */
-/* Substitui todas as Fases 2.6, 2.8, 2.10, 2.13, 2.14, 2.16, 2.17    */
-/* =================================================================== */
-
-/* --- 1. Espaçamento da Seção e Lista --- */
-.gum.sheet.item .tab[data-tab="attacks"] .attacks-editor-section {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-.gum.sheet.item .attacks-editor-section .attack-list {
-     margin-top: 5px;
-}
+/* Lista de Ataques */
 .gum.sheet.item .attack-list {
     display: flex;
     flex-direction: column;
-    gap: 5px; /* Espaço compacto entre os cards */
-}
-.gum.sheet.item .attack-item {
-    margin-bottom: 0;
+    gap: 8px;
 }
 
-
-/* --- 2. Estilo do MODO EXIBIÇÃO ("Mini-Card" Papiro) --- */
-.gum.sheet.item .attack-display-card {
-    padding: 10px;
-    margin-bottom: 0;
-    background: var(--c-fundo-card-claro, #f8f4f1);
-    border: 1px solid var(--c-borda, #dacdca);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    padding-top: 10px !important; 
-    padding-bottom: 10px !important;
+/* Card de Ataque (Modo Exibição) */
+.gum.sheet.item .attack-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    padding: 8px;
 }
 
-/* O título (Perícia (Modo)) - COM A CORREÇÃO DE OVERLAP */
-.gum.sheet.item .attack-display-card .section-title {
-    position: static;
-    transform: none;
-    background: none;
-    width: 100%;
-    padding: 0 0 8px 0;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--c-borda, #dacdca);
-    /* Flexbox é a chave */
+.gum.sheet.item .attack-header {
     display: flex;
-    align-items: center;
-    gap: 6px; 
-}
-.gum.sheet.item .attack-display-card .section-title .pill-skill {
-    font-size: 0.9em;
-    font-weight: 700;
-    color: var(--c-texto-escuro, #352425);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1; /* O nome ocupa o espaço livre inicial */
-    flex-shrink: 1; /* Permite que o nome encolha se necessário */
-}
-
-/* Controles (Editar/Deletar) com cores de papiro */
-.gum.sheet.item .attack-display-card .attack-controls {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
-    /* ✅ A CORREÇÃO MÁGICA: Empurra os controles para a extrema direita */
-    margin-left: auto; 
-}
-.gum.sheet.item .attack-display-card .attack-controls a {
-    color: var(--c-texto-subtitulo, #977c63);
-    font-size: 0.9em;
-    opacity: 1; /* Sempre visível */
-    pointer-events: auto;
-}
-.gum.sheet.item .attack-display-card .attack-controls a:hover {
-    color: var(--c-accent-red, #a53541);
-}
-
-/* Tags de Stat (NH e FX) DENTRO do título */
-.gum.sheet.item .attack-display-card .section-title .pill-stat {
-    flex-shrink: 0; /* Impede que encolham */
-    font-size: 0.8em;
-    padding: 1px 5px;
-    margin: 0;
-    background: rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.1);
-    color: var(--c-texto-escuro, #352425);
-    border-radius: 3px;
-}
-.gum.sheet.item .attack-display-card .section-title .pill-stat label {
-     color: var(--c-texto-subtitulo, #977c63);
-     font-size: 9px;
-     margin-right: 3px;
-     font-weight: 700;
-     text-transform: uppercase;
-}
-
-/* Ícone de Efeito DENTRO do título */
-.gum.sheet.item .attack-display-card .section-title .pill-stat.effect-indicator {
-     background: rgba(142, 68, 173, 0.08);
-     border-color: rgba(142, 68, 173, 0.3);
-     color: #8E44AD;
-     font-size: 0.9em;
-     padding: 2px 4px;
-     line-height: 1;
-}
-.gum.sheet.item .attack-display-card .section-title .pill-stat.effect-indicator label {
-    display: none;
-}
-
-/* A grade de stats (3x2) com cores de papiro */
-.gum.sheet.item .attack-display-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px 10px;
-    margin-top: 8px; /* Espaço entre título e stats */
-}
-.gum.sheet.item .display-stat {
-    background: rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 3px;
-    padding: 3px 6px;
-    text-align: center;
-}
-.gum.sheet.item .display-stat label {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--c-texto-subtitulo, #977c63);
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 2px;
-}
-.gum.sheet.item .display-stat span {
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--c-texto-escuro, #352425);
-    white-space: nowrap;
-}
-
-/* Grids de Stats (Dano Longo, etc) */
-.gum.sheet.item .attack-display-grid.melee-grid .damage-stat,
-.gum.sheet.item .attack-display-grid.ranged-grid .damage-stat {
-    grid-column: span 2;
-}
-.gum.sheet.item .attack-display-grid.ranged-grid .display-stat:has(label:contains('Alcance')) {
-    grid-column: span 2;
-}
-.gum.sheet.item .display-stat.damage-stat span {
-    white-space: normal;
-    word-break: break-all;
-}
-
-
-/* --- 3. Estilo do MODO EDIÇÃO (Minimalista, tema escuro) --- */
-
-.gum.sheet.item .attack-edit-mode {
-    background: rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--c-accent-gold, #c5a05b);
-    border-radius: 3px;
-    padding: 10px;
-}
-.gum.sheet.item .attack-edit-mode .ability-grid {
-    display: contents;
-}
-.gum.sheet.item .attack-edit-mode .ability-col-right {
-    display: none;
-}
-/* Grid de 3 colunas para Habilidade */
-.gum.sheet.item .attack-edit-mode .ability-grid .ability-col-left {
-    display: grid;
-    grid-template-columns: 2fr 2fr 1fr; /* Modo, Perícia, Mod.NH */
-    gap: 10px;
-    align-items: end;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-}
-.gum.sheet.item .attack-edit-mode .form-group label {
-    position: relative;
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    font-size: 10px;
-    margin-bottom: 0px;
-}
-.gum.sheet.item .attack-edit-mode .form-group label a.link-skill-button {
-    font-size: 0.9em;
-    color: var(--c-text-medium, #a9a6a0);
-    border: none;
-    background: none;
-    width: auto;
-    height: auto;
-    padding: 0 5px;
-}
-.gum.sheet.item .attack-edit-mode .form-group label a.link-skill-button:hover {
-    color: var(--c-accent-gold, #c5a05b);
-}
-.gum.sheet.item .attack-edit-mode .form-group:has(input[name$=".skill_name"]) {
-    display: flex;
     align-items: center;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 4px;
 }
-.gum.sheet.item .attack-edit-mode .form-group:has(input[name$=".skill_name"]) input {
-    flex-grow: 1;
+.gum.sheet.item .attack-mode-name {
+    font-weight: 700;
+    color: var(--gum-accent-gold);
 }
-.gum.sheet.item .attack-edit-mode .form-group-button {
-    display: none;
+
+/* Grid de Stats do Ataque */
+.gum.sheet.item .attack-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
 }
-.gum.sheet.item .attack-edit-mode .form-group input {
-    padding: 2px 3px;
+.gum.sheet.item .attack-stat {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 3px;
+    text-align: center;
+    border-radius: 2px;
+}
+.gum.sheet.item .attack-stat label {
+    display: block;
+    font-size: 9px;
+    color: var(--gum-text-medio);
+    text-transform: uppercase;
+}
+.gum.sheet.item .attack-stat span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gum-text-claro);
+}
+
+/* Controles (Editar/Deletar) */
+.gum.sheet.item .attack-controls a {
+    color: var(--gum-text-medio);
+    margin-left: 8px;
     font-size: 12px;
 }
-
-/* Grid de Stats (Modo Edição) */
-.gum.sheet.item .attack-stats-grid {
-    display: grid;
-    gap: 10px 8px;
-    align-items: end;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr; /* 5 colunas C.C. */
-}
-.gum.sheet.item .ranged-attack-item .attack-stats-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; /* 6 colunas L.D. */
-}
-.gum.sheet.item .ranged-attack-item .attack-stats-grid .form-group:has(input[name$=".range"]) {
-    grid-column: span 2;
-}
-
-/* "Dados Avançados" (Modo Edição) */
-.gum.sheet.item .advanced-content .stat-row,
-.gum.sheet.item .advanced-content .form-grid-3 {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 10px 8px;
-    align-items: end;
-}
-
-/* Botão "Concluir" (Modo Edição) */
-.gum.sheet.item .attack-controls-edit {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    text-align: right;
-}
-.gum.sheet.item .attack-controls-edit .button {
-    background: var(--c-accent-green, #389c68);
-    border-color: rgba(255,255,255,0.2);
-    color: #fff;
-    text-shadow: 1px 1px 2px #000;
-}
-.gum.sheet.item .attack-controls-edit .button:hover {
-    border-color: #fff;
-}
-/* ============================================================= */
-/* FASE 2.18: ESTILOS PARA CARACTERÍSTICAS (U/F)                 */
-/* ============================================================= */
-
-/* --- Estilo das Tags "U" e "F" no Modo Exibição --- */
-.gum.sheet.item .pill-stat.flag-u,
-.gum.sheet.item .pill-stat.flag-f {
-    font-weight: 700;
-    font-size: 0.9em;
-    padding: 2px 6px;
-    line-height: 1;
-}
-/* Tag Desbalanceada (U) - Laranja/Cuidado */
-.gum.sheet.item .pill-stat.flag-u {
-    background: rgba(211, 84, 0, 0.1);
-    border-color: rgba(211, 84, 0, 0.3);
-    color: #E67E22;
-}
-/* Tag Esgrima (F) - Azul/Técnica */
-.gum.sheet.item .pill-stat.flag-f {
-    background: rgba(86, 129, 156, 0.1);
-    border-color: rgba(86, 129, 156, 0.3);
-    color: #56819c;
-}
-
-/* --- Estilo do Grupo de Checkboxes no Modo Edição --- */
-.gum.sheet.item .attack-flags-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas */
-    gap: 8px 10px;
-    
-    /* Separador sutil */
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-/* Estilo do checkbox (reutilizando seu CSS de Armadura) */
-.gum.sheet.item .attack-flags-grid .custom-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 11px;
-  color: #d1d1d1;
-  transition: color 0.2s ease;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox:hover {
-  color: #fff;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"] {
-  display: none;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox span::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-  vertical-align: middle;
-  transition: all 0.2s ease;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
-  background-color: var(--c-accent-gold, #c5a05b);
-  border-color: var(--c-accent-gold, #c5a05b);
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 4px;
-  width: 3px;
-  height: 7px;
-  border: solid #111;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.hit-locations-grid-inputs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 4px 8px;
-    padding: 5px 0;
-}
-
-.hit-locations-grid-inputs .form-group-small {
-    margin-bottom: 0;
-}
-
-.hit-locations-grid-inputs .form-group-small label {
-    font-size: 0.85em;
-    font-weight: bold;
-    margin-bottom: 2px;
-}
-
-.hit-locations-grid-inputs .form-group-small input[type="number"] {
-    height: 24px;
-    font-size: 0.9em;
-    text-align: center;
+.gum.sheet.item .attack-controls a:hover {
+    color: var(--gum-accent-red);
 }
 
 /* =================================================================== */
-/* 14. ESTILO PARA O NOVO EDITOR DE TEXTO (TinyMCE) - REFINADO         */
+/* 7. EDITOR DE EFEITOS E CONDIÇÕES                                    */
 /* =================================================================== */
 
-/* 1. Contêiner geral (define a altura mínima) */
-.gum.sheet.item .editor {
-   min-height: 300px; /* Altura mínima para .chat_description */
-   /* Removemos bordas/fundos daqui para evitar bugs de layout */
-}
-/* Seletor específico para a descrição principal (mais alta) */
-.gum.sheet.item .editor[data-edit="system.description"] {
-    min-height: 400px; /* Altura mínima para .description */
+.gum.sheet.item .effect-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-/* 2. O editor (.tox-tinymce) */
-.gum.sheet.item .tox-tinymce {
-    background: var(--c-bg-darkest, #191813);
-    border: 1px solid var(--c-border-light, #4a4846) !important; 
+.gum.sheet.item .effect-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    padding: 4px 8px;
     border-radius: 3px;
-    overflow: hidden;
-    height: 300px !important;
+    border: 1px solid transparent;
+}
+.gum.sheet.item .effect-item:hover {
+    border-color: var(--gum-accent-blue);
 }
 
-/* 3. A barra de ferramentas (MAIS COMPACTA) */
-.gum.sheet.item .tox-toolbar-overlord {
-  background-color: var(--c-bg-darkest, #191813);
-  border-bottom: 1px solid var(--c-border-light, #4a4846);
-  /* Remove padding extra para um visual mais "flat" */
-  padding: 0 !important;
+.gum.sheet.item .effect-icon {
+    width: 24px; height: 24px;
+    border-radius: 3px;
 }
-.gum.sheet.item .tox-toolbar {
-    /* Garante que a barra em si não tenha fundo extra */
-    background: none !important;
-    padding: 2px 4px !important; /* Padding interno sutil */
+.gum.sheet.item .effect-name {
+    flex-grow: 1;
+    font-weight: 600;
 }
 
-/* 4. Botões da barra de ferramentas (AJUSTADO) */
-.gum.sheet.item .tox-tbtn,
-.gum.sheet.item .tox-mbtn {
-  color: var(--c-text-medium, #a9a6a0);
-  background: transparent;
-  
-  /* ✅ MUDANÇA: Aumentado de 30px para 34px para dar espaço ao ícone */
-  height: 34px !important; 
-  width: 34px !important;
+/* =================================================================== */
+/* 8. MODIFICADORES (VANTAGENS/PERÍCIAS)                               */
+/* =================================================================== */
+
+.gum.sheet.item .modifier-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
-/* ✅ REMOVIDO: O seletor para ".tox-tbtn svg" foi removido.
-   Isso permite que o ícone use seu tamanho padrão, que caberá no botão de 34px. */
-
-.gum.sheet.item .tox-tbtn:hover,
-.gum.sheet.item .tox-mbtn:hover {
-  background: var(--c-bg-medium, #3a3836);
-  color: #fff;
-}
-.gum.sheet.item .tox-tbtn--enabled {
-  background: var(--c-bg-medium, #3a3836);
-  color: var(--c-accent-gold, #c5a05b);
+.gum.sheet.item .modifier-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
 }
 
-/* ========================================================== */
-/* CSS PARA O MODO EXPANDIDO (sem alterações)                 */
-/* ========================================================== */
-.gum.sheet.item .tox-tinymce.expanded {
-  position: relative;
-  width: 100%;
-  height: 600px !important; /* Altura expandida */
-  z-index: 20;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-  border: 1px solid #c5a05b !important;
-  transition: all 0.3s ease;
+.gum.sheet.item .modifier-tag.enhancement {
+    border-color: var(--gum-accent-green);
+    color: #a8e6cf;
+}
+.gum.sheet.item .modifier-tag.limitation {
+    border-color: var(--gum-accent-red);
+    color: #ff8b94;
 }
 
-.gum.sheet.item .tox-tinymce.expanded .tox-edit-area__iframe {
-  height: 550px !important;
-}
-
-/* ========================================================== */
-/* ✅ NOVO: CSS PARA TEXTO RENDERIZADO (MODO DE EXIBIÇÃO)      */
-/* ========================================================== */
-
-/* Este seletor afeta o texto *depois* de salvo, no modo de visualização */
-.gum.sheet.item .rendered-text p,
-.gum.sheet.item .summary-description.rendered-text p {
-    margin: 0.2em 0 !important;
-    line-height: 1em !important;
-}
-
-/* ========================================================== */
-/* ✅ ESTILO UNIFICADO DOS BOTÕES DE DESCRIÇÃO (v2)           */
-/* ========================================================== */
-
-/* 1. Estilo base unificado para TODOS os 3 botões */
-.description-section button.toggle-editor,
-.description-editor button {
-  margin-top: 0.3rem;
-  font-size: 0.8rem;
-  background: #2b2b2b;
-  color: var(--c-accent-gold, #c5a05b); /* Cor dourada padrão */
-  border: none;
-  border-radius: 4px;
-  padding: 0.2rem 0.4rem;
-  cursor: pointer;
-  transition: all 0.2s ease; /* Adiciona transição suave */
-}
-
-/* 2. Efeito hover unificado */
-.description-section button.toggle-editor:hover,
-.description-editor button:hover {
-  color: #fff; /* Texto branco */
-  background: #3a3836; /* Cinza mais claro */
-}
-
-/* 3. (Opcional) Destaque de hover para Salvar e Cancelar */
-.description-editor button.save-description:hover {
-    background: var(--c-accent-green, #389c68);
-    color: #fff;
-}
-.description-editor button.cancel-description:hover {
-    background: var(--c-accent-red, #a53541);
-    color: #fff;
-}
-
-/* 4. Alinha os botões "Salvar" e "Cancelar" lado a lado... E ABAIXO do editor */
-.description-editor {
-  margin-top: 0.5rem;
-  flex-wrap: wrap; /*  Permite que os itens quebrem para a próxima linha */
-  gap: 0.3rem;     /* Espaço entre os botões (e entre o editor e os botões) */
-}
-
-/* ✅ ADICIONA: Nova regra para o editor de texto DENTRO do container */
-/* O .tox é o contêiner principal que o TinyMCE cria */
-.description-editor .tox {
-    flex-basis: 100%; /* Força o editor a ocupar a linha inteira, empurrando os botões para baixo */
-}
-
-/* ============================================================= */
-/* ESTILO DO SUB-CABEÇALHO (PARA GRUPO 4 DE MAGIAS/PODERES)     */
-/* ============================================================= */
-.gum.sheet.item .subheader {
-    font-size: 0.9em;
+.gum.sheet.item .modifier-cost {
     font-weight: bold;
-    color: #a0a0a0;
-    margin: 10px 0 8px 0;
-    padding-bottom: 3px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* =================================================================== */
+/* 9. BOTÕES DE AÇÃO (SALVAR, ADICIONAR)                               */
+/* =================================================================== */
+
+.gum.sheet.item button {
+    background: var(--gum-bg-medium);
+    color: var(--gum-text-claro);
+    border: 1px solid var(--gum-border-light);
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--gum-font-primary);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.gum.sheet.item button:hover {
+    background: var(--gum-accent-gold);
+    color: var(--gum-bg-darkest);
+    border-color: var(--gum-accent-gold);
+}
+
+/* Botões de Ícone Pequenos */
+.gum.sheet.item .action-btn-small {
+    padding: 2px 6px;
+    font-size: 10px;
+}
+/* =================================================================== */
+/* RESGATE: LISTA DE CONDIÇÕES ANEXADAS (Vinha do effect-browser)      */
+/* =================================================================== */
+
+.gum.sheet.item .attached-conditions-list {
+    list-style: none;
+    margin: 0 0 15px 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gum.sheet.item .attached-conditions-list .effect-summary {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.2); /* Fundo escuro sutil */
+    border: 1px solid var(--gum-border-light);
+    overflow: hidden;
+}
+
+.gum.sheet.item .attached-conditions-list .effect-summary-info {
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gum-text-claro);
+}
+
+.gum.sheet.item .attached-conditions-list .effect-summary-info strong { 
+    color: var(--gum-accent-gold);
+}
+
+.gum.sheet.item .attached-conditions-list .effect-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.3);
+    border-left: 1px solid var(--gum-border-light);
+}
+
+.gum.sheet.item .attached-conditions-list .effect-controls a {
+    color: var(--gum-text-medio);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.gum.sheet.item .attached-conditions-list .effect-controls a:hover {
+    color: var(--gum-accent-red);
+}
+
+.gum.sheet.item .attached-conditions-list .hint {
+    font-style: italic;
+    opacity: 0.7;
+    width: 100%;
 }

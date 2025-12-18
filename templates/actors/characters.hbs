@@ -9,6 +9,7 @@
     <header class="sheet-header">
       <div class="header-grid">
         <div class="header-identity">
+          {{! Classes já alinhadas com o CSS novo }}
           <input name="name" class="char-name-input" type="text" value="{{actor.name}}" placeholder="Nome do Personagem"/>
           <input name="system.details.concept" class="char-concept-input" type="text" value="{{actor.system.details.concept}}" placeholder="Conceito, Título ou Arquétipo"/>
         </div>
@@ -30,226 +31,227 @@
     {{! ================================================================== }}
     {{! MACRORREGIÃO 2: SIDEBAR (NOVA ESTRUTURA DE DESIGN)               }}
     {{! ================================================================== }}
-<aside class="sheet-sidebar">
-    <div class="sidebar-design-container">
+    <aside class="sheet-sidebar">
+      <div class="sidebar-design-container">
 
         {{!-- 1. FOTO --}}
         <div class="sidebar-block profile-block">
-            <div class="profile-frame">
-                <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
-            </div>
+          <div class="profile-frame">
+            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
+          </div>
         </div>
 
         {{!-- 2. CARD HÍBRIDO: CARGA & ESQUIVA (MEDALHÃO CIRCULAR) --}}
         <div class="sidebar-block encumbrance-dodge-bar">
-            {{!-- Lado Esquerdo --}}
-            <div class="enc-col left-col">
-                <a class="enc-label link edit-lifting-st">Base Carga</a>
-                <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
-            </div>
+          {{!-- Lado Esquerdo --}}
+          <div class="enc-col left-col">
+            <a class="enc-label link edit-lifting-st">Base Carga</a>
+            <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
+          </div>
 
-            {{!-- Centro: Medalhão de Esquiva --}}
-            <div class="enc-col center-col">
-                <div class="badge-wrapper">
-                    <svg class="dodge-badge-svg" viewBox="0 0 100 100">
-                        <circle class="badge-bg" cx="50" cy="50" r="48" />
-                        <circle class="badge-border" cx="50" cy="50" r="44" />
-                    </svg>
-                    <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
-                        {{actor.system.attributes.dodge.final}}
-                    </a>
-                    <div class="badge-label-curved">ESQUIVA</div>
-                </div>
+          {{!-- Centro: Medalhão de Esquiva --}}
+          <div class="enc-col center-col">
+            <div class="badge-wrapper">
+              <svg class="dodge-badge-svg" viewBox="0 0 100 100">
+                <circle class="badge-bg" cx="50" cy="50" r="48" />
+                <circle class="badge-border" cx="50" cy="50" r="44" />
+              </svg>
+              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
+                {{actor.system.attributes.dodge.final}}
+              </a>
+              <div class="badge-label-curved">ESQUIVA</div>
             </div>
+          </div>
 
-            {{!-- Lado Direito --}}
-            <div class="enc-col right-col">
-                <span class="enc-label">Nível Carga</span>
-                <span class="enc-val {{actor.system.encumbrance.level_name}}">{{actor.system.encumbrance.level_name}}</span>
-            </div>
+          {{!-- Lado Direito --}}
+          <div class="enc-col right-col">
+            <span class="enc-label">Nível Carga</span>
+            <span class="enc-val {{actor.system.encumbrance.level_name}}">{{actor.system.encumbrance.level_name}}</span>
+          </div>
         </div>
 
         {{!-- 3. DADOS QUADRADOS --}}
         <div class="sidebar-block stats-cluster">
-            <div class="cluster-header">
-                <span class="cluster-title">ATRIBUTOS SECUNDÁRIOS</span>
-                <a class="edit-secondary-stats-btn" title="Editar Atributos"><i class="fas fa-cog"></i></a>
-            </div>
+          <div class="cluster-header">
+            <span class="cluster-title">ATRIBUTOS SECUNDÁRIOS</span>
+            <a class="edit-secondary-stats-btn" title="Editar Atributos"><i class="fas fa-cog"></i></a>
+          </div>
 
-            <div class="dice-row">
-                <div class="d6-stat" title="Velocidade Básica">
-                    <div class="d6-face">
-                        <span class="d6-val">{{actor.system.attributes.basic_speed.final}}</span>
-                        <span class="d6-label">VELOC.</span>
-                    </div>
-                </div>
-                <div class="d6-stat main-d6" title="Deslocamento">
-                     <div class="d6-face">
-                        <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
-                        <span class="d6-label">DESLOC.</span>
-                    </div>
-                </div>
-                <div class="d6-stat" title="Modificador de Tamanho">
-                     <div class="d6-face">
-                        <span class="d6-val">{{actor.system.attributes.mt.final}}</span>
-                        <span class="d6-label">MT</span>
-                    </div>
-                </div>
+          <div class="dice-row">
+            <div class="d6-stat" title="Velocidade Básica">
+              <div class="d6-face">
+                <span class="d6-val">{{actor.system.attributes.basic_speed.final}}</span>
+                <span class="d6-label">VELOC.</span>
+              </div>
             </div>
+            <div class="d6-stat main-d6" title="Deslocamento">
+              <div class="d6-face">
+                <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
+                <span class="d6-label">DESLOC.</span>
+              </div>
+            </div>
+            <div class="d6-stat" title="Modificador de Tamanho">
+              <div class="d6-face">
+                <span class="d6-val">{{actor.system.attributes.mt.final}}</span>
+                <span class="d6-label">MT</span>
+              </div>
+            </div>
+          </div>
 
-            <div class="senses-container">
-                <div class="sense-box">
-                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
-                    <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
-                </div>
-                <div class="sense-box">
-                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
-                    <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
-                </div>
-                <div class="sense-box">
-                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
-                    <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
-                </div>
-                <div class="sense-box">
-                    <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
-                    <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
-                </div>
+          <div class="senses-container">
+            <div class="sense-box">
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
+              <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
             </div>
+            <div class="sense-box">
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
+              <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
+            </div>
+            <div class="sense-box">
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
+              <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
+            </div>
+            <div class="sense-box">
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
+              <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
+            </div>
+          </div>
         </div>
 
         {{!-- 4. BARRAS --}}
         <div class="sidebar-block bars-block">
-            <div class="bar-group">
-                <div class="bar-label">
-                    <span>PONTOS DE VIDA</span>
-                    <a class="edit-resource-bar" data-stat="hp"><i class="fas fa-cog"></i></a>
-                </div>
-                <div class="resource-bar original-style">
-                    <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
-                    <div class="bar-inputs">
-                        <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
-                        <span>/</span>
-                        <span class="final-max-value">{{actor.system.attributes.hp.final}}</span>
-                    </div>
-                </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>PONTOS DE VIDA</span>
+              <a class="edit-resource-bar" data-stat="hp"><i class="fas fa-cog"></i></a>
             </div>
-            <div class="bar-group">
-                <div class="bar-label">
-                    <span>PONTOS DE FADIGA</span>
-                    <a class="edit-resource-bar" data-stat="fp"><i class="fas fa-cog"></i></a>
-                </div>
-                <div class="resource-bar original-style">
-                    <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
-                    <div class="bar-inputs">
-                        <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
-                        <span>/</span>
-                        <span class="final-max-value">{{actor.system.attributes.fp.final}}</span>
-                    </div>
-                </div>
+            <div class="resource-bar original-style">
+              <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
+              <div class="bar-inputs">
+                <input type="number" name="system.attributes.hp.value" value="{{actor.system.attributes.hp.value}}"/>
+                <span>/</span>
+                <span class="final-max-value">{{actor.system.attributes.hp.final}}</span>
+              </div>
             </div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>PONTOS DE FADIGA</span>
+              <a class="edit-resource-bar" data-stat="fp"><i class="fas fa-cog"></i></a>
+            </div>
+            <div class="resource-bar original-style">
+              <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
+              <div class="bar-inputs">
+                <input type="number" name="system.attributes.fp.value" value="{{actor.system.attributes.fp.value}}"/>
+                <span>/</span>
+                <span class="final-max-value">{{actor.system.attributes.fp.final}}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-{{!-- 5. SOBREVIVÊNCIA (AGORA COM DETAILS/SUMMARY NATIVO) --}}
+        {{!-- 5. SOBREVIVÊNCIA (AGORA COM DETAILS/SUMMARY NATIVO) --}}
         <div class="sidebar-footer">
-            <details class="sidebar-collapsible" data-group-id="sidebar-survival" {{collapsibleState "sidebar-survival" @root.collapsedData}}>
-                 <summary class="sidebar-summary">
-                    <h4 class="block-title">SOBREVIVÊNCIA</h4>
-                    <i class="fas fa-chevron-down expand-icon"></i>
-                 </summary>
-                 
-                 <div class="collapsible-content">
-                    <div class="survival-grid">
-                        <div class="survival-item">
-                            <label>FOME</label>
-                            <div class="counter-wrapper">
-                                <a class="adjust-survival" data-action="decrease" data-attr="fome"><i class="fas fa-minus"></i></a>
-                                <input type="number" name="system.attributes.fome.value" value="{{actor.system.attributes.fome.value}}" min="0"/>
-                                <a class="adjust-survival" data-action="increase" data-attr="fome"><i class="fas fa-plus"></i></a>
-                            </div>
-                        </div>
-                        <div class="survival-item">
-                            <label>SEDE</label>
-                            <div class="counter-wrapper">
-                                <a class="adjust-survival" data-action="decrease" data-attr="sede"><i class="fas fa-minus"></i></a>
-                                <input type="number" name="system.attributes.sede.value" value="{{actor.system.attributes.sede.value}}" min="0"/>
-                                <a class="adjust-survival" data-action="increase" data-attr="sede"><i class="fas fa-plus"></i></a>
-                            </div>
-                        </div>
-                        <div class="survival-item">
-                            <label>SONO</label>
-                            <div class="counter-wrapper">
-                                <a class="adjust-survival" data-action="decrease" data-attr="sono"><i class="fas fa-minus"></i></a>
-                                <input type="number" name="system.attributes.sono.value" value="{{actor.system.attributes.sono.value}}" min="0"/>
-                                <a class="adjust-survival" data-action="increase" data-attr="sono"><i class="fas fa-plus"></i></a>
-                            </div>
-                        </div>
-                        <div class="survival-item radiation">
-                            <label class="warning-label">RADIAÇÃO</label>
-                            <div class="counter-wrapper">
-                                <a class="adjust-survival" data-action="decrease" data-attr="radiation"><i class="fas fa-minus"></i></a>
-                                <input type="number" name="system.attributes.radiation.value" value="{{actor.system.attributes.radiation.value}}" min="0"/>
-                                <a class="adjust-survival" data-action="increase" data-attr="radiation"><i class="fas fa-plus"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                 </div>
-            </details>
+          <details class="sidebar-collapsible" data-group-id="sidebar-survival" {{collapsibleState "sidebar-survival" @root.collapsedData}}>
+            <summary class="sidebar-summary">
+              <h4 class="block-title">SOBREVIVÊNCIA</h4>
+              <i class="fas fa-chevron-down expand-icon"></i>
+            </summary>
+            
+            <div class="collapsible-content">
+              <div class="survival-grid">
+                <div class="survival-item">
+                  <label>FOME</label>
+                  <div class="counter-wrapper">
+                    <a class="adjust-survival" data-action="decrease" data-attr="fome"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.attributes.fome.value" value="{{actor.system.attributes.fome.value}}" min="0"/>
+                    <a class="adjust-survival" data-action="increase" data-attr="fome"><i class="fas fa-plus"></i></a>
+                  </div>
+                </div>
+                <div class="survival-item">
+                  <label>SEDE</label>
+                  <div class="counter-wrapper">
+                    <a class="adjust-survival" data-action="decrease" data-attr="sede"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.attributes.sede.value" value="{{actor.system.attributes.sede.value}}" min="0"/>
+                    <a class="adjust-survival" data-action="increase" data-attr="sede"><i class="fas fa-plus"></i></a>
+                  </div>
+                </div>
+                <div class="survival-item">
+                  <label>SONO</label>
+                  <div class="counter-wrapper">
+                    <a class="adjust-survival" data-action="decrease" data-attr="sono"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.attributes.sono.value" value="{{actor.system.attributes.sono.value}}" min="0"/>
+                    <a class="adjust-survival" data-action="increase" data-attr="sono"><i class="fas fa-plus"></i></a>
+                  </div>
+                </div>
+                <div class="survival-item radiation">
+                  <label class="warning-label">RADIAÇÃO</label>
+                  <div class="counter-wrapper">
+                    <a class="adjust-survival" data-action="decrease" data-attr="radiation"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.attributes.radiation.value" value="{{actor.system.attributes.radiation.value}}" min="0"/>
+                    <a class="adjust-survival" data-action="increase" data-attr="radiation"><i class="fas fa-plus"></i></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
-    </div>
-</aside>
-{{! ================================================================== }}
-{{! MACRORREGIÃO 3: ÁREA PRINCIPAL (DESIGN RESTAURADO)                 }}
-{{! ================================================================== }}
-<div class="sheet-main-area">
-  <div class="sheet-mini-header">
-    <div class="primary-attributes-container">
-      {{#with actor.system.attributes}}
-        
-        {{!-- Estrutura para ST --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{st.final}}" data-label="Teste de ST" data-attribute-key="st"><label>ST</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.st.mod" value="{{st.mod}}" title="Modificador Fixo (Racial, Vantagens, etc)"/>
-        </div>
+      </div>
+    </aside>
 
-        {{!-- Estrutura para DX --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{dx.final}}" data-label="Teste de DX" data-attribute-key="dx"><label>DX</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.dx.mod" value="{{dx.mod}}" title="Modificador Fixo"/>
-        </div>
+    {{! ================================================================== }}
+    {{! MACRORREGIÃO 3: ÁREA PRINCIPAL (DESIGN RESTAURADO)                 }}
+    {{! ================================================================== }}
+    <div class="sheet-main-area">
+      <div class="sheet-mini-header">
+        <div class="primary-attributes-container">
+          {{#with actor.system.attributes}}
+            
+            {{!-- Estrutura para ST --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{st.final}}" data-label="Teste de ST" data-attribute-key="st"><label>ST</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.st.mod" value="{{st.mod}}" title="Modificador Fixo (Racial, Vantagens, etc)"/>
+            </div>
 
-        {{!-- Estrutura para IQ --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{iq.final}}" data-label="Teste de IQ" data-attribute-key="iq"><label>IQ</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.iq.mod" value="{{iq.mod}}" title="Modificador Fixo"/>
-        </div>
+            {{!-- Estrutura para DX --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{dx.final}}" data-label="Teste de DX" data-attribute-key="dx"><label>DX</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.dx.mod" value="{{dx.mod}}" title="Modificador Fixo"/>
+            </div>
 
-        {{!-- Estrutura para HT --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{ht.final}}" data-label="Teste de HT" data-attribute-key="ht"><label>HT</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.ht.mod" value="{{ht.mod}}" title="Modificador Fixo"/>
-        </div>
+            {{!-- Estrutura para IQ --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{iq.final}}" data-label="Teste de IQ" data-attribute-key="iq"><label>IQ</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.iq.mod" value="{{iq.mod}}" title="Modificador Fixo"/>
+            </div>
 
-        {{!-- Estrutura para Vontade --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{vont.final}}" data-label="Teste de Vontade" data-attribute-key="vont"><label>Vont</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.vont.value" value="{{vont.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.vont.mod" value="{{vont.mod}}" title="Modificador Fixo"/>
-        </div>
+            {{!-- Estrutura para HT --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{ht.final}}" data-label="Teste de HT" data-attribute-key="ht"><label>HT</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.ht.mod" value="{{ht.mod}}" title="Modificador Fixo"/>
+            </div>
 
-        {{!-- Estrutura para Percepção --}}
-        <div class="attribute-box">
-          <a class="rollable" data-type="attribute" data-roll-value="{{per.final}}" data-label="Teste de Percepção" data-attribute-key="per"><label>Per</label></a>
-          <input class="attribute-value" type="number" name="system.attributes.per.value" value="{{per.value}}"/>
-          <input class="attribute-modifier" type="number" name="system.attributes.per.mod" value="{{per.mod}}" title="Modificador Fixo"/>
+            {{!-- Estrutura para Vontade --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{vont.final}}" data-label="Teste de Vontade" data-attribute-key="vont"><label>Vont</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.vont.value" value="{{vont.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.vont.mod" value="{{vont.mod}}" title="Modificador Fixo"/>
+            </div>
+
+            {{!-- Estrutura para Percepção --}}
+            <div class="attribute-box">
+              <a class="rollable" data-type="attribute" data-roll-value="{{per.final}}" data-label="Teste de Percepção" data-attribute-key="per"><label>Per</label></a>
+              <input class="attribute-value" type="number" name="system.attributes.per.value" value="{{per.value}}"/>
+              <input class="attribute-modifier" type="number" name="system.attributes.per.mod" value="{{per.mod}}" title="Modificador Fixo"/>
+            </div>
+          {{/with}}
         </div>
-      {{/with}}
-    </div>
-  </div>
+      </div>
 
       {{! ================================================================== }}
       {{! MACRORREGIÃO 4: NAVEGAÇÃO DAS ABAS                               }}
@@ -288,1417 +290,1351 @@
           </a>
         </nav>
 
-  {{!-- ============   ESSE É O BODY DA FICHA - O QUE FICA DENTRO DE CADA ABA  =============== --}}
+  {{!-- ============   ESSE É O BODY DA FICHA - O QUE FICA DENTRO DE CADA ABA   =============== --}}
   <section class="sheet-body">
 
-{{! ========================================================= }}
-{{!  ABA DE CONFIGURAÇÃO DE MODIFICADORES (HIERARQUIA V3)     }}
-{{! ========================================================= }}
-<div class="tab modifiers-tab" data-group="primary" data-tab="modifiers">
-    
-    {{!-- BARRA DE FERRAMENTAS DE MODIFICADORES --}}
-    <div class="modifiers-toolbar gum-block">
+    {{! ========================================================= }}
+    {{!  ABA DE CONFIGURAÇÃO DE MODIFICADORES (HIERARQUIA V3)     }}
+    {{! ========================================================= }}
+    <div class="tab modifiers-tab" data-group="primary" data-tab="modifiers">
         
-        {{!-- Esquerda: Toggle --}}
-        <div class="toolbar-group left">
-            <label class="toggle-label" title="Se marcado, a janela de rolagem mostrará itens do Compêndio ALÉM dos itens desta ficha.">
-                <input type="checkbox" class="toggle-default-mods" {{checked (lookup actor.flags.gum 'useDefaultModifiers')}}/>
-                <span>Ler Compêndio</span>
-            </label>
-        </div>
-
-        {{!-- Centro: Busca (NOVO) --}}
-        <div class="toolbar-group center search-wrapper">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="modifier-search" placeholder="Filtrar Modificadores..." autocomplete="off"/>
-        </div>
-
-        {{!-- Direita: Ações --}}
-        <div class="toolbar-group right">
-            <button type="button" class="import-modifiers-btn" title="Importar"><i class="fas fa-file-import"></i></button>
-            <button type="button" class="reset-modifiers-btn" title="Resetar"><i class="fas fa-undo"></i></button>
-            <button type="button" class="clear-modifiers-btn" title="Limpar"><i class="fas fa-trash"></i></button>
-        </div>
-    </div>
-
-    <div class="modifiers-masonry-layout">
-     {{!-- Loop Nível 1: Contextos (Melee, Ranged, etc.) --}}
-        {{#each modifiersBySection as |section key|}}
-            {{!-- Só mostra o contexto se tiver subgrupos dentro --}}
-            {{#if section.subgroupsArray.length}}
-            <div class="context-wrapper">
-                <details class="context-details" data-group-id="mod-context-{{key}}" {{collapsibleState (concat "mod-context-" key) @root.collapsedData}}>
-                    <summary class="context-summary">
-                        <span class="ctx-title"><i class="{{section.icon}}"></i> {{section.label}}</span>
-                        
-                        {{!-- Botão Rápido para criar item neste contexto --}}
-                        <a class="item-create ctx-add-btn" data-type="gm_modifier" data-section="{{key}}" title="Novo Modificador aqui">
-                            <i class="fas fa-plus"></i>
-                        </a>
-                    </summary>
-                    
-                    <div class="context-body">
-                        {{!-- Loop Nível 2: Categorias (Manobras, Localização...) --}}
-                        {{#each section.subgroupsArray as |subgroup|}}
-                            <details class="subgroup-details">
-                                <summary class="subgroup-summary">{{subgroup.label}}</summary>
-                                
-                                {{!-- Loop Nível 3: Itens (Grid Compacto) --}}
-                                <div class="mod-mini-grid">
-                                    {{#each subgroup.items}}
-                                        <div class="mod-mini-card item-row" data-item-id="{{this.id}}">
-                                            <div class="mod-info" title="{{this.name}}">
-                                                <img src="{{this.img}}"/>
-                                                <span class="mod-name item-quick-view" style="cursor: pointer;">{{this.name}}</span>
-                                            </div>
-                                            <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
-                                                {{numberFormat this.system.modifier sign=true}}
-                                            </span>
-                                            
-                                            {{!-- Controles Invisíveis (aparecem no hover) --}}
-                                            <div class="mod-controls">
-                                                <a class="item-edit"><i class="fas fa-edit"></i></a>
-                                                <a class="item-delete"><i class="fas fa-trash"></i></a>
-                                            </div>
-                                        </div>
-                                    {{/each}}
-                                </div>
-                            </details>
-                        {{/each}}
-                    </div>
-                </details>
-            </div>
-            {{/if}}
-        {{/each}}
-
-        {{!-- Mensagem se tudo estiver vazio --}}
-        {{#unless actor.items}}
-             <div class="empty-state">
-                <p>Nenhum modificador encontrado. Importe do Compêndio ou crie novos.</p>
-             </div>
-        {{/unless}}
-     </div>
-</div>
-{{! ============================================================= }}
-{{!  ABA DE ASPECTOS SOCIAIS (ESTRUTURA REFINADA E PADRONIZADA)   }}
-{{! ============================================================= }}
-<div class="tab" data-group="primary" data-tab="social">
-  <div class="social-grid">
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Status Social</h4>
-        <a class="add-social-entry" data-type="status" title="Adicionar Status Social"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.social_status_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <div class="item-content-wrapper">
-            <span class="item-name">{{this.society}}: {{this.status_name}}</span>
-            <span class="item-details"> Nível {{this.level}} | {{this.monthly_cost}}</span>
-          </div>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="status"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="status"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Organização</h4>
-        <a class="add-social-entry" data-type="organization" title="Adicionar Organização"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.organization_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <div class="item-content-wrapper">
-          <span class="item-name">{{this.organization_name}}: {{this.status_name}}</span>
-          <span class="item-details">Nível {{this.level}} | Salário: {{this.salary}}</span>
-          </div>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="organization"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="organization"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Familiaridade Cultural</h4>
-        <a class="add-social-entry" data-type="culture" data-type-name="Cultura"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.culture_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <span class="item-name">{{this.culture_name}}</span>
-          <span class="item-details">Nível {{this.level}}</span>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="culture"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="culture"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Idioma</h4>
-        <a class="add-social-entry" data-type="language" data-type-name="Idioma"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.language_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <div class="item-content-wrapper">
-          <span class="item-name">{{this.language_name}}</span>
-          <span class="item-details"> Escrita: {{this.written_level}} | Fala: {{this.spoken_level}}</span>
-          </div>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="language"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="language"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Reputação</h4>
-        <a class="add-social-entry" data-type="reputation" data-type-name="Reputação"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.reputation_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <div class="item-content-wrapper">
-          <span class="item-name">{{this.title}} ({{this.reaction_modifier}})</span>
-          <span class="item-details">{{this.scope}} | {{this.recognition_frequency}}</span>
-          </div>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="reputation"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="reputation"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-
-    <div class="social-block">
-      <div class="block-header">
-        <h4>Riqueza</h4>
-        <a class="add-social-entry" data-type="wealth" data-type-name="Riqueza"><i class="fas fa-plus"></i></a>
-      </div>
-      <ol class="item-list">
-        {{#each actor.system.wealth_entries}}
-        <li class="item item-row" data-entry-id="{{@key}}">
-          <div class="item-content-wrapper">
-          <span class="item-name">{{this.wealth_level}}</span>
-          <span class="item-details">{{this.effects}}</span>
-          </div>
-          <div class="item-controls">
-            <a class="item-control edit-social-entry" data-type="wealth"><i class="fas fa-edit"></i></a>
-            <a class="item-control delete-social-entry" data-type="wealth"><i class="fas fa-trash"></i></a>
-          </div>
-        </li>
-        {{/each}}
-      </ol>
-    </div>
-  </div>
-
-  <div class="social-block-fullwidth">
-    <div class="block-header">
-      <h4>Vínculos</h4>
-      <a class="add-social-entry" data-type="bond" data-type-name="Vínculo"><i class="fas fa-plus"></i></a>
-    </div>
-    <ol class="item-list">
-      {{#each actor.system.bond_entries}}
-      <li class="item item-row bond-row" data-entry-id="{{@key}}">
-        <div class="item-content-wrapper">
-        <span class="bond-name"><strong>{{this.name}}</strong></span>
-        <span class="bond-type">[{{this.bond_type}}]</span>
-        <span class="bond-description">{{this.description}}</span>
-        </div>
-        <div class="item-controls">
-          <a class="item-control edit-social-entry" data-type="bond"><i class="fas fa-edit"></i></a>
-          <a class="item-control delete-social-entry" data-type="bond"><i class="fas fa-trash"></i></a>
-        </div>
-      </li>
-      {{/each}}
-    </ol>
-  </div>
-</div>
-    
-{{!-- ============================================================= --}}
-{{!--   ABA DE CARACTERÍSTICAS (Layout "Papiro Limpo")              --}}
-{{!-- ============================================================= --}}
-<div class="tab" data-group="primary" data-tab="characteristics">
-    
-    {{!-- Bloco Traços Raciais (block1) --}}
-    <div class="form-section" data-block-id="block1">
-        <div class="block-header">
-            <input type="text" name="system.characteristic_blocks.block1.name" value="{{actor.system.characteristic_blocks.block1.name}}"/>
-            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        
-        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-            {{#each (lookup characteristicsByBlock 'block1')}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                    <div class="card-info">
-                        {{!-- O <a> envolve o nome para o quick-view --}}
-                        <span class="item-name">
-                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                        </span>
-                        <div class="card-details">
-                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                            {{#if this.system.self_control_roll}}
-                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
-                            {{/if}}
-                        </div>
-                    </div>
-                    <div class="item-controls">
-                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                    </div>
-                </li>
-            {{/each}}
-            {{#unless (lookup characteristicsByBlock 'block1')}}
-                <li class="placeholder-text">Nenhum item neste grupo.</li>
-            {{/unless}}
-        </ol>
-    </div>
-
-    {{!-- Bloco Vantagens (block2) --}}
-    <div class="form-section" data-block-id="block2">
-        <div class="block-header">
-            <input type="text" name="system.characteristic_blocks.block2.name" value="{{actor.system.characteristic_blocks.block2.name}}"/>
-            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        
-        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-            {{#each (lookup characteristicsByBlock 'block2')}}
-                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                    <div class="card-info">
-                        <span class="item-name">
-                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                        </span>
-                        <div class="card-details">
-                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                            {{#if this.system.self_control_roll}}
-                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
-                            {{/if}}
-                        </div>
-                    </div>
-                    <div class="item-controls">
-                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                    </div>
-                </li>
-            {{/each}}
-            {{#unless (lookup characteristicsByBlock 'block2')}}
-                <li class="placeholder-text">Nenhum item neste grupo.</li>
-            {{/unless}}
-        </ol>
-    </div>
-
-    {{!-- Bloco Desvantagens (block3) --}}
-    <div class="form-section" data-block-id="block3">
-         <div class="block-header">
-            <input type="text" name="system.characteristic_blocks.block3.name" value="{{actor.system.characteristic_blocks.block3.name}}"/>
-            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        
-        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-            {{#each (lookup characteristicsByBlock 'block3')}}
-                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                    <div class="card-info">
-                        <span class="item-name">
-                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                        </span>
-                        <div class="card-details">
-                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                            {{#if this.system.self_control_roll}}
-                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
-                            {{/if}}
-                        </div>
-                    </div>
-                    <div class="item-controls">
-                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                    </div>
-                </li>
-            {{/each}}
-            {{#unless (lookup characteristicsByBlock 'block3')}}
-                <li class="placeholder-text">Nenhum item neste grupo.</li>
-            {{/unless}}
-        </ol>
-    </div>
-
-    {{!-- Bloco Especiais (block4) --}}
-    <div class="form-section" data-block-id="block4">
-         <div class="block-header">
-            <input type="text" name="system.characteristic_blocks.block4.name" value="{{actor.system.characteristic_blocks.block4.name}}"/>
-            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        
-        <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-            {{#each (lookup characteristicsByBlock 'block4')}}
-                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                    <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                    <div class="card-info">
-                        <span class="item-name">
-                            <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                        </span>
-                        <div class="card-details">
-                            <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                            {{#if this.system.self_control_roll}}
-                            <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
-                            {{/if}}
-                        </div>
-                    </div>
-                    <div class="item-controls">
-                        <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                        <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                    </div>
-                </li>
-            {{/each}}
-            {{#unless (lookup characteristicsByBlock 'block4')}}
-                <li class="placeholder-text">Nenhum item neste grupo.</li>
-            {{/unless}}
-        </ol>
-    </div>
-    
-</div>
-
-{{! ========================================================= }}
-{{!       ABA DE PERÍCIAS (LAYOUT ÁRVORE BLINDADO)            }}
-{{! ========================================================= }}
-<div class="tab skills-tab" data-group="primary" data-tab="skills">
-  
-{{!-- 1. BARRA DE FERRAMENTAS (TOPO) --}}
-  <div class="skills-header-tools">
-      <div class="skills-search-wrapper">
-          <i class="fas fa-search"></i>
-          <input type="text" name="search" placeholder="Buscar perícia..." autocomplete="off">
-      </div>
-      
-      <div class="skills-header-buttons">
-          {{!-- NOVO: Botão de Alternar Visualização --}}
-          <a class="toggle-skills-view" title="Alternar: Grupos / Árvore">
-              {{#if (eq @root.skillsViewMode "tree")}}
-                  <i class="fas fa-sitemap"></i> Árvore
-              {{else}}
-                  <i class="fas fa-layer-group"></i> Grupos
-              {{/if}}
-          </a>
-
-          <a class="item-create" data-type="skill" title="Nova Perícia"><i class="fas fa-plus"></i> Nova</a>
-          <a class="sort-control" data-item-type="skill" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-      </div>
-  </div>
-
-  {{!-- 2. LISTA --}}
-  {{!-- Adiciona a classe 'group' ou 'tree' dinamicamente --}}
-  <div class="skills-scroll-area {{#if (eq @root.skillsViewMode 'group')}}{{/if}}">
-
-    {{!-- Loop de Grupos --}}
-    {{#each skillGroupsKeys as |groupName|}}
-        {{#with (lookup ../skillsByGroup groupName) as |skills|}}
-        
-        {{!-- O ID único combina "skill-" com o nome do grupo para evitar conflitos com outras abas --}}
-        <details class="skill-tree-group" data-group-id="skill-{{groupName}}" {{collapsibleState (concat "skill-" groupName) @root.collapsedData}}>
-            <summary class="skill-tree-summary">
-                <span class="st-group-title">{{groupName}}</span>
-                <span class="st-group-count">{{skills.length}}</span>
-                <i class="fas fa-chevron-down st-icon"></i>
-            </summary>
+        {{!-- BARRA DE FERRAMENTAS DE MODIFICADORES --}}
+        <div class="modifiers-toolbar gum-block">
             
-        <ul class="skill-tree-list">
-                {{#each skills}}
-                <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" 
-                    data-item-id="{{this._id}}" 
-                    data-item-type="skill"
-                    draggable="true">
-                    
-                    {{!-- Ícone (Rola) --}}
-                    <div class="st-item-icon rollable" 
-                         style="background-image: url('{{this.img}}');"
-                         data-roll-value="{{this.system.final_nh}}" 
-                         data-label="Teste de {{this.name}}" 
-                         data-type="skill"
-                         title="Rolar Perícia">
-                    </div>
+            {{!-- Esquerda: Toggle --}}
+            <div class="toolbar-group left">
+                <label class="toggle-label" title="Se marcado, a janela de rolagem mostrará itens do Compêndio ALÉM dos itens desta ficha.">
+                    <input type="checkbox" class="toggle-default-mods" {{checked (lookup actor.flags.gum 'useDefaultModifiers')}}/>
+                    <span>Ler Compêndio</span>
+                </label>
+            </div>
 
-                    {{!-- Info Central --}}
-                    <div class="st-item-name">
-                        
-                        {{!-- Nome (Visualização Rápida) --}}
-                        <h4 class="item-quick-view" title="Clique para ver detalhes">{{this.name}}</h4>
-                        
-                        {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
-                        <div class="st-inheritance-path">
+            {{!-- Centro: Busca (NOVO) --}}
+            <div class="toolbar-group center search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="modifier-search" placeholder="Filtrar Modificadores..." autocomplete="off"/>
+            </div>
 
-                                                  {{!-- Meta tags (Dificuldade) --}}
-                        <div class="st-meta">
-                             {{#unless this.isTrunk}}
-                                <span>[{{this.system.difficulty}}]</span>
-                            {{/unless}}
-                        </div>
+            {{!-- Direita: Ações --}}
+            <div class="toolbar-group right">
+                <button type="button" class="import-modifiers-btn" title="Importar"><i class="fas fa-file-import"></i></button>
+                <button type="button" class="reset-modifiers-btn" title="Resetar"><i class="fas fa-undo"></i></button>
+                <button type="button" class="clear-modifiers-btn" title="Limpar"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+
+        <div class="modifiers-masonry-layout">
+         {{!-- Loop Nível 1: Contextos (Melee, Ranged, etc.) --}}
+            {{#each modifiersBySection as |section key|}}
+                {{!-- Só mostra o contexto se tiver subgrupos dentro --}}
+                {{#if section.subgroupsArray.length}}
+                <div class="context-wrapper">
+                    <details class="context-details" data-group-id="mod-context-{{key}}" {{collapsibleState (concat "mod-context-" key) @root.collapsedData}}>
+                        <summary class="context-summary">
+                            <span class="ctx-title"><i class="{{section.icon}}"></i> {{section.label}}</span>
                             
-                            {{!-- REQ 2: Tag de Modificadores Inatos (Só aparece se != 0) --}}
-                            {{#if (ne this.system.other_mods 0)}}
-                                <span class="path-node mod" title="Modificadores Inatos/Outros">
-                                    <i class="fas fa-adjust"></i>
+                            {{!-- Botão Rápido para criar item neste contexto --}}
+                            <a class="item-create ctx-add-btn" data-type="gm_modifier" data-section="{{key}}" title="Novo Modificador aqui">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </summary>
+                        
+                        <div class="context-body">
+                            {{!-- Loop Nível 2: Categorias (Manobras, Localização...) --}}
+                            {{#each section.subgroupsArray as |subgroup|}}
+                                <details class="subgroup-details">
+                                    <summary class="subgroup-summary">{{subgroup.label}}</summary>
+                                    
+                                    {{!-- Loop Nível 3: Itens (Grid Compacto) --}}
+                                    <div class="mod-mini-grid">
+                                        {{#each subgroup.items}}
+                                            <div class="mod-mini-card item-row" data-item-id="{{this.id}}">
+                                                <div class="mod-info" title="{{this.name}}">
+                                                    <img src="{{this.img}}"/>
+                                                    <span class="mod-name item-quick-view" style="cursor: pointer;">{{this.name}}</span>
+                                                </div>
+                                                <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
+                                                    {{numberFormat this.system.modifier sign=true}}
+                                                </span>
+                                                
+                                                {{!-- Controles Invisíveis (aparecem no hover) --}}
+                                                <div class="mod-controls">
+                                                    <a class="item-edit"><i class="fas fa-edit"></i></a>
+                                                    <a class="item-delete"><i class="fas fa-trash"></i></a>
+                                                </div>
+                                            </div>
+                                        {{/each}}
+                                    </div>
+                                </details>
+                            {{/each}}
+                        </div>
+                    </details>
+                </div>
+                {{/if}}
+            {{/each}}
+
+            {{!-- Mensagem se tudo estiver vazio --}}
+            {{#unless actor.items}}
+                 <div class="empty-state">
+                    <p>Nenhum modificador encontrado. Importe do Compêndio ou crie novos.</p>
+                 </div>
+            {{/unless}}
+         </div>
+    </div>
+
+    {{! ============================================================= }}
+    {{!  ABA DE ASPECTOS SOCIAIS (ESTRUTURA REFINADA E PADRONIZADA)   }}
+    {{! ============================================================= }}
+    <div class="tab" data-group="primary" data-tab="social">
+      <div class="social-grid">
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Status Social</h4>
+            <a class="add-social-entry" data-type="status" title="Adicionar Status Social"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.social_status_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <div class="item-content-wrapper">
+                <span class="item-name">{{this.society}}: {{this.status_name}}</span>
+                <span class="item-details"> Nível {{this.level}} | {{this.monthly_cost}}</span>
+              </div>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="status"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="status"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Organização</h4>
+            <a class="add-social-entry" data-type="organization" title="Adicionar Organização"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.organization_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <div class="item-content-wrapper">
+              <span class="item-name">{{this.organization_name}}: {{this.status_name}}</span>
+              <span class="item-details">Nível {{this.level}} | Salário: {{this.salary}}</span>
+              </div>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="organization"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="organization"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Familiaridade Cultural</h4>
+            <a class="add-social-entry" data-type="culture" data-type-name="Cultura"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.culture_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <span class="item-name">{{this.culture_name}}</span>
+              <span class="item-details">Nível {{this.level}}</span>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="culture"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="culture"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Idioma</h4>
+            <a class="add-social-entry" data-type="language" data-type-name="Idioma"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.language_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <div class="item-content-wrapper">
+              <span class="item-name">{{this.language_name}}</span>
+              <span class="item-details"> Escrita: {{this.written_level}} | Fala: {{this.spoken_level}}</span>
+              </div>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="language"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="language"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Reputação</h4>
+            <a class="add-social-entry" data-type="reputation" data-type-name="Reputação"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.reputation_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <div class="item-content-wrapper">
+              <span class="item-name">{{this.title}} ({{this.reaction_modifier}})</span>
+              <span class="item-details">{{this.scope}} | {{this.recognition_frequency}}</span>
+              </div>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="reputation"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="reputation"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+
+        <div class="social-block">
+          <div class="block-header">
+            <h4>Riqueza</h4>
+            <a class="add-social-entry" data-type="wealth" data-type-name="Riqueza"><i class="fas fa-plus"></i></a>
+          </div>
+          <ol class="item-list">
+            {{#each actor.system.wealth_entries}}
+            <li class="item item-row" data-entry-id="{{@key}}">
+              <div class="item-content-wrapper">
+              <span class="item-name">{{this.wealth_level}}</span>
+              <span class="item-details">{{this.effects}}</span>
+              </div>
+              <div class="item-controls">
+                <a class="item-control edit-social-entry" data-type="wealth"><i class="fas fa-edit"></i></a>
+                <a class="item-control delete-social-entry" data-type="wealth"><i class="fas fa-trash"></i></a>
+              </div>
+            </li>
+            {{/each}}
+          </ol>
+        </div>
+      </div>
+
+      <div class="social-block-fullwidth">
+        <div class="block-header">
+          <h4>Vínculos</h4>
+          <a class="add-social-entry" data-type="bond" data-type-name="Vínculo"><i class="fas fa-plus"></i></a>
+        </div>
+        <ol class="item-list">
+          {{#each actor.system.bond_entries}}
+          <li class="item item-row bond-row" data-entry-id="{{@key}}">
+            <div class="item-content-wrapper">
+            <span class="bond-name"><strong>{{this.name}}</strong></span>
+            <span class="bond-type">[{{this.bond_type}}]</span>
+            <span class="bond-description">{{this.description}}</span>
+            </div>
+            <div class="item-controls">
+              <a class="item-control edit-social-entry" data-type="bond"><i class="fas fa-edit"></i></a>
+              <a class="item-control delete-social-entry" data-type="bond"><i class="fas fa-trash"></i></a>
+            </div>
+          </li>
+          {{/each}}
+        </ol>
+      </div>
+    </div>
+    
+{{!-- ============================================================= --}}
+    {{!--   ABA DE CARACTERÍSTICAS (Layout Colapsável e Elegante)       --}}
+    {{!-- ============================================================= --}}
+    <div class="tab" data-group="primary" data-tab="characteristics">
+        
+        {{!-- Helper para iterar sobre os 4 blocos (evita repetição de código) --}}
+        {{#each (object block1="block1" block2="block2" block3="block3" block4="block4") as |blockKey blockId|}}
+            
+            {{!-- Transforma a DIV em DETAILS para ser colapsável --}}
+            {{!-- O ID é importante para o sistema lembrar o que está aberto/fechado --}}
+            <details class="form-section gum-details" id="char-section-{{blockId}}" data-group-id="char-section-{{blockId}}" {{collapsibleState (concat "char-section-" blockId) @root.collapsedData}}>
+                
+                {{!-- O Summary atua como o cabeçalho clicável --}}
+                <summary class="block-header">
+                    <div class="header-left">
+                        <i class="fas fa-chevron-right indicator"></i>
+                        {{!-- Input do Nome do Bloco (Ex: Vantagens) --}}
+                        <input type="text" name="system.characteristic_blocks.{{blockId}}.name" value="{{lookup (lookup ../actor.system.characteristic_blocks blockId) 'name'}}" placeholder="Nome do Bloco"/>
+                    </div>
+                    <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+                </summary>
+                
+                <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+                    {{#each (lookup ../characteristicsByBlock blockId)}}
+                        <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                            <div class="card-info">
+                                <span class="item-name">
+                                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                                </span>
+                                <div class="card-details">
+                                    <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                                    {{#if this.system.self_control_roll}}
+                                    <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                            <div class="item-controls">
+                                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </li>
+                    {{/each}}
+                    {{#unless (lookup ../characteristicsByBlock blockId)}}
+                        <li class="placeholder-text">Arraste itens para cá.</li>
+                    {{/unless}}
+                </ol>
+            </details>
+        {{/each}}
+        
+    </div>
+
+    {{! ========================================================= }}
+    {{!        ABA DE PERÍCIAS (LAYOUT ÁRVORE BLINDADO)             }}
+    {{! ========================================================= }}
+    <div class="tab skills-tab" data-group="primary" data-tab="skills">
+      
+    {{!-- 1. BARRA DE FERRAMENTAS (TOPO) --}}
+      <div class="skills-header-tools">
+          <div class="skills-search-wrapper">
+              <i class="fas fa-search"></i>
+              <input type="text" name="search" placeholder="Buscar perícia..." autocomplete="off">
+          </div>
+          
+          <div class="skills-header-buttons">
+              {{!-- NOVO: Botão de Alternar Visualização --}}
+              <a class="toggle-skills-view" title="Alternar: Grupos / Árvore">
+                  {{#if (eq @root.skillsViewMode "tree")}}
+                      <i class="fas fa-sitemap"></i> Árvore
+                  {{else}}
+                      <i class="fas fa-layer-group"></i> Grupos
+                  {{/if}}
+              </a>
+
+              <a class="item-create" data-type="skill" title="Nova Perícia"><i class="fas fa-plus"></i> Nova</a>
+              <a class="sort-control" data-item-type="skill" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          </div>
+      </div>
+
+      {{!-- 2. LISTA --}}
+      {{!-- Adiciona a classe 'group' ou 'tree' dinamicamente --}}
+      <div class="skills-scroll-area {{#if (eq @root.skillsViewMode 'group')}}group{{else}}tree{{/if}}">
+
+        {{!-- Loop de Grupos --}}
+        {{#each skillGroupsKeys as |groupName|}}
+            {{#with (lookup ../skillsByGroup groupName) as |skills|}}
+            
+            {{!-- O ID único combina "skill-" com o nome do grupo para evitar conflitos com outras abas --}}
+            <details class="skill-tree-group" data-group-id="skill-{{groupName}}" {{collapsibleState (concat "skill-" groupName) @root.collapsedData}}>
+                <summary class="skill-tree-summary">
+                    <span class="st-group-title">{{groupName}}</span>
+                    <span class="st-group-count">{{skills.length}}</span>
+                    <i class="fas fa-chevron-down st-icon"></i>
+                </summary>
+                
+            <ul class="skill-tree-list">
+                    {{#each skills}}
+                    <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" 
+                        data-item-id="{{this._id}}" 
+                        data-item-type="skill"
+                        draggable="true">
+                        
+                        {{!-- Ícone (Rola) --}}
+                        <div class="st-item-icon rollable" 
+                             style="background-image: url('{{this.img}}');"
+                             data-roll-value="{{this.system.final_nh}}" 
+                             data-label="Teste de {{this.name}}" 
+                             data-type="skill"
+                             title="Rolar Perícia">
+                        </div>
+
+                        {{!-- Info Central --}}
+                        <div class="st-item-name">
+                            
+                            {{!-- Nome (Visualização Rápida) --}}
+                            <h4 class="item-quick-view" title="Clique para ver detalhes">{{this.name}}</h4>
+                            
+                            {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
+                            <div class="st-inheritance-path">
+
+                                            {{!-- Meta tags (Dificuldade) --}}
+                            <div class="st-meta">
+                                 {{#unless this.isTrunk}}
+                                    <span>[{{this.system.difficulty}}]</span>
+                                {{/unless}}
+                            </div>
+                                
+                                {{!-- REQ 2: Tag de Modificadores Inatos (Só aparece se != 0) --}}
+                                {{#if (ne this.system.other_mods 0)}}
+                                    <span class="path-node mod" title="Modificadores Inatos/Outros">
+                                        <i class="fas fa-adjust"></i>
+                                        <span class="path-val">
+                                            {{#if (gte this.system.other_mods 0)}}+{{/if}}{{this.system.other_mods}}
+                                        </span>
+                                    </span>
+                                {{/if}}
+
+                                {{!-- REQ 1: Meu Próprio Atributo + Nível (SEMPRE VISÍVEL) --}}
+                                <span class="path-node self" title="Base: {{this.system.base_attribute}}">
+                                    {{this.system.base_attribute}}
                                     <span class="path-val">
-                                        {{#if (gte this.system.other_mods 0)}}+{{/if}}{{this.system.other_mods}}
+                                        {{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}
                                     </span>
                                 </span>
-                            {{/if}}
 
-                            {{!-- REQ 1: Meu Próprio Atributo + Nível (SEMPRE VISÍVEL) --}}
-                            <span class="path-node self" title="Base: {{this.system.base_attribute}}">
-                                {{this.system.base_attribute}}
-                                <span class="path-val">
-                                    {{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}
-                                </span>
-                            </span>
-
-                            {{!-- Caminho dos Ancestrais (APENAS NO MODO ÁRVORE) --}}
-                            {{#if (eq @root.skillsViewMode "tree")}}
-                                {{#if this.inheritancePath.length}}
-                                    {{#each this.inheritancePath}}
-                                        <i class="fas fa-chevron-right path-separator"></i>
-                                        <span class="path-node {{this.type}}" title="Bônus vindo de: {{this.name}}">
-                                            <span class="path-val">{{#if (gte this.value 0)}}+{{/if}}{{this.value}}</span>
-                                        </span>
-                                    {{/each}}
+                                {{!-- Caminho dos Ancestrais (APENAS NO MODO ÁRVORE) --}}
+                                {{#if (eq @root.skillsViewMode "tree")}}
+                                    {{#if this.inheritancePath.length}}
+                                        {{#each this.inheritancePath}}
+                                            <i class="fas fa-chevron-right path-separator"></i>
+                                            <span class="path-node {{this.type}}" title="Bônus vindo de: {{this.name}}">
+                                                <span class="path-val">{{#if (gte this.value 0)}}+{{/if}}{{this.value}}</span>
+                                            </span>
+                                        {{/each}}
+                                    {{/if}}
                                 {{/if}}
-                            {{/if}}
+                            </div>
                         </div>
+
+                        {{!-- NH Final --}}
+                        <div class="st-nh-box">
+                            <span>NH</span>
+                            <a class="rollable" 
+                               data-roll-value="{{this.system.final_nh}}" 
+                               data-label="Teste de {{this.name}}" 
+                               data-type="skill"
+                               data-item-id="{{this._id}}">
+                               {{this.system.final_nh}}
+                            </a>
+                        </div>
+
+                        {{!-- Pontos --}}
+                        <div class="st-pts-box" title="Pontos">
+                            <i class="fas fa-star"></i> {{this.system.points}}
+                        </div>
+
+                        {{!-- Controles --}}
+                        <div class="st-controls">
+                            <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </li>
+                    {{/each}}
+                </ul>
+            </details>
+            {{/with}}
+        {{/each}}
+
+        {{!-- Vazio --}}
+        {{#unless skillGroupsKeys}}
+            <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
+                <p>Nenhuma perícia adicionada.</p>
+            </div>
+        {{/unless}}
+
+      </div>
+    </div>
+
+    {{! ========================================================= }}
+    {{!  ABA DE CONJURAÇÕES (ESTRUTURA REFINADA E PADRONIZADA)    }}
+    {{! ========================================================= }}
+    <div class="tab" data-group="primary" data-tab="spells">
+
+      {{!-- Bloco da Habilidade de Conjuração (Mantido) --}}
+      <div class="casting-ability-box skill-block">
+        <div class="block-header">
+          <div class="header-main-info">
+            <h4>{{actor.system.casting_ability.name}} {{actor.system.casting_ability.level}}</h4>
+            <span class="header-subtitle">{{actor.system.casting_ability.source}}</span>
+          </div>
+          <div class="header-controls">
+            <a class="edit-casting-ability" title="Editar Habilidade"><i class="fas fa-edit"></i></a>
+          </div>
+        </div>
+        <div class="ability-description">
+          {{{actor.system.casting_ability.description}}}
+        </div>
+      </div>
+
+      {{!-- Bloco de Reservas (Mantido) --}}
+      <div class="energy-reserves-box skill-block">
+        <div class="block-header">
+          <h4>Reservas de Energia</h4>
+          <div class="header-controls">
+            <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
+          </div>
+        </div>
+        <div class="energy-reserves-list">
+          {{#each actor.system.spell_reserves}}
+          <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
+            <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+            <div class="meter-inputs">
+              <input type="number" data-property="current" value="{{this.current}}"/>
+              <span>/</span>
+              <input type="number" data-property="max" value="{{this.max}}"/>
+            </div>
+            <div class="item-controls">
+              <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
+              <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- LISTA DE MAGIAS (NOVA ESTRUTURA COLAPSÁVEL) --}}
+      <div class="skill-block spells-list-box">
+        <div class="block-header">
+          <h4>Lista de Magias</h4>
+          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+        
+        <div class="spell-list-v2">
+          {{#each itemsByType.spell}}
+<div class="item-wrapper item" data-item-id="{{this.id}}" draggable="true"> {{!-- Wrapper novo --}}
+    
+    <details class="spell-card-details" data-group-id="spell-card-{{this.id}}" {{collapsibleState (concat "spell-card-" this.id) @root.collapsedData}}>
+            {{!-- CABEÇALHO (Resumo) --}}
+            <summary class="spell-summary">
+                <div class="spell-main-info">
+                    <i class="fas fa-chevron-right indicator"></i>
+                    <span class="spell-name">{{this.name}}</span>
+                </div>
+
+                <div class="spell-quick-stats">
+                    {{!-- NH (Destaque Principal) --}}
+                    <div class="quick-stat nh">
+                        <label>NH</label>
+                        <a class="rollable value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    </div>
+                    {{!-- Custo (Info rápida) --}}
+                    <div class="quick-stat cost">
+                        <i class="fas fa-bolt"></i> {{this.system.mana_cost}}
                     </div>
 
-                    {{!-- NH Final --}}
-                    <div class="st-nh-box">
-                        <span>NH</span>
-                        <a class="rollable" 
-                           data-roll-value="{{this.system.final_nh}}" 
-                           data-label="Teste de {{this.name}}" 
-                           data-type="skill"
-                           data-item-id="{{this._id}}">
-                           {{this.system.final_nh}}
-                        </a>
-                    </div>
-
-                    {{!-- Pontos --}}
-                    <div class="st-pts-box" title="Pontos">
-                        <i class="fas fa-star"></i> {{this.system.points}}
+                    {{!-- Classe (Info rápida) --}}
+                    <div class="group-tag sp_cl">
+                        <label>{{this.system.spell_class}}</label>
                     </div>
 
                     {{!-- Controles --}}
-                    <div class="st-controls">
-                        <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>
-                        <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                    <div class="item-controls">
+                      <a class="item-control item-quick-view" data-item-id="{{this.id}}" title="Visualizar Card"><i class="fas fa-eye"></i></a>
+                        <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
                     </div>
-                </li>
-                {{/each}}
-            </ul>
-        </details>
-        {{/with}}
-    {{/each}}
+                </div>
+            </summary>
 
-    {{!-- Vazio --}}
-    {{#unless skillGroupsKeys}}
-        <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
-            <p>Nenhuma perícia adicionada.</p>
-        </div>
-    {{/unless}}
+            {{!-- CONTEÚDO EXPANDIDO (Detalhes) --}}
+            <div class="spell-expanded-content">
+                <div class="spell-tags-row">
+                    
+                    {{!-- Ataque (Se houver) --}}
+                    {{#if this.system.attack_nh}}
+                    <span class="tag-box attack">
+                        <label>Ataque</label>
+                        <a class="rollable value" data-type="attack" data-attack-type="spell" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
+                    </span>
+                    {{/if}}
 
-  </div>
-</div>
+                    {{!-- Dano (Se houver) --}}
+                    {{#if this.system.damage.formula}}
+                    <span class="tag-box damage">
+                        <label>Dano</label>
+                        <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{this.id}}">
+                            {{this.system.damage.formula}} {{this.system.damage.type}}
+                        </a>
+                    </span>
+                    {{/if}}
 
-{{! ========================================================= }}
-{{!  ABA DE CONJURAÇÕES (ESTRUTURA REFINADA E PADRONIZADA)    }}
-{{! ========================================================= }}
-<div class="tab" data-group="primary" data-tab="spells">
+                    {{!-- Outros Detalhes --}}
+                    
+                    <span class="tag-box"><label>Tempo</label> <span class="value">{{this.system.casting_time}}</span></span>
+                    <span class="tag-box"><label>Duração</label> <span class="value">{{this.system.duration}}</span></span>
+                    <span class="tag-box"><label>Custo</label> <span class="value">{{this.system.mana_cost}}</span></span>
+                    
+                    {{#if (ne this.system.mana_maint "0")}}
+                    <span class="tag-box"><label>Manut.</label> <span class="value">{{this.system.mana_maint}}</span></span>
+                    {{/if}}
+                    
+                    {{#if this.system.resistance}}
+                    <span class="tag-box resistance"><label>Resiste</label> <span class="value">{{this.system.resistance}}</span></span>
+                    {{/if}}
+                    <span class="tag-box"><label>Escola</label> <span class="value">{{this.system.spell_school}}</span></span>
+                </div>
 
-  {{!-- Bloco da Habilidade de Conjuração (Mantido) --}}
-  <div class="casting-ability-box skill-block">
-    <div class="block-header">
-      <div class="header-main-info">
-        <h4>{{actor.system.casting_ability.name}} {{actor.system.casting_ability.level}}</h4>
-        <span class="header-subtitle">{{actor.system.casting_ability.source}}</span>
-      </div>
-      <div class="header-controls">
-        <a class="edit-casting-ability" title="Editar Habilidade"><i class="fas fa-edit"></i></a>
-      </div>
-    </div>
-    <div class="ability-description">
-      {{{actor.system.casting_ability.description}}}
-    </div>
-  </div>
-
-  {{!-- Bloco de Reservas (Mantido) --}}
-  <div class="energy-reserves-box skill-block">
-    <div class="block-header">
-      <h4>Reservas de Energia</h4>
-      <div class="header-controls">
-        <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-      </div>
-    </div>
-    <div class="energy-reserves-list">
-      {{#each actor.system.spell_reserves}}
-      <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
-        <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-        <div class="meter-inputs">
-          <input type="number" data-property="current" value="{{this.current}}"/>
-          <span>/</span>
-          <input type="number" data-property="max" value="{{this.max}}"/>
-        </div>
-        <div class="item-controls">
-          <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
-          <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
+                {{!-- Efeito Descritivo --}}
+                {{#if this.system.effect}}
+                <div class="spell-effect-text">
+                    <strong>Efeito:</strong> {{this.system.effect}}
+                </div>
+                {{/if}}
+            </div>
+          </details>
+          </div>
+          {{/each}}
         </div>
       </div>
-      {{/each}}
-    </div>
-  </div>
-
-  {{!-- LISTA DE MAGIAS (NOVA ESTRUTURA COLAPSÁVEL) --}}
-  <div class="skill-block spells-list-box">
-    <div class="block-header">
-      <h4>Lista de Magias</h4>
-      <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
     </div>
     
-    <div class="spell-list-v2">
-      {{#each itemsByType.spell}}
-      <details class="spell-card-details item" data-item-id="{{this.id}}" data-group-id="spell-card-{{this.id}}" {{collapsibleState (concat "spell-card-" this.id) @root.collapsedData}}>
-        
-        {{!-- CABEÇALHO (Resumo) --}}
-        <summary class="spell-summary">
-            <div class="spell-main-info">
-                <i class="fas fa-chevron-right indicator"></i>
-                <span class="spell-name">{{this.name}}</span>
-            </div>
+    {{! ========================================================= }}
+    {{!  ABA DE PODERES (ESTRUTURA REFINADA E PADRONIZADA)        }}
+    {{! ========================================================= }}
+    <div class="tab" data-group="primary" data-tab="powers">
 
-            <div class="spell-quick-stats">
-                {{!-- NH (Destaque Principal) --}}
-                <div class="quick-stat nh">
-                    <label>NH</label>
-                    <a class="rollable value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                </div>
-                {{!-- Custo (Info rápida) --}}
-                <div class="quick-stat cost">
-                    <i class="fas fa-bolt"></i> {{this.system.mana_cost}}
-                </div>
-
-                {{!-- Classe (Info rápida) --}}
-                <div class="group-tag sp_cl">
-                    <label>{{this.system.spell_class}}</label>
-                </div>
-
-                {{!-- Controles --}}
-                <div class="item-controls">
-                  <a class="item-control item-quick-view" data-item-id="{{this.id}}" title="Visualizar Card"><i class="fas fa-eye"></i></a>
-                    <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                    <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                </div>
-            </div>
-        </summary>
-
-        {{!-- CONTEÚDO EXPANDIDO (Detalhes) --}}
-        <div class="spell-expanded-content">
-            <div class="spell-tags-row">
-                
-                {{!-- Ataque (Se houver) --}}
-                {{#if this.system.attack_nh}}
-                <span class="tag-box attack">
-                    <label>Ataque</label>
-                    <a class="rollable value" data-type="attack" data-attack-type="spell" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
-                </span>
-                {{/if}}
-
-                {{!-- Dano (Se houver) --}}
-                {{#if this.system.damage.formula}}
-                <span class="tag-box damage">
-                    <label>Dano</label>
-                    <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{this.id}}">
-                        {{this.system.damage.formula}} {{this.system.damage.type}}
-                    </a>
-                </span>
-                {{/if}}
-
-                {{!-- Outros Detalhes --}}
-                
-                <span class="tag-box"><label>Tempo</label> <span class="value">{{this.system.casting_time}}</span></span>
-                <span class="tag-box"><label>Duração</label> <span class="value">{{this.system.duration}}</span></span>
-                <span class="tag-box"><label>Custo</label> <span class="value">{{this.system.mana_cost}}</span></span>
-                
-                {{#if (ne this.system.mana_maint "0")}}
-                <span class="tag-box"><label>Manut.</label> <span class="value">{{this.system.mana_maint}}</span></span>
-                {{/if}}
-                
-                {{#if this.system.resistance}}
-                <span class="tag-box resistance"><label>Resiste</label> <span class="value">{{this.system.resistance}}</span></span>
-                {{/if}}
-                <span class="tag-box"><label>Escola</label> <span class="value">{{this.system.spell_school}}</span></span>
-            </div>
-
-            {{!-- Efeito Descritivo --}}
-            {{#if this.system.effect}}
-            <div class="spell-effect-text">
-                <strong>Efeito:</strong> {{this.system.effect}}
-            </div>
-            {{/if}}
-        </div>
-      </details>
-      {{/each}}
-    </div>
-  </div>
-</div>
-    
-{{! ========================================================= }}
-{{!  ABA DE PODERES (ESTRUTURA REFINADA E PADRONIZADA)        }}
-{{! ========================================================= }}
-<div class="tab" data-group="primary" data-tab="powers">
-
-  {{!-- Bloco da Fonte de Poder (v2 - Compacto) --}}
-<div class="casting-ability-box skill-block">
-    <div class="block-header">
-      <div class="header-main-info">
-        <h4>{{actor.system.power_source.name}} {{actor.system.power_source.level}}</h4>
-        {{! O subtítulo é um pouco diferente, mas a estrutura é idêntica }}
-        <span class="header-subtitle">{{actor.system.power_source.source}} | Talento de Poder: +{{actor.system.power_source.power_talent}}</span>
-      </div>
-      <div class="header-controls">
-        <a class="edit-power-source" title="Editar Fonte de Poder"><i class="fas fa-edit"></i></a>
-      </div>
-    </div>
-    <div class="ability-description">
-      {{{actor.system.power_source.description}}}
-    </div>
-</div>
-
-  {{!-- Bloco das Reservas de Energia --}}
-  <div class="energy-reserves-box skill-block">
-    <div class="block-header">
-      <h4>Reservas de Energia</h4>
-      <div class="header-controls">
-        <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-      </div>
-    </div>
-    <div class="energy-reserves-list">
-      {{#each actor.system.power_reserves}}
-      <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="power">
-        <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-        <div class="meter-inputs">
-          <input type="number" data-property="current" value="{{this.current}}"/>
-          <span>/</span>
-          <input type="number" data-property="max" value="{{this.max}}"/>
-        </div>
-        <div class="item-controls">
-          <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
-          <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
-        </div>
-      </div>
-      {{/each}}
-    </div>
-  </div>
-
-  {{!-- LISTA DE PODERES --}}
-  <div class="skill-block powers-list-box">
-    <div class="block-header">
-      <h4>Lista de Habilidades de Poder</h4>
-      <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-    </div>
-    
-    <div class="spell-list-v2 powers"> {{!-- Reutilizando a classe base + modificador 'powers' --}}
-      {{#each itemsByType.power}}
-      <details class="spell-card-details item power-card" data-item-id="{{this.id}}" data-group-id="power-card-{{this.id}}" {{collapsibleState (concat "power-card-" this.id) @root.collapsedData}}>
-        
-        <summary class="spell-summary">
-            <div class="spell-main-info">
-                <i class="fas fa-chevron-right indicator"></i>
-                <span class="spell-name">{{this.name}}</span>
-            </div>
-
-            <div class="spell-quick-stats">
-                <div class="quick-stat nh">
-                    <label>NH</label>
-                    <a class="rollable value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                </div>
-
-                <div class="quick-stat cost">
-                    <i class="fas fa-bolt"></i> {{this.system.activation_cost}}
-                </div>
-
-                {{!-- Classe (Info rápida) --}}
-                <div class="group-tag pw">
-                    <label>{{this.system.spell_class}}</label>
-                </div>
-
-                <div class="item-controls">
-                  <a class="item-control item-quick-view" data-item-id="{{this.id}}" title="Visualizar Card"><i class="fas fa-eye"></i></a>
-                    <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                    <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                </div>
-            </div>
-        </summary>
-
-        <div class="spell-expanded-content">
-            <div class="spell-tags-row">
-
-                {{!-- Ataque (Se houver) --}}
-                {{#if this.system.attack_nh}}
-                <span class="tag-box attack">
-                    <label>Ataque</label>
-                    <a class="rollable value" data-type="attack" data-attack-type="spell" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
-                </span>
-                {{/if}}
-
-                {{!-- Dano (Se houver) --}}
-                {{#if this.system.damage.formula}}
-                <span class="tag-box damage">
-                    <label>Dano</label>
-                    <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{this.id}}">
-                        {{this.system.damage.formula}} {{this.system.damage.type}}
-                    </a>
-                </span>
-                {{/if}}
-
-                <span class="tag-box"><label>Tempo</label> <span class="value">{{this.system.activation_time}}</span></span>
-                <span class="tag-box"><label>Duração</label> <span class="value">{{this.system.duration}}</span></span>
-                <span class="tag-box"><label>Custo</label> <span class="value">{{this.system.activation_cost}}</span></span>
-                
-                {{#if (ne this.system.maint_cost "0")}}
-                <span class="tag-box"><label>Manut.</label> <span class="value">{{this.system.maint_cost}}</span></span>
-                {{/if}}
-
-                {{#if this.system.resistance}}
-                <span class="tag-box resistance"><label>Resiste</label> <span class="value">{{this.system.resistance}}</span></span>
-                {{/if}}
-            </div>
-
-            {{#if this.system.effect}}
-            <div class="spell-effect-text">
-                <strong>Efeito:</strong> {{this.system.effect}}
-            </div>
-            {{/if}}
-        </div>
-      </details>
-      {{/each}}
-    </div>
-  </div>
-</div>
-    
-{{! ========================================================= }}
-{{!  ABA DE EQUIPAMENTOS (ESTRUTURA REFINADA E PADRONIZADA)   }}
-{{! ========================================================= }}
-<div class="tab" data-group="primary" data-tab="equipment">
-
-  {{!-- Bloco de Sumário de Carga --}}
-  <div class="encumbrance-block gum-block">
-  <div class="block-header">
-    <h4>Sumário de Carga</h4>
-    <div class="encumbrance-total-weight">
-      Peso Total: <strong>{{actor.system.encumbrance.total_weight}} kg</strong>
-    </div>
-  </div>
-
-  {{!-- O novo medidor de carga visual --}}
-  <div class="encumbrance-meter">
-    {{#each actor.system.encumbrance.level_data}}
-      <div class="encumbrance-level-box {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}">
-        <div class="level-name">{{this.name}}</div>
-        <div class="level-weight">≤{{this.max}} kg</div>
-      </div>
-    {{/each}}
-  </div>
-
-  <div class="encumbrance-footer">
-    <label class="ignore-weight-label">
-      <input type="checkbox" name="system.encumbrance.ignore_carried_weight" {{checked actor.system.encumbrance.ignore_carried_weight}}/>
-      <span>Ignorar Peso Carregado</span>
-    </label>
-  </div>
-</div>
-
-  {{!-- Colunas de Equipamentos --}}
-  <div class="equipment-columns">
-
-    {{!-- Coluna 1: Em Uso --}}
-    <div class="equipment-column">
+      {{!-- Bloco da Fonte de Poder (v2 - Compacto) --}}
+    <div class="casting-ability-box skill-block">
         <div class="block-header">
-            <h4 class="column-header">Em Uso</h4>
-            <a class="sort-control" data-item-type="equipment" data-location="equipped" title="Ordenar Coluna">
+          <div class="header-main-info">
+            <h4>{{actor.system.power_source.name}} {{actor.system.power_source.level}}</h4>
+            {{! O subtítulo é um pouco diferente, mas a estrutura é idêntica }}
+            <span class="header-subtitle">{{actor.system.power_source.source}} | Talento de Poder: +{{actor.system.power_source.power_talent}}</span>
+          </div>
+          <div class="header-controls">
+            <a class="edit-power-source" title="Editar Fonte de Poder"><i class="fas fa-edit"></i></a>
+          </div>
+        </div>
+        <div class="ability-description">
+          {{{actor.system.power_source.description}}}
+        </div>
+    </div>
+
+      {{!-- Bloco das Reservas de Energia --}}
+      <div class="energy-reserves-box skill-block">
+        <div class="block-header">
+          <h4>Reservas de Energia</h4>
+          <div class="header-controls">
+            <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
+          </div>
+        </div>
+        <div class="energy-reserves-list">
+          {{#each actor.system.power_reserves}}
+          <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="power">
+            <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+            <div class="meter-inputs">
+              <input type="number" data-property="current" value="{{this.current}}"/>
+              <span>/</span>
+              <input type="number" data-property="max" value="{{this.max}}"/>
+            </div>
+            <div class="item-controls">
+              <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
+              <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- LISTA DE PODERES --}}
+      <div class="skill-block powers-list-box">
+        <div class="block-header">
+          <h4>Lista de Habilidades de Poder</h4>
+          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+        
+<div class="spell-list-v2 powers"> 
+  {{#each itemsByType.power}}
+  {{!-- Adicionado o wrapper DIV com a classe .item --}}
+  <div class="item-wrapper item" data-item-id="{{this.id}}" draggable="true"> 
+    
+    {{!-- A classe .item SAIU daqui de baixo --}}
+    <details class="spell-card-details power-card" data-group-id="power-card-{{this.id}}" {{collapsibleState (concat "power-card-" this.id) @root.collapsedData}}>
+      
+      <summary class="spell-summary">
+        <div class="spell-main-info">
+          <i class="fas fa-chevron-right indicator"></i>
+          <span class="spell-name">{{this.name}}</span>
+        </div>
+
+        <div class="spell-quick-stats">
+          <div class="quick-stat nh">
+            <label>NH</label>
+            <a class="rollable value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+          </div>
+
+          <div class="quick-stat cost">
+            <i class="fas fa-bolt"></i> {{this.system.activation_cost}}
+          </div>
+
+          <div class="group-tag pw">
+            <label>{{this.system.spell_class}}</label>
+          </div>
+
+          <div class="item-controls">
+            {{!-- O Quick View vai funcionar agora por causa da correção no JS --}}
+            <a class="item-control item-quick-view" data-item-id="{{this.id}}" title="Visualizar Card"><i class="fas fa-eye"></i></a>
+            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+            <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+          </div>
+        </div>
+      </summary>
+
+            <div class="spell-expanded-content">
+                <div class="spell-tags-row">
+
+                    {{!-- Ataque (Se houver) --}}
+                    {{#if this.system.attack_nh}}
+                    <span class="tag-box attack">
+                        <label>Ataque</label>
+                        <a class="rollable value" data-type="attack" data-attack-type="spell" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
+                    </span>
+                    {{/if}}
+
+                    {{!-- Dano (Se houver) --}}
+                    {{#if this.system.damage.formula}}
+                    <span class="tag-box damage">
+                        <label>Dano</label>
+                        <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{this.id}}">
+                            {{this.system.damage.formula}} {{this.system.damage.type}}
+                        </a>
+                    </span>
+                    {{/if}}
+
+                    <span class="tag-box"><label>Tempo</label> <span class="value">{{this.system.activation_time}}</span></span>
+                    <span class="tag-box"><label>Duração</label> <span class="value">{{this.system.duration}}</span></span>
+                    <span class="tag-box"><label>Custo</label> <span class="value">{{this.system.activation_cost}}</span></span>
+                    
+                    {{#if (ne this.system.maint_cost "0")}}
+                    <span class="tag-box"><label>Manut.</label> <span class="value">{{this.system.maint_cost}}</span></span>
+                    {{/if}}
+
+                    {{#if this.system.resistance}}
+                    <span class="tag-box resistance"><label>Resiste</label> <span class="value">{{this.system.resistance}}</span></span>
+                    {{/if}}
+                </div>
+
+                {{#if this.system.effect}}
+                <div class="spell-effect-text">
+                    <strong>Efeito:</strong> {{this.system.effect}}
+                </div>
+                {{/if}}
+            </div>
+    </details>
+  </div> {{!-- Fecha Wrapper --}}
+  {{/each}}
+</div>
+      </div>
+    </div>
+    
+    {{! ========================================================= }}
+    {{!  ABA DE EQUIPAMENTOS (ESTRUTURA REFINADA E PADRONIZADA)   }}
+    {{! ========================================================= }}
+    <div class="tab" data-group="primary" data-tab="equipment">
+
+      {{!-- Bloco de Sumário de Carga --}}
+      <div class="encumbrance-block gum-block">
+      <div class="block-header">
+        <h4>Sumário de Carga</h4>
+        <div class="encumbrance-total-weight">
+          Peso Total: <strong>{{actor.system.encumbrance.total_weight}} kg</strong>
+        </div>
+      </div>
+
+      {{!-- O novo medidor de carga visual --}}
+      <div class="encumbrance-meter">
+        {{#each actor.system.encumbrance.level_data}}
+          <div class="encumbrance-level-box {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}">
+            <div class="level-name">{{this.name}}</div>
+            <div class="level-weight">≤{{this.max}} kg</div>
+          </div>
+        {{/each}}
+      </div>
+
+      <div class="encumbrance-footer">
+        <label class="ignore-weight-label">
+          <input type="checkbox" name="system.encumbrance.ignore_carried_weight" {{checked actor.system.encumbrance.ignore_carried_weight}}/>
+          <span>Ignorar Peso Carregado</span>
+        </label>
+      </div>
+    </div>
+
+      {{!-- Colunas de Equipamentos --}}
+      <div class="equipment-columns">
+
+        {{!-- Coluna 1: Em Uso --}}
+        <div class="equipment-column">
+            <div class="block-header">
+                <h4 class="column-header">Em Uso</h4>
+                <a class="sort-control" data-item-type="equipment" data-location="equipped" title="Ordenar Coluna">
+                  <i class="fas fa-sort-alpha-down"></i>
+                </a>
+              </div>
+            
+            {{! ✅ MUDANÇA: Adicionamos a classe 'flex-wrap-container' ao <ol> }}
+            <ol class="item-list flex-wrap-container" data-location="equipped">
+              {{#each equipmentInUse}}
+              
+              {{! ✅ MUDANÇA: Esta é a nova estrutura do 'card' (baseada na aba Características) }}
+              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                
+                <div class="card-info">
+                  <span class="item-name">
+                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                  </span>
+                  
+                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+                  <div class="card-details equipment-stats">
+                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
+
+                    {{#if this.system.dr}}
+                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                    {{/if}}
+
+                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                    {{else}}
+                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                      {{/with}}
+                    {{/with}}
+                  </div>
+                </div>
+                
+                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
+                <div class="item-controls">
+                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
+                </div>
+              </li>
+              {{/each}}
+              
+              {{#unless equipmentInUse}}
+                <li class="placeholder-text">Nenhum item em uso.</li>
+              {{/unless}}
+            </ol>
+        </div>
+
+        {{!-- Coluna 2: Carregado --}}
+        <div class="equipment-column">
+          <div class="block-header">
+            <h4 class="column-header">Carregado</h4>
+            <a class="sort-control" data-item-type="equipment" data-location="carried" title="Ordenar Coluna">
               <i class="fas fa-sort-alpha-down"></i>
             </a>
           </div>
-        
-        {{! ✅ MUDANÇA: Adicionamos a classe 'flex-wrap-container' ao <ol> }}
-        <ol class="item-list flex-wrap-container" data-location="equipped">
-          {{#each equipmentInUse}}
           
-          {{! ✅ MUDANÇA: Esta é a nova estrutura do 'card' (baseada na aba Características) }}
-          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-            
-            <div class="card-info">
-              <span class="item-name">
-                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              
-              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-              <div class="card-details equipment-stats">
-                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
+          {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
+          <ol class="item-list flex-wrap-container" data-location="carried">
+            {{#each equipmentCarried}}
+              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                
+                <div class="card-info">
+                  <span class="item-name">
+                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                  </span>
+                  
+                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+                  <div class="card-details equipment-stats">
+                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
 
-                {{#if this.system.dr}}
-                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                {{/if}}
+                    {{#if this.system.dr}}
+                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                    {{/if}}
 
-                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                {{else}}
-                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                  {{/with}}
-                {{/with}}
-              </div>
-            </div>
-            
-            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-            <div class="item-controls">
-              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
-            </div>
-          </li>
-          {{/each}}
+                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                    {{else}}
+                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                      {{/with}}
+                    {{/with}}
+                  </div>
+                </div>
+                
+                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
+                <div class="item-controls">
+                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
+                </div>
+              </li>
+            {{/each}}
+            {{#unless equipmentCarried}}
+              <li class="placeholder-text">Nenhum item carregado.</li>
+            {{/unless}}
+          </ol>
+        </div>
+
+        {{!-- Coluna 3: Armazenado --}}
+        <div class="equipment-column">
+          <div class="block-header">
+            <h4 class="column-header">Armazenado</h4>
+            <a class="sort-control" data-item-type="equipment" data-location="stored" title="Ordenar Coluna">
+              <i class="fas fa-sort-alpha-down"></i>
+            </a>
+          </div>
           
-          {{#unless equipmentInUse}}
-            <li class="placeholder-text">Nenhum item em uso.</li>
-          {{/unless}}
-        </ol>
-    </div>
+          {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
+          <ol class="item-list flex-wrap-container" data-location="stored">
+            {{#each equipmentStored}}
+              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                
+                <div class="card-info">
+                  <span class="item-name">
+                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                  </span>
+                  
+                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
+                  <div class="card-details equipment-stats">
+                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
+                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
+                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
 
-    {{!-- Coluna 2: Carregado --}}
-    <div class="equipment-column">
-      <div class="block-header">
-        <h4 class="column-header">Carregado</h4>
-        <a class="sort-control" data-item-type="equipment" data-location="carried" title="Ordenar Coluna">
-          <i class="fas fa-sort-alpha-down"></i>
-        </a>
+                    {{#if this.system.dr}}
+                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
+                    {{/if}}
+
+                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
+                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                    {{else}}
+                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
+                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
+                      {{/with}}
+                    {{/with}}
+                  </div>
+                </div>
+                
+                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
+                <div class="item-controls">
+                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
+                </div>
+              </li>
+            {{/each}}
+            {{#unless equipmentStored}}
+              <li class="placeholder-text">Nenhum item armazenado.</li>
+            {{/unless}}
+          </ol>
+        </div>
+
       </div>
       
-      {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
-      <ol class="item-list flex-wrap-container" data-location="carried">
-        {{#each equipmentCarried}}
-          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-            
-            <div class="card-info">
-              <span class="item-name">
-                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              
-              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-              <div class="card-details equipment-stats">
-                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
-
-                {{#if this.system.dr}}
-                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                {{/if}}
-
-                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                {{else}}
-                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                  {{/with}}
-                {{/with}}
-              </div>
-            </div>
-            
-            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-            <div class="item-controls">
-              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
-            </div>
-          </li>
-        {{/each}}
-        {{#unless equipmentCarried}}
-          <li class="placeholder-text">Nenhum item carregado.</li>
-        {{/unless}}
-      </ol>
     </div>
 
-    {{!-- Coluna 3: Armazenado --}}
-    <div class="equipment-column">
-      <div class="block-header">
-        <h4 class="column-header">Armazenado</h4>
-        <a class="sort-control" data-item-type="equipment" data-location="stored" title="Ordenar Coluna">
-          <i class="fas fa-sort-alpha-down"></i>
-        </a>
-      </div>
-      
-      {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
-      <ol class="item-list flex-wrap-container" data-location="stored">
-        {{#each equipmentStored}}
-          <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-            
-            <div class="card-info">
-              <span class="item-name">
-                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-              </span>
-              
-              {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-              <div class="card-details equipment-stats">
-                <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
+    {{! ========================================================= }}
+    {{!       ABA DE COMBATE (VERSÃO OTIMIZADA v3 - CARD UNIFICADO) }}
+    {{! ========================================================= }}
+    <div class="tab combat-tab" data-group="primary" data-tab="combat">
 
-                {{#if this.system.dr}}
-                  <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                {{/if}}
+      {{! ========================================================= }}
+      {{!       CONTAINER DE 2 COLUNAS (ESQUERDA ESTREITA)            }}
+      {{! ========================================================= }}
+      <div class="combat-main-content">
 
-                {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                  <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                {{else}}
-                  {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                    <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                  {{/with}}
-                {{/with}}
+        {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
+        <div class="combat-left-column">
+
+          {{! ================================================= }}
+          {{!     CARD DE DANO BÁSICO UNIFICADO    }}
+          {{! ================================================= }}
+          <div class="gum-block basic-damage-card">
+            <div class="block-header">
+              <h4>Dano Básico</h4>
+              <div class="header-controls">
+                {{! O único botão de editar }}
+                <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-edit"></i></a>
               </div>
             </div>
-            
-            {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-            <div class="item-controls">
-              <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
+            {{! O container com as duas metades clicáveis }}
+            <div class="damage-halves">
+              {{! Metade GdP }}
+              <a class="damage-half thrust rollable-basic-damage" 
+                 data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+                 data-label="Dano de Golpe de Ponta (GdP)">
+                <label>GdP</label>
+                <div class="value">{{actor.system.attributes.thrust_damage}}</div>
+              </a>
+              {{! Metade GeB }}
+              <a class="damage-half swing rollable-basic-damage" 
+                 data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+                 data-label="Dano de Golpe em Balanço (GeB)">
+                <label>GeB</label>
+                <div class="value">{{actor.system.attributes.swing_damage}}</div>
+              </a>
             </div>
-          </li>
-        {{/each}}
-        {{#unless equipmentStored}}
-          <li class="placeholder-text">Nenhum item armazenado.</li>
-        {{/unless}}
-      </ol>
-    </div>
-
-  </div>
-  
-</div>
-
-{{! ========================================================= }}
-{{!     ABA DE COMBATE (VERSÃO OTIMIZADA v3 - CARD UNIFICADO) }}
-{{! ========================================================= }}
-<div class="tab combat-tab" data-group="primary" data-tab="combat">
-
-  {{! ========================================================= }}
-  {{!     CONTAINER DE 2 COLUNAS (ESQUERDA ESTREITA)            }}
-  {{! ========================================================= }}
-  <div class="combat-main-content">
-
-    {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
-    <div class="combat-left-column">
-
-      {{! ================================================= }}
-      {{!    CARD DE DANO BÁSICO UNIFICADO   }}
-      {{! ================================================= }}
-      <div class="gum-block basic-damage-card">
-        <div class="block-header">
-          <h4>Dano Básico</h4>
-          <div class="header-controls">
-            {{! O único botão de editar }}
-            <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-edit"></i></a>
           </div>
-        </div>
-        {{! O container com as duas metades clicáveis }}
-        <div class="damage-halves">
-          {{! Metade GdP }}
-          <a class="damage-half thrust rollable-basic-damage" 
-             data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
-             data-label="Dano de Golpe de Ponta (GdP)">
-            <label>GdP</label>
-            <div class="value">{{actor.system.attributes.thrust_damage}}</div>
-          </a>
-          {{! Metade GeB }}
-          <a class="damage-half swing rollable-basic-damage" 
-             data-roll-formula="{{actor.system.attributes.swing_damage}}" 
-             data-label="Dano de Golpe em Balanço (GeB)">
-            <label>GeB</label>
-            <div class="value">{{actor.system.attributes.swing_damage}}</div>
-          </a>
-        </div>
-      </div>
 
-      {{! ================================================= }}
-      {{!    PAINEL DE RD  }}
-      {{! ================================================= }}
-      <div class="gum-block dr-location-block">
-        <div class="block-header">
-          <h4>Resist. a Dano</h4>
-          <div class="header-controls">
-            <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
-          </div>
-        </div>
-        <ol class="dr-location-list">
-          {{#each hitLocations as |loc key|}}
-            <li class="dr-location-row" data-location-key="{{key}}">
-              <span class="location-name">
-                {{loc.label}}
-                {{#if loc.roll}}{{/if}}
-              </span>
-              <span class="location-dr-value" title="{{formatDR (lookup ../actor.system.combat.dr_locations key)}}">
-                {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
-              </span>
-            </li>
-          {{/each}}
-        </ol>
-      </div>
-    </div>
-
-    {{! --- COLUNA DA DIREITA (LARGA) --- }}
-    <div class="combat-right-column">
-      
-      {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
-      <div class="gum-block combat-meters-box">
-        <div class="block-header">
-          <h4>Registros de Combate</h4>
-          <div class="header-controls">
-            <a class="show-hidden-meters" title="Mostrar Registros Ocultos"><i class="fas fa-eye-low-vision"></i></a>
-            <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
-          </div>
-        </div>
-        <div class="meter-list">
-          {{#each preparedCombatMeters}}
-            <div class="item-row meter-card" data-meter-id="{{this.id}}">
-              <span class="item-name">{{this.meter.name}}</span>
-              <div class="meter-inputs">
-                <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
-                <span>/</span>
-                <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
-              </div>
-              <div class="item-controls">
-                <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
-                <a class="item-control hide-combat-meter" title="Ocultar Registro"><i class="fas fa-eye-slash"></i></a>
-                <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
+          {{! ================================================= }}
+          {{!     PAINEL DE RD   }}
+          {{! ================================================= }}
+          <div class="gum-block dr-location-block">
+            <div class="block-header">
+              <h4>Resist. a Dano</h4>
+              <div class="header-controls">
+                <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
               </div>
             </div>
-          {{/each}}
-          {{#unless preparedCombatMeters}}
-            <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
-          {{/unless}}
+            <ol class="dr-location-list">
+              {{#each hitLocations as |loc key|}}
+                <li class="dr-location-row" data-location-key="{{key}}">
+                  <span class="location-name">
+                    {{loc.label}}
+                    {{#if loc.roll}}{{/if}}
+                  </span>
+                  <span class="location-dr-value" title="{{formatDR (lookup ../actor.system.combat.dr_locations key)}}">
+                    {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
+                  </span>
+                </li>
+              {{/each}}
+            </ol>
+          </div>
         </div>
-      </div>
 
-     <div class="attack-group-list-v2">
-          {{#each attackGroups as |group|}}
-          <details class="attack-group-details" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
+        {{! --- COLUNA DA DIREITA (LARGA) --- }}
+        <div class="combat-right-column">
+          
+          {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
+          <div class="gum-block combat-meters-box">
+            <div class="block-header">
+              <h4>Registros de Combate</h4>
+              <div class="header-controls">
+                <a class="show-hidden-meters" title="Mostrar Registros Ocultos"><i class="fas fa-eye-low-vision"></i></a>
+                <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
+              </div>
+            </div>
+            <div class="meter-list">
+              {{#each preparedCombatMeters}}
+                <div class="item-row meter-card" data-meter-id="{{this.id}}">
+                  <span class="item-name">{{this.meter.name}}</span>
+                  <div class="meter-inputs">
+                    <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
+                    <span>/</span>
+                    <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+                  </div>
+                  <div class="item-controls">
+                    <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a class="item-control hide-combat-meter" title="Ocultar Registro"><i class="fas fa-eye-slash"></i></a>
+                    <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
+                  </div>
+                </div>
+              {{/each}}
+              {{#unless preparedCombatMeters}}
+                <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
+              {{/unless}}
+            </div>
+          </div>
+
+          {{!-- Bloco de Lista de ataque --}}
+<div class="attack-group-list-v2">
+    {{#each attackGroups as |group|}}
+    {{!-- USANDO group.id EM VEZ DE group.name --}}
+    <details class="attack-group-details" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
+    
+        <summary class="group-summary">
+            <div class="summary-left">
+            <i class="fas fa-chevron-right indicator"></i>
+            <i class="fas fa-khanda-alt item-icon"></i> 
+            <span class="group-name">{{group.name}}</span>
+            </div>
             
-            {{!-- CABEÇALHO DO GRUPO (RESUMO) --}}
-            <summary class="group-summary">
-              <div class="summary-left">
-                <i class="fas fa-chevron-right indicator"></i>
-                <i class="fas fa-khanda-alt item-icon"></i> 
-                <span class="group-name">{{group.name}}</span>
-              </div>
-              
-              <div class="summary-right">
-                {{#if (gt group.weight 0)}}
-                  <span class="group-tag weight">{{group.weight}} kg</span>
-                {{/if}}
-                {{#if (gt group.defense_bonus 0)}}
-                   <span class="group-tag db" title="Bônus de Defesa">BD +{{group.defense_bonus}}</span>
-                {{/if}}
-                <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
-                  <i class="fas fa-cog"></i>
-                </a>
-              </div>
-            </summary>
+            <div class="summary-right">
+            {{#if (gt group.weight 0)}}
+                <span class="group-tag weight">{{group.weight}} kg</span>
+            {{/if}}
+            {{#if (gt group.defense_bonus 0)}}
+                <span class="group-tag db" title="Bônus de Defesa">BD +{{group.defense_bonus}}</span>
+            {{/if}}
+            <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
+                <i class="fas fa-cog"></i>
+            </a>
+            </div>
+        </summary>
 
-            {{!-- CONTEÚDO DO GRUPO (LISTA DE ATAQUES) --}}
-            <div class="group-content">
-                {{#each group.attacks as |attack|}}
-                <div class="attack-row item-row" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
-                    
-                    {{!-- Ícone do Tipo (Espada/Alvo) --}}
-                    <div class="attack-icon">
-                        {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
-                        {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+        <div class="group-content">
+            {{#each group.attacks as |attack|}}
+             {{!-- ... seu código interno dos ataques continua igual ... --}}
+             {{!-- Apenas incluí o início para contexto --}}
+             <div class="attack-row item-row" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+                <div class="attack-icon">
+                    {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
+                    {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+                </div>
+                <div class="attack-info">
+                    <div class="attack-header">
+                        <span class="attack-mode">{{attack.skill_name}}</span>
+                        <span class="attack-submode">({{attack.name}})</span>
+                         {{#if this.unbalanced}}<span class="attack-flag u" title="Desbalanceada">U</span>{{/if}}
+                         {{#if this.fencing}}<span class="attack-flag f" title="Esgrima">F</span>{{/if}}
                     </div>
-
-                    {{!-- Info Principal --}}
-                    <div class="attack-info">
-                        <div class="attack-header">
-                            <span class="attack-mode">{{attack.skill_name}}</span>
-                            <span class="attack-submode">({{attack.name}})</span>
-                            
-                            {{!-- Flags (U, F) --}}
-                            {{#if this.unbalanced}}
-                                <span class="attack-flag u" title="Desbalanceada">U</span>
-                            {{/if}}
-                            {{#if this.fencing}}
-                                <span class="attack-flag f" title="Esgrima">F</span>
-                            {{/if}}
-                        </div>
-
-                        {{!-- Tags de Dados --}}
-                        <div class="attack-tags">
-                             {{!-- NH --}}
-                             <span class="tag-box">
-                                <label>NH</label>
-                                <a class="rollable value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
-                             </span>
-
-                             {{!-- Dano --}}
-                             <span class="tag-box damage">
-                                <label>Dano</label>
-                                <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
-                                    {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
-                                    {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
-                                </a>
-                             </span>
-
-                             {{!-- Stats Específicos --}}
-                             {{#if (eq attack.attack_type "melee")}}
-                                <span class="tag-box"><label>Aparar</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a></span>
-                                <span class="tag-box"><label>Alcance</label><span class="value">{{attack.reach}}</span></span>
-                             {{/if}}
-
-                             {{#if (eq attack.attack_type "ranged")}}
-                                <span class="tag-box"><label>Prec</label><span class="value">{{attack.accuracy}}</span></span>
-                                <span class="tag-box"><label>Alcance</label><span class="value">{{attack.range}}</span></span>
-                                <span class="tag-box"><label>CdT</label><span class="value">{{attack.rof}}</span></span>
-                                <span class="tag-box"><label>Tiros</label><span class="value">{{attack.shots}}</span></span>
-                                <span class="tag-box"><label>RCO</label><span class="value">{{attack.rcl}}</span></span>
-                             {{/if}}
-                        </div>
+                    <div class="attack-tags">
+                        <span class="tag-box">
+                            <label>NH</label>
+                            <a class="rollable value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
+                        </span>
+                        <span class="tag-box damage">
+                            <label>Dano</label>
+                            <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+                                {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                                {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
+                            </a>
+                        </span>
+                        {{!-- Outros stats (Alcance, etc) mantidos iguais --}}
+                         {{#if (eq attack.attack_type "melee")}}
+                            <span class="tag-box"><label>Aparar</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a></span>
+                            <span class="tag-box"><label>Alcance</label><span class="value">{{attack.reach}}</span></span>
+                         {{/if}}
+                         {{#if (eq attack.attack_type "ranged")}}
+                            <span class="tag-box"><label>Prec</label><span class="value">{{attack.accuracy}}</span></span>
+                            <span class="tag-box"><label>Alcance</label><span class="value">{{attack.range}}</span></span>
+                            <span class="tag-box"><label>CdT</label><span class="value">{{attack.rof}}</span></span>
+                            <span class="tag-box"><label>Tiros</label><span class="value">{{attack.shots}}</span></span>
+                            <span class="tag-box"><label>RCO</label><span class="value">{{attack.rcl}}</span></span>
+                         {{/if}}
                     </div>
                 </div>
-                {{/each}}
+             </div>
+            {{/each}}
+        </div>
+    </details>
+    {{/each}}
+    {{#unless attackGroups}}
+    <div class="placeholder-text">Nenhum ataque disponível.</div>
+    {{/unless}}
+</div>
+
+        </div>
+        
+      </div>    
+    </div>
+
+    {{! ========================================================= }}
+    {{!  ABA DE BIOGRAFIA (ESTRUTURA REFINADA E PADRONIZADA)      }}
+    {{! ========================================================= }}
+    <div class="tab" data-group="primary" data-tab="biography">
+     
+      <div class="biography-layout">
+
+        {{!-- Coluna Lateral: Perfil do Personagem --}}
+        <div class="biography-details">
+          {{!-- A classe .skill-block será o "card" padrão no novo design --}}
+          <div class="skill-block">
+            <div class="block-header">
+              <h4>Perfil</h4>
+              <a class="edit-biography-details" title="Editar Perfil"><i class="fas fa-edit"></i></a>
             </div>
-          </details>
-          {{/each}}
+            <div class="details-display-list">
 
-          {{#unless attackGroups}}
-            <div class="placeholder-text">Nenhum ataque disponível.</div>
-          {{/unless}}
+              {{!-- a classe .item-row para padronização futura --}}
+              <div class="item-row detail-item">
+                <span class="detail-label">Gênero</span>
+                <span class="detail-value">{{actor.system.details.gender}}</span>
+              </div>
+              <div class="item-row detail-item">
+                <span class="detail-label">Idade</span>
+                <span class="detail-value">{{actor.system.details.age}}</span>
+              </div>
+              <div class="item-row detail-item">
+                <span class="detail-label">Altura</span>
+                <span class="detail-value">{{actor.system.details.height}}</span>
+              </div>
+              <div class="item-row detail-item">
+                <span class="detail-label">Peso</span>
+                <span class="detail-value">{{actor.system.details.weight}}</span>
+              </div>
+              <div class="item-row detail-item">
+                <span class="detail-label">Pele</span>
+                <span class="detail-value">{{actor.system.details.skin}}</span>
+              </div>
+              <div class="item-row detail-item">
+                <span class="detail-label">Cabelos</span>
+                <span class="detail-value">{{actor.system.details.hair}}</span>
+              </div>
+              <div class="item-row detail-item full-width">
+                <span class="detail-label">Olhos</span>
+                <span class="detail-value">{{actor.system.details.eyes}}</span>
+              </div>
+              <div class="item-row detail-item full-width">
+                <span class="detail-label">Alinhamento</span>
+                <span class="detail-value">{{actor.system.details.alignment}}</span>
+              </div>
+              <div class="item-row detail-item full-width">
+                <span class="detail-label">Crença / Fé</span>
+                <span class="detail-value">{{actor.system.details.belief}}</span>
+              </div>
+              
+            </div>
+          </div>
         </div>
 
-    </div>
-    
-  </div>    
-</div>
-
-{{! ========================================================= }}
-{{!  ABA DE BIOGRAFIA (ESTRUTURA REFINADA E PADRONIZADA)      }}
-{{! ========================================================= }}
-<div class="tab" data-group="primary" data-tab="biography">
- 
-  <div class="biography-layout">
-
-    {{!-- Coluna Lateral: Perfil do Personagem --}}
-    <div class="biography-details">
-      {{!-- A classe .skill-block será o "card" padrão no novo design --}}
-      <div class="skill-block">
-        <div class="block-header">
-          <h4>Perfil</h4>
-          <a class="edit-biography-details" title="Editar Perfil"><i class="fas fa-edit"></i></a>
-        </div>
-        <div class="details-display-list">
-
-          {{!-- a classe .item-row para padronização futura --}}
-          <div class="item-row detail-item">
-            <span class="detail-label">Gênero</span>
-            <span class="detail-value">{{actor.system.details.gender}}</span>
-          </div>
-          <div class="item-row detail-item">
-            <span class="detail-label">Idade</span>
-            <span class="detail-value">{{actor.system.details.age}}</span>
-          </div>
-          <div class="item-row detail-item">
-            <span class="detail-label">Altura</span>
-            <span class="detail-value">{{actor.system.details.height}}</span>
-          </div>
-          <div class="item-row detail-item">
-            <span class="detail-label">Peso</span>
-            <span class="detail-value">{{actor.system.details.weight}}</span>
-          </div>
-          <div class="item-row detail-item">
-            <span class="detail-label">Pele</span>
-            <span class="detail-value">{{actor.system.details.skin}}</span>
-          </div>
-          <div class="item-row detail-item">
-            <span class="detail-label">Cabelos</span>
-            <span class="detail-value">{{actor.system.details.hair}}</span>
-          </div>
-          <div class="item-row detail-item full-width">
-            <span class="detail-label">Olhos</span>
-            <span class="detail-value">{{actor.system.details.eyes}}</span>
-          </div>
-          <div class="item-row detail-item full-width">
-            <span class="detail-label">Alinhamento</span>
-            <span class="detail-value">{{actor.system.details.alignment}}</span>
-          </div>
-          <div class="item-row detail-item full-width">
-            <span class="detail-label">Crença / Fé</span>
-            <span class="detail-value">{{actor.system.details.belief}}</span>
-          </div>
-          
-        </div>
-      </div>
-    </div>
-
-{{!-- Coluna Principal: História do Personagem --}}
-<div class="biography-story">
-    <h3 class="block-title">História do Personagem</h3>
-    
-    {{!-- ✅ INÍCIO: Nova estrutura de Editor de Texto --}}
-    <div class="description-section">
+    {{!-- Coluna Principal: História do Personagem --}}
+    <div class="biography-story">
+        <h3 class="block-title">História do Personagem</h3>
         
-        {{!-- 1. Modo de Visualização (Texto Renderizado) --}}
-        <div class="description-view">
-            {{{enrichedBackstory}}}
-        </div>
-        
-        {{!-- 2. Botão "Editar" (Apenas para o dono) --}}
-        {{#if editable}}
-        <button type="button" class="toggle-editor" data-target="system.details.backstory">
-            <i class="fas fa-edit"></i> Editar
-        </button>
-        {{/if}}
-
-        {{!-- 3. Modo de Edição (Escondido) --}}
-        <div class="description-editor" style="display: none;">
-            {{!-- O editor em si (note button=false) --}}
-            {{editor enrichedBackstory target="system.details.backstory" button=false owner=owner editable=editable}}
+        {{!-- ✅ INÍCIO: Nova estrutura de Editor de Texto --}}
+        <div class="description-section">
             
-            {{!-- Botões Salvar/Cancelar --}}
-            <button type="button" class="save-description" data-field="system.details.backstory">
-                <i class="fas fa-save"></i> Salvar
+            {{!-- 1. Modo de Visualização (Texto Renderizado) --}}
+            <div class="description-view">
+                {{{enrichedBackstory}}}
+            </div>
+            
+            {{!-- 2. Botão "Editar" (Apenas para o dono) --}}
+            {{#if editable}}
+            <button type="button" class="toggle-editor" data-target="system.details.backstory">
+                <i class="fas fa-edit"></i> Editar
             </button>
-            <button type="button" class="cancel-description">
-                <i class="fas fa-times"></i> Cancelar
-            </button>
+            {{/if}}
+
+            {{!-- 3. Modo de Edição (Escondido) --}}
+            <div class="description-editor" style="display: none;">
+                {{!-- O editor em si (note button=false) --}}
+                {{editor enrichedBackstory target="system.details.backstory" button=false owner=owner editable=editable}}
+                
+                {{!-- Botões Salvar/Cancelar --}}
+                <button type="button" class="save-description" data-field="system.details.backstory">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+                <button type="button" class="cancel-description">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
         </div>
+        {{!-- ✅ FIM: Nova estrutura de Editor de Texto --}}
+        
     </div>
-    {{!-- ✅ FIM: Nova estrutura de Editor de Texto --}}
-    
-</div>
-</div>
+  </div>
 </div>
 
 {{!-- ============================================================= --}}
-{{!--     ABA DE CONDIÇÕES ("CASTELO SÓLIDO" V4 - FINAL)            --}}
+{{!--     ABA DE CONDIÇÕES ("CASTELO SÓLIDO" V5 - FINAL)            --}}
 {{!-- ============================================================= --}}
 <div class="tab conditions-tab" data-group="primary" data-tab="conditions">
 
     {{!-- ============================================================= --}}
     {{!--     SEÇÃO 1: EFEITOS TEMPORÁRIOS                              --}}
     {{!-- ============================================================= --}}
-    <div class="form-section temporary-effects-section">
-        <h4 class="section-title">Efeitos Temporários</h4>
-        <p class="hint">Efeitos com duração limitada, como rodadas, segundos ou turnos.</p>
+    <details class="form-section gum-details temporary-section" data-group-id="cond-temp" {{collapsibleState "cond-temp" @root.collapsedData}}>
+        <summary class="block-header">
+            <div class="header-left">
+                <i class="fas fa-chevron-right indicator"></i>
+                <span class="header-title">Efeitos Temporários</span>
+                <span class="header-counter">{{temporaryEffects.length}}</span>
+            </div>
+            <p class="header-hint">Duração limitada (rodadas, minutos).</p>
+        </summary>
         
-        <div class="effects-pill-list flex-wrap-container"> 
-            
-            {{!-- Itera sobre a nova lista 'temporaryEffects' --}}
+        <div class="effects-grid-container"> 
             {{#each temporaryEffects as |effect|}}
-                <div class="effect-pill-enhanced" data-effect-id="{{effect.id}}">
+                <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}">
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
                         <div class="pill-details">
-                            <span class="pill-duration" title="Duração"><i class="fas fa-hourglass-half"></i> {{effect.durationString}}</span>
-                            <span class="pill-source" title="Fonte: {{effect.fonteNome}}"><i class="{{effect.fonteIcon}}"></i> {{effect.fonteNome}}</span>
+                            <span class="pill-tag duration" title="Duração Restante">
+                                <i class="fas fa-hourglass-half"></i> {{effect.durationString}}
+                            </span>
+                            {{#if effect.fonteNome}}
+                            <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
+                                <i class="fas fa-link"></i> {{effect.fonteNome}}
+                            </span>
+                            {{/if}}
                         </div>
                     </div>
                     <div class="pill-controls">
-                        <a class="effect-control quick-view-origin" title="Visualizar Item Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
-                        <a class="effect-control" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover Efeito"><i class="fas fa-times"></i></a>
+                        <a class="effect-control quick-view-origin" title="Visualizar Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
+                        <a class="effect-control delete" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover"><i class="fas fa-trash"></i></a>
                     </div>
                 </div>
             {{/each}}
             
-            {{!-- Placeholder para quando a lista estiver vazia --}}
             {{#unless temporaryEffects}}
-                <div class="placeholder-text">Nenhum efeito temporário.</div>
+                <div class="placeholder-text">Nenhum efeito temporário ativo.</div>
             {{/unless}}
         </div>
-    </div>
+    </details>
 
     {{!-- ============================================================= --}}
     {{!--     SEÇÃO 2: EFEITOS PERMANENTES                              --}}
     {{!-- ============================================================= --}}
-    <div class="form-section permanent-effects-section">
-        <h4 class="section-title">Efeitos Permanentes</h4>
-        <p class="hint">Efeitos passivos de vantagens, equipamentos ou outras fontes sem duração definida.</p>
+    <details class="form-section gum-details permanent-section" data-group-id="cond-perm" {{collapsibleState "cond-perm" @root.collapsedData}}>
+        <summary class="block-header">
+            <div class="header-left">
+                <i class="fas fa-chevron-right indicator"></i>
+                <span class="header-title">Efeitos Permanentes</span>
+                <span class="header-counter">{{permanentEffects.length}}</span>
+            </div>
+            <p class="header-hint">Vantagens, equipamentos e passivos.</p>
+        </summary>
         
-        <div class="effects-pill-list flex-wrap-container"> 
-            
-            {{!-- Itera sobre a nova lista 'permanentEffects' --}}
+        <div class="effects-grid-container"> 
             {{#each permanentEffects as |effect|}}
-                {{!-- A estrutura da pílula é idêntica à dos temporários --}}
-                <div class="effect-pill-enhanced" data-effect-id="{{effect.id}}">
+                <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}">
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
                         <div class="pill-details">
-                            <span class="pill-duration" title="Duração"><i class="fas fa-hourglass-half"></i> {{effect.durationString}}</span>
-                            <span class="pill-source" title="Fonte: {{effect.fonteNome}}"><i class="{{effect.fonteIcon}}"></i> {{effect.fonteNome}}</span>
+                            <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
+                                <i class="{{effect.fonteIcon}}"></i> {{effect.fonteNome}}
+                            </span>
                         </div>
                     </div>
                     <div class="pill-controls">
-                        <a class="effect-control quick-view-origin" title="Visualizar Item Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
-                        <a class="effect-control" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover Efeito"><i class="fas fa-times"></i></a>
+                        <a class="effect-control quick-view-origin" title="Visualizar Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
+                        <a class="effect-control delete" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover"><i class="fas fa-times"></i></a>
                     </div>
                 </div>
             {{/each}}
             
-            {{!-- Placeholder para quando a lista estiver vazia --}}
             {{#unless permanentEffects}}
                 <div class="placeholder-text">Nenhum efeito permanente.</div>
             {{/unless}}
         </div>
-    </div>
+    </details>
 
     {{!-- ============================================================= --}}
-    {{!--     SEÇÃO 3: CONDIÇÕES PASSIVAS (REGRAS)                      --}}
+    {{!--     SEÇÃO 3: CONDIÇÕES PASSIVAS (REGRAS / INSTALLED)          --}}
     {{!-- ============================================================= --}}
-    {{!-- Esta seção foi copiada exatamente do seu código original. --}}
-    {{!-- Ela já estava correta e usava a variável 'installedConditions'. --}}
-    <div class="form-section passive-conditions-section">
-        <h4 class="section-title">Condições Passivas</h4>
-        <p class="hint">Regras do sistema ou cenário que estão prontas para serem ativadas.</p>
+    <details class="form-section gum-details passive-section" data-group-id="cond-passive" {{collapsibleState "cond-passive" @root.collapsedData}}>
+        <summary class="block-header">
+            <div class="header-left">
+                <i class="fas fa-chevron-right indicator"></i>
+                <span class="header-title">Condições Passivas (Regras)</span>
+                <span class="header-counter">{{installedConditions.length}}</span>
+            </div>
+            <p class="header-hint">Automações de sistema e cenário.</p>
+        </summary>
         
-        <div class="item-list flex-wrap-container"> 
+        <div class="effects-grid-container"> 
             {{#each installedConditions as |item|}}
-                <li class="item condition-card" data-item-id="{{item.id}}">
-                    <label class="switch" title="Anular Automação (Desligar)">
-                        <input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}>
-                        <span class="slider"></span>
-                    </label>
-                    <img src="{{item.img}}" class="item-icon" alt="{{item.name}}"/>
-                    <div class="item-name"><h4>{{item.name}}</h4></div>
-                    <div class="item-controls">
-                        <a class="item-control item-edit" title="Editar Regra"><i class="fas fa-edit"></i></a>
-                        <a class="item-control item-delete" title="Remover Regra"><i class="fas fa-trash"></i></a>
+                <div class="effect-pill-enhanced passive-rule" data-item-id="{{item.id}}">
+                    
+                    {{!-- O SWITCH --}}
+                    <div class="pill-switch-wrapper">
+                        <label class="switch" title="Anular Automação (Override)">
+                            <input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}>
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                </li>
+
+                    <img src="{{item.img}}" class="pill-icon" alt="{{item.name}}"/>
+                    
+                    <div class="pill-info">
+                        <span class="pill-name">{{item.name}}</span>
+                        <div class="pill-details">
+                            {{#if item.flags.gum.manual_override}}
+                                <span class="pill-tag status off">Desativado</span>
+                            {{else}}
+                                <span class="pill-tag status on">Automático</span>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="pill-controls">
+                        <a class="effect-control item-edit" title="Editar Regra"><i class="fas fa-edit"></i></a>
+                        <a class="effect-control item-delete" title="Remover Regra"><i class="fas fa-trash"></i></a>
+                    </div>
+                </div>
             {{/each}}
+            
             {{#unless installedConditions}}
-                <li class="placeholder-text">Nenhuma regra de condição instalada.</li>
+                <div class="placeholder-text">Nenhuma regra de condição instalada.</div>
             {{/unless}}
         </div>
-    </div>
+    </details>
+
 </div>
 
 

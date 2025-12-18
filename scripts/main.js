@@ -421,10 +421,9 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---
     
     let globalModValue = 0;
-    let lowestCap = Infinity; // Começa infinito
+    let lowestCap = extraOptions.effectiveCap !== undefined ? extraOptions.effectiveCap : Infinity; 
 
     // Só processa globais se NÃO tivermos instrução para ignorar
-    // (Útil se o Prompt já tiver embutido os globais no valor final)
     if (!extraOptions.ignoreGlobals) {
         const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
         
@@ -435,6 +434,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             // Verifica o Teto (Cap)
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
+                // Se achou um teto menor do que o atual, atualiza
                 if (!isNaN(capVal) && capVal < lowestCap) {
                     lowestCap = capVal;
                 }
@@ -1216,11 +1216,15 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 //  3. HELPERS DO HANDLEBARS
 // ================================================================== //
 
-// Helper para controlar estado de Detalhes
-// Se 'collapsedData[id]' for true, significa que o usuário fechou -> retorna "" (vazio = fechado)
-// Se for false/null/undefined -> retorna "open" (aberto)
-Handlebars.registerHelper('collapsibleState', function(id, collapsedData) {
-    return (collapsedData && collapsedData[id]) ? "" : "open";
+Handlebars.registerHelper('collapsibleState', function(targetId, allCollapsedData) {
+    if (!allCollapsedData) return ""; // Padrão: Fechado
+    if (!targetId) return "";
+    
+    // Tenta encontrar o estado salvo
+    const isOpen = allCollapsedData[targetId];
+
+    // Retorna 'open' apenas se for explicitamente true
+    return isOpen === true ? "open" : ""; 
 });
 
 Handlebars.registerHelper('formatDR', function(drObject) {
