@@ -1015,204 +1015,169 @@
 </div>
       </div>
     </div>
+        {{! ========================================================= }}
+    {{!       ABA DE EQUIPAMENTOS (VERSÃO OTIMIZADA v3 - CARD UNIFICADO) }}
+    {{! ========================================================= }}
     
-    {{! ========================================================= }}
-    {{!  ABA DE EQUIPAMENTOS (ESTRUTURA REFINADA E PADRONIZADA)   }}
-    {{! ========================================================= }}
-    <div class="tab" data-group="primary" data-tab="equipment">
+<div class="tab" data-group="primary" data-tab="equipment">
 
-      {{!-- Bloco de Sumário de Carga --}}
-      <div class="encumbrance-block gum-block">
-      <div class="block-header">
-        <h4>Sumário de Carga</h4>
-        <div class="encumbrance-total-weight">
-          Peso Total: <strong>{{actor.system.encumbrance.total_weight}} kg</strong>
+    {{!-- SUMÁRIO DE CARGA --}}
+    <div class="encumbrance-block gum-panel">
+        <div class="panel-header">
+            <h4 class="panel-title"><i class="fas fa-weight-hanging"></i> Sumário de Carga</h4>
+            <div class="encumbrance-total">
+                <span class="label">Peso Total:</span>
+                <span class="value">{{actor.system.encumbrance.total_weight}} kg</span>
+            </div>
         </div>
-      </div>
-
-      {{!-- O novo medidor de carga visual --}}
-      <div class="encumbrance-meter">
-        {{#each actor.system.encumbrance.level_data}}
-          <div class="encumbrance-level-box {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}">
-            <div class="level-name">{{this.name}}</div>
-            <div class="level-weight">≤{{this.max}} kg</div>
-          </div>
-        {{/each}}
-      </div>
-
-      <div class="encumbrance-footer">
-        <label class="ignore-weight-label">
-          <input type="checkbox" name="system.encumbrance.ignore_carried_weight" {{checked actor.system.encumbrance.ignore_carried_weight}}/>
-          <span>Ignorar Peso Carregado</span>
-        </label>
-      </div>
+        <div class="encumbrance-meter">
+            {{#each actor.system.encumbrance.level_data}}
+            <div class="encumbrance-step {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}">
+                <span class="step-name">{{this.name}}</span>
+                <span class="step-limit">≤ {{this.max}}</span>
+            </div>
+            {{/each}}
+        </div>
+        <div class="panel-footer">
+            <label class="checkbox-label">
+                <input type="checkbox" name="system.encumbrance.ignore_carried_weight" {{checked actor.system.encumbrance.ignore_carried_weight}}/>
+                Ignorar peso carregado
+            </label>
+        </div>
     </div>
 
-      {{!-- Colunas de Equipamentos --}}
-      <div class="equipment-columns">
+    <div class="equipment-columns">
 
-        {{!-- Coluna 1: Em Uso --}}
-        <div class="equipment-column">
-            <div class="block-header">
-                <h4 class="column-header">Em Uso</h4>
-                <a class="sort-control" data-item-type="equipment" data-location="equipped" title="Ordenar Coluna">
-                  <i class="fas fa-sort-alpha-down"></i>
-                </a>
-              </div>
-            
-            {{! ✅ MUDANÇA: Adicionamos a classe 'flex-wrap-container' ao <ol> }}
-            <ol class="item-list flex-wrap-container" data-location="equipped">
-              {{#each equipmentInUse}}
-              
-              {{! ✅ MUDANÇA: Esta é a nova estrutura do 'card' (baseada na aba Características) }}
-              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                
-                <div class="card-info">
-                  <span class="item-name">
-                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                  </span>
-                  
-                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-                  <div class="card-details equipment-stats">
-                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
+{{!-- 1. EM USO (Equipped) --}}
+<details class="gum-details equipment-column" data-section="equip_equipped" {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
+    <summary class="list-header">
+        <i class="fas fa-chevron-right toggle-icon"></i>
+        <h4 class="header-title">Em Uso (Mãos/Corpo)</h4>
+    </summary>
+    
+    <div class="list-content">
+        <ol class="item-list flex-wrap-container">
+            {{#each equipmentInUse}}
+              <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+                  {{!-- Coluna 1: Ícone --}}
+                  <img src="{{this.img}}" class="item-icon" title="{{this.name}}"/>
 
-                    {{#if this.system.dr}}
-                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                    {{/if}}
+                  {{!-- Coluna 2: Informações e Controles --}}
+                  <div class="card-info">
+                      <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                      
+                      {{!-- Linha de Tags --}}
+                      <div class="card-details equipment-stats">
+                          <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                          <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                          {{#if this.system.dr}}<span class="equip-stat-tag shield-tag">RD {{this.system.dr}}</span>{{/if}}
+                      </div>
 
-                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                    {{else}}
-                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                      {{/with}}
-                    {{/with}}
+                      {{!-- NOVA POSIÇÃO: Linha de Botões Horizontal --}}
+                      <div class="item-controls">
+                        <a class="item-control active" title="Em Uso">
+                            <i class="fas fa-tshirt" style="color: #389c68;"></i> 
+                        </a>
+                          <a class="item-control item-toggle-equip {{#if this.system.equipped}}active{{/if}}" title="Equipar/Desequipar">
+                              <i class="fas fa-backpack"></i>
+                          </a>
+                          <a class="item-control item-toggle-stored {{#if this.system.stored}}active{{/if}}" title="Guardar/Sacar">
+                              <i class="fas fa-box"></i>
+                          </a>
+                          <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                          <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                      </div>
                   </div>
-                </div>
-                
-                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-                <div class="item-controls">
-                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
-                </div>
               </li>
-              {{/each}}
-              
-              {{#unless equipmentInUse}}
-                <li class="placeholder-text">Nenhum item em uso.</li>
-              {{/unless}}
-            </ol>
-        </div>
+            {{/each}}
+        </ol>
+    </div>
+</details>
 
-        {{!-- Coluna 2: Carregado --}}
-        <div class="equipment-column">
-          <div class="block-header">
-            <h4 class="column-header">Carregado</h4>
-            <a class="sort-control" data-item-type="equipment" data-location="carried" title="Ordenar Coluna">
-              <i class="fas fa-sort-alpha-down"></i>
-            </a>
-          </div>
-          
-          {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
-          <ol class="item-list flex-wrap-container" data-location="carried">
+{{!-- 2. CARREGADO (Mochila) --}}
+<details class="gum-details equipment-column" data-section="equip_carried" {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
+    <summary class="list-header">
+        <i class="fas fa-chevron-right toggle-icon"></i>
+        <h4 class="header-title">Carregado (Mochila)</h4>
+    </summary>
+
+    <div class="list-content">
+        <ol class="item-list flex-wrap-container">
             {{#each equipmentCarried}}
-              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                
+            <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon"/>
                 <div class="card-info">
-                  <span class="item-name">
-                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                  </span>
-                  
-                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-                  <div class="card-details equipment-stats">
-                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
+                    <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                    <div class="card-details equipment-stats">
+                        <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                        <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                    </div>
 
-                    {{#if this.system.dr}}
-                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                    {{/if}}
-
-                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                    {{else}}
-                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                      {{/with}}
-                    {{/with}}
-                  </div>
+                    {{!-- CONTROLES LADO A LADO --}}
+                    <div class="item-controls">
+                        <a class="item-control item-toggle-equip" title="Equipar / Vestir">
+                            <i class="fas fa-tshirt" style="opacity: 0.3;"></i>
+                        </a>
+                        {{!-- Ícone de mochila ativo indicando que está aqui --}}
+                        <a class="item-control active" title="Na Mochila">
+                            <i class="fas fa-backpack" style="color: #54a0ff;"></i> 
+                        </a>
+                        <a class="item-control item-toggle-stored" title="Guardar no Baú">
+                            <i class="fas fa-box-open" style="opacity: 0.3;"></i>
+                        </a>
+                        <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                    </div>
                 </div>
-                
-                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-                <div class="item-controls">
-                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
-                </div>
-              </li>
+            </li>
             {{/each}}
-            {{#unless equipmentCarried}}
-              <li class="placeholder-text">Nenhum item carregado.</li>
-            {{/unless}}
-          </ol>
-        </div>
-
-        {{!-- Coluna 3: Armazenado --}}
-        <div class="equipment-column">
-          <div class="block-header">
-            <h4 class="column-header">Armazenado</h4>
-            <a class="sort-control" data-item-type="equipment" data-location="stored" title="Ordenar Coluna">
-              <i class="fas fa-sort-alpha-down"></i>
-            </a>
-          </div>
-          
-          {{! ✅ MUDANÇA: Adicione 'flex-wrap-container' aqui }}
-          <ol class="item-list flex-wrap-container" data-location="stored">
-            {{#each equipmentStored}}
-              <li class="item equipment-card" data-item-id="{{this.id}}" draggable="true">
-                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                
-                <div class="card-info">
-                  <span class="item-name">
-                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                  </span>
-                  
-                  {{! ✅ MUDANÇA: Agrupamos todos os stats aqui dentro --}}
-                  <div class="card-details equipment-stats">
-                    <span class="equip-stat-tag" title="Quantidade"><i class="fas fa-box-open"></i> x{{this.system.quantity}}</span>
-                    <span class="equip-stat-tag" title="Peso Total"><i class="fas fa-weight-hanging"></i> {{this.system.total_weight}} kg</span>
-                    <span class="equip-stat-tag" title="Custo Total"><i class="fas fa-dollar-sign"></i> {{this.system.total_cost}}</span>
-
-                    {{#if this.system.dr}}
-                      <span class="equip-stat-tag" title="Resistência a Dano"><i class="fas fa-shield-alt"></i> RD {{this.system.dr}}</span>
-                    {{/if}}
-
-                    {{#with (first (objectValues this.system.melee_attacks)) as |attack|}}
-                      <span class="equip-stat-tag" title="Dano (C.C.)"><i class="fas fa-swords"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                    {{else}}
-                      {{#with (first (objectValues this.system.ranged_attacks)) as |attack|}}
-                        <span class="equip-stat-tag" title="Dano (L.D.)"><i class="fas fa-bullseye"></i> {{attack.damage_formula}} {{attack.damage_type}}</span>
-                      {{/with}}
-                    {{/with}}
-                  </div>
-                </div>
-                
-                {{! ✅ MUDANÇA: Controles agora são idênticos aos da aba Características --}}
-                <div class="item-controls">
-                  <a class="item-control equipment-options-btn" title="Opções"><i class="fas fa-ellipsis-v"></i></a>
-                </div>
-              </li>
-            {{/each}}
-            {{#unless equipmentStored}}
-              <li class="placeholder-text">Nenhum item armazenado.</li>
-            {{/unless}}
-          </ol>
-        </div>
-
-      </div>
-      
+        </ol>
     </div>
+</details>
+
+{{!-- 3. ARMAZENADO (Banco/Casa) --}}
+<details class="gum-details equipment-column" data-section="equip_stored" {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
+    <summary class="list-header">
+        <i class="fas fa-chevron-right toggle-icon"></i>
+        <h4 class="header-title">Armazenado (Banco/Casa)</h4>
+    </summary>
+
+    <div class="list-content">
+        <ol class="item-list flex-wrap-container">
+            {{#each equipmentStored}}
+            <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon"/>
+                <div class="card-info">
+                    <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                    <div class="card-details equipment-stats">
+                        <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                        <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                    </div>
+
+                    {{!-- CONTROLES LADO A LADO --}}
+                    <div class="item-controls">
+                        <a class="item-control item-toggle-equip" title="Equipar direto do Baú">
+                             <i class="fas fa-tshirt" style="opacity: 0.3;"></i>
+                        </a>
+                        <a class="item-control item-toggle-stored" title="Mover para Mochila">
+                            <i class="fas fa-backpack" style="opacity: 0.3;"></i>
+                        </a>
+                        <a class="item-control item-toggle-stored active" title="No Baú (Sacar para Mochila)">
+                            <i class="fas fa-box" style="color: #ee5253;"></i>
+                        </a>
+                        <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                    </div>
+                </div>
+            </li>
+            {{/each}}
+        </ol>
+    </div>
+</details>
+
+    </div>
+</div>
+
 
     {{! ========================================================= }}
     {{!       ABA DE COMBATE (VERSÃO OTIMIZADA v3 - CARD UNIFICADO) }}

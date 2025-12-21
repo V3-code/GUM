@@ -449,128 +449,238 @@
     border-color: var(--gum-accent-gold); opacity: 1; box-shadow: 0 0 4px var(--gum-accent-gold);
 }
 /* =================================================================== */
-/* 8. ABA DE EQUIPAMENTOS (Actor Sheet)                               */
+/* 8. ABA DE EQUIPAMENTOS (Refinada)                                  */
 /* =================================================================== */
 
-/* Container da Lista com Flex-Wrap */
-.gum.sheet.actor .tab[data-tab="equipment"] .flex-wrap-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-}
-
-/* Colunas de Equipamento (Em Uso, Carregado, etc.) */
-.gum.sheet.actor .equipment-column {
-    background: var(--gum-bg-card-claro);
-    border: 1px solid var(--gum-border);
+/* --- Sumário de Carga (Painel Fixo) --- */
+.gum-panel {
+    background: var(--gum-bg-card-sutil);
+    border: 1px solid var(--gum-border-gold);
     border-radius: 4px;
-    padding: 10px;
+    padding: 8px 12px;
     margin-bottom: 15px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
 }
 
-.gum.sheet.actor .equipment-column .column-header {
-    font-family: var(--gum-font-secondary);
-    font-size: 1.1em;
-    color: var(--gum-text-escuro);
-    border-bottom: 1px solid var(--gum-border-gold);
-    margin-bottom: 10px;
-    padding-bottom: 5px;
+.gum-panel .panel-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--gum-border-light);
+    padding-bottom: 4px;
 }
 
-/* Card de Equipamento */
-.gum.sheet.actor .equipment-card {
+.gum-panel .panel-title {
+    font-family: var(--gum-font-primary);
+    color: var(--gum-primary);
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.encumbrance-total .value {
+    font-weight: bold;
+    color: var(--gum-accent-red);
+    font-size: 1.1em;
+}
+
+/* Medidor Visual de Carga */
+.encumbrance-meter {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0,0,0,0.03);
-    border: 1px solid var(--gum-border);
+    gap: 2px;
+    height: 28px;
+    background: #ccc;
     border-radius: 4px;
-    padding: 6px 8px;
-    box-shadow: var(--gum-shadow-sutil);
-    flex-basis: calc(50% - 4px); /* 2 Colunas */
-    flex-grow: 1;
-    min-width: 250px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    border: 1px solid #999;
+}
+
+.encumbrance-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f0f0f0;
+    font-size: 0.7em;
+    color: #888;
+    cursor: help;
     transition: all 0.2s;
 }
 
-.gum.sheet.actor .equipment-card:hover {
-    background: #fff;
-    border-color: var(--gum-accent-gold);
-    box-shadow: var(--gum-shadow-forte);
+.encumbrance-step.active {
+    background: var(--gum-accent-red); /* Cor de destaque quando ativo */
+    color: #fff;
+    font-weight: bold;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
 }
 
-.gum.sheet.actor .equipment-card .item-icon {
-    width: 32px; height: 32px;
+.encumbrance-step .step-limit {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+/* --- Colunas Colapsáveis (Details/Summary) --- */
+.gum-details.equipment-column {
+    margin-bottom: 10px;
+    border: 1px solid var(--gum-border);
     border-radius: 4px;
-    border: 1px solid var(--gum-border-light);
-    object-fit: cover;
-    flex-shrink: 0;
+    background: var(--gum-bg-paper);
+    overflow: hidden;
 }
 
-.gum.sheet.actor .equipment-card .card-info {
+.gum-details.equipment-column > summary {
+    list-style: none; /* Remove seta padrão do browser */
+    background: rgba(0, 0, 0, 0.05);
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+}
+
+.gum-details.equipment-column > summary:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* A Seta Customizada */
+.gum-details.equipment-column > summary .toggle-icon {
+    width: 20px;
+    transition: transform 0.2s;
+    color: var(--gum-primary);
+}
+
+.gum-details[open] > summary .toggle-icon {
+    transform: rotate(90deg);
+}
+
+.gum-details.equipment-column .header-title {
+    flex-grow: 1;
+    margin: 0;
+    font-family: var(--gum-font-secondary);
+    font-size: 1.1em;
+    color: var(--gum-text-escuro);
+}
+
+.gum-details.equipment-column .list-content {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Cards de Equipamento --- */
+.flex-wrap-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0; margin: 0;
+    list-style: none;
+}
+
+.equipment-card {
+    flex: 1 1 280px; /* Cresce, encolhe, base de 280px */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    padding: 6px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.equipment-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.15);
+    border-color: var(--gum-accent-gold);
+}
+
+.equipment-card .item-icon {
+    width: 36px; height: 36px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+
+.equipment-card .card-info {
     flex-grow: 1;
     overflow: hidden;
 }
 
-.gum.sheet.actor .equipment-card .item-name a {
+.equipment-card .item-name a {
     font-weight: 700;
     color: var(--gum-text-escuro);
-    font-size: 0.95em;
-    white-space: nowrap;
+    text-decoration: none;
+}
+.equipment-card .item-name a:hover {
+    text-decoration: underline;
+    color: var(--gum-primary);
 }
 
-/* Tags de Status (Peso, Qtd, Custo) */
-.gum.sheet.actor .equipment-stats {
+/* Tags de Stats (Peso, Custo) */
+.equipment-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     margin-top: 2px;
 }
 
-.gum.sheet.actor .equip-stat-tag {
+.equip-stat-tag {
     font-size: 0.75em;
-    background: rgba(0,0,0,0.05);
-    padding: 1px 5px;
-    border-radius: 3px;
-    color: var(--gum-text-medio);
-    white-space: nowrap;
+    background: #eee;
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: #555;
+    border: 1px solid #ddd;
 }
 
-/* Sumário de Carga (Rodapé da aba) */
-.gum.sheet.actor .encumbrance-block {
-    background: var(--gum-bg-card-sutil);
-    border: 1px solid var(--gum-border);
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
+.equip-stat-tag.shield-tag {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-color: #bbdefb;
 }
 
-.gum.sheet.actor .encumbrance-meter {
-    display: flex;
-    margin: 10px 0;
+/* --- Ajuste na Estrutura do Card --- */
+.equipment-card {
+    flex: 1 1 280px;
+    display: grid; /* Mudamos para Grid para melhor controle */
+    grid-template-columns: 40px 1fr; /* Coluna 1: Ícone, Coluna 2: Todo o resto */
+    gap: 8px;
+    background: #fff;
     border: 1px solid var(--gum-border-light);
     border-radius: 4px;
-    overflow: hidden;
+    padding: 8px;
+    align-items: start; /* Alinha o ícone no topo */
 }
 
-.gum.sheet.actor .encumbrance-level-box {
-    flex: 1;
-    text-align: center;
-    padding: 4px;
-    background: #e0e0e0;
-    font-size: 0.8em;
-    color: #777;
-    border-right: 1px solid rgba(0,0,0,0.1);
+.equipment-card .card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.gum.sheet.actor .encumbrance-level-box.active {
-    background: var(--gum-accent-red);
-    color: #fff;
-    font-weight: bold;
+/* --- Botões de Controle Lado a Lado --- */
+.equipment-card .item-controls {
+    display: flex;
+    flex-direction: row; /* Horizontal agora! */
+    justify-content: flex-end; /* Alinha os botões à direita na linha deles */
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dotted #ddd; /* Uma linha sutil para separar das tags */
+}
+
+.equipment-card .item-control {
+    font-size: 0.9em; /* Aumentamos um pouco para facilitar o clique */
+    color: #888;
+    transition: all 0.2s;
+}
+
+/* Efeito de hover individual mais nítido */
+.equipment-card .item-control:hover {
+    transform: scale(1.2);
 }
 /* =================================================================== */
 /* 9. ABA SOCIAL (Actor Sheet)                                        */
