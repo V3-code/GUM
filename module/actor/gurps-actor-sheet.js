@@ -1288,29 +1288,177 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
     `;
 }
 
-_renderItemQuickView(item) {
-    // Cole aqui toda a lógica de montar o HTML do Dialog do Quick View
-    // (Desde 'const getTypeName...' até 'new Dialog(...).render(true)')
-    // Isso evita duplicar código dentro do activateListeners
-    
-    // ... Código do Quick View ...
-    const getTypeName = (type) => { /* ... */ return type; }; // Sua função
-    const data = { name: item.name, img: item.img, system: item.system, type: item.type };
-    // ... resto da montagem do HTML ...
-    
-    // Vou simplificar aqui apenas para mostrar onde colocar o Dialog:
-    const content = `<div class="gurps-item-preview-card"><h3>${item.name}</h3><img src="${item.img}"/></div>`; // Exemplo simplificado
-    
-    // OBS: Use o SEU código completo aqui. Se usar o meu simplificado, vai perder a formatação bonita.
-    // O importante é garantir que o Dialog seja criado.
-    
-     new Dialog({
-        content: content, // Use o seu content gerado
-        buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
-        default: "close",
-        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400 }
+// ================================================================== //
+  //  MÉTODO AUXILIAR: VISUALIZAÇÃO RÁPIDA (QUICK VIEW)
+  // ================================================================== //
+  async _renderItemQuickView(item) {
+    if (!item) return;
+
+    // 1. Mapa de Nomes Legíveis
+    const getTypeName = (type) => {
+      const typeMap = {
+        equipment: "Equipamento",
+        melee_weapon: "Arma C. a C.",
+        ranged_weapon: "Arma à Dist.",
+        armor: "Armadura",
+        advantage: "Vantagem",
+        disadvantage: "Desvantagem",
+        skill: "Perícia",
+        spell: "Magia",
+        power: "Poder",
+        condition: "Condição",
+        gm_modifier: "Modificador"
+      };
+      return typeMap[type] || type.toUpperCase();
+    };
+
+    // 2. Preparação de Dados Básicos
+    const data = {
+      name: item.name,
+      img: item.img,
+      type: getTypeName(item.type),
+      system: item.system
+    };
+
+    // 3. Função Auxiliar para Criar Tags Visuais
+    const createTag = (label, value) => {
+      if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+        return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+      }
+      return '';
+    };
+
+    // 4. Montagem das Tags Específicas por Tipo
+    let mechanicalTagsHtml = '';
+    const s = data.system;
+
+    switch (item.type) {
+      case 'melee_weapon':
+        mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+        mechanicalTagsHtml += createTag('Alcance', s.reach);
+        mechanicalTagsHtml += createTag('Aparar', s.parry);
+        mechanicalTagsHtml += createTag('ST', s.min_strength);
+        break;
+
+      case 'ranged_weapon':
+        mechanicalTagsHtml += createTag('Dano', `${s.damage_formula || ''} ${s.damage_type || ''}`);
+        mechanicalTagsHtml += createTag('Prec.', s.accuracy);
+        mechanicalTagsHtml += createTag('Alcance', s.range);
+        mechanicalTagsHtml += createTag('CdT', s.rof);
+        mechanicalTagsHtml += createTag('Tiros', s.shots);
+        mechanicalTagsHtml += createTag('RCO', s.rcl);
+        mechanicalTagsHtml += createTag('ST', s.min_strength);
+        break;
+
+      case 'armor':
+        mechanicalTagsHtml += createTag('RD', s.dr);
+        mechanicalTagsHtml += createTag('Local', `<span style="text-transform:capitalize">${s.worn_location || 'N/A'}</span>`);
+        break;
+
+      case 'skill':
+        mechanicalTagsHtml += createTag('Attr.', `<span style="text-transform:uppercase">${s.base_attribute || '--'}</span>`);
+        mechanicalTagsHtml += createTag('Nível', `${s.skill_level > 0 ? '+' : ''}${s.skill_level || '0'}`);
+        mechanicalTagsHtml += createTag('Grupo', s.group);
+        break;
+
+      case 'spell':
+        mechanicalTagsHtml += createTag('Classe', s.spell_class);
+        mechanicalTagsHtml += createTag('Tempo', s.casting_time);
+        mechanicalTagsHtml += createTag('Duração', s.duration);
+        mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
+        break;
+
+      case 'power':
+        mechanicalTagsHtml += createTag('Custo', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
+        mechanicalTagsHtml += createTag('Duração', s.duration);
+        break;
+
+      case 'advantage':
+      case 'disadvantage':
+        mechanicalTagsHtml += createTag('Pontos', s.points);
+        break;
+    }
+
+    // Adiciona Peso e Custo para itens físicos (se existirem)
+    if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(item.type)) {
+       mechanicalTagsHtml += createTag('Qtd', `x${s.quantity || 1}`);
+       mechanicalTagsHtml += createTag('Peso', s.total_weight ? `${s.total_weight} kg` : null);
+       mechanicalTagsHtml += createTag('Custo', s.total_cost ? `$${s.total_cost}` : null);
+    }
+
+    // 5. Enriquecimento da Descrição (Links, HTML, Secrets)
+    const description = await TextEditor.enrichHTML(s.chat_description || s.description || "<i>Sem descrição.</i>", {
+      secrets: this.actor.isOwner,
+      async: true
+    });
+
+    // 6. Montagem do Conteúdo HTML Final
+    const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card" data-item-id="${item.id}">
+                <header class="preview-header">
+                    <img src="${data.img}" class="header-icon"/>
+                    <div class="header-text">
+                        <h3>${data.name}</h3>
+                        <span class="preview-item-type">${data.type}</span>
+                    </div>
+                    <div class="header-controls">
+                        <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                    </div>
+                </header>
+                
+                <div class="preview-content">
+                    <div class="preview-properties">
+                        ${mechanicalTagsHtml}
+                    </div>
+                    
+                    ${(description && description.trim() !== "<i>Sem descrição.</i>") ? '<hr class="preview-divider">' : ''}
+                    
+                    <div class="preview-description">
+                        ${description}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 7. Renderização do Dialog
+    new Dialog({
+      title: `Detalhes: ${data.name}`,
+      content: content,
+      buttons: {
+        close: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Fechar"
+        }
+      },
+      default: "close",
+      options: {
+        classes: ["dialog", "gurps-item-preview-dialog"],
+        width: 420,
+        height: "auto",
+        resizable: true
+      },
+      render: (html) => {
+        // Listener do Botão "Enviar para o Chat"
+        html.find('.send-to-chat').on('click', (event) => {
+          const cardHTML = $(event.currentTarget).closest('.gurps-item-preview-card').html();
+          // Remove os controles de header antes de mandar pro chat para ficar limpo
+          const cleanHTML = cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, ``);
+          
+          const chatContent = `<div class="gurps-item-preview-card chat-card">${cleanHTML}</div>`;
+          
+          ChatMessage.create({
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            content: chatContent,
+            type: CONST.CHAT_MESSAGE_TYPES.OTHER
+          });
+          ui.notifications.info("Enviado para o chat.");
+        });
+      }
     }).render(true);
-}
+  }
 
 _renderQuickView(item) {
    // Mesma lógica para o Quick View de Origem

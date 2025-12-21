@@ -2520,3 +2520,178 @@
 .gum.sheet.actor .item-control.item-delete:hover {
     color: var(--gum-accent-red);
 }
+
+/* =================================================================== */
+/* 9. VISUALIZAÇÃO RÁPIDA (QUICK VIEW / ITEM CARD) - GUM SYSTEM       */
+/* =================================================================== */
+
+/* --- Ajuste da Janela do Dialog (O Container do Foundry) --- */
+.dialog.gurps-item-preview-dialog .dialog-content {
+    padding: 0; /* Remove padding padrão do Foundry para usarmos o nosso */
+    background: transparent;
+    overflow: hidden; /* Garante que bordas arredondadas funcionem */
+}
+
+/* --- O Card Principal --- */
+.gurps-item-preview-card {
+    background: var(--gum-bg-paper, #fdfaf5); /* Cor creme/papel */
+    color: var(--gum-text-escuro, #2c2c2c);
+    font-family: var(--gum-font-primary, "Roboto", sans-serif);
+    border: 1px solid var(--gum-border-light, #d0c0a0);
+    border-radius: 0 0 4px 4px; /* Dialog já tem topo arredondado */
+    display: flex;
+    flex-direction: column;
+    min-width: 380px;
+    box-shadow: inset 0 0 30px rgba(139, 69, 19, 0.05); /* Textura sutil interna */
+}
+
+/* Ajuste específico para quando o Card aparece no CHAT */
+.chat-message .gurps-item-preview-card {
+    min-width: auto;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0.9em;
+}
+
+/* --- Cabeçalho (Imagem + Título + Tipo) --- */
+.gurps-item-preview-card .preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
+    border-bottom: 2px solid var(--gum-border-gold, #c5a563);
+}
+
+.gurps-item-preview-card .header-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--gum-border-dark, #5a4a3a);
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.gurps-item-preview-card .header-text {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.gurps-item-preview-card .header-text h3 {
+    margin: 0;
+    font-family: var(--gum-font-secondary, "Cinzel", serif);
+    font-weight: 700;
+    font-size: 1.3em;
+    color: var(--gum-primary, #4a3b2a);
+    border: none; /* Remove bordas padrões de H3 do Foundry */
+}
+
+.gurps-item-preview-card .preview-item-type {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gum-text-medio, #666);
+    font-weight: bold;
+}
+
+/* Botões do Header (Enviar pro Chat) */
+.gurps-item-preview-card .header-controls a {
+    color: var(--gum-text-medio, #888);
+    cursor: pointer;
+    transition: color 0.2s;
+    font-size: 1.1em;
+    padding: 4px;
+}
+
+.gurps-item-preview-card .header-controls a:hover {
+    color: var(--gum-accent-blue, #1e88e5);
+    text-shadow: 0 0 5px rgba(30, 136, 229, 0.4);
+}
+
+/* --- Área de Conteúdo --- */
+.gurps-item-preview-card .preview-content {
+    padding: 12px;
+    background: var(--gum-bg-paper, #fdfaf5);
+}
+
+/* --- Grid de Propriedades (Tags) --- */
+.gurps-item-preview-card .preview-properties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+/* A Tag Individual (Caixinha) */
+.gurps-item-preview-card .property-tag {
+    display: flex;
+    flex-direction: column; /* Label em cima, valor embaixo */
+    align-items: center;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-width: 50px;
+    flex-grow: 1; /* Faz as tags esticarem para preencher linhas */
+    flex-basis: 0; /* Distribuição igual */
+}
+
+/* Label da Tag (ex: "Dano", "Peso") */
+.gurps-item-preview-card .property-tag label {
+    font-size: 0.65em;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: var(--gum-text-medio, #777);
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+/* Valor da Tag (ex: "2d+1 cut", "1 kg") */
+.gurps-item-preview-card .property-tag span {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--gum-text-escuro, #222);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* --- Divisória Decorativa --- */
+.gurps-item-preview-card .preview-divider {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(197, 165, 99, 0.75), rgba(0, 0, 0, 0));
+    margin: 8px 0 12px 0;
+}
+
+/* --- Descrição do Item --- */
+.gurps-item-preview-card .preview-description {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #333;
+    text-align: justify;
+}
+
+.gurps-item-preview-card .preview-description p {
+    margin-bottom: 0.5em;
+}
+
+/* Estilos para Enriched HTML (Links de UUID, rolagens) */
+.gurps-item-preview-card .preview-description a.content-link,
+.gurps-item-preview-card .preview-description a.inline-roll {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--gum-border-light);
+    padding: 0 4px;
+    border-radius: 2px;
+    color: var(--gum-primary);
+    text-decoration: none;
+}
+
+.gurps-item-preview-card .preview-description a.content-link:hover {
+    background: var(--gum-primary);
+    color: #fff;
+}
