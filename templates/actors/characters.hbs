@@ -1331,10 +1331,23 @@
                         </span>
                         <span class="tag-box damage">
                             <label>Dano</label>
-                            <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}">
+                            <a class="rollable-damage value"
+                                title="Rolar Dano"
+                                data-item-id="{{attack.itemId}}"
+                                data-attack-id="{{attack.id}}"
+                                data-dmg-formula="{{attack.damage_formula}}"
+                                data-dmg-type="{{attack.damage_type}}"
+                                data-armor-divisor="{{attack.armor_divisor}}"
+                                {{#with attack.follow_up_damage}}
+                                  {{#if this.formula}}
+                                    data-followup-formula="{{this.formula}}"
+                                    data-followup-type="{{this.type}}"
+                                  {{/if}}
+                                {{/with}}>
                                 {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
                                 {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
-                            </a>
+                              </a>
+
                         </span>
                         {{!-- Outros stats (Alcance, etc) mantidos iguais --}}
                          {{#if (eq attack.attack_type "melee")}}

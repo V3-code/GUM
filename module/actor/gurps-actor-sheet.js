@@ -848,6 +848,51 @@ activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
+
+
+// -------------------------------------------------------------
+//  EDITAR ITEM (ABRIR ITEM SHEET)
+// -------------------------------------------------------------
+html.on('click', '.item-edit, .item-control.item-edit', (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation(); // garante que não acione o acordeão
+
+  const el = $(ev.currentTarget);
+
+  // Pega o itemId do container padrão (.item / .item-row) OU do próprio botão
+  const itemId =
+    el.closest('.item, .item-row').data('itemId') ??
+    el.data('itemId') ??
+    ev.currentTarget.dataset.itemId;
+
+  if (!itemId) return;
+
+  const item = this.actor.items.get(itemId);
+  if (!item) return;
+
+  item.sheet.render(true);
+});
+
+// -------------------------------------------------------------
+// 0. BLOQUEIA O "TOGGLE" NATIVO DO <summary> QUANDO CLICAR EM CONTROLES
+// (garante que botões/links dentro do cabeçalho funcionem sem abrir/fechar o details)
+// -------------------------------------------------------------
+html.on('click', 'details > summary a, details > summary button, details > summary .item-control, details > summary .rollable', (ev) => {
+    // Não queremos navegação nem o toggle automático do summary
+    ev.preventDefault();
+    // Não precisa stopImmediatePropagation: queremos que outros listeners (rolagens, edit, delete) executem
+    ev.stopPropagation();
+});
+
+// -------------------------------------------------------------
+// 0.1. BOTÕES ESPECÍFICOS DO COMBATE (fora de <summary>, mas por segurança)
+// -------------------------------------------------------------
+html.on('click', '.edit-basic-damage', this._onEditBasicDamage.bind(this));
+html.on('click', '.view-hit-locations', this._onViewHitLocations.bind(this));
+html.on('click', '.attack-group-details .group-summary .item-edit', this._onEditAttackGroupItem.bind(this));
+
+
     // -------------------------------------------------------------
     // 1. PERSISTÊNCIA DOS DETALHES (ACORDEÃO - VISUAL)
     // -------------------------------------------------------------
@@ -965,9 +1010,8 @@ activateListeners(html) {
 
         // 2. CASO BOTÕES (Editar, Deletar, Dados, Links)
         // Isso protege o acordeão de fechar se você clicar num botão que NãO tem stopPropagation
-        if (target.closest('a, button, .item-control, .rollable').length) {
-            // Nota: Seus botões de cima já tem stopPropagation, mas isso é uma segurança extra
-            return; 
+        if (target.closest('a, button, .item-control, .rollable, .item-edit, .item-delete, .item-quick-view, .effect-control').length) {
+        return;
         }
 
         // 3. CASO GERAL
@@ -1108,6 +1152,310 @@ activateListeners(html) {
         }
     });
 
+// ================================================================== //
+//  ROLAGEM DE DANO (ATAQUES DE EQUIPAMENTO + MAGIAS / PODERES)
+// ================================================================== //
+html.on("click", ".rollable-damage", async (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const element = ev.currentTarget;
+  let normalizedAttack;
+
+  // --------------------------------------------------
+  // 1) Identificação segura do Item e do Modo de Ataque
+  // --------------------------------------------------
+  const $el = $(element);
+
+  const itemId =
+    element.dataset.itemId ||
+    $el.data("itemId") ||
+    $el.closest("[data-item-id]").data("itemId") ||
+    $el.closest(".item").data("itemId");
+
+  const attackId =
+    element.dataset.attackId ||
+    $el.data("attackId") ||
+    $el.attr("data-attack-id");
+
+  if (!itemId) {
+    console.warn("GUM | Rolagem de dano sem itemId.");
+    return;
+  }
+
+  const item = this.actor.items.get(itemId);
+  if (!item) {
+    ui.notifications.error("Item não encontrado para esta rolagem de dano.");
+    return;
+  }
+
+  // --------------------------------------------------
+  // 2) NORMALIZAÇÃO (EXATAMENTE COMO SEU MODELO ANTIGO)
+  // --------------------------------------------------
+
+  // A) Equipamento com modos de ataque
+  if (attackId && (item.system.melee_attacks || item.system.ranged_attacks)) {
+    const attack =
+      item.system.melee_attacks?.[attackId] ||
+      item.system.ranged_attacks?.[attackId];
+
+    if (!attack) {
+      ui.notifications.warn("Modo de ataque não encontrado.");
+      return;
+    }
+
+    normalizedAttack = {
+      name: `${item.name} (${attack.mode ?? attackId})`,
+      formula: attack.damage_formula,
+      type: attack.damage_type,
+      armor_divisor: attack.armor_divisor,
+      follow_up_damage: attack.follow_up_damage,
+      fragmentation_damage: attack.fragmentation_damage,
+      onDamageEffects: attack.onDamageEffects || {},
+      generalConditions: item.system.generalConditions || {}
+    };
+
+  // B) Magias / Poderes
+  } else if (item.system.damage?.formula) {
+    const dmg = item.system.damage;
+
+    normalizedAttack = {
+      name: item.name,
+      formula: dmg.formula,
+      type: dmg.type,
+      armor_divisor: dmg.armor_divisor,
+      follow_up_damage: dmg.follow_up_damage,
+      fragmentation_damage: dmg.fragmentation_damage,
+      onDamageEffects: item.system.onDamageEffects || {},
+      generalConditions: item.system.generalConditions || {}
+    };
+
+  } else {
+    ui.notifications.warn("Este item não possui fórmula de dano válida.");
+    return;
+  }
+
+  // --------------------------------------------------
+  // 3) Helpers (GdP / GeB / limpeza de fórmula)
+  // --------------------------------------------------
+  const resolveBaseDamage = (actor, formula) => {
+    let f = String(formula || "0").toLowerCase();
+
+    const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
+    const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
+
+    f = f.replace(/\b(gdp|thrust)\b/gi, `(${thrust})`);
+    f = f.replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
+
+    return f;
+  };
+
+  const extractMathFormula = (formula) => {
+    const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
+    return match ? match[1].trim() : "0";
+  };
+
+  // --------------------------------------------------
+  // 4) Função principal de rolagem
+  // --------------------------------------------------
+  const performDamageRoll = async (modifier = 0) => {
+    const rolls = [];
+
+    // ---- DANO PRINCIPAL ----
+    let base = resolveBaseDamage(this.actor, normalizedAttack.formula);
+    const cleaned = extractMathFormula(base);
+    const mainFormula = cleaned + (modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : "");
+
+    const mainRoll = new Roll(mainFormula);
+    await mainRoll.evaluate();
+    rolls.push(mainRoll);
+
+    // ---- FOLLOW-UP ----
+    let followUpRoll = null;
+    if (normalizedAttack.follow_up_damage?.formula) {
+      const fu = resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula);
+      const fuClean = extractMathFormula(fu);
+      followUpRoll = new Roll(fuClean);
+      await followUpRoll.evaluate();
+      rolls.push(followUpRoll);
+    }
+
+    // ---- FRAGMENTAÇÃO ----
+    let fragRoll = null;
+    if (normalizedAttack.fragmentation_damage?.formula) {
+      const fr = resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula);
+      const frClean = extractMathFormula(fr);
+      fragRoll = new Roll(frClean);
+      await fragRoll.evaluate();
+      rolls.push(fragRoll);
+    }
+
+    // ---- Pacote de Dano (para Damage Application)
+    const damagePackage = {
+      attackerId: this.actor.id,
+      sourceName: normalizedAttack.name,
+      main: {
+        total: mainRoll.total,
+        type: normalizedAttack.type || "",
+        armorDivisor: normalizedAttack.armor_divisor || 1
+      },
+      onDamageEffects: normalizedAttack.onDamageEffects,
+      generalConditions: normalizedAttack.generalConditions
+    };
+
+    if (followUpRoll) {
+      damagePackage.followUp = {
+        total: followUpRoll.total,
+        type: normalizedAttack.follow_up_damage.type || "",
+        armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
+      };
+    }
+
+    if (fragRoll) {
+      damagePackage.fragmentation = {
+        total: fragRoll.total,
+        type: normalizedAttack.fragmentation_damage.type || "",
+        armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
+      };
+    }
+
+    // ---- Chat (simples, funcional)
+    const content = `
+      <div class="gurps-damage-card">
+        <header class="card-header"><h3>${normalizedAttack.name}</h3></header>
+        <div class="card-content">
+          <div class="damage-total">${mainRoll.total} ${normalizedAttack.type || ""}</div>
+        </div>
+        <footer class="card-actions">
+          <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+            Aplicar ao Alvo
+          </button>
+        </footer>
+      </div>
+    `;
+
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content,
+      rolls
+    });
+  };
+
+  // --------------------------------------------------
+  // 5) Shift+Click = diálogo de modificador
+  // --------------------------------------------------
+  if (ev.shiftKey) {
+    new Dialog({
+      title: "Modificador de Dano",
+      content: `<p>Informe o modificador:</p><input type="number" name="modifier" value="0"/>`,
+      buttons: {
+        roll: {
+          label: "Rolar",
+          callback: (html) => {
+            const mod = parseInt(html.find('[name="modifier"]').val()) || 0;
+            performDamageRoll(mod);
+          }
+        }
+      }
+    }).render(true);
+  } else {
+    performDamageRoll(0);
+  }
+});
+
+// ================================================================== //
+//  ROLAGEM DE DANO BÁSICO (CARD GdP / GeB)
+// ================================================================== //
+html.on("click", ".rollable-basic-damage", async (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const element = ev.currentTarget;
+  const actor = this.actor;
+
+  let formula = String(
+    element.dataset.rollFormula ||
+    element.getAttribute("data-roll-formula") ||
+    "0"
+  ).toLowerCase();
+
+  const label =
+    element.dataset.label ||
+    element.getAttribute("data-label") ||
+    "Dano Básico";
+
+  const resolveBaseDamage = (f) => {
+    const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
+    const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
+
+    return String(f)
+      .replace(/\b(gdp|thrust)\b/gi, `(${thrust})`)
+      .replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
+  };
+
+  const extractMathFormula = (f) => {
+    const match = String(f).match(/^([0-9dDkK+\-/*\s()]+)/i);
+    return match ? match[1].trim() : "0";
+  };
+
+  const performBasicRoll = async (modifier = 0) => {
+    const resolved = resolveBaseDamage(formula);
+    const cleaned = extractMathFormula(resolved);
+    const finalFormula = cleaned + (modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : "");
+
+    const roll = new Roll(finalFormula);
+    await roll.evaluate();
+
+    const damagePackage = {
+      attackerId: actor.id,
+      sourceName: label,
+      main: { total: roll.total, type: "", armorDivisor: 1 },
+      onDamageEffects: {},
+      generalConditions: {}
+    };
+
+    const content = `
+      <div class="gurps-damage-card">
+        <header class="card-header"><h3>${label}</h3></header>
+        <div class="card-content">
+          <div class="damage-total">${roll.total}</div>
+        </div>
+        <footer class="card-actions">
+          <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+            Aplicar ao Alvo
+          </button>
+        </footer>
+      </div>
+    `;
+
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content,
+      rolls: [roll]
+    });
+  };
+
+  if (ev.shiftKey) {
+    new Dialog({
+      title: "Modificador de Dano",
+      content: `<p>Informe o modificador:</p><input type="number" name="modifier" value="0"/>`,
+      buttons: {
+        roll: {
+          label: "Rolar",
+          callback: (html) => {
+            const mod = parseInt(html.find('[name="modifier"]').val()) || 0;
+            performBasicRoll(mod);
+          }
+        }
+      }
+    }).render(true);
+  } else {
+    performBasicRoll(0);
+  }
+});
+
+
+
     // EDITOR DE BARRAS DE PV/PF
     html.on('click', '.edit-resource-bar', ev => {
         ev.preventDefault();
@@ -1246,47 +1594,149 @@ activateListeners(html) {
 }
 
 // -----------------------------------------------------------------------
-// MÉTODOS AUXILIARES (Adicione estes métodos na classe da sua Ficha)
-// Isso ajuda a limpar o activateListeners
+// MÉTODO AUXILIAR - HTML COMPLETO DO EDITOR DE ATRIBUTOS SECUNDÁRIOS
 // -----------------------------------------------------------------------
-
 _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
-    // Cole aqui o HTML gigante do formulário de atributos secundários que você enviou no prompt
-    // Exatamente entre `const content = \`` e `\`;`
-    // Estou retornando apenas o começo para exemplificar:
-    return `
+  // Helpers seguros (evita crash se algum atributo não existir)
+  const safe = (obj, fallback = {}) => obj ?? fallback;
+
+  const basic_speed = safe(attrs.basic_speed, { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
+  const basic_move  = safe(attrs.basic_move,  { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
+  const mt          = safe(attrs.mt,          { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
+  const dodge       = safe(attrs.dodge,       { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
+
+  return `
     <form class="secondary-stats-editor">
-        <div class="form-header-grid">
-            <span>Atributo</span><span>Base</span><span>Mod. Fixo</span><span>Pass.</span><span>Temp.</span><span>Pts</span><span>Final</span>
+      <div class="form-header-grid">
+        <span>Atributo</span>
+        <span>Base</span>
+        <span>Mod. Fixo</span>
+        <span>Itens/Pass.</span>
+        <span>Cond./Temp.</span>
+        <span>Pontos</span>
+        <span>Final</span>
+      </div>
+
+      <div class="form-grid-rows">
+
+        <!-- Velocidade Básica -->
+        <div class="form-row">
+          <label>Velocidade</label>
+          <input type="number" name="basic_speed.value" value="${basic_speed.value ?? 0}" step="0.25"/>
+          <input type="number" name="basic_speed.mod" value="${basic_speed.mod ?? 0}"/>
+          <span class="read-only">${fmt(basic_speed.passive ?? 0)}</span>
+          <span class="read-only">${fmt(basic_speed.temp ?? 0)}</span>
+          <input type="number" name="basic_speed.points" value="${basic_speed.points ?? 0}"/>
+          <span class="final-display">${basic_speed.final ?? 0}</span>
         </div>
-        <div class="form-grid-rows">
-            <div class="form-row">
-                <label>Velocidade</label>
-                <input type="number" name="basic_speed.value" value="${attrs.basic_speed.value}" step="0.25"/>
-                <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
-                <span class="read-only">${fmt(attrs.basic_speed.passive)}</span>
-                <span class="read-only">${fmt(attrs.basic_speed.temp)}</span>
-                <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
-                <span class="final-display">${attrs.basic_speed.final}</span>
-            </div>
-            <div class="form-row">
-                <label>Deslocamento</label>
-                <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
-                <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
-                <span class="read-only">${fmt(attrs.basic_move.passive)}</span>
-                <span class="read-only">${fmt(attrs.basic_move.temp)}</span>
-                <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
-                <span class="final-display">${attrs.basic_move.final}</span>
-            </div>
-            </div>
+
+        <!-- Deslocamento -->
+        <div class="form-row">
+          <label>Deslocamento</label>
+          <input type="number" name="basic_move.value" value="${basic_move.value ?? 0}"/>
+          <input type="number" name="basic_move.mod" value="${basic_move.mod ?? 0}"/>
+          <span class="read-only">${fmt(basic_move.passive ?? 0)}</span>
+          <span class="read-only">${fmt(basic_move.temp ?? 0)}</span>
+          <input type="number" name="basic_move.points" value="${basic_move.points ?? 0}"/>
+          <span class="final-display">${basic_move.final ?? 0}</span>
+        </div>
+
+        <!-- Modificador de Tamanho -->
+        <div class="form-row">
+          <label>MT</label>
+          <input type="number" name="mt.value" value="${mt.value ?? 0}"/>
+          <input type="number" name="mt.mod" value="${mt.mod ?? 0}"/>
+          <span class="read-only">${fmt(mt.passive ?? 0)}</span>
+          <span class="read-only">${fmt(mt.temp ?? 0)}</span>
+          <input type="number" name="mt.points" value="${mt.points ?? 0}"/>
+          <span class="final-display">${mt.final ?? 0}</span>
+        </div>
+
+        <!-- Esquiva (normalmente não editamos "value" direto, só mod/points) -->
+        <div class="form-row">
+          <label>Esquiva</label>
+          <span class="read-only">${dodge.value ?? 0}</span>
+          <input type="number" name="dodge.mod" value="${dodge.mod ?? 0}"/>
+          <span class="read-only">${fmt(dodge.passive ?? 0)}</span>
+          <span class="read-only">${fmt(dodge.temp ?? 0)}</span>
+          <input type="number" name="dodge.points" value="${dodge.points ?? 0}"/>
+          <span class="final-display">${dodge.final ?? 0}</span>
+        </div>
+
+        <hr/>
+
+        <!-- Sentidos -->
+        <div class="form-row">
+          <label>Visão</label>
+          <input type="number" name="vision.value" value="${vision.value ?? 0}"/>
+          <input type="number" name="vision.mod" value="${vision.mod ?? 0}"/>
+          <span class="read-only">${fmt(vision.passive ?? 0)}</span>
+          <span class="read-only">${fmt(vision.temp ?? 0)}</span>
+          <input type="number" name="vision.points" value="${vision.points ?? 0}"/>
+          <span class="final-display">${vision.final ?? 0}</span>
+        </div>
+
+        <div class="form-row">
+          <label>Audição</label>
+          <input type="number" name="hearing.value" value="${hearing.value ?? 0}"/>
+          <input type="number" name="hearing.mod" value="${hearing.mod ?? 0}"/>
+          <span class="read-only">${fmt(hearing.passive ?? 0)}</span>
+          <span class="read-only">${fmt(hearing.temp ?? 0)}</span>
+          <input type="number" name="hearing.points" value="${hearing.points ?? 0}"/>
+          <span class="final-display">${hearing.final ?? 0}</span>
+        </div>
+
+        <div class="form-row">
+          <label>Olfato</label>
+          <input type="number" name="tastesmell.value" value="${tastesmell.value ?? 0}"/>
+          <input type="number" name="tastesmell.mod" value="${tastesmell.mod ?? 0}"/>
+          <span class="read-only">${fmt(tastesmell.passive ?? 0)}</span>
+          <span class="read-only">${fmt(tastesmell.temp ?? 0)}</span>
+          <input type="number" name="tastesmell.points" value="${tastesmell.points ?? 0}"/>
+          <span class="final-display">${tastesmell.final ?? 0}</span>
+        </div>
+
+        <div class="form-row">
+          <label>Tato</label>
+          <input type="number" name="touch.value" value="${touch.value ?? 0}"/>
+          <input type="number" name="touch.mod" value="${touch.mod ?? 0}"/>
+          <span class="read-only">${fmt(touch.passive ?? 0)}</span>
+          <span class="read-only">${fmt(touch.temp ?? 0)}</span>
+          <input type="number" name="touch.points" value="${touch.points ?? 0}"/>
+          <span class="final-display">${touch.final ?? 0}</span>
+        </div>
+
+      </div>
     </form>
+
     <style>
-        .secondary-stats-editor .form-header-grid, .secondary-stats-editor .form-row { display: grid; grid-template-columns: 110px 60px 60px 60px 60px 60px 60px; gap: 5px; align-items: center; text-align: center; margin-bottom: 5px; }
-        .secondary-stats-editor label { text-align: left; font-weight: bold; font-size: 0.9em; }
-        .secondary-stats-editor .final-display { font-weight: bold; color: #a53541; font-size: 1.1em; }
+      .secondary-stats-editor .form-header-grid,
+      .secondary-stats-editor .form-row {
+        display: grid;
+        grid-template-columns: 110px 60px 60px 60px 60px 60px 60px;
+        gap: 5px;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 5px;
+      }
+      .secondary-stats-editor .form-header-grid span {
+        font-weight: bold;
+        font-size: 0.85em;
+        white-space: nowrap;
+      }
+      .secondary-stats-editor label {
+        text-align: left;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+      .secondary-stats-editor input { text-align: center; }
+      .secondary-stats-editor .read-only { color: #666; font-style: italic; }
+      .secondary-stats-editor .final-display { font-weight: bold; color: #a53541; font-size: 1.1em; }
+      .secondary-stats-editor hr { grid-column: 1 / -1; width: 100%; margin: 8px 0; opacity: 0.4; }
     </style>
-    `;
+  `;
 }
+
 
 // ================================================================== //
   //  MÉTODO AUXILIAR: VISUALIZAÇÃO RÁPIDA (QUICK VIEW)
@@ -1481,5 +1931,152 @@ _renderQuickView(item) {
     // O 'gum' é o ID do seu sistema/módulo. Se for outro nome, troque aqui.
     await this.actor.setFlag('gum', `sheetCollapsedState.${groupId}`, isOpen);
   }
+
+
+
+/**
+ * Abre um diálogo simples para editar as fórmulas de Dano Básico (GdP/GeB).
+ * Campos: system.attributes.thrust_damage e system.attributes.swing_damage
+ */
+async _onEditBasicDamage(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const attrs = this.actor.system.attributes || {};
+  const thrust = attrs.thrust_damage ?? "";
+  const swing = attrs.swing_damage ?? "";
+
+  const content = `
+    <form class="gum-dialog-content basic-damage-editor">
+      <div class="form-group">
+        <label>GdP (Thrust)</label>
+        <input type="text" name="thrust" value="${thrust}" placeholder="ex: 1d-2" />
+      </div>
+      <div class="form-group">
+        <label>GeB (Swing)</label>
+        <input type="text" name="swing" value="${swing}" placeholder="ex: 1d" />
+      </div>
+      <p style="opacity:0.75; font-size: 12px; margin-top: 8px;">
+        Dica: aqui você pode registrar a fórmula final exibida na ficha (ex.: <b>2d+1</b>).
+      </p>
+    </form>
+  `;
+
+  return new Dialog({
+    title: "Editar Dano Básico",
+    content,
+    buttons: {
+      save: {
+        icon: '<i class="fas fa-save"></i>',
+        label: "Salvar",
+        callback: async (html) => {
+          const form = html.find("form")[0];
+          const fd = new FormData(form);
+          const update = {
+            "system.attributes.thrust_damage": (fd.get("thrust") ?? "").toString().trim(),
+            "system.attributes.swing_damage": (fd.get("swing") ?? "").toString().trim()
+          };
+          await this.actor.update(update);
+        }
+      },
+      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+    },
+    default: "save"
+  }, { classes: ["dialog", "gum"], width: 360 }).render(true);
+}
+
+async _onViewHitLocations(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const actor = this.actor;
+  const sheetData = await this.getData();
+
+  // Pega todos os objetos de RD
+  const actorDR_Armor = actor.system.combat.dr_from_armor || {};
+  const actorDR_Mods  = actor.system.combat.dr_mods || {};
+  const actorDR_Temp  = actor.system.combat.dr_temp_mods || {};
+  const actorDR_Total = actor.system.combat.dr_locations || {};
+
+  let tableRows = "";
+  for (const [key, loc] of Object.entries(sheetData.hitLocations)) {
+    const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);
+    const tempDR_String   = this._formatDRObjectToString(actorDR_Temp[key]);
+    const manualMod_String= this._formatDRObjectToString(actorDR_Mods[key]);
+    const totalDR_String  = this._formatDRObjectToString(actorDR_Total[key]);
+
+    tableRows += `
+      <div class="table-row">
+        <div class="loc-label">${loc.label}</div>
+        <div class="loc-rd-armor" title="RD da Armadura">${armorDR_String}</div>
+        <div class="loc-rd-temp" title="Bônus Temporários">${tempDR_String}</div>
+        <div class="loc-rd-mod">
+          <input type="text" name="${key}" value="${manualMod_String}" />
+        </div>
+        <div class="loc-rd-total"><strong>${totalDR_String}</strong></div>
+      </div>
+    `;
+  }
+
+  const content = `
+    <form>
+      <div class="gurps-rd-table">
+        <div class="table-header">
+          <div>Local</div>
+          <div>Armadura</div>
+          <div>Temp.</div>
+          <div>Manual</div>
+          <div>Total</div>
+        </div>
+        <div class="table-body">
+          ${tableRows}
+        </div>
+      </div>
+    </form>
+  `;
+
+  new Dialog({
+    title: "Tabela de Locais de Acerto e RD",
+    content,
+    buttons: {
+      save: {
+        icon: '<i class="fas fa-save"></i>',
+        label: "Salvar Modificadores",
+        callback: (html) => {
+          const form = html.find("form")[0];
+          const formData = new FormDataExtended(form).object;
+
+          const newDrMods = {};
+          for (const [loc, drString] of Object.entries(formData)) {
+            newDrMods[loc] = this._parseDRStringToObject(drString);
+          }
+
+          actor.update({ "system.combat.dr_mods": newDrMods });
+        }
+      },
+      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+    },
+    default: "save"
+  }, { classes: ["dialog", "gum"], width: 650 }).render(true);
+}
+
+
+/**
+ * Abre a ficha do item "grupo de ataque" (a engrenagem no cabeçalho do grupo).
+ * Esse botão não fica dentro de um `.item`, então o handler genérico não acha o itemId.
+ */
+async _onEditAttackGroupItem(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const itemId = ev.currentTarget?.dataset?.itemId;
+  if (!itemId) return;
+
+  const item = this.actor.items.get(itemId);
+  if (!item) return ui.notifications.warn("Item do grupo de ataque não encontrado.");
+
+  item.sheet.render(true);
+}
+
 
 }
