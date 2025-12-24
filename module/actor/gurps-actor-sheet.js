@@ -1,5 +1,9 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
+import { getBodyProfile, listBodyProfiles } from "../config/body-profiles.js";
+
+
+
 
 // ================================================================== //
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet) - EDITOR ATUALIZADO
@@ -19,23 +23,13 @@ import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 async getData(options) {
         const context = await super.getData(options);
         
-        context.hitLocations = {
-            head: { label: "Crânio (-7)", roll: "3-4", penalty: -7 },
-            face: { label: "Rosto (-5)", roll: "5", penalty: -5 },
-            eyes: { label: "Olhos (-9)", roll: "--", penalty: -9 },
-            neck: { label: "Pescoço (-5)", roll: "17-18", penalty: -5 },
-            torso: { label: "Torso (0)", roll: "9-11", penalty: 0 },
-            vitals: { label: "Órg. Vitais (-3)", roll: "--", penalty: -3 },
-            groin: { label: "Virilha (-3)", roll: "11", penalty: -3 },
-            arm_r: { label: "Braço D (-2)", roll: "8", penalty: -2 },
-            arm_l: { label: "Braço E (-2)", roll: "12", penalty: -2 },
-            hand_r: { label: "Mão D (-4)", "roll": "15", penalty: -4 },
-            hand_l: { label: "Mão E (-4)", "roll": "--", penalty: -4 },
-            leg_r: { label: "Perna D (-2)", roll: "6-7", penalty: -2 },
-            leg_l: { label: "Perna E (-2)", roll: "13-14", penalty: -2 },
-            foot_r: { label: "Pé D (-4)", roll: "16", penalty: -4 },
-            foot_l: { label: "Pé E (-4)", roll: "--", penalty: -4 }
-        };
+        const profileId = this.actor.system.combat?.body_profile || "humanoid";
+        const profile = getBodyProfile(profileId);
+
+        context.bodyProfileId = profileId;
+        context.bodyProfiles = listBodyProfiles();         // útil pra dropdown depois
+        context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
+
 
         // Agrupa todos os itens por tipo
         const itemsByType = context.actor.items.reduce((acc, item) => {
@@ -1990,6 +1984,8 @@ async _onViewHitLocations(ev) {
   ev.stopPropagation();
 
   const actor = this.actor;
+  const profiles = listBodyProfiles();
+  const currentProfileId = actor.system.combat?.body_profile || "humanoid";
   const sheetData = await this.getData();
 
   // Pega todos os objetos de RD
@@ -2018,9 +2014,25 @@ async _onViewHitLocations(ev) {
     `;
   }
 
+  const profileOptionsHtml = profiles.map(p =>
+  `<option value="${p.id}" ${p.id === currentProfileId ? "selected" : ""}>${p.label}</option>`
+).join("");
+
+const profileSelectorHtml = `
+  <div class="gum-rd-profile-row" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+    <label style="font-weight:700; white-space:nowrap;">Tipo Corporal</label>
+    <select class="gum-body-profile-select" name="body_profile">
+      ${profileOptionsHtml}
+    </select>
+    <span style="opacity:.7; font-size:12px;">(altera as localizações exibidas)</span>
+  </div>
+`;
+
   const content = `
-    <form>
-      <div class="gurps-rd-table">
+  <form class="gum-rd-form">
+    ${profileSelectorHtml}
+
+    <div class="gurps-rd-table">
         <div class="table-header">
           <div>Local</div>
           <div>Armadura</div>
@@ -2035,29 +2047,55 @@ async _onViewHitLocations(ev) {
     </form>
   `;
 
-  new Dialog({
-    title: "Tabela de Locais de Acerto e RD",
-    content,
-    buttons: {
-      save: {
-        icon: '<i class="fas fa-save"></i>',
-        label: "Salvar Modificadores",
-        callback: (html) => {
-          const form = html.find("form")[0];
-          const formData = new FormDataExtended(form).object;
+const dlg = new Dialog({
+  title: "Tabela de Locais de Acerto e RD",
+  content,
+  buttons: {
+    save: {
+      icon: '<i class="fas fa-save"></i>',
+      label: "Salvar Modificadores",
+      callback: async (html) => {
+        const form = html.find("form")[0];
+        const formData = new FormDataExtended(form).object;
 
-          const newDrMods = {};
-          for (const [loc, drString] of Object.entries(formData)) {
-            newDrMods[loc] = this._parseDRStringToObject(drString);
-          }
+        // ✅ IMPORTANTE: remove o campo do dropdown para não virar dr_mods.body_profile
+        delete formData.body_profile;
 
-          actor.update({ "system.combat.dr_mods": newDrMods });
+        const newDrMods = {};
+        for (const [loc, drString] of Object.entries(formData)) {
+          newDrMods[loc] = this._parseDRStringToObject(drString);
         }
-      },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+
+        await actor.update({ "system.combat.dr_mods": newDrMods });
+      }
     },
-    default: "save"
-  }, { classes: ["dialog", "gum"], width: 650 }).render(true);
+    cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+  },
+  default: "save",
+
+  // ✅ AQUI é onde entra o "render" (fica DENTRO do primeiro objeto do Dialog)
+  render: (dialogHtml) => {
+    // Quando trocar o tipo corporal:
+    dialogHtml.on("change", ".gum-body-profile-select", async (e) => {
+      const newProfileId = e.currentTarget.value;
+      if (!newProfileId || newProfileId === currentProfileId) return;
+
+      // Salva o perfil corporal no ator
+      await actor.update({ "system.combat.body_profile": newProfileId });
+
+      // Fecha este dialog
+      dlg.close();
+
+      // Reabre o dialog já com o novo perfil (recalcula hitLocations)
+      const fakeEv = { preventDefault() {}, stopPropagation() {} };
+      await this._onViewHitLocations(fakeEv);
+    });
+  }
+
+}, { classes: ["dialog", "gum"], width: 650 });
+
+dlg.render(true);
+
 }
 
 

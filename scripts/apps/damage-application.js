@@ -1,4 +1,7 @@
 import { applySingleEffect } from '../effects-engine.js';
+import { getBodyProfile } from "../../module/config/body-profiles.js";
+
+
 
 export default class DamageApplicationWindow extends Application {
     
@@ -55,24 +58,14 @@ async getData() {
         context.damageablePools = damageablePools;
         
         // --- Locations ---
-        const locationsData = { 
-            "head": { label: "Crânio", roll: "3-4", dr: 0 }, 
-            "face": { label: "Rosto", roll: "5", dr: 0 }, 
-            "leg_r": { label: "Perna D", roll: "6-7", dr: 0 },
-            "leg_l": { label: "Perna E", roll: "13-14", dr: 0 }, 
-            "arm_r": { label: "Braço D", roll: "8", dr: 0 },
-            "arm_l": { label: "Braço E", roll: "12", dr: 0 }, 
-            "torso": { label: "Torso", roll: "9-11", dr: 0 }, 
-            "groin": { label: "Virilha", roll: "11", dr: 0 }, 
-            "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, 
-            "hand_r": { label: "Mão D", roll: "15", dr: 0 },
-            "hand_l": { label: "Mão E", roll: "--", dr: 0 }, 
-            "foot_r": { label: "Pé D", roll: "16", dr: 0 },
-            "foot_l": { label: "Pé E", roll: "--", dr: 0 }, 
-            "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, 
-            "eyes": { label: "Olhos", roll: "--", dr: 0 } 
-        };
+        const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
+        const profile = getBodyProfile(profileId);
+
+        // clona para poder anexar dr e custom
+        const locationsData = foundry.utils.duplicate(profile.locations);
+
         locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };
+
 
         const finalActorDR = this.targetActor.system.combat.dr_locations || {};
 
