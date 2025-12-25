@@ -842,7 +842,63 @@ activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
+// -------------------------------------------------------------
+//  MODIFICADORES (ABA DO PERSONAGEM) - Botões da Toolbar
+// -------------------------------------------------------------
+html.on("click", ".import-modifiers-btn", async (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  if (typeof this._importModifiersFromCompendium !== "function") {
+    return ui.notifications.error("Função de importação não encontrada no GurpsActorSheet.");
+  }
+  await this._importModifiersFromCompendium();
+  this.render(false);
+});
 
+html.on("click", ".clear-modifiers-btn", async (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+
+  const toDelete = this.actor.items.filter(i => i.type === "gm_modifier");
+  if (!toDelete.length) return ui.notifications.info("Nenhum modificador para limpar.");
+
+  Dialog.confirm({
+    title: "Limpar Modificadores",
+    content: `<p>Isso vai apagar <b>${toDelete.length}</b> modificadores desta ficha. Continuar?</p>`,
+    yes: async () => {
+      await this.actor.deleteEmbeddedDocuments("Item", toDelete.map(i => i.id));
+      this.render(false);
+    },
+    no: () => {}
+  });
+});
+
+html.on("click", ".reset-modifiers-btn", async (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+
+  const toDelete = this.actor.items.filter(i => i.type === "gm_modifier");
+
+  Dialog.confirm({
+    title: "Resetar Modificadores",
+    content: `<p>Isso vai limpar os modificadores atuais e reimportar do compêndio. Continuar?</p>`,
+    yes: async () => {
+      if (toDelete.length) {
+        await this.actor.deleteEmbeddedDocuments("Item", toDelete.map(i => i.id));
+      }
+      if (typeof this._importModifiersFromCompendium !== "function") {
+        ui.notifications.error("Função de importação não encontrada no GurpsActorSheet.");
+        return;
+      }
+      await this._importModifiersFromCompendium();
+      this.render(false);
+    },
+    no: () => {}
+  });
+});
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
