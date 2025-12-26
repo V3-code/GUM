@@ -487,52 +487,67 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     }
 
     // --- 6. HTML DO CARD ---
+const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
+    const modText = totalModifier !== 0 ? `${totalModifier > 0 ? '+' : ''}${totalModifier}` : '±0';
+    const targetDisplay = isCapped
+      ? `
+        <div class="target-values">
+          <span class="capped-original">${mathLevel}</span>
+          <span class="target-value">${effectiveLevel}</span>
+          <span class="cap-note">Cap ${lowestCap}</span>
+        </div>
+      `
+      : `
+        <div class="target-values">
+          <span class="target-value">${effectiveLevel}</span>
+        </div>
+      `;
+
     const content = `
         <div class="gurps-roll-card premium">
-            
+
             <header class="card-header">
-                <div class="header-icon">
-                    <img src="${rollData.img || actor.img}" />
-                </div>
-                <div class="header-title">
-                    <h3>${label}</h3>
-                </div>
-            </header>
-            
-            <div class="card-body">
-                <div class="roll-meta">
-                    <span class="meta-part">NH <strong>${baseValue}</strong></span>
-                    
-                    <span class="meta-mod ${totalModifier !== 0 ? (totalModifier > 0 ? 'pos' : 'neg') : ''}" 
-                          title="Manual: ${promptMod}, Global: ${globalModValue}">
-                        ${totalModifier !== 0 ? (totalModifier > 0 ? '+' : '') + totalModifier : ''}
-                    </span>
-                    
-                    <span class="meta-target">
-                        | Alvo 
-                        ${isCapped ? `<span style="text-decoration:line-through; opacity:0.5; font-size:0.8em; margin-right:2px;">${mathLevel}</span>` : ''}
-                        <strong>${effectiveLevel}</strong>
-                        ${isCapped ? `<i class="fas fa-arrow-down" title="Limitado por Teto (Cap: ${lowestCap})" style="font-size:0.7em; color:#a53541; margin-left:2px;"></i>` : ''}
-                    </span>
-                </div>
-
-                <div class="roll-result">
-                    <span class="dice-total">${total}</span>
-                </div>
-
-                <div class="roll-status-container">
-                    <div class="status-text ${statusClass}">${resultLabel}</div>
-                    <div class="margin-pill ${statusClass}">
-                        ${marginLabel} <strong>${margin}</strong>
+                <div class="header-left">
+                    <div class="header-icon">
+                        <img src="${rollData.img || actor.img}" />
+                    </div>
+                    <div class="header-title">
+                        <h3>${label}</h3>
                     </div>
                 </div>
-                
-                <div class="dice-breakdown">
-                   ${roll.dice[0].results.map(d => `<span class="die-face">${d.result}</span>`).join('')}
+            </header>
+
+            <div class="roll-meta-row">
+                <div class="meta-bar ${totalModifier !== 0 ? 'has-mods' : ''}">
+                    <span class="meta-part">NH <strong>${baseValue}</strong></span>
+                    <span class="meta-mods">
+                        ${modText} <small>(M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue})</small>
+                    </span>
                 </div>
+            </div>
+
+            <div class="card-main">
+                <div class="total-column">
+                    <div class="column-label">Dados</div>
+                    <div class="big-number">${total}</div>
+                    <div class="dice-row">${diceFaces}</div>
+                </div>
+
+                <div class="dice-column target-column">
+                    <div class="column-label">Alvo</div>
+                    <div class="target-box ${isCapped ? 'capped' : ''}">
+                        ${targetDisplay}
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-pill ${statusClass}">
+                ${statusClass.includes('success') ? 'Margem de Sucesso' : 'Margem de Fracasso'} <strong>${margin}</strong>
             </div>
         </div>
     `;
+
+
 
     ChatMessage.create({
         user: game.user.id,
