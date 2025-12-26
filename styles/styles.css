@@ -2696,3 +2696,194 @@
     color: #fff;
 }
 
+/* =================================================================== */
+/* Chat: Cards de Dano (GURPS)                                         */
+/* =================================================================== */
+.chat-message .gurps-damage-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 239, 229, 0.92));
+    border: 1px solid #d7ccb8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    position: relative;
+    font-size: 0.9rem;
+    color: #2f2b28;
+    font-family: "Roboto", "Segoe UI", sans-serif;
+}
+
+.chat-message .gurps-damage-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #e6ddcd;
+    padding-bottom: 3px;
+}
+
+.chat-message .gurps-damage-card .card-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #2f2b28;
+}
+
+.chat-message .gurps-damage-card .card-formula-container {
+    margin-bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.chat-message .gurps-damage-card .formula-pill {
+    display: inline-block;
+    padding: 3px 7px;
+    border: 1px solid #e6ddcd;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.04);
+    font-family: "Roboto Condensed", "Segoe UI", sans-serif;
+    color: #2f2b28;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.chat-message .gurps-damage-card .card-main-flex {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid #e6ddcd;
+    border-radius: 6px;
+    padding: 7px 8px;
+}
+
+.chat-message .gurps-damage-card .roll-column,
+.chat-message .gurps-damage-card .target-column {
+    flex: 1;
+    text-align: center;
+}
+
+.chat-message .gurps-damage-card .column-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #6b5e55;
+    margin-bottom: 2px;
+    letter-spacing: 0.02em;
+    font-weight: 800;
+}
+
+.chat-message .gurps-damage-card .individual-dice-damage,
+.chat-message .gurps-damage-card .extra-dice {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.chat-message .gurps-damage-card .die-damage {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    min-height: 18px;
+    padding: 2px 5px;
+    border: 1px solid #e6ddcd;
+    border-radius: 3px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(235, 235, 235, 0.9));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #2f2b28;
+}
+
+.chat-message .gurps-damage-card .column-separator {
+    width: 1px;
+    background: #e6ddcd;
+    opacity: 0.8;
+    margin: 0 2px;
+}
+
+.chat-message .gurps-damage-card .damage-total {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    justify-content: center;
+}
+
+.chat-message .gurps-damage-card .damage-value {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #b64040;
+    line-height: 1.1;
+}
+
+.chat-message .gurps-damage-card .damage-type {
+    font-size: 0.82rem;
+    color: #6f6761;
+}
+
+.chat-message .gurps-damage-card .card-footer {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #e6ddcd;
+    display: grid;
+    gap: 6px;
+}
+
+.chat-message .gurps-damage-card .extra-damage-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(197, 160, 91, 0.08);
+    border: 1px solid rgba(197, 160, 91, 0.35);
+    border-radius: 6px;
+    padding: 6px 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.chat-message .gurps-damage-card .extra-damage-label {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #2f2b28;
+    text-transform: uppercase;
+}
+
+.chat-message .gurps-damage-card .extra-damage-roll {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-message .gurps-damage-card .extra-total {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.chat-message .gurps-damage-card .card-actions {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--gum-border-light);
+    display: grid;
+    gap: 6px;
+}
+
+.chat-message .gurps-damage-card .apply-damage-button {
+    background: #b64040;
+    color: #fff;
+    border: none;
+    padding: 10px 0;
+    border-radius: 6px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+    box-shadow: 0 2px 6px rgba(165, 53, 65, 0.3);
+    width: 100%;
+    text-align: center;
+}
+
+.chat-message .gurps-damage-card .apply-damage-button:hover {
+    filter: brightness(0.92);
+}

@@ -1320,11 +1320,12 @@ html.on("click", ".rollable-damage", async (ev) => {
     await mainRoll.evaluate();
     rolls.push(mainRoll);
 
-    // ---- FOLLOW-UP ----
+ // ---- FOLLOW-UP ----
     let followUpRoll = null;
+    let fuClean = null;
     if (normalizedAttack.follow_up_damage?.formula) {
       const fu = resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula);
-      const fuClean = extractMathFormula(fu);
+      fuClean = extractMathFormula(fu);
       followUpRoll = new Roll(fuClean);
       await followUpRoll.evaluate();
       rolls.push(followUpRoll);
@@ -1332,9 +1333,10 @@ html.on("click", ".rollable-damage", async (ev) => {
 
     // ---- FRAGMENTAÇÃO ----
     let fragRoll = null;
+    let frClean = null;
     if (normalizedAttack.fragmentation_damage?.formula) {
       const fr = resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula);
-      const frClean = extractMathFormula(fr);
+      frClean = extractMathFormula(fr);
       fragRoll = new Roll(frClean);
       await fragRoll.evaluate();
       rolls.push(fragRoll);
@@ -1370,19 +1372,85 @@ html.on("click", ".rollable-damage", async (ev) => {
     }
 
     // ---- Chat (simples, funcional)
+     const mainDiceHtml = mainRoll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
+
+    const formulaSegments = [];
+    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}`.trim());
+    if (followUpRoll) {
+      formulaSegments.push(`${fuClean}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor !== 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ""} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
+    }
+    if (fragRoll) {
+      formulaSegments.push(`${frClean}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor !== 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ""} ${normalizedAttack.fragmentation_damage.type || ""}`.trim());
+    }
+
+    const formulaPill = formulaSegments.join(" • ");
+
     const content = `
       <div class="gurps-damage-card">
-        <header class="card-header"><h3>${normalizedAttack.name}</h3></header>
-        <div class="card-content">
-          <div class="damage-total">${mainRoll.total} ${normalizedAttack.type || ""}</div>
+        <header class="card-header">
+          <h3>${normalizedAttack.name}</h3>
+        </header>
+
+        <div class="card-formula-container">
+          <span class="formula-pill">${formulaPill}</span>
         </div>
+
+        <div class="card-content">
+          <div class="card-main-flex">
+            <div class="roll-column">
+              <span class="column-label">Dados</span>
+              <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
+            </div>
+
+            <div class="column-separator"></div>
+
+            <div class="target-column">
+              <span class="column-label">Dano Total</span>
+              <div class="damage-total">
+                <span class="damage-value">${mainRoll.total}</span>
+                <span class="damage-type">${normalizedAttack.type || ""}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${(followUpRoll || fragRoll) ? `
+          <footer class="card-footer">
+            ${followUpRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">Acompanhamento</div>
+                <div class="extra-damage-roll">
+                  <div class="extra-total">
+                    <span class="damage-value">${followUpRoll.total}</span>
+                    <span class="damage-type">${normalizedAttack.follow_up_damage.type || ""}</span>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+
+            ${fragRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">Fragmentação</div>
+                <div class="extra-damage-roll">
+                  <div class="extra-total">
+                    <span class="damage-value">${fragRoll.total}</span>
+                    <span class="damage-type">${normalizedAttack.fragmentation_damage.type || ""}</span>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+          </footer>
+        ` : ""}
+
         <footer class="card-actions">
           <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-            Aplicar ao Alvo
+            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
           </button>
         </footer>
       </div>
     `;
+
+
 
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -1464,15 +1532,41 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
       generalConditions: {}
     };
 
+ const mainDiceHtml = roll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
+    const formulaPill = `${finalFormula}`.trim();
+
     const content = `
       <div class="gurps-damage-card">
-        <header class="card-header"><h3>${label}</h3></header>
-        <div class="card-content">
-          <div class="damage-total">${roll.total}</div>
+        <header class="card-header">
+          <h3>${label}</h3>
+          <div class="card-subtitle">Dano Básico</div>
+        </header>
+
+        <div class="card-formula-container">
+          <span class="formula-pill">${formulaPill}</span>
         </div>
+
+        <div class="card-content">
+          <div class="card-main-flex">
+            <div class="roll-column">
+              <span class="column-label">Dados</span>
+              <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
+            </div>
+
+            <div class="column-separator"></div>
+
+            <div class="target-column">
+              <span class="column-label">Dano Total</span>
+              <div class="damage-total">
+                <span class="damage-value">${roll.total}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <footer class="card-actions">
           <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-            Aplicar ao Alvo
+            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
           </button>
         </footer>
       </div>
