@@ -900,6 +900,35 @@ html.on("click", ".reset-modifiers-btn", async (ev) => {
   });
 });
 
+// Ler Compêndio (toggle)
+html.find(".toggle-default-mods").on("change", async (ev) => {
+  const checked = ev.currentTarget.checked;
+  await this.actor.setFlag("gum", "useDefaultModifiers", checked);
+  this.render(false);
+});
+
+// Busca de modificadores
+html.find(".modifier-search").on("input", (ev) => {
+  const term = String(ev.currentTarget.value || "").toLowerCase().trim();
+
+  const cards = html.find(".mod-mini-card");
+  cards.each((_, el) => {
+    const name = $(el).find(".mod-name").text().toLowerCase();
+    const match = !term || name.includes(term);
+    $(el).toggle(match);
+  });
+
+  // Esconde subgrupos/contexts vazios após o filtro
+  html.find(".subgroup-details").each((_, el) => {
+    const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
+    $(el).toggle(hasVisible);
+  });
+  html.find(".context-wrapper").each((_, el) => {
+    const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
+    $(el).toggle(hasVisible);
+  });
+});
+
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
 // -------------------------------------------------------------
