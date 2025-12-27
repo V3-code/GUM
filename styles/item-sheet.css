@@ -1,479 +1,589 @@
 /* =================================================================== */
-/* GURPS GUM - ITEM SHEET STYLES (Refatorado & Blindado)              */
+/* GURPS GUM - ITEM SHEET (SCOPED, LIGHT THEME)                       */
+/* Escopo: .gum.sheet.item                                             */
 /* =================================================================== */
 
-/* --- 0. IMPORTAÇÃO DE FONTES (Já importadas no styles.css, mas mantidas por segurança) --- */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700&family=Cinzel:wght@700&display=swap');
 
-/* =================================================================== */
-/* 1. LAYOUT ESTRUTURAL DA FICHA (CORRIGE O REDIMENSIONAMENTO)         */
-/* =================================================================== */
+.gum.sheet.item {
+  --item-bg-dark: #f4f0ea;
+  --item-bg-panel: #ffffff;
+  --item-bg-panel-2: #f9f6f0;
+  --item-border: #d8ccc0;
+  --item-border-light: #e7dfd6;
+  --item-accent: #b9893c;
+  --item-accent-2: #6a8bb5;
+  --item-text: #2f2b28;
+  --item-text-muted: #776a60;
+  --item-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
 
-/* Força o container do Foundry a se adaptar ao nosso layout flexível */
 .gum.sheet.item.app.window-app .window-content {
-    padding: 0;
-    overflow: hidden; /* O scroll é interno, não na janela */
-    background: var(--gum-bg-dark); /* Fundo padrão escuro */
-    color: var(--gum-text-claro);
-    display: flex;
-    flex-direction: column;
+  padding: 0;
+  background:
+    radial-gradient(120% 120% at 20% 20%, rgba(185,137,60,0.08), transparent 40%),
+    radial-gradient(80% 80% at 90% 10%, rgba(106,139,181,0.08), transparent 35%),
+    var(--item-bg-dark);
+  color: var(--item-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 12px;
 }
 
-/* Transforma o formulário em um container flexível vertical */
 .gum.sheet.item form {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden; /* Impede scroll duplo */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* O cabeçalho tem altura fixa (auto) */
-.gum.sheet.item .sheet-header {
-    flex: 0 0 auto;
-    z-index: 10; /* Fica acima do conteúdo ao rolar (se necessário) */
-}
-
-/* A área de conteúdo principal (abas + corpo) deve esticar */
 .gum.sheet.item .sheet-content {
-    display: flex;
-    flex-direction: column;
-    flex: 1; /* Ocupa todo o espaço restante */
-    overflow: hidden; 
-    min-height: 0; /* Fix crítico para o Firefox/Flexbox */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(249,245,239,0.9));
 }
 
-/* Navegação das Abas (Fixo no topo da section) */
-.gum.sheet.item .sheet-tabs {
-    flex: 0 0 auto; /* Não encolhe nem estica */
-}
-
-/* O corpo das abas é a única área que pode rolar */
 .gum.sheet.item .sheet-body-content {
-    flex: 1;
-    overflow-y: auto; /* Scroll vertical */
-    padding: 10px;
-    
-    /* Configuração da barra de rolagem para combinar com o tema */
-    scrollbar-width: thin;
-    scrollbar-color: var(--gum-accent-gold) rgba(0,0,0,0.1);
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--item-accent) rgba(0,0,0,0.08);
 }
 
-/* =================================================================== */
-/* 2. CABEÇALHO E TÍTULO                                               */
-/* =================================================================== */
-
+/* ------------------------------------------------------------------- */
+/* HEADER                                                             */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item .sheet-header {
-    flex: 0 0 auto; /* Altura fixa */
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--gum-bg-darkest);
-    color: var(--gum-text-claro);
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--gum-border-light);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(244,240,233,0.9));
+  border-bottom: 1px solid var(--item-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  z-index: 2;
 }
 
 .gum.sheet.item .sheet-header .profile-img {
-    width: 64px; height: 64px;
-    flex-shrink: 0;
-    border-radius: 4px; /* Quadrado arredondado p/ itens */
-    border: 2px solid var(--gum-accent-gold);
-    box-shadow: var(--gum-shadow-sutil);
-    object-fit: cover;
-    background: var(--gum-bg-dark);
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  border: 2px solid var(--item-accent);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  object-fit: cover;
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
 .gum.sheet.item .sheet-header .header-info {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-/* Input do Nome do Item */
 .gum.sheet.item .sheet-header input[name="name"] {
-    font-family: var(--gum-font-secondary);
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--gum-accent-gold);
-    font-size: 1.4em;
-    font-weight: 700;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    width: 100%;
-    padding: 2px 6px;
+  font-family: "Cinzel", serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid transparent;
+  color: var(--item-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .gum.sheet.item .sheet-header input[name="name"]:focus {
-    border-color: var(--gum-accent-gold);
-    background: rgba(0, 0, 0, 0.4);
+  border-color: var(--item-accent);
+  background: rgba(0,0,0,0.03);
+  box-shadow: 0 0 0 2px rgba(185,137,60,0.18);
 }
 
-/* Tags de Tipo (Ex: Vantagem, Perícia) */
 .gum.sheet.item .item-type-tag {
-    font-size: 0.75em;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: var(--gum-bg-darkest);
-    background: var(--gum-text-medio);
-    padding: 2px 6px;
-    border-radius: 3px;
-    align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: rgba(185,137,60,0.14);
+  color: var(--item-accent);
+  border: 1px solid rgba(185,137,60,0.32);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  width: fit-content;
 }
 
-/* =================================================================== */
-/* 3. NAVEGAÇÃO DAS ABAS (TABS)                                        */
-/* =================================================================== */
-
+/* ------------------------------------------------------------------- */
+/* TABS                                                              */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item .sheet-tabs {
-    flex: 0 0 auto;
-    background: var(--gum-bg-sidebar);
-    display: flex;
-    justify-content: flex-start;
-    padding: 0 10px;
-    border-bottom: 1px solid var(--gum-border-gold);
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 0;
+  background: transparent;
+  border-bottom: 1px solid var(--item-border);
 }
 
 .gum.sheet.item .sheet-tabs .item {
-    padding: 8px 12px;
-    color: var(--gum-text-medio);
-    font-family: var(--gum-font-primary);
-    font-size: 12px;
-    text-transform: uppercase;
-    font-weight: 600;
-    border: 1px solid transparent;
-    border-bottom: none;
-    cursor: pointer;
-    transition: all 0.2s;
+  padding: 8px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--item-text-muted);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-
 .gum.sheet.item .sheet-tabs .item:hover {
-    color: var(--gum-text-claro);
-    background: rgba(255,255,255,0.05);
+  color: var(--item-text);
+  background: rgba(0,0,0,0.03);
 }
-
 .gum.sheet.item .sheet-tabs .item.active {
-    color: var(--gum-accent-gold);
-    background: var(--gum-bg-dark); /* Conecta com o fundo do corpo */
-    border-color: var(--gum-border-gold);
-    border-bottom: 1px solid var(--gum-bg-dark); /* "Apaga" a borda inferior */
-    margin-bottom: -1px; /* Sobrepõe a borda do container */
+  color: var(--item-accent);
+  background: var(--item-bg-panel);
+  border-color: var(--item-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }
 
-/* =================================================================== */
-/* 4. COMPONENTES DE FORMULÁRIO (ESPECÍFICOS DE ITEM)                  */
-/* =================================================================== */
-
-/* Seções (Cards) */
+/* ------------------------------------------------------------------- */
+/* CARDS / SECTIONS                                                   */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item .form-section {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    position: relative;
+  background: var(--item-bg-panel);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 5px;
+  box-shadow: var(--item-shadow);
 }
 
-/* Títulos de Seção */
 .gum.sheet.item .section-title {
-    font-family: var(--gum-font-secondary);
-    color: var(--gum-accent-gold);
-    font-size: 1.1em;
-    border-bottom: 1px solid var(--gum-border-light);
-    margin-bottom: 8px;
-    padding-bottom: 2px;
+  font-family: "Roboto Condensed";
+  font-size: 0.85rem;
+  color: var(--item-accent);
+  margin: 0 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--item-border-light);
+  letter-spacing: 0.02em;
 }
 
-/* Grids de Formulário */
-.gum.sheet.item .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.gum.sheet.item .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.gum.sheet.item .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.gum.sheet.item .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .gum.sheet.item .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
-/* Grupo de Input (Label + Campo) */
 .gum.sheet.item .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+
 .gum.sheet.item .form-group label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--gum-text-medio);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--item-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-/* Inputs Específicos de Item (Sobrescrevendo estilo base se necessário) */
 .gum.sheet.item input,
-.gum.sheet.item select {
-    width: 100%;
-    background: rgba(0,0,0,0.3); /* Mais escuro para itens */
+.gum.sheet.item select,
+.gum.sheet.item textarea {
+  text-align: center;
+  width: 100%;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  color: var(--item-text);
+  padding: 5px 7px;
+  font-family: "Inter", "Roboto", sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
+.gum.sheet.item input:focus,
+.gum.sheet.item select:focus,
+.gum.sheet.item textarea:focus {
+  border-color: var(--item-accent);
+  box-shadow: 0 0 0 2px rgba(185,137,60,0.18);
+  background: rgba(0,0,0,0.03);
+}
+.gum.sheet.item textarea { resize: vertical; }
 
-/* Layout Inline (Label ao lado do Input) */
 .gum.sheet.item .form-group.inline {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 .gum.sheet.item .form-group.inline input {
-    width: auto;
-    text-align: right;
+  width: auto;
+  min-width: 90px;
+  text-align: right;
 }
 
-/* =================================================================== */
-/* 5. ABA DE DETALHES (SUMÁRIO)                                        */
-/* =================================================================== */
-
-.gum.sheet.item .summary-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+/* ------------------------------------------------------------------- */
+/* RESUMO / DESCRIÇÃO                                                 */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .summary-list { display: flex; flex-direction: column; gap: 6px; }
 .gum.sheet.item .summary-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    border-bottom: 1px dotted rgba(255,255,255,0.1);
-    padding-bottom: 2px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+  padding-bottom: 3px;
+  border-bottom: 1px dashed rgba(0,0,0,0.08);
 }
-.gum.sheet.item .summary-item label {
-    color: var(--gum-text-medio);
-}
-.gum.sheet.item .summary-item .value {
-    color: var(--gum-text-claro);
-    font-weight: 700;
-}
+.gum.sheet.item .summary-item label { color: var(--item-text-muted); }
+.gum.sheet.item .summary-item .value { color: var(--item-text); font-weight: 700; }
 
-/* Descrição (Rich Text) */
 .gum.sheet.item .description-view {
-    min-height: 100px;
-    padding: 8px;
-    background: rgba(0,0,0,0.15);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 3px;
-    color: var(--gum-text-medio);
-    line-height: 1.4;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--item-text-muted);
+  line-height: 1.35;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  min-height: 110px;
 }
 
-/* =================================================================== */
-/* 6. MODOS DE ATAQUE (ARMAS E PODERES)                                */
-/* =================================================================== */
-
-/* Lista de Ataques */
+/* ------------------------------------------------------------------- */
+/* ATAQUES                                                           */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item .attack-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Card de Ataque (Modo Exibição) */
 .gum.sheet.item .attack-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 4px;
-    padding: 8px;
+  background: linear-gradient(135deg, #ffffff, #f7f2ea);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-size: 12px;
 }
 
 .gum.sheet.item .attack-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--item-border-light);
 }
-.gum.sheet.item .attack-mode-name {
-    font-weight: 700;
-    color: var(--gum-accent-gold);
-}
+.gum.sheet.item .attack-mode-name { color: var(--item-accent); font-weight: 700; font-size: 0.95rem; }
+.gum.sheet.item .attack-controls a { color: var(--item-text-muted); margin-left: 8px; font-size: 0.8rem; }
+.gum.sheet.item .attack-controls a:hover { color: var(--item-accent); }
 
-/* Grid de Stats do Ataque */
 .gum.sheet.item .attack-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 .gum.sheet.item .attack-stat {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 3px;
-    text-align: center;
-    border-radius: 2px;
+  background: #fbf7f1;
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  padding: 4px 5px;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
 }
 .gum.sheet.item .attack-stat label {
-    display: block;
-    font-size: 9px;
-    color: var(--gum-text-medio);
-    text-transform: uppercase;
+  display: block;
+  font-size: 0.58rem;
+  color: var(--item-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
 }
 .gum.sheet.item .attack-stat span {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--gum-text-claro);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--item-text);
 }
 
-/* Controles (Editar/Deletar) */
-.gum.sheet.item .attack-controls a {
-    color: var(--gum-text-medio);
-    margin-left: 8px;
-    font-size: 12px;
+/* Ajustes específicos da aba Modos de Ataque (lista + edição) */
+.gum.sheet.item .tab[data-tab="attacks"] .attack-list {
+  padding: 0;
+  margin: 0;
 }
-.gum.sheet.item .attack-controls a:hover {
-    color: var(--gum-accent-red);
+.gum.sheet.item .attack-item {
+  font-size: 12px;
+  border-radius: 8px;
+}
+.gum.sheet.item .attack-display-grid .display-stat span {
+  font-size: 0.82rem;
+}
+.gum.sheet.item .attack-display-grid .display-stat label {
+  font-size: 0.58rem;
+}
+.gum.sheet.item .attack-display-card .pill-stat {
+  font-size: 0.75rem;
+  padding: 1px 5px;
+}
+.gum.sheet.item .attack-display-card .attack-controls a {
+  font-size: 0.78rem;
+}
+.gum.sheet.item .attack-edit-mode {
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  font-size: 12px;
+}
+.gum.sheet.item .attack-edit-mode .form-group label {
+  font-size: 0.62rem;
+}
+.gum.sheet.item .attack-edit-mode input,
+.gum.sheet.item .attack-edit-mode select {
+  font-size: 12px;
+  padding: 4px 6px;
+}
+.gum.sheet.item .attack-controls-edit .button {
+  font-size: 12px;
+  padding: 6px 10px;
 }
 
-/* =================================================================== */
-/* 7. EDITOR DE EFEITOS E CONDIÇÕES                                    */
-/* =================================================================== */
-
-.gum.sheet.item .effect-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+/* Checkboxes U/F alinhados e visíveis */
+.gum.sheet.item .attack-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 10px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 5px;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox {
+  font-size: 0.8rem;
+  color: var(--item-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox span::before {
+  border-color: var(--item-border);
+  background: rgba(0,0,0,0.05);
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
+  background-color: var(--item-accent);
+  border-color: var(--item-accent);
+  box-shadow: 0 0 4px rgba(185,137,60,0.35);
 }
 
+/* Polimento do bloco de avançados dentro do modo de ataque */
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced {
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced summary {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--item-text);
+  background: #f7f2ea;
+  border-bottom: 1px solid var(--item-border);
+}
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced[open] summary {
+  background: #f2ece1;
+}
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced .advanced-content {
+  padding: 10px;
+  font-size: 0.78rem;
+}
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced .advanced-content .subheader {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--item-text);
+  margin: 8px 0 4px;
+}
+.gum.sheet.item .attack-edit-mode details.item-sheet-advanced .effects-list-container .effect-summary {
+  background: #f9f6f0;
+  border: 1px solid var(--item-border);
+  padding: 6px 8px;
+}
+/* Checkboxes U/F alinhados e compactos */
+.gum.sheet.item .attack-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px 10px;
+  align-items: center;
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox {
+  font-size: 0.8rem;
+  color: var(--item-text);
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox span::before {
+  border-color: var(--item-border);
+  background: rgba(0,0,0,0.05);
+}
+.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
+  background-color: var(--item-accent);
+  border-color: var(--item-accent);
+  box-shadow: 0 0 4px rgba(185,137,60,0.35);
+}
+
+/* ------------------------------------------------------------------- */
+/* EFEITOS / CONDIÇÕES                                                */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .effect-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .gum.sheet.item .effect-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.05);
-    padding: 4px 8px;
-    border-radius: 3px;
-    border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-.gum.sheet.item .effect-item:hover {
-    border-color: var(--gum-accent-blue);
-}
+.gum.sheet.item .effect-item:hover { border-color: var(--item-accent-2); }
+.gum.sheet.item .effect-icon { width: 26px; height: 26px; border-radius: 4px; }
+.gum.sheet.item .effect-name { flex: 1; font-weight: 700; color: var(--item-text); font-size: 0.9rem; }
 
-.gum.sheet.item .effect-icon {
-    width: 24px; height: 24px;
-    border-radius: 3px;
-}
-.gum.sheet.item .effect-name {
-    flex-grow: 1;
-    font-weight: 600;
-}
-
-/* =================================================================== */
-/* 8. MODIFICADORES (VANTAGENS/PERÍCIAS)                               */
-/* =================================================================== */
-
-.gum.sheet.item .modifier-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
+/* ------------------------------------------------------------------- */
+/* MODIFICADORES                                                      */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .modifier-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .gum.sheet.item .modifier-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--item-border);
+  font-size: 0.8rem;
+  color: var(--item-text);
 }
-
-.gum.sheet.item .modifier-tag.enhancement {
-    border-color: var(--gum-accent-green);
-    color: #a8e6cf;
-}
-.gum.sheet.item .modifier-tag.limitation {
-    border-color: var(--gum-accent-red);
-    color: #ff8b94;
-}
-
+.gum.sheet.item .modifier-tag.enhancement { border-color: var(--item-accent); color: #8d6a2e; }
+.gum.sheet.item .modifier-tag.limitation { border-color: #b64040; color: #a23a3a; }
 .gum.sheet.item .modifier-cost {
-    font-weight: bold;
-    background: rgba(255,255,255,0.1);
-    padding: 1px 4px;
-    border-radius: 3px;
+  font-weight: 800;
+  background: rgba(0,0,0,0.03);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.78rem;
 }
 
-/* =================================================================== */
-/* 9. BOTÕES DE AÇÃO (SALVAR, ADICIONAR)                               */
-/* =================================================================== */
-
+/* ------------------------------------------------------------------- */
+/* BOTÕES                                                            */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item button {
-    background: var(--gum-bg-medium);
-    color: var(--gum-text-claro);
-    border: 1px solid var(--gum-border-light);
-    padding: 6px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-family: var(--gum-font-primary);
-    font-weight: 600;
-    transition: all 0.2s;
+  background: #ffffff;
+  color: var(--item-text);
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
 }
 .gum.sheet.item button:hover {
-    background: var(--gum-accent-gold);
-    color: var(--gum-bg-darkest);
-    border-color: var(--gum-accent-gold);
+  background: var(--item-accent);
+  color: #fff;
+  border-color: var(--item-accent);
+  transform: translateY(-1px);
 }
+.gum.sheet.item .action-btn-small { padding: 3px 7px; font-size: 0.8rem; }
 
-/* Botões de Ícone Pequenos */
-.gum.sheet.item .action-btn-small {
-    padding: 2px 6px;
-    font-size: 10px;
-}
-/* =================================================================== */
-/* RESGATE: LISTA DE CONDIÇÕES ANEXADAS (Vinha do effect-browser)      */
-/* =================================================================== */
-
+/* ------------------------------------------------------------------- */
+/* CONDIÇÕES ANEXADAS                                                 */
+/* ------------------------------------------------------------------- */
 .gum.sheet.item .attached-conditions-list {
-    list-style: none;
-    margin: 0 0 15px 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-
 .gum.sheet.item .attached-conditions-list .effect-summary {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 4px;
-    font-size: 13px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    background-color: rgba(0,0,0,0.2); /* Fundo escuro sutil */
-    border: 1px solid var(--gum-border-light);
-    overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--item-border);
+  overflow: hidden;
 }
-
 .gum.sheet.item .attached-conditions-list .effect-summary-info {
-    padding: 4px 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--gum-text-claro);
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--item-text);
 }
-
-.gum.sheet.item .attached-conditions-list .effect-summary-info strong { 
-    color: var(--gum-accent-gold);
-}
-
+.gum.sheet.item .attached-conditions-list .effect-summary-info strong { color: var(--item-accent); }
 .gum.sheet.item .attached-conditions-list .effect-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 8px;
-    background: rgba(0,0,0,0.3);
-    border-left: 1px solid var(--gum-border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: rgba(0,0,0,0.05);
+  border-left: 1px solid var(--item-border);
 }
-
 .gum.sheet.item .attached-conditions-list .effect-controls a {
-    color: var(--gum-text-medio);
-    cursor: pointer;
-    transition: color 0.2s;
+  color: var(--item-text-muted);
+  cursor: pointer;
 }
-.gum.sheet.item .attached-conditions-list .effect-controls a:hover {
-    color: var(--gum-accent-red);
+.gum.sheet.item .attached-conditions-list .effect-controls a:hover { color: var(--item-accent); }
+.gum.sheet.item .attached-conditions-list .hint {
+  font-style: italic;
+  opacity: 0.7;
+  width: 100%;
 }
 
-.gum.sheet.item .attached-conditions-list .hint {
-    font-style: italic;
-    opacity: 0.7;
-    width: 100%;
+/* ------------------------------------------------------------------- */
+/* MINI CARDS / MASONRY                                               */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .mod-mini-grid,
+.gum.sheet.item .modifiers-masonry-layout { gap: 10px; }
+.gum.sheet.item .mod-mini-card {
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
+.gum.sheet.item .mod-mini-card .mod-controls a:hover { color: var(--item-accent); }
+
+/* ------------------------------------------------------------------- */
+/* TINYMCE (Descrição)                                                */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .tox-tinymce {
+  border: 1px solid var(--item-border) !important;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  height: 320px !important;
+}
+.gum.sheet.item .tox-toolbar,
+.gum.sheet.item .tox-toolbar__primary {
+  background: var(--item-bg-panel) !important;
+  border-bottom: 1px solid var(--item-border) !important;
+}
+.gum.sheet.item .tox-edit-area__iframe {
+  background: var(--item-bg-panel-2) !important;
+}
+.gum.sheet.item .tox-tinymce.expanded {
+  height: 600px !important;
+  max-height: none !important;
+  width: 100% !important;
+}
+.gum.sheet.item .description-editor .tox { min-height: 320px; }

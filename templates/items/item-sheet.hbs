@@ -1253,8 +1253,7 @@
                                  {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
                                  ({{attack.mode}})
                              </span>
-                             <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
-                             {{#if (objectValues attack.onDamageEffects)}}
+                               {{#if (objectValues attack.onDamageEffects)}}
                                  <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
                                      <i class="fas fa-magic"></i>
                                  </span>
@@ -1265,12 +1264,21 @@
                              {{#if attack.fencing}}
                                  <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
                              {{/if}}
-                             <div class="attack-controls">
+                             <span class="attack-controls">
                                  <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
                                  <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                             </div>
+                             </span>
                          </h4>
                          <div class="form-grid-3 attack-display-grid melee-grid">
+
+                                <div class="display-stat damage-stat">
+                                    <label>NH</label>
+                                    <span>
+                                    {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}
+                                    </span>
+
+                                </div>
+                            
                              <div class="display-stat damage-stat">
                                  <label>Dano</label>
                                  <span>
@@ -1313,7 +1321,7 @@
                                  <label>Perícia Vinculada <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
                                  <input type="text" data-name="system.melee_attacks.{{key}}.skill_name" value="{{attack.skill_name}}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
                              </div>
-                             <div class="form-group input-narrow">
+                             <div class="form-group">
                                  <label>Mod. NH</label>
                                  <input type="number" data-name="system.melee_attacks.{{key}}.skill_level_mod" value="{{attack.skill_level_mod}}"/>
                              </div>
@@ -1418,15 +1426,14 @@
            <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
              
                  {{!-- MODO EXIBIÇÃO - ATAQUE L.D.  --}}
-                 <div class="attack-display-mode">
+                                 <div class="attack-display-mode">
                      <div class="form-section attack-display-card">
                          <h4 class="section-title">
                              <span class="pill-skill">
                                  {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
                                  ({{attack.mode}})
                              </span>
-                             <span class="pill-stat"><label>NH</label> {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}</span>
-                             {{#if (objectValues attack.onDamageEffects)}}
+                               {{#if (objectValues attack.onDamageEffects)}}
                                  <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
                                      <i class="fas fa-magic"></i>
                                  </span>
@@ -1437,12 +1444,19 @@
                              {{#if attack.fencing}}
                                  <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
                              {{/if}}
-                             <div class="attack-controls">
+                             <span class="attack-controls">
                                  <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                 <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                             </div>
+                                 <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                             </span>
                          </h4>
                          <div class="form-grid-3 attack-display-grid ranged-grid">
+                                <div class="display-stat damage-stat">
+                                    <label>NH</label>
+                                    <span>
+                                    {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}
+                                    </span>
+
+                                </div>
                              <div class="display-stat damage-stat">
                                  <label>Dano</label>
                                  <span>

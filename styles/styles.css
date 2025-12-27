@@ -95,6 +95,7 @@
     color: var(--gum-accent-gold);
     text-decoration: none;
     transition: color 0.2s;
+    margin-top: 5px;
 }
 .gum a:hover {
     text-decoration: underline;
@@ -3077,4 +3078,78 @@
 
 .chat-message .gurps-damage-card .apply-damage-button:hover {
     filter: brightness(0.92);
+}
+
+/* =================================================================== */
+/* RD Manual Dialog                                                    */
+/* =================================================================== */
+.gum-rd-form {
+    font-family: "Roboto", "Segoe UI", sans-serif;
+    color: #2f2b28;
+}
+.gum-rd-form .gum-rd-profile-row {
+    background: #f8f4ed;
+    border: 1px solid #e6ddcd;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.gum-rd-form .gum-body-profile-select {
+    flex: 0 0 180px;
+    padding: 4px 6px;
+    border: 1px solid #d7ccb8;
+    border-radius: 6px;
+    background: #fff;
+}
+.gum-rd-form .gurps-rd-table {
+    border: 1px solid #e0d5c7;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fdfbf6;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+.gum-rd-form .gurps-rd-table .table-header {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    background: #f4efe8;
+    color: #6b5e55;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e6ddcd;
+}
+.gum-rd-form .gurps-rd-table .table-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
+.gum-rd-form .gurps-rd-table .table-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    gap: 6px;
+}
+.gum-rd-form .gurps-rd-table .table-row:nth-child(even) {
+    background: rgba(0,0,0,0.01);
+}
+.gum-rd-form .gurps-rd-table .table-row .loc-label {
+    font-weight: 800;
+    color: #2f2b28;
+}
+.gum-rd-form .gurps-rd-table .table-row input[type="text"] {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #d7ccb8;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.gum-rd-form .gurps-rd-table .table-row .loc-rd-total strong {
+    color: #b64040;
 }
