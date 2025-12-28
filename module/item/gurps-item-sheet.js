@@ -198,17 +198,24 @@ export class GurpsItemSheet extends ItemSheet {
             let currentLevel = foundry.utils.getProperty(this.item, targetField) || 0;
             let newLevel = action === 'increase' ? currentLevel + 1 : currentLevel - 1;
             
-            let updateData = { [targetField]: newLevel };
+            // Sincroniza o input na tela antes do update (evita ler valor antigo no formulário)
+            const input = this.form?.querySelector(`input[name="${targetField}"]`);
+            if (input) input.value = newLevel;
+
             const sys = this.item.system;
-            
+            const updateData = { [targetField]: newLevel };
+
+            // Recalcula pontos automaticamente (aplicado em magias/poderes também)
             if (sys.auto_points !== false && targetField === "system.skill_level") {
-                if (sys.cost_mode === 'linear') {
+                const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points";
+                const costMode = sys.cost_mode || "standard";
+                if (costMode === 'linear') {
                     const cost = sys.cost_per_level || 1;
-                    updateData['system.points'] = Math.max(0, newLevel * cost);
+                    updateData[pointsField] = Math.max(0, newLevel * cost);
                 } else {
                     const diff = sys.difficulty || "A"; 
                     const newPoints = this._calculateSkillPoints(diff, newLevel);
-                    updateData['system.points'] = newPoints;
+                    updateData[pointsField] = newPoints;
                 }
             }
             this.item.update(updateData);

@@ -977,49 +977,53 @@
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "spell")}}
 
-            {{!-- Grupo 1: Classificação da Magia --}}
             <div class="form-section">
                 <h4 class="section-title">Classificação</h4>
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group"><label>Classe</label><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
-                        <div class="form-group"><label>Escola</label><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Classe</label>
+                        <input type="text" name="system.spell_class" value="{{system.spell_class}}"/>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-medium"><label>Fonte</label><input type="text" name="system.source" value="{{system.source}}"/></div>
-                        
-                        {{!-- Campo REF com botão --}}
-                        <div class="form-group input-medium">
-                            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
-                            <div class="input-with-button">
-                                <input type="text" name="system.ref" value="{{system.ref}}"/>
-
-                            </div>
+                    <div class="form-group">
+                        <label>Escola</label>
+                        <input type="text" name="system.spell_school" value="{{system.spell_school}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Fonte</label>
+                        <input type="text" name="system.source" value="{{system.source}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
+                        <div class="input-with-button">
+                            <input type="text" name="system.ref" value="{{system.ref}}"/>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{!-- Grupo 2: Habilidade (COM AUTOMAÇÃO) --}}
-            <div class="form-section">
-                <h4 class="section-title">Habilidade</h4>
-                
-                <div class="form-group" style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                    <label class="custom-checkbox">
+            <div class="form-section skill-ability">
+                <div class="skill-ability-header">
+                    <div>
+                        <h4 class="section-title">Habilidade</h4>
+                        <p class="section-hint">Mesmo fluxo das perícias: defina atributo, dificuldade e NH.</p>
+                    </div>
+                </div>
+
+                <div class="skill-ability-toggle">
+                    <label class="custom-checkbox inline-checkbox">
                         <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                         <span>Calcular Pontos Automaticamente</span>
                     </label>
                 </div>
 
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group input-medium">
-                            <label>Atributo Base <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                            <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
-                        </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Dificuldade</label>
+                <div class="skill-ability-grid trio">
+                    <div class="form-group">
+                        <label>Atributo Base <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                        <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Dificuldade</label>
+                        <div class="form-fields">
                             {{#if (ne system.auto_points false)}}
                                 <select name="system.difficulty">
                                     {{selectOptions skillDifficulties selected=system.difficulty}}
@@ -1028,48 +1032,47 @@
                                 <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil"/>
                             {{/if}}
                         </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Nível (Relativo)</label>
-                            <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
+                    </div>
+                </div>
+
+                <div class="skill-ability-grid trio">
+                    <div class="skill-stat-card level-card">
+                        <div class="stat-label">Nível (Relativo)</div>
+                        <div class="stat-value counter-wrapper">
+                            <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
+                            <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
+                            <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
                         </div>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-narrow">
-                            <label>Pontos</label>
-                            <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Modificadores</label>
-                            <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
-                        </div>
+                    <div class="skill-stat-card">
+                        <div class="stat-label">Pontos</div>
+                        <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                    </div>
+                    <div class="skill-stat-card">
+                        <div class="stat-label">Mods. NH</div>
+                        <input type="number" name="system.other_mods" value="{{system.other_mods}}" placeholder="+0"/>
                     </div>
                 </div>
             </div>
-            
-            {{!-- Grupo 3: Execução e Custo --}}
+
             <div class="form-section">
                 <h4 class="section-title">Execução e Custo</h4>
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group input-medium">
-                            <label>Tempo de Execução</label>
-                            <input type="text" name="system.casting_time" value="{{system.casting_time}}"/>
-                        </div>
-                        <div class="form-group input-medium">
-                            <label>Custo de Mana</label>
-                            <input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/>
-                        </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Tempo de Execução</label>
+                        <input type="text" name="system.casting_time" value="{{system.casting_time}}"/>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-narrow">
-                            <label>Duração</label>
-                            <input type="text" name="system.duration" value="{{system.duration}}"/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Manutenção</label>
-                            <input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/>
-                        </div>
+                    <div class="form-group">
+                        <label>Custo de Mana</label>
+                        <input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Duração</label>
+                        <input type="text" name="system.duration" value="{{system.duration}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Manutenção</label>
+                        <input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/>
                     </div>
                 </div>
             </div>
@@ -1080,61 +1083,56 @@
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "power")}}
 
-            {{!-- Grupo 1: Custo e Pontos --}}
             <div class="form-section">
                 <h4 class="section-title">Custo e Classificação</h4>
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group input-narrow layout-inline">
-                            <label>Pontos Base</label>
-                            <input type="number" name="system.points" value="{{system.points}}"/>
-                        </div>
-                        <div class="form-group calculated-cost layout-inline">
-                            <label>Custo Final</label>
-                            <div class="value">
-                                <span>{{calculatedCost.finalPoints}}</span>
-                                <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
-                            </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Pontos Base</label>
+                        <input type="number" name="system.points" value="{{system.points}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Custo Final</label>
+                        <div class="calculated-cost value">
+                            <span>{{calculatedCost.finalPoints}}</span>
+                            <small>(Mod: {{calculatedCost.totalModifier}}%)</small>
                         </div>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-medium">
-                            <label>Fonte</label>
-                            <input type="text" name="system.source" value="{{system.source}}"/>
-                        </div>
-                        
-                        {{!-- Campo REF com botão --}}
-                        <div class="form-group input-medium">
-                            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
-                            <div class="input-with-button">
-                                <input type="text" name="system.ref" value="{{system.ref}}"/>
-                                
-                            </div>
+                    <div class="form-group">
+                        <label>Fonte</label>
+                        <input type="text" name="system.source" value="{{system.source}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>REF</label>
+                        <div class="input-with-button">
+                            <input type="text" name="system.ref" value="{{system.ref}}"/>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{!-- Grupo 2: Habilidade (COM AUTOMAÇÃO) --}}
-            <div class="form-section">
-                <h4 class="section-title">Habilidade (Rolagem)</h4>
-                
-                <div class="form-group" style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                    <label class="custom-checkbox">
+            <div class="form-section skill-ability">
+                <div class="skill-ability-header">
+                    <div>
+                        <h4 class="section-title">Habilidade (NH)</h4>
+                        <p class="section-hint">Layout idêntico ao de perícias para manter consistência.</p>
+                    </div>
+                </div>
+
+                <div class="skill-ability-toggle">
+                    <label class="custom-checkbox inline-checkbox">
                         <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                         <span>Calcular Pontos Automaticamente</span>
                     </label>
                 </div>
 
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group input-medium">
-                            <label>Atributo Base <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                            <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
-                        </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Dificuldade</label>
+                <div class="skill-ability-grid trio">
+                    <div class="form-group">
+                        <label>Atributo Base <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
+                        <input type="text" name="system.base_attribute" value="{{system.base_attribute}}" placeholder="IQ, DX, ou Perícia"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Dificuldade</label>
+                        <div class="form-fields">
                             {{#if (ne system.auto_points false)}}
                                 <select name="system.difficulty">
                                     {{selectOptions skillDifficulties selected=system.difficulty}}
@@ -1143,36 +1141,47 @@
                                 <input type="text" name="system.difficulty_manual" value="{{system.difficulty_manual}}" placeholder="Ex: Média, Difícil"/>
                             {{/if}}
                         </div>
-                        
-                        <div class="form-group input-medium">
-                            <label>Nível (Relativo)</label>
-                            <input type="number" name="system.skill_level" value="{{system.skill_level}}"/>
+                    </div>
+                </div>
+
+                <div class="skill-ability-grid trio">
+                    <div class="skill-stat-card level-card">
+                        <div class="stat-label">Nível (Relativo)</div>
+                        <div class="stat-value counter-wrapper">
+                            <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
+                            <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
+                            <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
                         </div>
                     </div>
-                    <div class="ability-col-right">
-                        <div class="form-group input-narrow">
-                            <label>Pontos (NH)</label>
-                            <input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
-                        </div>
-                        <div class="form-group input-narrow">
-                            <label>Modificadores</label>
-                            <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
-                        </div>
+                    <div class="skill-stat-card">
+                        <div class="stat-label">Pontos (NH)</div>
+                        <input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                    </div>
+                    <div class="skill-stat-card">
+                        <div class="stat-label">Mods. NH</div>
+                        <input type="number" name="system.other_mods" value="{{system.other_mods}}"/>
                     </div>
                 </div>
             </div>
-            
-            {{!-- Grupo 3: Uso e Ativação --}}
+
             <div class="form-section">
                 <h4 class="section-title">Uso e Ativação</h4>
-                <div class="ability-grid">
-                    <div class="ability-col-left">
-                        <div class="form-group"><label>Tempo de Ativação</label><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div>
-                        <div class="form-group input-narrow"><label>Custo</label><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Tempo de Ativação</label>
+                        <input type="text" name="system.activation_time" value="{{system.activation_time}}"/>
                     </div>
-                    <div class="ability-col-right">
-                    <div class="form-group"><label>Duração</label><input type="text" name="system.duration" value="{{system.duration}}"/></div>
-                    <div class="form-group input-narrow"><label>Manutenção</label><input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/></div>
+                    <div class="form-group">
+                        <label>Custo</label>
+                        <input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Duração</label>
+                        <input type="text" name="system.duration" value="{{system.duration}}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Manutenção</label>
+                        <input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/>
                     </div>
                 </div>
             </div>
