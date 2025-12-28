@@ -97,167 +97,259 @@
 {{!--        NOVA ABA DE EFEITOS (ESTRUTURA VERSÃO 3)        --}}
 {{!-- ======================================================== --}}
 {{#*inline "effectsTab"}}
-    {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Teste de Ativação / Ataque</h4>
-        <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
-        <div class="effect-group success">
-            <div class="group-header">
-                <h5 class="group-title">Em Sucesso</h5>
-                <a class="button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
+    <div class="effects-tab-layout">
+        <div class="effects-hero">
+            <div>
+                <p class="eyebrow">Gestão de Efeitos do Item</p>
+                <h3>Active, onDamage & Passivos</h3>
+                <p class="hint">Organize todas as interações do item em um único painel, separando gatilhos e destinatários.</p>
             </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.activation.success as |effect|}}
-                    <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                        <div class="contextual-fields">
-                            <div class="form-group">
-                                <label>Destinatário</label>
-                                <select name="system.activationEffects.success.{{effect.id}}.recipient">
-                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                </select>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de sucesso.</p>
-                {{/each}}
-            </ol>
+            <div class="effects-legend">
+                <span class="pill success"><i class="fas fa-check"></i> Sucesso</span>
+                <span class="pill failure"><i class="fas fa-times"></i> Falha</span>
+                <span class="pill passive"><i class="fas fa-infinity"></i> Passivo</span>
+            </div>
         </div>
-        <div class="effect-group failure">
-            <div class="group-header">
-                <h5 class="group-title">Em Falha</h5>
-                <a class="button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
+
+        <div class="effects-columns">
+            {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
+            <div class="form-section effect-category">
+                <div class="section-header">
+                    <div>
+                        <h4 class="section-title">Teste de Ativação / Ataque</h4>
+                        <p class="hint">Efeitos que ocorrem como resultado direto da rolagem de ativação da habilidade.</p>
+                    </div>
+                    <div class="section-actions">
+                        <span class="section-tag">Ação Instantânea</span>
+                    </div>
+                </div>
+                <div class="effect-group success">
+                    <div class="group-header">
+                        <div class="group-heading">
+                            <h5 class="group-title"><i class="fas fa-check-circle"></i> Em Sucesso</h5>
+                            <p class="group-subtitle">Dispare efeitos quando a rolagem atingir ou superar o NH.</p>
+                        </div>
+                        <a class="button item-add-button add-effect" data-target-list="activationEffects.success" title="Adicionar Efeito de Sucesso"><i class="fas fa-plus"></i> Adicionar</a>
+                    </div>
+                    <ol class="effects-list">
+                        {{#each system.preparedEffects.activation.success as |effect|}}
+                            <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
+                                <div class="effect-header">
+                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    <div class="effect-main">
+                                        <img src="{{effect.img}}" class="effect-icon"/>
+                                        <div class="effect-text">
+                                            <span class="effect-name">{{effect.name}}</span>
+                                            <span class="effect-context">Aplicado logo após a ativação</span>
+                                        </div>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                                <div class="contextual-fields">
+                                    <div class="form-group">
+                                        <label>Destinatário</label>
+                                        <select name="system.activationEffects.success.{{effect.id}}.recipient">
+                                            <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                            <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <p class="empty-hint">Nenhum efeito de sucesso.</p>
+                        {{/each}}
+                    </ol>
+                </div>
+                <div class="effect-group failure">
+                    <div class="group-header">
+                        <div class="group-heading">
+                            <h5 class="group-title"><i class="fas fa-times-circle"></i> Em Falha</h5>
+                            <p class="group-subtitle">Use para contratempos, recargas ou efeitos negativos.</p>
+                        </div>
+                        <a class="button item-add-button add-effect" data-target-list="activationEffects.failure" title="Adicionar Efeito de Falha"><i class="fas fa-plus"></i> Adicionar</a>
+                    </div>
+                    <ol class="effects-list">
+                        {{#each system.preparedEffects.activation.failure as |effect|}}
+                            <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
+                                <div class="effect-header">
+                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    <div class="effect-main">
+                                        <img src="{{effect.img}}" class="effect-icon"/>
+                                        <div class="effect-text">
+                                            <span class="effect-name">{{effect.name}}</span>
+                                            <span class="effect-context">Acionado quando o teste falha</span>
+                                        </div>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                                <div class="contextual-fields">
+                                    <div class="form-group">
+                                        <label>Destinatário</label>
+                                        <select name="system.activationEffects.failure.{{effect.id}}.recipient">
+                                            <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
+                                            <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <p class="empty-hint">Nenhum efeito de falha.</p>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.activation.failure as |effect|}}
-                    <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
+            {{!-- 2. SEÇÃO: AO CAUSAR DANO --}}
+            <div class="form-section effect-category">
+                <div class="section-header">
+                    <div>
+                        <h4 class="section-title">Ao Causar Dano</h4>
+                        <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
+                    </div>
+                    <div class="section-actions">
+                        <span class="section-tag">Gatilho Pós-Dano</span>
+                    </div>
+                </div>
+                <div class="effect-group">
+                    <div class="group-header">
+                        <div class="group-heading">
+                            <h5 class="group-title"><i class="fas fa-burst"></i> Aplicação de Dano</h5>
+                            <p class="group-subtitle">Perfeito para sangramento, empurrões ou efeitos contínuos.</p>
                         </div>
-                        <div class="contextual-fields">
-                            <div class="form-group">
-                                <label>Destinatário</label>
-                                <select name="system.activationEffects.failure.{{effect.id}}.recipient">
-                                    <option value="self" {{#if (eq effect.recipient 'self')}}selected{{/if}}>Próprio</option>
-                                    <option value="target" {{#if (eq effect.recipient 'target')}}selected{{/if}}>Alvo</option>
-                                </select>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de falha.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
-    {{!-- 2. SEÇÃO: AO CAUSAR DANO --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Ao Causar Dano</h4>
-        <p class="hint">Efeitos acionados pela Janela de Aplicação de Dano. O destinatário é sempre o Alvo.</p>
-        <div class="effect-group">
-            <div class="group-header">
-                <a class="button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
+                        <a class="button item-add-button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
+                    </div>
+                    <ol class="effects-list">
+                        {{#each system.preparedEffects.onDamage as |effect|}}
+                            <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
+                                <div class="effect-header">
+                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    <div class="effect-main">
+                                        <img src="{{effect.img}}" class="effect-icon"/>
+                                        <div class="effect-text">
+                                            <span class="effect-name">{{effect.name}}</span>
+                                            <span class="effect-context">Dispara quando o dano é aplicado</span>
+                                        </div>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                                <div class="contextual-fields grid-3">
+                                    <div class="form-group">
+                                        <label>Lesão Mín.</label>
+                                        <input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tipo de Dano</label>
+                                        <input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Chance (%)</label>
+                                        <input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <p class="empty-hint">Nenhum efeito de dano.</p>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.onDamage as |effect|}}
-                    <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
+            {{!-- 3. SEÇÃO: EFEITOS PASSIVOS --}}
+            <div class="form-section effect-category">
+                <div class="section-header">
+                    <div>
+                        <h4 class="section-title">Efeitos Passivos</h4>
+                        <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
+                    </div>
+                    <div class="section-actions">
+                        <span class="section-tag">Sempre Ativo</span>
+                    </div>
+                </div>
+                <div class="effect-group passive"> 
+                    <div class="group-header">
+                        <div class="group-heading">
+                            <h5 class="group-title"><i class="fas fa-infinity"></i> Sempre em efeito</h5>
+                            <p class="group-subtitle">Ideal para bônus permanentes, imunidades ou penalidades.</p>
                         </div>
-                        <div class="contextual-fields grid-3">
-                            <div class="form-group">
-                                <label>Lesão Mín.</label>
-                                <input type="number" name="system.onDamageEffects.{{effect.id}}.minInjury" value="{{effect.minInjury}}" placeholder="1"/>
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Dano</label>
-                                <input type="text" name="system.onDamageEffects.{{effect.id}}.requiredDamageType" value="{{effect.requiredDamageType}}" placeholder="Qualquer"/>
-                            </div>
-                            <div class="form-group">
-                                <label>Chance (%)</label>
-                                <input type="number" name="system.onDamageEffects.{{effect.id}}.activationChance" value="{{effect.activationChance}}" placeholder="100"/>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito de dano.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
-    {{!-- 3. SEÇÃO: EFEITOS PASSIVOS --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Efeitos Passivos</h4>
-        <p class="hint">Aplicados automaticamente enquanto o personagem possuir este item.</p>
-        <div class="effect-group passive"> 
-            <div class="group-header">
-                <a class="button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
+                        <a class="button item-add-button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
+                    </div>
+                    <ol class="effects-list">
+                        {{#each system.preparedEffects.passive as |effect|}}
+                            <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
+                                <div class="effect-header">
+                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    <div class="effect-main">
+                                        <img src="{{effect.img}}" class="effect-icon"/>
+                                        <div class="effect-text">
+                                            <span class="effect-name">{{effect.name}}</span>
+                                            <span class="effect-context">Ativo enquanto o item estiver equipado</span>
+                                        </div>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
+                                        <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <p class="empty-hint">Nenhum efeito passivo definido.</p>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.passive as |effect|}}
-                    <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
-                        <div class="effect-header">
-                            <img src="{{effect.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{effect.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
-                            </div>
+            {{!-- 4. SEÇÃO: CONDIÇÕES GERAIS --}}
+            <div class="form-section effect-category">
+                <div class="section-header">
+                    <div>
+                        <h4 class="section-title">Condições Gerais</h4>
+                        <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
+                    </div>
+                    <div class="section-actions">
+                        <span class="section-tag">Condição Vinculada</span>
+                    </div>
+                </div>
+                <div class="effect-group">
+                    <div class="group-header">
+                        <div class="group-heading">
+                            <h5 class="group-title"><i class="fas fa-link"></i> Condições Anexadas</h5>
+                            <p class="group-subtitle">Ideal para atordoamento, venenos ou modos de combate especiais.</p>
                         </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhum efeito passivo definido.</p>
-                {{/each}}
-            </ol>
-        </div>
-    </div>
-    {{!-- 4. SEÇÃO: CONDIÇÕES GERAIS --}}
-    <div class="form-section effect-category">
-        <h4 class="section-title">Condições Gerais</h4>
-        <p class="hint">Anexe Condições completas com gatilhos customizados e avançados.</p>
-        <div class="effect-group">
-            <div class="group-header">
-                <a class="button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
+                        <a class="button item-add-button add-general-condition" title="Anexar Condição"><i class="fas fa-plus"></i> Anexar Condição</a>
+                    </div>
+                    <ol class="effects-list">
+                        {{#each system.preparedEffects.general as |condition|}}
+                            <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
+                                <div class="effect-header">
+                                    <div class="effect-id-tag">ID #{{condition.id}}</div>
+                                    <div class="effect-main">
+                                        <img src="{{condition.img}}" class="effect-icon"/>
+                                        <div class="effect-text">
+                                            <span class="effect-name">{{condition.name}}</span>
+                                            <span class="effect-context">Aplicação contextual</span>
+                                        </div>
+                                    </div>
+                                    <div class="effect-controls">
+                                        <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
+                                        <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <p class="empty-hint">Nenhuma condição geral anexada.</p>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
-            <ol class="effects-list">
-                {{#each system.preparedEffects.general as |condition|}}
-                    <li class="effect-entry" data-list-name="generalConditions" data-effect-id="{{condition.id}}">
-                        <div class="effect-header">
-                            <img src="{{condition.img}}" class="effect-icon"/>
-                            <span class="effect-name">{{condition.name}}</span>
-                            <div class="effect-controls">
-                                <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
-                                <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </div>
-                    </li>
-                {{else}}
-                    <p class="hint small">Nenhuma condição geral anexada.</p>
-                {{/each}}
-            </ol>
         </div>
     </div>
 {{/inline}}
-
 
 {{!-- ============================================= --}}
 {{!-- INÍCIO DA ESTRUTURA DAS FICHAS                --}}
@@ -1130,35 +1222,79 @@
         {{/if}}
     </div>
 
-    {{! ========================================================= }}
+     {{! ========================================================= }}
     {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
     {{! ========================================================= }}
     <div class="tab" data-tab="description">
-      <div class="form-section description-section">
-        <h4 class="section-title">Descrição Resumida (Chat)</h4>
-        <div class="description-view">{{{system.chat_description}}}</div>
-        {{#if editable}}
-        <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
-        {{/if}}
-
-        <div class="description-editor" style="display:none;">
-          {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
-          <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
-          <button type="button" class="cancel-description">Cancelar</button>
+      <div class="description-tab">
+        <div class="description-hero">
+          <div class="hero-text">
+            <p class="eyebrow">Narrativa & Referência</p>
+            <h3>Descrição do Item</h3>
+            <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-chip">
+              <i class="fas fa-book-open"></i>
+              <span>Resumo (Chat)</span>
+            </div>
+            <div class="meta-chip">
+              <i class="fas fa-scroll"></i>
+              <span>Completa</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="form-section description-section">
-        <h4 class="section-title">Descrição Completa</h4>
-        <div class="description-view">{{{system.description}}}</div>
-        {{#if editable}}
-        <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
-        {{/if}}
+        <div class="description-grid">
+          <div class="form-section description-section">
+            <div class="description-header">
+              <div>
+                <h4 class="section-title">Descrição Resumida (Chat)</h4>
+                <p class="hint">Use para tooltips e mensagens rápidas.</p>
+              </div>
+              {{#if editable}}
+              <div class="description-actions">
+                <button type="button" class="toggle-editor" data-field="system.chat_description">
+                  <i class="fas fa-pen"></i> Editar
+                </button>
+              </div>
+              {{/if}}
+            </div>
+            <div class="description-view">{{{system.chat_description}}}</div>
 
-        <div class="description-editor" style="display:none;">
-          {{editor system.description target="system.description" owner=owner editable=editable}}
-          <button type="button" class="save-description" data-field="system.description">Salvar</button>
-          <button type="button" class="cancel-description">Cancelar</button>
+            <div class="description-editor" style="display:none;">
+              {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+              <div class="description-actions">
+                <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section description-section">
+            <div class="description-header">
+              <div>
+                <h4 class="section-title">Descrição Completa</h4>
+                <p class="hint">Inclua detalhes extensos, efeitos narrativos e referências.</p>
+              </div>
+              {{#if editable}}
+              <div class="description-actions">
+                <button type="button" class="toggle-editor" data-field="system.description">
+                  <i class="fas fa-pen"></i> Editar
+                </button>
+              </div>
+              {{/if}}
+            </div>
+            <div class="description-view">{{{system.description}}}</div>
+
+            <div class="description-editor" style="display:none;">
+              {{editor system.description target="system.description" owner=owner editable=editable}}
+              <div class="description-actions">
+                <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

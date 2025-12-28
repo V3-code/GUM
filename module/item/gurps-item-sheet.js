@@ -448,7 +448,8 @@ export class GurpsItemSheet extends ItemSheet {
     
     async _updateObject(event, formData) {
         for (const [k, v] of Object.entries(formData)) {
-            if (typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
+            const isDescriptionField = k.includes("description");
+            if (!isDescriptionField && typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
         }
         this._saveUIState();
         return super._updateObject(event, formData);
