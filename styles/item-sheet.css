@@ -744,27 +744,132 @@
 /* ------------------------------------------------------------------- */
 /* MODIFICADORES                                                      */
 /* ------------------------------------------------------------------- */
-.gum.sheet.item .modifier-list { display: flex; flex-wrap: wrap; gap: 8px; }
-.gum.sheet.item .modifier-tag {
+.gum.sheet.item .modifiers-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gum.sheet.item .mod-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+  background: linear-gradient(110deg, rgba(185,137,60,0.12), rgba(106,139,181,0.08));
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+.gum.sheet.item .mod-hero h3 { margin: 2px 0 4px; font-size: 1.05rem; }
+.gum.sheet.item .mod-hero .eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  font-size: 0.65rem;
+  color: var(--item-text-muted);
+}
+.gum.sheet.item .mod-hero-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.gum.sheet.item .meta-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 9px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.04);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
   border: 1px solid var(--item-border);
+  font-weight: 700;
+  color: var(--item-text);
   font-size: 0.8rem;
+}
+.gum.sheet.item .meta-chip.enhancement { border-color: var(--item-accent); color: #8d6a2e; }
+.gum.sheet.item .meta-chip.limitation { border-color: #b64040; color: #a23a3a; }
+.gum.sheet.item .meta-chip.neutral { border-color: var(--item-border); color: var(--item-text-muted); }
+
+.gum.sheet.item .modifiers-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gum.sheet.item .mod-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.gum.sheet.item .modifier-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gum.sheet.item .modifier-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+.gum.sheet.item .modifier-card.is-enhancement { border-color: var(--item-accent); }
+.gum.sheet.item .modifier-card.is-limitation { border-color: #b64040; }
+.gum.sheet.item .modifier-card.is-eqp { border-style: dashed; background: #f9f6f0; }
+.gum.sheet.item .mod-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gum.sheet.item .mod-name {
+  font-weight: 800;
+  font-size: 0.95rem;
   color: var(--item-text);
 }
-.gum.sheet.item .modifier-tag.enhancement { border-color: var(--item-accent); color: #8d6a2e; }
-.gum.sheet.item .modifier-tag.limitation { border-color: #b64040; color: #a23a3a; }
-.gum.sheet.item .modifier-cost {
-  font-weight: 800;
-  background: rgba(0,0,0,0.03);
-  padding: 2px 6px;
-  border-radius: 5px;
-  font-size: 0.78rem;
+.gum.sheet.item .mod-effect {
+  color: var(--item-text-muted);
+  font-size: 0.85rem;
 }
+.gum.sheet.item .mod-notes {
+  font-size: 0.82rem;
+  color: var(--item-text);
+  background: rgba(0,0,0,0.03);
+  border-radius: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--item-border);
+}
+.gum.sheet.item .mod-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gum.sheet.item .mod-cost-badge {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--item-border);
+  background: rgba(0,0,0,0.04);
+  font-weight: 800;
+  color: var(--item-text);
+  font-size: 0.85rem;
+}
+.gum.sheet.item .modifier-controls {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+.gum.sheet.item .modifier-controls a {
+  color: var(--item-text-muted);
+}
+.gum.sheet.item .modifier-controls a:hover { color: var(--item-accent); }
 
 /* ------------------------------------------------------------------- */
 /* BOTÕES                                                            */

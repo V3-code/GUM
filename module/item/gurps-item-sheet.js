@@ -252,9 +252,9 @@ export class GurpsItemSheet extends ItemSheet {
             ev.preventDefault();
             new EqpModifierBrowser(this.item).render(true);
         });
-        html.find('.delete-eqp-modifier').click(ev => {
-            const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
-            this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
+         html.find('.delete-eqp-modifier').click(ev => {
+            const modId = $(ev.currentTarget).closest('[data-modifier-id]').data('modifier-id');
+            if (modId) this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
         });
         html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this));
 

@@ -1772,38 +1772,52 @@
      <div class="tab" data-tab="modifiers">
          {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
          
-             {{!-- A barra de ferramentas fica fora da seção para ter destaque --}}
-             <div class="modifiers-toolbar">
-                 <a class="add-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-             </div>
+             <div class="modifiers-tab">
+                 <div class="mod-hero">
+                     <div class="hero-text">
+                         <p class="eyebrow">Aprimoramentos e Limitações</p>
+                         <h3>Modificadores do Item</h3>
+                         <p class="hint">Organize os ajustes de custo e efeito para vantagens, desvantagens e poderes.</p>
+                     </div>
+                     <div class="mod-hero-meta">
+                         <span class="meta-chip enhancement"><i class="fas fa-arrow-up"></i> Enhancement</span>
+                         <span class="meta-chip limitation"><i class="fas fa-arrow-down"></i> Limitation</span>
+                     </div>
+                 </div>
 
-             {{!-- Envolvemos a lista com a estrutura .form-section --}}
-             <div class="form-section">
-                     
-                 <ol class="modifier-list">
-                     {{#each sortedModifiers as |modifier|}}
-                         <li class="modifier-tag {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
-                             
-                             <a class="modifier-info view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
-                                 <span class="modifier-name">{{modifier.name}}</span>
-                                 {{#if modifier.applied_effect}}
-                                     <span class="modifier-divider">|</span>
-                                     <span class="modifier-effect">{{modifier.applied_effect}}</span>
-                                 {{/if}}
-                             </a>
+                 <div class="form-section modifiers-panel">
+                     <div class="mod-panel-header">
+                         <div>
+                             <h4 class="section-title">Lista de Modificadores</h4>
+                             <p class="hint">Clique para visualizar detalhes ou remover rapidamente.</p>
+                         </div>
+                         <a class="button item-add-button add-modifier"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+                     </div>
 
-                             <div class="modifier-controls">
-                                 <span class="modifier-cost">{{modifier.cost}}</span>
-
-                                 <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
-                             </div>
-                         </li>
-                     {{else}}
-                         <li class="placeholder-text">
-                             <p>Nenhum modificador aplicado.</p>
-                         </li>
-                     {{/each}}
-                 </ol>
+                     <ol class="modifier-list">
+                         {{#each sortedModifiers as |modifier|}}
+                             <li class="modifier-card {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
+                                 <div class="mod-info">
+                                     <div class="mod-name">{{modifier.name}}</div>
+                                     {{#if modifier.applied_effect}}
+                                         <div class="mod-effect">{{modifier.applied_effect}}</div>
+                                     {{/if}}
+                                 </div>
+                                 <div class="mod-meta">
+                                     <span class="mod-cost-badge">{{modifier.cost}}</span>
+                                     <div class="modifier-controls">
+                                         <a class="view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}"><i class="fas fa-eye"></i></a>
+                                         <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
+                                     </div>
+                                 </div>
+                             </li>
+                         {{else}}
+                             <li class="placeholder-text">
+                                 <p>Nenhum modificador aplicado.</p>
+                             </li>
+                         {{/each}}
+                     </ol>
+                 </div>
              </div>
          {{/if}}
      </div>
@@ -1814,50 +1828,54 @@
     <div class="tab" data-tab="eqp_modifiers">
         {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
             
-            <div class="modifiers-toolbar">
-                <a class="add-eqp-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-            </div>
+            <div class="modifiers-tab">
+                <div class="mod-hero">
+                    <div class="hero-text">
+                        <p class="eyebrow">Ajustes de Equipamento</p>
+                        <h3>Mods, Materiais e Qualidades</h3>
+                        <p class="hint">Gerencie fatores de custo, peso e efeitos especiais de armaduras e equipamentos.</p>
+                    </div>
+                    <div class="mod-hero-meta">
+                        <span class="meta-chip neutral"><i class="fas fa-hammer"></i> Craft</span>
+                        <span class="meta-chip neutral"><i class="fas fa-magic"></i> Encantos</span>
+                    </div>
+                </div>
 
-            <div class="form-section">
-                <p class="hint">Adicione qualidades, materiais ou modificações mágicas aqui. O Custo Final e Peso serão recalculados automaticamente.</p>
-                
-                <ol class="modifier-list">
-                    {{#each eqpModifiersList as |mod|}}
-                        <li class="modifier-tag" data-modifier-id="{{mod.id}}" style="background: rgba(0,0,0,0.2); border: 1px solid #777;">
-                            
-                            <div class="modifier-info" style="flex-grow: 1;">
-                                <span class="modifier-name">{{mod.name}}</span>
-                                <span class="modifier-divider">|</span>
-                                <span class="modifier-effect" style="font-size: 0.85em; color: #ccc;">
-                                    CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
-                                </span>
-                            </div>
+                <div class="form-section modifiers-panel">
+                    <div class="mod-panel-header">
+                        <div>
+                            <h4 class="section-title">Modificadores de Equipamento</h4>
+                            <p class="hint">CF, Peso e texto de efeito ficam visíveis aqui.</p>
+                        </div>
+                        <a class="button item-add-button add-eqp-modifier"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+                    </div>
 
-                            <div class="modifier-controls">
-                                <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </li>
-                    {{else}}
-                        <li class="placeholder-text">
-                            <p>Nenhum modificador de equipamento aplicado.</p>
-                        </li>
-                    {{/each}}
-                </ol>
+                    <ol class="modifier-list">
+                        {{#each eqpModifiersList as |mod|}}
+                            <li class="modifier-card is-eqp" data-modifier-id="{{mod.id}}">
+                                <div class="mod-info">
+                                    <div class="mod-name">{{mod.name}}</div>
+                                    <div class="mod-effect">
+                                        CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
+                                    </div>
+                                    {{#if mod.features}}
+                                        <div class="mod-notes">{{mod.features}}</div>
+                                    {{/if}}
+                                </div>
+                                <div class="mod-meta">
+                                    <div class="modifier-controls">
+                                        <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </li>
+                        {{else}}
+                            <li class="placeholder-text">
+                                <p>Nenhum modificador de equipamento aplicado.</p>
+                            </li>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
-            
-            {{!-- Exibição dos Efeitos de Texto dos Mods (Opcional, mas útil) --}}
-            {{#if eqpModifiersList}}
-            <div class="form-section" style="margin-top: 10px;">
-                <h4 class="section-title">Resumo dos Efeitos</h4>
-                <ul style="padding-left: 20px; margin: 5px 0; color: #ccc; font-size: 0.9em;">
-                    {{#each eqpModifiersList as |mod|}}
-                        {{#if mod.features}}
-                            <li><strong>{{mod.name}}:</strong> {{mod.features}}</li>
-                        {{/if}}
-                    {{/each}}
-                </ul>
-            </div>
-            {{/if}}
 
         {{/if}}
     </div>
