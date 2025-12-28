@@ -221,11 +221,14 @@ export class GurpsItemSheet extends ItemSheet {
             this.item.update(updateData);
         });
 
+        if (this.item?.type === "gm_modifier") {
+            this._activateGmModifierBehaviors(html);
+        }
+
         // Editor de Descrição
         html.find(".toggle-editor").on("click", ev => {
             const section = $(ev.currentTarget).closest(".description-section");
             section.find(".description-view, .toggle-editor").hide();
-            section.find(".description-editor").show();
         });
         html.find(".cancel-description").on("click", ev => {
             const section = $(ev.currentTarget).closest(".description-section");
@@ -326,15 +329,118 @@ export class GurpsItemSheet extends ItemSheet {
         });
     }
 
-/* -------------------------------------------- */
+     /* -------------------------------------------- */
     /* Métodos Auxiliares                          */
     /* -------------------------------------------- */
+
+    _activateGmModifierBehaviors(html) {
+        if (!this._gmTreeState) this._gmTreeState = {};
+
+        // Persistência de colapsáveis
+        html.find('.gm-tree-group').each((index, el) => {
+            const id = el.id || `gm-tree-${index}`;
+            if (this._gmTreeState[id] === undefined) {
+                this._gmTreeState[id] = el.hasAttribute('open');
+            }
+            el.dataset.treeId = id;
+            el.open = !!this._gmTreeState[id];
+            el.addEventListener('toggle', ev => {
+                const treeId = ev.currentTarget.dataset.treeId;
+                this._gmTreeState[treeId] = ev.currentTarget.open;
+            });
+        });
+
+        // Lógica de checkboxes (implicações)
+        html.on('change', '.gm-modifier-layout input[type="checkbox"]', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            this._handleGmCheckboxChange(event, html);
+        });
+    }
+
+    _handleGmCheckboxChange(event, html) {
+        const target = event.currentTarget;
+        const name = target.name || "";
+        const checked = target.checked;
+
+        const setChecked = (selector, value) => {
+            html.find(selector).each((_, el) => { el.checked = value; });
+        };
+
+        const syncAttrRow = (attr) => {
+            const rowInputs = Array.from(html.find(`input.attr-child-${attr}`));
+            const allChecked = rowInputs.length > 0 && rowInputs.every(el => el.checked);
+            const parent = html.find(`input.attr-parent-toggle[data-attr="${attr}"]`)[0];
+            if (parent) parent.checked = allChecked;
+        };
+
+        const syncAttrAll = () => {
+            const parents = Array.from(html.find('input.attr-parent-toggle'));
+            const allChecked = parents.length > 0 && parents.every(el => el.checked);
+            const attrAll = html.find('input[name="system.target_type.attr_all"]')[0];
+            if (attrAll) attrAll.checked = allChecked;
+        };
+
+        const applySkillAll = (value) => {
+            setChecked('input[name^="system.target_type.skill_"]', value);
+        };
+
+        // Regras principais
+        if (name === "system.target_type.global") {
+            setChecked('.gm-modifier-layout input[type="checkbox"]', checked);
+        } else if (name === "system.target_type.combat_all") {
+            setChecked('input[name^="system.target_type.combat_"]', checked);
+        } else if (name === "system.target_type.attr_all") {
+            setChecked('input.attr-parent-toggle', checked);
+            setChecked('input[name^="system.target_type.check_"]', checked);
+            setChecked('input[name^="system.target_type.skill_"]', checked);
+            setChecked('input[name^="system.target_type.spell_"]', checked);
+            setChecked('input[name^="system.target_type.power_"]', checked);
+        } else if (name === "system.target_type.skill_all") {
+            applySkillAll(checked);
+        } else if (target.classList.contains('attr-parent-toggle')) {
+            const attr = target.dataset.attr;
+            if (attr) {
+                setChecked(`input.attr-child-${attr}`, checked);
+            }
+        } else if (name.startsWith("system.target_type.check_") ||
+                   name.startsWith("system.target_type.skill_") ||
+                   name.startsWith("system.target_type.spell_") ||
+                   name.startsWith("system.target_type.power_")) {
+            const parts = name.split("_");
+            const attr = parts[parts.length - 1];
+            if (attr) {
+                syncAttrRow(attr);
+            }
+        }
+
+        // Ajustes derivados
+        syncAttrAll();
+
+        // Atualizar apenas campos alterados para minimizar re-render
+        const updateData = {};
+        html.find('.gm-modifier-layout input[type="checkbox"]').each((_, el) => {
+            const input = el;
+            const path = input.name;
+            if (!path) return;
+            const value = input.checked;
+            const current = foundry.utils.getProperty(this.item, path);
+            if (current !== value) {
+                foundry.utils.setProperty(updateData, path, value);
+            }
+        });
+        if (Object.keys(updateData).length > 0) {
+            this.item.update(updateData);
+        }
+    }
 
     _calculateSkillPoints(difficulty, relativeLevel) {
         const rl = parseInt(relativeLevel) || 0;
         const normalized = ({
             "E": "F", "A": "M", "H": "D", "VH": "MD"
         })[difficulty] || difficulty;
+
 
         const tables = {
             "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
