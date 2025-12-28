@@ -1669,6 +1669,75 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     }
                 }
             },
+default: 'save'
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+    });
+
+    // EDITOR DE ST DE CARGA
+    html.on('click', '.edit-lifting-st', ev => {
+        ev.preventDefault();
+
+        const lifting = this.actor.system.attributes.lifting_st ?? { value: 0, mod: 0, temp: 0, passive: 0, final: 0, final_computed: 0 };
+        const fmt = (val) => (val > 0 ? `+${val}` : val || 0);
+
+        const content = `
+            <form class="secondary-stats-editor">
+                <p class="hint">Defina a ST utilizada para calcular a base de carga.</p>
+                <div class="form-header-grid">
+                    <span>Atributo</span>
+                    <span>Base</span>
+                    <span>Mod. Fixo</span>
+                    <span>Itens/Pass.</span>
+                    <span>Cond./Temp.</span>
+                    <span>Final</span>
+                </div>
+
+                <div class="form-row">
+                    <label>ST de Carga</label>
+                    <input type="number" name="lifting_st.value" value="${lifting.value ?? 0}" />
+                    <input type="number" name="lifting_st.mod" value="${lifting.mod ?? 0}" />
+                    <span class="read-only">${fmt(lifting.passive ?? 0)}</span>
+                    <input type="number" name="lifting_st.temp" value="${lifting.temp ?? 0}" />
+                    <span class="final-display">${lifting.final ?? lifting.final_computed ?? 0}</span>
+                </div>
+            </form>
+
+            <style>
+                .secondary-stats-editor .form-header-grid,
+                .secondary-stats-editor .form-row {
+                    display: grid;
+                    grid-template-columns: 110px 60px 60px 60px 60px 60px;
+                    gap: 5px;
+                    align-items: center;
+                    text-align: center;
+                    margin-bottom: 5px;
+                }
+            </style>
+        `;
+
+        new Dialog({
+            title: "Editar ST de Carga",
+            content: content,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: (html) => {
+                        const form = html.find('form')[0];
+                        const formData = new FormDataExtended(form).object;
+                        const updateData = {};
+
+                        const fields = ["value", "mod", "temp"];
+                        fields.forEach(field => {
+                            if (formData[`lifting_st.${field}`] !== undefined) {
+                                updateData[`system.attributes.lifting_st.${field}`] = Number(formData[`lifting_st.${field}`]);
+                            }
+                        });
+
+                        this.actor.update(updateData);
+                    }
+                }
+            },
             default: 'save'
         }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
     });
@@ -1679,22 +1748,123 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
         const attrs = this.actor.system.attributes;
         const fmt = (val) => (val > 0 ? `+${val}` : val || 0);
         
-        // ... (Todo o seu HTML do Dialog aqui permanece igual, só abreviando para leitura) ...
-        // Reutilize o código exato que você mandou na pergunta para o "content" desta Dialog
-        // Vou manter a estrutura lógica abaixo:
-
         const getAttr = (key) => attrs[key] || { value: 10, mod: 0, passive: 0, temp: 0, points: 0, final: 10 };
         const vision = getAttr('vision');
         const hearing = getAttr('hearing');
         const tastesmell = getAttr('tastesmell');
         const touch = getAttr('touch');
+                const content = `
+        <form class="secondary-stats-editor">
+            <div class="form-header-grid">
+                <span>Atributo</span>
+                <span>Base</span>
+                <span>Mod. Fixo</span>
+                <span>Itens/Pass.</span>
+                <span>Cond./Temp.</span>
+                <span>Pontos</span>
+                <span>Final</span>
+            </div>
 
-        // (Aqui entra a string 'const content = ...' que você já tem no seu código original)
-        // Por segurança, vou assumir que você tem esse bloco. Se precisar que eu repita o HTML inteiro, avise.
-        
-        // Nota: Para o código funcionar, certifique-se de que a variável 'content' está definida aqui igual ao seu código original.
-        // Vou colocar um placeholder para não estourar o limite de caracteres, mas use o SEU código HTML aqui.
-        const content = this._getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt); 
+            <div class="form-grid-rows">
+                
+                <div class="form-row">
+                    <label>Velocidade</label>
+                    <input type="number" name="basic_speed.value" value="${attrs.basic_speed.value}" step="0.25"/>
+                    <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
+                    <span class="read-only">${fmt(attrs.basic_speed.passive)}</span>
+                    <span class="read-only">${fmt(attrs.basic_speed.temp)}</span>
+                    <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
+                    <span class="final-display">${attrs.basic_speed.final}</span>
+                </div>
+                <div class="form-row">
+                    <label>Deslocamento</label>
+                    <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
+                    <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
+                    <span class="read-only">${fmt(attrs.basic_move.passive)}</span>
+                    <span class="read-only">${fmt(attrs.basic_move.temp)}</span>
+                    <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
+                    <span class="final-display">${attrs.basic_move.final}</span>
+                </div>
+                <div class="form-row">
+                    <label>MT (SM)</label>
+                    <input type="number" name="mt.value" value="${attrs.mt.value}"/>
+                    <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
+                    <span class="read-only">${fmt(attrs.mt.passive)}</span>
+                    <span class="read-only">${fmt(attrs.mt.temp)}</span>
+                    <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
+                    <span class="final-display">${attrs.mt.final}</span>
+                </div>
+                <div class="form-row">
+                    <label>Esquiva</label>
+                    <span class="read-only base-calc">${Math.floor(attrs.basic_speed.final) + 3}</span>
+                    <input type="number" name="dodge.mod" value="${attrs.dodge.mod || 0}"/>
+                    <span class="read-only">${fmt(attrs.dodge.passive)}</span>
+                    <span class="read-only">${fmt(attrs.dodge.temp)}</span>
+                    <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
+                    <span class="final-display">${attrs.dodge.final}</span>
+                </div>
+
+                <hr style="grid-column: 1 / -1; border-color: #aaa;">
+                
+                <div class="form-row">
+                    <label>Visão</label>
+                    <input type="number" name="vision.value" value="${vision.value}"/>
+                    <input type="number" name="vision.mod" value="${vision.mod}"/>
+                    <span class="read-only">${fmt(vision.passive)}</span>
+                    <span class="read-only">${fmt(vision.temp)}</span>
+                    <input type="number" name="vision.points" value="${vision.points || 0}"/>
+                    <span class="final-display">${vision.final}</span>
+                </div>
+
+                <div class="form-row">
+                    <label>Audição</label>
+                    <input type="number" name="hearing.value" value="${hearing.value}"/>
+                    <input type="number" name="hearing.mod" value="${hearing.mod}"/>
+                    <span class="read-only">${fmt(hearing.passive)}</span>
+                    <span class="read-only">${fmt(hearing.temp)}</span>
+                    <input type="number" name="hearing.points" value="${hearing.points || 0}"/>
+                    <span class="final-display">${hearing.final}</span>
+                </div>
+
+                <div class="form-row">
+                    <label>Olfato/Paladar</label>
+                    <input type="number" name="tastesmell.value" value="${tastesmell.value}"/>
+                    <input type="number" name="tastesmell.mod" value="${tastesmell.mod}"/>
+                    <span class="read-only">${fmt(tastesmell.passive)}</span>
+                    <span class="read-only">${fmt(tastesmell.temp)}</span>
+                    <input type="number" name="tastesmell.points" value="${tastesmell.points || 0}"/>
+                    <span class="final-display">${tastesmell.final}</span>
+                </div>
+
+                <div class="form-row">
+                    <label>Tato</label>
+                    <input type="number" name="touch.value" value="${touch.value}"/>
+                    <input type="number" name="touch.mod" value="${touch.mod}"/>
+                    <span class="read-only">${fmt(touch.passive)}</span>
+                    <span class="read-only">${fmt(touch.temp)}</span>
+                    <input type="number" name="touch.points" value="${touch.points || 0}"/>
+                    <span class="final-display">${touch.final}</span>
+                </div>
+
+            </div>
+        </form>
+        <style>
+            .secondary-stats-editor .form-header-grid,
+            .secondary-stats-editor .form-row {
+                display: grid;
+                grid-template-columns: 110px 60px 60px 60px 60px 60px 60px;
+                gap: 5px;
+                align-items: center;
+                text-align: center;
+                margin-bottom: 5px;
+            }
+            .secondary-stats-editor .form-header-grid span { font-weight: bold; font-size: 0.85em; white-space: nowrap; }
+            .secondary-stats-editor label { text-align: left; font-weight: bold; font-size: 0.9em; }
+            .secondary-stats-editor input { text-align: center; }
+            .secondary-stats-editor .read-only { color: #666; font-style: italic; }
+            .secondary-stats-editor .final-display { font-weight: bold; color: #a53541; font-size: 1.1em; }
+        </style>
+        `;
 
         new Dialog({
             title: "Editar Atributos Secundários",

@@ -95,7 +95,6 @@
     color: var(--gum-accent-gold);
     text-decoration: none;
     transition: color 0.2s;
-    margin-top: 5px;
 }
 .gum a:hover {
     text-decoration: underline;
