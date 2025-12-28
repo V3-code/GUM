@@ -226,6 +226,24 @@
   text-align: right;
 }
 
+.gum.sheet.item .secondary-damage-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 8px 0 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.04);
+  color: var(--item-text);
+  border: 1px solid var(--item-border-light);
+}
+.gum.sheet.item .secondary-damage-title i { color: var(--item-accent); }
+.gum.sheet.item .secondary-damage-title.follow-up { border-left: 3px solid var(--item-accent); }
+.gum.sheet.item .secondary-damage-title.fragmentation { border-left: 3px solid var(--item-accent-2); }
+
 /* ------------------------------------------------------------------- */
 /* SKILL DETAILS                                                      */
 /* ------------------------------------------------------------------- */

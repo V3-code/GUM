@@ -1300,17 +1300,14 @@
     {{!-- ===================================================================== --}}
     {{!--           ABA ESPECIAL: ATAQUE (apenas para Magias e Poderes) --}}
     {{!-- ===================================================================== --}}
-    <div class="tab" data-tab="attack">
+<div class="tab" data-tab="attack">
         
         {{!-- O IF de abertura --}}
         {{#if (or (eq item.type "spell") (eq item.type "power"))}}
 
-            {{!-- Este é o "Grupo 4" que movemos --}}
             <div class="form-section">
-                <h4 class="section-title">Efeitos Ofensivos</h4>
-
-                {{!-- Sub-seção 1: Rolagem de Ataque --}}
-                <h5 class="subheader">Rolagem de Ataque (para Acertar)</h5>
+                <h4 class="section-title">Rolagem de Ataque</h4>
+                <p class="section-hint">Para Magias e Poderes que precisam realizar um ataque própio após sua conjuração/ativação.</p>
                 <div class="form-grid-2" style="margin-bottom: 10px;">
                     <div class="form-group">
                         <label>Perícia de Ataque <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
@@ -1321,17 +1318,15 @@
                         <input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}"/>
                     </div>
                 </div>
+            </div>
 
-                {{!-- Sub-seção 2: Rolagem de Dano --}}
-                <h5 class="subheader">Rolagem de Dano (ao Acertar)</h5>
+            <div class="form-section">
+                <h4 class="section-title">Dano & Efeitos</h4>
                 <div class="form-grid-3">
                     <div class="form-group"><label>Fórmula de Dano</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}"/></div>
                     <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.type" value="{{system.damage.type}}"/></div>
                     <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}"/></div>
                 </div>
-
-                {{!-- Sub-seção 3: Efeitos Adicionais --}}
-                <h5 class="subheader">Efeitos Adicionais</h5>
                 <div class="form-grid-2" style="margin-top: 10px;">
                     <div class="form-group">
                         <label>Resistido Por</label>
@@ -1342,25 +1337,24 @@
                         <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Ex: Alvo fica Atordoado"/>
                     </div>
                 </div>
-                
-                {{!-- Danos Secundários --}}
-                <details class="advanced-options" style="margin-top: 15px;">
-                    <summary>Danos Secundários</summary>
-                    <div class="advanced-damage-fields">
-                        <h5 class="subheader">Dano de Acompanhamento</h5>
-                        <div class="form-grid-3">
-                            <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
-                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
-                            <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
-                        </div>
-                        <h5 class="subheader">Dano de Fragmentação</h5>
-                        <div class="form-grid-3">
-                            <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
-                            <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
-                            <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
-                        </div>
+            </div>
+            
+            <div class="form-section">
+                <h4 class="section-title">Danos Secundários</h4>
+                <div class="advanced-damage-fields">
+                    <h5 class="secondary-damage-title follow-up"><i class="fas fa-link"></i> <span>Dano de Acompanhamento</span></h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}"/></div>
                     </div>
-                </details>
+                    <h5 class="secondary-damage-title fragmentation"><i class="fas fa-burst"></i> <span>Dano de Fragmentação</span></h5>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Fórmula</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/></div>
+                        <div class="form-group input-narrow"><label>Tipo</label><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/></div>
+                        <div class="form-group input-narrow"><label>Divisor</label><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}"/></div>
+                    </div>
+                </div>
             </div>
 
         {{/if}} 
