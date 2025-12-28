@@ -227,6 +227,191 @@
 }
 
 /* ------------------------------------------------------------------- */
+/* SKILL DETAILS                                                      */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .section-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--item-text-muted);
+}
+.gum.sheet.item .skill-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+.gum.sheet.item .skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--item-border);
+  font-weight: 800;
+  color: var(--item-text);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.gum.sheet.item .skill-organization-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.gum.sheet.item .section-divider {
+  border: none;
+  border-top: 1px solid var(--item-border-light);
+  margin: 10px 0;
+}
+.gum.sheet.item .skill-hierarchy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.gum.sheet.item .skill-hierarchy-card {
+  border: 1px dashed var(--item-border);
+  background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04));
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.gum.sheet.item .skill-hierarchy-card .hint-text {
+  margin: 0;
+  color: var(--item-text);
+  line-height: 1.4;
+}
+.gum.sheet.item .ability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.gum.sheet.item .ability-col-left,
+.gum.sheet.item .ability-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gum.sheet.item .skill-ability {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gum.sheet.item .skill-ability-toggle {
+  display: flex;
+  justify-content: flex-start;
+  padding: 6px 0 2px;
+}
+.gum.sheet.item .skill-ability-toggle .inline-checkbox {
+  width: 100%;
+  justify-content: center;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--item-border);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.gum.sheet.item .skill-ability-toggle .inline-checkbox span {
+  white-space: nowrap;
+}
+.gum.sheet.item .skill-ability-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.gum.sheet.item .inline-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--item-text);
+}
+.gum.sheet.item .inline-checkbox input {
+  width: auto;
+}
+.gum.sheet.item .skill-ability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+.gum.sheet.item .skill-ability-grid.trio {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.gum.sheet.item .skill-ability-stats {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.1fr) repeat(auto-fit, minmax(140px, 0.7fr));
+  gap: 10px;
+}
+.gum.sheet.item .skill-stat-card {
+  background: linear-gradient(135deg, #ffffff, #f7f2ea);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gum.sheet.item .skill-stat-card .stat-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--item-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.gum.sheet.item .skill-stat-card .stat-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.gum.sheet.item .skill-stat-card.level-card .stat-value {
+  justify-content: space-between;
+}
+.gum.sheet.item .skill-stat-card input {
+  background: rgba(0,0,0,0.04);
+  font-weight: 700;
+  text-align: center;
+}
+.gum.sheet.item .counter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+.gum.sheet.item .adjust-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid var(--item-border);
+  color: var(--item-text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.gum.sheet.item .adjust-value:hover {
+  background: var(--item-accent);
+  color: #fff;
+  border-color: var(--item-accent);
+}
+.gum.sheet.item .pseudo-input {
+  width: 100%;
+  text-align: center;
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.03);
+  border: 1px dashed var(--item-border);
+  border-radius: 6px;
+  color: var(--item-text-muted);
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------- */
 /* RESUMO / DESCRIÇÃO                                                 */
 /* ------------------------------------------------------------------- */
 .gum.sheet.item .summary-list { display: flex; flex-direction: column; gap: 6px; }

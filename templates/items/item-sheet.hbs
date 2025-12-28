@@ -800,11 +800,11 @@
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "skill")}} 
 
-    {{!-- SEÇÃO 1: ORGANIZAÇÃO & HIERARQUIA --}}
-    <div class="form-section">
-        <h4 class="section-title">Organização (Skill Trees)</h4>
+{{!-- SEÇÃO 1: ORGANIZAÇÃO & HIERARQUIA --}}
+    <div class="form-section skill-organization">
+        <h4 class="section-title">Organização</h4>
+        <p class="section-hint">Defina como a perícia se agrupa e se conecta na árvore.</p>
         
-        {{!-- Linha 1: Grupo e Página --}}
         <div class="form-grid-2">
             <div class="form-group">
                 <label>Grupo / Tronco</label>
@@ -839,9 +839,8 @@
             </div>
         </div>
 
-        <hr style="border-color:rgba(255,255,255,0.1); margin: 8px 0;">
+        <hr class="section-divider">
 
-        {{!-- Linha 2: Definição da Árvore (Tier) --}}
         <div class="form-group">
             <label>Nível na Árvore (Tier)</label>
             <select name="system.hierarchy_type" class="hierarchy-select">
@@ -850,12 +849,13 @@
             </select>
         </div>
 
+        <div class="skill-hierarchy-grid">
         {{!-- CONDICIONAIS DE VÍNCULO --}}
         
         {{!-- TRUNK --}}
         {{#if (eq system.hierarchy_type "trunk")}}
-        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <p class="hint-text" style="font-size:0.8em; color:var(--c-acento-dourado);">
+        <div class="skill-hierarchy-card">
+            <p class="hint-text">
                 <i class="fas fa-info-circle"></i> Este item define um <strong>Tronco</strong>. Outras perícias usarão o nome deste grupo ("{{system.group}}") para se agrupar aqui.
             </p>
         </div>
@@ -863,16 +863,16 @@
 
         {{!-- BRANCH --}}
         {{#if (eq system.hierarchy_type "branch")}}
-        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <label style="color:var(--c-acento-azul);">Vinculado ao Tronco (Opcional)</label>
+        <div class="skill-hierarchy-card">
+            <label>Vinculado ao Tronco (Opcional)</label>
             <input type="text" name="system.root_parent" value="{{system.root_parent}}" placeholder="Nome do Tronco Pai (se diferente do Grupo)"/>
         </div>
         {{/if}}
 
         {{!-- TWIG --}}
         {{#if (eq system.hierarchy_type "twig")}}
-        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <label style="color:#ce93d8;">Vinculado ao Ramo (Branch)</label>
+        <div class="skill-hierarchy-card">
+            <label>Vinculado ao Ramo (Branch)</label>
             <div class="input-with-button">
                 <input type="text" name="system.branch_parent" value="{{system.branch_parent}}" placeholder="Nome exato da perícia Ramo"/>
                 <a class="link-skill-button" title="Buscar Ramo"><i class="fas fa-link"></i></a>
@@ -882,102 +882,91 @@
 
         {{!-- LEAF --}}
         {{#if (eq system.hierarchy_type "leaf")}}
-        <div class="form-group full-width" style="margin-top:5px; animation: fadeIn 0.3s;">
-            <label style="color:var(--c-acento-verde);">Vinculado ao Pai (Twig/Branch)</label>
+        <div class="skill-hierarchy-card">
+            <label>Vinculado ao Pai (Twig/Branch)</label>
             <div class="input-with-button">
                 <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
                 <a class="link-skill-button" title="Buscar Pai"><i class="fas fa-link"></i></a>
             </div>
         </div>
         {{/if}}
+        </div>
     </div>
 
     {{!-- SEÇÃO 2: HABILIDADE & CUSTO --}}
-    <div class="form-section">
-        <h4 class="section-title">Habilidade</h4>
-        
-        <div class="form-group" style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-            <label class="custom-checkbox">
+    <div class="form-section skill-ability">
+        <div class="skill-ability-header">
+            <div>
+                <h4 class="section-title">Habilidade</h4>
+                <p class="section-hint">Escolha o modelo de custo e ajuste os valores principais.</p>
+            </div>
+        </div>
+
+        <div class="skill-ability-toggle">
+            <label class="custom-checkbox inline-checkbox">
                 <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                 <span>Calcular Pontos Automaticamente</span>
             </label>
         </div>
 
-        <div class="ability-grid">
-            
-            {{!-- Coluna Esquerda: Definições --}}
-            <div class="ability-col-left">
-                <div class="form-group">
-                    <label>Modo de Custo</label>
-                    <div class="form-fields">
-                        <select name="system.cost_mode" class="cost-mode-select">
-                            {{selectOptions config.costModes selected=system.cost_mode localize=true}}
-                        </select>
-                    </div>
-                </div>
-
-                {{!-- MODO PADRÃO --}}
-                {{#if (eq system.cost_mode "standard")}}
-                    <div class="form-group">
-                        <label>Dificuldade</label>
-                        <div class="form-fields">
-                            <select name="system.difficulty">
-                                {{selectOptions config.difficulties selected=system.difficulty localize=true}}
-                            </select>
-                        </div>
-                    </div>
-                {{/if}}
-
-                {{!-- MODO LINEAR --}}
-                {{#if (eq system.cost_mode "linear")}}
-                    <div class="form-group">
-                        <label>Custo por Nível</label>
-                        <div class="form-fields">
-                            <input type="number" name="system.cost_per_level" value="{{system.cost_per_level}}" class="short-input cost-input">
-                            <span class="hint">pts/nível</span>
-                        </div>
-                    </div>
-                {{/if}}
-
-                {{!-- Atributo Base --}}
-                <div class="form-group">
-                    <label>Atributo Base</label>
-                    <div class="form-fields">
-                        <select name="system.base_attribute">
-                            {{#select system.base_attribute}}
-                            <option value="dx">DX</option>
-                            <option value="iq">IQ</option>
-                            <option value="ht">HT</option>
-                            <option value="per">Per</option>
-                            <option value="will">Vont</option>
-                            {{/select}}
-                        </select>
-                    </div>
+        <div class="skill-ability-grid trio">
+            <div class="form-group">
+                <label>Modo de Custo</label>
+                <div class="form-fields">
+                    <select name="system.cost_mode" class="cost-mode-select">
+                        {{selectOptions config.costModes selected=system.cost_mode localize=true}}
+                    </select>
                 </div>
             </div>
 
-            {{!-- Coluna Direita: Valores --}}
-            <div class="ability-col-right">
-                
-                {{!-- Nível Relativo com Botões --}}
-                <div class="form-group">
-                    <label>Nível Relativo</label>
-                    <div class="form-fields counter-wrapper">
-                        <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
-                        <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
-                        <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
-                    </div>
+            <div class="form-group">
+                <label>Atributo Base</label>
+                <div class="form-fields">
+                    <select name="system.base_attribute">
+                        {{#select system.base_attribute}}
+                        <option value="dx">DX</option>
+                        <option value="iq">IQ</option>
+                        <option value="ht">HT</option>
+                        <option value="per">Per</option>
+                        <option value="will">Vont</option>
+                        {{/select}}
+                    </select>
                 </div>
+            </div>
 
-                <div class="form-group input-narrow">
-                    <label>Pontos</label>
-                    <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+            <div class="form-group difficulty-group">
+                <label>{{#if (eq system.cost_mode "linear")}}Custo por Nível{{else}}Dificuldade{{/if}}</label>
+                <div class="form-fields">
+                    {{#if (eq system.cost_mode "linear")}}
+                        <input type="number" name="system.cost_per_level" value="{{system.cost_per_level}}" class="short-input cost-input" placeholder="pts/nível">
+                    {{else}}
+                        <select name="system.difficulty">
+                            {{selectOptions config.difficulties selected=system.difficulty localize=true}}
+                        </select>
+                    {{/if}}
                 </div>
-                
-                <div class="form-group input-narrow">
-                    <label>Mods. NH</label>
-                    <input type="number" name="system.other_mods" value="{{system.other_mods}}" placeholder="+0"/>
+            </div>
+        </div>
+
+        <div class="skill-ability-grid trio">
+            {{!-- Nível Relativo com Botões --}}
+            <div class="skill-stat-card level-card">
+                <div class="stat-label">Nível Relativo</div>
+                <div class="stat-value counter-wrapper">
+                    <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
+                    <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
                 </div>
+            </div>
+
+            <div class="skill-stat-card">
+                <div class="stat-label">Pontos</div>
+                <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+            </div>
+            
+            <div class="skill-stat-card">
+                <div class="stat-label">Mods. NH</div>
+                <input type="number" name="system.other_mods" value="{{system.other_mods}}" placeholder="+0"/>
             </div>
         </div>
     </div>

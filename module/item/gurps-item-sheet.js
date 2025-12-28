@@ -45,7 +45,9 @@ export class GurpsItemSheet extends ItemSheet {
                 "E": "Fácil (E)",
                 "A": "Média (A)",
                 "H": "Difícil (H)",
-                "VH": "Muito Difícil (VH)"
+                "VH": "Muito Difícil (VH)",
+                "TecM": "Técnica Média (TecM)",
+                "TecD": "Técnica Difícil (TecD)"
             },
             attributes: {
                 "st": "ST", "dx": "DX", "iq": "IQ", "ht": "HT", 
@@ -185,9 +187,9 @@ export class GurpsItemSheet extends ItemSheet {
         if (!this.isEditable) return;
 
         // Auto-Cálculo
-        html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"]').on('change', this._onAutoCalcPoints.bind(this));
-        
-        // Ajuste de Valor (+/-)
+        html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"]').on('change', this._onAutoCalcPoints.bind(this));    
+
+          // Ajuste de Valor (+/-)
         html.find('.adjust-value').click(ev => {
             ev.preventDefault();
             const btn = $(ev.currentTarget);
@@ -317,33 +319,44 @@ export class GurpsItemSheet extends ItemSheet {
         });
     }
 
-    /* -------------------------------------------- */
+/* -------------------------------------------- */
     /* Métodos Auxiliares                          */
     /* -------------------------------------------- */
 
     _calculateSkillPoints(difficulty, relativeLevel) {
         const rl = parseInt(relativeLevel) || 0;
-        if (difficulty === "TecM") return Math.max(0, rl * 1);
-        if (difficulty === "TecD") return Math.max(0, rl * 2);
-        
-        let defaultLevel = 0;
-        switch (difficulty) {
-            case "F": defaultLevel = 0; break;
-            case "M": defaultLevel = -1; break;
-            case "D": defaultLevel = -2; break;
-            case "MD": defaultLevel = -3; break;
-            default: return 0;
-        }
-        const pointLevel = rl - defaultLevel;
-        if (pointLevel < 0) return 0;
-        const costs = [1, 2, 4, 8];
-        if (pointLevel < costs.length) return costs[pointLevel];
-        return 8 + (pointLevel - 3) * 4;
+        const normalized = ({
+            "E": "F", "A": "M", "H": "D", "VH": "MD"
+        })[difficulty] || difficulty;
+
+        const tables = {
+            "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
+            "M": { "-1": 1, 0: 2, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20 },
+            "D": { "-2": 1, "-1": 2, 0: 4, 1: 8, 2: 12, 3: 16, 4: 20, 5: 24 },
+            "MD": { "-3": 1, "-2": 2, "-1": 4, 0: 8, 1: 12, 2: 16, 3: 20, 4: 24, 5: 28 },
+            "TecM": {},
+            "TecD": {}
+        };
+
+        if (normalized === "TecM") return Math.max(0, rl * 1);
+        if (normalized === "TecD") return Math.max(0, rl * 2);
+
+        const table = tables[normalized] || tables["M"];
+        const keys = Object.keys(table).map(k => parseInt(k));
+        const minKey = Math.min(...keys);
+        const maxKey = Math.max(...keys);
+
+        if (rl < minKey) return 0;
+        if (rl in table) return table[rl];
+
+        const base = table[maxKey];
+        return base + (rl - maxKey) * 4;
     }
 
     async _onAutoCalcPoints(event) {
         const formData = new FormDataExtended(this.form).object;
         const autoPoints = formData["system.auto_points"] || false;
+        const costMode = formData["system.cost_mode"] || "standard";
         
         if (event.currentTarget.name === "system.auto_points") {
              await this.item.update({"system.auto_points": autoPoints});
@@ -351,10 +364,16 @@ export class GurpsItemSheet extends ItemSheet {
         }
 
         if (autoPoints) {
-            const difficulty = formData["system.difficulty"];
+            const difficulty = formData["system.difficulty"] ?? this.item.system.difficulty ?? "M";
             const relativeLevel = formData["system.skill_level"];
             const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points";
-            const newPoints = this._calculateSkillPoints(difficulty, relativeLevel);
+            let newPoints;
+            if (costMode === "linear") {
+                const perLevel = Number(formData["system.cost_per_level"]) || 0;
+                newPoints = Math.max(0, (Number(relativeLevel) || 0) * perLevel);
+            } else {
+                newPoints = this._calculateSkillPoints(difficulty, relativeLevel);
+            }
             
             if (foundry.utils.getProperty(this.item, pointsField) !== newPoints) {
                 await this.item.update({[pointsField]: newPoints});
