@@ -8,287 +8,497 @@
         </div>
     </header>
 
+    <nav class="sheet-tabs tabs" data-group="primary">
+        <a class="item active" data-tab="configuracao">Configuração</a>
+        <a class="item" data-tab="description">Descrição</a>
+    </nav>
+
     <main class="sheet-body">
-        <div class="sheet-body-content">
-            
-            {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
-            <div class="form-section">
-                <h4 class="section-title">Barreira de Resistência</h4>
-                <div class="resistance-section">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
-                        <span>Resistência específica para este efeito antes dele ser aplicado.</span>
-                    </label>
+        <div class="sheet-body-content effect-sheet-body">
+            <div class="tab active" data-tab="configuracao" data-group="primary">
 
-                    {{#if system.resistanceRoll.isResisted}}
-                    <div class="indented">
-                        <hr>
-                        <div class="form-grid-2">
-                            <div class="form-group"><label>Atributo do Teste</label><input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}"/></div>
-                            <div class="form-group"><label>Modificador</label><input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}"/></div>
+                {{!-- HERO RESUMIDO --}}
+                <section class="form-section effect-hero">
+                    <div>
+                        <p class="eyebrow">Configuração visual do efeito</p>
+                        <h3 class="effect-title">{{item.name}}</h3>
+                        <p class="hint">Ajuste a natureza do efeito, sua resistência e o comportamento específico sem sair desta tela.</p>
+                    </div>
+                    <div class="hero-meta">
+                        <span class="meta-pill">
+                            <i class="fas fa-magic"></i>
+                            <span>
+                                {{#if system.type}}
+                                    {{#if (eq system.type 'attribute')}}Modificador de Atributo{{/if}}
+                                    {{#if (eq system.type 'status')}}Status{{/if}}
+                                    {{#if (eq system.type 'resource_change')}}Alteração de Recurso{{/if}}
+                                    {{#if (eq system.type 'chat')}}Mensagem de Chat{{/if}}
+                                    {{#if (eq system.type 'macro')}}Macro{{/if}}
+                                    {{#if (eq system.type 'flag')}}Flag{{/if}}
+                                {{else}}
+                                    Tipo não definido
+                                {{/if}}
+                            </span>
+                        </span>
+                        <span class="meta-pill subtle {{#if system.resistanceRoll.isResisted}}active{{/if}}">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>{{#if system.resistanceRoll.isResisted}}Com resistência{{else}}Aplicação direta{{/if}}</span>
+                        </span>
+                        <span class="meta-pill subtle">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>
+                                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
+                                    {{#if system.duration.isPermanent}}
+                                        Permanente
+                                    {{else}}
+                                        {{#if system.duration.value}}
+                                            {{system.duration.value}} {{system.duration.unit}}
+                                        {{else}}
+                                            Duração não definida
+                                        {{/if}}
+                                    {{/if}}
+                                {{else}}
+                                    Instantâneo
+                                {{/if}}
+                            </span>
+                        </span>
+                    </div>
+                </section>
+
+                <div class="effect-grid">
+                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
+                    <section class="form-section effect-card">
+                        <div class="section-header">
+                            <div>
+                                <p class="eyebrow">Fluxo de aplicação</p>
+                                <h4 class="section-title">Barreira de Resistência</h4>
+                            </div>
+                            <span class="chip {{#if system.resistanceRoll.isResisted}}accent{{else}}muted{{/if}}">{{#if system.resistanceRoll.isResisted}}Ativa{{else}}Opcional{{/if}}</span>
                         </div>
+                        <p class="hint">Controle se o efeito exige um teste defensivo antes de ser aplicado.</p>
 
-                        {{!-- Linha de "Aplicar Se" --}}
-                        <div class="form-row">
-                            <label class="row-label">Aplicar efeito se obter:</label>
-                            <div class="radio-group horizontal">
-                                <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="failure" {{checked (eq system.resistanceRoll.applyOn 'failure')}}><span>Falha</span></label>
-                                <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="success" {{checked (eq system.resistanceRoll.applyOn 'success')}}><span>Sucesso</span></label>
+                        <label class="custom-checkbox block">
+                            <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                            <span>Resistência específica para este efeito antes dele ser aplicado.</span>
+                        </label>
+
+                        {{#if system.resistanceRoll.isResisted}}
+                        <div class="inner-card">
+                            <div class="form-grid-2 compact">
+                                <div class="form-group"><label>Atributo do Teste</label><input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}"/></div>
+                                <div class="form-group"><label>Modificador</label><input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}"/></div>
+                            </div>
+
+                            <div class="form-row split">
+                                <label class="row-label">Aplicar efeito se obter:</label>
+                                <div class="radio-group horizontal">
+                                    <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="failure" {{checked (eq system.resistanceRoll.applyOn 'failure')}}><span>Falha</span></label>
+                                    <label class="custom-radio"><input type="radio" name="system.resistanceRoll.applyOn" value="success" {{checked (eq system.resistanceRoll.applyOn 'success')}}><span>Sucesso</span></label>
+                                </div>
+                            </div>
+
+                            <div class="form-row split">
+                                <label class="row-label">Margem Mínima:</label>
+                                <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional"/>
                             </div>
                         </div>
+                        {{/if}}
+                    </section>
 
-                        {{!-- Linha da "Margem Mínima" --}}
-                        <div class="form-row">
-                            <label class="row-label">Margem Mínima:</label>
-                            <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional"/>
+                    {{!-- SEÇÃO EFEITO --}}
+                    <section class="form-section effect-card">
+                        <div class="section-header">
+                            <div>
+                                <p class="eyebrow">Natureza</p>
+                                <h4 class="section-title">Tipo de Efeito</h4>
+                            </div>
+                            <span class="chip outline"><i class="fas fa-ellipsis-h"></i> Seleção</span>
+                        </div>
+
+                        <div class="form-row stacked">
+                            <label class="row-label">Tipo de Efeito:</label>
+                            <select name="system.type">
+                                <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
+                                <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
+                                <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
+                                <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
+                                <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
+                                <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
+                            </select>
+                        </div>
+
+                        <div class="hint-area">
+                            {{#if system.type}}
+                                <div class="hint-card single active">
+                                    {{#if (eq system.type 'attribute')}}
+                                        <h5>Modificador de Atributo</h5>
+                                        <p>Use para efeitos contínuos no ator, como +1 ST ou -2 DX. Cria um efeito ativo.</p>
+                                    {{else}}
+                                        {{#if (eq system.type 'resource_change')}}
+                                            <h5>Alteração de Recurso</h5>
+                                            <p>Aplicação pontual: custo de PF, flechas gastas ou cura/dano imediato.</p>
+                                        {{else}}
+                                            {{#if (eq system.type 'status')}}
+                                                <h5>Status</h5>
+                                                <p>Aplica um ícone de status no token do alvo.</p>
+                                            {{else}}
+                                                {{#if (eq system.type 'macro')}}
+                                                    <h5>Macro</h5>
+                                                    <p>Executa uma macro existente. Ideal para ações complexas.</p>
+                                                {{else}}
+                                                    {{#if (eq system.type 'flag')}}
+                                                        <h5>Flag</h5>
+                                                        <p>Define um estado personalizado que outras condições podem consultar.</p>
+                                                    {{else}}
+                                                        {{#if (eq system.type 'chat')}}
+                                                            <h5>Mensagem de Chat</h5>
+                                                            <p>Envia um texto informativo e, opcionalmente, inclui um teste rápido.</p>
+                                                        {{/if}}
+                                                    {{/if}}
+                                                {{/if}}
+                                            {{/if}}
+                                        {{/if}}
+                                    {{/if}}
+                                </div>
+                            {{else}}
+                                <div class="hint-card single muted">
+                                    <h5>Escolha um tipo</h5>
+                                    <p>Selecione um tipo de efeito para ver um resumo rápido do seu comportamento.</p>
+                                </div>
+                            {{/if}}
+                        </div>
+                    </section>
+                </div>
+
+                <section class="form-section effect-card">
+                    <div class="section-header">
+                        <div>
+                            <p class="eyebrow">Configuração dinâmica</p>
+                            <h4 class="section-title">Campos do Tipo Selecionado</h4>
                         </div>
                     </div>
-                    {{/if}}
-                </div>
-            </div>
 
-{{!-- SEÇÃO EFEITO --}}
-<div class="form-section">
-    <h4 class="section-title">Efeito</h4>
-    
-    {{!-- Linha do "Tipo de Efeito" --}}
-    <div class="form-row">
-        <label class="row-label">Tipo de Efeito:</label>
-        <select name="system.type">
-            <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
-            <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
-            <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
-            <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
-            <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
-            <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
-        </select>
-    </div>
+                    <div class="conditional-fields modern">
+                        {{!-- BLOCO COMBINADO PARA ATTRIBUTE e FLAG --}}
+                        {{#if (or (eq system.type 'attribute') (eq system.type 'flag'))}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Dados principais</p>
+                                        <h5>{{#if (eq system.type 'attribute')}}Configuração do Atributo{{else}}Configuração da Flag{{/if}}</h5>
+                                    </div>
+                                    <span class="chip subtle">{{#if (eq system.type 'attribute')}}Contínuo{{else}}Marcador{{/if}}</span>
+                                </div>
 
-    {{!-- Textos de Ajuda (Hints) --}}
-    {{#if (eq system.type 'attribute')}}<p class="hint">Modifica um atributo de forma contínua (Ex: +1 ST, -2 DX). Cria um Efeito Ativo.</p>{{/if}}
-    {{#if (eq system.type 'resource_change')}}<p class="hint">Altera um recurso de forma pontual (Ex: custo de PF, consumo de flechas, cura de PV).</p>{{/if}}
-    {{#if (eq system.type 'status')}}<p class="hint">Aplica um ícone de status no token do alvo.</p>{{/if}}
-    {{#if (eq system.type 'macro')}}<p class="hint">Executa uma macro previamente feita.</p>{{/if}}
-    {{#if (eq system.type 'flag')}}<p class="hint">Define uma flag customizada no alvo. Útil para criar estados que outras condições podem verificar.</p>{{/if}}
-    
-    <hr>
-    
-    {{!-- ======================================================== --}}
-    {{!-- ✅ CORREÇÃO: UM ÚNICO Bloco 'conditional-fields' ✅ --}}
-    {{!-- ======================================================== --}}
-    <div class="conditional-fields">
-    
-        {{!-- ======================================================= --}}
-        {{!--  BLOCO COMBINADO PARA ATTRIBUTE e FLAG                 --}}
-        {{!-- ======================================================= --}}
-        {{#if (or (eq system.type 'attribute') (eq system.type 'flag'))}}
-            <div class="attribute-flag-layout"> {{!-- Container comum --}}
-                
-                {{!-- CAMPOS ESPECÍFICOS DO 'ATTRIBUTE' --}}
-                {{#if (eq system.type 'attribute')}}
-                    <h4 class="subsection-title">Configuração do Atributo</h4>
-                    <div class="form-row">
-                        <label class="row-label">Caminho:</label>
-                        <textarea name="system.path" rows="1" placeholder="Ex: system.attributes.dx.mod">{{system.path}}</textarea>
+                                {{#if (eq system.type 'attribute')}}
+                                    <div class="effect-detail-grid">
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Caminho</label>
+                                            <textarea name="system.path" rows="1" placeholder="Ex: system.attributes.dx.mod">{{system.path}}</textarea>
+                                        </div>
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Operação</label>
+                                            <div class="radio-group horizontal">
+                                                <label class="custom-radio"><input type="radio" name="system.operation" value="ADD" {{checked (or (eq system.operation 'ADD') (eq system.operation 'SUB') (not system.operation))}}><span>Adicionar (ADD)</span></label>
+                                                <label class="custom-radio"><input type="radio" name="system.operation" value="OVERRIDE" {{checked (eq system.operation 'OVERRIDE')}}><span>Definir (SET/OVERRIDE)</span></label>
+                                            </div>
+                                        </div>
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Valor</label>
+                                            <textarea name="system.value" rows="1" placeholder="Ex: -2 ou @st.mod">{{system.value}}</textarea>
+                                        </div>
+                                    </div>
+                                    <p class="hint inline">Use valores negativos para subtrair com "ADD". "SET" sobrescreve o valor base.</p>
+                                {{/if}}
+
+                                {{#if (eq system.type 'flag')}}
+                                    <div class="effect-detail-grid">
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Chave da Flag (Key)</label>
+                                            <input type="text" name="system.key" value="{{system.key}}" placeholder="Ex: em_chamas"/>
+                                        </div>
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Valor da Flag</label>
+                                            <div class="radio-group horizontal">
+                                                <label class="custom-radio">
+                                                    <input type="radio" name="system.flag_value_selector" value="true" {{checked (eq flagValueSelection 'true')}}>
+                                                    <span>Verdadeiro</span>
+                                                </label>
+                                                <label class="custom-radio">
+                                                    <input type="radio" name="system.flag_value_selector" value="false" {{checked (eq flagValueSelection 'false')}}>
+                                                    <span>Falso</span>
+                                                </label>
+                                                <label class="custom-radio">
+                                                    <input type="radio" name="system.flag_value_selector" value="custom" {{checked (eq flagValueSelection 'custom')}}>
+                                                    <span>Outro</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {{#unless (eq flagValueSelection)}}
+                                            <div class="form-row stacked">
+                                                <label class="row-label">Valor Customizado</label>
+                                                <input type="text" name="system.flag_value" value="{{system.flag_value}}"/>
+                                            </div>
+                                        {{/unless}}
+                                    </div>
+                                {{/if}}
+                            </div>
+                        {{/if}}
+
+                        {{!-- SEÇÃO PARA STATUS --}}
+                        {{#if (eq system.type 'status')}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Marca visual</p>
+                                        <h5>Ícone de Status</h5>
+                                    </div>
+                                    <span class="chip subtle">Token</span>
+                                </div>
+                                <div class="form-row stacked">
+                                    <label class="row-label">Ícone de Status a Aplicar</label>
+                                    <select name="system.statusId">
+                                        {{#each statusEffects as |status|}}
+                                            <option value="{{status.id}}" {{#if (eq ../system.statusId status.id)}}selected{{/if}}>
+                                                {{status.label}}
+                                            </option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        {{!-- SEÇÃO PARA RESOURCE_CHANGE --}}
+                        {{#if (eq system.type 'resource_change')}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Impacto imediato</p>
+                                        <h5>Alteração de Recurso</h5>
+                                    </div>
+                                    <span class="chip subtle">Consumir / Restaurar</span>
+                                </div>
+                                <div class="effect-detail-grid">
+                                    <div class="form-row stacked">
+                                        <label class="row-label">Valor da Alteração</label>
+                                        <input type="text" name="system.value" value="{{system.value}}" placeholder="Ex: -1 ou 2d6"/>
+                                    </div>
+                                    <div class="form-row stacked">
+                                        <label class="row-label">Alvo da Alteração</label>
+                                        <select name="system.category">
+                                            <option value="hp" {{#if (eq system.category 'hp')}}selected{{/if}}>Pontos de Vida</option>
+                                            <option value="fp" {{#if (eq system.category 'fp')}}selected{{/if}}>Pontos de Fadiga</option>
+                                            <option value="energy_reserve" {{#if (eq system.category 'energy_reserve')}}selected{{/if}}>Reserva de Energia</option>
+                                            <option value="combat_tracker" {{#if (eq system.category 'combat_tracker')}}selected{{/if}}>Registro de Combate</option>
+                                            <option value="item_quantity" {{#if (eq system.category 'item_quantity')}}selected{{/if}}>Quantidade de Equipamento</option>
+                                        </select>
+                                    </div>
+                                    {{#if (or (eq system.category 'energy_reserve') (eq system.category 'combat_tracker') (eq system.category 'item_quantity'))}}
+                                        <div class="form-row stacked">
+                                            <label class="row-label">Nome Específico</label>
+                                            <input type="text" name="system.name" value="{{system.name}}" placeholder="Digite o nome exato"/>
+                                        </div>
+                                    {{/if}}
+                                </div>
+
+                                <div class="advanced-options">
+                                    <h6>Opções avançadas</h6>
+                                    <div class="checkbox-options">
+                                        <label class="custom-checkbox"><input type="checkbox" name="system.chat_notice" {{checked system.chat_notice}}/><span>Gerar aviso no chat</span></label>
+                                        <label class="custom-checkbox"><input type="checkbox" name="system.confirm_prompt" {{checked system.confirm_prompt}}/><span>Pedir confirmação antes de aplicar</span></label>
+                                        <label class="custom-checkbox"><input type="checkbox" name="system.variable_value" {{checked system.variable_value}}/><span>Permitir alterar o valor</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        {{!-- SEÇÃO PARA MACRO --}}
+                        {{#if (eq system.type 'macro')}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Automação</p>
+                                        <h5>Macro</h5>
+                                    </div>
+                                    <span class="chip subtle">Execução</span>
+                                </div>
+                                <div class="form-row stacked">
+                                    <label class="row-label">Nome da Macro</label>
+                                    <div class="input-with-validation">
+                                        <input type="text" name="system.value" value="{{system.value}}" list="macro-list" autocomplete="off"/>
+                                        <span class="validation-icon"></span>
+                                    </div>
+                                    <datalist id="macro-list">
+                                        {{#each macros as |macroName|}}
+                                            <option value="{{macroName}}">
+                                        {{/each}}
+                                    </datalist>
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        {{!-- SEÇÃO PARA CHAT --}}
+                        {{#if (eq system.type 'chat')}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Comunicação</p>
+                                        <h5>Mensagem de Chat</h5>
+                                    </div>
+                                    <span class="chip subtle">Texto</span>
+                                </div>
+                                    <div class="form-group">
+                                        <label>Texto da Mensagem</label>
+                                            <textarea name="system.chat_text" rows="3">{{system.chat_text}}</textarea>
+                                            <label class="custom-checkbox hint block">
+                                                <input type="checkbox" name="system.has_roll" {{checked system.has_roll}}/>
+                                                <span>Incluir teste?</span>
+                                            </label>
+                                        {{#if system.has_roll}}
+                                            <div class="form-grid-3">
+                                                <div class="form-group"><label>Rótulo</label><input type="text" name="system.roll_label" value="{{system.roll_label}}"/></div>
+                                                <div class="form-group"><label>Atributo</label><input type="text" name="system.roll_attribute" value="{{system.roll_attribute}}"/></div>
+                                                <div class="form-group"><label>Modificador</label><input type="text" name="system.roll_modifier" value="{{system.roll_modifier}}"/></div>
+                                            </div>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+                        {{/if}}
                     </div>
-                    <div class="form-row">
-                        <label class="row-label">Operação:</label>
-                        <div class="radio-group horizontal">
-                            <label class="custom-radio"><input type="radio" name="system.operation" value="ADD" {{checked (or (eq system.operation 'ADD') (eq system.operation 'SUB') (not system.operation))}}><span>Adicionar (ADD)</span></label>
-                            <label class="custom-radio"><input type="radio" name="system.operation" value="OVERRIDE" {{checked (eq system.operation 'OVERRIDE')}}><span>Definir (SET/OVERRIDE)</span></label>
+                </section>
+
+                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
+                    <section class="form-section effect-card">
+                        <div class="section-header">
+                            <div>
+                                <p class="eyebrow">Temporalidade</p>
+                                <h4 class="section-title">Duração & Expiração</h4>
+                            </div>
+                            <span class="chip outline"><i class="fas fa-stopwatch"></i></span>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <label class="row-label">Valor:</label>
-                        <textarea name="system.value" rows="1" placeholder="Ex: -2 ou @st.mod">{{system.value}}</textarea>
-                    </div>
-                    <p class="hint">Use valores negativos para subtrair com 'ADD'. 'SET' sobrescreve o valor base (Override).</p>
-                    <hr> 
-                {{/if}}
 
-                {{!-- CAMPOS ESPECÍFICOS DO 'FLAG' --}}
-                {{#if (eq system.type 'flag')}}
-                    <h4 class="subsection-title">Configuração da Flag</h4>
-                    <div class="form-row">
-                        <label class="row-label">Chave da Flag (Key):</label>
-                        <input type="text" name="system.key" value="{{system.key}}" placeholder="Ex: em_chamas"/>
-                    </div>
-                    {{!-- Linha do Valor Lógico --}}
-                    <div class="form-row">
-                        <label class="row-label">Valor da Flag:</label>
-                        <div class="radio-group horizontal">
-                            <label class="custom-radio">
-                                <input type="radio" name="system.flag_value_selector" value="true" {{checked (eq flagValueSelection 'true')}}>
-                                <span>Verdadeiro</span>
-                            </label>
-                            <label class="custom-radio">
-                                <input type="radio" name="system.flag_value_selector" value="false" {{checked (eq flagValueSelection 'false')}}>
-                                <span>Falso</span>
-                            </label>
-                            <label class="custom-radio">
-                                <input type="radio" name="system.flag_value_selector" value="custom" {{checked (eq flagValueSelection 'custom')}}>
-                                <span>Outro</span>
-                            </label>
-                        </div>
-                    </div>
-                    {{!-- Campo de valor customizado --}}
-                    {{#unless flagValueIsBoolean}}
-                        <div class="form-row indented">
-                            <label class="row-label">Valor Customizado:</label>
-                            <input type="text" name="system.flag_value" value="{{system.flag_value}}"/>
-                        </div>
-                    {{/unless}}
-                    <hr> 
-                {{/if}}                     
-            </div>
-        {{/if}}
-
-        {{!-- ======================================================= --}}
-        {{!--  SEÇÃO PARA STATUS                      --}}
-        {{!-- ======================================================= --}}
-        {{#if (eq system.type 'status')}}  
-        <div class="form-row">
-        <label class="row-label">Ícone de Status a Aplicar:</label>
-        <select name="system.statusId">
-        {{!-- Popula com a lista de status do config.js --}}
-        {{#each statusEffects as |status|}}
-        <option value="{{status.id}}" {{#if (eq ../system.statusId status.id)}}selected{{/if}}>
-        {{status.label}}
-        </option>
-        {{/each}}
-        </select>
-        </div>
-        {{/if}}
-
-        {{!-- ======================================================= --}}
-        {{!--  SEÇÃO PARA RESOURCE_CHANGE     --}}
-        {{!-- ======================================================= --}}
-        {{#if (eq system.type 'resource_change')}}
-            <div class="resource-change-layout">
-                {{!-- Valor da Alteração --}}
-                <div class="form-row">
-                    <label class="row-label">Valor da Alteração:</label>
-                    <input type="text" name="system.value" value="{{system.value}}" placeholder="Ex: -1 ou 2d6"/>
-                </div>
-                {{!-- Categoria do Alvo --}}
-                <div class="form-row">
-                    <label class="row-label">Alvo da Alteração:</label>
-                    <select name="system.category">
-                        <option value="hp" {{#if (eq system.category 'hp')}}selected{{/if}}>Pontos de Vida</option>
-                        <option value="fp" {{#if (eq system.category 'fp')}}selected{{/if}}>Pontos de Fadiga</option>
-                        <option value="energy_reserve" {{#if (eq system.category 'energy_reserve')}}selected{{/if}}>Reserva de Energia</option>
-                        <option value="combat_tracker" {{#if (eq system.category 'combat_tracker')}}selected{{/if}}>Registro de Combate</option>
-                        <option value="item_quantity" {{#if (eq system.category 'item_quantity')}}selected{{/if}}>Quantidade de Equipamento</option>
-                    </select>
-                </div>
-                {{!-- Nome do Alvo (se necessário) --}}
-                {{#if (or (eq system.category 'energy_reserve') (eq system.category 'combat_tracker') (eq system.category 'item_quantity'))}}
-                <div class="form-row indented">
-                    <label class="row-label">Nome Específico:</label>
-                    <input type="text" name="system.name" value="{{system.name}}" placeholder="Digite o nome exato"/>
-                </div>
-                {{/if}}
-                <hr>
-                <h4 class="subsection-title">Opções Avançadas</h4>
-                {{!-- Checkboxes de Funcionalidades --}}
-                <div class="checkbox-options">
-                    <label class="custom-checkbox"><input type="checkbox" name="system.chat_notice" {{checked system.chat_notice}}/><span>Gerar aviso no chat</span></label>
-                    <label class="custom-checkbox"><input type="checkbox" name="system.confirm_prompt" {{checked system.confirm_prompt}}/><span>Pedir confirmação antes de aplicar</span></label>
-                    <label class="custom-checkbox"><input type="checkbox" name="system.variable_value" {{checked system.variable_value}}/><span>Permitir alterar o valor</span></label>
-                </div>
-            </div>
-        {{/if}}
-
-        {{!-- ======================================================= --}}
-        {{!--  SEÇÃO PARA MACRO                --}}
-        {{!-- ======================================================= --}}
-        {{#if (eq system.type 'macro')}}
-            <div class="form-row">
-                <label class="row-label">Nome da Macro:</label>
-                <div class="input-with-validation">
-                    <input type="text" name="system.value" value="{{system.value}}" list="macro-list" autocomplete="off"/>
-                    <span class="validation-icon"></span>
-                </div>
-                <datalist id="macro-list">
-                    {{#each macros as |macroName|}}
-                        <option value="{{macroName}}">
-                    {{/each}}
-                </datalist>
-            </div>
-        {{/if}}
-
-        {{!-- ======================================================= --}}
-        {{!--  SEÇÃO PARA CHAT                 --}}
-        {{!-- ======================================================= --}}
-        {{#if (eq system.type 'chat')}}
-            <div class="form-group"><label>Texto da Mensagem</label><textarea name="system.chat_text" rows="3">{{system.chat_text}}</textarea></div>
-            <label class="custom-checkbox hint"><input type="checkbox" name="system.has_roll" {{checked system.has_roll}}/><span>Incluir um botão de teste?</span></label>
-            {{#if system.has_roll}}
-            <div class="form-grid-3 indented">
-                <div class="form-group"><label>Rótulo</label><input type="text" name="system.roll_label" value="{{system.roll_label}}"/></div>
-                <div class="form-group"><label>Atributo</label><input type="text" name="system.roll_attribute" value="{{system.roll_attribute}}"/></div>
-                <div class="form-group"><label>Modificador</label><input type="text" name="system.roll_modifier" value="{{system.roll_modifier}}"/></div>
-            </div>
-            {{/if}}
-        {{/if}}
-
-    </div> {{!-- Fim do ÚNICO conditional-fields --}}
-
-</div>
-
-            {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
-                  
-                    <div class="form-section">
-                        <h4 class="section-title">Duração & Expiração</h4>
-                                                <label class="custom-checkbox permanent-duration-checkbox">
+                        <label class="custom-checkbox block permanent-duration-checkbox">
                             <input type="checkbox" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
                             <span>Duração Permanente / Indeterminada</span>
                         </label>
                         <p class="hint">Se marcado, o efeito não expirará automaticamente.</p>
 
-                        {{!-- Campos de Duração (só aparecem se NÃO for permanente) --}}
                         {{#unless system.duration.isPermanent}}
                             <div class="timed-duration-fields">
-                                <hr>
-                                <div class="form-grid-2">
-                                    {{!-- Campo do Valor da Duração --}}
+                                <div class="form-grid-2 compact">
                                     <div class="form-group">
                                         <label>Duração</label>
-                                        <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/> {{!-- Valor mínimo 1 --}}
+                                        <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
                                     </div>
-
-                                    {{!-- Campo da Unidade (Simplificado) --}}
                                     <div class="form-group">
                                         <label>Unidade</label>
                                         <select name="system.duration.unit">
-                                            {{!-- Opção padrão --}}
                                             <option value="rounds" {{#if (or (eq system.duration.unit 'rounds') (eq system.duration.unit 'seconds'))}}selected{{/if}}>Turnos (1s)</option>
                                             <option value="turns" {{#if (eq system.duration.unit 'turns')}}selected{{/if}}>Em construção</option>
-                                            {{!-- Outras unidades (minutos, horas) podem ser adicionadas se necessário --}}
                                         </select>
                                     </div>
                                 </div>
-                                
-                                {{!-- Checkbox "Apenas em Combate" --}}
-                                <label class="custom-checkbox hint combat-checkbox-row">
+
+                                <label class="custom-checkbox hint block combat-checkbox-row">
                                     <input type="checkbox" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
                                     <span>Contagem apenas em combate.</span>
                                 </label>
                             </div>
                         {{/unless}}
-                    </div>
+                    </section>
                 {{/if}}
 
-                        
-        {{!-- SEÇÃO DE DESCRIÇÃO --}}
-            <div class="form-section">
-                <div class="section-header">
-                    <h4 class="section-title">Descrição Resumida (para a Tag)</h4>
-                    <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição Resumida"><i class="fas fa-edit"></i></a>
-                </div>
-                <div class="rendered-text">
-                    {{{enrichedChatDescription}}}
-                </div>
+                <section class="form-section effect-card">
+                    <div class="section-header">
+                        <div>
+                            <p class="eyebrow">Apresentação</p>
+                            <h4 class="section-title">Descrição Resumida (para a Tag)</h4>
+                        </div>
+                        <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição Resumida"><i class="fas fa-edit"></i></a>
+                    </div>
+                    <div class="rendered-text">
+                        {{{enrichedChatDescription}}}
+                    </div>
+                </section>
             </div>
+
+            {{! ========================================================= }}
+            {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
+            {{! ========================================================= }}
+            <div class="tab" data-tab="description" data-group="primary">
+              <div class="description-tab">
+                <div class="description-hero">
+                  <div class="hero-text">
+                    <p class="eyebrow">Narrativa & Referência</p>
+                    <h3>Descrição do Item</h3>
+                    <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
+                  </div>
+                  <div class="hero-meta">
+                    <div class="meta-chip">
+                      <i class="fas fa-book-open"></i>
+                      <span>Resumo (Chat)</span>
+                    </div>
+                    <div class="meta-chip">
+                      <i class="fas fa-scroll"></i>
+                      <span>Completa</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="description-grid">
+                  <div class="form-section description-section">
+                    <div class="description-header">
+                      <div>
+                        <h4 class="section-title">Descrição Resumida (Chat)</h4>
+                        <p class="hint">Use para tooltips e mensagens rápidas.</p>
+                      </div>
+                      {{#if editable}}
+                      <div class="description-actions">
+                        <button type="button" class="toggle-editor" data-field="system.chat_description">
+                          <i class="fas fa-pen"></i> Editar
+                        </button>
+                      </div>
+                      {{/if}}
+                    </div>
+                    <div class="description-view">{{{system.chat_description}}}</div>
+
+                    <div class="description-editor" style="display:none;">
+                      {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+                      <div class="description-actions">
+                        <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-section description-section">
+                    <div class="description-header">
+                      <div>
+                        <h4 class="section-title">Descrição Completa</h4>
+                        <p class="hint">Inclua detalhes extensos, efeitos narrativos e referências.</p>
+                      </div>
+                      {{#if editable}}
+                      <div class="description-actions">
+                        <button type="button" class="toggle-editor" data-field="system.description">
+                          <i class="fas fa-pen"></i> Editar
+                        </button>
+                      </div>
+                      {{/if}}
+                    </div>
+                    <div class="description-view">{{{system.description}}}</div>
+
+                    <div class="description-editor" style="display:none;">
+                      {{editor system.description target="system.description" owner=owner editable=editable}}
+                      <div class="description-actions">
+                        <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
     </main>
 </form>

@@ -8,7 +8,12 @@ export class EffectSheet extends ItemSheet {
             width: "450",
             height: "495",
             resizable: true,
-            template: "systems/gum/templates/items/effect-sheet.hbs"
+            template: "systems/gum/templates/items/effect-sheet.hbs",
+            tabs: [{
+                navSelector: ".sheet-tabs",
+                contentSelector: ".sheet-body-content",
+                initial: "configuracao"
+            }]
         });
     }
 
@@ -21,9 +26,26 @@ export class EffectSheet extends ItemSheet {
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
             context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
         context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, { async: true });
+        context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, { async: true });
+        context.owner = this.item.isOwner;
+        context.editable = this.options.editable;
 
 
         return context;
+    }
+
+    /**
+     * Preserve scroll position when the sheet re-renders to avoid jumping to the top.
+     */
+    async _render(force, options = {}) {
+        const container = this.element?.[0]?.querySelector('.sheet-body-content');
+        const scrollTop = container?.scrollTop ?? null;
+        const result = await super._render(force, options);
+        if (scrollTop !== null) {
+            const refreshed = this.element?.[0]?.querySelector('.sheet-body-content');
+            if (refreshed) refreshed.scrollTop = scrollTop;
+        }
+        return result;
     }
 
 activateListeners(html) {
@@ -38,8 +60,13 @@ activateListeners(html) {
         }
     });
     
-    // ✅ OUVINTE DO BOTÃO DE EDITAR AGORA É ATIVADO SEMPRE ✅
+ // ✅ OUVINTE DO BOTÃO DE EDITAR AGORA É ATIVADO SEMPRE ✅
     html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
+
+    // Alterna os editores padrão da aba de descrição (padrão dos outros itens)
+    html.find('.toggle-editor').on('click', this._toggleEditor.bind(this));
+    html.find('.save-description').on('click', this._saveDescription.bind(this));
+    html.find('.cancel-description').on('click', this._cancelDescription.bind(this));
 
     // ✅ LÓGICA DA MACRO AGORA ESTÁ DENTRO DE UMA VERIFICAÇÃO SEGURA ✅
     const macroInput = html.find('input[name="system.value"]')[0];
@@ -92,5 +119,36 @@ activateListeners(html) {
             default: "save"
         }, { width: 500, height: 400, resizable: true }).render(true);
     }
-}
 
+    _toggleEditor(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest('.description-section');
+        container.find('.description-view').toggle();
+        container.find('.description-editor').toggle();
+        if (field) {
+            const editor = container.find(`.editor[data-edit=\"${field}\"]`);
+            if (editor.length) {
+                editor.trigger('focus');
+            }
+        }
+    }
+
+    async _saveDescription(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest('.description-section');
+        const editor = container.find(`.editor[data-edit=\"${field}\"]`);
+        const content = editor.length ? editor.val() : container.find(`textarea[name=\"${field}\"]`).val();
+        if (field) await this.item.update({ [field]: content });
+        container.find('.description-view').show();
+        container.find('.description-editor').hide();
+    }
+
+    _cancelDescription(event) {
+        event.preventDefault();
+        const container = $(event.currentTarget).closest('.description-section');
+        container.find('.description-view').show();
+        container.find('.description-editor').hide();
+    }
+}
