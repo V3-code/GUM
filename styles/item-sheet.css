@@ -543,6 +543,61 @@
 }
 
 /* ------------------------------------------------------------------- */
+/* ARMADURA - PROTEÇÃO                                                 */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .protection-grid .section-heading {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.gum.sheet.item .protection-grid .hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--item-text-muted);
+}
+.gum.sheet.item .hit-locations-grid-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.gum.sheet.item .hit-location-card {
+  background: var(--item-bg-panel-2);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gum.sheet.item .hit-location-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gum.sheet.item .hit-location-meta .location-name {
+  font-weight: 800;
+  color: var(--item-text);
+}
+.gum.sheet.item .hit-location-meta .location-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(185,137,60,0.15);
+  color: var(--item-accent);
+  border: 1px solid rgba(185,137,60,0.3);
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+.gum.sheet.item .hit-location-input {
+  text-align: center;
+  font-weight: 700;
+  background: rgba(0,0,0,0.04);
+}
+
+/* ------------------------------------------------------------------- */
 /* TRIGGER SHEET (GATILHOS)                                            */
 /* ------------------------------------------------------------------- */
 .gum.sheet.item.trigger-sheet .trigger-code-card {

@@ -160,46 +160,102 @@
 
     {{!-- ABA: DESCRIÇÃO --}}
     <div class="tab" data-tab="description">
-      <div class="form-section description-section">
-        <h4 class="section-title">Descrição Resumida (Chat)</h4>
-        <div class="description-view">{{{system.chat_description}}}</div>
-        <button type="button" class="toggle-editor" data-field="system.chat_description">Editar</button>
-        <div class="description-editor" style="display:none;">
-          {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
-          <button type="button" class="save-description" data-field="system.chat_description">Salvar</button>
-          <button type="button" class="cancel-description">Cancelar</button>
+      <div class="description-tab">
+        <div class="description-hero">
+          <div class="hero-text">
+            <p class="eyebrow">Narrativa & Referência</p>
+            <h3>Descrição da Armadura</h3>
+            <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
+          </div>
+          <div class="hero-meta">
+            <div class="meta-chip">
+              <i class="fas fa-book-open"></i>
+              <span>Resumo (Chat)</span>
+            </div>
+            <div class="meta-chip">
+              <i class="fas fa-scroll"></i>
+              <span>Completa</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="form-section description-section">
-        <h4 class="section-title">Descrição Completa</h4>
-        <div class="description-view">{{{system.description}}}</div>
-        <button type="button" class="toggle-editor" data-field="system.description">Editar</button>
-        <div class="description-editor" style="display:none;">
-          {{editor system.description target="system.description" owner=owner editable=editable}}
-          <button type="button" class="save-description" data-field="system.description">Salvar</button>
-          <button type="button" class="cancel-description">Cancelar</button>
+
+        <div class="description-grid">
+          <div class="form-section description-section">
+            <div class="description-header">
+              <div>
+                <h4 class="section-title">Descrição Resumida (Chat)</h4>
+                <p class="hint">Use para tooltips e mensagens rápidas.</p>
+              </div>
+              {{#if editable}}
+              <div class="description-actions">
+                <button type="button" class="toggle-editor" data-field="system.chat_description">
+                  <i class="fas fa-pen"></i> Editar
+                </button>
+              </div>
+              {{/if}}
+            </div>
+            <div class="description-view">{{{system.chat_description}}}</div>
+
+            <div class="description-editor" style="display:none;">
+              {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+              <div class="description-actions">
+                <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section description-section">
+            <div class="description-header">
+              <div>
+                <h4 class="section-title">Descrição Completa</h4>
+                <p class="hint">Inclua detalhes extensos, efeitos narrativos e referências.</p>
+              </div>
+              {{#if editable}}
+              <div class="description-actions">
+                <button type="button" class="toggle-editor" data-field="system.description">
+                  <i class="fas fa-pen"></i> Editar
+                </button>
+              </div>
+              {{/if}}
+            </div>
+            <div class="description-view">{{{system.description}}}</div>
+
+            <div class="description-editor" style="display:none;">
+              {{editor system.description target="system.description" owner=owner editable=editable}}
+              <div class="description-actions">
+                <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
     <div class="tab" data-tab="protection">
-        <div class="form-section">
-            <h4 class="section-title">Proteção por Localização</h4>
-            <p class="hint" style="margin-top: 5px; font-size: 12px; opacity: 0.8; text-align: center;">
-                Digite a RD para cada local. (ex: <code>5</code>, <code>5, 2 cont</code>, <code>3 pi++</code>).
-            </p>
-            
-            <div class="hit-locations-grid-inputs" style="margin-top: 15px;">
+        <div class="form-section protection-grid">
+            <div class="section-heading">
+                <h4 class="section-title">Proteção por Localização</h4>
+                <p class="hint">
+                    Digite a RD para cada local (ex: 5 | 5, 2 cont | 3 pi++).
+                </p>
+            </div>
+
+            <div class="hit-locations-grid-inputs">
                 {{!-- Loop pelos 15 locais de acerto --}}
                 {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
-                    <div class="form-group form-group-small">
-                        <label>{{lookup (object 
-                            head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
-                            arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
-                            leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
-                        ) loc}}</label>
-                        <input type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" />
+                    <div class="hit-location-card">
+                        <div class="hit-location-meta">
+                            <span class="location-name">{{lookup (object 
+                                head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
+                                arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
+                                leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
+                            ) loc}}</span>
+                            <span class="location-tag">RD</span>
+                        </div>
+                        <input class="hit-location-input" type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" />
                     </div>
                 {{/each}}
             </div>
