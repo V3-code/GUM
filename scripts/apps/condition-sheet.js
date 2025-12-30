@@ -2,21 +2,22 @@
 
 import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
-// NOTA: O import do ConditionBuilder não é mais necessário aqui, mas pode ser mantido se você o usa em outro lugar.
+
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
-            width: 500, // Aumentei um pouco a largura para acomodar os resumos
-            height: "auto",
+            width: 500,
+            height: 600,
             resizable: true,
             template: "systems/gum/templates/items/condition-sheet.hbs",
             tabs: [{
                 navSelector: ".sheet-tabs",
                 contentSelector: ".sheet-body-content",
-                initial: "efeitos" // Mudei a aba inicial para 'efeitos' para ser mais direto
-            }]
+                initial: "description"
+            }],
+            scrollY: [".sheet-body-content"]
         });
     }
 
@@ -24,10 +25,13 @@ export class ConditionSheet extends ItemSheet {
      * ✅ [VERSÃO 2.0] Prepara os dados para a ficha.
      * Agora carrega os dados completos dos efeitos linkados por UUID.
      */
-    async getData(options) {
+   async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
         context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, { async: true });
+        context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description || "", { async: true });
+        context.owner = this.item.isOwner;
+        context.editable = this.options.editable;
         
         const effectLinks = this.item.system.effects || [];
         const preparedEffects = [];
@@ -40,15 +44,15 @@ export class ConditionSheet extends ItemSheet {
                     preparedEffects.push({
                         name: effectItem.name,
                         img: effectItem.img,
-                        type: effectItem.system.type,
+                        type: effectItem.system.type || "indefinido",
                         chat_description: effectItem.system.chat_description,
-                        summary: this._getEffectSummary(effectItem), // Gera o resumo
-                        index: index, // O índice original para a função de deletar
-                        uuid: link.uuid // O UUID para a função de visualizar
+                        summary: this._getEffectSummary(effectItem), // Gera o resumo␊
+                        index: index, // O índice original para a função de deletar␊
+                        uuid: link.uuid // O UUID para a função de visualizar␊
                     });
                 } else {
-                    // Adiciona um placeholder se o link estiver quebrado
-                    preparedEffects.push({ name: "Link Quebrado", img: "icons/svg/hazard.svg", summary: "UUID não encontrado", index: index, uuid: link.uuid });
+                    // Adiciona um placeholder se o link estiver quebrado␊
+                    preparedEffects.push({ name: "Link Quebrado", img: "icons/svg/hazard.svg", summary: "UUID não encontrado", index: index, uuid: link.uuid, type: "desconhecido" });
                 }
             }
         }
@@ -82,23 +86,10 @@ export class ConditionSheet extends ItemSheet {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
-            html.find('.view-effect').on('click', async (ev) => {
-            ev.preventDefault();
-            // Pega o UUID que armazenamos no elemento HTML
-            const effectUuid = $(ev.currentTarget).closest('.effect-tag').data('effect-uuid');
-            if (effectUuid) {
-                const effectItem = await fromUuid(effectUuid);
-                if (effectItem) {
-                    // Renderiza a ficha do item original
-                    effectItem.sheet.render(true);
-                }
-            }
-        });
-
         // --- ABA DE EFEITOS ---
 
         // Adicionar um novo efeito (linkado)
-        html.find('.add-effect').on('click', (ev) => {
+         html.find('.add-effect').on('click', (ev) => {
             ev.preventDefault();
             new EffectBuilder(this.item).render();
         });
@@ -108,7 +99,9 @@ export class ConditionSheet extends ItemSheet {
             ev.preventDefault();
             const effectIndex = $(ev.currentTarget).closest('.effect-entry').data('effectIndex');
             const effects = foundry.utils.deepClone(this.item.system.effects || []);
-            effects.splice(effectIndex, 1);
+            if (Number.isInteger(effectIndex)) {
+                effects.splice(effectIndex, 1);
+            }
             this.item.update({ "system.effects": effects });
         });
         
@@ -130,32 +123,40 @@ export class ConditionSheet extends ItemSheet {
             new TriggerBrowser(textarea).render(true);
         });
 
-        // --- ABA DE DETALHES ---
+               // --- ABA DE DETALHES ---
         
-        // Editor de Descrição
-        html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
+        html.find('.toggle-editor').on('click', this._toggleEditor.bind(this));
+        html.find('.save-description').on('click', this._saveDescription.bind(this));
+        html.find('.cancel-description').on('click', this._cancelDescription.bind(this));
     }
 
-    // Função auxiliar para editar texto (mantida)
-    _onEditText(event) {
-        const fieldName = $(event.currentTarget).data('target');
-        const title = $(event.currentTarget).attr('title');
-        const currentContent = foundry.utils.getProperty(this.item, fieldName) || "";
+    _toggleEditor(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest('.description-section');
+        container.find('.description-view').toggle();
+        container.find('.description-editor').toggle();
+        if (field) {
+            const editor = container.find(`.editor[data-edit="${field}"]`);
+            if (editor.length) editor.trigger('focus');
+        }
+    }
 
-        new Dialog({
-            title: title,
-            content: `<form><textarea name="content" style="width: 100%; height: 300px;">${currentContent}</textarea></form>`,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
-                    callback: (html) => {
-                        const newContent = html.find('textarea[name="content"]').val();
-                        this.item.update({ [fieldName]: newContent });
-                    }
-                }
-            },
-            default: "save"
-        }).render(true);
+    async _saveDescription(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest('.description-section');
+        const editor = container.find(`.editor[data-edit="${field}"]`);
+        const content = editor.length ? editor.val() : container.find(`textarea[name="${field}"]`).val();
+        if (field) await this.item.update({ [field]: content });
+        container.find('.description-view').show();
+        container.find('.description-editor').hide();
+    }
+
+    _cancelDescription(event) {
+        event.preventDefault();
+        const container = $(event.currentTarget).closest('.description-section');
+        container.find('.description-view').show();
+        container.find('.description-editor').hide();
     }
 }

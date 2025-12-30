@@ -1,294 +1,226 @@
 /* =================================================================== */
-/* FICHA DE ITEM 'CONDIÇÃO' (Refatorado & Blindado)                    */
+/* FICHA DE CONDIÇÃO - VISUAL PADRÃO DE ITENS                          */
+/* Escopo: .gum.sheet.item.condition-sheet                             */
 /* =================================================================== */
 
-/* --- 1. ESTRUTURA GERAL --- */
-
-.gum.sheet.item.condition-sheet .window-content {
-    background: var(--gum-bg-dark);
-    color: var(--gum-text-claro);
-    padding: 0;
-}
-
-/* O Form ocupa toda a altura */
-.gum.sheet.item.condition-sheet form {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* O corpo da ficha pode rolar */
-.gum.sheet.item.condition-sheet .sheet-body {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
 .gum.sheet.item.condition-sheet .sheet-body-content {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* --- 2. SEÇÕES E TÍTULOS --- */
-
-.gum.sheet.item.condition-sheet .form-section {
-    margin-bottom: 12px;
-    background: transparent; /* Remove fundo extra se houver */
-    border: none; /* Remove borda extra se houver */
-    padding: 0;
+.gum.sheet.item.condition-sheet .condition-card {
+  background: var(--item-bg-panel);
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+  box-shadow: var(--item-shadow);
+  padding: 12px;
 }
 
-.gum.sheet.item.condition-sheet .section-title {
-    font-family: var(--gum-font-secondary);
-    color: var(--gum-accent-gold);
-    font-weight: 700;
-    font-size: 1.1em;
-    margin: 0 0 8px 0;
-    padding-bottom: 5px;
-    border-bottom: 1px solid var(--gum-border-light);
+.gum.sheet.item.condition-sheet .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.gum.sheet.item.condition-sheet .hint {
-    font-size: 0.85em;
-    color: var(--gum-text-medio);
-    margin-bottom: 10px;
-    font-style: italic;
+.gum.sheet.item.condition-sheet .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.58rem;
+  color: var(--item-text-muted);
+  margin: 0 0 4px 0;
 }
 
-/* --- 3. CAMPO DE FÓRMULA (CÓDIGO) --- */
-
-.gum.sheet.item.condition-sheet textarea[name="system.when"] {
-    width: 100%;
-    resize: vertical;
-    font-family: monospace;
-    background: var(--gum-bg-darkest);
-    color: var(--gum-text-claro);
-    border: 1px solid var(--gum-border-light);
-    height: 185px;
-    font-size: 0.9em;
-    padding: 8px;
-    border-radius: 3px;
+.gum.sheet.item.condition-sheet .section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--item-border);
+  background: var(--item-bg-panel-2);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--item-text-muted);
 }
 
-/* Container dos botões abaixo do código */
-.gum.sheet.item.condition-sheet .button-container,
+.gum.sheet.item.condition-sheet .section-tag.subtle {
+  background: rgba(0,0,0,0.03);
+}
+
+/* --------------------------------------------- */
+/* GATILHO                                       */
+/* --------------------------------------------- */
+.gum.sheet.item.condition-sheet .condition-input-area textarea {
+  width: 100%;
+  min-height: 180px;
+  font-family: "JetBrains Mono", monospace;
+  background: var(--item-bg-panel-2);
+  border: 1px dashed var(--item-border);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--item-text);
+}
+
 .gum.sheet.item.condition-sheet .condition-input-area .button-group {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;
+  display: flex;
+  justify-content: space-evenly;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
 
-.gum.sheet.item.condition-sheet .button-group .button {
-    background: var(--gum-bg-medium);
-    color: var(--gum-text-claro);
-    border: 1px solid var(--gum-border-light);
-    padding: 4px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.gum.sheet.item.condition-sheet .button-group .button:hover {
-    background: var(--gum-accent-gold);
-    color: var(--gum-bg-darkest);
-    border-color: var(--gum-accent-gold);
+.gum.sheet.item.condition-sheet .condition-input-area .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--item-bg-panel-2);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  color: var(--item-text);
+  text-decoration: none;
+  font-weight: 700;
 }
 
-/* --- 4. SEÇÃO DE DURAÇÃO (GRID COMPLEXO) --- */
-
-.gum.sheet.item.condition-sheet .duration-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.gum.sheet.item.condition-sheet .condition-input-area .button:hover {
+  border-color: var(--item-accent);
+  color: var(--item-accent);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* Linha 1: Valor + Unidade */
-.gum.sheet.item.condition-sheet .duration-inline-group {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* Espaço entre label e inputs */
+/* --------------------------------------------- */
+/* DURAÇÃO                                       */
+/* --------------------------------------------- */
+.gum.sheet.item.condition-sheet .condition-duration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
 }
 
-.gum.sheet.item.condition-sheet .duration-inline-group .grid-label {
-    font-weight: bold;
-    flex-shrink: 0;
-    min-width: 80px;
-    color: var(--gum-text-medio);
+.gum.sheet.item.condition-sheet .duration-block {
+  background: var(--item-bg-panel-2);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.gum.sheet.item.condition-sheet .duration-inline-group .input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+.gum.sheet.item.condition-sheet .duration-block h5 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--item-text);
 }
 
-.gum.sheet.item.condition-sheet .duration-value {
-    width: 60px !important; /* Força largura */
-    text-align: center;
-}
-
-/* Linha 2: Ao Expirar (Radio Buttons) */
-.gum.sheet.item.condition-sheet .expiration-group {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.gum.sheet.item.condition-sheet .expiration-group .grid-label {
-    font-weight: bold;
-    flex-shrink: 0;
-    min-width: 80px;
-    color: var(--gum-text-medio);
-}
-
-.gum.sheet.item.condition-sheet .radio-group {
-    display: flex;
-    gap: 20px;
+.gum.sheet.item.condition-sheet .radio-group,
+.gum.sheet.item.condition-sheet .radio-group.horizontal {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .gum.sheet.item.condition-sheet .custom-radio {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.gum.sheet.item.condition-sheet .custom-radio input[type="radio"] {
+  display: none;
 }
 
 .gum.sheet.item.condition-sheet .custom-radio span {
-    font-weight: normal;
-    color: var(--gum-text-medio);
-    font-size: 0.9em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--item-text-muted);
+  transition: all 0.2s ease;
 }
 
-/* Círculo do Radio */
-.gum.sheet.item.condition-sheet .custom-radio input[type="radio"] { display: none; }
-.gum.sheet.item.condition-sheet .custom-radio span::before {
-    content: '';
-    display: inline-block;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    border: 2px solid #555;
-    background: #222;
-    transition: all 0.2s ease;
-    margin-right: 6px;
-}
-.gum.sheet.item.condition-sheet .custom-radio input[type="radio"]:checked + span::before {
-    background: var(--gum-accent-gold);
-    border-color: #fff;
-    box-shadow: 0 0 5px var(--gum-accent-gold);
-}
 .gum.sheet.item.condition-sheet .custom-radio input[type="radio"]:checked + span {
-    color: var(--gum-text-claro);
+  border-color: var(--item-accent);
+  color: var(--item-accent);
+  background: rgba(185,137,60,0.12);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
 }
 
-/* Linha 3: Checkbox de Combate */
+.gum.sheet.item.condition-sheet .custom-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--item-text);
+}
+
+.gum.sheet.item.condition-sheet .custom-checkbox input[type="checkbox"] {
+  accent-color: var(--item-accent);
+}
+
+.gum.sheet.item.condition-sheet .duration-inline-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.gum.sheet.item.condition-sheet .duration-inline-group .grid-label,
+ .gum.sheet.item.condition-sheet .duration-block .radio-group .grid-label {
+  min-width: 70px;
+  color: var(--item-text-muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+.gum.sheet.item.condition-sheet .duration-inline-group .input-group {
+  display: flex;
+  gap: 60px;
+  align-items: center;
+}
+
+.gum.sheet.item.condition-sheet .duration-value {
+  width: 70px;
+  text-align: center;
+}
+
+.gum.sheet.item.condition-sheet .expiration-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .gum.sheet.item.condition-sheet .combat-checkbox-row {
-    margin-top: 5px;
-}
-
-/* --- 5. SEÇÃO DE EFEITOS (LISTA DE CARDS) --- */
-
-.gum.sheet.item.condition-sheet .effects-section {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 200px;
-}
-
-/* Barra de Ferramentas (Adicionar Efeito) */
-.gum.sheet.item.condition-sheet .effects-toolbar {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 10px;
-}
-
-/* Container da Lista */
-.gum.sheet.item.condition-sheet .effects-list-container {
-    overflow-y: auto;
-    padding-right: 5px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-/* Card de Efeito Individual */
-.gum.sheet.item.condition-sheet .effect-summary {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--gum-bg-darkest);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 4px;
-    padding: 8px;
-    transition: border-color 0.2s;
-}
-.gum.sheet.item.condition-sheet .effect-summary:hover {
-    border-color: var(--gum-accent-gold);
+    padding: 6px 8px;
+    cursor: pointer;
+    margin-bottom: 5px;
 }
 
-.gum.sheet.item.condition-sheet .effect-summary-info {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+/* --------------------------------------------- */
+/* LISTA DE EFEITOS                              */
+/* --------------------------------------------- */
+.gum.sheet.item.condition-sheet .effect-group .effect-summary-line {
+  background: rgba(0,0,0,0.02);
+  border: 1px dashed var(--item-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  color: var(--item-text);
 }
 
-/* Rótulo do Tipo (ex: ATRIBUTO) */
-.gum.sheet.item.condition-sheet .effect-type-label {
-    font-family: var(--gum-font-secondary);
-    font-size: 0.75em;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--gum-accent-gold);
-}
-
-/* Detalhes (ST +1) */
-.gum.sheet.item.condition-sheet .effect-details {
-    font-family: monospace;
-    font-size: 0.95em;
-    color: var(--gum-text-claro);
-}
-
-/* Tag de Rolagem */
-.gum.sheet.item.condition-sheet .roll-summary-tag {
-    display: inline-block;
-    background: rgba(255,255,255,0.1);
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 0.8em;
-    font-style: italic;
-    color: var(--gum-text-medio);
-    margin-top: 2px;
-    width: fit-content;
-}
-
-/* Controles (Editar/Deletar) */
-.gum.sheet.item.condition-sheet .effect-controls {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-}
-.gum.sheet.item.condition-sheet .effect-controls a {
-    color: var(--gum-text-medio);
-    font-size: 1.1em;
-}
-.gum.sheet.item.condition-sheet .effect-controls a:hover {
-    color: var(--gum-text-claro);
-}
-
-/* Placeholder (Lista Vazia) */
-.gum.sheet.item.condition-sheet .placeholder-text {
-    text-align: center;
-    font-style: italic;
-    color: var(--gum-text-medio);
-    padding: 20px;
-    opacity: 0.7;
+.gum.sheet.item.condition-sheet .effect-group .effect-summary-line.muted {
+  color: var(--item-text-muted);
+  font-style: italic;
 }
