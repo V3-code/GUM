@@ -10,50 +10,67 @@
 
     {{!-- NAVEGAÇÃO DAS ABAS --}}
     <nav class="sheet-tabs tabs">
-        <a class="item active" data-tab="detalhes">Detalhes</a>
         <a class="item" data-tab="codigo">Código</a>
+        <a class="item" data-tab="detalhes">Descrição</a>   
     </nav>
 
     <main class="sheet-body">
         <div class="sheet-body-content">
             
             {{!-- ABA DE CÓDIGO --}}
-            <div class="tab" data-tab="codigo">
-                <div class="form-section">
-                    <h4 class="section-title">Código do Gatilho</h4>
-                    <p class="hint">Insira a condição de JavaScript que será avaliada como Verdadeira ou Falsa.</p>
-                    <textarea name="system.code" placeholder="Ex: actor.system.attributes.hp.value <= 0">{{system.code}}</textarea>
-                </div>
-
-                {{!-- PALETA DE FERRAMENTAS --}}
-                <div class="palette">
-                    <div class="palette-group">
-                        <div class="palette-header"><i class="fas fa-sitemap"></i> Estruturas</div>
-                        <div class="palette-buttons">
-                            <button type="button" class="palette-button" data-action="open-structures">Estruturas...</button>
+            <div class="tab active" data-tab="codigo">
+                <div class="form-section trigger-code-card">
+                    <div class="section-header">
+                        <div class="section-lead">
+                            <p class="label">Biblioteca de Gatilhos</p>
+                            <h4 class="section-title">Código do Gatilho</h4>
+                            <p class="hint">Insira a condição em JavaScript que será avaliada como verdadeira ou falsa.</p>
+                        </div>
+                        <div class="code-meta">
+                            <span class="chip">Somente texto</span>
+                            <span class="chip accent">Avaliação lógica</span>
                         </div>
                     </div>
-                    <div class="palette-group">
-                        <div class="palette-header"><i class="fas fa-cube"></i> Componentes</div>
-                        <div class="palette-buttons">
-                            <button type="button" class="palette-button" data-action="open-attributes">Atributos...</button>
-                            <button type="button" class="palette-button" data-action="open-operators">Operadores...</button>
-                            <button type="button" class="palette-button" data-action="open-connectors">Conectores...</button>
-                        </div>
+
+                    <div class="trigger-code-area">
+                        <textarea class="trigger-code-input" name="system.code" rows="10" placeholder="Ex: actor.system.attributes.hp.value &lt;= 0">{{system.code}}</textarea>
+                        <p class="hint">Use este espaço para armazenar a lógica do gatilho que ficará disponível em sua biblioteca.</p>
                     </div>
                 </div>
             </div>
 
             {{!-- ABA DE DETALHES --}}
-            <div class="tab active" data-tab="detalhes">
-                <div class="form-section">
-                    <div class="section-header">
-                        <h4 class="section-title">Descrição
-                        <a class="edit-text-btn" data-target="system.description" title="Editar Descrição"><i class="fas fa-edit"></i></a>
-                    </div></h4>
-                    
-                    <div class="rendered-text">
-                        {{{enrichedDescription}}}
+            <div class="tab" data-tab="detalhes">
+                <div class="description-tab">
+                    <div class="description-hero">
+                        <div class="hero-text">
+                            <p class="eyebrow">Referência do Sistema</p>
+                            <h3>Descrição do Gatilho</h3>
+                            <p class="hint">Documente como e quando este gatilho deve ser usado na sua biblioteca.</p>
+                        </div>
+                        <div class="hero-meta">
+                            <div class="meta-chip"><i class="fas fa-bookmark"></i> Biblioteca</div>
+                            <div class="meta-chip"><i class="fas fa-stream"></i> Contexto</div>
+                        </div>
+                    </div>
+
+                    <div class="description-grid">
+                        <div class="form-section description-section">
+                            <div class="description-header">
+                                <div>
+                                    <h4 class="section-title">Descrição</h4>
+                                    <p class="hint">Explique a finalidade deste gatilho para consultas futuras.</p>
+                                </div>
+                                <div class="description-actions">
+                                    <button type="button" class="edit-text-btn" data-target="system.description" title="Editar Descrição">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="rendered-text">
+                                {{{enrichedDescription}}}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

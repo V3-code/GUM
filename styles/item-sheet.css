@@ -543,6 +543,83 @@
 }
 
 /* ------------------------------------------------------------------- */
+/* TRIGGER SHEET (GATILHOS)                                            */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item.trigger-sheet .trigger-code-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-card .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-card .section-lead .label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  font-size: 0.65rem;
+  color: var(--item-text-muted);
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-card .section-title {
+  margin-bottom: 4px;
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-card .code-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gum.sheet.item.trigger-sheet .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--item-border);
+  background: rgba(0,0,0,0.04);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--item-text);
+}
+
+.gum.sheet.item.trigger-sheet .chip.accent {
+  color: var(--item-accent);
+  border-color: var(--item-accent);
+  background: rgba(185,137,60,0.14);
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-input {
+  min-height: 220px;
+  padding: 10px 12px;
+  font-family: "Roboto Mono", "SFMono-Regular", ui-monospace, monospace;
+  font-size: 0.95rem;
+  text-align: justify;
+  line-height: 1.4;
+  background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.gum.sheet.item.trigger-sheet .trigger-code-input::placeholder {
+  color: var(--item-text-muted);
+}
+
+/* ------------------------------------------------------------------- */
 /* ATAQUES                                                           */
 /* ------------------------------------------------------------------- */
 .gum.sheet.item .attack-list {
