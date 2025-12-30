@@ -1213,6 +1213,31 @@
   color: var(--item-text-muted);
 }
 .gum.sheet.item .modifier-controls a:hover { color: var(--item-accent); }
+.gum.sheet.item .mod-effects-summary {
+  margin-top: 5px;
+}
+.gum.sheet.item .mod-effects-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gum.sheet.item .mod-effects-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 10px;
+  border: 1px dashed var(--item-border);
+  border-radius: 8px;
+  background: var(--item-bg-panel-2);
+  color: var(--item-text);
+}
+.gum.sheet.item .mod-effects-list strong {
+  color: var(--item-accent);
+}
 
 /* ------------------------------------------------------------------- */
 /* BOTÕES                                                            */

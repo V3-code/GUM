@@ -76,12 +76,13 @@ export class GurpsItemSheet extends ItemSheet {
         // =======================================================
         // 2. LÓGICA DE EQUIPAMENTOS
         // =======================================================
-        if (['equipment', 'armor', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
+            if (['equipment', 'armor', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
             const eqpModsObj = this.item.system.eqp_modifiers || {};
             const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({
                 id, ...data
             })).sort((a, b) => a.name.localeCompare(b.name));
             context.eqpModifiersList = modifiersArray;
+            context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features);
 
             let baseCost = Number(this.item.system.cost) || 0;
             let baseWeight = Number(this.item.system.weight) || 0;

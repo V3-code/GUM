@@ -263,56 +263,140 @@
     </div>
 
     {{!-- ABA: MODIFICADORES DE EQUIPAMENTO (NOVA) --}}
-    <div class="tab" data-tab="eqp_modifiers">
-        <div class="modifiers-toolbar">
-            <a class="add-eqp-modifier button"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-        </div>
+     <div class="tab" data-tab="eqp_modifiers">
+        <div class="modifiers-tab">
+            <div class="mod-hero">
+                <div class="hero-text">
+                    <p class="eyebrow">Ajustes de Armadura</p>
+                    <h3>Mods, Materiais e Qualidades</h3>
+                    <p class="hint">Gerencie fatores de custo, peso e efeitos textuais desta peça.</p>
+                </div>
+                <div class="mod-hero-meta">
+                    <span class="meta-chip neutral"><i class="fas fa-coins"></i> Custo Final: {{finalCostString}}</span>
+                    <span class="meta-chip neutral"><i class="fas fa-weight-hanging"></i> Peso Final: {{finalWeightString}}</span>
+                </div>
+            </div>
 
-        <div class="form-section">
-            <p class="hint">Adicione qualidades, materiais ou modificações mágicas aqui. O Custo Final e Peso serão recalculados automaticamente.</p>
-            
-            <ol class="modifier-list">
-                {{#each eqpModifiersList as |mod|}}
-                    <li class="modifier-tag" data-modifier-id="{{mod.id}}" style="background: rgba(0,0,0,0.2); border: 1px solid #777;">
-                        <div class="modifier-info" style="flex-grow: 1;">
-                            <span class="modifier-name">{{mod.name}}</span>
-                            <span class="modifier-divider">|</span>
-                            <span class="modifier-effect" style="font-size: 0.85em; color: #ccc;">
-                                CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
-                            </span>
-                        </div>
-                        <div class="modifier-controls">
-                            {{!-- ✅ Botão de View --}}
-                            <a class="view-eqp-modifier" title="Ver Detalhes" style="margin-right: 5px;"><i class="fas fa-eye"></i></a>
-                            <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
-                        </div>
-                    </li>
-                {{else}}
-                    <li class="placeholder-text">
-                        <p>Nenhum modificador de equipamento aplicado.</p>
-                    </li>
-                {{/each}}
-            </ol>
+            <div class="form-section modifiers-panel">
+                <div class="mod-panel-header">
+                    <div>
+                        <h4 class="section-title">Modificadores de Equipamento</h4>
+                        <p class="hint">CF e Peso ajustados são exibidos aqui.</p>
+                    </div>
+                    <a class="button item-add-button add-eqp-modifier"><i class="fas fa-plus"></i> Adicionar Modificador</a>
+                </div>
+
+                <ol class="modifier-list">
+                    {{#each eqpModifiersList as |mod|}}
+                        <li class="modifier-card is-eqp" data-modifier-id="{{mod.id}}">
+                            <div class="mod-info">
+                                <div class="mod-name">{{mod.name}}</div>
+                                <div class="mod-effect">
+                                    CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
+                                </div>
+                                {{#if mod.features}}
+                                    <div class="mod-notes">{{mod.features}}</div>
+                                {{/if}}
+                            </div>
+                            <div class="mod-meta">
+                                <span class="mod-cost-badge">CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}}</span>
+                                <span class="mod-cost-badge">Peso {{mod.weight_mod}}</span>
+                                <div class="modifier-controls">
+                                    <a class="view-eqp-modifier" title="Ver Detalhes"><i class="fas fa-eye"></i></a>
+                                    <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
+                                </div>
+                            </div>
+                        </li>
+                    {{else}}
+                        <li class="placeholder-text">
+                            <p>Nenhum modificador de equipamento aplicado.</p>
+                        </li>
+                    {{/each}}
+                </ol>
+            </div>
+
+            {{#if eqpModifiersHasFeatures}}
+            <div class="form-section mod-effects-summary">
+                <div class="mod-panel-header">
+                    <div>
+                        <h4 class="section-title">Resumo de Efeitos</h4>
+                        <p class="hint">Textos e observações consolidadas dos mods.</p>
+                    </div>
+                </div>
+                <ul class="mod-effects-list">
+                    {{#each eqpModifiersList as |mod|}}
+                        {{#if mod.features}}
+                            <li>
+                                <strong>{{mod.name}}:</strong>
+                                <span>{{mod.features}}</span>
+                            </li>
+                        {{/if}}
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
         </div>
-        
-        {{!-- Exibição dos Efeitos de Texto dos Mods --}}
-        {{#if eqpModifiersList}}
-        <div class="form-section" style="margin-top: 10px;">
-            <h4 class="section-title">Resumo dos Efeitos</h4>
-            <ul style="padding-left: 20px; margin: 5px 0; color: #ccc; font-size: 0.9em;">
-                {{#each eqpModifiersList as |mod|}}
-                    {{#if mod.features}}
-                        <li><strong>{{mod.name}}:</strong> {{mod.features}}</li>
-                    {{/if}}
-                {{/each}}
-            </ul>
-        </div>
-        {{/if}}
     </div>
 
     {{!-- ABA: EFEITOS --}}
     <div class="tab" data-tab="effects">
-        {{> effectsTab}}
+        <div class="effects-tab-layout">
+            <div class="effects-hero">
+                <div>
+                    <p class="eyebrow">Efeitos da Armadura</p>
+                    <h3>Passivos e Vinculados ao Equipar</h3>
+                    <p class="hint">Mantenha aqui os efeitos que são aplicados automaticamente quando a armadura está equipada.</p>
+                </div>
+                <div class="effects-legend">
+                    <span class="pill passive"><i class="fas fa-infinity"></i> Passivo</span>
+                    <span class="pill neutral"><i class="fas fa-shield-alt"></i> Equipamento</span>
+                </div>
+            </div>
+
+            <div class="effects-columns">
+                <div class="form-section effect-category">
+                    <div class="section-header">
+                        <div>
+                            <h4 class="section-title">Efeitos Passivos</h4>
+                            <p class="hint">Aplicados automaticamente enquanto a armadura estiver EQUIPADA.</p>
+                        </div>
+                        <div class="section-actions">
+                            <span class="section-tag">Equipado</span>
+                        </div>
+                    </div>
+                    <div class="effect-group passive"> 
+                        <div class="group-header">
+                            <div class="group-heading">
+                                <h5 class="group-title"><i class="fas fa-shield-alt"></i> Ativos na Armadura</h5>
+                                <p class="group-subtitle">Inclua bônus, resistências ou penalidades permanentes.</p>
+                            </div>
+                            <a class="button item-add-button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar</a>
+                        </div>
+                        <ol class="effects-list">
+                            {{#each system.preparedEffects.passive as |effect|}}
+                                <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
+                                    <div class="effect-header">
+                                        <div class="effect-main">
+                                            <img src="{{effect.img}}" class="effect-icon"/>
+                                            <div class="effect-text">
+                                                <span class="effect-name">{{effect.name}}</span>
+                                                <span class="effect-context">Aplicado enquanto equipada</span>
+                                            </div>
+                                        </div>
+                                        <div class="effect-controls">
+                                            <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
+                                            <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </div>
+                                </li>
+                            {{else}}
+                                <p class="empty-hint">Nenhum efeito passivo definido.</p>
+                            {{/each}}
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
   </section> 
