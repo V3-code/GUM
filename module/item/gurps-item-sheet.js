@@ -222,14 +222,22 @@ export class GurpsItemSheet extends ItemSheet {
             this.item.update(updateData);
         });
 
-        if (this.item?.type === "gm_modifier") {
+ if (this.item?.type === "gm_modifier") {
             this._activateGmModifierBehaviors(html);
         }
 
         // Editor de Descrição
         html.find(".toggle-editor").on("click", ev => {
             const section = $(ev.currentTarget).closest(".description-section");
+            const field = $(ev.currentTarget).data("field");
+            const editorWrapper = section.find(".description-editor");
             section.find(".description-view, .toggle-editor").hide();
+            editorWrapper.show();
+            const editor = this.editors?.[field];
+            if (editor?.instance) {
+                // Aguarda o próximo tick para garantir que o editor esteja visível antes do foco
+                setTimeout(() => editor.instance.focus(), 0);
+            }
         });
         html.find(".cancel-description").on("click", ev => {
             const section = $(ev.currentTarget).closest(".description-section");

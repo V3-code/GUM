@@ -135,7 +135,7 @@
                         {{#each system.preparedEffects.activation.success as |effect|}}
                             <li class="effect-entry" data-list-name="activationEffects.success" data-effect-id="{{effect.id}}">
                                 <div class="effect-header">
-                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    
                                     <div class="effect-main">
                                         <img src="{{effect.img}}" class="effect-icon"/>
                                         <div class="effect-text">
@@ -175,7 +175,7 @@
                         {{#each system.preparedEffects.activation.failure as |effect|}}
                             <li class="effect-entry" data-list-name="activationEffects.failure" data-effect-id="{{effect.id}}">
                                 <div class="effect-header">
-                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    
                                     <div class="effect-main">
                                         <img src="{{effect.img}}" class="effect-icon"/>
                                         <div class="effect-text">
@@ -221,13 +221,13 @@
                             <h5 class="group-title"><i class="fas fa-burst"></i> Aplicação de Dano</h5>
                             <p class="group-subtitle">Perfeito para sangramento, empurrões ou efeitos contínuos.</p>
                         </div>
-                        <a class="button item-add-button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar Efeito de Dano</a>
+                        <a class="button item-add-button add-effect" data-target-list="onDamageEffects" title="Adicionar Efeito de Dano"><i class="fas fa-plus"></i> Adicionar</a>
                     </div>
                     <ol class="effects-list">
                         {{#each system.preparedEffects.onDamage as |effect|}}
                             <li class="effect-entry" data-list-name="onDamageEffects" data-effect-id="{{effect.id}}">
                                 <div class="effect-header">
-                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    
                                     <div class="effect-main">
                                         <img src="{{effect.img}}" class="effect-icon"/>
                                         <div class="effect-text">
@@ -278,13 +278,13 @@
                             <h5 class="group-title"><i class="fas fa-infinity"></i> Sempre em efeito</h5>
                             <p class="group-subtitle">Ideal para bônus permanentes, imunidades ou penalidades.</p>
                         </div>
-                        <a class="button item-add-button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar Efeito Passivo</a>
+                        <a class="button item-add-button add-effect" data-target-list="passiveEffects" title="Adicionar Efeito Passivo"><i class="fas fa-plus"></i> Adicionar</a>
                     </div>
                     <ol class="effects-list">
                         {{#each system.preparedEffects.passive as |effect|}}
                             <li class="effect-entry" data-list-name="passiveEffects" data-effect-id="{{effect.id}}">
                                 <div class="effect-header">
-                                    <div class="effect-id-tag">ID #{{effect.id}}</div>
+                                    
                                     <div class="effect-main">
                                         <img src="{{effect.img}}" class="effect-icon"/>
                                         <div class="effect-text">
@@ -1538,7 +1538,7 @@
                                      </div>
                                  </div>
                                  {{/each}}
-                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar</a>
                              </div>
                          </div>
                      </details>
@@ -1740,7 +1740,7 @@
                                      </div>
                                  </div>
                                  {{/each}}
-                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar Efeito</a>
+                                 <a class="add-attack-effect button" data-list="onDamageEffects"><i class="fas fa-plus"></i> Adicionar</a>
                              </div>
                          </div>
                      </details>
