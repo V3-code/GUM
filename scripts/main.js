@@ -1384,19 +1384,67 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         }
     }
 
-    // Monta o card de resultado no chat
-    const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
+// Monta o card de resultado no chat usando o mesmo layout da rolagem base
+    const diceFaces = roll.dice[0].results.map(r => `<span class="die-face">${r.result}</span>`).join('');
+    const modifier = parseInt(rollConfig.modifier) || 0;
+    const modifierText = modifier !== 0 ? `${modifier > 0 ? '+' : ''}${modifier}` : '±0';
+    const attributeLabel = (rollConfig.attribute || 'HT').toUpperCase();
+    const marginValue = Math.abs(margin);
+
+    const isCritSuccess = roll.total <= 4 || (roll.total === 5 && finalTarget >= 15) || (roll.total === 6 && finalTarget >= 16);
+    const isCritFailure = roll.total >= 18 || (roll.total === 17 && finalTarget <= 15) || (roll.total - finalTarget >= 10);
+
+    if (isCritSuccess) {
+        resultClass = 'crit-success';
+    } else if (isCritFailure) {
+        resultClass = 'crit-failure';
+    }
+
     const flavor = `
-        <div class="gurps-roll-card resistance-roll-card roll-result">
-            <header class="card-header"><h3>Teste de Resistência: ${effectItemData.name || 'Teste'}</h3></header>
-            <div class="card-content">
-                <div class="card-main-flex">
-                    <div class="roll-column"><div class="roll-total-value">${roll.total}</div><div class="individual-dice">${diceHtml}</div></div>
-                    <div class="column-separator"></div>
-                    <div class="target-column"><div class="roll-target-value">${finalTarget}</div><div class="roll-breakdown-pill"><span>Alvo: ${effectItemData.system.resistanceRoll.attribute.toUpperCase()}</span></div></div>
+        <div class="gurps-roll-card premium resistance-roll-card roll-result">
+
+            <header class="card-header">
+                <div class="header-left">
+                    <div class="header-icon">
+                        <img src="${effectItemData.img || resistingActor?.img || "icons/svg/dice-target.svg"}" />
+                    </div>
+                    <div class="header-title">
+                        <h3>Teste de Resistência</h3>
+                        <small>${effectItemData.name || 'Efeito'}</small>
+                    </div>
+                </div>
+            </header>
+
+            <div class="roll-meta-row">
+                <div class="meta-bar ${modifier !== 0 ? 'has-mods' : ''}">
+                    <span class="meta-part">Atributo <strong>${attributeLabel}</strong></span>
+                    <span class="meta-mods">
+                        ${modifierText} <small>(Base ${targetCalc.base}${modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''})</small>
+                    </span>
                 </div>
             </div>
-            <footer class="card-footer ${resultClass}"><i class="${resultIcon}"></i> <span>${resultText}</span></footer>
+
+            <div class="card-main">
+                <div class="total-column">
+                    <div class="column-label">Dados</div>
+                    <div class="big-number">${roll.total}</div>
+                    <div class="dice-row">${diceFaces}</div>
+                </div>
+
+                <div class="dice-column target-column">
+                    <div class="column-label">Alvo</div>
+                    <div class="target-box">
+                        <div class="target-values">
+                            <span class="target-value">${finalTarget}</span>
+                        </div>
+                        <div class="cap-note">${attributeLabel}${modifier !== 0 ? ` (${modifierText})` : ''}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-pill ${resultClass}">
+                ${success ? 'Margem de Sucesso' : 'Margem de Fracasso'} <strong>${marginValue}</strong>
+            </div>
         </div>
     `;
 
