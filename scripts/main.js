@@ -625,8 +625,10 @@ async function applyActivationEffects(item, actor, outcome) {
  */
 async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId) {
     const rollData = effectItem.system?.resistanceRoll || {};
-    const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
-    const marginText = rollData.margin ? ` | Margem mínima: ${rollData.margin}` : '';
+     const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
+    const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
+    const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
+    const modifierClass = rollData.modifier > 0 ? 'positive' : rollData.modifier < 0 ? 'negative' : 'neutral';
 
     const chatPayload = {
         mode: "activation",
@@ -638,30 +640,48 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         effectLinkId: effectLinkId || null
     };
 
-    const content = `
-        <div class="gurps-roll-card">
-            <header class="card-header"><h3>Teste de Resistência Necessário</h3></header>
-            <div class="card-content">
-                <div class="summary-actors vertical" style="padding-bottom: 10px;">
-                    <div class="actor-line">
-                        <img src="${targetToken.actor?.img || targetToken.document.texture.src}" class="actor-token-icon">
-                        <strong>${targetToken.name}</strong>
+ const content = `
+        <div class="gurps-roll-card resistance-roll-card roll-pending">
+            <header class="card-header">
+                <div class="header-left">
+                    <div class="header-icon"><img src="${effectItem.img}"></div>
+                    <div class="header-title">
+                        <h3>Teste de Resistência Necessário</h3>
+                        <small>${effectItem.name}</small>
                     </div>
                 </div>
-                <div class="minicard result-card">
-                    <div class="minicard-title">Efeito Recebido</div>
-                    <p>Resistir a <strong>${effectItem.name}</strong> de <em>${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</em>.</p>
-                    <p>Teste: <strong>${(rollData.attribute || 'HT').toUpperCase()}</strong> ${rollData.modifier ? `(${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier})` : ''}</p>
-                    <p>Condição: <strong>${applyOnText}</strong>${marginText}</p>
+            </header>
+            <div class="card-content">
+                <div class="resistance-info">
+                    <div class="info-row">
+                        <span class="label">Alvo</span>
+                        <span class="value with-img">
+                            <img src="${targetToken.actor?.img || targetToken.document.texture.src}" class="actor-token-icon">
+                            ${targetToken.name}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Origem</span>
+                        <span class="value">${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</span>
+                    </div>
+                    <div class="pill-row dual">
+                        <div class="pill pill-attribute"><strong>Atributo:</strong> ${(rollData.attribute || 'HT').toUpperCase()}</div>
+                        <div class="pill pill-modifier ${modifierClass}"><strong>Mod:</strong> ${modifierValue}</div>
+                    </div>
+                    <div class="pill-row dual">
+                        <div class="pill pill-condition"><strong></strong> ${applyOnText}</div>
+                        <div class="pill pill-margin"><strong>Margem Mínima:</strong> ${marginValue}</div>
+                    </div>
+                    <div class="pill-row action-row">
+                        <button type="button" class="resistance-roll-button full-width" data-roll-data='${JSON.stringify(chatPayload)}'>
+                            <i class="fas fa-dice-d6"></i> Rolar Resistência
+                        </button>
+                    </div>
                 </div>
             </div>
-            <footer class="card-actions">
-                <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatPayload)}'>
-                    <i class="fas fa-dice-d6"></i> Rolar Resistência
-                </button>
-            </footer>
         </div>
     `;
+
 
     ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
@@ -1367,7 +1387,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     // Monta o card de resultado no chat
     const diceHtml = roll.dice[0].results.map(r => `<span class="die">${r.result}</span>`).join('');
     const flavor = `
-        <div class="gurps-roll-card">
+        <div class="gurps-roll-card resistance-roll-card roll-result">
             <header class="card-header"><h3>Teste de Resistência: ${effectItemData.name || 'Teste'}</h3></header>
             <div class="card-content">
                 <div class="card-main-flex">
@@ -1383,17 +1403,8 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     // Atualiza a mensagem original no chat
     const originalMessage = game.messages.get($(button).closest('.message').data('messageId'));
     if (originalMessage) {
-        await originalMessage.update({ content: flavor, rolls: [JSON.stringify(roll)] });
+        await originalMessage.update({ content: flavor, rolls: [roll] });
     }
-
-    // Cria uma nova mensagem com o resultado para manter o histórico
-    await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: resistingActor }),
-        content: flavor,
-        type: CONST.CHAT_MESSAGE_TYPES.ROLL,
-        rolls: [roll],
-        sound: null
-    });
 });
 
 });
