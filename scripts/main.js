@@ -409,6 +409,12 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     
     // --- 1. LÓGICA DE VALORES BASE ---
     const hasProcessedData = rollData.originalValue !== undefined;
+    let sourceItem = null;
+    if (rollData.itemUuid) {
+        sourceItem = await fromUuid(rollData.itemUuid).catch(() => null);
+    } else if (rollData.itemId && actor?.items) {
+        sourceItem = actor.items.get(rollData.itemId) || null;
+    }
     
     // Valor Base (Atributo Puro)
     const baseValue = parseInt(hasProcessedData ? rollData.originalValue : rollData.value) || 10;
@@ -473,6 +479,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     let resultLabel = isSuccess ? "Sucesso" : "Falha";
     let statusClass = isSuccess ? "success" : "failure";
     let marginLabel = "Margem";
+    const rollOutcome = isSuccess ? "success" : "failure";
 
     // Críticos
     const isCritSuccess = (total <= 4) || (total === 5 && effectiveLevel >= 15) || (total === 6 && effectiveLevel >= 16);
@@ -486,7 +493,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         statusClass = "crit-failure";
     }
 
-    // --- 6. HTML DO CARD ---
+    // --- 7. HTML DO CARD ---
 const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
     const modText = totalModifier !== 0 ? `${totalModifier > 0 ? '+' : ''}${totalModifier}` : '±0';
     const targetDisplay = isCapped
@@ -557,6 +564,16 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
         rolls: [roll],
         sound: CONFIG.sounds.dice
     });
+
+    // --- 8. DISPARO DE EFEITOS DE ATIVAÇÃO (SUCESSO/FALHA) ---
+    // Executamos depois de criar a mensagem para que o card da rolagem apareça antes do pedido de resistência.
+    if (sourceItem?.system?.activationEffects && sourceItem.system.activationEffects[rollOutcome]) {
+        try {
+            await applyActivationEffects(sourceItem, actor, rollOutcome);
+        } catch (err) {
+            console.error("GUM | Falha ao aplicar efeitos de ativação:", err);
+        }
+    }
 }
 
 /**
@@ -589,10 +606,69 @@ async function applyActivationEffects(item, actor, outcome) {
                  finalTargets = actor.getActiveTokens();
             }
 
-            await applySingleEffect(effectItem, finalTargets, { actor: actor, origin: item });
+            // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
+            const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
+            if (requiresResistance) {
+                for (const targetToken of finalTargets) {
+                    await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id);
+                }
+            } else {
+                await applySingleEffect(effectItem, finalTargets, { actor: actor, origin: item });
+            }
         }
     }
 }
+
+/**
+ * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
+ * O teste usa os dados de barreira configurados no item efeito.
+ */
+async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId) {
+    const rollData = effectItem.system?.resistanceRoll || {};
+    const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
+    const marginText = rollData.margin ? ` | Margem mínima: ${rollData.margin}` : '';
+
+    const chatPayload = {
+        mode: "activation",
+        targetActorId: targetToken.actor?.id,
+        targetTokenId: targetToken.id,
+        effectItemData: effectItem.toObject(),
+        sourceActorId: sourceActor?.id || null,
+        originItemUuid: originItem?.uuid || null,
+        effectLinkId: effectLinkId || null
+    };
+
+    const content = `
+        <div class="gurps-roll-card">
+            <header class="card-header"><h3>Teste de Resistência Necessário</h3></header>
+            <div class="card-content">
+                <div class="summary-actors vertical" style="padding-bottom: 10px;">
+                    <div class="actor-line">
+                        <img src="${targetToken.actor?.img || targetToken.document.texture.src}" class="actor-token-icon">
+                        <strong>${targetToken.name}</strong>
+                    </div>
+                </div>
+                <div class="minicard result-card">
+                    <div class="minicard-title">Efeito Recebido</div>
+                    <p>Resistir a <strong>${effectItem.name}</strong> de <em>${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</em>.</p>
+                    <p>Teste: <strong>${(rollData.attribute || 'HT').toUpperCase()}</strong> ${rollData.modifier ? `(${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier})` : ''}</p>
+                    <p>Condição: <strong>${applyOnText}</strong>${marginText}</p>
+                </div>
+            </div>
+            <footer class="card-actions">
+                <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatPayload)}'>
+                    <i class="fas fa-dice-d6"></i> Rolar Resistência
+                </button>
+            </footer>
+        </div>
+    `;
+
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
+        content
+    });
+}
+
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -757,10 +833,16 @@ Hooks.on("createItem", async (item, options, userId) => {
                         activeEffectData.duration = {};
                         const value = parseInt(effectSystem.duration.value) || 1;
                         const unit = effectSystem.duration.unit;
+
                         if (unit === 'turns') {
                             activeEffectData.duration.turns = value;
-                            activeEffectData.duration.combat = game.combat?.id;
-                        } else if (unit === 'rounds' || unit === 'seconds') {
+                        } else if (unit === 'seconds') {
+                            if (effectSystem.duration.inCombat && game.combat) {
+                                activeEffectData.duration.turns = value; // 1s = 1 turno em combate
+                            } else {
+                                activeEffectData.duration.seconds = value;
+                            }
+                        } else if (unit === 'rounds') {
                             activeEffectData.duration.rounds = value;
                         } else if (unit === 'minutes') {
                             activeEffectData.duration.seconds = value * 60;
@@ -769,9 +851,13 @@ Hooks.on("createItem", async (item, options, userId) => {
                         } else if (unit === 'days') {
                             activeEffectData.duration.seconds = value * 60 * 60 * 24;
                         }
-                        if (unit !== 'turns' && effectSystem.duration.inCombat && game.combat) {
+
+                        if (effectSystem.duration.inCombat && game.combat) {
                             activeEffectData.duration.combat = game.combat.id;
                         }
+                        activeEffectData.duration.startRound = game.combat?.round ?? null;
+                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                     }
                     // --- FIM DO CÓDIGO DE DURAÇÃO ---
 
@@ -874,10 +960,16 @@ Hooks.on("createItem", async (item, options, userId) => {
                             activeEffectData.duration = {};
                             const value = parseInt(effectSystem.duration.value) || 1;
                             const unit = effectSystem.duration.unit;
+
                             if (unit === 'turns') {
                                 activeEffectData.duration.turns = value;
-                                activeEffectData.duration.combat = game.combat?.id;
-                            } else if (unit === 'rounds' || unit === 'seconds') {
+                            } else if (unit === 'seconds') {
+                                if (effectSystem.duration.inCombat && game.combat) {
+                                    activeEffectData.duration.turns = value;
+                                } else {
+                                    activeEffectData.duration.seconds = value;
+                                }
+                            } else if (unit === 'rounds') {
                                 activeEffectData.duration.rounds = value;
                             } else if (unit === 'minutes') {
                                 activeEffectData.duration.seconds = value * 60;
@@ -886,9 +978,13 @@ Hooks.on("createItem", async (item, options, userId) => {
                             } else if (unit === 'days') {
                                 activeEffectData.duration.seconds = value * 60 * 60 * 24;
                             }
-                            if (unit !== 'turns' && effectSystem.duration.inCombat && game.combat) {
+
+                            if (effectSystem.duration.inCombat && game.combat) {
                                 activeEffectData.duration.combat = game.combat.id;
                             }
+                            activeEffectData.duration.startRound = game.combat?.round ?? null;
+                            activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                            activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                         }
 
                         const coreStatusId = effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true });
@@ -1161,16 +1257,63 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     const rollData = JSON.parse(button.dataset.rollData);
     
     // ✅ CORREÇÃO AQUI: Lemos o 'effectItemData' completo que salvamos antes.
-    const { targetActorId, finalTarget, effectItemData, sourceName, effectLinkId } = rollData;
+    const { effectItemData, sourceName, effectLinkId, mode } = rollData;
+    const rollConfig = effectItemData?.system?.resistanceRoll || {};
 
-    const targetActor = game.actors.get(targetActorId);
-    if (!targetActor) return;
+    const resolveActorForRoll = () => {
+        const messageId = $(button).closest('.message').data('messageId');
+        const message = messageId ? game.messages.get(messageId) : null;
+        const speakerActor = message ? ChatMessage.getSpeakerActor(message.speaker) : null;
+        if (speakerActor) return speakerActor;
+
+        const controlled = canvas.tokens?.controlled || [];
+        if (controlled.length > 0) return controlled[0].actor;
+
+        if (game.user.character) return game.user.character;
+
+        if (rollData.targetActorId) return game.actors.get(rollData.targetActorId);
+        return null;
+    };
+
+    const computeTargetValue = (actor) => {
+        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
+        const attributeKey = rollConfig.attribute || "ht";
+        const attributeObject = foundry.utils.getProperty(actor.system.attributes, attributeKey);
+        let baseAttributeValue = 10;
+
+        if (attributeObject) {
+            baseAttributeValue = (attributeObject.override !== null && attributeObject.override !== undefined)
+                ? attributeObject.override
+                : attributeObject.final;
+        } else if (!isNaN(parseInt(attributeKey))) {
+            baseAttributeValue = parseInt(attributeKey);
+        }
+
+        const modifier = parseInt(rollConfig.modifier) || 0;
+        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue };
+    };
+
+    const resistingActor = resolveActorForRoll();
+    if (!resistingActor) {
+        ui.notifications.warn("Nenhum ator encontrado para rolar a resistência.");
+        button.disabled = false;
+        return;
+    }
+
+    const targetCalc = computeTargetValue(resistingActor);
+    const finalTarget = targetCalc.finalTarget;
 
     const roll = new Roll("3d6");
     await roll.evaluate();
 
     const margin = finalTarget - roll.total;
     const success = roll.total <= finalTarget;
+    const achievedMargin = Math.abs(margin);
+    const minMargin = parseInt(rollConfig.margin) || 0;
+    const marginOk = achievedMargin >= minMargin;
+    const applyOnSuccess = rollConfig.applyOn === 'success';
+    const shouldApply = marginOk && ((applyOnSuccess && success) || (!applyOnSuccess && !success));
+
     let resultText = success ? `Sucesso com margem de ${margin}` : `Fracasso por uma margem de ${-margin}`;
     let resultClass = success ? 'success' : 'failure';
     let resultIcon = success ? 'fas fa-check-circle' : 'fas fa-times-circle';
@@ -1188,15 +1331,35 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     }
 
     // Aplica o efeito no alvo
-    // ✅ CORREÇÃO AQUI: Lemos a regra de 'resistanceRoll' de dentro do 'system'.
-    const triggerOn = effectItemData.system.resistanceRoll.applyOn || 'failure';
-    if ((triggerOn === 'failure' && !success) || (triggerOn === 'success' && success)) {
-        // Usa o motor 'applySingleEffect' para consistência
+    if (shouldApply) {
         const effectItem = await Item.fromSource(effectItemData);
-        const targetToken = targetActor.getActiveTokens()[0];
-        if (effectItem && targetToken) {
-            ui.notifications.info(`${targetActor.name} foi afetado por: ${effectItem.name}!`);
-            await applySingleEffect(effectItem, [targetToken]);
+        if (effectItem) {
+            const resolveTargets = () => {
+                const targets = [];
+                if (rollData.targetTokenId) {
+                    const token = canvas.tokens?.get(rollData.targetTokenId);
+                    if (token) targets.push(token);
+                }
+                if (targets.length === 0 && resistingActor) {
+                    targets.push(...resistingActor.getActiveTokens());
+                }
+                if (targets.length === 0 && rollData.targetActorId) {
+                    const actor = game.actors.get(rollData.targetActorId);
+                    if (actor) targets.push(...actor.getActiveTokens());
+                }
+                return targets;
+            };
+
+            const targets = resolveTargets();
+            if (targets.length > 0) {
+                const originItem = rollData.originItemUuid ? await fromUuid(rollData.originItemUuid).catch(() => null) : null;
+                const originActor = rollData.sourceActorId ? game.actors.get(rollData.sourceActorId) : null;
+
+                ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
+                await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem });
+            } else {
+                ui.notifications.warn("Não foi possível encontrar um alvo para aplicar o efeito.");
+            }
         }
     }
 
@@ -1221,6 +1384,15 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     if (originalMessage) {
         await originalMessage.update({ content: flavor, rolls: [JSON.stringify(roll)] });
     }
+
+    // Cria uma nova mensagem com o resultado para manter o histórico
+    await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: resistingActor }),
+        content: flavor,
+        type: CONST.CHAT_MESSAGE_TYPES.ROLL,
+        rolls: [roll],
+        sound: null
+    });
 });
 
 });
@@ -1490,11 +1662,36 @@ async function manageActiveEffectDurations(actor) {
     if (!actor || !game.combat) return;
     const effectsToDelete = [];
     const currentRound = game.combat.round;
+    const currentTurn = game.combat.turn ?? 0;
+    const totalTurns = Math.max(game.combat.turns?.length || 1, 1);
+    const currentWorldTime = game.time?.worldTime || 0;
     for (const effect of actor.effects) {
         const duration = effect.duration;
-        const isExpired = currentRound >= (duration.startRound || 0) + (duration.rounds || 0);
-        if (duration.rounds && isExpired) {
-            effectsToDelete.push(effect.id);
+        if (!duration) continue;
+
+        const startRound = duration.startRound ?? currentRound;
+        const startTurn = duration.startTurn ?? currentTurn;
+        const startTime = duration.startTime ?? currentWorldTime;
+
+        // Expiração por rodadas
+        if (duration.rounds) {
+            const isExpired = currentRound >= startRound + duration.rounds;
+            if (isExpired) effectsToDelete.push(effect.id);
+            continue;
+        }
+
+        // Expiração por turnos
+        if (duration.turns) {
+            const turnsElapsed = (currentRound - startRound) * totalTurns + (currentTurn - startTurn);
+            if (turnsElapsed >= duration.turns) effectsToDelete.push(effect.id);
+            continue;
+        }
+
+        // Expiração por tempo (segundos)
+        if (duration.seconds) {
+            const isExpired = currentWorldTime >= startTime + duration.seconds;
+            if (isExpired) effectsToDelete.push(effect.id);
+            continue;
         }
     }
     if (effectsToDelete.length > 0) {
