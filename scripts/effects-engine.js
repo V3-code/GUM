@@ -27,7 +27,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
                     statuses: [], // Lista nativa VAZIA
-                    flags: {}
+                    flags: {
+                        gum: {
+                            effectUuid: effectItem.uuid,
+                            duration: foundry.utils.duplicate(effectSystem.duration || {})
+                        }
+                    }
                 };
 
                // =============================================================
@@ -95,7 +100,7 @@ if (effectSystem.attachedStatusId) {
             break;
         }
 
-        // =======================================================
+       // =======================================================
         // CASO STATUS (RESTAURADO - Usa toggleStatusEffect)
         // Controla apenas o ícone visual no token.
         // =======================================================
@@ -105,23 +110,56 @@ if (effectSystem.attachedStatusId) {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
                 const statusId = effectSystem.statusId;
-                
-                // Prepara dados de duração (se houver) para passar ao toggleStatusEffect
-                // Nota: O Foundry pode não usar a duração aqui, mas passamos por segurança.
-                const durationData = {};
-                if (effectSystem.duration && effectSystem.duration.unit !== 'unlimited') {
-                    if (effectSystem.duration.unit === 'seconds') durationData.seconds = effectSystem.duration.value;
-                    else if (effectSystem.duration.unit === 'rounds') durationData.rounds = effectSystem.duration.value;
-                    else if (effectSystem.duration.unit === 'turns') durationData.turns = effectSystem.duration.value;
+
+                const activeEffectData = {
+                    name: effectItem.name,
+                    img: effectItem.img,
+                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
+                    changes: [],
+                    statuses: [statusId],
+                    flags: {
+                        core: { statusId },
+                        gum: {
+                            effectUuid: effectItem.uuid,
+                            duration: foundry.utils.duplicate(effectSystem.duration || {})
+                        }
+                    }
+                };
+
+                // Duração (mesma lógica dos outros tipos)
+                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                    activeEffectData.duration = {};
+                    const value = parseInt(effectSystem.duration.value) || 1; 
+                    const unit = effectSystem.duration.unit;
+
+                    if (unit === 'turns') {
+                        activeEffectData.duration.turns = value;
+                    } else if (unit === 'seconds') {
+                        if (effectSystem.duration.inCombat && game.combat) {
+                            activeEffectData.duration.turns = value; // 1s = 1 turno em combate
+                        } else {
+                            activeEffectData.duration.seconds = value;
+                        }
+                    } else if (unit === 'rounds') {
+                        activeEffectData.duration.rounds = value;
+                    } else if (unit === 'minutes') {
+                        activeEffectData.duration.seconds = value * 60;
+                    } else if (unit === 'hours') {
+                        activeEffectData.duration.seconds = value * 60 * 60;
+                    } else if (unit === 'days') {
+                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                    }
+                    
+                    if (effectSystem.duration.inCombat && game.combat) {
+                        activeEffectData.duration.combat = game.combat.id;
+                    }
+                    activeEffectData.duration.startRound = game.combat?.round ?? null;
+                    activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                    activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                 }
 
-                // Chama a função nativa do ator para ligar o status (o overlay é importante)
-                await targetActor.toggleStatusEffect(statusId, { active: true, overlay: true, duration: durationData });
-                console.log(`[GUM] Efeito de Status "${statusId}" aplicado em "${targetActor.name}" via toggleStatusEffect.`);
-                
-                // Importante: toggleStatusEffect já força o redesenho do token.
-                // Pode ser necessário redesenhar a ficha se você quiser que EFEITOS de status apareçam nela.
-                 targetActor.sheet.render(false); 
+                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                targetActor.sheet.render(false); 
             }
             break;
         }

@@ -163,39 +163,15 @@ async getData(options) {
             const effectData = effect.toObject(); 
             effectData.id = effect.id; 
 
-            // --- Lógica de Duração ---
-            const d = effect.duration;
-            let isPermanent = true; // Assume permanente até que se prove o contrário
-
-            if (d.seconds) {
-                effectData.durationString = `${d.seconds} seg.`;
-                isPermanent = false;
-            } 
-            else if (d.rounds) {
-                // Calcula rodadas restantes
-                const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
-                effectData.durationString = `${remaining} rodada(s)`;
-                isPermanent = false;
-            } 
-            else if (d.turns) {
-                // Calcula turnos restantes
-                const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
-                effectData.durationString = `${remaining} turno(s)`;
-                isPermanent = false;
-            } 
-            else {
-                effectData.durationString = "Permanente";
-                isPermanent = true;
-            }
-            
             // --- Lógica de Identificação da Fonte (seu código original) ---
             let fonteNome = "Origem Desconhecida";
             let fonteIcon = "fas fa-question-circle";
             let fonteUuid = null;
             
+            let originalEffectItem = null;
             const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
             if (effectUuid) {
-                const originalEffectItem = await fromUuid(effectUuid);
+                originalEffectItem = await fromUuid(effectUuid);
                 if (originalEffectItem) {
                     effectData.name = originalEffectItem.name; 
                     effectData.img = originalEffectItem.img;
@@ -222,6 +198,43 @@ async getData(options) {
             effectData.fonteNome = fonteNome;
             effectData.fonteIcon = fonteIcon;
             effectData.fonteUuid = fonteUuid; 
+
+            // --- Lógica de Duração ---
+            const d = effect.duration || {};
+            const gumDuration = effectData.flags?.gum?.duration || {};
+            const originalDuration = originalEffectItem?.system?.duration || gumDuration || {};
+            const isMarkedPermanent = originalDuration.isPermanent === true;
+            const countsInCombatOnly = originalDuration.inCombat === true;
+            let isPermanent = true; // Assume permanente até que se prove o contrário
+
+            if (d.seconds) {
+                effectData.durationString = `${d.seconds} seg.`;
+                isPermanent = false;
+            } 
+            else if (d.rounds) {
+                // Calcula rodadas restantes
+                const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
+                effectData.durationString = `${remaining} rodada(s)`;
+                isPermanent = false;
+            } 
+            else if (d.turns) {
+                // Calcula turnos restantes
+                const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
+                effectData.durationString = `${remaining} turno(s)`;
+                isPermanent = false;
+            } 
+            else if (!isMarkedPermanent && countsInCombatOnly) {
+                // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
+                // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
+                const fallbackValue = originalDuration.value ?? 1;
+                const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
+                effectData.durationString = `${fallbackValue} ${unit}`;
+                isPermanent = false;
+            }
+            else {
+                effectData.durationString = "Permanente";
+                isPermanent = true;
+            }
 
             // Adiciona o efeito processado à lista correta
             if (isPermanent) {

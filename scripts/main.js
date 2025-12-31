@@ -823,7 +823,8 @@ Hooks.on("createItem", async (item, options, userId) => {
                                 originItemId: item.id,
                                 // ✅ IMPORTANTE: Guardamos o UUID do Item Efeito original
                                 //    para a ficha poder encontrar a imagem correta.
-                                effectUuid: effectItem.uuid 
+                                effectUuid: effectItem.uuid,
+                                duration: foundry.utils.duplicate(effectSystem.duration || {})
                             }
                         }
                     };
@@ -953,7 +954,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             origin: item.uuid,
                             changes: [],
                             statuses: [],
-                            flags: { gum: { originItemId: item.id, effectUuid: effectItem.uuid } }
+                            flags: { gum: { originItemId: item.id, effectUuid: effectItem.uuid, duration: foundry.utils.duplicate(effectSystem.duration || {}) } }
                         };
 
                         if (effectSystem.duration && !effectSystem.duration.isPermanent) {
@@ -1661,6 +1662,7 @@ async function processConditions(actor, eventData = null) {
 async function manageActiveEffectDurations(actor) {
     if (!actor || !game.combat) return;
     const effectsToDelete = [];
+    const effectsToUpdate = [];
     const currentRound = game.combat.round;
     const currentTurn = game.combat.turn ?? 0;
     const totalTurns = Math.max(game.combat.turns?.length || 1, 1);
@@ -1669,14 +1671,61 @@ async function manageActiveEffectDurations(actor) {
         const duration = effect.duration;
         if (!duration) continue;
 
-        const startRound = duration.startRound ?? currentRound;
-        const startTurn = duration.startTurn ?? currentTurn;
-        const startTime = duration.startTime ?? currentWorldTime;
+        const updateData = { _id: effect.id };
+        const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+
+        // Se o efeito foi marcado como "apenas em combate" no item original e ainda não
+        // possui valores de duração aplicados pelo Foundry, convertemos agora.
+        if (!duration.rounds && !duration.turns && !duration.seconds && gumDuration.value) {
+            const fallbackValue = parseInt(gumDuration.value) || 1;
+            const unit = gumDuration.unit || "rounds";
+
+            if (gumDuration.inCombat) {
+                if (unit === "turns") {
+                    updateData["duration.turns"] = fallbackValue;
+                } else {
+                    updateData["duration.rounds"] = fallbackValue;
+                }
+                updateData["duration.combat"] = game.combat.id;
+            } else {
+                if (unit === "seconds") {
+                    updateData["duration.seconds"] = fallbackValue;
+                } else if (unit === "minutes") {
+                    updateData["duration.seconds"] = fallbackValue * 60;
+                } else if (unit === "hours") {
+                    updateData["duration.seconds"] = fallbackValue * 60 * 60;
+                } else if (unit === "days") {
+                    updateData["duration.seconds"] = fallbackValue * 60 * 60 * 24;
+                } else {
+                    // Default para efeitos sem flag de combate: trata como rodadas em combate
+                    updateData["duration.rounds"] = fallbackValue;
+                }
+            }
+        }
+
+        let startRound = duration.startRound;
+        if (startRound == null) {
+            startRound = currentRound;
+            updateData["duration.startRound"] = startRound;
+        }
+
+        let startTurn = duration.startTurn;
+        if (startTurn == null) {
+            startTurn = currentTurn;
+            updateData["duration.startTurn"] = startTurn;
+        }
+
+        let startTime = duration.startTime;
+        if (startTime == null) {
+            startTime = currentWorldTime;
+            updateData["duration.startTime"] = startTime;
+        }
 
         // Expiração por rodadas
         if (duration.rounds) {
             const isExpired = currentRound >= startRound + duration.rounds;
             if (isExpired) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
             continue;
         }
 
@@ -1684,6 +1733,7 @@ async function manageActiveEffectDurations(actor) {
         if (duration.turns) {
             const turnsElapsed = (currentRound - startRound) * totalTurns + (currentTurn - startTurn);
             if (turnsElapsed >= duration.turns) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
             continue;
         }
 
@@ -1691,14 +1741,21 @@ async function manageActiveEffectDurations(actor) {
         if (duration.seconds) {
             const isExpired = currentWorldTime >= startTime + duration.seconds;
             if (isExpired) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
             continue;
         }
+
+        if (Object.keys(updateData).length > 1) {
+            effectsToUpdate.push(updateData);
+        }
+    }
+    if (effectsToUpdate.length > 0) {
+        await actor.updateEmbeddedDocuments("ActiveEffect", effectsToUpdate);
     }
     if (effectsToDelete.length > 0) {
         await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToDelete);
     }
 }
-
 /**
  * Gerencia a duração de condições baseadas em rodadas de combate a cada turno.
  * @param {Combat} combat O objeto de combate que foi atualizado.
