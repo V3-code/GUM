@@ -1398,12 +1398,12 @@
                              {{#if attack.unbalanced}}
                                  <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
                              {{/if}}
-                             {{#if attack.fencing}}
+                            {{#if attack.fencing}}
                                  <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                             {{/if}}
+                             {{/if}}␊
                              <span class="attack-controls">
                                  <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                 <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                                <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
                              </span>
                          </h4>
                          <div class="form-grid-3 attack-display-grid melee-grid">
@@ -1544,7 +1544,8 @@
                      </details>
                      
                      <div class="attack-controls-edit">
-                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Salvar</a>
+                         <a class="cancel-attack-edit button ghost"><i class="fas fa-times"></i> Cancelar</a>
                      </div>
                  </div>
                  </li>
@@ -1746,12 +1747,13 @@
                      </details>
                      
                      <div class="attack-controls-edit">
-                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Concluir Edição</a>
+                         <a class="save-attack-mode button"><i class="fas fa-check"></i> Salvar</a>
+                         <a class="cancel-attack-edit button ghost"><i class="fas fa-times"></i> Cancelar</a>
                      </div>
                  </div>
                  </li>
                  {{/each}}
-             </ol>
+             </ol
              <div class="attack-toolbar">
              <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
 

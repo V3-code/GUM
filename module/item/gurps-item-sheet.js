@@ -331,11 +331,16 @@ export class GurpsItemSheet extends ItemSheet {
              $(ev.currentTarget).closest('.attack-item').find('.attack-display-mode').hide();
              $(ev.currentTarget).closest('.attack-item').find('.attack-edit-mode').show();
         });
-        html.find('.save-attack-mode').click(ev => {
-             ev.preventDefault();
-             $(ev.currentTarget).closest('.attack-item').find('.attack-edit-mode').hide();
-             $(ev.currentTarget).closest('.attack-item').find('.attack-display-mode').show();
-        });
+
+        const saveAttackHandler = this._onSaveAttackMode ? this._onSaveAttackMode.bind(this) : null;
+        if (saveAttackHandler) {
+            html.find('.save-attack-mode').click(saveAttackHandler);
+        }
+
+        const cancelAttackHandler = this._onCancelAttackEdit ? this._onCancelAttackEdit.bind(this) : null;
+        if (cancelAttackHandler) {
+            html.find('.cancel-attack-edit').click(cancelAttackHandler);
+        }
     }
 
      /* -------------------------------------------- */
@@ -521,7 +526,52 @@ export class GurpsItemSheet extends ItemSheet {
             title: "Deletar Modo de Ataque",
             content: "<p>Tem certeza?</p>",
             yes: () => this.item.update({ [`system.${listName}.-=${attackId}`]: null })
+       });
+    }
+
+    async _onSaveAttackMode(ev) {
+        ev.preventDefault();
+        const attackItem = $(ev.currentTarget).closest('.attack-item');
+        const inputs = attackItem.find('input[data-name]');
+        const updateData = {};
+
+        inputs.each((_, el) => {
+            const input = el;
+            const path = input.dataset.name;
+            if (!path) return;
+
+            let value;
+            if (input.type === "checkbox") {
+                value = input.checked;
+            } else if (input.type === "number") {
+                const raw = input.value.trim();
+                if (raw === "") {
+                    value = null;
+                } else {
+                    const normalized = raw.replace(',', '.');
+                    const parsed = Number(normalized);
+                    value = Number.isNaN(parsed) ? normalized : parsed;
+                }
+            } else {
+                value = input.value;
+            }
+
+            foundry.utils.setProperty(updateData, path, value);
         });
+
+        if (Object.keys(updateData).length > 0) {
+            await this.item.update(updateData);
+        }
+
+        attackItem.find('.attack-edit-mode').hide();
+        attackItem.find('.attack-display-mode').show();
+    }
+
+    _onCancelAttackEdit(ev) {
+        ev.preventDefault();
+        const attackItem = $(ev.currentTarget).closest('.attack-item');
+        attackItem.find('.attack-edit-mode').hide();
+        attackItem.find('.attack-display-mode').show();
     }
 
     _onLinkSkill(ev) {

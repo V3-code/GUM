@@ -771,6 +771,14 @@
   font-size: 12px;
   padding: 4px 6px;
 }
+.gum.sheet.item .attack-controls-edit{
+  margin-top: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px 10px;
+    align-items: center;
+    display: grid
+;
+}
 .gum.sheet.item .attack-controls-edit .button {
   font-size: 12px;
   padding: 6px 10px;
