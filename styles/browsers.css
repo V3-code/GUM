@@ -22,13 +22,14 @@
 .gum.trigger-browser .window-content,
 .gum.eqp-modifier-browser .window-content,
 .gum.gm-modifier-browser .window-content {
-    background: var(--gum-bg-dark) !important;
+    background: radial-gradient(ellipse at top, rgba(197, 160, 91, 0.06), transparent 45%), var(--gum-bg-dark) !important;
     color: var(--gum-text-claro);
-    padding: 0;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    gap: 10px;
 }
 
 /* O Form interno que segura tudo */
@@ -41,10 +42,24 @@
 /* O Grid Principal (Sidebar Esquerda | Conteúdo Direito) */
 .gum .browser-container {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 230px 1fr;
     height: 100%;
     overflow: hidden;
-    border-top: 1px solid var(--gum-border-light);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 10px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+    background: linear-gradient(135deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));
+    position: relative;
+}
+
+.gum .browser-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    border: 1px solid rgba(197, 160, 91, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* ================================================================== */
@@ -52,68 +67,92 @@
 /* ================================================================== */
 
 .gum .browser-sidebar {
-    background: var(--gum-bg-darkest);
-    padding: 15px;
-    border-right: 1px solid var(--gum-border-light);
+    background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.45)), var(--gum-bg-darkest);
+    padding: 18px 16px;
+    border-right: 1px solid rgba(255,255,255,0.04);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     overflow-y: auto;
+    box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
 }
 
 /* Títulos dos Filtros */
 .gum .filter-title {
     font-family: var(--gum-font-secondary);
-    font-size: 0.95em;
+    font-size: 0.9em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--gum-accent-gold);
-    margin: 0 0 5px 0;
-    padding-bottom: 5px;
-    border-bottom: 1px solid var(--gum-border-light);
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.gum .filter-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gum-accent-gold);
+    box-shadow: 0 0 0 4px rgba(197, 160, 91, 0.15);
 }
 
 /* Grupos de Filtros */
 .gum .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.18);
 }
 
 /* Checkboxes e Labels na Sidebar */
 .gum .filter-group label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 0.9em;
     color: var(--gum-text-medio);
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.15s ease, transform 0.15s ease;
 }
 .gum .filter-group label:hover {
     color: var(--gum-text-claro);
+    transform: translateX(2px);
 }
 
 /* Input Checkbox Customizado (Estilo consistente) */
 .gum .filter-group input[type="checkbox"] {
     appearance: none;
-    width: 14px; height: 14px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 2px;
+    width: 16px; height: 16px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
     cursor: pointer;
     flex-shrink: 0;
     position: relative;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.gum .filter-group input[type="checkbox"]:hover {
+    border-color: var(--gum-accent-gold);
+    box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.18);
 }
 .gum .filter-group input[type="checkbox"]:checked {
-    background: var(--gum-accent-gold);
+    background: linear-gradient(145deg, #f7d49b, #cda35f);
     border-color: var(--gum-accent-gold);
 }
 .gum .filter-group input[type="checkbox"]:checked::after {
     content: '✔'; 
-    font-size: 10px; color: #000;
+    font-size: 11px; color: #000;
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    font-weight: bold;
+    font-weight: 700;
 }
 
 /* Campo de Busca */
@@ -121,21 +160,33 @@
 
 .gum .search-box input {
     width: 100%;
-    padding: 6px 30px 6px 10px; /* Espaço para ícone */
+    padding: 8px 34px 8px 12px; /* Espaço para ícone */
     background: var(--gum-bg-medium);
-    border: 1px solid var(--gum-border-light);
+    border: 1px solid rgba(255,255,255,0.08);
     color: var(--gum-text-claro);
-    border-radius: 4px;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.gum .search-box input::placeholder {
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
 }
 .gum .search-box input:focus {
     border-color: var(--gum-accent-gold);
-    box-shadow: 0 0 5px rgba(197, 160, 91, 0.2);
+    box-shadow: 0 0 0 3px rgba(197, 160, 91, 0.18);
+    background: #2f2d2b;
 }
 
 .gum .search-box i {
     position: absolute;
-    right: 10px; top: 50%; transform: translateY(-50%);
+    right: 12px; top: 50%; transform: translateY(-50%);
     color: var(--gum-text-medio);
+    opacity: 0.8;
+    transition: color 0.15s ease, opacity 0.15s ease;
+}
+.gum .search-box input:focus + i {
+    color: var(--gum-accent-gold);
+    opacity: 1;
 }
 
 /* Texto de Dica/Hint */
@@ -153,49 +204,77 @@
 
 .gum .browser-content,
 .gum .browser-results {
-    background: var(--gum-bg-dark);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.35)), var(--gum-bg-dark);
     display: flex;
     flex-direction: column;
     overflow: hidden; /* O scroll é na lista interna */
     flex: 1;
+    position: relative;
+}
+
+.gum .browser-content::before,
+.gum .browser-results::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 /* Lista Scrollável */
 .gum .results-list {
     list-style: none;
-    padding: 0;
+    padding: 12px;
     margin: 0;
     overflow-y: auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* --- O ITEM DE LISTA PADRÃO (CARD) --- */
 .gum .result-item {
     display: grid;
-    /* Grid padrão: Checkbox | Ícone | Info | Extra */
-    grid-template-columns: 30px 32px 1fr auto; 
-    gap: 10px;
+    /* Grid padrão: Checkbox | Ícone | Info  */
+    grid-template-columns: 0.1fr 1fr 0.1fr;
+    gap: 12px;
     align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    background: rgba(255,255,255,0.015);
+    position: relative;
 }
 
 .gum .result-item:hover {
     background: rgba(255,255,255,0.05);
+    border-color: rgba(197, 160, 91, 0.45);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    transform: translateY(-1px);
 }
 
 /* Item Selecionado */
 .gum .result-item.selected {
-    background: rgba(197, 160, 91, 0.1);
-    border-left: 3px solid var(--gum-accent-gold);
+    background: linear-gradient(135deg, rgba(197, 160, 91, 0.18), rgba(0,0,0,0.15));
+    border: 1px solid var(--gum-accent-gold);
+    box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.25);
 }
 
 /* Checkbox de Seleção do Item */
+.gum .item-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .gum .item-controls input[type="checkbox"] {
-    width: 18px; height: 18px;
+    width: 18px; 
+    height: 18px;
     cursor: pointer;
+    accent-color: var(--gum-accent-gold);
 }
 
 /* Ícone do Item */
@@ -206,18 +285,44 @@
     object-fit: cover;
     background: #000;
 }
+.gum .item-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    border: 1px dashed rgba(255,255,255,0.08);
+}
 
 /* Informações de Texto */
 .gum .item-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
     overflow: hidden;
+}
+
+.gum .info-line-1,
+.gum .info-line-2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+}
+.gum .info-line-2 {
+    align-items: flex-start;
+}
+.gum .right-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .gum .item-name {
     font-weight: 700;
-    font-size: 1em;
+    font-size: 1.02em;
     color: var(--gum-text-claro);
     white-space: nowrap;
     overflow: hidden;
@@ -233,6 +338,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.gum .item-desc {
+    font-style: normal;
+    opacity: 0.85;
+}
+
+.gum .item-tags {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78em;
+    color: var(--gum-accent-gold);
+    letter-spacing: 0.02em;
+}
+.gum .item-tags::before {
+    content: '•';
+    color: rgba(197, 160, 91, 0.75);
+}
 
 /* Tags de Código/Valor */
 .gum .item-details code,
@@ -245,6 +367,22 @@
     font-style: normal;
     font-weight: bold;
 }
+.gum .item-cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(197, 160, 91, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.gum .browser-quick-view {
+    color: var(--gum-text-medio);
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+.gum .browser-quick-view:hover {
+    color: var(--gum-accent-gold);
+    transform: scale(1.05);
+}
 
 /* ================================================================== */
 /* 4. VARIAÇÕES ESPECÍFICAS (OVERRIDES)                               */
@@ -255,13 +393,16 @@
     display: grid;
     grid-template-columns: 30px 1fr 60px 60px; /* Check | Nome | CF | Peso */
     gap: 10px;
-    padding: 8px 10px;
-    background: var(--gum-bg-medium);
-    border-bottom: 1px solid var(--gum-border-light);
-    font-weight: bold;
+    padding: 12px 14px;
+    margin: 12px 12px 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.35), rgba(0,0,0,0.15));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px 10px 0 0;
+    font-weight: 700;
     color: var(--gum-accent-gold);
     font-size: 0.9em;
     text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .gum.eqp-modifier-browser .result-item {
@@ -291,37 +432,40 @@
 /* ================================================================== */
 
 .gum .browser-footer {
-    padding: 12px 15px;
-    background: var(--gum-bg-darkest);
-    border-top: 1px solid var(--gum-border-light);
+    padding: 14px 16px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.6));
+    border-top: 1px solid rgba(255,255,255,0.08);
     text-align: right;
     flex-shrink: 0;
 }
 
 .gum .browser-footer button {
-    background: var(--gum-accent-gold);
+    background: linear-gradient(145deg, #f2d59a, #c69b4f);
     color: var(--gum-bg-darkest); /* Texto escuro no dourado */
-    border: none;
-    padding: 8px 20px;
-    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.25);
+    padding: 10px 22px;
+    border-radius: 8px;
     font-weight: 700;
     font-family: var(--gum-font-primary);
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: all 0.18s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
 }
 
 .gum .browser-footer button:hover {
     background: #fff;
-    box-shadow: 0 0 10px var(--gum-accent-gold);
+    box-shadow: 0 0 0 3px rgba(197, 160, 91, 0.25), 0 8px 18px rgba(0,0,0,0.35);
 }
 
 /* Placeholder (Lista Vazia) */
 .gum .placeholder-text {
-    padding: 40px;
+    padding: 28px;
     text-align: center;
     color: var(--gum-text-medio);
     font-style: italic;
-    opacity: 0.7;
+    opacity: 0.85;
+    border: 1px dashed rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
 }
