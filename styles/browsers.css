@@ -1,27 +1,19 @@
 /* ================================================================== */
 /* GURPS GUM - UNIFIED BROWSERS STYLESHEET                            */
-/* Unifica: Modifiers, Effects, Conditions, Triggers, Equipment       */
+/* Escopo isolado para: Modifiers, Effects, Conditions, Triggers,     */
+/* Equipment e GM Modifiers                                           */
 /* ================================================================== */
-
-/* --- CLASSES SUPORTADAS ---
-   .gum.modifier-browser
-   .gum.effect-browser
-   .gum.condition-browser
-   .gum.trigger-browser
-   .gum.eqp-modifier-browser
-   .gum.gm-modifier-browser
-*/
 
 /* ================================================================== */
 /* 1. ESTRUTURA DA JANELA (Layout Comum)                              */
 /* ================================================================== */
 
-.gum.modifier-browser .window-content,
-.gum.effect-browser .window-content,
-.gum.condition-browser .window-content,
-.gum.trigger-browser .window-content,
-.gum.eqp-modifier-browser .window-content,
-.gum.gm-modifier-browser .window-content {
+:is(.gum.modifier-browser,
+    .gum.effect-browser,
+    .gum.condition-browser,
+    .gum.trigger-browser,
+    .gum.eqp-modifier-browser,
+    .gum.gm-modifier-browser) .window-content {
     background: radial-gradient(ellipse at top, rgba(197, 160, 91, 0.06), transparent 45%), var(--gum-bg-dark) !important;
     color: var(--gum-text-claro);
     padding: 12px;
@@ -32,15 +24,13 @@
     gap: 10px;
 }
 
-/* O Form interno que segura tudo */
-.gum [class$="-browser-form"] {
+.gum-browser {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-/* O Grid Principal (Sidebar Esquerda | Conteúdo Direito) */
-.gum .browser-container {
+.gum-browser .browser-container {
     display: grid;
     grid-template-columns: 230px 1fr;
     height: 100%;
@@ -52,7 +42,7 @@
     position: relative;
 }
 
-.gum .browser-container::before {
+.gum-browser .browser-container::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -66,7 +56,7 @@
 /* 2. SIDEBAR (FILTROS E BUSCA)                                       */
 /* ================================================================== */
 
-.gum .browser-sidebar {
+.gum-browser .browser-sidebar {
     background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.45)), var(--gum-bg-darkest);
     padding: 18px 16px;
     border-right: 1px solid rgba(255,255,255,0.04);
@@ -77,8 +67,7 @@
     box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
 }
 
-/* Títulos dos Filtros */
-.gum .filter-title {
+.gum-browser .filter-title {
     font-family: var(--gum-font-secondary);
     font-size: 0.9em;
     letter-spacing: 0.04em;
@@ -91,7 +80,8 @@
     padding: 0 0 6px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.gum .filter-title::before {
+
+.gum-browser .filter-title::before {
     content: '';
     width: 6px;
     height: 6px;
@@ -100,8 +90,7 @@
     box-shadow: 0 0 0 4px rgba(197, 160, 91, 0.15);
 }
 
-/* Grupos de Filtros */
-.gum .filter-group {
+.gum-browser .filter-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -112,8 +101,7 @@
     box-shadow: 0 8px 16px rgba(0,0,0,0.18);
 }
 
-/* Checkboxes e Labels na Sidebar */
-.gum .filter-group label {
+.gum-browser .filter-group label {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -122,15 +110,16 @@
     cursor: pointer;
     transition: color 0.15s ease, transform 0.15s ease;
 }
-.gum .filter-group label:hover {
+
+.gum-browser .filter-group label:hover {
     color: var(--gum-text-claro);
     transform: translateX(2px);
 }
 
-/* Input Checkbox Customizado (Estilo consistente) */
-.gum .filter-group input[type="checkbox"] {
+.gum-browser .filter-group input[type="checkbox"] {
     appearance: none;
-    width: 16px; height: 16px;
+    width: 16px;
+    height: 16px;
     background: rgba(0,0,0,0.35);
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: 4px;
@@ -139,58 +128,69 @@
     position: relative;
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.gum .filter-group input[type="checkbox"]:hover {
+
+.gum-browser .filter-group input[type="checkbox"]:hover {
     border-color: var(--gum-accent-gold);
     box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.18);
 }
-.gum .filter-group input[type="checkbox"]:checked {
+
+.gum-browser .filter-group input[type="checkbox"]:checked {
     background: linear-gradient(145deg, #f7d49b, #cda35f);
     border-color: var(--gum-accent-gold);
 }
-.gum .filter-group input[type="checkbox"]:checked::after {
-    content: '✔'; 
-    font-size: 11px; color: #000;
-    position: absolute; top: 50%; left: 50%;
+
+.gum-browser .filter-group input[type="checkbox"]:checked::after {
+    content: '✔';
+    font-size: 11px;
+    color: #000;
+    position: absolute;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     font-weight: 700;
 }
 
-/* Campo de Busca */
-.gum .search-box { position: relative; }
+.gum-browser .search-box {
+    position: relative;
+}
 
-.gum .search-box input {
+.gum-browser .search-box input {
     width: 100%;
-    padding: 8px 34px 8px 12px; /* Espaço para ícone */
+    padding: 8px 34px 8px 12px;
     background: var(--gum-bg-medium);
     border: 1px solid rgba(255,255,255,0.08);
     color: var(--gum-text-claro);
     border-radius: 8px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.gum .search-box input::placeholder {
+
+.gum-browser .search-box input::placeholder {
     color: rgba(255,255,255,0.5);
     font-style: italic;
 }
-.gum .search-box input:focus {
+
+.gum-browser .search-box input:focus {
     border-color: var(--gum-accent-gold);
     box-shadow: 0 0 0 3px rgba(197, 160, 91, 0.18);
     background: #2f2d2b;
 }
 
-.gum .search-box i {
+.gum-browser .search-box i {
     position: absolute;
-    right: 12px; top: 50%; transform: translateY(-50%);
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--gum-text-medio);
     opacity: 0.8;
     transition: color 0.15s ease, opacity 0.15s ease;
 }
-.gum .search-box input:focus + i {
+
+.gum-browser .search-box input:focus + i {
     color: var(--gum-accent-gold);
     opacity: 1;
 }
 
-/* Texto de Dica/Hint */
-.gum .browser-sidebar .hint {
+.gum-browser .browser-sidebar .hint {
     font-size: 0.85em;
     color: var(--gum-text-medio);
     font-style: italic;
@@ -202,18 +202,18 @@
 /* 3. ÁREA DE RESULTADOS (DIREITA)                                    */
 /* ================================================================== */
 
-.gum .browser-content,
-.gum .browser-results {
+.gum-browser .browser-content,
+.gum-browser .browser-results {
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.35)), var(--gum-bg-dark);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* O scroll é na lista interna */
+    overflow: hidden;
     flex: 1;
     position: relative;
 }
 
-.gum .browser-content::before,
-.gum .browser-results::before {
+.gum-browser .browser-content::before,
+.gum-browser .browser-results::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -221,8 +221,7 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Lista Scrollável */
-.gum .results-list {
+.gum-browser .results-list {
     list-style: none;
     padding: 12px;
     margin: 0;
@@ -233,10 +232,8 @@
     gap: 8px;
 }
 
-/* --- O ITEM DE LISTA PADRÃO (CARD) --- */
-.gum .result-item {
+.gum-browser .result-item {
     display: grid;
-    /* Grid padrão: Checkbox | Ícone | Info  */
     grid-template-columns: 0.1fr 1fr 0.1fr;
     gap: 12px;
     align-items: center;
@@ -249,43 +246,42 @@
     position: relative;
 }
 
-.gum .result-item:hover {
+.gum-browser .result-item:hover {
     background: rgba(255,255,255,0.05);
     border-color: rgba(197, 160, 91, 0.45);
     box-shadow: 0 10px 20px rgba(0,0,0,0.25);
     transform: translateY(-1px);
 }
 
-/* Item Selecionado */
-.gum .result-item.selected {
+.gum-browser .result-item.selected {
     background: linear-gradient(135deg, rgba(197, 160, 91, 0.18), rgba(0,0,0,0.15));
     border: 1px solid var(--gum-accent-gold);
     box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.25);
 }
 
-/* Checkbox de Seleção do Item */
-.gum .item-controls {
+.gum-browser .item-controls {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.gum .item-controls input[type="checkbox"] {
-    width: 18px; 
+.gum-browser .item-controls input[type="checkbox"] {
+    width: 18px;
     height: 18px;
     cursor: pointer;
     accent-color: var(--gum-accent-gold);
 }
 
-/* Ícone do Item */
-.gum .item-icon img {
-    width: 32px; height: 32px;
+.gum-browser .item-icon img {
+    width: 32px;
+    height: 32px;
     border-radius: 4px;
     border: 1px solid var(--gum-border-light);
     object-fit: cover;
     background: #000;
 }
-.gum .item-icon {
+
+.gum-browser .item-icon {
     width: 32px;
     height: 32px;
     display: flex;
@@ -296,31 +292,32 @@
     border: 1px dashed rgba(255,255,255,0.08);
 }
 
-/* Informações de Texto */
-.gum .item-info {
+.gum-browser .item-info {
     display: flex;
     flex-direction: column;
     gap: 6px;
     overflow: hidden;
 }
 
-.gum .info-line-1,
-.gum .info-line-2 {
+.gum-browser .info-line-1,
+.gum-browser .info-line-2 {
     display: flex;
     align-items: center;
     gap: 10px;
     justify-content: space-between;
 }
-.gum .info-line-2 {
+
+.gum-browser .info-line-2 {
     align-items: flex-start;
 }
-.gum .right-info {
+
+.gum-browser .right-info {
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.gum .item-name {
+.gum-browser .item-name {
     font-weight: 700;
     font-size: 1.02em;
     color: var(--gum-text-claro);
@@ -329,8 +326,8 @@
     text-overflow: ellipsis;
 }
 
-.gum .item-details,
-.gum .item-desc {
+.gum-browser .item-details,
+.gum-browser .item-desc {
     font-size: 0.85em;
     color: var(--gum-text-medio);
     font-style: italic;
@@ -338,12 +335,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.gum .item-desc {
+
+.gum-browser .item-desc {
     font-style: normal;
     opacity: 0.85;
 }
 
-.gum .item-tags {
+.gum-browser .item-tags {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -351,14 +349,14 @@
     color: var(--gum-accent-gold);
     letter-spacing: 0.02em;
 }
-.gum .item-tags::before {
+
+.gum-browser .item-tags::before {
     content: '•';
     color: rgba(197, 160, 91, 0.75);
 }
 
-/* Tags de Código/Valor */
-.gum .item-details code,
-.gum .item-cost {
+.gum-browser .item-details code,
+.gum-browser .item-cost {
     background: rgba(0,0,0,0.3);
     padding: 1px 5px;
     border-radius: 3px;
@@ -367,7 +365,8 @@
     font-style: normal;
     font-weight: bold;
 }
-.gum .item-cost {
+
+.gum-browser .item-cost {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -375,11 +374,12 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
-.gum .browser-quick-view {
+.gum-browser .browser-quick-view {
     color: var(--gum-text-medio);
     transition: color 0.15s ease, transform 0.15s ease;
 }
-.gum .browser-quick-view:hover {
+
+.gum-browser .browser-quick-view:hover {
     color: var(--gum-accent-gold);
     transform: scale(1.05);
 }
@@ -388,10 +388,9 @@
 /* 4. VARIAÇÕES ESPECÍFICAS (OVERRIDES)                               */
 /* ================================================================== */
 
-/* --- Equipment Modifier Browser (Tabela com Colunas) --- */
-.gum.eqp-modifier-browser .results-header {
+.gum.eqp-modifier-browser .gum-browser .results-header {
     display: grid;
-    grid-template-columns: 30px 1fr 60px 60px; /* Check | Nome | CF | Peso */
+    grid-template-columns: 30px 1fr 60px 60px;
     gap: 10px;
     padding: 12px 14px;
     margin: 12px 12px 0;
@@ -405,33 +404,30 @@
     letter-spacing: 0.02em;
 }
 
-.gum.eqp-modifier-browser .result-item {
-    /* Sobrescreve o grid padrão para bater com o cabeçalho */
-    grid-template-columns: 30px 1fr 60px 60px; 
+.gum.eqp-modifier-browser .gum-browser .result-item {
+    grid-template-columns: 30px 1fr 60px 60px;
 }
 
-.gum.eqp-modifier-browser .item-tags {
+.gum.eqp-modifier-browser .gum-browser .item-tags {
     font-size: 0.8em;
     color: var(--gum-accent-gold);
     font-style: italic;
 }
 
-/* --- Trigger Browser (Layout Simples) --- */
-.gum.trigger-browser .result-item {
-    grid-template-columns: 30px 1fr; /* Check | Info (sem ícone) */
+.gum.trigger-browser .gum-browser .result-item {
+    grid-template-columns: 30px 1fr;
 }
 
-/* --- GM Modifier Browser & Standard Modifier Browser --- */
-.gum.modifier-browser .result-item,
-.gum.gm-modifier-browser .result-item {
-    grid-template-columns: 30px 1fr 40px; /* Check | Info | Valor */
+.gum.modifier-browser .gum-browser .result-item,
+.gum.gm-modifier-browser .gum-browser .result-item {
+    grid-template-columns: 30px 1fr 40px;
 }
 
 /* ================================================================== */
 /* 5. RODAPÉ (FOOTER)                                                 */
 /* ================================================================== */
 
-.gum .browser-footer {
+.gum-browser .browser-footer {
     padding: 14px 16px;
     background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.6));
     border-top: 1px solid rgba(255,255,255,0.08);
@@ -439,9 +435,9 @@
     flex-shrink: 0;
 }
 
-.gum .browser-footer button {
+.gum-browser .browser-footer button {
     background: linear-gradient(145deg, #f2d59a, #c69b4f);
-    color: var(--gum-bg-darkest); /* Texto escuro no dourado */
+    color: var(--gum-bg-darkest);
     border: 1px solid rgba(0,0,0,0.25);
     padding: 10px 22px;
     border-radius: 8px;
@@ -453,13 +449,12 @@
     box-shadow: 0 6px 14px rgba(0,0,0,0.35);
 }
 
-.gum .browser-footer button:hover {
+.gum-browser .browser-footer button:hover {
     background: #fff;
     box-shadow: 0 0 0 3px rgba(197, 160, 91, 0.25), 0 8px 18px rgba(0,0,0,0.35);
 }
 
-/* Placeholder (Lista Vazia) */
-.gum .placeholder-text {
+.gum-browser .placeholder-text {
     padding: 28px;
     text-align: center;
     color: var(--gum-text-medio);
@@ -468,4 +463,4 @@
     border: 1px dashed rgba(255,255,255,0.12);
     border-radius: 10px;
     background: rgba(255,255,255,0.02);
-}
+} 
