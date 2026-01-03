@@ -1278,8 +1278,14 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     const rollData = JSON.parse(button.dataset.rollData);
     
     // ✅ CORREÇÃO AQUI: Lemos o 'effectItemData' completo que salvamos antes.
-    const { effectItemData, sourceName, effectLinkId, mode } = rollData;
+    const { effectItemData, sourceName, effectLinkId } = rollData;
+    const mode = rollData.mode || "activation";
     const rollConfig = effectItemData?.system?.resistanceRoll || {};
+    if (!effectItemData) {
+        ui.notifications.warn("Dados do efeito não encontrados para o teste de resistência.");
+        button.disabled = false;
+        return;
+    }
 
     const resolveActorForRoll = () => {
         const messageId = $(button).closest('.message').data('messageId');
@@ -1347,12 +1353,13 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
         game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
             isSuccess: success,
-            resultText: resultText
+            resultText: resultText,
+            shouldApply: shouldApply
         }, effectItemData.system); // Passamos os dados do sistema como terceiro argumento
     }
 
     // Aplica o efeito no alvo
-    if (shouldApply) {
+    if (shouldApply && mode !== "damage") {
         const effectItem = await Item.fromSource(effectItemData);
         if (effectItem) {
             const resolveTargets = () => {

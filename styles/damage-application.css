@@ -586,8 +586,7 @@
   font-style: italic;
 }
 
-/* Coluna 2: Efeitos */
-.effects-summary {
+.damage-application-dialog .effects-summary {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -596,7 +595,7 @@
   padding: 8px;
   border: 1px solid rgba(0,0,0,0.3);
 }
-.effect-card {
+.damage-application-dialog .effect-card {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -605,7 +604,7 @@
   border-radius: 3px;
   font-size: 12px;
 }
-.effect-card .eff-type {
+.damage-application-dialog .effect-card .eff-type {
   margin-left: auto;
   font-size: 11px;
   color: #a0a0a0;

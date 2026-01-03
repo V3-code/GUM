@@ -1,4 +1,5 @@
 import { applyContingentCondition } from "../main.js";
+import { applySingleEffect } from "../effects-engine.js";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -18,6 +19,35 @@ export default class DamageApplicationWindow extends Application {
         };
 
         this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+    }
+
+    async _resolveOnDamageEffects() {
+        const resolved = [];
+        const effects = this.damageData.onDamageEffects || {};
+
+        for (const [id, data] of Object.entries(effects)) {
+            const effectUuid = data.effectUuid || data.uuid;
+            let effectItem = null;
+            if (effectUuid) {
+                effectItem = await fromUuid(effectUuid).catch(() => null);
+            }
+
+            const activationChance = (data.activationChance === undefined || data.activationChance === null || data.activationChance === "")
+                ? 100
+                : (parseInt(data.activationChance) || 0);
+
+            resolved.push({
+                id,
+                ...data,
+                effectUuid,
+                item: effectItem,
+                minInjury: parseInt(data.minInjury) || 0,
+                activationChance,
+                requiredDamageType: (data.requiredDamageType || "").toLowerCase().trim()
+            });
+        }
+
+        return resolved;
     }
 
     _getDynamicDR(locationKey, damageType) {
@@ -68,12 +98,15 @@ export default class DamageApplicationWindow extends Application {
             const reservePath = `system.spell_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
             damageablePools.push({ path: reservePath, label: `RM:${reserve.name}` });
         }
-        const powerReserves = this.targetActor.system.power_reserves || {};
+ const powerReserves = this.targetActor.system.power_reserves || {};
         for (const [key, reserve] of Object.entries(powerReserves)) {
             const reservePath = `system.power_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
             damageablePools.push({ path: reservePath, label: `RP:${reserve.name}` });
         }
         context.damageablePools = damageablePools;
+        this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
+        game.gum = game.gum || {};
+        game.gum.activeDamageApplication = this;
         const locationsData = { "head": { label: "Crânio", roll: "3-4", dr: 0 }, "face": { label: "Rosto", roll: "5", dr: 0 }, "leg": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, "arm": { label: "Braço", roll: "8, 12", dr: 0 }, "torso": { label: "Torso", roll: "9-11", dr: 0 }, "groin": { label: "Virilha", roll: "11", dr: 0 }, "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, "hand": { label: "Mão", roll: "15", dr: 0 }, "foot": { label: "Pé", roll: "16", dr: 0 }, "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, "eyes": { label: "Olhos", roll: "--", dr: 0 } };
         locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };
         const manualDRMods = this.targetActor.system.combat.dr_mods || {};
@@ -350,77 +383,121 @@ async _updateDamageCalculation(form) {
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
     
-    // --- LÓGICA DE PREVIEW DE EFEITOS CONTINGENTES (permanece igual) ---
+    // --- LÓGICA DE PREVIEW DE EFEITOS "AO CAUSAR DANO" ---
     const effectsSummaryEl = form.querySelector(".effects-summary");
     const actionButtonsEl = form.querySelector(".action-buttons");
-    const contingentEffects = this.damageData.contingentEffects || {};
-    const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
+    if (!effectsSummaryEl || !actionButtonsEl) return;
     let potentialEffectsHTML = '';
     let hasPotentialEffects = false;
     let needsResistanceRoll = false;
 
-    for (const [id, effect] of Object.entries(contingentEffects)) {
-        if (effect.trigger !== 'onDamage') continue;
-        let conditionMet = !effect.condition || effect.condition.trim() === '';
-        if (effect.condition) {
-            try { conditionMet = Function("actor", "event", `return (${effect.condition})`)(this.targetActor, eventContext); } catch(e) { console.warn("GUM | Erro na condição do efeito (preview):", e); conditionMet = false; }
+    this.availableOnDamageEffects = [];
+    for (const effect of this.preparedOnDamageEffects || []) {
+        hasPotentialEffects = true;
+        const meetsInjury = this.finalInjury >= effect.minInjury;
+        const requiredType = effect.requiredDamageType;
+        const meetsType = !requiredType || requiredType === damageTypeKey;
+        const meetsRequirements = meetsInjury && meetsType;
+        if (this.effectState[effect.id] === undefined) {
+            this.effectState[effect.id] = { checked: meetsRequirements };
+        }
+        const effectState = this.effectState[effect.id];
+        const isChecked = effectState.checked && meetsRequirements;
+        const resistanceData = effect.item?.system?.resistanceRoll;
+        const requiresResistance = resistanceData?.isResisted;
+        const chanceText = effect.activationChance < 100 ? `Chance: ${effect.activationChance}%` : null;
+        const reqTexts = [];
+        if (effect.minInjury) reqTexts.push(`Lesão mín. ${effect.minInjury}`);
+        if (requiredType) reqTexts.push(`Tipo: ${requiredType.toUpperCase()}`);
+        const disabledAttr = meetsRequirements ? "" : "disabled";
+        const statusText = !meetsRequirements ? "Requisitos não atendidos" : requiresResistance ? "Requer teste de resistência" : "Aplicação direta";
+        const resistanceClass = requiresResistance ? "eff-type" : "eff-type muted";
+        const resistanceStatus = effectState.resistanceResult
+            ? effectState.resistanceResult.shouldApply
+                ? "Aplicável"
+                : "Bloqueado"
+            : statusText;
+
+        if (isChecked && requiresResistance && !effectState.resistanceResult) {
+            needsResistanceRoll = true;
         }
 
-        if (conditionMet) {
-            hasPotentialEffects = true;
-            if (this.effectState[id] === undefined) this.effectState[id] = { checked: true };
-            const isChecked = this.effectState[id].checked;
-            const conditionItem = await fromUuid(effect.payload);
-            const conditionName = conditionItem ? conditionItem.name : "Condição Desconhecida";
-            let resistanceHTML = '<span class="eff-type">(Automático)</span>';
-            if (effect.resistanceRoll) {
-                if (isChecked) needsResistanceRoll = true;
-                resistanceHTML = `<span class="eff-type">(Teste de ${effect.resistanceRoll.attribute.toUpperCase()})</span><a class="npc-resistance-roll" data-effect-id="${id}" title="Rolar para NPC"><i class="fas fa-dice-d20"></i></a>`;
-            }
-            potentialEffectsHTML += `<div class="effect-card" data-effect-id="${id}"><label class="custom-checkbox"><input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''}><span>${conditionName}</span></label>${resistanceHTML}</div>`;
-        }
+        this.availableOnDamageEffects.push({
+            ...effect,
+            meetsRequirements,
+            requiresResistance,
+            resistanceResult: effectState.resistanceResult
+        });
+
+        const resistanceRollText = requiresResistance && resistanceData?.attribute
+            ? `(Teste de ${resistanceData.attribute.toUpperCase()})`
+            : "(Automático)";
+
+        const resistanceResultText = effectState.resistanceResult?.resultText
+            ? `<div class="eff-status">${effectState.resistanceResult.resultText}</div>`
+            : "";
+
+        potentialEffectsHTML += `
+            <div class="effect-card ${meetsRequirements ? '' : 'disabled'}" data-effect-id="${effect.id}">
+                <label class="custom-checkbox">
+                    <input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''} ${disabledAttr}>
+                    <span>${effect.item?.name || "Efeito desconhecido"}</span>
+                </label>
+                <div class="${resistanceClass}">
+                    ${resistanceRollText} ${chanceText ? `• ${chanceText}` : ''}
+                </div>
+                ${reqTexts.length ? `<div class="eff-meta">${reqTexts.join(" • ")}</div>` : ''}
+                <div class="eff-meta">${resistanceStatus}</div>
+                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="Rolar para o alvo"><i class="fas fa-dice-d20"></i></a>` : ''}
+                ${resistanceResultText}
+            </div>
+        `;
     }
-    
+
     effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
     const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
-    if (proposeButton) { if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; } }
+    if (proposeButton) {
+        proposeButton.disabled = false;
+        proposeButton.textContent = "Propor Testes";
+        if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; }
+    }
 }
     
-    _onProposeTests(form) {
+        _onProposeTests(form) {
+        const effectsNeedingRoll = (this.availableOnDamageEffects || []).filter(e => {
+            const state = this.effectState[e.id];
+            return e.requiresResistance && e.meetsRequirements && state?.checked && !state.resistanceResult;
+        });
+
+        if (effectsNeedingRoll.length === 0) {
+            return ui.notifications.info("Nenhum efeito com resistência selecionado.");
+        }
+
         ui.notifications.info("Enviando propostas de teste para o chat...");
-        for (const [id, state] of Object.entries(this.effectState)) {
-            if (state.checked) {
-                const effect = this.damageData.contingentEffects[id];
-                if (effect?.resistanceRoll) {
-                    const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
-                    this._promptResistanceRoll(effect, eventContext);
-                }
-            }
+        for (const effect of effectsNeedingRoll) {
+            this._promptResistanceRoll(effect);
         }
         this.element.find('button[data-action="proposeTests"]').prop('disabled', true).text('Testes Propostos');
     }
     
     async _onNpcResistanceRoll(effectId) {
-        // ... (Este método, sem alterações)
-        const effect = this.damageData.contingentEffects[effectId];
-        const eventContext = { damage: this.finalInjury, target: this.targetActor, attacker: this.attackerActor };
-        const rollData = effect.resistanceRoll;
-        const target = eventContext.target;
+        const effect = (this.availableOnDamageEffects || []).find(e => e.id === effectId);
+        if (!effect?.requiresResistance || !effect.item) return;
+        const rollData = effect.item.system?.resistanceRoll || {};
+        const target = this.targetActor;
         let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
         let totalModifier = parseInt(rollData.modifier) || 0;
         if (rollData.dynamicModifier) {
-            try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, eventContext); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
+            try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
         }
         const finalTarget = baseAttributeValue + totalModifier;
         const roll = new Roll("3d6");
         await roll.evaluate();
         const success = roll.total <= finalTarget;
-        const resultText = `<strong>Rolagem de NPC (${effect.resistanceRoll.attribute.toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
+        const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
+        const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
+        this.updateEffectCard(effectId, { isSuccess: success, shouldApply, resultText }, effect.item.system);
         ChatMessage.create({ content: resultText, whisper: ChatMessage.getWhisperRecipients("GM") });
-        if (success && (rollData.on === 'failure')) {
-            this.effectState[effectId].checked = false;
-            this._updateDamageCalculation(this.form);
-        }
     }
     
     async _onApplyDamage(form, shouldClose, shouldPublish) {
@@ -445,29 +522,55 @@ async _updateDamageCalculation(form) {
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
             }
 
-            // Processa os efeitos FINAIS que permaneceram marcados.
-            const effectsToProcess = [];
-            for (const [id, state] of Object.entries(this.effectState)) {
-                if (state.checked) { effectsToProcess.push(this.damageData.contingentEffects[id]); }
+            const appliedEffectNames = [];
+            let pendingResistance = false;
+            const effectTargets = this._resolveEffectTargets();
+            for (const effect of this.availableOnDamageEffects || []) {
+                const state = this.effectState[effect.id];
+                if (!state?.checked || !effect.meetsRequirements || !effect.item) continue;
+
+                if (effect.activationChance < 100) {
+                    const chanceRoll = await (new Roll("1d100")).evaluate({ async: true });
+                    state.activationRoll = chanceRoll.total;
+                    if (chanceRoll.total > effect.activationChance) continue;
+                }
+
+                if (effect.requiresResistance) {
+                    const resistanceResult = state.resistanceResult;
+                    if (!resistanceResult) {
+                        pendingResistance = true;
+                        await this._promptResistanceRoll(effect);
+                        continue;
+                    }
+                    if (!resistanceResult.shouldApply) continue;
+                }
+
+                if (effectTargets.length > 0) {
+                    await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
+                    appliedEffectNames.push(effect.item.name);
+                }
             }
-            if (effectsToProcess.length > 0) {
+
+            const contingentApplied = [];
+            const contingentEffects = this.damageData.contingentEffects || {};
+            if (contingentEffects) {
                 const eventContext = { damage: finalInjury, target: this.targetActor, attacker: this.attackerActor };
-                for (const effect of effectsToProcess) {
+                for (const [id, state] of Object.entries(this.effectState)) {
+                    const effect = contingentEffects[id];
+                    if (!effect || !state?.checked) continue;
                     if (!effect.resistanceRoll) {
                         await this._executeContingentAction(effect, eventContext);
+                        const conditionItem = await fromUuid(effect.payload);
+                        if (conditionItem) contingentApplied.push(conditionItem.name);
                     }
                 }
             }
 
-if (shouldPublish) {
-    const appliedEffectNames = [];
-    for (const effect of effectsToProcess) {
-        const conditionItem = await fromUuid(effect.payload);
-        if (conditionItem) {
-            appliedEffectNames.push(conditionItem.name);
-        }
-    }
+            if (pendingResistance) {
+                ui.notifications.info("Efeitos com resistência precisam de teste antes de serem aplicados. As solicitações foram enviadas para o chat.");
+            }
 
+if (shouldPublish) {
     const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
     let resultLine = '';
 
@@ -505,10 +608,10 @@ if (shouldPublish) {
                 </div>
                 ` : ''}
 
-                ${appliedEffectNames.length > 0 ? `
+                ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
                 <div class="minicard effects-card">
                     <div class="minicard-title">Efeitos Aplicados</div>
-                    ${appliedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
+                    ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
                 </div>
                 ` : ''}
             </div>
@@ -533,19 +636,99 @@ if (shouldPublish) {
         }
     }
 
-    async _promptResistanceRoll(effect, eventContext) {
-        // ... (Seu método _promptResistanceRoll, sem alterações)
-        const rollData = effect.resistanceRoll;
-        const target = eventContext.target;
-        let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
-        let totalModifier = parseInt(rollData.modifier) || 0;
-        if (rollData.dynamicModifier) {
-            try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, eventContext); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
+    _resolveEffectTargets() {
+        const activeTokens = this.targetActor?.getActiveTokens?.() || [];
+        if (activeTokens.length > 0) return activeTokens;
+        if (this.targetActor) return [{ actor: this.targetActor, name: this.targetActor.name }];
+        return [];
+    }
+
+    updateEffectCard(effectId, rollResult, effectSystem) {
+        if (!effectId) return;
+        const state = this.effectState[effectId] || (this.effectState[effectId] = { checked: true });
+        const applyOn = effectSystem?.resistanceRoll?.applyOn || 'failure';
+        let shouldApply = rollResult.shouldApply;
+        if (shouldApply === undefined && rollResult.isSuccess !== undefined) {
+            shouldApply = applyOn === 'success' ? rollResult.isSuccess : !rollResult.isSuccess;
         }
-        const finalTarget = baseAttributeValue + totalModifier;
-        const chatButtonPayload = { targetActorId: target.id, finalTarget: finalTarget, contingentEffect: effect };
-        const content = `<div class="gurps-resistance-roll-card"><p><strong>${target.name}</strong> precisa resistir a um efeito de <strong>${this.attackerActor.name}</strong>!</p><p>Faça um teste de <strong>${rollData.attribute.toUpperCase()}</strong> para evitar o efeito.</p><button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatButtonPayload)}'><i class="fas fa-dice-d6"></i> Rolar Teste de Resistência (vs ${finalTarget})</button></div>`;
-        ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: target }), content: content });
+        state.resistanceResult = { ...rollResult, shouldApply };
+
+        const card = this.form?.querySelector(`.effect-card[data-effect-id="${effectId}"]`);
+        if (card) {
+            const statusEl = card.querySelector('.eff-status');
+            if (statusEl) {
+                statusEl.textContent = rollResult.resultText || (shouldApply ? "Aplicável" : "Bloqueado");
+            }
+        }
+
+        if (this.form) {
+            this._updateDamageCalculation(this.form);
+        }
+    }
+
+    async _promptResistanceRoll(effect) {
+        if (!effect?.item) return;
+        const rollData = effect.item.system?.resistanceRoll || {};
+        const target = this.targetActor;
+        const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
+        const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
+        const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
+        const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
+        const modifierClass = rollData.modifier > 0 ? 'positive' : rollData.modifier < 0 ? 'negative' : 'neutral';
+
+        const chatPayload = {
+            mode: "damage",
+            targetActorId: target?.id || null,
+            targetTokenId: targetToken?.id || null,
+            effectItemData: effect.item.toObject(),
+            sourceActorId: this.attackerActor?.id || null,
+            effectLinkId: effect.id,
+            originItemUuid: effect.originItemUuid || null
+        };
+
+        const content = `
+            <div class="gurps-roll-card resistance-roll-card roll-pending">
+                <header class="card-header">
+                    <div class="header-left">
+                        <div class="header-icon"><img src="${effect.item.img}"></div>
+                        <div class="header-title">
+                            <h3>Teste de Resistência Necessário</h3>
+                            <small>${effect.item.name}</small>
+                        </div>
+                    </div>
+                </header>
+                <div class="card-content">
+                    <div class="resistance-info">
+                        <div class="info-row">
+                            <span class="label">Alvo</span>
+                            <span class="value with-img">
+                                <img src="${target?.img || targetToken?.document?.texture?.src}" class="actor-token-icon">
+                                ${target?.name || "Alvo"}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Atributo</span>
+                            <span class="value">${(rollData.attribute || "HT").toUpperCase()} ${modifierValue !== '0' ? `<small class="${modifierClass}">(${modifierValue})</small>` : ''}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Aplicar em</span>
+                            <span class="value">${applyOnText}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Margem mín.</span>
+                            <span class="value">${marginValue}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatPayload)}'>
+                            <i class="fas fa-dice-d6"></i> Rolar Resistência
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: target }), content });
     }
     
     _getAdjustedWoundingModifiers(locationKey) {
@@ -561,5 +744,12 @@ if (shouldPublish) {
     
     async _updateObject(_event, _formData) {
         // Limpamos os avisos de 'não lido' e mantemos o método vazio.
+    }
+
+    async close(options) {
+        if (game.gum?.activeDamageApplication === this) {
+            delete game.gum.activeDamageApplication;
+        }
+        return super.close(options);
     }
 }
