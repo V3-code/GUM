@@ -24,6 +24,7 @@ export class ModifierBrowser extends FormApplication {
         this.allModifiers = await pack.getDocuments();
         this.allModifiers = this.allModifiers.map(item => ({
             id: item.id,
+            uuid: item.uuid,
             name: item.name, system: item.system, img: item.img,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
@@ -33,11 +34,33 @@ export class ModifierBrowser extends FormApplication {
     return context;
   }
 
-  activateListeners(html) {
+activateListeners(html) {
     super.activateListeners(html);
     html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') event.preventDefault();
+    });
+
+    html.find('.result-item').on('click', ev => {
+        if ($(ev.target).closest('input, button').length) return;
+        const checkbox = $(ev.currentTarget).find('input[type="checkbox"]');
+        const isChecked = !checkbox.prop('checked');
+        checkbox.prop('checked', isChecked);
+        $(ev.currentTarget).toggleClass('selected', isChecked);
+    });
+
+    html.find('.results-list input[type="checkbox"]').on('change', ev => {
+        const li = $(ev.currentTarget).closest('.result-item');
+        li.toggleClass('selected', ev.currentTarget.checked);
+    });
+
+    html.find('.browser-quick-view').on('click', async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest('.result-item');
+        const modifierId = li.data('itemId');
+        const modifier = this.allModifiers.find(m => m.id === modifierId);
+        if (modifier) await this._showQuickView(modifier);
     });
   }
 
@@ -61,9 +84,46 @@ export class ModifierBrowser extends FormApplication {
       const isEnhancement = costString && !isLimitation;
       if (showEnhancements && !showLimitations && !isEnhancement) isVisible = false;
       if (showLimitations && !showEnhancements && !isLimitation) isVisible = false;
-      if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVisible = false;
+if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVisible = false;
       li.style.display = isVisible ? "grid" : "none";
     }
+  }
+
+  async _showQuickView(modifierData) {
+      const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
+      const system = modifier?.system || {};
+      const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
+      const tags = [
+        createTag("Custo", system.cost),
+        createTag("Referência", system.ref),
+        createTag("Efeito", system.applied_effect)
+      ].join("");
+
+      const description = await TextEditor.enrichHTML(system.description || "<i>Sem descrição.</i>", { async: true });
+
+      const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card">
+                <header class="preview-header">
+                    <h3>${modifier?.name || "Modificador"}</h3>
+                    <div class="header-controls"><span class="preview-item-type">Modificador</span></div>
+                </header>
+                <div class="preview-content">
+                    <div class="preview-properties">${tags}</div>
+                    <hr class="preview-divider">
+                    <div class="preview-description">${description}</div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      new Dialog({
+        title: `Detalhes: ${modifier?.name || "Modificador"}`,
+        content,
+        buttons: { close: { label: "Fechar" } },
+        default: "close",
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+      }).render(true);
   }
 
   async _updateObject(event, formData) {

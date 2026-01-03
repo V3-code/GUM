@@ -27,7 +27,6 @@
                         <span>Geral / Materiais</span>
                     </label>
                     
-                    {{!-- ✅ NOVO FILTRO --}}
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="enchantment" {{checked filters.categories.enchantment}}>
                         <span>Encantamentos</span>
@@ -60,27 +59,19 @@
 
             <div class="filter-group">
                 <h3 class="filter-title">Fator de Custo (CF)</h3>
-                <div class="cf-range-inputs" style="display: flex; gap: 5px; align-items: center;">
-                    <input type="number" name="cfMin" placeholder="Min" step="0.1" style="width: 50%; text-align: center;">
-                    <span style="color: var(--c-text-medium);">-</span>
-                    <input type="number" name="cfMax" placeholder="Max" step="0.1" style="width: 50%; text-align: center;">
+                <div class="cf-range-inputs">
+                    <input type="number" name="cfMin" placeholder="Min" step="0.1">
+                    <span class="range-sep">-</span>
+                    <input type="number" name="cfMax" placeholder="Max" step="0.1">
                 </div>
             </div>
         </div>
 
         {{!-- Lista de Resultados --}}
-        <div class="browser-results">
-            <div class="results-header">
-                <span class="col-check"><i class="fas fa-check"></i></span>
-                <span class="col-name">Modificador</span>
-                <span class="col-cf" title="Fator de Custo">CF</span>
-                <span class="col-weight" title="Modificador de Peso">Peso</span>
-            </div>
-            
-            <div class="results-list">
+        <main class="browser-content">
+            <ol class="results-list">
                 {{#each modifiers}}
-                {{!-- ✅ ADICIONADO data-cat-enchantment --}}
-                <div class="result-item" 
+                <li class="result-item" 
                      data-id="{{this.id}}" 
                      data-cf="{{this.system.cost_factor}}"
                      data-tags="{{this.system.tags}}"
@@ -93,33 +84,30 @@
                      data-cat-ammo="{{this.system.target_type.ammo}}"
                      >
                      
-                    <div class="item-controls">
-                        <input type="checkbox" name="{{this.id}}">
+                    <div class="item-icon">
+                        {{#if this.displayImg}}
+                            <img src="{{this.displayImg}}" alt="{{this.name}}">
+                        {{/if}}
                     </div>
                     
-                    <div class="item-main">
-                        <div class="item-info">
-                            <span class="item-name">{{this.name}}</span>
-                            {{#if this.system.tags}}
-                                <span class="item-tags">{{this.system.tags}}</span>
-                            {{/if}}
-                            {{#if this.system.features}}
-                                <span class="item-desc" title="{{this.system.features}}">{{this.system.features}}</span>
-                            {{/if}}
-                        </div>
+                    <div class="item-info">
+                        <span class="item-name">{{this.name}}</span>
                     </div>
 
-                    <div class="item-stat cf-stat {{#if (gt this.system.cost_factor 0)}}positive{{/if}}">
-                        {{this.formattedCF}}
+                    <div class="item-actions">
+                        <button type="button" class="browser-quick-view" data-id="{{this.id}}" title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <label class="item-select">
+                            <input type="checkbox" name="{{this.id}}">
+                        </label>
                     </div>
-                    
-                    <div class="item-stat weight-stat">
-                        {{this.formattedWeight}}
-                    </div>
-                </div>
+                </li>
+                {{else}}
+                <li class="placeholder-text">Nenhum modificador de equipamento encontrado.</li>
                 {{/each}}
-            </div>
-        </div>
+            </ol>
+        </main>
     </div>
 
     <footer class="browser-footer">

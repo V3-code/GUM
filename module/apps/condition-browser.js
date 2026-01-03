@@ -38,12 +38,34 @@ constructor(targetItem, options = {}) {
     return context;
   }
 
-  activateListeners(html) {
+   activateListeners(html) {
     super.activateListeners(html);
     // ✅ AGORA O LISTENER OBSERVA MUDANÇAS EM QUALQUER INPUT DA SIDEBAR ✅
     html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') event.preventDefault();
+    });
+
+    html.find('.result-item').on('click', ev => {
+        if ($(ev.target).closest('input, button').length) return;
+        const checkbox = $(ev.currentTarget).find('input[type="checkbox"]');
+        const isChecked = !checkbox.prop('checked');
+        checkbox.prop('checked', isChecked);
+        $(ev.currentTarget).toggleClass('selected', isChecked);
+    });
+
+    html.find('.results-list input[type="checkbox"]').on('change', ev => {
+        const li = $(ev.currentTarget).closest('.result-item');
+        li.toggleClass('selected', ev.currentTarget.checked);
+    });
+
+    html.find('.browser-quick-view').on('click', async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest('.result-item');
+        const conditionId = li.data('itemId');
+        const condition = this.allConditions.find(c => c.id === conditionId);
+        if (condition) await this._showQuickView(condition);
     });
   }
 
@@ -93,8 +115,45 @@ constructor(targetItem, options = {}) {
           }
       }
 
-      li.style.display = isVisible ? "grid" : "none";
+ li.style.display = isVisible ? "grid" : "none";
     }
+  }
+
+  async _showQuickView(conditionData) {
+      const condition = conditionData?.uuid ? (await fromUuid(conditionData.uuid).catch(() => null)) || conditionData : conditionData;
+      const system = condition?.system || {};
+      const effectsList = Array.isArray(system.effects) ? system.effects : Object.values(system.effects || {});
+      const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
+      const tags = [
+        createTag("Gatilho", system.when),
+        createTag("Efeitos", effectsList.length ? effectsList.length : null)
+      ].join("");
+
+      const description = await TextEditor.enrichHTML(system.description || "<i>Sem descrição.</i>", { async: true });
+
+      const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card">
+                <header class="preview-header">
+                    <h3>${condition?.name || "Condição"}</h3>
+                    <div class="header-controls"><span class="preview-item-type">Condição</span></div>
+                </header>
+                <div class="preview-content">
+                    <div class="preview-properties">${tags}</div>
+                    <hr class="preview-divider">
+                    <div class="preview-description">${description}</div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      new Dialog({
+        title: `Detalhes: ${condition?.name || "Condição"}`,
+        content,
+        buttons: { close: { label: "Fechar" } },
+        default: "close",
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+      }).render(true);
   }
 
   async _updateObject(event, formData) {

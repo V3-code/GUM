@@ -47,10 +47,33 @@ activateListeners(html) {
     // ✅ AGORA O LISTENER OBSERVA MUDANÇAS EM QUALQUER INPUT DA SIDEBAR ✅
     html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
     
+    
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') event.preventDefault();
     });
-}
+
+    html.find('.result-item').on('click', ev => {
+        if ($(ev.target).closest('input, button').length) return;
+        const checkbox = $(ev.currentTarget).find('input[type="checkbox"]');
+        const isChecked = !checkbox.prop('checked');
+        checkbox.prop('checked', isChecked);
+        $(ev.currentTarget).toggleClass('selected', isChecked);
+    });
+
+    html.find('.results-list input[type="checkbox"]').on('change', ev => {
+        const li = $(ev.currentTarget).closest('.result-item');
+        li.toggleClass('selected', ev.currentTarget.checked);
+    });
+
+    html.find('.browser-quick-view').on('click', async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest('.result-item');
+        const effectId = li.data('itemId');
+        const effect = this.allEffects.find(e => e.id === effectId);
+        if (effect) await this._showQuickView(effect);
+    });
+  }
 
 _onFilterResults(event) {
     const form = this.form;
@@ -90,9 +113,52 @@ _onFilterResults(event) {
             isVisible = false;
         }
 
-        li.style.display = isVisible ? "grid" : "none";
+      li.style.display = isVisible ? "grid" : "none";
     }
 }
+
+  async _showQuickView(effectData) {
+      const effect = effectData?.uuid ? (await fromUuid(effectData.uuid).catch(() => null)) || effectData : effectData;
+      const system = effect?.system || {};
+      const createTag = (label, value) => {
+        if (value !== null && value !== undefined && value !== "") {
+            return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+        }
+        return "";
+      };
+
+      const tags = [
+        createTag("Tipo", system.type ? system.type.toUpperCase() : null),
+        createTag("Caminho", system.path),
+        createTag("Operação", system.operation || system.statusId || system.value)
+      ].join("");
+
+      const description = await TextEditor.enrichHTML(system.description || system.notes || "<i>Sem descrição.</i>", { async: true });
+
+      const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card">
+                <header class="preview-header">
+                    <h3>${effect?.name || "Efeito"}</h3>
+                    <div class="header-controls"><span class="preview-item-type">Efeito</span></div>
+                </header>
+                <div class="preview-content">
+                    <div class="preview-properties">${tags}</div>
+                    <hr class="preview-divider">
+                    <div class="preview-description">${description}</div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      new Dialog({
+        title: `Detalhes: ${effect?.name || "Efeito"}`,
+        content,
+        buttons: { close: { label: "Fechar" } },
+        default: "close",
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+      }).render(true);
+  }
 
   // ✅ PASSO 3: Reescrever a lógica de salvamento
   async _updateObject(event, formData) {

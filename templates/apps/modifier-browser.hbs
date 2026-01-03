@@ -1,65 +1,54 @@
 <form class="modifier-browser-form gum-browser">
 
-  {{!-- Container principal de 2 colunas --}}
   <div class="browser-container">
 
-    {{!-- Coluna da Esquerda (Sidebar de Filtros) --}}
     <aside class="browser-sidebar">
       <div class="filter-group">
-        <h4 class="filter-title">Buscar por Nome</h4>
+        <h3 class="filter-title">Buscar</h3>
         <div class="search-box">
           <input type="text" name="search" placeholder="Buscar modificador..."/>
           <i class="fas fa-search"></i>
         </div>
       </div>
       <div class="filter-group">
-        <h4 class="filter-title">Filtrar por Custo</h4>
-        <label><input type="checkbox" name="filter-enhancements"/> Ampliações (+)</label>
-        <label><input type="checkbox" name="filter-limitations"/> Limitações (-)</label>
+        <h3 class="filter-title">Custo</h3>
+        <label class="filter-check"><input type="checkbox" name="filter-enhancements"/> <span>Ampliações (+)</span></label>
+        <label class="filter-check"><input type="checkbox" name="filter-limitations"/> <span>Limitações (-)</span></label>
       </div>
     </aside>
 
-    {{!-- Coluna da Direita (Resultados) --}}
-   <main class="browser-content">
-  <ol class="results-list">
-  {{#each modifiers as |mod|}}
-    <li class="result-item" data-item-id="{{mod.id}}">
-      
-      <div class="item-icon">
-        {{!-- A lógica de imagem agora deve funcionar corretamente com o JS atualizado --}}
-        {{#if mod.displayImg}}
-          <img src="{{mod.displayImg}}" alt="{{mod.name}}"/>
-        {{/if}}
-      </div>
-
-      <div class="item-info">
-        <label class="item-label" for="mod-{{mod.id}}">
-          {{!-- MUDANÇA: Nome e Custo agora estão juntos --}}
-          <div class="info-line-1">
-            <span class="item-name">{{mod.name}}</span>
-            <span class="item-cost">({{mod.system.cost}})</span>
+    <main class="browser-content">
+      <ol class="results-list">
+        {{#each modifiers as |mod|}}
+        <li class="result-item" data-item-id="{{mod.id}}">
+          
+          <div class="item-icon">
+            {{#if mod.displayImg}}
+              <img src="{{mod.displayImg}}" alt="{{mod.name}}"/>
+            {{/if}}
           </div>
-          {{#if mod.system.applied_effect}}
-            <div class="info-line-2">
-              <span class="item-details">{{mod.system.applied_effect}}</span>
-            </div>
-          {{/if}}
-        </label>
-      </div>
 
-      <div class="item-controls">
-        <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
-      </div>
-    </li>
-  {{else}}
-    <li class="placeholder-text">Nenhum modificador encontrado.</li>
-  {{/each}}
-</ol>
-</main>
+          <div class="item-info">
+            <span class="item-name">{{mod.name}}</span>
+          </div>
+
+          <div class="item-actions">
+            <button type="button" class="browser-quick-view" data-id="{{mod.id}}" title="Visualizar modificador">
+              <i class="fas fa-eye"></i>
+            </button>
+            <label class="item-select" for="mod-{{mod.id}}">
+              <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
+            </label>
+          </div>
+        </li>
+        {{else}}
+        <li class="placeholder-text">Nenhum modificador encontrado.</li>
+        {{/each}}
+      </ol>
+    </main>
 
   </div>
 
-  {{!-- Rodapé com o botão de seleção --}}
   <footer class="browser-footer">
     <button type="submit">
       <i class="fas fa-check"></i> Adicionar Selecionados

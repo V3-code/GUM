@@ -82,6 +82,7 @@ export class EqpModifierBrowser extends FormApplication {
         name: item.name, 
         system: item.system, 
         img: item.img,
+        displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
         formattedCF: (item.system.cost_factor > 0 ? '+' : '') + Number(item.system.cost_factor || 0),
         formattedWeight: item.system.weight_mod || "x1"
     }));
@@ -133,7 +134,7 @@ export class EqpModifierBrowser extends FormApplication {
     });
 
     // 3. Filtro de CF
-    html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
+html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
         const val = parseFloat(event.target.value);
         if (event.target.name === "cfMin") this.filters.cfMin = isNaN(val) ? null : val;
         if (event.target.name === "cfMax") this.filters.cfMax = isNaN(val) ? null : val;
@@ -142,10 +143,24 @@ export class EqpModifierBrowser extends FormApplication {
 
     // Seleção de Linha
     html.find('.result-item').on('click', event => {
-      if ($(event.target).is('input[type="checkbox"]')) return;
+      if ($(event.target).is('input[type="checkbox"]') || $(event.target).closest('button').length) return;
       const checkbox = $(event.currentTarget).find('input[type="checkbox"]');
       checkbox.prop('checked', !checkbox.prop('checked'));
       $(event.currentTarget).toggleClass('selected', checkbox.prop('checked'));
+    });
+    
+    html.find('.results-list input[type="checkbox"]').on('change', event => {
+        const li = $(event.currentTarget).closest('.result-item');
+        li.toggleClass('selected', event.currentTarget.checked);
+    });
+    
+    html.find('.browser-quick-view').on('click', async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const li = $(event.currentTarget).closest('.result-item');
+        const modifierId = li.data('id');
+        const modifier = this.allModifiers.find(m => m.id === modifierId);
+        if (modifier) await this._showQuickView(modifier);
     });
     
     this._applyFilters(html);
@@ -201,8 +216,53 @@ export class EqpModifierBrowser extends FormApplication {
             if (cfMax !== null && cf > cfMax) isVisible = false;
         }
 
-        el.style.display = isVisible ? "grid" : "none";
+el.style.display = isVisible ? "grid" : "none";
     });
+  }
+
+  async _showQuickView(modifierData) {
+      const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
+      const system = modifier?.system || {};
+      const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
+      const tags = [
+        createTag("CF", this._formatValue(system.cost_factor)),
+        createTag("Peso", system.weight_mod),
+        createTag("TL", system.tech_level_mod),
+        createTag("Categorias", Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", "))
+      ].join("");
+
+      const description = await TextEditor.enrichHTML(system.features || system.description || "<i>Sem descrição.</i>", { async: true });
+
+      const content = `
+        <div class="gurps-dialog-canvas">
+            <div class="gurps-item-preview-card">
+                <header class="preview-header">
+                    <h3>${modifier?.name || "Modificador"}</h3>
+                    <div class="header-controls"><span class="preview-item-type">Equipamento</span></div>
+                </header>
+                <div class="preview-content">
+                    <div class="preview-properties">${tags}</div>
+                    <hr class="preview-divider">
+                    <div class="preview-description">${description}</div>
+                </div>
+            </div>
+        </div>
+      `;
+
+      new Dialog({
+        title: `Detalhes: ${modifier?.name || "Modificador"}`,
+        content,
+        buttons: { close: { label: "Fechar" } },
+        default: "close",
+        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+      }).render(true);
+  }
+
+  _formatValue(val) {
+      if (val === null || val === undefined) return "";
+      const num = Number(val);
+      if (isNaN(num)) return val;
+      return (num > 0 ? "+" : "") + num;
   }
 
   async _updateObject(event, formData) {

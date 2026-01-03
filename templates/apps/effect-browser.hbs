@@ -1,26 +1,25 @@
 <form class="effect-browser-form gum-browser">
 
-    {{!-- Container principal de 2 colunas --}}
     <div class="browser-container">
 
         {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
         <aside class="browser-sidebar">
             <div class="filter-group">
-                <h4 class="filter-title">Buscar por Nome</h4>
+                <h3 class="filter-title">Buscar</h3>
                 <div class="search-box">
                     <input type="text" name="search" placeholder="Buscar efeito..."/>
                     <i class="fas fa-search"></i>
                 </div>
             </div>
             
-        <div class="filter-group">
-            <h4 class="filter-title">Filtrar por Tipo</h4>
-            <label><input type="checkbox" name="filter-attribute" checked/> Atributo</label>
-            <label><input type="checkbox" name="filter-status" checked/> Status</label>
-            <label><input type="checkbox" name="filter-chat" checked/> Chat</label>
-            <label><input type="checkbox" name="filter-macro" checked/> Macro</label>
-            <label><input type="checkbox" name="filter-flag" checked/> Flag</label>
-        </div>
+            <div class="filter-group">
+                <h3 class="filter-title">Tipo</h3>
+                <label class="filter-check"><input type="checkbox" name="filter-attribute" checked/> <span>Atributo</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-status" checked/> <span>Status</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-chat" checked/> <span>Chat</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-macro" checked/> <span>Macro</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-flag" checked/> <span>Flag</span></label>
+            </div>
 
         </aside>
 
@@ -37,35 +36,16 @@
                     </div>
 
                     <div class="item-info">
-                        <label class="item-label" for="effect-{{effect.id}}">
-                            {{!-- Linha 1: Nome do Efeito e seu Tipo --}}
-                            <div class="info-line-1">
-                                <span class="item-name">{{effect.name}}</span>
-                                <span class="item-type-tag">({{capitalize effect.system.type}})</span>
-                            </div>
-                            
-                            {{!-- Linha 2: Resumo do que o efeito faz --}}
-                            <div class="info-line-2">
-                                <span class="item-details">
-                                    {{#if (eq effect.system.type 'attribute')}}
-                                        {{effect.system.path}} {{effect.system.operation}} {{effect.system.value}}
-                                    {{/if}}
-                                    {{#if (eq effect.system.type 'status')}}
-                                        Aplica status: {{effect.system.statusId}}
-                                    {{/if}}
-                                     {{#if (eq effect.system.type 'macro')}}
-                                        Executa macro: {{effect.system.value}}
-                                    {{/if}}
-                                    {{#if (eq effect.system.type 'chat')}}
-                                        Envia mensagem no chat.
-                                    {{/if}}
-                                </span>
-                            </div>
-                        </label>
+                        <span class="item-name">{{effect.name}}</span>
                     </div>
 
-                    <div class="item-controls">
-                        <input type="checkbox" name="{{effect.id}}" id="effect-{{effect.id}}" />
+                    <div class="item-actions">
+                        <button type="button" class="browser-quick-view" data-id="{{effect.id}}" title="Visualizar efeito">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <label class="item-select" for="effect-{{effect.id}}">
+                            <input type="checkbox" name="{{effect.id}}" id="effect-{{effect.id}}" />
+                        </label>
                     </div>
                 </li>
                 {{else}}
@@ -76,7 +56,6 @@
 
     </div>
 
-    {{!-- Rodapé (sem alterações) --}}
     <footer class="browser-footer">
         <button type="submit">
             <i class="fas fa-check"></i> Adicionar Selecionados

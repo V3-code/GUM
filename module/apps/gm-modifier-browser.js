@@ -30,12 +30,13 @@ export class GMModifierBrowser extends FormApplication {
     
     if (pack) {
         const content = await pack.getDocuments();
-        this.allModifiers = content.map(item => ({
+                this.allModifiers = content.map(item => ({
             id: item.id,
             uuid: item.uuid,
             name: item.name, 
             system: item.system, 
             img: item.img,
+            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
             // Prepara dados para filtros
             category: item.system.ui_category || "other",
             isBonus: item.system.modifier >= 0,
@@ -63,11 +64,17 @@ export class GMModifierBrowser extends FormApplication {
         if (event.key === 'Enter') event.preventDefault();
     });
     
-    // Seleção de linha ao clicar (UX)
+ // Seleção de linha ao clicar (UX)
     html.find('.result-item').click(ev => {
-        if ($(ev.target).is('input[type="checkbox"]')) return;
+        if ($(ev.target).is('input[type="checkbox"]') || $(ev.target).is('button') || $(ev.target).closest('button').length) return;
         const checkbox = $(ev.currentTarget).find('input[type="checkbox"]');
         checkbox.prop('checked', !checkbox.prop('checked'));
+        $(ev.currentTarget).toggleClass('selected', checkbox.prop('checked'));
+    });
+
+    html.find('.results-list input[type="checkbox"]').on('change', ev => {
+        const li = $(ev.currentTarget).closest('.result-item');
+        li.toggleClass('selected', ev.currentTarget.checked);
     });
 
     html.find('.browser-quick-view').click(ev => {
