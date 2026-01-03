@@ -583,22 +583,24 @@ async getData(options) {
                     async: true
                 });              
                 context.survivalBlockWasOpen = this._survivalBlockOpen || false;
+
+                this._showHiddenMeters = this._showHiddenMeters ?? false;
                 const combatMeters = context.actor.system.combat.combat_meters || {};
-                
-                // Cria a lista de registros "preparados" para o template
-                const preparedCombatMeters = Object.entries(combatMeters).map(([id, meter]) => {
-                    return {
-                        id: id,
-                        meter: meter
-                    };
-                // Filtra os registros que estão marcados como "hidden"
-                }).filter(m => !m.meter.hidden); 
-                
-                // Ordena por nome
+                const includeHiddenMeters = this._showHiddenMeters === true;
+
+                const preparedCombatMeters = Object.entries(combatMeters)
+                    .map(([id, meter]) => {
+                        const normalized = this._normalizeResourceEntry(meter, { defaultName: "Registro", allowHidden: true });
+                        return { id, meter: normalized };
+                    })
+                    .filter((m) => includeHiddenMeters || !m.meter.hidden);
+
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
-                // Salva a lista pronta no contexto
                 context.preparedCombatMeters = preparedCombatMeters;
+                context.showHiddenMeters = includeHiddenMeters;
+                context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
+                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
                 context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
@@ -810,8 +812,28 @@ _getSubmitData(updateData) {
                 }
             }
         }
-        
+  
         return drObject;
+    }
+
+    _normalizeResourceEntry(entry = {}, { defaultName = "Registro", allowHidden = false } = {}) {
+        const data = foundry.utils.duplicate(entry || {});
+        data.name = data.name || defaultName;
+        const current = Number(data.current ?? data.value ?? 0);
+        const max = Number(data.max ?? data.value ?? current);
+        data.current = current;
+        data.max = max;
+        data.value = data.value ?? current; // Mantém compatibilidade com referências antigas
+        if (allowHidden) data.hidden = Boolean(data.hidden);
+        return data;
+    }
+
+    _normalizeResourceCollection(collection = {}, { defaultName = "Reserva" } = {}) {
+        const normalized = {};
+        for (const [id, entry] of Object.entries(collection)) {
+            normalized[id] = this._normalizeResourceEntry(entry, { defaultName });
+        }
+        return normalized;
     }
 
     /**
@@ -936,11 +958,29 @@ html.find(".modifier-search").on("input", (ev) => {
     const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
     $(el).toggle(hasVisible);
   });
-  html.find(".context-wrapper").each((_, el) => {
+ html.find(".context-wrapper").each((_, el) => {
     const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
     $(el).toggle(hasVisible);
   });
 });
+
+// -------------------------------------------------------------
+//  REGISTROS DE COMBATE
+// -------------------------------------------------------------
+html.on("click", ".add-combat-meter", (ev) => this._onAddCombatMeter(ev));
+html.on("click", ".edit-combat-meter", (ev) => this._onEditCombatMeter(ev));
+html.on("click", ".delete-combat-meter", (ev) => this._onDeleteCombatMeter(ev));
+html.on("click", ".hide-combat-meter", (ev) => this._onToggleCombatMeterVisibility(ev));
+html.on("click", ".show-hidden-meters", (ev) => this._onToggleHiddenMeters(ev));
+html.on("change", ".combat-meters-box .meter-inputs input", (ev) => this._onCombatMeterInputChange(ev));
+
+// -------------------------------------------------------------
+//  RESERVAS DE ENERGIA (MAGIA / PODER)
+// -------------------------------------------------------------
+html.on("click", ".add-energy-reserve", (ev) => this._onAddEnergyReserve(ev));
+html.on("click", ".edit-energy-reserve", (ev) => this._onEditEnergyReserve(ev));
+html.on("click", ".delete-energy-reserve", (ev) => this._onDeleteEnergyReserve(ev));
+html.on("change", ".reserve-card .meter-inputs input", (ev) => this._onEnergyReserveInputChange(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -2458,6 +2498,236 @@ const dlg = new Dialog({
 
 dlg.render(true);
 
+}
+
+async _onAddCombatMeter(ev) {
+  ev.preventDefault();
+  const meterData = await this._promptCombatMeterData({}, { isEdit: false });
+  if (!meterData) return;
+
+  const meterId = foundry.utils.randomID();
+  await this.actor.update({ [`system.combat.combat_meters.${meterId}`]: meterData });
+}
+
+async _onEditCombatMeter(ev) {
+  ev.preventDefault();
+  const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
+  if (!meterId) return;
+
+  const existing = this.actor.system.combat.combat_meters?.[meterId];
+  const meterData = await this._promptCombatMeterData(existing, { isEdit: true });
+  if (!meterData) return;
+
+  await this.actor.update({ [`system.combat.combat_meters.${meterId}`]: meterData });
+}
+
+async _onDeleteCombatMeter(ev) {
+  ev.preventDefault();
+  const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
+  if (!meterId) return;
+
+  const name = this.actor.system.combat.combat_meters?.[meterId]?.name || "registro";
+  Dialog.confirm({
+    title: `Excluir ${name}?`,
+    content: `<p>Tem certeza que deseja remover este registro?</p>`,
+    yes: async () => {
+      await this.actor.update({ [`system.combat.combat_meters.-=${meterId}`]: null });
+    }
+  });
+}
+
+async _onToggleCombatMeterVisibility(ev) {
+  ev.preventDefault();
+  const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
+  if (!meterId) return;
+
+  const current = this.actor.system.combat.combat_meters?.[meterId];
+  if (!current) return;
+
+  const newState = !current.hidden;
+  await this.actor.update({ [`system.combat.combat_meters.${meterId}.hidden`]: newState });
+}
+
+_onToggleHiddenMeters(ev) {
+  ev.preventDefault();
+  this._showHiddenMeters = !this._showHiddenMeters;
+  this.render(false);
+}
+
+async _onCombatMeterInputChange(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+
+  const input = ev.currentTarget;
+  const meterCard = input.closest(".meter-card");
+  if (!meterCard) return;
+
+  const meterId = meterCard.dataset.meterId;
+  const prop =
+    input.name?.split(".").pop() ||
+    input.dataset.property;
+  if (!meterId || !prop) return;
+
+  const value = Number(input.value) || 0;
+  const updateData = { [`system.combat.combat_meters.${meterId}.${prop}`]: value };
+  if (prop === "current") updateData[`system.combat.combat_meters.${meterId}.value`] = value;
+
+  await this.actor.update(updateData);
+}
+
+async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
+  const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", allowHidden: true });
+  const content = `
+    <form class="gum-meter-form">
+      <div class="form-group">
+        <label>Nome do Registro</label>
+        <input type="text" name="name" value="${data.name || ""}" required/>
+      </div>
+      <div class="form-group">
+        <label>Valor Atual</label>
+        <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Valor Máximo</label>
+        <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="checkbox">
+          <input type="checkbox" name="hidden" ${data.hidden ? "checked" : ""}/>
+          Ocultar na ficha
+        </label>
+      </div>
+    </form>`;
+
+  const title = isEdit ? "Editar Registro" : "Novo Registro";
+
+  return Dialog.prompt({
+    title,
+    content,
+    label: "Salvar",
+    callback: (html) => {
+      const form = html[0].querySelector("form");
+      const name = form.name.value.trim();
+      if (!name) return ui.notifications.warn("Informe um nome para o registro.");
+
+      const current = Number(form.current.value) || 0;
+      const max = Number(form.max.value) || 0;
+      const hidden = form.hidden?.checked ?? false;
+
+      return { name, current, max, value: current, hidden };
+    },
+    rejectClose: false
+  });
+}
+
+async _onAddEnergyReserve(ev) {
+  ev.preventDefault();
+  const reserveType = ev.currentTarget?.dataset?.reserveType === "power" ? "power" : "spell";
+  const reserveData = await this._promptEnergyReserveData(reserveType, {}, { isEdit: false });
+  if (!reserveData) return;
+
+  const reserveId = foundry.utils.randomID();
+  await this.actor.update({ [`system.${reserveType}_reserves.${reserveId}`]: reserveData });
+}
+
+async _onEditEnergyReserve(ev) {
+  ev.preventDefault();
+  const card = ev.currentTarget.closest(".reserve-card");
+  const reserveId = card?.dataset?.reserveId;
+  const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
+  if (!reserveId) return;
+
+  const existing = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId];
+  const reserveData = await this._promptEnergyReserveData(reserveType, existing, { isEdit: true });
+  if (!reserveData) return;
+
+  await this.actor.update({ [`system.${reserveType}_reserves.${reserveId}`]: reserveData });
+}
+
+async _onDeleteEnergyReserve(ev) {
+  ev.preventDefault();
+  const card = ev.currentTarget.closest(".reserve-card");
+  const reserveId = card?.dataset?.reserveId;
+  const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
+  if (!reserveId) return;
+
+  const name = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId]?.name || "reserva";
+
+  Dialog.confirm({
+    title: `Excluir ${name}?`,
+    content: `<p>Tem certeza que deseja remover esta reserva?</p>`,
+    yes: async () => {
+      await this.actor.update({ [`system.${reserveType}_reserves.-=${reserveId}`]: null });
+    }
+  });
+}
+
+async _onEnergyReserveInputChange(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+
+  const input = ev.currentTarget;
+  const card = input.closest(".reserve-card");
+  if (!card) return;
+
+  const reserveId = card.dataset.reserveId;
+  const reserveType = card.dataset.reserveType === "power" ? "power" : "spell";
+  const prop = input.dataset.property;
+  if (!reserveId || !prop) return;
+
+  const value = Number(input.value) || 0;
+  const pathBase = `system.${reserveType}_reserves.${reserveId}`;
+  const updateData = { [`${pathBase}.${prop}`]: value };
+  if (prop === "current") updateData[`${pathBase}.value`] = value;
+
+  await this.actor.update(updateData);
+}
+
+async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
+  const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? "Reserva de Poder" : "Reserva de Magia" });
+  const content = `
+    <form class="gum-meter-form">
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" name="name" value="${data.name || ""}" required/>
+      </div>
+      <div class="form-group">
+        <label>Fonte / Origem</label>
+        <input type="text" name="source" value="${data.source || ""}" />
+      </div>
+      <div class="form-group">
+        <label>Valor Atual</label>
+        <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Valor Máximo</label>
+        <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
+      </div>
+    </form>`;
+
+  const title = reserveType === "power"
+    ? isEdit ? "Editar Reserva de Poder" : "Nova Reserva de Poder"
+    : isEdit ? "Editar Reserva de Magia" : "Nova Reserva de Magia";
+
+  return Dialog.prompt({
+    title,
+    content,
+    label: "Salvar",
+    callback: (html) => {
+      const form = html[0].querySelector("form");
+      const name = form.name.value.trim();
+      if (!name) return ui.notifications.warn("Informe um nome para a reserva.");
+
+      const source = form.source.value.trim();
+      const current = Number(form.current.value) || 0;
+      const max = Number(form.max.value) || 0;
+
+      return { name, source, current, max, value: current };
+    },
+    rejectClose: false
+  });
 }
 
 

@@ -58,12 +58,21 @@ export default class DamageApplicationWindow extends Application {
         const damageablePools = [];
         damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
         damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
-        const combatMeters = this.targetActor.system.combat.combat_meters || {};
-        for (const [key, meter] of Object.entries(combatMeters)) { damageablePools.push({ path: `system.combat.combat_meters.${key}.value`, label: meter.name }); }
+               const combatMeters = this.targetActor.system.combat.combat_meters || {};
+        for (const [key, meter] of Object.entries(combatMeters)) {
+            const meterPath = `system.combat.combat_meters.${key}.${meter.current !== undefined ? "current" : "value"}`;
+            damageablePools.push({ path: meterPath, label: meter.name });
+        }
         const spellReserves = this.targetActor.system.spell_reserves || {};
-        for (const [key, reserve] of Object.entries(spellReserves)) { damageablePools.push({ path: `system.spell_reserves.${key}.value`, label: `RM:${reserve.name}` }); }
+        for (const [key, reserve] of Object.entries(spellReserves)) {
+            const reservePath = `system.spell_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
+            damageablePools.push({ path: reservePath, label: `RM:${reserve.name}` });
+        }
         const powerReserves = this.targetActor.system.power_reserves || {};
-        for (const [key, reserve] of Object.entries(powerReserves)) { damageablePools.push({ path: `system.power_reserves.${key}.value`, label: `RP:${reserve.name}` }); }
+        for (const [key, reserve] of Object.entries(powerReserves)) {
+            const reservePath = `system.power_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
+            damageablePools.push({ path: reservePath, label: `RP:${reserve.name}` });
+        }
         context.damageablePools = damageablePools;
         const locationsData = { "head": { label: "Crânio", roll: "3-4", dr: 0 }, "face": { label: "Rosto", roll: "5", dr: 0 }, "leg": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, "arm": { label: "Braço", roll: "8, 12", dr: 0 }, "torso": { label: "Torso", roll: "9-11", dr: 0 }, "groin": { label: "Virilha", roll: "11", dr: 0 }, "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, "hand": { label: "Mão", roll: "15", dr: 0 }, "foot": { label: "Pé", roll: "16", dr: 0 }, "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, "eyes": { label: "Olhos", roll: "--", dr: 0 } };
         locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };

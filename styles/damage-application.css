@@ -401,7 +401,6 @@
 .damage-app-footer .action-buttons {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;

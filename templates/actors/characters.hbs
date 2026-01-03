@@ -764,7 +764,7 @@
           </div>
         </div>
         <div class="energy-reserves-list">
-          {{#each actor.system.spell_reserves}}
+          {{#each spellReserves}}
           <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
             <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
             <div class="meter-inputs">
@@ -906,9 +906,9 @@
           <div class="header-controls">
             <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
           </div>
-        </div>
+ </div>
         <div class="energy-reserves-list">
-          {{#each actor.system.power_reserves}}
+          {{#each powerReserves}}
           <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="power">
             <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
             <div class="meter-inputs">
@@ -1252,26 +1252,35 @@
         <div class="combat-right-column">
           
           {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
-          <div class="gum-block combat-meters-box">
+ <div class="gum-block combat-meters-box">
             <div class="block-header">
               <h4>Registros de Combate</h4>
               <div class="header-controls">
-                <a class="show-hidden-meters" title="Mostrar Registros Ocultos"><i class="fas fa-eye-low-vision"></i></a>
+                <a class="show-hidden-meters" title="{{#if showHiddenMeters}}Ocultar Registros Ocultos{{else}}Mostrar Registros Ocultos{{/if}}">
+                  <i class="fas {{#if showHiddenMeters}}fa-eye{{else}}fa-eye-low-vision{{/if}}"></i>
+                </a>
                 <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
               </div>
             </div>
             <div class="meter-list">
               {{#each preparedCombatMeters}}
-                <div class="item-row meter-card" data-meter-id="{{this.id}}">
-                  <span class="item-name">{{this.meter.name}}</span>
-                  <div class="meter-inputs">
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
-                    <span>/</span>
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+                <div class="item-row meter-card {{#if this.meter.hidden}}is-hidden{{/if}}" data-meter-id="{{this.id}}">
+                  <div class="meter-main">
+                    <span class="item-name">
+                      {{this.meter.name}}
+                      {{#if this.meter.hidden}}<small>(oculto)</small>{{/if}}
+                    </span>
+                    <div class="meter-inputs">
+                      <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
+                      <span>/</span>
+                      <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+                    </div>
                   </div>
-                  <div class="item-controls">
+                  <div class="item-controls meter-controls">
                     <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
-                    <a class="item-control hide-combat-meter" title="Ocultar Registro"><i class="fas fa-eye-slash"></i></a>
+                    <a class="item-control hide-combat-meter" title="{{#if this.meter.hidden}}Reexibir Registro{{else}}Ocultar Registro{{/if}}">
+                      <i class="fas {{#if this.meter.hidden}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
+                    </a>
                     <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
                   </div>
                 </div>
@@ -1310,8 +1319,6 @@
 
         <div class="group-content">
             {{#each group.attacks as |attack|}}
-             {{!-- ... seu código interno dos ataques continua igual ... --}}
-             {{!-- Apenas incluí o início para contexto --}}
              <div class="attack-row item-row" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
                 <div class="attack-icon">
                     {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
