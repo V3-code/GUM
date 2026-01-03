@@ -5,12 +5,14 @@ export default class DamageApplicationWindow extends Application {
     
     constructor(damageData, attackerActor, targetActor, options = {}) {
         super(options);
-        this.damageData = damageData;
+this.damageData = damageData;
         this.attackerActor = attackerActor;
         this.targetActor = targetActor;
         
         this.effectState = {};
         this.isApplying = false;
+        this.pendingResistanceEffects = new Set();
+        this.isDialogClosed = false;
 
         this.state = {
             finalInjury: 0,
@@ -496,7 +498,7 @@ async _updateDamageCalculation(form) {
         const success = roll.total <= finalTarget;
         const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
         const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
-        this.updateEffectCard(effectId, { isSuccess: success, shouldApply, resultText }, effect.item.system);
+        await this.updateEffectCard(effectId, { isSuccess: success, shouldApply, resultText }, effect.item.system);
         ChatMessage.create({ content: resultText, whisper: ChatMessage.getWhisperRecipients("GM") });
     }
     
@@ -522,7 +524,9 @@ async _updateDamageCalculation(form) {
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
             }
 
-            const appliedEffectNames = [];
+           const appliedEffectNames = [];
+            const pendingEffectNames = [];
+            const pendingResistanceQueue = [];
             let pendingResistance = false;
             const effectTargets = this._resolveEffectTargets();
             for (const effect of this.availableOnDamageEffects || []) {
@@ -539,18 +543,24 @@ async _updateDamageCalculation(form) {
                     const resistanceResult = state.resistanceResult;
                     if (!resistanceResult) {
                         pendingResistance = true;
-                        await this._promptResistanceRoll(effect);
+                        pendingEffectNames.push(effect.item.name);
+                        this.pendingResistanceEffects.add(effect.id);
+                        pendingResistanceQueue.push(effect);
                         continue;
                     }
-                    if (!resistanceResult.shouldApply) continue;
+                    if (!resistanceResult.shouldApply) {
+                        this.pendingResistanceEffects.delete(effect.id);
+                        continue;
+                    }
                 }
 
                 if (effectTargets.length > 0) {
                     await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
                     appliedEffectNames.push(effect.item.name);
+                    state.applied = true;
+                    this.pendingResistanceEffects.delete(effect.id);
                 }
             }
-
             const contingentApplied = [];
             const contingentEffects = this.damageData.contingentEffects || {};
             if (contingentEffects) {
@@ -578,6 +588,8 @@ if (shouldPublish) {
         resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
     } else if (finalInjury > 0 && !effectsOnlyChecked) {
         resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+    } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
+        resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
     }
 
     // Monta o HTML final com a nova estrutura de texto
@@ -601,7 +613,7 @@ if (shouldPublish) {
                     </div>
                 </div>
 
-                ${resultLine ? `
+                 ${resultLine ? `
                 <div class="minicard result-card">
                     <div class="minicard-title">Resultado</div>
                     ${resultLine}
@@ -614,15 +626,28 @@ if (shouldPublish) {
                     ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
                 </div>
                 ` : ''}
+
+                ${pendingEffectNames.length > 0 ? `
+                <div class="minicard pending-card">
+                    <div class="minicard-title">Efeitos Pendentes</div>
+                    <p>Aguardando teste de resistência:</p>
+                    ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
+                </div>
+                ` : ''}
             </div>
         </div>
     `;
+
 
     ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
         content: messageContent
     });
 }
+
+            for (const effect of pendingResistanceQueue) {
+                await this._promptResistanceRoll(effect);
+            }
 
             if (shouldClose) { this.close(); }
         } finally {
@@ -643,7 +668,7 @@ if (shouldPublish) {
         return [];
     }
 
-    updateEffectCard(effectId, rollResult, effectSystem) {
+    async updateEffectCard(effectId, rollResult, effectSystem) {
         if (!effectId) return;
         const state = this.effectState[effectId] || (this.effectState[effectId] = { checked: true });
         const applyOn = effectSystem?.resistanceRoll?.applyOn || 'failure';
@@ -661,9 +686,24 @@ if (shouldPublish) {
             }
         }
 
+        if (shouldApply) {
+            await this._applyEffectFromResistance(effectId);
+        }
+
         if (this.form) {
             this._updateDamageCalculation(this.form);
         }
+    }
+
+    async _applyEffectFromResistance(effectId) {
+        const effect = (this.availableOnDamageEffects || []).find(e => e.id === effectId);
+        const state = this.effectState[effectId];
+        if (!effect || !state?.checked || state.applied || !effect.meetsRequirements || !effect.item) return;
+        const effectTargets = this._resolveEffectTargets();
+        if (effectTargets.length === 0) return;
+        await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
+        state.applied = true;
+        ui.notifications.info(`Efeito aplicado: ${effect.item.name}`);
     }
 
     async _promptResistanceRoll(effect) {
@@ -747,7 +787,8 @@ if (shouldPublish) {
     }
 
     async close(options) {
-        if (game.gum?.activeDamageApplication === this) {
+        this.isDialogClosed = true;
+        if (this.pendingResistanceEffects.size === 0 && game.gum?.activeDamageApplication === this) {
             delete game.gum.activeDamageApplication;
         }
         return super.close(options);
