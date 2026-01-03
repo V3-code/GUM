@@ -90,7 +90,7 @@
   <div class="wounding-table">
   {{#each woundingModifiers}}
     {{#if (or (eq this.abrev "cort") (eq this.abrev "cont") (eq this.abrev "perf"))}}
-      <div class="wounding-row group-1">
+      <div class="wounding-row group-1" data-abrev="{{this.abrev}}">
         <label class="custom-radio">
           <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
           <span class="type">{{this.type}} ({{this.abrev}})</span>
@@ -103,7 +103,7 @@
 
   {{#each woundingModifiers}}
     {{#if (or (eq this.abrev "qmd") (eq this.abrev "cor") (eq this.abrev "tox"))}}
-      <div class="wounding-row group-2">
+      <div class="wounding-row group-2" data-abrev="{{this.abrev}}">
         <label class="custom-radio">
           <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
           <span class="type">{{this.type}} ({{this.abrev}})</span>
@@ -116,7 +116,7 @@
 
   {{#each woundingModifiers}}
     {{#if (or (eq this.abrev "pi") (eq this.abrev "pi-") (eq this.abrev "pi+") (eq this.abrev "pi++"))}}
-      <div class="wounding-row group-3">
+      <div class="wounding-row group-3" data-abrev="{{this.abrev}}">
         <label class="custom-radio">
           <input type="radio" name="wounding_mod_type" value="{{this.mult}}" {{#if this.checked}}checked{{/if}}/>
           <span class="type">{{this.type}} ({{this.abrev}})</span>

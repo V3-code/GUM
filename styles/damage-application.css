@@ -46,11 +46,10 @@
 
 /* Rodapé */
 .damage-application-dialog .damage-app-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 10px; }
-.damage-application-dialog .footer-top { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; align-items: start; }
+.damage-application-dialog .footer-top { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; align-items: start; }
 .damage-application-dialog .calculation-summary .summary-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
 .damage-application-dialog .calculation-summary .summary-row label { color: #a0a0a0; }
 .damage-application-dialog .calculation-summary .final-injury { font-weight: bold; font-size: 1.2em; color: var(--c-accent-red, #a53541); }
-.damage-application-dialog .action-buttons { display: flex; flex-direction: column; gap: 5px; }
 
 /* =================================================================== */
 /* ESTILO PARA CHECKBOXES CUSTOMIZADOS NA JANELA DE DANO             */
@@ -119,15 +118,6 @@
 /* =================================================================== */
 /* ESTILO FINAL PARA OS BOTÕES DE AÇÃO DA JANELA DE DANO             */
 /* =================================================================== */
-
-/* Container que alinha os botões verticalmente */
-.damage-application-dialog .action-buttons.action-bar {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
 
 /* Estilo base para cada um dos três botões */
 .damage-application-dialog .action-buttons button {
@@ -410,11 +400,12 @@
 
 .damage-app-footer .action-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: stretch;
-  justify-content: center;
-  margin-top: 4px; 
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px; 
 }
 
 /* Estilo dos botões */
@@ -492,9 +483,9 @@
 /* ============================================= */
 
 .damage-app-footer {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1.2fr; /* Layout de 3 colunas */
-  gap: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -620,12 +611,4 @@
   font-size: 11px;
   color: #a0a0a0;
   font-style: italic;
-}
-
-/* Coluna 3: Botões de Ação */
-.damage-application-dialog .action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  justify-content: center; /* Centraliza os botões verticalmente */
 }

@@ -91,15 +91,28 @@ export default class DamageApplicationWindow extends Application {
             card.addEventListener('click', ev => {
                 form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
                 ev.currentTarget.classList.add('active');
-                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0];
+                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0]?.toLowerCase();
+                this.damageTypeAbrev = damageType || this.damageTypeAbrev;
+                const applyAsHealCheckbox = form.querySelector('[name="special_apply_as_heal"]');
                 if (damageType) {
                     const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
                     let matched = false;
                     allRadios.forEach(r => {
-                        const label = r.closest('.wounding-row')?.textContent;
-                        if (label?.toLowerCase().includes(damageType.toLowerCase())) { r.checked = true; matched = true; }
+                        const abrev = r.closest('.wounding-row')?.dataset?.abrev?.toLowerCase() || '';
+                        if (abrev === damageType) { r.checked = true; matched = true; }
                     });
                     if (!matched) { const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]'); if (noModRadio) noModRadio.checked = true; }
+
+                    if (damageType === 'cura') {
+                        const customRadio = form.querySelector('input[name="wounding_mod_type"][value="custom"]');
+                        const customInput = form.querySelector('input[name="custom_wounding_mod"]');
+                        if (customInput) customInput.value = 1;
+                        if (customRadio) { customRadio.checked = true; matched = true; }
+                        if (applyAsHealCheckbox) { applyAsHealCheckbox.checked = true; applyAsHealCheckbox.dataset.autoSet = "true"; }
+                    } else if (applyAsHealCheckbox?.dataset.autoSet === "true") {
+                        applyAsHealCheckbox.checked = false;
+                        delete applyAsHealCheckbox.dataset.autoSet;
+                    }
                 } else {
                     const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
                     for (let r of allRadios) { const label = r.closest('.wounding-row')?.textContent?.toLowerCase() || ''; if (r.value === '1' && label.includes("sem modificador")) { r.checked = true; break; } }
@@ -125,14 +138,17 @@ export default class DamageApplicationWindow extends Application {
 
                 if (modTable) {
                     const selectedRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
-                    let selectedAbrev = '';
+  let selectedAbrev = '';
                     if (selectedRadio) { 
-                        const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); 
-                        selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; 
+                        selectedAbrev = selectedRadio.closest('.wounding-row')?.dataset?.abrev || '';
+                        if (!selectedAbrev) {
+                            const labelSpan = selectedRadio.closest('.wounding-row')?.querySelector('.type'); 
+                            selectedAbrev = labelSpan?.textContent?.match(/\(([^)]+)\)/)?.[1] || ''; 
+                        }
                     }
 
                     // 1. Constrói a parte dinâmica da lista
-                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
+                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}" data-abrev="${mod.abrev}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
 
                     // 2. Adiciona as opções estáticas ("Sem Modificador" e "Outros")
                     htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
@@ -230,8 +246,13 @@ async _updateDamageCalculation(form) {
     if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`); originalBase = modifiedBase; }
     if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`); }
     damageRolled = modifiedBase;
+    const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
+    const selectedRowForMod = selectedModRadio?.closest('.wounding-row');
+    const damageAbrev = selectedRowForMod?.dataset?.abrev?.toLowerCase() || selectedRowForMod?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
+    const damageTypeKey = damageAbrev || this.damageTypeAbrev || 'base';
+    this.damageTypeAbrev = damageTypeKey;
+
     // Atualiza visualização de RD por local de acordo com o tipo de dano
-    const damageTypeKey = this.damageTypeAbrev || 'base';
     form.querySelectorAll('.location-row').forEach(row => {
         const locKey = row.dataset.locationKey;
         if (locKey === 'custom') return;
@@ -251,11 +272,8 @@ async _updateDamageCalculation(form) {
     
     const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
     let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
-    let selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
     let woundingMod = 1;
     if (selectedModRadio) { if (selectedModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } else { woundingMod = parseFloat(selectedModRadio.value) || 1; } }
-    const damageAbrev = selectedModRadio?.closest('.wounding-row')?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
-    this.damageTypeAbrev = damageAbrev;
     if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
     if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
     if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
