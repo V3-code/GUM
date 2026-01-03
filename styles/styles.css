@@ -2160,31 +2160,35 @@
     background: var(--gum-bg-card-claro);
     overflow: hidden;
 }
-.gum.sheet.actor .combat-meters-box .meter-list {
+.gum.sheet.actor .combat-meters-box .meter-list,
+.gum.sheet.actor .energy-reserves-box .meter-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 6px;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card {
+.gum.sheet.actor .combat-meters-box .meter-card,
+.gum.sheet.actor .energy-reserves-box .meter-card {
     display: flex;
     flex-direction: column;
     gap: 6px;
     padding: 6px 8px;
     border: 1px solid var(--gum-border-light);
     border-radius: 4px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(245, 238, 226, 0.92));
+     background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(245, 238, 226, 0.92));
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .meter-main {
+.gum.sheet.actor .combat-meters-box .meter-card .meter-main,
+.gum.sheet.actor .energy-reserves-box .meter-card .meter-main {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .item-name {
+.gum.sheet.actor .combat-meters-box .meter-card .item-name,
+.gum.sheet.actor .energy-reserves-box .meter-card .item-name {
     font-weight: 500;
     color: var(--gum-text-escuro);
     display: flex;
@@ -2193,7 +2197,8 @@
     font-size: smaller;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .item-name small {
+.gum.sheet.actor .combat-meters-box .meter-card .item-name small,
+.gum.sheet.actor .energy-reserves-box .meter-card .item-name small {
     color: var(--gum-text-medio);
     font-weight: 500;
     background: rgba(0,0,0,0.05);
@@ -2201,7 +2206,8 @@
     border-radius: 8px;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .meter-inputs {
+.gum.sheet.actor .combat-meters-box .meter-card .meter-inputs,
+.gum.sheet.actor .energy-reserves-box .meter-card .meter-inputs {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -2211,14 +2217,16 @@
     border-radius: 5px;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .meter-inputs input {
+.gum.sheet.actor .combat-meters-box .meter-card .meter-inputs input,
+.gum.sheet.actor .energy-reserves-box .meter-card .meter-inputs input {
     width: 26px;
     text-align: center;
     font-weight: 500;
     font-size: smaller
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .item-controls.meter-controls {
+.gum.sheet.actor .combat-meters-box .meter-card .item-controls.meter-controls,
+.gum.sheet.actor .energy-reserves-box .meter-card .item-controls.meter-controls {
     display: flex;
     justify-content: flex-end;
     gap: 6px;
@@ -2226,17 +2234,20 @@
     border-top: 1px dotted var(--gum-border-light);
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .item-control i {
+.gum.sheet.actor .combat-meters-box .meter-card .item-control i,
+.gum.sheet.actor .energy-reserves-box .meter-card .item-control i {
     color: var(--gum-text-medio);
     transition: color 0.15s ease;
     font-size: smaller;
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card .item-control:hover i {
+.gum.sheet.actor .combat-meters-box .meter-card .item-control:hover i,
+.gum.sheet.actor .energy-reserves-box .meter-card .item-control:hover i {
     color: var(--gum-accent-blue);
 }
 
-.gum.sheet.actor .combat-meters-box .meter-card.is-hidden {
+.gum.sheet.actor .combat-meters-box .meter-card.is-hidden,
+.gum.sheet.actor .energy-reserves-box .meter-card.is-hidden {
     opacity: 0.85;
     background: linear-gradient(135deg, rgba(245,245,245,0.95), rgba(230,230,230,0.95));
     border-style: dashed;

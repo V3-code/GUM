@@ -756,23 +756,25 @@
       </div>
 
       {{!-- Bloco de Reservas (Mantido) --}}
-      <div class="energy-reserves-box skill-block">
+      <div class="energy-reserves-box skill-block combat-meters-box">
         <div class="block-header">
           <h4>Reservas de Energia</h4>
           <div class="header-controls">
             <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
           </div>
         </div>
-        <div class="energy-reserves-list">
+        <div class="meter-list energy-reserves-list">
           {{#each spellReserves}}
-          <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
-            <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-            <div class="meter-inputs">
-              <input type="number" data-property="current" value="{{this.current}}"/>
-              <span>/</span>
-              <input type="number" data-property="max" value="{{this.max}}"/>
+          <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
+            <div class="meter-main">
+              <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+              <div class="meter-inputs">
+                <input type="number" data-property="current" value="{{this.current}}"/>
+                <span>/</span>
+                <input type="number" data-property="max" value="{{this.max}}"/>
+              </div>
             </div>
-            <div class="item-controls">
+            <div class="item-controls meter-controls">
               <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
               <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
             </div>
@@ -900,23 +902,25 @@
     </div>
 
       {{!-- Bloco das Reservas de Energia --}}
-      <div class="energy-reserves-box skill-block">
+      <div class="energy-reserves-box skill-block combat-meters-box">
         <div class="block-header">
           <h4>Reservas de Energia</h4>
           <div class="header-controls">
             <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
           </div>
- </div>
-        <div class="energy-reserves-list">
+        </div>
+        <div class="meter-list energy-reserves-list">
           {{#each powerReserves}}
-          <div class="item-row reserve-card" data-reserve-id="{{@key}}" data-reserve-type="power">
-            <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-            <div class="meter-inputs">
-              <input type="number" data-property="current" value="{{this.current}}"/>
-              <span>/</span>
-              <input type="number" data-property="max" value="{{this.max}}"/>
+          <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="power">
+            <div class="meter-main">
+              <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+              <div class="meter-inputs">
+                <input type="number" data-property="current" value="{{this.current}}"/>
+                <span>/</span>
+                <input type="number" data-property="max" value="{{this.max}}"/>
+              </div>
             </div>
-            <div class="item-controls">
+            <div class="item-controls meter-controls">
               <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
               <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
             </div>
