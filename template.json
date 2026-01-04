@@ -297,7 +297,7 @@
       "roll_attribute": "ht", 
       "roll_modifier": "0", 
       "whisperMode": "public",
-      "resistanceRoll": { "isResisted": false, "attribute": "ht", "modifier": "0", "applyOn": "failure", "margin": "" },
+      "resistanceRoll": { "isResisted": false, "attribute": "ht", "modifier": "0", "applyOn": "failure", "margin": "", "skipPromptCard": false },
       "category": "pf",
       "name": "", 
       "chat_notice": true,

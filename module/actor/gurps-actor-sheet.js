@@ -1362,10 +1362,35 @@ html.on("click", ".rollable-damage", async (ev) => {
       generalConditions: item.system.generalConditions || {}
     };
 
-  } else {
+ } else {
     ui.notifications.warn("Este item não possui fórmula de dano válida.");
     return;
   }
+
+  const mergeEffects = (...sources) => {
+    const merged = [];
+    for (const source of sources) {
+      if (!source) continue;
+      if (Array.isArray(source)) {
+        source.forEach((data, index) => {
+          if (!data) return;
+          merged.push({ id: data.id ?? `effect-${merged.length + index}`, ...data });
+        });
+      } else {
+        for (const [id, data] of Object.entries(source)) {
+          if (!data) continue;
+          merged.push({ id, ...data });
+        }
+      }
+    }
+    return merged;
+  };
+
+  const combinedOnDamageEffects = mergeEffects(
+    normalizedAttack.generalConditions,
+    item.system?.onDamageEffects,
+    normalizedAttack.onDamageEffects
+  );
 
   // --------------------------------------------------
   // 3) Helpers (GdP / GeB / limpeza de fórmula)
@@ -1433,7 +1458,7 @@ html.on("click", ".rollable-damage", async (ev) => {
         type: normalizedAttack.type || "",
         armorDivisor: normalizedAttack.armor_divisor || 1
       },
-      onDamageEffects: normalizedAttack.onDamageEffects,
+      onDamageEffects: combinedOnDamageEffects,
       generalConditions: normalizedAttack.generalConditions
     };
 

@@ -101,6 +101,11 @@
                                 <label class="row-label">Margem Mínima:</label>
                                 <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional"/>
                             </div>
+
+                            <label class="custom-checkbox block">
+                                <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}}/>
+                                <span>Aplicar direto (não criar card de resistência no chat).</span>
+                            </label>
                         </div>
                         {{/if}}
                     </section>

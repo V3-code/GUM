@@ -22,10 +22,14 @@
                     <label class="custom-radio"><input type="radio" name="resistanceRoll.applyOn" value="success" {{checked (eq effect.resistanceRoll.applyOn 'success')}}><span>Sucesso</span></label>
                 </div>
             </div>
-            <div class="form-group">
+        <div class="form-group">
                 <label>Margem Mínima</label>
                 <input type="text" name="resistanceRoll.margin" value="{{effect.resistanceRoll.margin}}" placeholder="Opcional"/>
             </div>
+            <label class="custom-checkbox">
+                <input type="checkbox" name="resistanceRoll.skipPromptCard" {{checked effect.resistanceRoll.skipPromptCard}}/>
+                <span>Aplicar direto (não criar card de resistência)</span>
+            </label>
         </div>
         {{/if}}
     </div>

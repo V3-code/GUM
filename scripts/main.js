@@ -569,7 +569,7 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
     // Executamos depois de criar a mensagem para que o card da rolagem apareça antes do pedido de resistência.
     if (sourceItem?.system?.activationEffects && sourceItem.system.activationEffects[rollOutcome]) {
         try {
-            await applyActivationEffects(sourceItem, actor, rollOutcome);
+            await applyActivationEffects(sourceItem, actor, rollOutcome, extraOptions);
         } catch (err) {
             console.error("GUM | Falha ao aplicar efeitos de ativação:", err);
         }
@@ -580,7 +580,7 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
  * O "Despachante" de Efeitos de Ativação.
  * Pega os efeitos de sucesso/falha de um item e os envia para o "Motor" applySingleEffect.
  */
-async function applyActivationEffects(item, actor, outcome) {
+async function applyActivationEffects(item, actor, outcome, activationOptions = {}) {
     if (!item || !item.system.activationEffects || !item.system.activationEffects[outcome]) {
         return;
     }
@@ -605,12 +605,12 @@ async function applyActivationEffects(item, actor, outcome) {
                  }
                  finalTargets = actor.getActiveTokens();
             }
-
             // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
             const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
-            if (requiresResistance) {
+            const suppressResistanceCard = effectItem.system?.resistanceRoll?.skipPromptCard || activationOptions.suppressResistanceCard;
+            if (requiresResistance && !suppressResistanceCard) {
                 for (const targetToken of finalTargets) {
-                    await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id);
+                    await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, activationOptions);
                 }
             } else {
                 await applySingleEffect(effectItem, finalTargets, { actor: actor, origin: item });
@@ -623,8 +623,13 @@ async function applyActivationEffects(item, actor, outcome) {
  * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
  * O teste usa os dados de barreira configurados no item efeito.
  */
-async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId) {
+async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId, options = {}) {
     const rollData = effectItem.system?.resistanceRoll || {};
+    const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
+    if (suppressResistanceCard) {
+        await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem });
+        return;
+    }
      const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
     const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
     const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';

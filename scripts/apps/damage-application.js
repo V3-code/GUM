@@ -23,12 +23,25 @@ this.damageData = damageData;
         this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
     }
 
-    async _resolveOnDamageEffects() {
+async _resolveOnDamageEffects() {
         const resolved = [];
         const effects = this.damageData.onDamageEffects || {};
 
-        for (const [id, data] of Object.entries(effects)) {
+        const entries = Array.isArray(effects)
+            ? effects.map((data, index) => [data?.id ?? `effect-${index}`, data])
+            : Object.entries(effects);
+
+        const seenEffectUuids = new Set();
+
+        for (const [id, data] of entries) {
+            if (!data) continue;
             const effectUuid = data.effectUuid || data.uuid;
+
+            if (effectUuid) {
+                if (seenEffectUuids.has(effectUuid)) continue;
+                seenEffectUuids.add(effectUuid);
+            }
+
             let effectItem = null;
             if (effectUuid) {
                 effectItem = await fromUuid(effectUuid).catch(() => null);
@@ -39,7 +52,7 @@ this.damageData = damageData;
                 : (parseInt(data.activationChance) || 0);
 
             resolved.push({
-                id,
+                id: id ?? data.id,
                 ...data,
                 effectUuid,
                 item: effectItem,
