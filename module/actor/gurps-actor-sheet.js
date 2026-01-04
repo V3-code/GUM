@@ -2,6 +2,8 @@ import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { getBodyProfile, listBodyProfiles } from "../config/body-profiles.js";
 
+const { ActorSheet } = foundry.appv1.sheets;
+
 
 
 

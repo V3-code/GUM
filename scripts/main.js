@@ -18,6 +18,8 @@ import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 
+const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
+
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
 // ================================================================== //
@@ -719,23 +721,23 @@ Hooks.once('init', async function() {
       decimals: 3 //
     };
     
-    Actors.registerSheet("gum", GurpsActorSheet, { 
+    ActorsCollection.registerSheet("gum", GurpsActorSheet, { 
         types: ["character"], makeDefault: true 
     }); 
-    Items.registerSheet("gum", GurpsItemSheet, { makeDefault: true }); 
-    Items.registerSheet("gum", ConditionSheet, { 
+    ItemsCollection.registerSheet("gum", GurpsItemSheet, { makeDefault: true }); 
+    ItemsCollection.registerSheet("gum", ConditionSheet, { 
         types: ["condition"], 
         makeDefault: true 
     });
-    Items.registerSheet("gum", EffectSheet, { 
+    ItemsCollection.registerSheet("gum", EffectSheet, { 
     types: ["effect"], 
     makeDefault: true 
     });
-    Items.registerSheet("gum", TriggerSheet, { 
+    ItemsCollection.registerSheet("gum", TriggerSheet, { 
     types: ["trigger"], 
     makeDefault: true 
     });
-    Items.registerSheet("gum", GurpsArmorSheet, { types: ["armor"], makeDefault: true, label: "Ficha de Armadura" });
+    ItemsCollection.registerSheet("gum", GurpsArmorSheet, { types: ["armor"], makeDefault: true, label: "Ficha de Armadura" });
 
     
     

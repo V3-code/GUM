@@ -1,5 +1,7 @@
 // GUM/scripts/apps/effect-sheet.js
 
+const { ItemSheet } = foundry.appv1.sheets;
+
 export class EffectSheet extends ItemSheet {
     
     static get defaultOptions() {

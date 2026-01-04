@@ -1,3 +1,5 @@
+const { ItemSheet } = foundry.appv1.sheets;
+
 export class TriggerSheet extends ItemSheet {
     
     static get defaultOptions() {

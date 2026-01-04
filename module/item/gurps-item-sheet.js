@@ -3,6 +3,8 @@ import { ConditionBrowser } from "../apps/condition-browser.js";
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
 
+const { ItemSheet } = foundry.appv1.sheets;
+
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    //
 // ================================================================== //

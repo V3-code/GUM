@@ -3,6 +3,7 @@
 import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 
+const { ItemSheet } = foundry.appv1.sheets;
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
