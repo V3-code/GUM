@@ -1393,6 +1393,27 @@
     color: var(--gum-accent-gold);
 }
 
+/* Editor de História (TinyMCE) */
+.gum.sheet.actor .tox-tinymce {
+    border: 1px solid var(--gum-border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    height: 320px !important;
+}
+.gum.sheet.actor .tox-toolbar,
+.gum.sheet.actor .tox-toolbar__primary {
+    background: var(--gum-bg-card-claro) !important;
+    border-bottom: 1px solid var(--gum-border-light) !important;
+}
+.gum.sheet.actor .tox-edit-area__iframe {
+    background: #fffaf4 !important;
+}
+.gum.sheet.actor .tox-tinymce.expanded {
+    height: 600px !important;
+    max-height: none !important;
+    width: 100% !important;
+}
+
 /* Botões de Editor (Mantidos) */
 .gum.sheet.actor .toggle-editor,
 .gum.sheet.actor .save-description,

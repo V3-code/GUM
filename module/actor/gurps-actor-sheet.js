@@ -880,6 +880,44 @@ activateListeners(html) {
     if (!this.isEditable) return;
 
 // -------------------------------------------------------------
+//  BIOGRAFIA - Editor de História
+// -------------------------------------------------------------
+html.find(".biography-story .toggle-editor").on("click", ev => {
+  const section = $(ev.currentTarget).closest(".description-section");
+  const field = $(ev.currentTarget).data("field") ?? $(ev.currentTarget).data("target");
+  const editorWrapper = section.find(".description-editor");
+  section.find(".description-view, .toggle-editor").hide();
+  editorWrapper.show();
+  const editor = this.editors?.[field];
+  if (editor?.instance) {
+    setTimeout(() => editor.instance.focus(), 0);
+  }
+});
+
+html.find(".biography-story .cancel-description").on("click", ev => {
+  const section = $(ev.currentTarget).closest(".description-section");
+  section.find(".description-editor").hide();
+  section.find(".description-view, .toggle-editor").show();
+});
+
+html.find(".biography-story .save-description").on("click", async ev => {
+  ev.preventDefault();
+  const btn = $(ev.currentTarget);
+  const section = btn.closest(".description-section");
+  const field = btn.data("field") ?? btn.data("target");
+  const editor = this.editors?.[field];
+  if (!editor) return;
+
+  const content = editor.instance.getContent();
+  await this.actor.update({ [field]: content });
+
+  const enriched = await TextEditor.enrichHTML(content || "", { async: true, secrets: this.actor.isOwner });
+  section.find(".description-view").html(enriched);
+  section.find(".description-editor").hide();
+  section.find(".description-view, .toggle-editor").show();
+});
+
+// -------------------------------------------------------------
 //  MODIFICADORES (ABA DO PERSONAGEM) - Botões da Toolbar
 // -------------------------------------------------------------
 html.on("click", ".import-modifiers-btn", async (ev) => {
