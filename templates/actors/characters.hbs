@@ -1470,15 +1470,22 @@
             {{!-- 3. Modo de Edição (Escondido) --}}
             <div class="description-editor" style="display: none;">
                 {{!-- O editor em si (note button=false) --}}
-                {{editor enrichedBackstory target="system.details.backstory" button=false owner=owner editable=editable}}
+               {{editor actor.system.details.backstory target="system.details.backstory" engine="prosemirror" button=false owner=owner editable=editable}}
                 
                 {{!-- Botões Salvar/Cancelar --}}
-                <button type="button" class="save-description" data-field="system.details.backstory">
-                    <i class="fas fa-save"></i> Salvar
-                </button>
-                <button type="button" class="cancel-description">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
+                <div class="description-editor-actions">
+                        {{!-- Botões Salvar/Cancelar --}}
+                        <button type="button" class="save-description" data-field="system.details.backstory">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <button type="button" class="expand-description" data-expanded="false">
+                            <i class="fas fa-expand"></i> Expandir
+                        </button>
+                        <button type="button" class="cancel-description">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         {{!-- ✅ FIM: Nova estrutura de Editor de Texto --}}

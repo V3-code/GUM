@@ -3,6 +3,7 @@ import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { getBodyProfile, listBodyProfiles } from "../config/body-profiles.js";
 
 const { ActorSheet } = foundry.appv1.sheets;
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 
 
@@ -580,7 +581,7 @@ async getData(options) {
         //    ENRIQUECIMENTO DE TEXTO (Seu código original)
         // ================================================================== //
                   // Prepara o campo de biografia, garantindo que funcione mesmo se estiver vazio
-            context.enrichedBackstory = await TextEditor.enrichHTML(this.actor.system.details.backstory || "", {
+            context.enrichedBackstory = await TextEditorImpl.enrichHTML(this.actor.system.details.backstory || "", {
                     secrets: this.actor.isOwner,
                     async: true
                 });              
@@ -650,63 +651,50 @@ _getSubmitData(updateData) {
 
     }
 
+        // ================================================================== //
+    // ✅ CONFIGURAÇÃO DO EDITOR (API ATUAL)
     // ================================================================== //
-    // ✅ INÍCIO DA ATUALIZAÇÃO DO EDITOR
-    // ================================================================== //
-/**
+    /**
      * @override
-     * Ativa o editor de texto rico (TinyMCE) para a Ficha do Ator.
+     * Configura o editor de texto rico para a ficha do ator usando o engine atual.
      */
     activateEditor(name, options = {}, ...args) {
-        // 1. Plugins e Barra de Ferramentas
-        options.plugins = "link lists image"; // Mantém 'image'
-        
-        // ✅ MUDANÇA: Adiciona "gurpsExpand" ao lado do botão de imagem
-        options.toolbar = "styleselect | bold italic | bullist numlist | link image | gurpsExpand | removeformat"; 
-        options.menubar = false;
-
-        options.style_formats = [
-            { title: 'Parágrafo', block: 'p' },
-            { title: 'Cabeçalho 4', block: 'h4' },
-            { title: 'Cabeçalho 5', block: 'h5' },
-        ];
-        
-        // 2. Altura padrão (quando não expandido)
-        options.height = 300; 
-
-        // 3. CSS Interno (Tema Papiro e Espaçamento de Parágrafo)
-        options.content_style = `
-            body {
-                background-color: var(--c-fundo-papiro, #f1e8e7); 
-                color: var(--c-texto-escuro, #352425);
-            }
-            p { 
-                margin: 0.2em 0 !important; 
-                line-height: 1.4em !important;
-            }
-            h4, h5 {
-                margin: 0.5em 0 0.2em 0 !important;
-            }
-        `;
-        
-        // ✅ MUDANÇA: Adiciona a lógica para o botão "gurpsExpand"
-        options.setup = function (editor) {
-          editor.ui.registry.addButton("gurpsExpand", {
-            tooltip: "Expandir área de edição",
-            icon: "fullscreen",
-            onAction: function () {
-              const container = editor.getContainer();
-              // Adiciona/remove a classe "expanded"
-              container.classList.toggle("expanded");
-            }
-          });
-        };
-
+        options.engine = "prosemirror";
+        options.minHeight ??= 300;
         return super.activateEditor(name, options, ...args);
     }
     // ================================================================== //
-    // ✅ FIM DA ATUALIZAÇÃO DO EDITOR
+    // ✅ FIM DA CONFIGURAÇÃO DO EDITOR
     // ================================================================== //
+
+    _getEditorInstance(field) {
+        const editor = this.editors?.[field];
+        if (!editor) return null;
+        return editor.editor ?? editor.instance ?? editor;
+    }
+
+    async _getEditorContent(field, section) {
+        const instance = this._getEditorInstance(field);
+        if (instance?.getHTML) {
+            const html = instance.getHTML();
+            return html?.then ? await html : html;
+        }
+        if (instance?.getContent) {
+            const content = instance.getContent();
+            return content?.then ? await content : content;
+        }
+        if (instance?.view?.dom?.innerHTML) return instance.view.dom.innerHTML;
+        if (TextEditorImpl?.getContent) {
+            const element = section.find(`[name="${field}"]`).get(0)
+                ?? section.find(`.editor[data-edit="${field}"]`).get(0);
+            if (element) return TextEditorImpl.getContent(element);
+        }
+        const namedInput = section.find(`[name="${field}"]`);
+        if (namedInput.length) return namedInput.val();
+        const editorElement = section.find(`.editor[data-edit="${field}"]`);
+        if (editorElement.length) return editorElement.val() ?? editorElement.html();
+        return "";
+    }
     
       async _updateObject(event, formData) {
         // Processa a conversão de vírgula para ponto
@@ -888,9 +876,11 @@ html.find(".biography-story .toggle-editor").on("click", ev => {
   const editorWrapper = section.find(".description-editor");
   section.find(".description-view, .toggle-editor").hide();
   editorWrapper.show();
-  const editor = this.editors?.[field];
-  if (editor?.instance) {
-    setTimeout(() => editor.instance.focus(), 0);
+  const editor = this._getEditorInstance(field);
+  if (editor?.focus) {
+    setTimeout(() => editor.focus(), 0);
+  } else if (editor?.view?.focus) {
+    setTimeout(() => editor.view.focus(), 0);
   }
 });
 
@@ -900,18 +890,33 @@ html.find(".biography-story .cancel-description").on("click", ev => {
   section.find(".description-view, .toggle-editor").show();
 });
 
+html.find(".biography-story .expand-description").on("click", ev => {
+  const btn = $(ev.currentTarget);
+  const section = btn.closest(".description-section");
+  const editorWrapper = section.find(".description-editor");
+  editorWrapper.toggleClass("expanded");
+  const expanded = editorWrapper.hasClass("expanded");
+  const expandedHeight = expanded ? "600px" : "300px";
+  editorWrapper.find(".editor, .editor-content, .ProseMirror").css({
+    minHeight: expandedHeight,
+    height: expanded ? expandedHeight : ""
+  });
+  btn.attr("data-expanded", expanded ? "true" : "false");
+  btn.html(expanded
+    ? '<i class="fas fa-compress"></i> Reduzir'
+    : '<i class="fas fa-expand"></i> Expandir');
+});
+
 html.find(".biography-story .save-description").on("click", async ev => {
   ev.preventDefault();
   const btn = $(ev.currentTarget);
   const section = btn.closest(".description-section");
   const field = btn.data("field") ?? btn.data("target");
-  const editor = this.editors?.[field];
-  if (!editor) return;
-
-  const content = editor.instance.getContent();
+  const content = await this._getEditorContent(field, section);
+  if (content === null || content === undefined) return;
   await this.actor.update({ [field]: content });
 
-  const enriched = await TextEditor.enrichHTML(content || "", { async: true, secrets: this.actor.isOwner });
+  const enriched = await TextEditorImpl.enrichHTML(content || "", { async: true, secrets: this.actor.isOwner });
   section.find(".description-view").html(enriched);
   section.find(".description-editor").hide();
   section.find(".description-view, .toggle-editor").show();
@@ -2298,7 +2303,7 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
     }
 
     // 5. Enriquecimento da Descrição (Links, HTML, Secrets)
-    const description = await TextEditor.enrichHTML(s.chat_description || s.description || "<i>Sem descrição.</i>", {
+    const description = await TextEditorImpl.enrichHTML(s.chat_description || s.description || "<i>Sem descrição.</i>", {
       secrets: this.actor.isOwner,
       async: true
     });

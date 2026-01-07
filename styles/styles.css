@@ -1417,6 +1417,7 @@
 /* Botões de Editor (Mantidos) */
 .gum.sheet.actor .toggle-editor,
 .gum.sheet.actor .save-description,
+.gum.sheet.actor .expand-description,
 .gum.sheet.actor .cancel-description {
     align-self: flex-start;
     margin-top: 10px;
@@ -1432,6 +1433,38 @@
     background: var(--gum-accent-gold);
 }
 
+.gum.sheet.actor .toggle-editor:hover {
+    background: var(--gum-accent-gold);
+}
+
+.gum.sheet.actor .description-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.gum.sheet.actor .description-editor-actions .save-description,
+.gum.sheet.actor .description-editor-actions .expand-description,
+.gum.sheet.actor .description-editor-actions .cancel-description {
+    margin-top: 0;
+}
+
+/* Editor de História (ProseMirror) */
+.gum.sheet.actor .description-editor .editor,
+.gum.sheet.actor .description-editor .editor-content,
+.gum.sheet.actor .description-editor .ProseMirror {
+    min-height: 300px;
+    max-height: 300px;
+    height: 300px;
+    overflow: auto;
+}
+.gum.sheet.actor .description-editor.expanded .editor,
+.gum.sheet.actor .description-editor.expanded .editor-content,
+.gum.sheet.actor .description-editor.expanded .ProseMirror {
+    min-height: 600px !important;
+    max-height: 600px !important;
+    height: 600px !important;
+}
 /* =================================================================== */
 /* 11. ABA CONDIÇÕES (ESTILO FINAL CONSOLIDADO)                        */
 /* =================================================================== */
