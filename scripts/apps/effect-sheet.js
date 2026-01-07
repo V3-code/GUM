@@ -1,6 +1,7 @@
 // GUM/scripts/apps/effect-sheet.js
 
 const { ItemSheet } = foundry.appv1.sheets;
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 export class EffectSheet extends ItemSheet {
     
@@ -27,8 +28,8 @@ export class EffectSheet extends ItemSheet {
         const flagValue = context.system.flag_value;
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
             context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
-        context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description, { async: true });
-        context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, { async: true });
+        context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description, { async: true });
+        context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
         context.owner = this.item.isOwner;
         context.editable = this.options.editable;
 

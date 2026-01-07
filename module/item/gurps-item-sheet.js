@@ -4,6 +4,7 @@ import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
 
 const { ItemSheet } = foundry.appv1.sheets;
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    //
@@ -235,11 +236,29 @@ export class GurpsItemSheet extends ItemSheet {
             const editorWrapper = section.find(".description-editor");
             section.find(".description-view, .toggle-editor").hide();
             editorWrapper.show();
-            const editor = this.editors?.[field];
-            if (editor?.instance) {
+            const editor = this._getEditorInstance(field);
+            if (editor?.focus) {
                 // Aguarda o próximo tick para garantir que o editor esteja visível antes do foco
-                setTimeout(() => editor.instance.focus(), 0);
+                setTimeout(() => editor.focus(), 0);
+            } else if (editor?.view?.focus) {
+                setTimeout(() => editor.view.focus(), 0);
             }
+        });
+        html.find(".expand-description").on("click", ev => {
+            const btn = $(ev.currentTarget);
+            const section = btn.closest(".description-section");
+            const editorWrapper = section.find(".description-editor");
+            editorWrapper.toggleClass("expanded");
+            const expanded = editorWrapper.hasClass("expanded");
+            const expandedHeight = expanded ? "600px" : "300px";
+            editorWrapper.find(".editor, .editor-content, .ProseMirror").css({
+                minHeight: expandedHeight,
+                height: expanded ? expandedHeight : ""
+            });
+            btn.attr("data-expanded", expanded ? "true" : "false");
+            btn.html(expanded
+                ? '<i class="fas fa-compress"></i> Reduzir'
+                : '<i class="fas fa-expand"></i> Expandir');
         });
         html.find(".cancel-description").on("click", ev => {
             const section = $(ev.currentTarget).closest(".description-section");
@@ -251,13 +270,11 @@ export class GurpsItemSheet extends ItemSheet {
             const btn = $(ev.currentTarget);
             const section = btn.closest(".description-section");
             const field = btn.data("field");
-            const editor = this.editors?.[field];
-            if (!editor) return;
-            
-            const content = editor.instance.getContent();
+            const content = await this._getEditorContent(field, section);
+            if (content === null || content === undefined) return;
             await this.item.update({[field]: content});
             
-            const enriched = await TextEditor.enrichHTML(content, {async: true});
+            const enriched = await TextEditorImpl.enrichHTML(content, {async: true});
             section.find(".description-view").html(enriched);
             section.find(".description-editor").hide();
             section.find(".description-view, .toggle-editor").show();
@@ -610,18 +627,41 @@ export class GurpsItemSheet extends ItemSheet {
         }).render(true);
     }
 
-    activateEditor(name, options = {}, ...args) {
-        options.plugins = "link lists";
-        options.toolbar = "styleselect | bold italic | bullist numlist | link | gurpsExpand | removeformat";
-        options.height = (name === "system.chat_description") ? 300 : 400;
-        options.setup = (editor) => {
-            editor.ui.registry.addButton("gurpsExpand", {
-                tooltip: "Expandir", icon: "fullscreen",
-                onAction: () => editor.getContainer().classList.toggle("expanded")
-            });
-        };
+     activateEditor(name, options = {}, ...args) {
+        options.engine = "prosemirror";
+        options.minHeight ??= (name === "system.chat_description") ? 300 : 400;
         return super.activateEditor(name, options, ...args);
     }
+
+    _getEditorInstance(field) {
+        const editor = this.editors?.[field];
+        if (!editor) return null;
+        return editor.editor ?? editor.instance ?? editor;
+    }
+
+    async _getEditorContent(field, section) {
+        const instance = this._getEditorInstance(field);
+        if (instance?.getHTML) {
+            const html = instance.getHTML();
+            return html?.then ? await html : html;
+        }
+        if (instance?.getContent) {
+            const content = instance.getContent();
+            return content?.then ? await content : content;
+        }
+        if (instance?.view?.dom?.innerHTML) return instance.view.dom.innerHTML;
+        if (TextEditorImpl?.getContent) {
+            const element = section.find(`[name="${field}"]`).get(0)
+                ?? section.find(`.editor[data-edit="${field}"]`).get(0);
+            if (element) return TextEditorImpl.getContent(element);
+        }
+        const namedInput = section.find(`[name="${field}"]`);
+        if (namedInput.length) return namedInput.val();
+        const editorElement = section.find(`.editor[data-edit="${field}"]`);
+        if (editorElement.length) return editorElement.val() ?? editorElement.html();
+        return "";
+    }
+
 
     _saveUIState() {
         const openDetails = [];

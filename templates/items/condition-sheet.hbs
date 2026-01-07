@@ -61,9 +61,10 @@
                             <div class="description-view">{{{enrichedChatDescription}}}</div>
 
                             <div class="description-editor" style="display:none;">
-                                {{editor system.chat_description target="system.chat_description" owner=owner editable=editable}}
+                                {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
                                 <div class="description-actions">
                                     <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                                    <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
                                     <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
                                 </div>
                             </div>
@@ -86,9 +87,10 @@
                             <div class="description-view">{{{enrichedDescription}}}</div>
 
                             <div class="description-editor" style="display:none;">
-                                {{editor system.description target="system.description" owner=owner editable=editable}}
+                                {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
                                 <div class="description-actions">
                                     <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                                    <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
                                     <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
                                 </div>
                             </div>

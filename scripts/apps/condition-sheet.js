@@ -4,6 +4,7 @@ import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 
 const { ItemSheet } = foundry.appv1.sheets;
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
@@ -29,8 +30,8 @@ export class ConditionSheet extends ItemSheet {
    async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
-        context.enrichedDescription = await TextEditor.enrichHTML(this.item.system.description, { async: true });
-        context.enrichedChatDescription = await TextEditor.enrichHTML(this.item.system.chat_description || "", { async: true });
+        context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
+        context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.owner = this.item.isOwner;
         context.editable = this.options.editable;
         

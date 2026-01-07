@@ -1,7 +1,7 @@
 // systems/gum/module/apps/gurps-armor-sheet.js
 
-// Importa a classe principal que vamos estender
 import { GurpsItemSheet } from "./gurps-item-sheet.js";
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 /**
  * A Ficha de Item dedicada para Armaduras.
@@ -38,7 +38,7 @@ export class GurpsArmorSheet extends GurpsItemSheet {
         }
         
         // Prepara a descrição para o editor
-        context.system.description = await TextEditor.enrichHTML(this.item.system.description || "", {
+        context.system.description = await TextEditorImpl.enrichHTML(this.item.system.description || "", {
             secrets: this.item.isOwner,
             async: true
         });

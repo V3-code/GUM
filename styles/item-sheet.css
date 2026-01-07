@@ -1261,6 +1261,7 @@
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  display: inline-flex;
 }
 .gum.sheet.item button:hover {
   background: var(--item-accent);
@@ -1689,6 +1690,21 @@
   width: 100% !important;
 }
 .gum.sheet.item .description-editor .tox { min-height: 320px; }
+.gum.sheet.item .description-editor .editor,
+.gum.sheet.item .description-editor .editor-content,
+.gum.sheet.item .description-editor .ProseMirror {
+  min-height: 300px;
+  max-height: 300px;
+  height: 300px;
+  overflow: auto;
+}
+.gum.sheet.item .description-editor.expanded .editor,
+.gum.sheet.item .description-editor.expanded .editor-content,
+.gum.sheet.item .description-editor.expanded .ProseMirror {
+  min-height: 600px !important;
+  max-height: 600px !important;
+  height: 600px !important;
+}
 
 /* ------------------------------------------------------------------- */
 /* EFFECT SHEET SPECIFIC STYLES                                        */
