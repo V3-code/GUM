@@ -30,18 +30,25 @@ export class GMModifierBrowser extends FormApplication {
     
     if (pack) {
         const content = await pack.getDocuments();
-                this.allModifiers = content.map(item => ({
-            id: item.id,
-            uuid: item.uuid,
-            name: item.name, 
-            system: item.system, 
-            img: item.img,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
-            // Prepara dados para filtros
-            category: item.system.ui_category || "other",
-            isBonus: item.system.modifier >= 0,
-            formattedVal: (item.system.modifier > 0 ? '+' : '') + item.system.modifier
-        }));
+        this.allModifiers = content.map(item => {
+            const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
+            const subtitleParts = [`Modificador: ${formattedVal}`];
+            if (item.system.nh_cap) subtitleParts.push(`Teto ${item.system.nh_cap}`);
+
+            return {
+                id: item.id,
+                uuid: item.uuid,
+                name: item.name,
+                system: item.system,
+                img: item.img,
+                displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
+                // Prepara dados para filtros
+                category: item.system.ui_category || "other",
+                isBonus: item.system.modifier >= 0,
+                formattedVal,
+                modifierSubtitle: subtitleParts.join(" • ")
+            };
+        });
         this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
     }
     

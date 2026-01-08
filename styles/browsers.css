@@ -123,41 +123,8 @@
 
 .gum-browser .filter-group input[type="checkbox"],
 .gum-browser .filter-group input[type="radio"] {
-    appearance: none;
     width: 14px;
     height: 14px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 3px;
-    cursor: pointer;
-    flex-shrink: 0;
-    position: relative;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, transform 0.15s ease;
-}
-
-.gum-browser .filter-group input[type="checkbox"]:hover,
-.gum-browser .filter-group input[type="radio"]:hover {
-    border-color: var(--gum-accent-gold);
-    box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.18);
-    transform: translateY(-1px);
-}
-
-.gum-browser .filter-group input[type="checkbox"]:checked,
-.gum-browser .filter-group input[type="radio"]:checked {
-    background: linear-gradient(145deg, #f7d49b, #cda35f);
-    border-color: var(--gum-accent-gold);
-}
-
-.gum-browser .filter-group input[type="checkbox"]:checked::after,
-.gum-browser .filter-group input[type="radio"]:checked::after {
-    content: '✔';
-    font-size: 10px;
-    color: #1a1a1a;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 700;
 }
 
 .gum-browser .cf-range-inputs {
