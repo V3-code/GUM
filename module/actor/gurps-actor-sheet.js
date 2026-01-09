@@ -162,7 +162,7 @@ async getData(options) {
         const permanentEffects = [];
 
         // Processa todos os ActiveEffects no ator
-        const activeEffects = Array.from(this.actor.effects ?? []);
+        const activeEffects = Array.from(this.actor.appliedEffects ?? this.actor.effects ?? []);
         const activeEffectsPromises = activeEffects.map(async (effect) => {
             try {
                 const effectData = effect.toObject(); 
@@ -261,7 +261,7 @@ async getData(options) {
 
         // --- 2. Prepara a lista para "Condições Passivas" (Regras de Cenário) ---
         // Esta parte do seu código original já estava perfeita.
-        context.installedConditions = itemsByType.condition || [];
+         context.installedConditions = this.actor.items.filter(item => item.type === "condition");
         
         // --- FIM DA NOVA LÓGICA DE CONDIÇÕES ---
         
