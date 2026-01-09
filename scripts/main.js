@@ -562,7 +562,6 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
         user: game.user.id,
         speaker: ChatMessage.getSpeaker({ actor: actor }),
         content: content,
-        type: CONST.CHAT_MESSAGE_TYPES.ROLL,
         rolls: [roll],
         sound: CONFIG.sounds.dice
     });

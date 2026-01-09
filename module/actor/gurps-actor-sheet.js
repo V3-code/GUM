@@ -1152,6 +1152,7 @@ html.on('click', '.item-edit, .item-control.item-edit', (ev) => {
   // Pega o itemId do container padrão (.item / .item-row) OU do próprio botão
   const itemId =
     el.closest('.item, .item-row').data('itemId') ??
+    el.closest('[data-item-id]').data('itemId') ??
     el.data('itemId') ??
     ev.currentTarget.dataset.itemId;
 
@@ -1270,22 +1271,55 @@ html.on('click', '.attack-group-details .group-summary .item-edit', this._onEdit
     // 4. DELETAR ITEM (COM CONFIRMAÇÃO)
     // -------------------------------------------------------------
     html.find('.item-delete').click(ev => {
-        ev.preventDefault();
-        ev.stopPropagation(); // Garante que não feche o bloco ao clicar no lixo
+    ev.preventDefault();
+    ev.stopPropagation(); // Garante que não feche o bloco ao clicar no lixo
 
-        const li = $(ev.currentTarget).closest(".item");
-        const item = this.actor.items.get(li.data("itemId"));
-        if (!item) return;
+    const container = $(ev.currentTarget).closest(".item, [data-item-id]");
+    const itemId = container.data("itemId") ?? ev.currentTarget.dataset.itemId;
+    const item = this.actor.items.get(itemId);
+    if (!item) return;
 
-        // Cria a janela de diálogo para confirmação
-        Dialog.confirm({
-            title: `Excluir ${item.name}?`,
-            content: `<p>Tem certeza que deseja excluir este item permanentemente?</p>`,
-            yes: () => item.delete(),
-            no: () => {}, // Não faz nada se cancelar
-            defaultYes: false
-        });
+    // Cria a janela de diálogo para confirmação
+    Dialog.confirm({
+        title: `Excluir ${item.name}?`,
+        content: `<p>Tem certeza que deseja excluir este item permanentemente?</p>`,
+        yes: () => item.delete(),
+        no: () => {}, // Não faz nada se cancelar
+        defaultYes: false
     });
+});
+
+// -------------------------------------------------------------
+//  CONDIÇÕES PASSIVAS (OVERRIDE MANUAL)
+// -------------------------------------------------------------
+html.on('change', '.manual-override-toggle', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const itemId = ev.currentTarget.dataset.itemId;
+    if (!itemId) return;
+
+    const item = this.actor.items.get(itemId);
+    if (!item) return;
+
+    const isDisabled = ev.currentTarget.checked;
+    await item.update({ 'flags.gum.manual_override': isDisabled }, { render: false });
+
+    const pill = html.find(`.effect-pill-enhanced[data-item-id="${itemId}"]`);
+    const statusTag = pill.find('.pill-tag.status');
+    if (statusTag.length) {
+        statusTag.toggleClass('off', isDisabled);
+        statusTag.toggleClass('on', !isDisabled);
+        statusTag.text(isDisabled ? 'Desativado' : 'Automático');
+    }
+});
+
+// -------------------------------------------------------------
+//  CONDIÇÕES PASSIVAS (EVITA TOGGLE DO <details>)
+// -------------------------------------------------------------
+html.on('click', '.passive-section .effects-grid-container', (ev) => {
+    ev.stopPropagation();
+});
 
     // ================================================================== //
     //  CONTROLE MANUAL DE ACORDEÃO (VERSÃO 3.0 - FINAL)
@@ -2480,7 +2514,7 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
             content: chatContent,
-            type: CONST.CHAT_MESSAGE_TYPES.OTHER
+             style: CONST.CHAT_MESSAGE_STYLES.OTHER
           });
           ui.notifications.info("Enviado para o chat.");
         });
