@@ -19,7 +19,7 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
           template: "systems/gum/templates/actors/characters.hbs",
           width: 900,
           height: 800,
-          tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "attributes" }]
+          tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "combat" }]
         });
       }
 
@@ -162,93 +162,98 @@ async getData(options) {
         const permanentEffects = [];
 
         // Processa todos os ActiveEffects no ator
-        const activeEffectsPromises = Array.from(this.actor.effects).map(async (effect) => {
-            const effectData = effect.toObject(); 
-            effectData.id = effect.id; 
+        const activeEffects = Array.from(this.actor.effects ?? []);
+        const activeEffectsPromises = activeEffects.map(async (effect) => {
+            try {
+                const effectData = effect.toObject(); 
+                effectData.id = effect.id; 
 
-            // --- Lógica de Identificação da Fonte (seu código original) ---
-            let fonteNome = "Origem Desconhecida";
-            let fonteIcon = "fas fa-question-circle";
-            let fonteUuid = null;
-            
-            let originalEffectItem = null;
-            const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-            if (effectUuid) {
-                originalEffectItem = await fromUuid(effectUuid);
-                if (originalEffectItem) {
-                    effectData.name = originalEffectItem.name; 
-                    effectData.img = originalEffectItem.img;
-                }
-            }
-            
-            if (effect.origin) {
-                const originItem = await fromUuid(effect.origin);
-                if (originItem) {
-                    fonteNome = originItem.name;
-                    fonteUuid = originItem.uuid; 
-
-                    switch (originItem.type) {
-                        case 'spell': fonteIcon = 'fas fa-magic'; break;
-                        case 'power': fonteIcon = 'fas fa-bolt'; break;
-                        case 'advantage':
-                        case 'disadvantage': fonteIcon = 'fas fa-star'; break;
-                        case 'equipment':
-                        case 'armor': fonteIcon = 'fas fa-shield-alt'; break;
-                        default: fonteIcon = 'fas fa-archive';
+                // --- Lógica de Identificação da Fonte (seu código original) ---
+                let fonteNome = "Origem Desconhecida";
+                let fonteIcon = "fas fa-question-circle";
+                let fonteUuid = null;
+                
+                let originalEffectItem = null;
+                const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+                if (effectUuid) {
+                    originalEffectItem = await fromUuid(effectUuid).catch(() => null);
+                    if (originalEffectItem) {
+                        effectData.name = originalEffectItem.name; 
+                        effectData.img = originalEffectItem.img;
                     }
                 }
-            }
-            effectData.fonteNome = fonteNome;
-            effectData.fonteIcon = fonteIcon;
-            effectData.fonteUuid = fonteUuid; 
+                
+                if (effect.origin) {
+                    const originItem = await fromUuid(effect.origin).catch(() => null);
+                    if (originItem) {
+                        fonteNome = originItem.name;
+                        fonteUuid = originItem.uuid; 
 
-            // --- Lógica de Duração ---
-            const d = effect.duration || {};
-            const gumDuration = effectData.flags?.gum?.duration || {};
-            const originalDuration = originalEffectItem?.system?.duration || gumDuration || {};
-            const isMarkedPermanent = originalDuration.isPermanent === true;
-            const countsInCombatOnly = originalDuration.inCombat === true;
-            let isPermanent = true; // Assume permanente até que se prove o contrário
+                        switch (originItem.type) {
+                            case 'spell': fonteIcon = 'fas fa-magic'; break;
+                            case 'power': fonteIcon = 'fas fa-bolt'; break;
+                            case 'advantage':
+                            case 'disadvantage': fonteIcon = 'fas fa-star'; break;
+                            case 'equipment':
+                            case 'armor': fonteIcon = 'fas fa-shield-alt'; break;
+                            default: fonteIcon = 'fas fa-archive';
+                        }
+                    }
+                }
+                effectData.fonteNome = fonteNome;
+                effectData.fonteIcon = fonteIcon;
+                effectData.fonteUuid = fonteUuid; 
 
-            if (d.seconds) {
-                effectData.durationString = `${d.seconds} seg.`;
-                isPermanent = false;
-            } 
-            else if (d.rounds) {
-                // Calcula rodadas restantes
-                const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
-                effectData.durationString = `${remaining} rodada(s)`;
-                isPermanent = false;
-            } 
-            else if (d.turns) {
-                // Calcula turnos restantes
-                const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
-                effectData.durationString = `${remaining} turno(s)`;
-                isPermanent = false;
-            } 
-            else if (!isMarkedPermanent && countsInCombatOnly) {
-                // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
-                // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
-                const fallbackValue = originalDuration.value ?? 1;
-                const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
-                effectData.durationString = `${fallbackValue} ${unit}`;
-                isPermanent = false;
-            }
-            else {
-                effectData.durationString = "Permanente";
-                isPermanent = true;
-            }
+                // --- Lógica de Duração ---
+                const d = effect.duration || {};
+                const gumDuration = effectData.flags?.gum?.duration || {};
+                const originalDuration = originalEffectItem?.system?.duration || gumDuration || {};
+                const isMarkedPermanent = originalDuration.isPermanent === true;
+                const countsInCombatOnly = originalDuration.inCombat === true;
+                let isPermanent = true; // Assume permanente até que se prove o contrário
 
-            // Adiciona o efeito processado à lista correta
-            if (isPermanent) {
-                permanentEffects.push(effectData);
-            } else {
-                temporaryEffects.push(effectData);
+                if (d.seconds) {
+                    effectData.durationString = `${d.seconds} seg.`;
+                    isPermanent = false;
+                } 
+                else if (d.rounds) {
+                    // Calcula rodadas restantes
+                    const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
+                    effectData.durationString = `${remaining} rodada(s)`;
+                    isPermanent = false;
+                } 
+                else if (d.turns) {
+                    // Calcula turnos restantes
+                    const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
+                    effectData.durationString = `${remaining} turno(s)`;
+                    isPermanent = false;
+                } 
+                else if (!isMarkedPermanent && countsInCombatOnly) {
+                    // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
+                    // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
+                    const fallbackValue = originalDuration.value ?? 1;
+                    const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
+                    effectData.durationString = `${fallbackValue} ${unit}`;
+                    isPermanent = false;
+                }
+                else {
+                    effectData.durationString = "Permanente";
+                    isPermanent = true;
+                }
+
+                // Adiciona o efeito processado à lista correta
+                if (isPermanent) {
+                    permanentEffects.push(effectData);
+                } else {
+                    temporaryEffects.push(effectData);
+                }
+            } catch (error) {
+                console.warn("GUM | Falha ao processar efeito ativo:", error);
             }
         });
         
         // Espera todas as promessas de processamento de efeitos terminarem
-        await Promise.all(activeEffectsPromises);
+        await Promise.allSettled(activeEffectsPromises);
 
         // Salva as listas separadas no contexto para o .hbs usar
         context.temporaryEffects = temporaryEffects;
@@ -870,6 +875,106 @@ activateListeners(html) {
 // -------------------------------------------------------------
 //  BIOGRAFIA - Editor de História
 // -------------------------------------------------------------
+html.on("click", ".edit-biography-details", (ev) => {
+  ev.preventDefault();
+  const details = this.actor.system.details || {};
+
+  const content = `
+    <form class="secondary-stats-editor biography-details-editor">
+      <p class="hint">Atualize os dados do perfil do personagem.</p>
+      <div class="form-header-grid">
+        <span>Campo</span>
+        <span>Valor</span>
+      </div>
+      <div class="form-row">
+        <label>Gênero</label>
+        <input type="text" name="details.gender" value="${details.gender ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Idade</label>
+        <input type="text" name="details.age" value="${details.age ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Altura</label>
+        <input type="text" name="details.height" value="${details.height ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Peso</label>
+        <input type="text" name="details.weight" value="${details.weight ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Pele</label>
+        <input type="text" name="details.skin" value="${details.skin ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Cabelos</label>
+        <input type="text" name="details.hair" value="${details.hair ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Olhos</label>
+        <input type="text" name="details.eyes" value="${details.eyes ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Alinhamento</label>
+        <input type="text" name="details.alignment" value="${details.alignment ?? ""}" />
+      </div>
+      <div class="form-row">
+        <label>Crença / Fé</label>
+        <input type="text" name="details.belief" value="${details.belief ?? ""}" />
+      </div>
+    </form>
+    <style>
+      .biography-details-editor .form-header-grid,
+      .biography-details-editor .form-row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .biography-details-editor label {
+        text-align: left;
+        font-weight: bold;
+      }
+      .biography-details-editor input {
+        width: 100%;
+      }
+    </style>
+  `;
+
+  new Dialog({
+    title: "Editar Perfil",
+    content,
+    buttons: {
+      save: {
+        icon: '<i class="fas fa-save"></i>',
+        label: "Salvar",
+        callback: (html) => {
+          const form = html.find("form")[0];
+          const formData = new FormDataExtended(form).object;
+          const updateData = {};
+          const fields = [
+            "gender",
+            "age",
+            "height",
+            "weight",
+            "skin",
+            "hair",
+            "eyes",
+            "alignment",
+            "belief"
+          ];
+          fields.forEach((field) => {
+            updateData[`system.details.${field}`] = formData[`details.${field}`] ?? "";
+          });
+          this.actor.update(updateData);
+        }
+      }
+    },
+    default: "save"
+  }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+});
+
 html.find(".biography-story .toggle-editor").on("click", ev => {
   const section = $(ev.currentTarget).closest(".description-section");
   const field = $(ev.currentTarget).data("field") ?? $(ev.currentTarget).data("target");
@@ -1026,6 +1131,13 @@ html.on("click", ".add-energy-reserve", (ev) => this._onAddEnergyReserve(ev));
 html.on("click", ".edit-energy-reserve", (ev) => this._onEditEnergyReserve(ev));
 html.on("click", ".delete-energy-reserve", (ev) => this._onDeleteEnergyReserve(ev));
 html.on("change", ".reserve-card .meter-inputs input", (ev) => this._onEnergyReserveInputChange(ev));
+
+// -------------------------------------------------------------
+//  ASPECTOS SOCIAIS
+// -------------------------------------------------------------
+html.on("click", ".add-social-entry", (ev) => this._onAddSocialEntry(ev));
+html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
+html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -2796,7 +2908,203 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
 
       return { name, source, current, max, value: current };
     },
-    rejectClose: false
+ rejectClose: false
+  });
+}
+
+_getSocialEntryConfig(type) {
+  const configs = {
+    status: {
+      label: "Status Social",
+      path: "system.social_status_entries",
+      fields: [
+        { name: "society", label: "Sociedade", type: "text", placeholder: "Ex: Nobreza, Guilda" },
+        { name: "status_name", label: "Status", type: "text", placeholder: "Ex: Cavaleiro, Membro" },
+        { name: "level", label: "Nível", type: "number" },
+        { name: "monthly_cost", label: "Custo Mensal", type: "text", placeholder: "Ex: 50" }
+      ]
+    },
+    organization: {
+      label: "Organização",
+      path: "system.organization_entries",
+      fields: [
+        { name: "organization_name", label: "Organização", type: "text" },
+        { name: "status_name", label: "Status", type: "text" },
+        { name: "level", label: "Nível", type: "number" },
+        { name: "salary", label: "Salário", type: "text" }
+      ]
+    },
+    culture: {
+      label: "Cultura",
+      path: "system.culture_entries",
+      fields: [
+        { name: "culture_name", label: "Cultura", type: "text" },
+        { name: "level", label: "Nível", type: "number" }
+      ]
+    },
+    language: {
+      label: "Idioma",
+      path: "system.language_entries",
+      fields: [
+        { name: "language_name", label: "Idioma", type: "text" },
+        { name: "written_level", label: "Escrita", type: "text", placeholder: "Ex: Nenhuma, Básica, Fluente" },
+        { name: "spoken_level", label: "Fala", type: "text", placeholder: "Ex: Nenhuma, Básica, Fluente" }
+      ]
+    },
+    reputation: {
+      label: "Reputação",
+      path: "system.reputation_entries",
+      fields: [
+        { name: "title", label: "Título", type: "text" },
+        { name: "reaction_modifier", label: "Modificador de Reação", type: "text", placeholder: "Ex: +2" },
+        { name: "scope", label: "Escopo", type: "text", placeholder: "Ex: Cidade, Reino" },
+        { name: "recognition_frequency", label: "Frequência de Reconhecimento", type: "text" }
+      ]
+    },
+    wealth: {
+      label: "Riqueza",
+      path: "system.wealth_entries",
+      fields: [
+        { name: "wealth_level", label: "Nível de Riqueza", type: "text" },
+        { name: "effects", label: "Efeitos", type: "textarea" }
+      ]
+    },
+    bond: {
+      label: "Vínculo",
+      path: "system.bond_entries",
+      fields: [
+        { name: "name", label: "Nome", type: "text" },
+        { name: "bond_type", label: "Tipo", type: "text", placeholder: "Ex: Familiar, Juramento" },
+        { name: "description", label: "Descrição", type: "textarea" }
+      ]
+    }
+  };
+
+  return configs[type] || null;
+}
+
+async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
+  const config = this._getSocialEntryConfig(type);
+  if (!config) return null;
+
+  const fieldHtml = config.fields.map((field) => {
+    const value = initialData[field.name] ?? "";
+    if (field.type === "textarea") {
+      return `
+        <div class="form-group">
+          <label>${field.label}</label>
+          <textarea name="${field.name}" rows="3" placeholder="${field.placeholder || ""}">${value}</textarea>
+        </div>`;
+    }
+    const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : "";
+    const min = field.type === "number" ? "min=\"0\"" : "";
+    return `
+      <div class="form-group">
+        <label>${field.label}</label>
+        <input type="${field.type}" name="${field.name}" value="${value}" ${placeholder} ${min}/>
+      </div>`;
+  }).join("");
+
+  const content = `
+    <form class="gum-social-entry-form">
+      ${fieldHtml}
+    </form>`;
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    new Dialog({
+      title: isEdit ? `Editar ${config.label}` : `Adicionar ${config.label}`,
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const formData = new FormDataExtended(form).object;
+            const entryData = {};
+
+            for (const field of config.fields) {
+              let value = formData[field.name];
+              if (field.type === "number") {
+                value = Number(value) || 0;
+              } else {
+                value = (value ?? "").toString().trim();
+              }
+              entryData[field.name] = value;
+            }
+
+            finish(entryData);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum"] }).render(true);
+  });
+}
+
+async _onAddSocialEntry(ev) {
+  ev.preventDefault();
+  const type = ev.currentTarget?.dataset?.type;
+  const config = this._getSocialEntryConfig(type);
+  if (!config) return;
+
+  const entryData = await this._promptSocialEntryData(type, {}, { isEdit: false });
+  if (!entryData) return;
+
+  const entryId = foundry.utils.randomID();
+  await this.actor.update({ [`${config.path}.${entryId}`]: entryData });
+}
+
+async _onEditSocialEntry(ev) {
+  ev.preventDefault();
+  const type = ev.currentTarget?.dataset?.type;
+  const entryId = ev.currentTarget.closest(".item-row")?.dataset?.entryId;
+  const config = this._getSocialEntryConfig(type);
+  if (!config || !entryId) return;
+
+  const existing = foundry.utils.getProperty(this.actor.system, config.path.split(".").slice(1).join("."))?.[entryId];
+  const entryData = await this._promptSocialEntryData(type, existing || {}, { isEdit: true });
+  if (!entryData) return;
+
+  await this.actor.update({ [`${config.path}.${entryId}`]: entryData });
+}
+
+async _onDeleteSocialEntry(ev) {
+  ev.preventDefault();
+  const type = ev.currentTarget?.dataset?.type;
+  const entryId = ev.currentTarget.closest(".item-row")?.dataset?.entryId;
+  const config = this._getSocialEntryConfig(type);
+  if (!config || !entryId) return;
+
+  const entries = foundry.utils.getProperty(this.actor.system, config.path.split(".").slice(1).join(".")) || {};
+  const name = entries?.[entryId]?.name
+    || entries?.[entryId]?.organization_name
+    || entries?.[entryId]?.society
+    || entries?.[entryId]?.culture_name
+    || entries?.[entryId]?.language_name
+    || entries?.[entryId]?.title
+    || entries?.[entryId]?.wealth_level
+    || "registro";
+
+  Dialog.confirm({
+    title: `Excluir ${name}?`,
+    content: "<p>Tem certeza que deseja remover este registro?</p>",
+    yes: async () => {
+      await this.actor.update({ [`${config.path}.-=${entryId}`]: null });
+    }
   });
 }
 

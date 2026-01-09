@@ -1536,7 +1536,7 @@
                 </div>
             {{/each}}
             
-            {{#unless temporaryEffects}}
+            {{#unless temporaryEffects.length}}
                 <div class="placeholder-text">Nenhum efeito temporário ativo.</div>
             {{/unless}}
         </div>
@@ -1574,7 +1574,7 @@
                 </div>
             {{/each}}
             
-            {{#unless permanentEffects}}
+            {{#unless permanentEffects.length}}
                 <div class="placeholder-text">Nenhum efeito permanente.</div>
             {{/unless}}
         </div>
@@ -1625,7 +1625,7 @@
                 </div>
             {{/each}}
             
-            {{#unless installedConditions}}
+            {{#unless installedConditions.length}}
                 <div class="placeholder-text">Nenhuma regra de condição instalada.</div>
             {{/unless}}
         </div>
