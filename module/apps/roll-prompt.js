@@ -8,11 +8,12 @@ export class GurpsRollPrompt extends FormApplication {
         this.actor = actor;
         this.rollData = rollData;
         this.selectedModifiers = [];
-        
-        // 1. Carrega modificadores globais (Escudo)
-        this._loadGMModifiers(); 
-        
+
         this.context = this._determineContext();
+
+        // 1. Carrega modificadores globais (Escudo)
+        this._loadGMModifiers();
+        this._loadEffectModifiers();
         
         console.log("GUM | Roll Prompt Iniciado");
         console.log(" -> Dados recebidos:", rollData);
@@ -48,7 +49,36 @@ export class GurpsRollPrompt extends FormApplication {
                 nh_cap: (mod.cap !== undefined && mod.cap !== "") ? parseInt(mod.cap) : null,
                 isGM: true // Marca para estilizar diferente se quiser (ex: cadeado)
             });
+});
+    }
+
+    _loadEffectModifiers() {
+        const activeEffects = Array.from(this.actor.appliedEffects ?? this.actor.effects ?? []);
+
+        activeEffects.forEach(effect => {
+            const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+            if (!data) return;
+            if (!this._matchesEffectContext(data.context, this.context)) return;
+
+            this.selectedModifiers.push({
+                id: effect.id,
+                label: effect.name,
+                value: parseInt(data.value) || 0,
+                nh_cap: (data.cap !== undefined && data.cap !== "") ? parseInt(data.cap) : null,
+                isGM: true,
+                isEffect: true
+            });
         });
+    }
+
+    _matchesEffectContext(modContext, rollContext) {
+        if (!modContext || modContext === "all") return true;
+        if (Array.isArray(modContext)) return modContext.includes(rollContext);
+        if (typeof modContext === "string" && modContext.includes(",")) {
+            return modContext.split(",").map(c => c.trim()).includes(rollContext);
+        }
+        if (modContext === "attack") return rollContext.startsWith("attack");
+        return modContext === rollContext;
     }
     
     _determineContext() {
@@ -340,7 +370,8 @@ _updateTotals(html) {
 
         this.selectedModifiers.forEach(m => {
             let capBadge = m.nh_cap ? `<span class="stack-cap" style="font-size:0.8em; opacity:0.7; margin-right:3px;">[↓${m.nh_cap}]</span>` : '';
-            const tag = $(`<span class="mod-tag ${m.isGM ? 'gm-locked' : ''}">${capBadge}${m.label} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
+            const tagClass = m.isGM ? 'gm-locked' : (m.isEffect ? 'gm-locked' : '');
+            const tag = $(`<span class="mod-tag ${tagClass}">${capBadge}${m.label} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
             tag.click(() => {
                 const idx = this.selectedModifiers.findIndex(x => x.id === m.id);
                 if (idx >= 0) this.selectedModifiers.splice(idx, 1);

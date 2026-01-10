@@ -32,6 +32,7 @@
                                     {{#if (eq system.type 'attribute')}}Modificador de Atributo{{/if}}
                                     {{#if (eq system.type 'status')}}Status{{/if}}
                                     {{#if (eq system.type 'resource_change')}}Alteração de Recurso{{/if}}
+                                    {{#if (eq system.type 'roll_modifier')}}Modificador de Rolagem{{/if}}
                                     {{#if (eq system.type 'chat')}}Mensagem de Chat{{/if}}
                                     {{#if (eq system.type 'macro')}}Macro{{/if}}
                                     {{#if (eq system.type 'flag')}}Flag{{/if}}
@@ -47,7 +48,7 @@
                         <span class="meta-pill subtle">
                             <i class="fas fa-hourglass-half"></i>
                             <span>
-                                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
+                                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
                                     {{#if system.duration.isPermanent}}
                                         Permanente
                                     {{else}}
@@ -126,6 +127,7 @@
                                 <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
                                 <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
                                 <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
+                                <option value="roll_modifier" {{#if (eq system.type 'roll_modifier')}}selected{{/if}}>Modificador de Rolagem</option>
                                 <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
                                 <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
                                 <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
@@ -135,7 +137,7 @@
                         <div class="hint-area">
                             {{#if system.type}}
                                 <div class="hint-card single active">
-                                    {{#if (eq system.type 'attribute')}}
+                                   {{#if (eq system.type 'attribute')}}
                                         <h5>Modificador de Atributo</h5>
                                         <p>Use para efeitos contínuos no ator, como +1 ST ou -2 DX. Cria um efeito ativo.</p>
                                     {{else}}
@@ -147,17 +149,22 @@
                                                 <h5>Status</h5>
                                                 <p>Aplica um ícone de status no token do alvo.</p>
                                             {{else}}
-                                                {{#if (eq system.type 'macro')}}
-                                                    <h5>Macro</h5>
-                                                    <p>Executa uma macro existente. Ideal para ações complexas.</p>
+                                                {{#if (eq system.type 'roll_modifier')}}
+                                                    <h5>Modificador de Rolagem</h5>
+                                                    <p>Cria um modificador temporário para testes, respeitando contexto e teto.</p>
                                                 {{else}}
-                                                    {{#if (eq system.type 'flag')}}
-                                                        <h5>Flag</h5>
-                                                        <p>Define um estado personalizado que outras condições podem consultar.</p>
+                                                    {{#if (eq system.type 'macro')}}
+                                                        <h5>Macro</h5>
+                                                        <p>Executa uma macro existente. Ideal para ações complexas.</p>
                                                     {{else}}
-                                                        {{#if (eq system.type 'chat')}}
-                                                            <h5>Mensagem de Chat</h5>
-                                                            <p>Envia um texto informativo e, opcionalmente, inclui um teste rápido.</p>
+                                                        {{#if (eq system.type 'flag')}}
+                                                            <h5>Flag</h5>
+                                                            <p>Define um estado personalizado que outras condições podem consultar.</p>
+                                                        {{else}}
+                                                            {{#if (eq system.type 'chat')}}
+                                                                <h5>Mensagem de Chat</h5>
+                                                                <p>Envia um texto informativo e, opcionalmente, inclui um teste rápido.</p>
+                                                            {{/if}}
                                                         {{/if}}
                                                     {{/if}}
                                                 {{/if}}
@@ -270,6 +277,43 @@
                                         {{/each}}
                                     </select>
                                 </div>
+ </div>
+                        {{/if}}
+
+                        {{!-- SEÇÃO PARA ROLL_MODIFIER --}}
+                        {{#if (eq system.type 'roll_modifier')}}
+                            <div class="conditional-card">
+                                <div class="conditional-card-header">
+                                    <div>
+                                        <p class="eyebrow">Ajuste de teste</p>
+                                        <h5>Modificador de Rolagem</h5>
+                                    </div>
+                                    <span class="chip subtle">Contextual</span>
+                                </div>
+                                <div class="effect-detail-grid">
+                                    <div class="form-row stacked">
+                                        <label class="row-label">Valor do Modificador</label>
+                                        <input type="text" name="system.roll_modifier_value" value="{{system.roll_modifier_value}}" placeholder="Ex: +2 ou -1"/>
+                                    </div>
+                                    <div class="form-row stacked">
+                                        <label class="row-label">Teto (Cap)</label>
+                                        <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
+                                    </div>
+                                    <div class="form-row stacked">
+                                        <label class="row-label">Contexto</label>
+                                        <select name="system.roll_modifier_context">
+                                            <option value="all" {{#if (eq system.roll_modifier_context 'all')}}selected{{/if}}>Qualquer rolagem</option>
+                                            <option value="attack" {{#if (eq system.roll_modifier_context 'attack')}}selected{{/if}}>Ataque (qualquer)</option>
+                                            <option value="attack_melee" {{#if (eq system.roll_modifier_context 'attack_melee')}}selected{{/if}}>Ataque corpo-a-corpo</option>
+                                            <option value="attack_ranged" {{#if (eq system.roll_modifier_context 'attack_ranged')}}selected{{/if}}>Ataque à distância</option>
+                                            <option value="defense" {{#if (eq system.roll_modifier_context 'defense')}}selected{{/if}}>Defesa</option>
+                                            <option value="skill" {{#if (eq system.roll_modifier_context 'skill')}}selected{{/if}}>Perícia/Atributo</option>
+                                            <option value="spell" {{#if (eq system.roll_modifier_context 'spell')}}selected{{/if}}>Magia</option>
+                                            <option value="power" {{#if (eq system.roll_modifier_context 'power')}}selected{{/if}}>Poder</option>
+                                            <option value="default" {{#if (eq system.roll_modifier_context 'default')}}selected{{/if}}>Outros</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         {{/if}}
 
@@ -373,7 +417,7 @@
                     </div>
                 </section>
 
-                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag'))}}
+                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
                     <section class="form-section effect-card">
                         <div class="section-header">
                             <div>

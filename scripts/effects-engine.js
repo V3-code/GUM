@@ -2,7 +2,7 @@
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
  * Lida com tipos de efeitos separados:
- * - 'attribute'/'flag': Cria ActiveEffects para mecânica e duração.
+ * - 'attribute'/'flag'/'roll_modifier': Cria ActiveEffects para mecânica e duração.
  * - 'status': Usa toggleStatusEffect para controlar ícones no token.
  * - 'resource_change', 'macro', 'chat': Executam ações pontuais.
  */
@@ -93,9 +93,78 @@ if (effectSystem.attachedStatusId) {
                     // Não usamos mais flags.gum.statusId nem toggleStatusEffect aqui
                 }
 
-                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+ await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
                 // Renderiza a ficha para mostrar a pílula
                 targetActor.sheet.render(false); 
+            }
+            break;
+        }
+
+        // =======================================================
+        // CASO ROLL_MODIFIER (ActiveEffect para modificadores de rolagem)
+        // =======================================================
+        case 'roll_modifier': {
+            for (const targetToken of targets) {
+                const targetActor = targetToken.actor;
+                const activeEffectData = {
+                    name: effectItem.name,
+                    img: effectItem.img,
+                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
+                    changes: [],
+                    statuses: [],
+                    flags: {
+                        gum: {
+                            effectUuid: effectItem.uuid,
+                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            rollModifier: {
+                                value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                cap: effectSystem.roll_modifier_cap ?? "",
+                                context: effectSystem.roll_modifier_context ?? "all"
+                            }
+                        }
+                    }
+                };
+
+                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                    activeEffectData.duration = {};
+                    const value = parseInt(effectSystem.duration.value) || 1;
+                    const unit = effectSystem.duration.unit;
+
+                    if (unit === 'turns') {
+                        activeEffectData.duration.turns = value;
+                    } else if (unit === 'seconds') {
+                        if (effectSystem.duration.inCombat && game.combat) {
+                            activeEffectData.duration.turns = value;
+                        } else {
+                            activeEffectData.duration.seconds = value;
+                        }
+                    } else if (unit === 'rounds') {
+                        activeEffectData.duration.rounds = value;
+                    } else if (unit === 'minutes') {
+                        activeEffectData.duration.seconds = value * 60;
+                    } else if (unit === 'hours') {
+                        activeEffectData.duration.seconds = value * 60 * 60;
+                    } else if (unit === 'days') {
+                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                    }
+
+                    if (effectSystem.duration.inCombat && game.combat) {
+                        activeEffectData.duration.combat = game.combat.id;
+                    }
+                    activeEffectData.duration.startRound = game.combat?.round ?? null;
+                    activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                    activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                }
+
+                const coreStatusId = effectItem.name.slugify({ strict: true });
+                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
+
+                if (effectSystem.attachedStatusId) {
+                    activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                }
+
+                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                targetActor.sheet.render(false);
             }
             break;
         }

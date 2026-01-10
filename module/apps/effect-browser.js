@@ -86,6 +86,7 @@ _onFilterResults(event) {
     const typesToShow = {
         attribute: form.querySelector('[name="filter-attribute"]').checked,
         status: form.querySelector('[name="filter-status"]').checked,
+        roll_modifier: form.querySelector('[name="filter-roll_modifier"]').checked,
         chat: form.querySelector('[name="filter-chat"]').checked,
         macro: form.querySelector('[name="filter-macro"]').checked,
         flag: form.querySelector('[name="filter-flag"]').checked
@@ -127,10 +128,19 @@ _onFilterResults(event) {
         return "";
       };
 
+      const rollModifierTags = system.type === "roll_modifier"
+        ? [
+            createTag("Modificador", system.roll_modifier_value),
+            createTag("Teto", system.roll_modifier_cap),
+            createTag("Contexto", system.roll_modifier_context)
+          ].join("")
+        : "";
+
       const tags = [
         createTag("Tipo", system.type ? system.type.toUpperCase() : null),
         createTag("Caminho", system.path),
-        createTag("Operação", system.operation || system.statusId || system.value)
+        createTag("Operação", system.operation || system.statusId || system.value),
+        rollModifierTags
       ].join("");
 
       const description = await TextEditor.enrichHTML(system.description || system.notes || "<i>Sem descrição.</i>", { async: true });

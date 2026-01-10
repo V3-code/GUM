@@ -44,6 +44,7 @@
                 <option value="attribute" {{#if (eq effect.type 'attribute')}}selected{{/if}}>Atributo</option>
                 <option value="resource_change" {{#if (eq effect.type 'resource_change')}}selected{{/if}}>Alterção de Registro</option>
                 <option value="status" {{#if (eq effect.type 'status')}}selected{{/if}}>Status</option>
+                <option value="roll_modifier" {{#if (eq effect.type 'roll_modifier')}}selected{{/if}}>Modificador de Rolagem</option>
                 <option value="chat" {{#if (eq effect.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
                 <option value="macro" {{#if (eq effect.type 'macro')}}selected{{/if}}>Macro</option>
                 <option value="flag" {{#if (eq effect.type 'flag')}}selected{{/if}}>Flag</option>
@@ -94,7 +95,34 @@
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="chat_notice" {{checked effect.chat_notice}}/><span>Avisar no Chat?</span></label>
             <label class="custom-checkbox"><input type="checkbox" name="confirm_prompt" {{checked effect.confirm_prompt}}/><span>Pedir Confirmação?</span></label>
-            <label class="custom-checkbox"><input type="checkbox" name="variable_value" {{checked effect.variable_value}}/><span>Pedir Valor Variável?</span></label>
+ <label class="custom-checkbox"><input type="checkbox" name="variable_value" {{checked effect.variable_value}}/><span>Pedir Valor Variável?</span></label>
+        {{/if}}
+
+        {{#if (eq effect.type 'roll_modifier')}}
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>Valor do Modificador</label>
+                    <input type="text" name="roll_modifier_value" value="{{effect.roll_modifier_value}}" placeholder="Ex: +2 ou -1"/>
+                </div>
+                <div class="form-group">
+                    <label>Teto (Cap)</label>
+                    <input type="text" name="roll_modifier_cap" value="{{effect.roll_modifier_cap}}" placeholder="Opcional"/>
+                </div>
+                <div class="form-group">
+                    <label>Contexto</label>
+                    <select name="roll_modifier_context">
+                        <option value="all" {{#if (eq effect.roll_modifier_context 'all')}}selected{{/if}}>Qualquer rolagem</option>
+                        <option value="attack" {{#if (eq effect.roll_modifier_context 'attack')}}selected{{/if}}>Ataque (qualquer)</option>
+                        <option value="attack_melee" {{#if (eq effect.roll_modifier_context 'attack_melee')}}selected{{/if}}>Ataque corpo-a-corpo</option>
+                        <option value="attack_ranged" {{#if (eq effect.roll_modifier_context 'attack_ranged')}}selected{{/if}}>Ataque à distância</option>
+                        <option value="defense" {{#if (eq effect.roll_modifier_context 'defense')}}selected{{/if}}>Defesa</option>
+                        <option value="skill" {{#if (eq effect.roll_modifier_context 'skill')}}selected{{/if}}>Perícia/Atributo</option>
+                        <option value="spell" {{#if (eq effect.roll_modifier_context 'spell')}}selected{{/if}}>Magia</option>
+                        <option value="power" {{#if (eq effect.roll_modifier_context 'power')}}selected{{/if}}>Poder</option>
+                        <option value="default" {{#if (eq effect.roll_modifier_context 'default')}}selected{{/if}}>Outros</option>
+                    </select>
+                </div>
+            </div>
         {{/if}}
 
         {{#if (eq effect.type 'status')}}

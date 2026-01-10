@@ -426,13 +426,14 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     
     const label = rollData.label || "Teste";
 
-    // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---
+    // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---    
     
     let globalModValue = 0;
     let lowestCap = extraOptions.effectiveCap !== undefined ? extraOptions.effectiveCap : Infinity; 
 
     // Só processa globais se NÃO tivermos instrução para ignorar
     if (!extraOptions.ignoreGlobals) {
+        const rollContext = _determineRollContext(actor, rollData);
         const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
         
         globalMods.forEach(m => {
@@ -443,6 +444,17 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 // Se achou um teto menor do que o atual, atualiza
+                if (!isNaN(capVal) && capVal < lowestCap) {
+                    lowestCap = capVal;
+                }
+            }
+        });
+
+        const effectMods = _collectEffectRollModifiers(actor, rollContext);
+        effectMods.forEach(m => {
+            globalModValue += (parseInt(m.value) || 0);
+            if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
+                const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
                     lowestCap = capVal;
                 }
@@ -575,6 +587,61 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
             console.error("GUM | Falha ao aplicar efeitos de ativação:", err);
         }
     }
+}
+
+function _determineRollContext(actor, rollData) {
+    const type = rollData.type;
+    const itemId = rollData.itemId;
+
+    if (type === 'defense') return 'defense';
+
+    if (type === 'attack') {
+        if (rollData.attackType === 'ranged') return 'attack_ranged';
+        if (rollData.isRanged === true) return 'attack_ranged';
+        if (rollData.attackType === 'melee') return 'attack_melee';
+    }
+
+    if (itemId) {
+        const item = actor?.items?.get(itemId);
+        if (item) {
+            if (item.type === 'spell') return 'spell';
+            if (item.type === 'power') return 'power';
+            if (item.type === 'ranged_weapon') return 'attack_ranged';
+        }
+    }
+
+    if (type === 'attack') return 'attack_melee';
+    if (type === 'skill' || type === 'attribute') return 'skill';
+    if (type === 'spell') return 'spell';
+    if (type === 'power') return 'power';
+
+    return 'default';
+}
+
+function _matchesRollContext(modContext, rollContext) {
+    if (!modContext || modContext === 'all') return true;
+    if (Array.isArray(modContext)) return modContext.includes(rollContext);
+    if (typeof modContext === 'string' && modContext.includes(',')) {
+        return modContext.split(',').map(c => c.trim()).includes(rollContext);
+    }
+    if (modContext === 'attack') return rollContext.startsWith('attack');
+    return modContext === rollContext;
+}
+
+function _collectEffectRollModifiers(actor, rollContext) {
+    const activeEffects = Array.from(actor?.appliedEffects ?? actor?.effects ?? []);
+    const mods = [];
+    for (const effect of activeEffects) {
+        const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+        if (!data) continue;
+        if (!_matchesRollContext(data.context, rollContext)) continue;
+        mods.push({
+            id: effect.id,
+            value: data.value,
+            cap: data.cap
+        });
+    }
+    return mods;
 }
 
 /**
