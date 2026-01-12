@@ -1463,7 +1463,8 @@ html.on('click', '.passive-section .effects-grid-container', (ev) => {
             itemId: dataset.itemId || $(element).closest('.item').data('itemId') || "", 
             img: dataset.img || "",
             attackType: dataset.attackType || null, 
-            isRanged: dataset.isRanged === "true"   
+            isRanged: dataset.isRanged === "true",
+            attributeKey: dataset.attributeKey || null
         };
 
         if (ev.shiftKey) {

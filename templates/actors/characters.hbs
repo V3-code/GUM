@@ -100,19 +100,19 @@
 
           <div class="senses-container">
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão"><i class="fas fa-eye"></i> Visão</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão" data-attribute-key="vision"><i class="fas fa-eye"></i> Visão</a>
               <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição"><i class="fas fa-deaf"></i> Audição</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição" data-attribute-key="hearing"><i class="fas fa-deaf"></i> Audição</a>
               <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato"><i class="fas fa-wine-bottle"></i> Olfato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato" data-attribute-key="tastesmell"><i class="fas fa-wine-bottle"></i> Olfato</a>
               <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato"><i class="fas fa-hand-paper"></i> Tato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato" data-attribute-key="touch"><i class="fas fa-hand-paper"></i> Tato</a>
               <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
             </div>
           </div>
@@ -644,6 +644,7 @@
                              data-roll-value="{{this.system.final_nh}}" 
                              data-label="Teste de {{this.name}}" 
                              data-type="skill"
+                             data-attribute-key="{{this.system.base_attribute}}"
                              title="Rolar Perícia">
                         </div>
 
@@ -702,7 +703,8 @@
                                data-roll-value="{{this.system.final_nh}}" 
                                data-label="Teste de {{this.name}}" 
                                data-type="skill"
-                               data-item-id="{{this._id}}">
+                               data-item-id="{{this._id}}"
+                               data-attribute-key="{{this.system.base_attribute}}">
                                {{this.system.final_nh}}
                             </a>
                         </div>

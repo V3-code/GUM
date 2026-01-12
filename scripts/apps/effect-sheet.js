@@ -28,14 +28,115 @@ export class EffectSheet extends ItemSheet {
         const flagValue = context.system.flag_value;
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
             context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
-        context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description, { async: true });
+ context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description, { async: true });
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
         context.owner = this.item.isOwner;
         context.editable = this.options.editable;
 
+        const rawContext = context.system.roll_modifier_context;
+        const selectedContexts = Array.isArray(rawContext)
+            ? rawContext
+            : (rawContext || "")
+                .split(',')
+                .map(entry => entry.trim())
+                .filter(Boolean);
+
+        const rollModifierContexts = [
+            { id: "all", label: "Qualquer rolagem de teste" },
+            { id: "attack", label: "Ataque (qualquer)" },
+            { id: "attack_melee", label: "Ataque corpo-a-corpo" },
+            { id: "attack_ranged", label: "Ataque à distância" },
+            { id: "defense", label: "Defesa" },
+            { id: "spell", label: "Magias" },
+            { id: "power", label: "Poderes" },
+            { id: "sense_vision", label: "Visão" },
+            { id: "sense_hearing", label: "Audição" },
+            { id: "sense_tastesmell", label: "Olfato/Paladar" },
+            { id: "sense_touch", label: "Tato" },
+            { id: "check_st", label: "Atributo Específico: ST" },
+            { id: "skill_st", label: "Perícias baseadas em ST" },
+            { id: "check_dx", label: "Atributo Específico: DX" },
+            { id: "skill_dx", label: "Perícias baseadas em DX" },
+            { id: "check_iq", label: "Atributo Específico: IQ" },
+            { id: "skill_iq", label: "Perícias baseadas em IQ" },
+            { id: "check_ht", label: "Atributo Específico: HT" },
+            { id: "skill_ht", label: "Perícias baseadas em HT" },
+            { id: "check_per", label: "Atributo Específico: Per" },
+            { id: "skill_per", label: "Perícias baseadas em Per" },
+            { id: "check_vont", label: "Atributo Específico: Vont" },
+            { id: "skill_vont", label: "Perícias baseadas em Vont" }
+        ];
+
+        const hasSelections = selectedContexts.length > 0;
+        const contextsById = rollModifierContexts.reduce((acc, ctx) => {
+            acc[ctx.id] = {
+                ...ctx,
+                selected: hasSelections ? selectedContexts.includes(ctx.id) : ctx.id === "all"
+            };
+            return acc;
+        }, {});
+
+        if (selectedContexts.includes("skill")) {
+            [
+                "check_st", "skill_st",
+                "check_dx", "skill_dx",
+                "check_iq", "skill_iq",
+                "check_ht", "skill_ht",
+                "check_per", "skill_per",
+                "check_vont", "skill_vont"
+            ].forEach(id => {
+                if (contextsById[id]) contextsById[id].selected = true;
+            });
+        }
+
+        context.rollModifierContextAll = contextsById.all;
+        context.rollModifierContextGroups = [
+            {
+                title: "Combate",
+                contexts: [
+                    contextsById.attack,
+                    contextsById.attack_melee,
+                    contextsById.attack_ranged,
+                    contextsById.defense
+                ],
+                listClass: "roll-context-list-columns"
+            },
+            {
+                title: "Específicas",
+                contexts: [
+                    contextsById.spell,
+                    contextsById.power,
+                    contextsById.sense_vision,
+                    contextsById.sense_hearing,
+                    contextsById.sense_tastesmell,
+                    contextsById.sense_touch
+                ],
+                listClass: "roll-context-list-columns"
+            },
+            {
+                title: "Atributos e Perícias",
+                contexts: [
+                    contextsById.check_st,
+                    contextsById.skill_st,
+                    contextsById.check_dx,
+                    contextsById.skill_dx,
+                    contextsById.check_iq,
+                    contextsById.skill_iq,
+                    contextsById.check_ht,
+                    contextsById.skill_ht,
+                    contextsById.check_per,
+                    contextsById.skill_per,
+                    contextsById.check_vont,
+                    contextsById.skill_vont
+                ],
+                listClass: "roll-context-list-columns"
+            }
+        ];
+        context.rollModifierContextValue = hasSelections ? selectedContexts.join(",") : "all";
 
         return context;
     }
+
 
     /**
      * Preserve scroll position when the sheet re-renders to avoid jumping to the top.
@@ -94,8 +195,33 @@ activateListeners(html) {
             }
         };
 
-        macroInput.addEventListener('keyup', validateMacro);
+  macroInput.addEventListener('keyup', validateMacro);
         validateMacro(); // Valida ao abrir a ficha
+    }
+
+    const contextHiddenInput = html.find('input[name="system.roll_modifier_context"]')[0];
+    const contextCheckboxes = html.find('.roll-context-checkbox');
+    const updateRollModifierContext = (trigger) => {
+        if (!contextHiddenInput || !contextCheckboxes.length) return;
+        const target = trigger?.currentTarget;
+        if (target && target.dataset.context === "all" && target.checked) {
+            contextCheckboxes.each((_, box) => {
+                if (box.dataset.context !== "all") box.checked = false;
+            });
+        } else if (target && target.checked) {
+            contextCheckboxes.each((_, box) => {
+                if (box.dataset.context === "all") box.checked = false;
+            });
+        }
+        const selected = contextCheckboxes
+            .toArray()
+            .filter(box => box.checked)
+            .map(box => box.dataset.context);
+        contextHiddenInput.value = selected.length ? selected.join(",") : "all";
+    };
+    if (contextCheckboxes.length) {
+        contextCheckboxes.on('change', updateRollModifierContext);
+        updateRollModifierContext();
     }
 }
 

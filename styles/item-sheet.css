@@ -1965,6 +1965,54 @@
   margin: 0;
 }
 
+.gum.sheet.item.effect-sheet .roll-context-all {
+  padding: 6px 8px;
+  border: 1px solid var(--item-border-light);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.gum.sheet.item.effect-sheet .roll-context-all .gm-checkbox {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.gum.sheet.item.effect-sheet .roll-context-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.gum.sheet.item.effect-sheet .roll-context-title {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--item-text-muted);
+}
+
+.gum.sheet.item.effect-sheet .roll-context-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.76rem;
+}
+
+.gum.sheet.item.effect-sheet .roll-context-list.roll-context-list-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  column-gap: 10px;
+  row-gap: 4px;
+}
+
+.gum.sheet.item.effect-sheet .roll-context-list .gm-checkbox {
+  font-size: 0.76rem;
+  font-weight: 600;
+  gap: 6px;
+}
+
 .gum.sheet.item.effect-sheet .radio-group.horizontal {
   display: flex;
   gap: 12px;

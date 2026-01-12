@@ -78,19 +78,40 @@ export class GurpsRollPrompt extends FormApplication {
             return modContext.split(",").map(c => c.trim()).includes(rollContext);
         }
         if (modContext === "attack") return rollContext.startsWith("attack");
+        if (modContext === "skill") return rollContext.startsWith("skill_") || rollContext === "skill";
         return modContext === rollContext;
     }
     
     _determineContext() {
         const type = this.rollData.type;
         const itemId = this.rollData.itemId;
+        const attributeKey = this.rollData.attributeKey?.toLowerCase?.() || this.rollData.attribute?.toLowerCase?.();
+        const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
+        const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
         
         if (type === 'defense') return 'defense';
 
         if (type === 'attack') {
             if (this.rollData.attackType === 'ranged') return 'attack_ranged';
             if (this.rollData.isRanged === true) return 'attack_ranged';
-            if (this.rollData.attackType === 'melee') return 'attack_melee';
+ if (this.rollData.attackType === 'melee') return 'attack_melee';
+        }
+
+        if (type === 'spell') return 'spell';
+        if (type === 'power') return 'power';
+
+        if (type === 'attribute' && attributeKey) {
+            if (attributeKeys.includes(attributeKey)) return `check_${attributeKey}`;
+        }
+
+        if (type === 'skill') {
+            if (attributeKey && senseKeys.includes(attributeKey)) return `sense_${attributeKey}`;
+            let baseAttribute = attributeKey;
+            if (!baseAttribute && itemId) {
+                const item = this.actor.items.get(itemId);
+                if (item?.system?.base_attribute) baseAttribute = item.system.base_attribute.toLowerCase();
+            }
+            if (baseAttribute && attributeKeys.includes(baseAttribute)) return `skill_${baseAttribute}`;
         }
 
         if (itemId) {
@@ -104,8 +125,6 @@ export class GurpsRollPrompt extends FormApplication {
 
         if (type === 'attack') return 'attack_melee';
         if (type === 'skill' || type === 'attribute') return 'skill';
-        if (type === 'spell') return 'spell';
-        if (type === 'power') return 'power';
 
         return 'default';
     }
@@ -197,9 +216,9 @@ export class GurpsRollPrompt extends FormApplication {
         else if (context === 'power') {
              validKeys.push('combat_attack_power', 'power_iq', 'power_ht', 'power_will');
         }
-        else if (context === 'skill') {
-            validKeys.push('attr_all', 'attr_dx_all', 'attr_iq_all', 'attr_ht_all', 'attr_st_all'); 
-            validKeys.push('skill_dx', 'skill_iq', 'skill_ht', 'skill_per', 'skill_will');
+        else if (context === 'skill' || context.startsWith('skill_') || context.startsWith('check_')) {
+            validKeys.push('attr_all', 'attr_dx_all', 'attr_iq_all', 'attr_ht_all', 'attr_st_all', 'attr_per_all', 'attr_will_all'); 
+            validKeys.push('skill_st', 'skill_dx', 'skill_iq', 'skill_ht', 'skill_per', 'skill_will');
         }
 
         return validKeys.some(k => targets[k] === true);

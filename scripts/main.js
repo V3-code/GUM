@@ -592,6 +592,9 @@ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.re
 function _determineRollContext(actor, rollData) {
     const type = rollData.type;
     const itemId = rollData.itemId;
+    const attributeKey = rollData.attributeKey?.toLowerCase?.() || rollData.attribute?.toLowerCase?.();
+    const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
+    const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
 
     if (type === 'defense') return 'defense';
 
@@ -599,6 +602,23 @@ function _determineRollContext(actor, rollData) {
         if (rollData.attackType === 'ranged') return 'attack_ranged';
         if (rollData.isRanged === true) return 'attack_ranged';
         if (rollData.attackType === 'melee') return 'attack_melee';
+    }
+
+    if (type === 'spell') return 'spell';
+    if (type === 'power') return 'power';
+
+    if (type === 'attribute' && attributeKey) {
+        if (attributeKeys.includes(attributeKey)) return `check_${attributeKey}`;
+    }
+
+    if (type === 'skill') {
+        if (attributeKey && senseKeys.includes(attributeKey)) return `sense_${attributeKey}`;
+        let baseAttribute = attributeKey;
+        if (!baseAttribute && itemId) {
+            const item = actor?.items?.get(itemId);
+            if (item?.system?.base_attribute) baseAttribute = item.system.base_attribute.toLowerCase();
+        }
+        if (baseAttribute && attributeKeys.includes(baseAttribute)) return `skill_${baseAttribute}`;
     }
 
     if (itemId) {
@@ -610,10 +630,8 @@ function _determineRollContext(actor, rollData) {
         }
     }
 
-    if (type === 'attack') return 'attack_melee';
+  if (type === 'attack') return 'attack_melee';
     if (type === 'skill' || type === 'attribute') return 'skill';
-    if (type === 'spell') return 'spell';
-    if (type === 'power') return 'power';
 
     return 'default';
 }
@@ -625,6 +643,7 @@ function _matchesRollContext(modContext, rollContext) {
         return modContext.split(',').map(c => c.trim()).includes(rollContext);
     }
     if (modContext === 'attack') return rollContext.startsWith('attack');
+    if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
     return modContext === rollContext;
 }
 

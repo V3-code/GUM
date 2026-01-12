@@ -1,5 +1,5 @@
-2026/01/09-18:01:19.439 331c Recovering log #318
-2026/01/09-18:01:19.439 331c Level-0 table #320: started
-2026/01/09-18:01:19.446 331c Level-0 table #320: 383 bytes OK
-2026/01/09-18:01:19.454 331c Delete type=0 #318
-2026/01/09-18:01:19.454 331c Delete type=3 #317
+2026/01/11-22:31:36.571 9cc Recovering log #321
+2026/01/11-22:31:36.571 9cc Level-0 table #323: started
+2026/01/11-22:31:36.579 9cc Level-0 table #323: 1133 bytes OK
+2026/01/11-22:31:36.587 9cc Delete type=0 #321
+2026/01/11-22:31:36.587 9cc Delete type=3 #319

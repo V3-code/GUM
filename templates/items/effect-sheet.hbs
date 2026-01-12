@@ -299,19 +299,31 @@
                                         <label class="row-label">Teto (Cap)</label>
                                         <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
                                     </div>
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Contexto</label>
-                                        <select name="system.roll_modifier_context">
-                                            <option value="all" {{#if (eq system.roll_modifier_context 'all')}}selected{{/if}}>Qualquer rolagem</option>
-                                            <option value="attack" {{#if (eq system.roll_modifier_context 'attack')}}selected{{/if}}>Ataque (qualquer)</option>
-                                            <option value="attack_melee" {{#if (eq system.roll_modifier_context 'attack_melee')}}selected{{/if}}>Ataque corpo-a-corpo</option>
-                                            <option value="attack_ranged" {{#if (eq system.roll_modifier_context 'attack_ranged')}}selected{{/if}}>Ataque à distância</option>
-                                            <option value="defense" {{#if (eq system.roll_modifier_context 'defense')}}selected{{/if}}>Defesa</option>
-                                            <option value="skill" {{#if (eq system.roll_modifier_context 'skill')}}selected{{/if}}>Perícia/Atributo</option>
-                                            <option value="spell" {{#if (eq system.roll_modifier_context 'spell')}}selected{{/if}}>Magia</option>
-                                            <option value="power" {{#if (eq system.roll_modifier_context 'power')}}selected{{/if}}>Poder</option>
-                                            <option value="default" {{#if (eq system.roll_modifier_context 'default')}}selected{{/if}}>Outros</option>
-                                        </select>
+<div class="form-row stacked">
+                                        <label class="row-label">Contextos Afetados</label>
+                                        <input type="hidden" name="system.roll_modifier_context" value="{{rollModifierContextValue}}"/>
+                                        <div class="roll-context-all">
+                                            <label class="gm-checkbox">
+                                                <input type="checkbox" class="roll-context-checkbox" data-context="{{rollModifierContextAll.id}}" {{checked rollModifierContextAll.selected}}/>
+                                                <span>{{rollModifierContextAll.label}}</span>
+                                            </label>
+                                        </div>
+                                        <div class="roll-context-columns">
+                                            {{#each rollModifierContextGroups as |group|}}
+                                                <div class="roll-context-group">
+                                                    <p class="roll-context-title">{{group.title}}</p>
+                                                    <div class="roll-context-list {{group.listClass}}">
+                                                        {{#each group.contexts as |ctx|}}
+                                                            <label class="gm-checkbox">
+                                                                <input type="checkbox" class="roll-context-checkbox" data-context="{{ctx.id}}" {{checked ctx.selected}}/>
+                                                                <span>{{ctx.label}}</span>
+                                                            </label>
+                                                        {{/each}}
+                                                    </div>
+                                                </div>
+                                            {{/each}}
+                                        </div>
+                                        <p class="hint">Selecione mais de um contexto. "Qualquer rolagem" substitui as demais opções.</p>
                                     </div>
                                 </div>
                             </div>
