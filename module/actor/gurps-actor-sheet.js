@@ -1195,6 +1195,8 @@ html.on('click', '.attack-group-details .group-summary .item-edit', this._onEdit
         }
     });
 
+    html.find('details[data-group-id]').on('toggle', this._onDetailsToggle.bind(this));
+
     // -------------------------------------------------------------
     // 2. MOVER EQUIPAMENTO (Botão Camiseta: Equipar / Desequipar)
     // -------------------------------------------------------------
