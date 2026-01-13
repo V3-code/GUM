@@ -568,7 +568,8 @@ async getData(options) {
         // ================================================================== //
            const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ];
             context.characteristicsByBlock = characteristics.reduce((acc, char) => {
-            const blockId = char.system.block_id || 'block2';
+            const defaultBlockId = char.type === 'disadvantage' ? 'block3' : 'block2';
+            const blockId = char.system.block_id || defaultBlockId;
             if (!acc[blockId]) acc[blockId] = [];
             acc[blockId].push(char);
             return acc;
@@ -581,6 +582,12 @@ async getData(options) {
             for (const blockId in context.characteristicsByBlock) {
                 context.characteristicsByBlock[blockId].sort(getSortFunction(charSortPref));
             }
+            const racialBlockId = 'block1';
+            const racialItems = context.characteristicsByBlock[racialBlockId] || [];
+            context.racialCharacteristics = {
+                advantages: racialItems.filter((item) => item.type === 'advantage'),
+                disadvantages: racialItems.filter((item) => item.type === 'disadvantage')
+            };
 
         // ================================================================== //
         //    ENRIQUECIMENTO DE TEXTO (Seu código original)

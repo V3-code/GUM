@@ -2758,25 +2758,16 @@
     color: var(--gum-accent-gold);
 }
 
-/* O Input do Título */
-.gum.sheet.actor .tab[data-tab="characteristics"] .block-header input {
+/* O Título do Bloco */
+.gum.sheet.actor .tab[data-tab="characteristics"] .block-title {
     font-family: var(--gum-font-condensed);
     text-transform: uppercase;
     letter-spacing: 1px;
     font-size: 1.1em;
     font-weight: 700;
     color: var(--gum-text-subtitulo);
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-    cursor: text; /* Indica que é editável */
-}
-.gum.sheet.actor .tab[data-tab="characteristics"] .block-header input:focus {
-    color: var(--gum-text-escuro);
-    outline: none;
+    margin: 0;
 }
 
 /* Ícone de Ordenar */
@@ -2848,7 +2839,7 @@
 .gum.sheet.actor .characteristic-card .item-name a {
     font-family: var(--gum-font-primary); font-weight: 600; font-size: 0.9em;
     color: var(--gum-text-escuro); text-decoration: none; line-height: 1.1;
-    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: block; overflow: hidden; text-overflow: ellipsis;
 }
 .gum.sheet.actor .characteristic-card .item-name a:hover { color: var(--gum-accent-red); }
 
@@ -2873,6 +2864,50 @@
 .gum.sheet.actor .tab[data-tab="characteristics"] .placeholder-text {
     width: 100%; text-align: center; font-style: italic; color: var(--gum-text-medio);
     padding: 10px; font-size: 0.85em; opacity: 0.7;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-section {
+    display: grid;
+    gap: 14px;
+    padding: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-subsection {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.04);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-subsection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gum-border-light);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-subsection-title {
+    margin: 0;
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gum-text-subtitulo);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-subsection-count {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--gum-text-medio);
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-subsection .flex-wrap-container {
+    padding: 10px;
 }
 
 /* =================================================================== */

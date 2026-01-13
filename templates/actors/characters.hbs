@@ -541,48 +541,119 @@
     {{!-- ============================================================= --}}
     <div class="tab" data-group="primary" data-tab="characteristics">
         
-        {{!-- Helper para iterar sobre os 4 blocos (evita repetição de código) --}}
-        {{#each (object block1="block1" block2="block2" block3="block3" block4="block4") as |blockKey blockId|}}
+                {{!-- Helper para iterar sobre os 4 blocos (evita repetição de código) --}}
+        {{#each (array
+            (obj "id" "block1" "title" "Raciais" "isRacial" true)
+            (obj "id" "block2" "title" "Vantagens")
+            (obj "id" "block3" "title" "Desvantagens")
+            (obj "id" "block4" "title" "Especiais")
+        ) as |block|}}
             
             {{!-- Transforma a DIV em DETAILS para ser colapsável --}}
             {{!-- O ID é importante para o sistema lembrar o que está aberto/fechado --}}
-            <details class="form-section gum-details" id="char-section-{{blockId}}" data-group-id="char-section-{{blockId}}" {{collapsibleState (concat "char-section-" blockId) @root.collapsedData}}>
+            <details class="form-section gum-details" id="char-section-{{block.id}}" data-group-id="char-section-{{block.id}}" {{collapsibleState (concat "char-section-" block.id) @root.collapsedData}}>
                 
                 {{!-- O Summary atua como o cabeçalho clicável --}}
                 <summary class="block-header">
                     <div class="header-left">
                         <i class="fas fa-chevron-right indicator"></i>
-                        {{!-- Input do Nome do Bloco (Ex: Vantagens) --}}
-                        <input type="text" name="system.characteristic_blocks.{{blockId}}.name" value="{{lookup (lookup ../actor.system.characteristic_blocks blockId) 'name'}}" placeholder="Nome do Bloco"/>
+                        <h4 class="block-title">{{block.title}}</h4>
                     </div>
                     <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
                 </summary>
                 
-                <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-                    {{#each (lookup ../characteristicsByBlock blockId)}}
-                        <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                            <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                            <div class="card-info">
-                                <span class="item-name">
-                                    <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
-                                </span>
-                                <div class="card-details">
-                                    <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                                    {{#if this.system.self_control_roll}}
-                                    <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
-                                    {{/if}}
+                {{#if block.isRacial}}
+                    <div class="racial-section">
+                        <div class="racial-subsection">
+                            <div class="racial-subsection-header">
+                                <h5 class="racial-subsection-title">Vantagens Raciais</h5>
+                                <span class="racial-subsection-count">{{racialCharacteristics.advantages.length}}</span>
+                            </div>
+                            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+                                {{#each ../racialCharacteristics.advantages}}
+                                    <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                                        <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                                        <div class="card-info">
+                                            <span class="item-name">
+                                                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                                            </span>
+                                            <div class="card-details">
+                                                <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                                                {{#if this.system.self_control_roll}}
+                                                <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                                                {{/if}}
+                                            </div>
+                                        </div>
+                                        <div class="item-controls">
+                                            <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                            <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </li>
+                                {{/each}}
+                                {{#unless ../racialCharacteristics.advantages.length}}
+                                    <li class="placeholder-text">Nenhuma vantagem racial adicionada.</li>
+                                {{/unless}}
+                            </ol>
+                        </div>
+                        <div class="racial-subsection">
+                            <div class="racial-subsection-header">
+                                <h5 class="racial-subsection-title">Desvantagens Raciais</h5>
+                                <span class="racial-subsection-count">{{racialCharacteristics.disadvantages.length}}</span>
+                            </div>
+                            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+                                {{#each ../racialCharacteristics.disadvantages}}
+                                    <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                                        <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                                        <div class="card-info">
+                                            <span class="item-name">
+                                                <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                                            </span>
+                                            <div class="card-details">
+                                                <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                                                {{#if this.system.self_control_roll}}
+                                                <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                                                {{/if}}
+                                            </div>
+                                        </div>
+                                        <div class="item-controls">
+                                            <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                            <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                                        </div>
+                                    </li>
+                                {{/each}}
+                                {{#unless ../racialCharacteristics.disadvantages.length}}
+                                    <li class="placeholder-text">Nenhuma desvantagem racial adicionada.</li>
+                                {{/unless}}
+                            </ol>
+                        </div>
+                    </div>
+                {{else}}
+                    <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+                        {{#each (lookup ../characteristicsByBlock block.id)}}
+                            <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                                <div class="card-info">
+                                    <span class="item-name">
+                                        <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a>
+                                    </span>
+                                    <div class="card-details">
+                                        <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                                        {{#if this.system.self_control_roll}}
+                                        <span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>
+                                        {{/if}}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="item-controls">
-                                <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                                <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                            </div>
-                        </li>
-                    {{/each}}
-                    {{#unless (lookup ../characteristicsByBlock blockId)}}
-                        <li class="placeholder-text">Arraste itens para cá.</li>
-                    {{/unless}}
-                </ol>
+                                <div class="item-controls">
+                                    <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                                    <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                                </div>
+                            </li>
+                        {{/each}}
+                        {{#unless (lookup ../characteristicsByBlock block.id)}}
+                            <li class="placeholder-text">Arraste itens para cá.</li>
+                        {{/unless}}
+                    </ol>
+                {{/if}}
             </details>
         {{/each}}
         

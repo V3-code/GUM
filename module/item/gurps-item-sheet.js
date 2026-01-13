@@ -69,11 +69,11 @@ export class GurpsItemSheet extends ItemSheet {
         context.skillDifficulties = context.config.difficulties;
         context.hierarchyTypes = context.config.hierarchyTypes;
 
-        context.characteristic_blocks = { 
-            "block1": "Traços Raciais", 
-            "block2": "Vantagens", 
-            "block3": "Desvantagens", 
-            "block4": "Especiais" 
+        const defaultBlockId = this.item.type === 'disadvantage' ? 'block3' : 'block2';
+        context.characteristic_blocks = {
+            [defaultBlockId]: "Nenhuma",
+            "block1": "Traços Raciais",
+            "block4": "Especiais"
         };
 
         // =======================================================
