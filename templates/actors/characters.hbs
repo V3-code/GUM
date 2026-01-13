@@ -1365,6 +1365,9 @@
                         {{!-- Outros stats (Alcance, etc) mantidos iguais --}}
                          {{#if (eq attack.attack_type "melee")}}
                             <span class="tag-box"><label>Aparar</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a></span>
+                            {{#if attack.final_block}}
+                              <span class="tag-box"><label>Bloqueio</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio">{{attack.final_block}}</a></span>
+                            {{/if}}
                             <span class="tag-box"><label>Alcance</label><span class="value">{{attack.reach}}</span></span>
                          {{/if}}
                          {{#if (eq attack.attack_type "ranged")}}
