@@ -1391,12 +1391,58 @@ Hooks.once('ready', async function() {
 });
     
 
- $('body').on('click', '.chat-message .rollable', async (ev) => {
+ const normalizeTestKey = (value) => value?.toString?.().trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+const resolveActorTestValue = (actor, rawKey) => {
+    if (!actor) return null;
+    const key = rawKey?.toString?.().trim();
+    if (!key) return null;
+
+    const numericKey = Number(key);
+    if (!Number.isNaN(numericKey) && key !== "") return numericKey;
+
+    const attributeCandidates = [key, key.toLowerCase(), key.toUpperCase()];
+    let attributeObject = null;
+    for (const candidate of attributeCandidates) {
+        attributeObject = foundry.utils.getProperty(actor.system?.attributes, candidate);
+        if (attributeObject) break;
+    }
+    if (attributeObject) {
+        return (attributeObject.override !== null && attributeObject.override !== undefined)
+            ? attributeObject.override
+            : attributeObject.final;
+    }
+
+    const normalizedKey = normalizeTestKey(key);
+    const skills = actor.items?.filter(item => item.type === 'skill') || [];
+    const matchedSkill = skills.find(skill => normalizeTestKey(skill.name) === normalizedKey);
+    if (matchedSkill) {
+        return matchedSkill.system?.final_nh ?? matchedSkill.system?.nh ?? 10;
+    }
+
+    return null;
+};
+
+const formatTestLabel = (rawKey) => {
+    if (!rawKey) return "HT";
+    const key = rawKey.toString().trim();
+    const attributeKey = key.toLowerCase();
+    const standardAttributes = new Set(["st", "dx", "iq", "ht", "will", "per"]);
+    if (standardAttributes.has(attributeKey)) {
+        return attributeKey.toUpperCase();
+    }
+    return key;
+};
+
+$('body').on('click', '.chat-message .rollable', async (ev) => {
         const element = ev.currentTarget;
         const speaker = ChatMessage.getSpeaker({ scene: $(element).closest('.message').data('scene-id'), actor: $(element).closest('.message').data('actor-id') });
         const actor = ChatMessage.getSpeakerActor(speaker);
         if (!actor) return ui.notifications.warn("Ator da mensagem de chat não encontrado.");
-        
+
+        const rollValue = Number(element.dataset.rollValue);
+        const rollLabel = element.dataset.label || "Teste";
+
         // A lógica de Shift+Click para modificadores
         if (ev.shiftKey) {
             new Dialog({
@@ -1407,13 +1453,13 @@ Hooks.once('ready', async function() {
                         label: "Rolar",
                         callback: (html) => {
                             const situationalMod = parseInt(html.find('input[name="modifier"]').val()) || 0;
-                            performGURPSRoll(element, actor, situationalMod);
+                            performGURPSRoll(actor, { label: rollLabel, value: rollValue, modifier: situationalMod });
                         }
                     }
                 }
             }).render(true);
         } else {
-            performGURPSRoll(element, actor, 0);
+            performGURPSRoll(actor, { label: rollLabel, value: rollValue, modifier: 0 });
         }
     });
 
@@ -1454,22 +1500,13 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         return null;
     };
 
-    const computeTargetValue = (actor) => {
-        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
-        const attributeKey = rollConfig.attribute || "ht";
-        const attributeObject = foundry.utils.getProperty(actor.system.attributes, attributeKey);
-        let baseAttributeValue = 10;
-
-        if (attributeObject) {
-            baseAttributeValue = (attributeObject.override !== null && attributeObject.override !== undefined)
-                ? attributeObject.override
-                : attributeObject.final;
-        } else if (!isNaN(parseInt(attributeKey))) {
-            baseAttributeValue = parseInt(attributeKey);
-        }
-
+       const computeTargetValue = (actor) => {
+        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10, sourceLabel: formatTestLabel(rollConfig.attribute || "HT") };
+        const rawKey = rollConfig.attribute || "ht";
+        const baseValue = resolveActorTestValue(actor, rawKey);
+        const baseAttributeValue = baseValue ?? 10;
         const modifier = parseInt(rollConfig.modifier) || 0;
-        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue };
+        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue, sourceLabel: formatTestLabel(rawKey) };
     };
 
     const resistingActor = resolveActorForRoll();
@@ -1547,7 +1584,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     const diceFaces = roll.dice[0].results.map(r => `<span class="die-face">${r.result}</span>`).join('');
     const modifier = parseInt(rollConfig.modifier) || 0;
     const modifierText = modifier !== 0 ? `${modifier > 0 ? '+' : ''}${modifier}` : '±0';
-    const attributeLabel = (rollConfig.attribute || 'HT').toUpperCase();
+    const attributeLabel = (targetCalc.sourceLabel || 'HT').toString();
     const marginValue = Math.abs(margin);
 
     const isCritSuccess = roll.total <= 4 || (roll.total === 5 && finalTarget >= 15) || (roll.total === 6 && finalTarget >= 16);
@@ -1576,7 +1613,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 
             <div class="roll-meta-row">
                 <div class="meta-bar ${modifier !== 0 ? 'has-mods' : ''}">
-                    <span class="meta-part">Atributo <strong>${attributeLabel}</strong></span>
+                   <span class="meta-part">Teste <strong>${attributeLabel}</strong></span>
                     <span class="meta-mods">
                         ${modifierText} <small>(Base ${targetCalc.base}${modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''})</small>
                     </span>
@@ -1831,8 +1868,8 @@ async function processConditions(actor, eventData = null) {
                                 if (effectItem.system.roll_attribute === 'fixed') {
                                     finalTarget = Number(effectItem.system.roll_fixed_value) || 10;
                                 } else if (effectItem.system.roll_attribute) {
-                                    const attr = foundry.utils.getProperty(actor.system.attributes, effectItem.system.roll_attribute);
-                                    const finalAttr = attr?.final ?? 10;
+                                    const baseValue = resolveActorTestValue(actor, effectItem.system.roll_attribute);
+                                    const finalAttr = baseValue ?? 10;
                                     finalTarget = finalAttr + (Number(effectItem.system.roll_modifier) || 0);
                                 }
                                 const label = effectItem.system.roll_label || `Rolar Teste`;

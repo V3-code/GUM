@@ -17,55 +17,6 @@
         <div class="sheet-body-content effect-sheet-body">
             <div class="tab active" data-tab="configuracao" data-group="primary">
 
-                {{!-- HERO RESUMIDO --}}
-                <section class="form-section effect-hero">
-                    <div>
-                        <p class="eyebrow">Configuração visual do efeito</p>
-                        <h3 class="effect-title">{{item.name}}</h3>
-                        <p class="hint">Ajuste a natureza do efeito, sua resistência e o comportamento específico sem sair desta tela.</p>
-                    </div>
-                    <div class="hero-meta">
-                        <span class="meta-pill">
-                            <i class="fas fa-magic"></i>
-                            <span>
-                                {{#if system.type}}
-                                    {{#if (eq system.type 'attribute')}}Modificador de Atributo{{/if}}
-                                    {{#if (eq system.type 'status')}}Status{{/if}}
-                                    {{#if (eq system.type 'resource_change')}}Alteração de Recurso{{/if}}
-                                    {{#if (eq system.type 'roll_modifier')}}Modificador de Rolagem{{/if}}
-                                    {{#if (eq system.type 'chat')}}Mensagem de Chat{{/if}}
-                                    {{#if (eq system.type 'macro')}}Macro{{/if}}
-                                    {{#if (eq system.type 'flag')}}Flag{{/if}}
-                                {{else}}
-                                    Tipo não definido
-                                {{/if}}
-                            </span>
-                        </span>
-                        <span class="meta-pill subtle {{#if system.resistanceRoll.isResisted}}active{{/if}}">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>{{#if system.resistanceRoll.isResisted}}Com resistência{{else}}Aplicação direta{{/if}}</span>
-                        </span>
-                        <span class="meta-pill subtle">
-                            <i class="fas fa-hourglass-half"></i>
-                            <span>
-                                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
-                                    {{#if system.duration.isPermanent}}
-                                        Permanente
-                                    {{else}}
-                                        {{#if system.duration.value}}
-                                            {{system.duration.value}} {{system.duration.unit}}
-                                        {{else}}
-                                            Duração não definida
-                                        {{/if}}
-                                    {{/if}}
-                                {{else}}
-                                    Instantâneo
-                                {{/if}}
-                            </span>
-                        </span>
-                    </div>
-                </section>
-
                 <div class="effect-grid">
                     {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
                     <section class="form-section effect-card">
@@ -424,7 +375,6 @@
                                         {{/if}}
                                     </div>
                                 </div>
-                            </div>
                         {{/if}}
                     </div>
                 </section>
@@ -469,19 +419,6 @@
                         {{/unless}}
                     </section>
                 {{/if}}
-
-                <section class="form-section effect-card">
-                    <div class="section-header">
-                        <div>
-                            <p class="eyebrow">Apresentação</p>
-                            <h4 class="section-title">Descrição Resumida (para a Tag)</h4>
-                        </div>
-                        <a class="edit-text-btn" data-target="system.chat_description" title="Editar Descrição Resumida"><i class="fas fa-edit"></i></a>
-                    </div>
-                    <div class="rendered-text">
-                        {{{enrichedChatDescription}}}
-                    </div>
-                </section>
             </div>
 
             {{! ========================================================= }}
@@ -489,24 +426,6 @@
             {{! ========================================================= }}
             <div class="tab" data-tab="description" data-group="primary">
               <div class="description-tab">
-                <div class="description-hero">
-                  <div class="hero-text">
-                    <p class="eyebrow">Narrativa & Referência</p>
-                    <h3>Descrição do Item</h3>
-                    <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
-                  </div>
-                  <div class="hero-meta">
-                    <div class="meta-chip">
-                      <i class="fas fa-book-open"></i>
-                      <span>Resumo (Chat)</span>
-                    </div>
-                    <div class="meta-chip">
-                      <i class="fas fa-scroll"></i>
-                      <span>Completa</span>
-                    </div>
-                  </div>
-                </div>
-
                 <div class="description-grid">
                   <div class="form-section description-section">
                     <div class="description-header">
