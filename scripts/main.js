@@ -17,6 +17,7 @@ import { applySingleEffect } from './effects-engine.js';
 import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
+import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -407,6 +408,73 @@ class ContingentEffectBuilder extends Dialog {
  * @param {Object} rollData - Dados do teste { label, value, modifier, type, itemId, etc. }
  * @param {Object} extraOptions - Opções extras { ignoreGlobals: boolean }
  */
+export async function rollFromHotbar({ actorId, actorUuid, rollData } = {}) {
+    let actor = null;
+
+    if (actorUuid) {
+        actor = await fromUuid(actorUuid).catch(() => null);
+    }
+
+    if (!actor && actorId) {
+        actor = game.actors.get(actorId);
+    }
+
+    if (!actor) {
+        ui.notifications.warn("[GUM] Ator não encontrado para rolagem de atalho.");
+        return;
+    }
+
+    const resolvedRollData = rollData || {};
+
+    if (resolvedRollData.quick && typeof performGURPSRoll !== "undefined") {
+        return performGURPSRoll(actor, resolvedRollData);
+    }
+
+    if (typeof GurpsRollPrompt !== "undefined") {
+        return new GurpsRollPrompt(actor, resolvedRollData).render(true);
+    }
+
+    return performGURPSRoll(actor, resolvedRollData);
+}
+
+async function createGumRollMacro(data, slot) {
+    const rollData = data?.rollData || {};
+    let actor = null;
+
+    if (data?.actorUuid) {
+        actor = await fromUuid(data.actorUuid).catch(() => null);
+    }
+
+    if (!actor && data?.actorId) {
+        actor = game.actors.get(data.actorId);
+    }
+
+    if (!actor) {
+        ui.notifications.warn("[GUM] Ator não encontrado para criar atalho de rolagem.");
+        return false;
+    }
+
+    const label = rollData.label || "Teste";
+    const command = `game.gum.rollFromHotbar(${JSON.stringify({
+        actorId: actor.id,
+        actorUuid: actor.uuid,
+        rollData
+    })})`;
+    let macro = game.macros.find((m) => m.name === label && m.command === command);
+
+    if (!macro) {
+        macro = await Macro.create({
+            name: label,
+            type: "script",
+            img: rollData.img || actor.img || "icons/svg/d20.svg",
+            command
+        }, { displaySheet: false });
+    }
+
+    game.user.assignHotbarMacro(macro, slot);
+    return false;
+}
+
 export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     
     // --- 1. LÓGICA DE VALORES BASE ---
@@ -789,11 +857,17 @@ Hooks.once('init', async function() {
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     game.gum = {};
     game.gum.importFromGCS = importFromGCS;
+    game.gum.rollFromHotbar = rollFromHotbar;
 
     CONFIG.statusEffects = GUM.statusEffects;
     CONFIG.Actor.documentClass = GurpsActor;
 
     registerSystemSettings();
+
+    Hooks.on("hotbarDrop", (bar, data, slot) => {
+        if (data?.type !== "GUM.Roll") return;
+        return createGumRollMacro(data, slot);
+    });
     
     // --- 2. LÊ A CONFIGURAÇÃO E APLICA NO SISTEMA DE COMBATE ---
     // ✅ A CORREÇÃO FINAL:

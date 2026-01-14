@@ -873,8 +873,44 @@ _getSubmitData(updateData) {
         } else {
             ui.notifications.info("Nenhum modificador novo para importar.");
         }
-    }
+ }
     
+_getRollDataFromElement(element) {
+    const dataset = element.dataset;
+
+    return {
+        label: dataset.label || "Teste",
+        value: parseInt(dataset.rollValue) || 10,
+        type: dataset.type || "attribute",
+        itemId: dataset.itemId || $(element).closest('.item').data('itemId') || "",
+        img: dataset.img || "",
+        attackType: dataset.attackType || null,
+        isRanged: dataset.isRanged === "true",
+        attributeKey: dataset.attributeKey || null
+    };
+}
+
+_onDragStart(event) {
+    const target = event.currentTarget;
+    const dataTransfer = event?.dataTransfer || event?.originalEvent?.dataTransfer;
+
+    if (target?.classList?.contains("rollable")) {
+        if (!dataTransfer) return;
+        const rollData = this._getRollDataFromElement(target);
+        const dragData = {
+            type: "GUM.Roll",
+            actorId: this.actor.id,
+            actorUuid: this.actor.uuid,
+            rollData
+        };
+
+        dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        return;
+    }
+
+    return super._onDragStart(event);
+}
+
 activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
@@ -1454,7 +1490,7 @@ html.on('click', '.passive-section .effects-grid-container', (ev) => {
         }
     });
 
-    // ================================================================== //
+   // ================================================================== //
     //   LISTENER: ROLAGENS GERAIS (ROLLABLE)
     // ================================================================== //
     // Correção: Unifiquei seus dois listeners de .rollable em um só mais robusto para evitar duplicidade
@@ -1463,27 +1499,19 @@ html.on('click', '.passive-section .effects-grid-container', (ev) => {
         ev.stopPropagation(); // Importante
 
         const element = ev.currentTarget;
-        const dataset = element.dataset;
-
-        const rollData = {
-            label: dataset.label || "Teste",
-            value: parseInt(dataset.rollValue) || 10,
-            type: dataset.type || "attribute", 
-            itemId: dataset.itemId || $(element).closest('.item').data('itemId') || "", 
-            img: dataset.img || "",
-            attackType: dataset.attackType || null, 
-            isRanged: dataset.isRanged === "true",
-            attributeKey: dataset.attributeKey || null
-        };
+        const rollData = this._getRollDataFromElement(element);
 
         if (ev.shiftKey) {
             // Shift = Rápido
             if(typeof performGURPSRoll !== 'undefined') performGURPSRoll(this.actor, rollData);
         } else {
             // Normal = Prompt
-            if(typeof GurpsRollPrompt !== 'undefined') new GurpsRollPrompt(this.actor, rollData).render(true);
+             if(typeof GurpsRollPrompt !== 'undefined') new GurpsRollPrompt(this.actor, rollData).render(true);
         }
     });
+
+    html.find(".rollable").attr("draggable", true);
+    html.on("dragstart", ".rollable", this._onDragStart.bind(this));
 
 // ================================================================== //
 //  ROLAGEM DE DANO (ATAQUES DE EQUIPAMENTO + MAGIAS / PODERES)
