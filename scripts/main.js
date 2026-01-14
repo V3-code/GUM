@@ -1500,14 +1500,18 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         return null;
     };
 
-       const computeTargetValue = (actor) => {
-        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10, sourceLabel: formatTestLabel(rollConfig.attribute || "HT") };
-        const rawKey = rollConfig.attribute || "ht";
-        const baseValue = resolveActorTestValue(actor, rawKey);
-        const baseAttributeValue = baseValue ?? 10;
+    const computeTargetValue = (actor) => {
+        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
+        const attributeKey = rollConfig.attribute || "ht";
+        const resolvedBaseValue = resolveRollBaseValue(actor, attributeKey);
+        const baseAttributeValue = (resolvedBaseValue !== null && resolvedBaseValue !== undefined)
+            ? resolvedBaseValue
+            : 10;
+
         const modifier = parseInt(rollConfig.modifier) || 0;
-        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue, sourceLabel: formatTestLabel(rawKey) };
+        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue };
     };
+
 
     const resistingActor = resolveActorForRoll();
     if (!resistingActor) {
@@ -1812,6 +1816,43 @@ Handlebars.registerHelper('obj', function(...args) {
     return obj;
 });
 
+const normalizeLookupKey = (value) => value
+    ?.toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const resolveRollBaseValue = (actor, rollAttribute) => {
+    if (!actor || !rollAttribute) return null;
+    const normalizedKey = normalizeLookupKey(rollAttribute);
+    if (!normalizedKey) return null;
+
+    const attributes = actor.system?.attributes || {};
+    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizedKey);
+    if (attrKey) {
+        const attr = attributes[attrKey];
+        const value = (attr?.override !== null && attr?.override !== undefined)
+            ? attr?.override
+            : (attr?.final ?? attr?.value);
+        if (value !== undefined && value !== null && !Number.isNaN(Number(value))) {
+            return Number(value);
+        }
+    }
+
+    const skills = actor.items?.filter((item) => item.type === "skill") || [];
+    const matchedSkill = skills.find((skill) => normalizeLookupKey(skill.name) === normalizedKey);
+    if (matchedSkill) {
+        const nhValue = matchedSkill.system?.final_nh;
+        if (nhValue !== undefined && nhValue !== null && !Number.isNaN(Number(nhValue))) {
+            return Number(nhValue);
+        }
+    }
+
+    if (!Number.isNaN(parseInt(rollAttribute))) return parseInt(rollAttribute);
+    return null;
+};
+
 /**
  * Função unificada que avalia todas as condições de um ator.
  * - Sincroniza ícones de status no token usando a API moderna (v12+).
@@ -1868,8 +1909,8 @@ async function processConditions(actor, eventData = null) {
                                 if (effectItem.system.roll_attribute === 'fixed') {
                                     finalTarget = Number(effectItem.system.roll_fixed_value) || 10;
                                 } else if (effectItem.system.roll_attribute) {
-                                    const baseValue = resolveActorTestValue(actor, effectItem.system.roll_attribute);
-                                    const finalAttr = baseValue ?? 10;
+                                    const resolvedBase = resolveRollBaseValue(actor, effectItem.system.roll_attribute);
+                                    const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
                                     finalTarget = finalAttr + (Number(effectItem.system.roll_modifier) || 0);
                                 }
                                 const label = effectItem.system.roll_label || `Rolar Teste`;

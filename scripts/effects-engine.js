@@ -6,6 +6,43 @@
  * - 'status': Usa toggleStatusEffect para controlar ícones no token.
  * - 'resource_change', 'macro', 'chat': Executam ações pontuais.
  */
+const normalizeLookupKey = (value) => value
+    ?.toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const resolveRollBaseValue = (actor, rollAttribute) => {
+    if (!actor || !rollAttribute) return null;
+    const normalizedKey = normalizeLookupKey(rollAttribute);
+    if (!normalizedKey) return null;
+
+    const attributes = actor.system?.attributes || {};
+    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizedKey);
+    if (attrKey) {
+        const attr = attributes[attrKey];
+        const value = (attr?.override !== null && attr?.override !== undefined)
+            ? attr?.override
+            : (attr?.final ?? attr?.value);
+        if (value !== undefined && value !== null && !Number.isNaN(Number(value))) {
+            return Number(value);
+        }
+    }
+
+    const skills = actor.items?.filter((item) => item.type === "skill") || [];
+    const matchedSkill = skills.find((skill) => normalizeLookupKey(skill.name) === normalizedKey);
+    if (matchedSkill) {
+        const nhValue = matchedSkill.system?.final_nh;
+        if (nhValue !== undefined && nhValue !== null && !Number.isNaN(Number(nhValue))) {
+            return Number(nhValue);
+        }
+    }
+
+    if (!Number.isNaN(parseInt(rollAttribute))) return parseInt(rollAttribute);
+    return null;
+};
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
@@ -331,8 +368,8 @@ if (effectSystem.attachedStatusId) {
                     if (effectSystem.roll_attribute === 'fixed') {
                         finalTarget = Number(effectSystem.roll_fixed_value) || 10;
                     } else if (effectSystem.roll_attribute) {
-                        const attr = foundry.utils.getProperty(targetActor.system.attributes, effectSystem.roll_attribute);
-                        const finalAttr = attr?.final ?? 10;
+                       const resolvedBase = resolveRollBaseValue(targetActor, effectSystem.roll_attribute);
+                        const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
                         finalTarget = finalAttr + (Number(effectSystem.roll_modifier) || 0);
                     }
                     const label = effectSystem.roll_label || `Rolar Teste`;
