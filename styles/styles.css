@@ -392,253 +392,106 @@
 /* =================================================================== */
 
 .gurps-roll-card {
-    background: linear-gradient(135deg, #fdfbf6, #f4efe6);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 239, 229, 0.92));
     border: 1px solid #d7ccb8;
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 8px;
+    padding: 10px 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
     position: relative;
+    font-size: 0.9rem;
     font-family: "Roboto", "Segoe UI", sans-serif;
     color: #2f2b28;
     margin-top: 6px;
 }
 
 .gurps-roll-card.premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #a67c00, #ffd700, #a67c00);
+    display: none;
 }
 
 .gurps-roll-card .card-header {
-    background: #f8f4ed;
-    padding: 10px 12px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 4px;
     border-bottom: 1px solid #e6ddcd;
+    padding-bottom: 3px;
+    gap: 6px;
 }
 
-.gurps-roll-card .header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.gurps-roll-card .header-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid #d7ccb8;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-    background: #fff;
-    flex-shrink: 0;
-}
-.gurps-roll-card .header-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.gurps-roll-card .header-title h3 {
+.gurps-roll-card .card-header h3 {
     margin: 0;
-    font-family: "Cinzel", serif;
-    font-size: 0.95em;
+    font-size: 0.95rem;
     font-weight: 800;
     color: #2f2b28;
-    letter-spacing: 0.01em;
 }
 
-.gurps-roll-card .roll-meta-row {
+.gurps-roll-card .card-header small {
+    font-size: 0.78rem;
+    color: #6b5e55;
+    font-weight: 700;
+}
+
+.gurps-roll-card .card-formula-container {
+    margin-bottom: 6px;
     display: flex;
     flex-wrap: wrap;
-    padding: 8px 12px 4px;
-    color: #5d524a;
-    font-size: 0.88em;
+    gap: 6px;
     justify-content: center;
 }
-.gurps-roll-card .meta-bar {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 12px;
+
+.gurps-roll-card .formula-pill {
+    display: inline-block;
+    padding: 3px 7px;
+    border: 1px solid #e6ddcd;
     border-radius: 999px;
-    border: 1px solid #d7ccb8;
-    background: #f1e7d9;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-.gurps-roll-card .meta-bar.has-mods {
-    background: linear-gradient(90deg, #f1e7d9 0%, #f1e7d9 55%, #e8f2e9 100%);
-    border-color: #d1c4af;
-}
-.gurps-roll-card .meta-bar .meta-part {
-    font-weight: 800;
+    background: rgba(0, 0, 0, 0.04);
+    font-family: "Roboto Condensed", "Segoe UI", sans-serif;
     color: #2f2b28;
-}
-.gurps-roll-card .meta-bar .meta-part strong {
-    font-size: 1.05em;
-}
-.gurps-roll-card .meta-bar .meta-mods {
     font-weight: 700;
-    color: #2f6b3f;
-}
-.gurps-roll-card .meta-bar .meta-mods small {
-    font-weight: 700;
-    color: #6b5e55;
-    font-size: 0.78em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.gurps-roll-card .card-main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 8px 12px 12px;
-    align-items: center;
-}
-
-.gurps-roll-card .card-content {
-    padding: 12px;
-    display: grid;
-    gap: 10px;
-    background: linear-gradient(180deg, #fdfbf6 0%, #f7f1e8 100%);
-}
-
-.gurps-roll-card .summary-actors {
+.gurps-roll-card .card-main-flex {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 10px;
-    border: 1px dashed #d7ccb8;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.7);
-}
-
-.gurps-roll-card .summary-actors .actor-line {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    font-weight: 800;
-    color: #2f2b28;
-}
-
-.gurps-roll-card .summary-actors .actor-token-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e6ddcd;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-    background: #fff;
-}
-
-.gurps-roll-card .summary-actors .arrow-line {
-    color: #b64040;
-    font-size: 1.1em;
-}
-
-.gurps-roll-card .minicard {
-    background: rgba(0, 0, 0, 0.03);
+    align-items: stretch;
+    background: rgba(0, 0, 0, 0.02);
     border: 1px solid #e6ddcd;
-    border-radius: 8px;
-    padding: 10px 12px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    display: grid;
-    gap: 6px;
+    border-radius: 6px;
+    padding: 7px 8px;
 }
 
-.gurps-roll-card .minicard-title {
-    font-size: 0.82em;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #6b5e55;
-    letter-spacing: 0.03em;
-}
-
-.gurps-roll-card .minicard.result-card {
-    background: rgba(60, 154, 95, 0.08);
-    border-color: rgba(60, 154, 95, 0.45);
-}
-
-.gurps-roll-card .minicard.effects-card {
-    background: rgba(182, 64, 64, 0.08);
-    border-color: rgba(182, 64, 64, 0.4);
-}
-
-.gurps-roll-card .minicard.pending-card {
-    background: rgba(91, 158, 197, 0.08);
-    border-color: rgba(91, 158, 197, 0.4);
-}
-
-.gurps-roll-card .minicard p {
-    margin: 0;
-    color: #2f2b28;
-    line-height: 1.3;
-}
-
-.gurps-roll-card .total-column,
-.gurps-roll-card .dice-column {
-    background: #e6ddcd;
-    border: 1px solid #e6ddcd;
-    border-radius: 10px;
-    padding: 10px 9px;
-    text-align: center;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-.gurps-roll-card .dice-column {
-    background: #f4efe8;
-    border-color: #d9cebd;
-}
+.gurps-roll-card .roll-column,
 .gurps-roll-card .target-column {
-    background: #ffffff;
-    border-color: #e4d8c5;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    flex: 1;
+    text-align: center;
 }
 
 .gurps-roll-card .column-label {
-    font-size: 0.85em;
-    color: #9f9275;
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #6b5e55;
+    margin-bottom: 2px;
     letter-spacing: 0.02em;
     font-weight: 800;
-    margin-bottom: 4px;
-    text-transform: uppercase;
 }
 
-.gurps-roll-card .big-number {
-    font-size: 1.85em;
+.gurps-roll-card .roll-total {
+    font-size: 1.6rem;
     font-weight: 900;
-    color: #352425;
+    color: #2f2b28;
     line-height: 1.1;
-    margin-bottom: 6px;
 }
 
-.gurps-roll-card .margin-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: 800;
-    color: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-.gurps-roll-card .margin-chip.success { background: #3c9a5f; }
-.gurps-roll-card .margin-chip.failure { background: #b64040; }
-.gurps-roll-card .margin-chip.crit-success { background: linear-gradient(90deg, #2d8a4c, #54c487); }
-.gurps-roll-card .margin-chip.crit-failure { background: linear-gradient(90deg, #b64040, #e07c7c); }
-
-.gurps-roll-card .dice-row {
+.gurps-roll-card .individual-dice {
     display: flex;
-    justify-content: center;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
-    margin-top: 2px;
+    justify-content: center;
 }
+
 .gurps-roll-card .die-face {
     display: inline-flex;
     align-items: center;
@@ -655,69 +508,57 @@
     color: #2f2b28;
 }
 
-.gurps-roll-card .target-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-weight: 800;
-    color: #2f2b28;
-    font-size: 1.05em;
-    padding: 8px 10px;
-    border-radius: 12px;
-    background: rgba(182, 143, 93, 0.08);
+.gurps-roll-card .column-separator {
+    width: 1px;
+    background: #e6ddcd;
+    opacity: 0.8;
+    margin: 0 2px;
 }
-.gurps-roll-card .target-box .target-values {
-    display: grid;
-    gap: 2px;
-    justify-items: center;
-}
-.gurps-roll-card .target-box .target-value {
-    font-size: 2.2em;
+
+.gurps-roll-card .target-value {
+    font-size: 1.6rem;
     font-weight: 900;
-    line-height: 1.05;
+    color: #2f2b28;
+    line-height: 1.1;
 }
-.gurps-roll-card .target-box .capped-original {
-    text-decoration: line-through;
-    color: #9a3a41;
-    opacity: 0.7;
-    font-size: 0.9em;
+
+.gurps-roll-card .target-note {
+    font-size: 0.72rem;
+    color: #6b5e55;
+    font-weight: 700;
 }
-.gurps-roll-card .target-box .cap-note {
-    display: inline-block;
-    padding: 2px 6px;
-    background: #f8e5e6;
-    border: 1px solid #d59aa0;
+
+.gurps-roll-card .card-footer {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #e6ddcd;
+}
+
+.gurps-roll-card .result-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
     border-radius: 6px;
-    color: #9a3a41;
-    font-size: 0.78em;
-    font-weight: 800;
-    margin-top: 2px;
-}
-
-.gurps-roll-card .target-box.capped .target-value {
-    color: #9a3a41;
-}
-
-.gurps-roll-card .result-pill {
-    margin: 0 12px 12px;
-    padding: 6px 10px;
-    border-radius: 8px;
     font-weight: 800;
     color: #fff;
-    text-align: center;
     text-transform: uppercase;
-    letter-spacing: 0.01em;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    font-size: 0.9em;
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
-.gurps-roll-card .result-pill.success,
-.gurps-roll-card .result-pill.crit-success {
-    background: #235c36
+
+.gurps-roll-card .result-block.success,
+.gurps-roll-card .result-block.crit-success {
+    background: #235c36;
 }
-.gurps-roll-card .result-pill.failure,
-.gurps-roll-card .result-pill.crit-failure {
-    background: #7d3030
+
+.gurps-roll-card .result-block.failure,
+.gurps-roll-card .result-block.crit-failure {
+    background: #7d3030;
+}
+
+.gurps-roll-card .result-margin {
+    font-size: 0.88rem;
 }
 
 /* Cartas de resistência (aplicação de efeitos) */
@@ -725,6 +566,32 @@
     border: 1px solid #d1c4af;
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
     overflow: hidden;
+}
+
+.resistance-roll-card.roll-pending .card-header {
+    align-items: center;
+}
+
+.resistance-roll-card.roll-pending .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.resistance-roll-card.roll-pending .header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #d7ccb8;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.resistance-roll-card.roll-pending .header-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .resistance-roll-card .card-header h3 {

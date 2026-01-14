@@ -576,65 +576,51 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     }
 
     // --- 7. HTML DO CARD ---
-const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
+ const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
     const modText = totalModifier !== 0 ? `${totalModifier > 0 ? '+' : ''}${totalModifier}` : '±0';
-    const targetDisplay = isCapped
-      ? `
-        <div class="target-values">
-          <span class="capped-original">${mathLevel}</span>
-          <span class="target-value">${effectiveLevel}</span>
-          <span class="cap-note">Cap ${lowestCap}</span>
-        </div>
-      `
-      : `
-        <div class="target-values">
-          <span class="target-value">${effectiveLevel}</span>
-        </div>
-      `;
+
+    const modBreakdown = `M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue}`;
+    const targetPill = isCapped ? `Alvo ${effectiveLevel} (Cap ${lowestCap})` : `Alvo ${effectiveLevel}`;
 
     const content = `
         <div class="gurps-roll-card premium">
-
             <header class="card-header">
-                <div class="header-left">
-                    <div class="header-icon">
-                        <img src="${rollData.img || actor.img}" />
-                    </div>
-                    <div class="header-title">
-                        <h3>${label}</h3>
-                    </div>
-                </div>
+                <h3>${label}</h3>
+                <small>${actor.name}</small>
             </header>
 
-            <div class="roll-meta-row">
-                <div class="meta-bar ${totalModifier !== 0 ? 'has-mods' : ''}">
-                    <span class="meta-part">NH <strong>${baseValue}</strong></span>
-                    <span class="meta-mods">
-                        ${modText} <small>(M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue})</small>
-                    </span>
-                </div>
+            <div class="card-formula-container">
+                <span class="formula-pill">NH ${baseValue}</span>
+                <span class="formula-pill">${modText} (${modBreakdown})</span>
             </div>
 
-            <div class="card-main">
-                <div class="total-column">
-                    <div class="column-label">Dados</div>
-                    <div class="big-number">${total}</div>
-                    <div class="dice-row">${diceFaces}</div>
-                </div>
+            <div class="card-content">
+                <div class="card-main-flex">
+                    <div class="roll-column">
+                        <span class="column-label">Dados</span>
+                        <div class="roll-total">${total}</div>
+                        <div class="individual-dice">${diceFaces}</div>
+                    </div>
 
-                <div class="dice-column target-column">
-                    <div class="column-label">Alvo</div>
-                    <div class="target-box ${isCapped ? 'capped' : ''}">
-                        ${targetDisplay}
+                    <div class="column-separator"></div>
+
+                    <div class="target-column">
+                        <span class="column-label">Alvo</span>
+                        <div class="target-value">${effectiveLevel}</div>
+                        <div class="target-note">${isCapped ? `Cap ${lowestCap}` : 'Final'}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="result-pill ${statusClass}">
-                ${statusClass.includes('success') ? 'Margem de Sucesso' : 'Margem de Fracasso'} <strong>${margin}</strong>
-            </div>
+            <footer class="card-footer">
+                <div class="result-block ${statusClass}">
+                    <span class="result-label">${resultLabel}</span>
+                    <span class="result-margin">Margem ${margin}</span>
+                </div>
+            </footer>
         </div>
     `;
+
 
 
 
