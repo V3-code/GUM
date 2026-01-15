@@ -144,13 +144,15 @@ export class ConditionSheet extends ItemSheet {
         }
     }
 
-    async _saveDescription(event) {
+  async _saveDescription(event) {
         event.preventDefault();
         const field = event.currentTarget.dataset.field;
         const container = $(event.currentTarget).closest('.description-section');
-        const editor = container.find(`.editor[data-edit="${field}"]`);
-        const content = editor.length ? editor.val() : container.find(`textarea[name="${field}"]`).val();
-        if (field) await this.item.update({ [field]: content });
+        const content = await this._getEditorContent(field, container);
+        if (!field || content === null || content === undefined) return;
+        await this.item.update({ [field]: content });
+        const enriched = await TextEditorImpl.enrichHTML(content, { async: true });
+        container.find('.description-view').html(enriched);
         container.find('.description-view').show();
         container.find('.description-editor').hide();
     }
@@ -160,5 +162,35 @@ export class ConditionSheet extends ItemSheet {
         const container = $(event.currentTarget).closest('.description-section');
         container.find('.description-view').show();
         container.find('.description-editor').hide();
+    }
+
+    _getEditorInstance(field) {
+        const editor = this.editors?.[field];
+        if (!editor) return null;
+        return editor.editor ?? editor.instance ?? editor;
+    }
+
+    async _getEditorContent(field, container) {
+        if (!field) return null;
+        const instance = this._getEditorInstance(field);
+        if (instance?.getHTML) {
+            const html = instance.getHTML();
+            return html?.then ? await html : html;
+        }
+        if (instance?.getContent) {
+            const content = instance.getContent();
+            return content?.then ? await content : content;
+        }
+        if (instance?.view?.dom?.innerHTML) return instance.view.dom.innerHTML;
+        if (TextEditorImpl?.getContent) {
+            const element = container.find(`[name="${field}"]`).get(0)
+                ?? container.find(`.editor[data-edit="${field}"]`).get(0);
+            if (element) return TextEditorImpl.getContent(element);
+        }
+        const namedInput = container.find(`[name="${field}"]`);
+        if (namedInput.length) return namedInput.val();
+        const editorElement = container.find(`.editor[data-edit="${field}"]`);
+        if (editorElement.length) return editorElement.val() ?? editorElement.html();
+        return "";
     }
 }
