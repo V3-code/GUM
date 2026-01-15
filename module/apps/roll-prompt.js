@@ -8,6 +8,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.actor = actor;
         this.rollData = rollData;
         this.selectedModifiers = [];
+        this.onRoll = options.onRoll;
 
         this.context = this._determineContext();
 
@@ -454,15 +455,23 @@ async _updateObject(event, formData) {
         // Importante: Não precisamos calcular o 'finalValue' cortado aqui,
         // pois vamos mandar o 'lowestCap' para o main.js fazer a matemática visual correta.
         
-        performGURPSRoll(this.actor, {
+const rollPayload = {
             ...this.rollData,
             // Enviamos o valor matemático puro, o performGURPSRoll aplica o corte visualmente
-            value: parseInt(this.rollData.value) + totalMod, 
-            originalValue: this.rollData.value, 
-            modifier: totalMod          
-        }, { 
+            value: parseInt(this.rollData.value) + totalMod,
+            originalValue: this.rollData.value,
+            modifier: totalMod
+        };
+        const rollOptions = {
             ignoreGlobals: true, // Já processamos os globais aqui no prompt
             effectiveCap: lowestCap // ✅ O SEGREDO: Enviamos o teto calculado aqui!
-        }); 
-    }
+        };
+
+        if (typeof this.onRoll === "function") {
+            await this.onRoll(this.actor, rollPayload, rollOptions);
+            return;
+        }
+
+        performGURPSRoll(this.actor, rollPayload, rollOptions);
+    } 
 }

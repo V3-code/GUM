@@ -1526,7 +1526,6 @@ $('body').on('click', '.chat-message .rollable', async (ev) => {
 $('body').on('click', '.resistance-roll-button', async ev => {
     ev.preventDefault();
     const button = ev.currentTarget;
-    button.disabled = true;
 
     // Acessa o pacote de dados completo
     const rollData = JSON.parse(button.dataset.rollData);
@@ -1563,7 +1562,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
     });
 
-    const computeTargetValue = (actor) => {
+   const computeTargetValue = (actor, extraModifier = 0) => {
         if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
         const attributeKey = rollConfig.attribute || "ht";
         const resolvedBaseValue = resolveRollBaseValue(actor, attributeKey);
@@ -1571,171 +1570,195 @@ $('body').on('click', '.resistance-roll-button', async ev => {
             ? resolvedBaseValue
             : 10;
 
-        const modifier = parseInt(rollConfig.modifier) || 0;
-        return { finalTarget: baseAttributeValue + modifier, base: baseAttributeValue };
+        const effectModifier = parseInt(rollConfig.modifier) || 0;
+        const totalModifier = effectModifier + extraModifier;
+        return {
+            finalTarget: baseAttributeValue + totalModifier,
+            base: baseAttributeValue,
+            modifier: totalModifier,
+            effectModifier,
+            extraModifier,
+            attributeLabel: attributeKey.toString().toUpperCase()
+        };
     };
-
 
     const resistingActor = resolveActorForRoll();
     if (!resistingActor) {
         ui.notifications.warn("Nenhum ator encontrado para rolar a resistência.");
-        button.disabled = false;
         return;
     }
 
-    const targetCalc = computeTargetValue(resistingActor);
-    const finalTarget = targetCalc.finalTarget;
+    const performResistanceRoll = async (extraModifier = 0) => {
+        button.disabled = true;
+        const targetCalc = computeTargetValue(resistingActor, extraModifier);
+        const finalTarget = targetCalc.finalTarget;
 
-    const roll = new Roll("3d6");
-    await roll.evaluate();
+        const roll = new Roll("3d6");
+        await roll.evaluate();
 
-    const margin = finalTarget - roll.total;
-    const success = roll.total <= finalTarget;
-    const achievedMargin = Math.abs(margin);
-    const minMargin = parseInt(rollConfig.margin) || 0;
-    const marginOk = achievedMargin >= minMargin;
-    const applyOnSuccess = rollConfig.applyOn === 'success';
-    const shouldApply = marginOk && ((applyOnSuccess && success) || (!applyOnSuccess && !success));
+        const margin = finalTarget - roll.total;
+        const success = roll.total <= finalTarget;
+        const achievedMargin = Math.abs(margin);
+        const minMargin = parseInt(rollConfig.margin) || 0;
+        const marginOk = achievedMargin >= minMargin;
+        const applyOnSuccess = rollConfig.applyOn === 'success';
+        const shouldApply = marginOk && ((applyOnSuccess && success) || (!applyOnSuccess && !success));
 
-    let resultText = success ? `Sucesso com margem de ${margin}` : `Fracasso por uma margem de ${-margin}`;
-    let resultClass = success ? 'success' : 'failure';
-    let resultIcon = success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        let resultText = success ? `Sucesso com margem de ${margin}` : `Fracasso por uma margem de ${-margin}`;
+        let resultLabel = success ? "Sucesso" : "Falha";
+        let resultClass = success ? 'success' : 'failure';
 
-    if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) { resultText = `Sucesso Crítico!`; }
-    else if (roll.total >= 17 || (roll.total === 16 && margin <= -10)) { resultText = `Falha Crítica!`; }
+        if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
+            resultText = `Sucesso Crítico!`;
+            resultLabel = "Sucesso Crítico";
+            resultClass = 'crit-success';
+        } else if (roll.total >= 17 || (roll.total === 16 && margin <= -10)) {
+            resultText = `Falha Crítica!`;
+            resultLabel = "Falha Crítica";
+            resultClass = 'crit-failure';
+        }
 
-    // Comunica o resultado de volta para a janela de dano
-    if (game.gum.activeDamageApplication) {
-        // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
-        game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
-            isSuccess: success,
-            resultText: resultText,
-            shouldApply: shouldApply
-        }, effectItemData.system); // Passamos os dados do sistema como terceiro argumento
-    }
+        // Comunica o resultado de volta para a janela de dano
+        if (game.gum.activeDamageApplication) {
+            // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
+            game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
+                isSuccess: success,
+                resultText: resultText,
+                shouldApply: shouldApply
+            }, effectItemData.system); // Passamos os dados do sistema como terceiro argumento
+        }
 
-    // Aplica o efeito no alvo
-    if (shouldApply && mode !== "damage") {
-        const effectItem = await Item.fromSource(effectItemData);
-        if (effectItem) {
- const resolveTargets = () => {
-                const targets = [];
-                if (rollData.targetTokenId) {
-                    const token = canvas.tokens?.get(rollData.targetTokenId);
-                    if (token) targets.push(token);
-                }
-                if (targets.length === 0 && resistingActor) {
-                    const activeTokens = resistingActor.getActiveTokens();
-                    if (activeTokens.length > 0) {
-                        targets.push(...activeTokens);
-                    } else {
-                        targets.push(buildFallbackToken(resistingActor));
+        // Aplica o efeito no alvo
+        if (shouldApply && mode !== "damage") {
+            const effectItem = await Item.fromSource(effectItemData);
+            if (effectItem) {
+     const resolveTargets = () => {
+                    const targets = [];
+                    if (rollData.targetTokenId) {
+                        const token = canvas.tokens?.get(rollData.targetTokenId);
+                        if (token) targets.push(token);
                     }
-                }
-                if (targets.length === 0 && rollData.targetActorId) {
-                    const actor = game.actors.get(rollData.targetActorId);
-                    if (actor) {
-                        const activeTokens = actor.getActiveTokens();
+                    if (targets.length === 0 && resistingActor) {
+                        const activeTokens = resistingActor.getActiveTokens();
                         if (activeTokens.length > 0) {
                             targets.push(...activeTokens);
                         } else {
-                            targets.push(buildFallbackToken(actor));
+                            targets.push(buildFallbackToken(resistingActor));
                         }
                     }
+                    if (targets.length === 0 && rollData.targetActorId) {
+                        const actor = game.actors.get(rollData.targetActorId);
+                        if (actor) {
+                            const activeTokens = actor.getActiveTokens();
+                            if (activeTokens.length > 0) {
+                                targets.push(...activeTokens);
+                            } else {
+                                targets.push(buildFallbackToken(actor));
+                            }
+                        }
+                    }
+                    return targets;
+                };
+
+
+                const targets = resolveTargets();
+                if (targets.length > 0) {
+                    const originItem = rollData.originItemUuid ? await fromUuid(rollData.originItemUuid).catch(() => null) : null;
+                    const originActor = rollData.sourceActorId ? game.actors.get(rollData.sourceActorId) : null;
+
+                    ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
+                  const conditionContext = mode === "condition" && rollData.conditionId
+                        ? { conditionId: rollData.conditionId }
+                        : {};
+                    await applySingleEffect(effectItem, targets, {
+                        actor: originActor,
+                        origin: originItem || effectItem,
+                        ...conditionContext
+                    });
+                } else {
+                    ui.notifications.warn("Não foi possível encontrar um alvo para aplicar o efeito.");
                 }
-                return targets;
-            };
-
-
-            const targets = resolveTargets();
-            if (targets.length > 0) {
-                const originItem = rollData.originItemUuid ? await fromUuid(rollData.originItemUuid).catch(() => null) : null;
-                const originActor = rollData.sourceActorId ? game.actors.get(rollData.sourceActorId) : null;
-
-                ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
-              const conditionContext = mode === "condition" && rollData.conditionId
-                    ? { conditionId: rollData.conditionId }
-                    : {};
-                await applySingleEffect(effectItem, targets, {
-                    actor: originActor,
-                    origin: originItem || effectItem,
-                    ...conditionContext
-                });
-            } else {
-                ui.notifications.warn("Não foi possível encontrar um alvo para aplicar o efeito.");
             }
         }
-    }
 
-// Monta o card de resultado no chat usando o mesmo layout da rolagem base
-    const diceFaces = roll.dice[0].results.map(r => `<span class="die-face">${r.result}</span>`).join('');
-    const modifier = parseInt(rollConfig.modifier) || 0;
-    const modifierText = modifier !== 0 ? `${modifier > 0 ? '+' : ''}${modifier}` : '±0';
-    const attributeLabel = (targetCalc.sourceLabel || 'HT').toString();
-    const marginValue = Math.abs(margin);
+        // Monta o card de resultado no chat usando o mesmo layout da rolagem base
+        const diceFaces = roll.dice[0].results.map(r => `<span class="die-face">${r.result}</span>`).join('');
+        const modifierText = targetCalc.modifier !== 0 ? `${targetCalc.modifier > 0 ? '+' : ''}${targetCalc.modifier}` : '±0';
+        const modBreakdownParts = [];
+        if (targetCalc.effectModifier) {
+            modBreakdownParts.push(`Ef ${targetCalc.effectModifier > 0 ? '+' : ''}${targetCalc.effectModifier}`);
+        }
+        if (targetCalc.extraModifier) {
+            modBreakdownParts.push(`Mod ${targetCalc.extraModifier > 0 ? '+' : ''}${targetCalc.extraModifier}`);
+        }
+        const modBreakdown = modBreakdownParts.length > 0 ? modBreakdownParts.join(' | ') : 'Sem modificadores';
+        const marginValue = Math.abs(margin);
 
-    const isCritSuccess = roll.total <= 4 || (roll.total === 5 && finalTarget >= 15) || (roll.total === 6 && finalTarget >= 16);
-    const isCritFailure = roll.total >= 18 || (roll.total === 17 && finalTarget <= 15) || (roll.total - finalTarget >= 10);
+        const flavor = `
+            <div class="gurps-roll-card premium roll-result">
+                <header class="card-header">
+                    <h3>Teste de Resistência</h3>
+                    <small>${resistingActor?.name || 'Alvo'}</small>
+                </header>
 
-    if (isCritSuccess) {
-        resultClass = 'crit-success';
-    } else if (isCritFailure) {
-        resultClass = 'crit-failure';
-    }
-
-    const flavor = `
-        <div class="gurps-roll-card premium resistance-roll-card roll-result">
-
-            <header class="card-header">
-                <div class="header-left">
-                    <div class="header-icon">
-                        <img src="${effectItemData.img || resistingActor?.img || "icons/svg/dice-target.svg"}" />
-                    </div>
-                    <div class="header-title">
-                        <h3>Teste de Resistência</h3>
-                        <small>${effectItemData.name || 'Efeito'}</small>
-                    </div>
-                </div>
-            </header>
-
-            <div class="roll-meta-row">
-                <div class="meta-bar ${modifier !== 0 ? 'has-mods' : ''}">
-                   <span class="meta-part">Teste <strong>${attributeLabel}</strong></span>
-                    <span class="meta-mods">
-                        ${modifierText} <small>(Base ${targetCalc.base}${modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''})</small>
-                    </span>
-                </div>
-            </div>
-
-            <div class="card-main">
-                <div class="total-column">
-                    <div class="column-label">Dados</div>
-                    <div class="big-number">${roll.total}</div>
-                    <div class="dice-row">${diceFaces}</div>
+                <div class="card-formula-container">
+                    <span class="formula-pill">${targetCalc.attributeLabel} ${targetCalc.base}</span>
+                    <span class="formula-pill">${modifierText} (${modBreakdown})</span>
                 </div>
 
-                <div class="dice-column target-column">
-                    <div class="column-label">Alvo</div>
-                    <div class="target-box">
-                        <div class="target-values">
-                            <span class="target-value">${finalTarget}</span>
+                <div class="card-content">
+                    <div class="card-main-flex">
+                        <div class="roll-column">
+                            <span class="column-label">Dados</span>
+                            <div class="roll-total">${roll.total}</div>
+                            <div class="individual-dice">${diceFaces}</div>
                         </div>
-                        <div class="cap-note">${attributeLabel}${modifier !== 0 ? ` (${modifierText})` : ''}</div>
+
+                        <div class="column-separator"></div>
+
+                        <div class="target-column">
+                            <span class="column-label">Alvo</span>
+                            <div class="target-value">${finalTarget}</div>
+                            <div class="target-note">Final</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="result-pill ${resultClass}">
-                ${success ? 'Margem de Sucesso' : 'Margem de Fracasso'} <strong>${marginValue}</strong>
+                <footer class="card-footer">
+                    <div class="result-block ${resultClass}">
+                        <span class="result-label">${resultLabel}</span>
+                        <span class="result-margin">Margem ${marginValue}</span>
+                    </div>
+                </footer>
             </div>
-        </div>
-    `;
+        `;
 
-    // Atualiza a mensagem original no chat
-    const originalMessage = game.messages.get($(button).closest('.message').data('messageId'));
-    if (originalMessage) {
-        await originalMessage.update({ content: flavor, rolls: [roll] });
+        // Atualiza a mensagem original no chat
+        const originalMessage = game.messages.get($(button).closest('.message').data('messageId'));
+        if (originalMessage) {
+            await originalMessage.update({ content: flavor, rolls: [roll] });
+        }
+    };
+
+    if (ev.shiftKey) {
+        await performResistanceRoll();
+        return;
     }
+
+    const promptTarget = computeTargetValue(resistingActor, 0);
+    const promptData = {
+        label: "Teste de Resistência",
+        type: "attribute",
+        attribute: rollConfig.attribute || "ht",
+        value: promptTarget.finalTarget,
+        img: effectItemData?.img || resistingActor.img
+    };
+
+    new GurpsRollPrompt(resistingActor, promptData, {
+        onRoll: async (_actor, promptPayload) => {
+            await performResistanceRoll(promptPayload.modifier || 0);
+        }
+    }).render(true);
 });
 
 });
