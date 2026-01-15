@@ -818,7 +818,12 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const rollData = effectItem.system?.resistanceRoll || {};
     const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
     if (suppressResistanceCard) {
-        await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem });
+        const conditionContext = options.conditionId ? { conditionId: options.conditionId } : {};
+        await applySingleEffect(effectItem, [targetToken], {
+            actor: sourceActor,
+            origin: originItem || effectItem,
+            ...conditionContext
+        });
         return;
     }
      const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
@@ -826,14 +831,15 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
     const modifierClass = rollData.modifier > 0 ? 'positive' : rollData.modifier < 0 ? 'negative' : 'neutral';
 
-    const chatPayload = {
-        mode: "activation",
+ const chatPayload = {
+        mode: options.mode || "activation",
         targetActorId: targetToken.actor?.id,
         targetTokenId: targetToken.id,
         effectItemData: effectItem.toObject(),
         sourceActorId: sourceActor?.id || null,
         originItemUuid: originItem?.uuid || null,
-        effectLinkId: effectLinkId || null
+        effectLinkId: effectLinkId || null,
+        conditionId: options.conditionId || null
     };
 
  const content = `
@@ -852,8 +858,8 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                     <div class="info-row">
                         <span class="label">Alvo</span>
                         <span class="value with-img">
-                            <img src="${targetToken.actor?.img || targetToken.document.texture.src}" class="actor-token-icon">
-                            ${targetToken.name}
+                             <img src="${targetToken.actor?.img || targetToken.document?.texture?.src || "icons/svg/mystery-man.svg"}" class="actor-token-icon">
+                            ${targetToken.name || targetToken.actor?.name || "Alvo"}
                         </span>
                     </div>
                     <div class="info-row">
@@ -1546,9 +1552,16 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 
         if (game.user.character) return game.user.character;
 
-        if (rollData.targetActorId) return game.actors.get(rollData.targetActorId);
+ if (rollData.targetActorId) return game.actors.get(rollData.targetActorId);
         return null;
     };
+
+    const buildFallbackToken = (fallbackActor) => ({
+        actor: fallbackActor,
+        id: null,
+        name: fallbackActor?.name || "Alvo",
+        document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
+    });
 
     const computeTargetValue = (actor) => {
         if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
@@ -1605,21 +1618,34 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     if (shouldApply && mode !== "damage") {
         const effectItem = await Item.fromSource(effectItemData);
         if (effectItem) {
-            const resolveTargets = () => {
+ const resolveTargets = () => {
                 const targets = [];
                 if (rollData.targetTokenId) {
                     const token = canvas.tokens?.get(rollData.targetTokenId);
                     if (token) targets.push(token);
                 }
                 if (targets.length === 0 && resistingActor) {
-                    targets.push(...resistingActor.getActiveTokens());
+                    const activeTokens = resistingActor.getActiveTokens();
+                    if (activeTokens.length > 0) {
+                        targets.push(...activeTokens);
+                    } else {
+                        targets.push(buildFallbackToken(resistingActor));
+                    }
                 }
                 if (targets.length === 0 && rollData.targetActorId) {
                     const actor = game.actors.get(rollData.targetActorId);
-                    if (actor) targets.push(...actor.getActiveTokens());
+                    if (actor) {
+                        const activeTokens = actor.getActiveTokens();
+                        if (activeTokens.length > 0) {
+                            targets.push(...activeTokens);
+                        } else {
+                            targets.push(buildFallbackToken(actor));
+                        }
+                    }
                 }
                 return targets;
             };
+
 
             const targets = resolveTargets();
             if (targets.length > 0) {
@@ -1627,7 +1653,14 @@ $('body').on('click', '.resistance-roll-button', async ev => {
                 const originActor = rollData.sourceActorId ? game.actors.get(rollData.sourceActorId) : null;
 
                 ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
-                await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem });
+              const conditionContext = mode === "condition" && rollData.conditionId
+                    ? { conditionId: rollData.conditionId }
+                    : {};
+                await applySingleEffect(effectItem, targets, {
+                    actor: originActor,
+                    origin: originItem || effectItem,
+                    ...conditionContext
+                });
             } else {
                 ui.notifications.warn("Não foi possível encontrar um alvo para aplicar o efeito.");
             }
@@ -1920,8 +1953,14 @@ async function processConditions(actor, eventData = null) {
     if (!actor || evaluatingActors.has(actor.id)) return;
     evaluatingActors.add(actor.id);
 
-    try {
+ try {
         const conditions = actor.items.filter(i => i.type === "condition");
+        const buildFallbackToken = (fallbackActor) => ({
+            actor: fallbackActor,
+            id: null,
+            name: fallbackActor?.name || "Alvo",
+            document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
+        });
         const normalizeEffectPath = (path) => {
             if (!path || typeof path !== "string") return path;
             let normalized = path.trim();
@@ -1970,14 +2009,30 @@ async function processConditions(actor, eventData = null) {
                  
                  const effectLinks = condition.system.effects || []; // Pega os links de efeito dentro da condição
 
-                 if (isEffectivelyActiveNow) { // Condição acabou de LIGAR
+ if (isEffectivelyActiveNow) { // Condição acabou de LIGAR
                      for (const link of effectLinks) {
                         if(!link.uuid) continue; // Pula se não for um link válido
                         const effectItem = await fromUuid(link.uuid); // Carrega o Item Efeito original
                         if (!effectItem?.system) continue;
+                        const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
+                        if (requiresResistance) {
+                            const activeTokens = actor.getActiveTokens();
+                            const resistanceTargets = activeTokens.length ? activeTokens : [buildFallbackToken(actor)];
+                            for (const targetToken of resistanceTargets) {
+                                await _promptActivationResistance(
+                                    effectItem,
+                                    targetToken,
+                                    actor,
+                                    condition,
+                                    link.id || null,
+                                    { mode: "condition", conditionId: condition.id }
+                                );
+                            }
+                            continue;
+                        }
 
                         // Executa Macro (se for do tipo macro)
-                        if (effectItem.system.type === "macro" && effectItem.system.value) { 
+                        if (effectItem.system.type === "macro" && effectItem.system.value) {
                             const macro = game.macros.getName(effectItem.system.value);
                             if (macro) macro.execute({ actor: actor }); // Passa o ator atual para a macro
                             else ui.notifications.warn(`[GUM] Macro "${effectItem.system.value}" não encontrada.`);

@@ -47,6 +47,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const conditionFlags = context.conditionId
+        ? { conditionEffect: true, conditionId: context.conditionId }
+        : {};
     const evaluateEffectValue = (value, actor) => {
         if (typeof value === "string") {
             const trimmed = value.trim();
@@ -80,10 +83,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     flags: {
                         gum: {
                             effectUuid: effectItem.uuid,
-                            duration: foundry.utils.duplicate(effectSystem.duration || {})
+                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            ...conditionFlags
                         }
                     }
                 };
+
 
                // =============================================================
                 // ✅ LÓGICA DE DURAÇÃO FINAL (Sincronizada com createItem)
@@ -171,7 +176,8 @@ if (effectSystem.attachedStatusId) {
                                 value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
                                 cap: effectSystem.roll_modifier_cap ?? "",
                                 context: effectSystem.roll_modifier_context ?? "all"
-                            }
+                            },
+                            ...conditionFlags
                         }
                     }
                 };
@@ -241,7 +247,8 @@ if (effectSystem.attachedStatusId) {
                         core: { statusId },
                         gum: {
                             effectUuid: effectItem.uuid,
-                            duration: foundry.utils.duplicate(effectSystem.duration || {})
+                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            ...conditionFlags
                         }
                     }
                 };
