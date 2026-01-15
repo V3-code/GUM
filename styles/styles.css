@@ -347,9 +347,25 @@
     text-align: center; width: 100%;
 }
 .gum.sheet.actor .attribute-box .attribute-modifier {
+    font-size: 0.75rem; background: var(--gum-bg-sidebar) !important; border: 1px solid #444 !important;
+    padding: 1px 4px; border-radius: 10px; color: #dcdcdc; width: 42px; text-align: center;
     position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%);
-    font-size: 0.8rem; background: var(--gum-bg-sidebar) !important; border: 1px solid #444 !important;
-    padding: 1px 6px; border-radius: 10px; color: #dcdcdc; width: 40px; text-align: center;
+}
+.gum.sheet.actor .attribute-box .attribute-corner-pills {
+    position: absolute; top: 4px; left: 0; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+}
+.gum.sheet.actor .attribute-box .attribute-pill {
+    font-size: 0.65rem; background: #3a3a3a; border: 1px solid #444;
+    padding: 1px 4px; border-radius: 10px; color: #dcdcdc; min-width: 26px; text-align: center;
+}
+.gum.sheet.actor .attribute-box .attribute-pill.attribute-pill-positive {
+    background: #2f5e2f;
+    color: #e7f7e7;
+}
+.gum.sheet.actor .attribute-box .attribute-pill.attribute-pill-negative {
+    background: #5e2f2f;
+    color: #f7e7e7;
 }
 
 /* Abas de Navegação */
@@ -1521,7 +1537,7 @@
 .gum.sheet.actor .switch input { opacity: 0; width: 0; height: 0; }
 .gum.sheet.actor .slider {
     position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #ccc; transition: .4s; border-radius: 34px;
+    background-color: var(--gum-accent-green); transition: .4s; border-radius: 34px;
 }
 .gum.sheet.actor .slider:before {
     position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px;

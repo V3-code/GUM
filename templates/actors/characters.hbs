@@ -212,6 +212,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{st.final}}" data-label="Teste de ST" data-attribute-key="st"><label>ST</label></a>
               <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne st.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt st.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt st.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{st.passive}}</span>
+                {{/if}}
+                {{#if (ne st.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt st.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt st.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{st.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.st.mod" value="{{st.mod}}" title="Modificador Fixo (Racial, Vantagens, etc)"/>
             </div>
 
@@ -219,6 +227,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{dx.final}}" data-label="Teste de DX" data-attribute-key="dx"><label>DX</label></a>
               <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne dx.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt dx.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt dx.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{dx.passive}}</span>
+                {{/if}}
+                {{#if (ne dx.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt dx.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt dx.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{dx.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.dx.mod" value="{{dx.mod}}" title="Modificador Fixo"/>
             </div>
 
@@ -226,6 +242,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{iq.final}}" data-label="Teste de IQ" data-attribute-key="iq"><label>IQ</label></a>
               <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne iq.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt iq.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt iq.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{iq.passive}}</span>
+                {{/if}}
+                {{#if (ne iq.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt iq.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt iq.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{iq.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.iq.mod" value="{{iq.mod}}" title="Modificador Fixo"/>
             </div>
 
@@ -233,6 +257,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{ht.final}}" data-label="Teste de HT" data-attribute-key="ht"><label>HT</label></a>
               <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne ht.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt ht.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt ht.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{ht.passive}}</span>
+                {{/if}}
+                {{#if (ne ht.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt ht.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt ht.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{ht.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.ht.mod" value="{{ht.mod}}" title="Modificador Fixo"/>
             </div>
 
@@ -240,6 +272,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{vont.final}}" data-label="Teste de Vontade" data-attribute-key="vont"><label>Vont</label></a>
               <input class="attribute-value" type="number" name="system.attributes.vont.value" value="{{vont.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne vont.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt vont.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt vont.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{vont.passive}}</span>
+                {{/if}}
+                {{#if (ne vont.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt vont.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt vont.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{vont.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.vont.mod" value="{{vont.mod}}" title="Modificador Fixo"/>
             </div>
 
@@ -247,6 +287,14 @@
             <div class="attribute-box">
               <a class="rollable" data-type="attribute" data-roll-value="{{per.final}}" data-label="Teste de Percepção" data-attribute-key="per"><label>Per</label></a>
               <input class="attribute-value" type="number" name="system.attributes.per.value" value="{{per.value}}"/>
+              <div class="attribute-corner-pills">
+                {{#if (ne per.passive 0)}}
+                  <span class="attribute-pill attribute-passive {{#if (gt per.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt per.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{per.passive}}</span>
+                {{/if}}
+                {{#if (ne per.temp 0)}}
+                  <span class="attribute-pill attribute-temp {{#if (gt per.temp 0)}}attribute-pill-positive{{/if}}{{#if (lt per.temp 0)}}attribute-pill-negative{{/if}}" title="Temporário">{{per.temp}}</span>
+                {{/if}}
+              </div>
               <input class="attribute-modifier" type="number" name="system.attributes.per.mod" value="{{per.mod}}" title="Modificador Fixo"/>
             </div>
           {{/with}}
