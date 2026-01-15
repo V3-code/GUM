@@ -367,6 +367,15 @@
     background: #5e2f2f;
     color: #f7e7e7;
 }
+.gum.sheet.actor .attribute-box .attribute-pill.attribute-override {
+    background: #2b3a5e;
+    border-color: #46598a;
+    color: #e6edff;
+}
+.gum.sheet.actor .attribute-box.attribute-box-override {
+    border-color: #6b7fd1;
+    box-shadow: inset 0 0 12px rgba(80, 110, 200, 0.6);
+}
 
 /* Abas de Navegação */
 .gum.sheet.actor nav.sheet-tabs {

@@ -209,10 +209,13 @@
           {{#with actor.system.attributes}}
             
             {{!-- Estrutura para ST --}}
-            <div class="attribute-box">
+<div class="attribute-box {{#if (or (eq st.override 0) st.override)}}attribute-box-override{{/if}}">
               <a class="rollable" data-type="attribute" data-roll-value="{{st.final}}" data-label="Teste de ST" data-attribute-key="st"><label>ST</label></a>
               <input class="attribute-value" type="number" name="system.attributes.st.value" value="{{st.value}}"/>
               <div class="attribute-corner-pills">
+                {{#if (or (eq st.override 0) st.override)}}
+                  <span class="attribute-pill attribute-override" title="Override">{{st.override}}</span>
+                {{/if}}
                 {{#if (ne st.passive 0)}}
                   <span class="attribute-pill attribute-passive {{#if (gt st.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt st.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{st.passive}}</span>
                 {{/if}}
@@ -224,10 +227,13 @@
             </div>
 
             {{!-- Estrutura para DX --}}
-            <div class="attribute-box">
+           <div class="attribute-box {{#if (or (eq dx.override 0) dx.override)}}attribute-box-override{{/if}}">
               <a class="rollable" data-type="attribute" data-roll-value="{{dx.final}}" data-label="Teste de DX" data-attribute-key="dx"><label>DX</label></a>
               <input class="attribute-value" type="number" name="system.attributes.dx.value" value="{{dx.value}}"/>
               <div class="attribute-corner-pills">
+                {{#if (or (eq dx.override 0) dx.override)}}
+                  <span class="attribute-pill attribute-override" title="Override">{{dx.override}}</span>
+                {{/if}}
                 {{#if (ne dx.passive 0)}}
                   <span class="attribute-pill attribute-passive {{#if (gt dx.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt dx.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{dx.passive}}</span>
                 {{/if}}
@@ -239,10 +245,13 @@
             </div>
 
             {{!-- Estrutura para IQ --}}
-            <div class="attribute-box">
+            <div class="attribute-box {{#if (or (eq iq.override 0) iq.override)}}attribute-box-override{{/if}}">
               <a class="rollable" data-type="attribute" data-roll-value="{{iq.final}}" data-label="Teste de IQ" data-attribute-key="iq"><label>IQ</label></a>
               <input class="attribute-value" type="number" name="system.attributes.iq.value" value="{{iq.value}}"/>
               <div class="attribute-corner-pills">
+                {{#if (or (eq iq.override 0) iq.override)}}
+                  <span class="attribute-pill attribute-override" title="Override">{{iq.override}}</span>
+                {{/if}}
                 {{#if (ne iq.passive 0)}}
                   <span class="attribute-pill attribute-passive {{#if (gt iq.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt iq.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{iq.passive}}</span>
                 {{/if}}
@@ -254,10 +263,13 @@
             </div>
 
             {{!-- Estrutura para HT --}}
-            <div class="attribute-box">
+            <div class="attribute-box {{#if (or (eq ht.override 0) ht.override)}}attribute-box-override{{/if}}">
               <a class="rollable" data-type="attribute" data-roll-value="{{ht.final}}" data-label="Teste de HT" data-attribute-key="ht"><label>HT</label></a>
               <input class="attribute-value" type="number" name="system.attributes.ht.value" value="{{ht.value}}"/>
               <div class="attribute-corner-pills">
+                {{#if (or (eq ht.override 0) ht.override)}}
+                  <span class="attribute-pill attribute-override" title="Override">{{ht.override}}</span>
+                {{/if}}
                 {{#if (ne ht.passive 0)}}
                   <span class="attribute-pill attribute-passive {{#if (gt ht.passive 0)}}attribute-pill-positive{{/if}}{{#if (lt ht.passive 0)}}attribute-pill-negative{{/if}}" title="Passiva">{{ht.passive}}</span>
                 {{/if}}

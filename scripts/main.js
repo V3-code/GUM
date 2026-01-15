@@ -848,8 +848,8 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                 <div class="header-left">
                     <div class="header-icon"><img src="${effectItem.img}"></div>
                     <div class="header-title">
-                        <h3>Teste de Resistência Necessário</h3>
-                        <small>${effectItem.name}</small>
+                        <h3>${effectItem.name}</h3>
+                        <small>Teste de Resistência Necessário</small>
                     </div>
                 </div>
             </header>
