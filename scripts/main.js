@@ -35,6 +35,25 @@ _prepareCharacterItems() {
         const actorData = this; 
         const attributes = actorData.system.attributes;
         const combat = actorData.system.combat;
+        const normalizeEffectPath = (path) => {
+            if (!path || typeof path !== "string") return path;
+            let normalized = path.trim();
+            if (normalized.startsWith("actor.")) {
+                normalized = normalized.slice(6);
+            }
+            if (normalized.startsWith("data.")) {
+                normalized = normalized.replace(/^data\./, "system.");
+            }
+            if (!normalized.startsWith("system.")
+                && !normalized.startsWith("flags.")
+                && !normalized.startsWith("effects.")
+                && !normalized.startsWith("items.")) {
+                if (normalized.startsWith("attributes.") || normalized.startsWith("combat.") || normalized.startsWith("resources.")) {
+                    normalized = `system.${normalized}`;
+                }
+            }
+            return normalized;
+        };
 
         // --- ETAPA 0: RESETAR VALORES ---
         const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge',
@@ -46,6 +65,28 @@ _prepareCharacterItems() {
                 attributes[attr].override = null;
             }
         });
+        const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(this.effects?.values?.() || []);
+        for (const effect of activeEffects) {
+            for (const change of effect?.changes || []) {
+                const normalizedPath = normalizeEffectPath(change.key);
+                if (!normalizedPath?.startsWith("system.attributes.")) continue;
+                if (!normalizedPath.endsWith(".passive") && !normalizedPath.endsWith(".temp") && !normalizedPath.endsWith(".override")) continue;
+                let value = change.value;
+                if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+                    value = Number(value);
+                }
+                const currentVal = foundry.utils.getProperty(this, normalizedPath) ?? 0;
+                if (change.mode === CONST.ACTIVE_EFFECT_MODES.OVERRIDE) {
+                    foundry.utils.setProperty(this, normalizedPath, value);
+                } else if (change.mode === CONST.ACTIVE_EFFECT_MODES.MULTIPLY) {
+                    const numericValue = Number(value) || 0;
+                    foundry.utils.setProperty(this, normalizedPath, currentVal * numericValue);
+                } else if (change.mode === CONST.ACTIVE_EFFECT_MODES.ADD) {
+                    const numericValue = Number(value) || 0;
+                    foundry.utils.setProperty(this, normalizedPath, currentVal + numericValue);
+                }
+            }
+        }
         if (combat.dr_temp_mods) {
             for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
         }
@@ -81,8 +122,14 @@ _prepareCharacterItems() {
         }
 
         // --- ETAPA 2: MOTOR DE CONDIÇÕES ---
-        const add_sub_modifiers = {};
+const add_sub_modifiers = {};
         const set_modifiers = {};
+        const resolveConditionEffect = (link) => {
+            if (!link) return null;
+            if (link.type) return link;
+            if (link.system?.type) return link.system;
+            return null;
+        };
         const conditions = this.items.filter(i => i.type === "condition"); 
         
         for (const condition of conditions) {
@@ -94,17 +141,20 @@ _prepareCharacterItems() {
             
             if (isConditionActive) {
                 const effects = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});
-                for (const effect of effects) {
-                    if (effect.type === 'attribute' && effect.path) {
+                for (const link of effects) {
+                    if (link?.uuid) continue;
+                    const effect = resolveConditionEffect(link);
+                    if (effect?.type === 'attribute' && effect.path) {
+                        const normalizedPath = normalizeEffectPath(effect.path);
                         let value = 0;
                         try {
                             value = typeof effect.value === "string" ? new Function("actor", "game", `return (${effect.value});`)(this, game) : (Number(effect.value) || 0); 
                         } catch (e) { console.warn(`GUM | Erro ao avaliar valor do efeito em "${condition.name}":`, e); }
                         
-                        if (effect.operation === "SET") {
-                            set_modifiers[effect.path] = value;
+                        if (effect.operation === "SET" || effect.operation === "OVERRIDE") {
+                            set_modifiers[normalizedPath] = value;
                         } else {
-                            let tempPath = effect.path.endsWith('.passive') ? effect.path.replace('.passive', '.temp') : effect.path;
+                            let tempPath = normalizedPath.endsWith('.passive') ? normalizedPath.replace('.passive', '.temp') : normalizedPath;
                             if (!add_sub_modifiers[tempPath]) add_sub_modifiers[tempPath] = 0;
                             if (effect.operation === "ADD") add_sub_modifiers[tempPath] += value;
                             else if (effect.operation === "SUB") add_sub_modifiers[tempPath] -= value;
@@ -1872,6 +1922,38 @@ async function processConditions(actor, eventData = null) {
 
     try {
         const conditions = actor.items.filter(i => i.type === "condition");
+        const normalizeEffectPath = (path) => {
+            if (!path || typeof path !== "string") return path;
+            let normalized = path.trim();
+            if (normalized.startsWith("actor.")) {
+                normalized = normalized.slice(6);
+            }
+            if (normalized.startsWith("data.")) {
+                normalized = normalized.replace(/^data\./, "system.");
+            }
+            if (!normalized.startsWith("system.")
+                && !normalized.startsWith("flags.")
+                && !normalized.startsWith("effects.")
+                && !normalized.startsWith("items.")) {
+                if (normalized.startsWith("attributes.") || normalized.startsWith("combat.") || normalized.startsWith("resources.")) {
+                    normalized = `system.${normalized}`;
+                }
+            }
+            return normalized;
+        };
+        const evaluateEffectValue = (value) => {
+            if (typeof value === "string") {
+                const trimmed = value.trim();
+                if (trimmed === "") return 0;
+                try {
+                    return new Function("actor", "game", `return (${trimmed});`)(actor, game);
+                } catch (error) {
+                    console.warn("GUM | Erro ao avaliar valor de efeito em condição:", error);
+                    return value;
+                }
+            }
+            return value;
+        };
 
         // --- Loop para avaliar Condições e disparar ações únicas ---
         for (const condition of conditions) {
@@ -1923,9 +2005,61 @@ async function processConditions(actor, eventData = null) {
                              ChatMessage.create(chatData);
                         }
                         // Define Flag (se for do tipo flag)
-                        else if (effectItem.system.type === "flag" && effectItem.system.key) {
+ else if (effectItem.system.type === "flag" && effectItem.system.key) {
                              let valueToSet = effectItem.system.flag_value === "true" ? true : effectItem.system.flag_value === "false" ? false : effectItem.system.flag_value;
                              await actor.setFlag("gum", effectItem.system.key, valueToSet);
+                        }
+
+                        const shouldCreateEffect = ["attribute", "roll_modifier", "status"].includes(effectItem.system.type);
+                        if (shouldCreateEffect) {
+                            const existingConditionEffect = actor.effects.find((effect) =>
+                                effect?.flags?.gum?.conditionId === condition.id
+                                && effect?.flags?.gum?.effectUuid === effectItem.uuid
+                            );
+                            if (!existingConditionEffect) {
+                                const effectData = {
+                                    name: effectItem.name,
+                                    img: effectItem.img,
+                                    origin: condition.uuid,
+                                    changes: [],
+                                    statuses: [],
+                                    flags: {
+                                        gum: {
+                                            conditionEffect: true,
+                                            conditionId: condition.id,
+                                            effectUuid: effectItem.uuid
+                                        }
+                                    }
+                                };
+                                const coreStatusId = effectItem.name.slugify({ strict: true });
+                                foundry.utils.setProperty(effectData, "flags.core.statusId", coreStatusId);
+                                if (effectItem.system.type === "attribute" && effectItem.system.path) {
+                                    const normalizedPath = normalizeEffectPath(effectItem.system.path);
+                                    let computedValue = evaluateEffectValue(effectItem.system.value);
+                                    if (effectItem.system.operation === "SUB") {
+                                        computedValue = -Math.abs(Number(computedValue) || 0);
+                                    }
+                                    const mode = (effectItem.system.operation === "OVERRIDE" || effectItem.system.operation === "SET")
+                                        ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE
+                                        : CONST.ACTIVE_EFFECT_MODES.ADD;
+                                    effectData.changes.push({
+                                        key: normalizedPath,
+                                        mode,
+                                        value: computedValue
+                                    });
+                                }
+                                if (effectItem.system.type === "roll_modifier") {
+                                    effectData.flags.gum.rollModifier = {
+                                        value: effectItem.system.roll_modifier_value ?? effectItem.system.value ?? 0,
+                                        cap: effectItem.system.roll_modifier_cap ?? "",
+                                        context: effectItem.system.roll_modifier_context ?? "all"
+                                    };
+                                }
+                                if (effectItem.system.type === "status" && effectItem.system.statusId) {
+                                    effectData.statuses.push(effectItem.system.statusId);
+                                }
+                                await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+                            }
                         }
                      }
                  } else { // Condição acabou de DESLIGAR
@@ -1937,6 +2071,15 @@ async function processConditions(actor, eventData = null) {
                         // Remove Flag (se for do tipo flag)
                         if (effectItem.system.type === "flag" && effectItem.system.key) {
                              await actor.unsetFlag("gum", effectItem.system.key);
+                        }
+                         if (["attribute", "roll_modifier", "status"].includes(effectItem.system.type)) {
+                            const effectsToRemove = actor.effects.filter((effect) =>
+                                effect?.flags?.gum?.conditionId === condition.id
+                                && effect?.flags?.gum?.effectUuid === effectItem.uuid
+                            );
+                            if (effectsToRemove.length) {
+                                await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToRemove.map(effect => effect.id));
+                            }
                         }
                         // Outras ações de "desligar" poderiam ir aqui no futuro
                      }

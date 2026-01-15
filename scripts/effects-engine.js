@@ -47,6 +47,19 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const evaluateEffectValue = (value, actor) => {
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+            if (trimmed === "") return 0;
+            try {
+                return new Function("actor", "game", `return (${trimmed});`)(actor, game);
+            } catch (error) {
+                console.warn(`GUM | Não foi possível avaliar o valor do efeito "${effectItem.name}":`, error);
+                return value;
+            }
+        }
+        return value;
+    };
     
     switch (effectSystem.type) {
 
@@ -113,11 +126,12 @@ if (effectSystem.duration && !effectSystem.duration.isPermanent) {
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
                 // Lógica Mecânica
-                if (effectSystem.type === 'attribute') {
+  if (effectSystem.type === 'attribute') {
+                    const computedValue = evaluateEffectValue(effectSystem.value, targetActor);
                     const change = {
                         key: effectSystem.path,
                         mode: effectSystem.operation === 'OVERRIDE' ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
-                        value: effectSystem.value
+                        value: computedValue
                     };
                     activeEffectData.changes.push(change);
                 } else if (effectSystem.type === 'flag') {
