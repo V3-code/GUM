@@ -528,7 +528,19 @@ async _updateDamageCalculation(form) {
             let eventData = null;
 
             if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
-                eventData = { type: "damage", damage: finalInjury, damageType: this.damageTypeAbrev };
+                const damagePayload = {
+                    total: finalInjury,
+                    value: finalInjury,
+                    amount: finalInjury,
+                    valueOf() { return finalInjury; },
+                    toString() { return String(finalInjury); }
+                };
+                eventData = {
+                    type: "damage",
+                    damage: damagePayload,
+                    injury: finalInjury,
+                    damageType: this.damageTypeAbrev
+                };
                 const newPoolValue = currentPoolValue - finalInjury;
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue }, { gumEventData: eventData });
             } else {
