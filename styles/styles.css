@@ -1505,7 +1505,6 @@
     font-weight: 700;
     font-size: 0.95em;
     color: var(--gum-text-escuro);
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.2;

@@ -1334,7 +1334,6 @@ Hooks.on("createItem", async (item, options, userId) => {
             if (previousCombatant?.actor) {
                 const actor = previousCombatant.actor;
                 await manageActiveEffectDurations(actor); 
-                await manageDurations(combat); 
                 await processConditions(actor); 
                 actor.getActiveTokens().forEach(token => token.drawEffects()); 
             }
@@ -2273,61 +2272,7 @@ async function manageActiveEffectDurations(actor) {
         await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToDelete);
     }
 }
-/**
- * Gerencia a duração de condições baseadas em rodadas de combate a cada turno.
- * @param {Combat} combat O objeto de combate que foi atualizado.
- */
-async function manageDurations(combat) {
-    // Pega o combatente cujo turno ACABOU DE TERMINAR.
-    const combatant = combat.previous.combatantId ? combat.combatants.get(combat.previous.combatantId) : null;
-    if (!combatant?.actor) return; // Se não houver um combatente anterior, não faz nada.
-
-    const actor = combatant.actor;
-    const itemsToDelete = [];
-    const itemsToDisable = [];
-    const itemUpdates = [];
-
-    for (const condition of actor.items.filter(i => i.type === 'condition')) {
-        const duration = condition.system.duration;
-
-        // Pula condições que não têm duração finita em rodadas.
-        if (!duration || duration.unit !== 'rounds' || duration.value <= 0) continue;
-
-        const newValue = duration.value - 1;
-
-        if (newValue <= 0) {
-            // O tempo acabou! Decide o que fazer com base na escolha do usuário.
-            if (duration.expiration === 'disable') {
-                itemsToDisable.push(condition.id);
-            } else { // O padrão é sempre deletar
-                itemsToDelete.push(condition.id);
-            }
-        } else {
-            // Se o tempo ainda não acabou, apenas prepara a atualização do valor.
-            itemUpdates.push({ _id: condition.id, 'system.duration.value': newValue });
-        }
-    }
-
-    // Aplica todas as atualizações de duração de uma só vez para melhor performance.
-    if (itemUpdates.length > 0) {
-        await actor.updateEmbeddedDocuments("Item", itemUpdates);
-    }
-
-    if (itemsToDisable.length > 0) {
-        console.log(`GUM | Desativando condições expiradas de ${actor.name}:`, itemsToDisable);
-        // Pega os itens para desativar e seta a flag `manual_override` para 'true'
-        const disableUpdates = itemsToDisable.map(id => {
-            return { _id: id, 'flags.gum.manual_override': true, 'system.duration.value': 0 };
-        });
-        await actor.updateEmbeddedDocuments("Item", disableUpdates);
-    }
-
-    if (itemsToDelete.length > 0) {
-        console.log(`GUM | Removendo condições expiradas de ${actor.name}:`, itemsToDelete);
-        await actor.deleteEmbeddedDocuments("Item", itemsToDelete);
-    }
-}
-
+ 
 /**
  * Aplica um Item de Condição em um ator alvo com base em um Efeito Contingente.
  * Esta é uma função auxiliar reutilizável.
