@@ -1,7 +1,3 @@
-2026/01/16-23:55:35.283 3fbc Recovering log #175
-2026/01/16-23:55:35.286 3fbc Delete type=0 #175
-2026/01/16-23:55:35.286 3fbc Delete type=3 #173
-2026/01/17-08:03:34.891 45b8 Level-0 table #180: started
-2026/01/17-08:03:34.891 45b8 Level-0 table #180: 0 bytes OK
-2026/01/17-08:03:34.892 45b8 Delete type=0 #178
-2026/01/17-08:03:34.896 45b8 Manual compaction at level-0 from '!macros!4VFRDTvuTQpmdyjn' @ 72057594037927935 : 1 .. '!macros!q2eFGmmGN2pg9lSc' @ 0 : 0; will stop at (end)
+2026/01/17-09:30:20.177 3fbc Recovering log #179
+2026/01/17-09:30:20.185 3fbc Delete type=0 #179
+2026/01/17-09:30:20.185 3fbc Delete type=3 #177

@@ -98,19 +98,6 @@
 {{!-- ======================================================== --}}
 {{#*inline "effectsTab"}}
     <div class="effects-tab-layout">
-        <div class="effects-hero">
-            <div>
-                <p class="eyebrow">Gestão de Efeitos do Item</p>
-                <h3>Active, onDamage & Passivos</h3>
-                <p class="hint">Organize todas as interações do item em um único painel, separando gatilhos e destinatários.</p>
-            </div>
-            <div class="effects-legend">
-                <span class="pill success"><i class="fas fa-check"></i> Sucesso</span>
-                <span class="pill failure"><i class="fas fa-times"></i> Falha</span>
-                <span class="pill passive"><i class="fas fa-infinity"></i> Passivo</span>
-            </div>
-        </div>
-
         <div class="effects-columns">
             {{!-- SEÇÃO: TESTE DE ATIVAÇÃO / ATAQUE --}}
             <div class="form-section effect-category">
@@ -1236,24 +1223,6 @@
     {{! ========================================================= }}
     <div class="tab" data-tab="description">
       <div class="description-tab">
-        <div class="description-hero">
-          <div class="hero-text">
-            <p class="eyebrow">Narrativa & Referência</p>
-            <h3>Descrição do Item</h3>
-            <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
-          </div>
-          <div class="hero-meta">
-            <div class="meta-chip">
-              <i class="fas fa-book-open"></i>
-              <span>Resumo (Chat)</span>
-            </div>
-            <div class="meta-chip">
-              <i class="fas fa-scroll"></i>
-              <span>Completa</span>
-            </div>
-          </div>
-        </div>
-
         <div class="description-grid">
           <div class="form-section description-section">
             <div class="description-header">
@@ -1836,18 +1805,6 @@
         {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
             
             <div class="modifiers-tab">
-                <div class="mod-hero">
-                    <div class="hero-text">
-                        <p class="eyebrow">Ajustes de Equipamento</p>
-                        <h3>Mods, Materiais e Qualidades</h3>
-                        <p class="hint">Gerencie fatores de custo, peso e efeitos especiais de armaduras e equipamentos.</p>
-                    </div>
-                    <div class="mod-hero-meta">
-                        <span class="meta-chip neutral"><i class="fas fa-hammer"></i> Craft</span>
-                        <span class="meta-chip neutral"><i class="fas fa-magic"></i> Encantos</span>
-                    </div>
-                </div>
-
                 <div class="form-section modifiers-panel">
                     <div class="mod-panel-header">
                         <div>

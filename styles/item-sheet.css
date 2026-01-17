@@ -1,34 +1,94 @@
 /* =================================================================== */
-/* GURPS GUM - ITEM SHEET (SCOPED, LIGHT THEME)                       */
+/* GURPS GUM - ITEM SHEET (SCOPED, DARK THEME)                       */
 /* Escopo: .gum.sheet.item                                             */
 /* =================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700&family=Cinzel:wght@700&display=swap');
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/roboto/Roboto-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  src: url("../fonts/roboto/Roboto-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto Condensed";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/roboto-condensed/RobotoCondensed-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto Condensed";
+  font-style: normal;
+  font-weight: 700;
+  src: url("../fonts/roboto-condensed/RobotoCondensed-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto Slab";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/roboto-slab/RobotoSlab-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto Slab";
+  font-style: normal;
+  font-weight: 700;
+  src: url("../fonts/roboto-slab/RobotoSlab-Bold.ttf") format("truetype");
+}
 
 .gum.sheet.item {
-  --item-bg-dark: #f4f0ea;
-  --item-bg-panel: #ffffff;
-  --item-bg-panel-2: #f9f6f0;
-  --item-border: #d8ccc0;
-  --item-border-light: #e7dfd6;
-  --item-accent: #b9893c;
-  --item-accent-2: #6a8bb5;
-  --item-text: #2f2b28;
-  --item-text-muted: #776a60;
-  --item-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  --item-font-base: "Roboto", sans-serif;
+  --item-font-condensed: "Roboto Condensed", sans-serif;
+  --item-font-serif: "Roboto Slab", serif;
+  --item-bg-dark: #121114;
+  --item-bg-panel: #1d1b20;
+  --item-bg-panel-2: #24222a;
+  --item-bg-panel-contrast: #16151a;
+  --item-border: #3b3742;
+  --item-border-light: #2b2831;
+  --item-accent: #c9a15e;
+  --item-accent-2: #7d6aa3;
+  --item-text: #f0ebe3;
+  --item-text-muted: #c4bccf;
+  --item-text-soft: #9f98a8;
+  --item-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  --item-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.3);
+  --item-header-banner: url("assets/items/item-header-banner.webp");
+  --item-bg-texture: url("assets/items/item-bg-texture-dark.webp");
+  --item-panel-texture: url("assets/items/item-bg-panel.webp");
+  --item-panel-texture-contrast: url("assets/items/item-bg-panel-contrast.webp");
+  --item-divider: url("assets/items/item-divider.svg.svg");
+  --item-input-bg: #1a1820;
+  --item-input-border: #3f3a47;
+  --item-input-text: #f3f0ea;
+  --item-input-placeholder: #7f778a;
+  --item-font-size-base: 11px;
+  --item-font-size-sm: 10px;
+  --item-font-size-xs: 9px;
+  --item-font-size-lg: 14px;
 }
 
 .gum.sheet.item.app.window-app .window-content {
   padding: 0;
   background:
-    radial-gradient(120% 120% at 20% 20%, rgba(185,137,60,0.08), transparent 40%),
-    radial-gradient(80% 80% at 90% 10%, rgba(106,139,181,0.08), transparent 35%),
-    var(--item-bg-dark);
+    radial-gradient(120% 120% at 18% 12%, rgba(125,106,163,0.25), transparent 48%),
+    radial-gradient(90% 90% at 85% 15%, rgba(201,161,94,0.2), transparent 45%),
+    var(--item-bg-dark) var(--item-bg-texture) repeat;
   color: var(--item-text);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--item-font-size-base);
+  font-family: var(--item-font-base);
 }
 
 .gum.sheet.item form {
@@ -43,7 +103,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(249,245,239,0.9));
+  background: linear-gradient(135deg, rgba(14, 13, 17, 0.9), rgba(22, 20, 27, 0.95));
 }
 
 .gum.sheet.item .sheet-body {
@@ -56,10 +116,10 @@
 .gum.sheet.item .sheet-body-content {
   flex: 1;
   overflow: auto;
-  padding: 12px;
+  padding: 10px 12px 14px;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: var(--item-accent) rgba(0,0,0,0.08);
+  scrollbar-color: var(--item-accent) rgba(0,0,0,0.2);
 }
 
 /* ------------------------------------------------------------------- */
@@ -68,22 +128,34 @@
 .gum.sheet.item .sheet-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(244,240,233,0.9));
+  gap: 10px;
+  padding: 12px 16px 14px;
+  background:
+    var(--item-header-banner) no-repeat center / cover,
+    linear-gradient(90deg, rgba(18, 17, 20, 0.92), rgba(27, 25, 31, 0.94));
   border-bottom: 1px solid var(--item-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.45);
   z-index: 2;
+  position: relative;
+}
+
+.gum.sheet.item .sheet-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 161, 94, 0.7), transparent);
+  opacity: 0.85;
 }
 
 .gum.sheet.item .sheet-header .profile-img {
-  width: 70px;
-  height: 70px;
-  border-radius: 6px;
-  border: 2px solid var(--item-accent);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  width: 74px;
+  height: 74px;
+  border-radius: 10px;
+  border: 2px solid rgba(201, 161, 94, 0.8);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
   object-fit: cover;
-  background: #ffffff;
+  background: var(--item-bg-panel-contrast);
   flex-shrink: 0;
 }
 
@@ -91,36 +163,36 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .gum.sheet.item .sheet-header input[name="name"] {
-  font-family: "Cinzel", serif;
-  font-size: 1.05rem;
+  font-family: var(--item-font-serif);
+  font-size: 1.2rem;
   font-weight: 700;
-  background: rgba(0,0,0,0.02);
-  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(201, 161, 94, 0.25);
   color: var(--item-text);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 6px 10px;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .gum.sheet.item .sheet-header input[name="name"]:focus {
   border-color: var(--item-accent);
-  background: rgba(0,0,0,0.03);
-  box-shadow: 0 0 0 2px rgba(185,137,60,0.18);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.2);
 }
 
 .gum.sheet.item .item-type-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
-  background: rgba(185,137,60,0.14);
+  padding: 3px 10px;
+  background: rgba(201, 161, 94, 0.16);
   color: var(--item-accent);
-  border: 1px solid rgba(185,137,60,0.32);
+  border: 1px solid rgba(201, 161, 94, 0.45);
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: var(--item-font-size-xs);
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -132,94 +204,139 @@
 /* ------------------------------------------------------------------- */
 .gum.sheet.item .sheet-tabs {
   display: flex;
-  gap: 6px;
-  padding: 8px 12px 0;
-  background: transparent;
+  gap: 4px;
+  padding: 8px 16px 0;
+  background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid var(--item-border);
 }
 
 .gum.sheet.item .sheet-tabs .item {
-  padding: 8px 12px;
-  font-size: 0.7rem;
+  padding: 6px 10px;
+  font-size: var(--item-font-size-sm);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--item-text-muted);
+  letter-spacing: 0.08em;
+  color: var(--item-text-soft);
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   transition: all 0.2s;
+  text-transform: uppercase;
 }
 .gum.sheet.item .sheet-tabs .item:hover {
   color: var(--item-text);
-  background: rgba(0,0,0,0.03);
+  background: rgba(0, 0, 0, 0.3);
 }
 .gum.sheet.item .sheet-tabs .item.active {
-  color: var(--item-accent);
-  background: var(--item-bg-panel);
-  border-color: var(--item-border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  color: var(--item-text);
+  background: var(--item-bg-panel-contrast);
+  border-color: rgba(201, 161, 94, 0.4);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+
+.gum.sheet.item .sheet-tabs .item.active::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: 4px;
+  background: linear-gradient(90deg, transparent, var(--item-accent), transparent);
 }
 
 /* ------------------------------------------------------------------- */
 /* CARDS / SECTIONS                                                   */
 /* ------------------------------------------------------------------- */
 .gum.sheet.item .form-section {
-  background: var(--item-bg-panel);
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+    var(--item-panel-texture) repeat;
   border: 1px solid var(--item-border);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 5px;
+  border-radius: 10px;
+  padding: 18px 12px 12px;
+  margin-bottom: 10px;
   box-shadow: var(--item-shadow);
 }
 
 .gum.sheet.item .section-title {
-  font-family: "Roboto Condensed";
-  font-size: 0.85rem;
-  color: var(--item-accent);
-  margin: 0 0 8px 0;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--item-border-light);
-  letter-spacing: 0.02em;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-sm);
+  color: var(--item-text);
+  margin: 0;
+  padding: 2px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 161, 94, 0.45);
+  background: var(--item-bg-panel-contrast);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: var(--item-shadow-soft);
 }
 
 .gum.sheet.item .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .gum.sheet.item .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .gum.sheet.item .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
+.gum.sheet.item .form-section .form-grid-2,
+.gum.sheet.item .form-section .form-grid-3,
+.gum.sheet.item .form-section .form-grid-4 {
+  margin-top: 4px;
+}
+
+
 .gum.sheet.item .form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .gum.sheet.item .form-group label {
-  font-size: 0.62rem;
-  font-weight: 800;
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-xs);
+  font-weight: 700;
   color: var(--item-text-muted);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.gum.sheet.item input,
+.gum.sheet.item input[type="text"],
+.gum.sheet.item input[type="number"],
 .gum.sheet.item select,
 .gum.sheet.item textarea {
-  text-align: center;
   width: 100%;
-  background: rgba(0,0,0,0.05);
-  border: 1px solid var(--item-border);
+  background: var(--item-input-bg);
+  border: 1px solid var(--item-input-border);
   border-radius: 6px;
-  color: var(--item-text);
-  padding: 5px 7px;
-  font-family: "Inter", "Roboto", sans-serif;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  color: var(--item-input-text);
+  font-size: var(--item-font-size-sm);
+  padding: 4px 8px;
+  min-height: 28px;
+  font-family: var(--item-font-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
+
+.gum.sheet.item input::placeholder,
+.gum.sheet.item textarea::placeholder {
+  color: var(--item-input-placeholder);
+}
+
 .gum.sheet.item input:focus,
 .gum.sheet.item select:focus,
 .gum.sheet.item textarea:focus {
-  border-color: var(--item-accent);
-  box-shadow: 0 0 0 2px rgba(185,137,60,0.18);
-  background: rgba(0,0,0,0.03);
+  border-color: rgba(201, 161, 94, 0.8);
+  box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.2);
+  background: #15141a;
+}
+
+.gum.sheet.item .form-group.input-narrow input,
+.gum.sheet.item .form-group.input-narrow select {
+  text-align: center;
+}
+
+.gum.sheet.item .calculated-value-group input {
+  text-align: center;
 }
 .gum.sheet.item textarea { resize: vertical; }
 
