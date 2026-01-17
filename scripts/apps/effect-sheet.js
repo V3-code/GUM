@@ -33,7 +33,12 @@ export class EffectSheet extends ItemSheet {
         context.owner = this.item.isOwner;
         context.editable = this.options.editable;
 
-        const rawContext = context.system.roll_modifier_context;
+       const rawContext = context.system.roll_modifier_context;
+
+        if (context.system.duration) {
+            context.system.duration.startMode = context.system.duration.startMode || "apply";
+            context.system.duration.endMode = context.system.duration.endMode || "turnEnd";
+        }
         const selectedContexts = Array.isArray(rawContext)
             ? rawContext
             : (rawContext || "")
@@ -155,6 +160,56 @@ export class EffectSheet extends ItemSheet {
 activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
+
+    const permanentInput = html.find('input[name="system.duration.isPermanent"]');
+    const inCombatInput = html.find('input[name="system.duration.inCombat"]');
+    const startModeInputs = html.find('input[name="system.duration.startMode"]');
+    const endModeInputs = html.find('input[name="system.duration.endMode"]');
+    const presetInputs = html.find('input[name="duration-preset"]');
+
+    const clearPresetSelection = () => {
+        presetInputs.each((_, input) => {
+            input.checked = false;
+        });
+    };
+
+    permanentInput.on('change', async (event) => {
+        if (!event.currentTarget.checked) return;
+        inCombatInput.prop('checked', false);
+        await this.item.update({
+            "system.duration.isPermanent": true,
+            "system.duration.inCombat": false
+        });
+    });
+
+    inCombatInput.on('change', async (event) => {
+        if (!event.currentTarget.checked) return;
+        permanentInput.prop('checked', false);
+        await this.item.update({
+            "system.duration.inCombat": true,
+            "system.duration.isPermanent": false,
+            "system.duration.startMode": this.item.system.duration?.startMode || "apply",
+            "system.duration.endMode": this.item.system.duration?.endMode || "turnEnd"
+        });
+    });
+
+    startModeInputs.on('change', () => {
+        clearPresetSelection();
+    });
+
+    endModeInputs.on('change', () => {
+        clearPresetSelection();
+    });
+
+    presetInputs.on('change', async (event) => {
+        const target = event.currentTarget;
+        const startMode = target.dataset.startMode || "apply";
+        const endMode = target.dataset.endMode || "turnEnd";
+        await this.item.update({
+            "system.duration.startMode": startMode,
+            "system.duration.endMode": endMode
+        });
+    });
 
     // Listener para o seletor de valor da flag (funciona independentemente)
     html.find('input[name="system.flag_value_selector"]').on('change', (event) => {

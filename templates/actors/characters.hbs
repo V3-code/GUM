@@ -1649,6 +1649,12 @@
         <div class="effects-grid-container"> 
             {{#each temporaryEffects as |effect|}}
                 <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}">
+                    <div class="pill-switch-wrapper">
+                        <label class="switch" title="Ativar/Desativar efeito">
+                            <input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
@@ -1656,6 +1662,11 @@
                             <span class="pill-tag duration" title="Duração Restante">
                                 <i class="fas fa-hourglass-half"></i> {{effect.durationString}}
                             </span>
+                            {{#if effect.disabled}}
+                                <span class="pill-tag status off">Desativado</span>
+                            {{else}}
+                                <span class="pill-tag status on">Ativo</span>
+                            {{/if}}
                             {{#if effect.fonteNome}}
                             <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
                                 <i class="fas fa-link"></i> {{effect.fonteNome}}
@@ -1690,12 +1701,23 @@
         </summary>
         
         <div class="effects-grid-container"> 
-            {{#each permanentEffects as |effect|}}
+           {{#each permanentEffects as |effect|}}
                 <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}">
+                    <div class="pill-switch-wrapper">
+                        <label class="switch" title="Ativar/Desativar efeito">
+                            <input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
                         <div class="pill-details">
+                            {{#if effect.disabled}}
+                                <span class="pill-tag status off">Desativado</span>
+                            {{else}}
+                                <span class="pill-tag status on">Ativo</span>
+                            {{/if}}
                             <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
                                 <i class="{{effect.fonteIcon}}"></i> {{effect.fonteNome}}
                             </span>

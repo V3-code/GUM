@@ -74,6 +74,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         case 'flag': {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
+               const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                const startMode = gumDuration.startMode || "apply";
+                const endMode = gumDuration.endMode || "turnEnd";
+                const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+                const pendingCombat = gumDuration.inCombat && !game.combat;
+                gumDuration.startMode = startMode;
+                gumDuration.endMode = endMode;
+                if (shouldDelayStart) gumDuration.pendingStart = true;
+                if (pendingCombat) gumDuration.pendingCombat = true;
+
                 const activeEffectData = {
                     name: effectItem.name,
                     img: effectItem.img, // Sempre a imagem do Item Efeito
@@ -83,10 +93,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     flags: {
                         gum: {
                             effectUuid: effectItem.uuid,
-                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            duration: gumDuration,
                             ...conditionFlags
                         }
-                    }
+                    },
+                    disabled: pendingCombat || shouldDelayStart
                 };
 
 
@@ -116,13 +127,15 @@ if (effectSystem.duration && !effectSystem.duration.isPermanent) {
                         activeEffectData.duration.seconds = value * 60 * 60 * 24;
                     }
                     
-                    if (effectSystem.duration.inCombat && game.combat) {
+                  if (effectSystem.duration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
                     // Marca o ponto de início para que a expiração funcione corretamente
-                    activeEffectData.duration.startRound = game.combat?.round ?? null;
-                    activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                    activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                    if (!pendingCombat && !shouldDelayStart) {
+                        activeEffectData.duration.startRound = game.combat?.round ?? null;
+                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                    }
                 }
 
                 // Flag core.statusId (Importante para duração, usa slug do nome como fallback)
@@ -162,6 +175,16 @@ if (effectSystem.attachedStatusId) {
         case 'roll_modifier': {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
+                const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                const startMode = gumDuration.startMode || "apply";
+                const endMode = gumDuration.endMode || "turnEnd";
+                const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+                const pendingCombat = gumDuration.inCombat && !game.combat;
+                gumDuration.startMode = startMode;
+                gumDuration.endMode = endMode;
+                if (shouldDelayStart) gumDuration.pendingStart = true;
+                if (pendingCombat) gumDuration.pendingCombat = true;
+
                 const activeEffectData = {
                     name: effectItem.name,
                     img: effectItem.img,
@@ -171,7 +194,7 @@ if (effectSystem.attachedStatusId) {
                     flags: {
                         gum: {
                             effectUuid: effectItem.uuid,
-                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            duration: gumDuration,
                             rollModifier: {
                                 value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
                                 cap: effectSystem.roll_modifier_cap ?? "",
@@ -179,7 +202,8 @@ if (effectSystem.attachedStatusId) {
                             },
                             ...conditionFlags
                         }
-                    }
+                    },
+                    disabled: pendingCombat || shouldDelayStart
                 };
 
                 if (effectSystem.duration && !effectSystem.duration.isPermanent) {
@@ -205,12 +229,14 @@ if (effectSystem.attachedStatusId) {
                         activeEffectData.duration.seconds = value * 60 * 60 * 24;
                     }
 
-                    if (effectSystem.duration.inCombat && game.combat) {
+                   if (effectSystem.duration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
-                    activeEffectData.duration.startRound = game.combat?.round ?? null;
-                    activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                    activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                    if (!pendingCombat && !shouldDelayStart) {
+                        activeEffectData.duration.startRound = game.combat?.round ?? null;
+                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                    }
                 }
 
                 const coreStatusId = effectItem.name.slugify({ strict: true });

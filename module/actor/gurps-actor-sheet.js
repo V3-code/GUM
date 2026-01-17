@@ -162,11 +162,13 @@ async getData(options) {
         const permanentEffects = [];
 
         // Processa todos os ActiveEffects no ator
-        const activeEffects = Array.from(this.actor.appliedEffects ?? this.actor.effects ?? []);
+        const activeEffects = Array.from(this.actor.effects ?? []);
         const activeEffectsPromises = activeEffects.map(async (effect) => {
             try {
                 const effectData = effect.toObject(); 
                 effectData.id = effect.id; 
+                effectData.disabled = effect.disabled;
+                effectData.pendingCombat = effectData.flags?.gum?.duration?.pendingCombat === true; 
 
                 // --- Lógica de Identificação da Fonte (seu código original) ---
                 let fonteNome = "Origem Desconhecida";
@@ -212,7 +214,15 @@ async getData(options) {
                 const countsInCombatOnly = originalDuration.inCombat === true;
                 let isPermanent = true; // Assume permanente até que se prove o contrário
 
-                if (d.seconds) {
+                if (effectData.pendingCombat && countsInCombatOnly) {
+                    effectData.durationString = "Pendente (combate)";
+                    isPermanent = false;
+                }
+                else if (gumDuration.pendingStart && countsInCombatOnly) {
+                    effectData.durationString = "Inicia no próximo turno";
+                    isPermanent = false;
+                }
+                else if (d.seconds) {
                     effectData.durationString = `${d.seconds} seg.`;
                     isPermanent = false;
                 } 
@@ -1356,13 +1366,55 @@ html.on('change', '.manual-override-toggle', async (ev) => {
         statusTag.toggleClass('off', isDisabled);
         statusTag.toggleClass('on', !isDisabled);
         statusTag.text(isDisabled ? 'Desativado' : 'Automático');
+ }
+});
+
+// -------------------------------------------------------------
+//  EFEITOS TEMPORÁRIOS / PERMANENTES (ATIVAR/DESATIVAR)
+// -------------------------------------------------------------
+html.on('change', '.effect-toggle', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const effectId = ev.currentTarget.dataset.effectId;
+    if (!effectId) return;
+
+    const effect = this.actor.effects.get(effectId);
+    if (!effect) return;
+
+    const isDisabled = ev.currentTarget.checked;
+    const updateData = {
+        disabled: isDisabled,
+        "flags.gum.manualDisabled": isDisabled
+    };
+
+    if (!isDisabled) {
+        updateData["flags.gum.duration.pendingCombat"] = false;
+        updateData["flags.gum.duration.pendingStart"] = false;
     }
+
+    await effect.update(updateData, { render: false });
+
+    const pill = html.find(`.effect-pill-enhanced[data-effect-id="${effectId}"]`);
+    const statusTag = pill.find('.pill-tag.status');
+    if (statusTag.length) {
+        statusTag.toggleClass('off', isDisabled);
+        statusTag.toggleClass('on', !isDisabled);
+        statusTag.text(isDisabled ? 'Desativado' : 'Ativo');
+    }
+
+    this.actor.sheet.render(false);
+    this.actor.getActiveTokens().forEach(token => token.drawEffects());
 });
 
 // -------------------------------------------------------------
 //  CONDIÇÕES PASSIVAS (EVITA TOGGLE DO <details>)
 // -------------------------------------------------------------
 html.on('click', '.passive-section .effects-grid-container', (ev) => {
+    ev.stopPropagation();
+});
+
+html.on('click', '.temporary-section .effects-grid-container, .permanent-section .effects-grid-container', (ev) => {
     ev.stopPropagation();
 });
 

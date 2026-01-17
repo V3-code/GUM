@@ -308,7 +308,9 @@
           "value": 1,
           "unit": "rounds",
           "inCombat": true,
-          "isPermanent": false
+          "isPermanent": false,
+          "startMode": "apply",
+          "endMode": "turnEnd"
       },
       "statusId": "dead"
     }

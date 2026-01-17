@@ -1040,6 +1040,16 @@ Hooks.on("createItem", async (item, options, userId) => {
                         }
                     }
 
+                   const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                    const startMode = gumDuration.startMode || "apply";
+                    const endMode = gumDuration.endMode || "turnEnd";
+                    const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+                    const pendingCombat = gumDuration.inCombat && !game.combat;
+                    gumDuration.startMode = startMode;
+                    gumDuration.endMode = endMode;
+                    if (shouldDelayStart) gumDuration.pendingStart = true;
+                    if (pendingCombat) gumDuration.pendingCombat = true;
+
                     const activeEffectData = {
                         name: effectItem.name,
                         img: effectImage, // ✅ 'img' agora é o ícone do status ou null
@@ -1052,9 +1062,10 @@ Hooks.on("createItem", async (item, options, userId) => {
                                 // ✅ IMPORTANTE: Guardamos o UUID do Item Efeito original
                                 //    para a ficha poder encontrar a imagem correta.
                                 effectUuid: effectItem.uuid,
-                                duration: foundry.utils.duplicate(effectSystem.duration || {})
+                                duration: gumDuration
                             }
-                        }
+                        },
+                        disabled: pendingCombat || shouldDelayStart
                     };
 
                     // --- INÍCIO DO CÓDIGO DE DURAÇÃO COMPLETO ---
@@ -1084,9 +1095,11 @@ Hooks.on("createItem", async (item, options, userId) => {
                         if (effectSystem.duration.inCombat && game.combat) {
                             activeEffectData.duration.combat = game.combat.id;
                         }
-                        activeEffectData.duration.startRound = game.combat?.round ?? null;
-                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                        if (!pendingCombat && !shouldDelayStart) {
+                            activeEffectData.duration.startRound = game.combat?.round ?? null;
+                            activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                            activeEffectData.duration.startTime = game.time?.worldTime ?? null;
+                        }
                     }
                     // --- FIM DO CÓDIGO DE DURAÇÃO ---
 
@@ -1176,13 +1189,24 @@ Hooks.on("createItem", async (item, options, userId) => {
                             if (statusEffect) { effectImage = statusEffect.icon; }
                         }
 
+                        const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                        const startMode = gumDuration.startMode || "apply";
+                        const endMode = gumDuration.endMode || "turnEnd";
+                        const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+                        const pendingCombat = gumDuration.inCombat && !game.combat;
+                        gumDuration.startMode = startMode;
+                        gumDuration.endMode = endMode;
+                        if (shouldDelayStart) gumDuration.pendingStart = true;
+                        if (pendingCombat) gumDuration.pendingCombat = true;
+
                         const activeEffectData = {
                             name: effectItem.name,
                             img: effectImage, 
                             origin: item.uuid,
                             changes: [],
                             statuses: [],
-                            flags: { gum: { originItemId: item.id, effectUuid: effectItem.uuid, duration: foundry.utils.duplicate(effectSystem.duration || {}) } }
+                            flags: { gum: { originItemId: item.id, effectUuid: effectItem.uuid, duration: gumDuration } },
+                            disabled: pendingCombat || shouldDelayStart
                         };
 
                         if (effectSystem.duration && !effectSystem.duration.isPermanent) {
@@ -1296,7 +1320,7 @@ Hooks.on("createItem", async (item, options, userId) => {
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
-    Hooks.on("updateCombat", async (combat, changed, options, userId) => {
+   Hooks.on("updateCombat", async (combat, changed, options, userId) => {
         
         // ==========================================================
         // ✅ BLOCO DE CORREÇÃO DO ÍCONE (INÍCIO)
@@ -1304,6 +1328,9 @@ Hooks.on("createItem", async (item, options, userId) => {
         // Se o combate foi desativado (encerrado) ou o round resetado para null
         if (changed.active === false || (changed.hasOwnProperty('round') && changed.round === null)) {
             console.log("GUM | Combate encerrado. Limpando ícones dos tokens.");
+            if (game.user.isGM) {
+                await handleCombatEnd(combat);
+            }
             // Loop em TODOS os combatentes para limpar seus ícones
             for (const combatant of combat.combatants) {
                 // token.object.refresh() é a forma mais segura de forçar a limpeza
@@ -1319,10 +1346,15 @@ Hooks.on("createItem", async (item, options, userId) => {
 
         if (!game.user.isGM) return;
 
+        if (changed.active === true) {
+            await handleCombatStart(combat);
+        }
+
         // --- Lógica de Início de Turno (Seu código original, sem alteração) ---
         if (changed.round !== undefined || (changed.turn !== undefined && combat.combatant)) {
             const currentCombatant = combat.combatant;
             if (currentCombatant?.actor) {
+                await handleCombatTurnStart(currentCombatant);
                 await processConditions(currentCombatant.actor); 
                 currentCombatant.token?.object?.drawEffects(); 
             }
@@ -2189,6 +2221,12 @@ async function manageActiveEffectDurations(actor) {
 
         const updateData = { _id: effect.id };
         const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+        const endMode = gumDuration.endMode || "turnEnd";
+        const isPendingCombat = gumDuration.pendingCombat === true;
+        const isPendingStart = gumDuration.pendingStart === true;
+
+        if (effect.disabled || isPendingCombat || isPendingStart) continue;
+        if (endMode === "turnStart") continue;
 
         // Se o efeito foi marcado como "apenas em combate" no item original e ainda não
         // possui valores de duração aplicados pelo Foundry, convertemos agora.
@@ -2239,7 +2277,8 @@ async function manageActiveEffectDurations(actor) {
 
         // Expiração por rodadas
         if (duration.rounds) {
-            const isExpired = currentRound >= startRound + duration.rounds;
+            const lastRound = startRound + Math.max(duration.rounds - 1, 0);
+            const isExpired = currentRound >= lastRound;
             if (isExpired) effectsToDelete.push(effect.id);
             else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
             continue;
@@ -2272,7 +2311,237 @@ async function manageActiveEffectDurations(actor) {
         await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToDelete);
     }
 }
- 
+
+const collectCombatEffects = (combat, predicate) => {
+    const effectsByActor = new Map();
+    for (const combatant of combat.combatants) {
+        const actor = combatant.actor;
+        if (!actor) continue;
+        const effects = actor.effects.filter(effect => predicate(effect));
+        if (effects.length > 0) effectsByActor.set(actor, effects);
+    }
+    return effectsByActor;
+};
+
+const setEffectStartData = (effect, updateData, combat) => {
+    const startRound = combat?.round ?? null;
+    const startTurn = combat?.turn ?? null;
+    const startTime = game.time?.worldTime ?? null;
+    if (effect.duration?.startRound == null) updateData["duration.startRound"] = startRound;
+    if (effect.duration?.startTurn == null) updateData["duration.startTurn"] = startTurn;
+    if (effect.duration?.startTime == null) updateData["duration.startTime"] = startTime;
+};
+
+async function handleCombatTurnStart(combatant) {
+    const actor = combatant?.actor;
+    if (!actor || !game.combat) return;
+
+    const currentRound = game.combat.round;
+    const currentTurn = game.combat.turn ?? 0;
+    const totalTurns = Math.max(game.combat.turns?.length || 1, 1);
+    const currentWorldTime = game.time?.worldTime || 0;
+    const effectsToDelete = [];
+    const effectsToUpdate = [];
+
+    for (const effect of actor.effects) {
+        const duration = effect.duration;
+        if (!duration) continue;
+
+        const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+        const endMode = gumDuration.endMode || "turnEnd";
+        const isPendingStart = gumDuration.pendingStart === true;
+        const isManualDisabled = foundry.utils.getProperty(effect, "flags.gum.manualDisabled") === true;
+
+        if (isManualDisabled) continue;
+
+        const updateData = { _id: effect.id };
+
+        if (isPendingStart) {
+            setEffectStartData(effect, updateData, game.combat);
+            updateData["flags.gum.duration.pendingStart"] = false;
+            updateData["disabled"] = false;
+            effectsToUpdate.push(updateData);
+            continue;
+        }
+
+        if (effect.disabled) continue;
+
+        if (endMode !== "turnStart") continue;
+
+        if (duration.startRound == null || duration.startTurn == null || duration.startTime == null) {
+            setEffectStartData(effect, updateData, game.combat);
+        }
+
+        if (duration.rounds) {
+            const startRound = duration.startRound ?? currentRound;
+            const lastRound = startRound + Math.max(duration.rounds - 1, 0);
+            const isExpired = currentRound >= lastRound;
+            if (isExpired) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
+            continue;
+        }
+
+        if (duration.turns) {
+            const startRound = duration.startRound ?? currentRound;
+            const startTurn = duration.startTurn ?? currentTurn;
+            const turnsElapsed = (currentRound - startRound) * totalTurns + (currentTurn - startTurn);
+            if (turnsElapsed >= Math.max(duration.turns - 1, 0)) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
+            continue;
+        }
+
+        if (duration.seconds) {
+            const startTime = duration.startTime ?? currentWorldTime;
+            const isExpired = currentWorldTime >= startTime + duration.seconds;
+            if (isExpired) effectsToDelete.push(effect.id);
+            else if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
+            continue;
+        }
+
+        if (Object.keys(updateData).length > 1) effectsToUpdate.push(updateData);
+    }
+
+    if (effectsToUpdate.length > 0) {
+        await actor.updateEmbeddedDocuments("ActiveEffect", effectsToUpdate);
+    }
+    if (effectsToDelete.length > 0) {
+        await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToDelete);
+    }
+}
+
+async function handleCombatStart(combat) {
+    if (!combat || !game.user.isGM) return;
+    const pendingEffects = collectCombatEffects(combat, (effect) => {
+        const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+        return gumDuration.inCombat === true
+            && gumDuration.pendingCombat === true
+            && foundry.utils.getProperty(effect, "flags.gum.manualDisabled") !== true;
+    });
+
+    if (pendingEffects.size === 0) return;
+
+    let enablePending = true;
+    try {
+        enablePending = await Dialog.confirm({
+            title: "Efeitos de Combate Pendentes",
+            content: "<p>Deseja ligar todos os efeitos de combate pendentes?</p>",
+            yes: () => true,
+            no: () => false,
+            defaultYes: true
+        });
+    } catch (error) {
+        enablePending = true;
+    }
+
+    if (!enablePending) return;
+
+    for (const [actor, effects] of pendingEffects.entries()) {
+        const updates = effects.map(effect => {
+            const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+            const startMode = gumDuration.startMode || "apply";
+            const updateData = {
+                _id: effect.id,
+                disabled: startMode !== "apply",
+                "flags.gum.duration.pendingCombat": false,
+                "flags.gum.manualDisabled": false
+            };
+            if (startMode === "apply") {
+                setEffectStartData(effect, updateData, combat);
+            }
+            return updateData;
+        });
+        await actor.updateEmbeddedDocuments("ActiveEffect", updates);
+        actor.sheet.render(false);
+        actor.getActiveTokens().forEach(token => token.drawEffects());
+    }
+}
+
+async function handleCombatEnd(combat) {
+    if (!combat || !game.user.isGM) return;
+    const combatEffects = collectCombatEffects(combat, (effect) => {
+        const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+        return gumDuration.inCombat === true;
+    });
+
+    if (combatEffects.size === 0) return;
+
+    let shouldDelete = true;
+    try {
+        shouldDelete = await Dialog.confirm({
+            title: "Encerrar efeitos de combate",
+            content: "<p>Deseja excluir todos os efeitos de combate?</p>",
+            yes: () => true,
+            no: () => false,
+            defaultYes: true
+        });
+    } catch (error) {
+        shouldDelete = true;
+    }
+
+    if (!shouldDelete) return;
+
+    for (const [actor, effects] of combatEffects.entries()) {
+        const effectIds = effects.map(effect => effect.id);
+        await actor.deleteEmbeddedDocuments("ActiveEffect", effectIds);
+        actor.sheet.render(false);
+        actor.getActiveTokens().forEach(token => token.drawEffects());
+    }
+}
+/**
+ * Gerencia a duração de condições baseadas em rodadas de combate a cada turno.
+ * @param {Combat} combat O objeto de combate que foi atualizado.
+ */
+async function manageDurations(combat) {
+    // Pega o combatente cujo turno ACABOU DE TERMINAR.
+    const combatant = combat.previous.combatantId ? combat.combatants.get(combat.previous.combatantId) : null;
+    if (!combatant?.actor) return; // Se não houver um combatente anterior, não faz nada.
+
+    const actor = combatant.actor;
+    const itemsToDelete = [];
+    const itemsToDisable = [];
+    const itemUpdates = [];
+
+    for (const condition of actor.items.filter(i => i.type === 'condition')) {
+        const duration = condition.system.duration;
+
+        // Pula condições que não têm duração finita em rodadas.
+        if (!duration || duration.unit !== 'rounds' || duration.value <= 0) continue;
+
+        const newValue = duration.value - 1;
+
+        if (newValue <= 0) {
+            // O tempo acabou! Decide o que fazer com base na escolha do usuário.
+            if (duration.expiration === 'disable') {
+                itemsToDisable.push(condition.id);
+            } else { // O padrão é sempre deletar
+                itemsToDelete.push(condition.id);
+            }
+        } else {
+            // Se o tempo ainda não acabou, apenas prepara a atualização do valor.
+            itemUpdates.push({ _id: condition.id, 'system.duration.value': newValue });
+        }
+    }
+
+    // Aplica todas as atualizações de duração de uma só vez para melhor performance.
+    if (itemUpdates.length > 0) {
+        await actor.updateEmbeddedDocuments("Item", itemUpdates);
+    }
+
+    if (itemsToDisable.length > 0) {
+        console.log(`GUM | Desativando condições expiradas de ${actor.name}:`, itemsToDisable);
+        // Pega os itens para desativar e seta a flag `manual_override` para 'true'
+        const disableUpdates = itemsToDisable.map(id => {
+            return { _id: id, 'flags.gum.manual_override': true, 'system.duration.value': 0 };
+        });
+        await actor.updateEmbeddedDocuments("Item", disableUpdates);
+    }
+
+    if (itemsToDelete.length > 0) {
+        console.log(`GUM | Removendo condições expiradas de ${actor.name}:`, itemsToDelete);
+        await actor.deleteEmbeddedDocuments("Item", itemsToDelete);
+    }
+}
+
 /**
  * Aplica um Item de Condição em um ator alvo com base em um Efeito Contingente.
  * Esta é uma função auxiliar reutilizável.

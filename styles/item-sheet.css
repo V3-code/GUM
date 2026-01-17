@@ -2030,3 +2030,40 @@
   align-items: center;
   gap: 8px;
 }
+
+.gum.sheet.item.effect-sheet .timed-duration-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options {
+  margin-top: 4px;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options .form-group {
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options .stat-label {
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options .custom-radio.block {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 2px 0;
+  line-height: 1.2;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options .custom-radio.block input[type="radio"] {
+  margin-top: 2px;
+}
+
+.gum.sheet.item.effect-sheet .combat-duration-options .custom-radio.block span {
+  display: inline;
+  font-size: 0.78rem;
+}
