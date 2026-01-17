@@ -274,7 +274,7 @@
     var(--item-panel-texture) repeat;
   border: 1px solid var(--item-border);
   border-radius: 10px;
-  padding: 18px 12px 12px;
+  padding: 12px 12px 12px;
   margin-bottom: 15px;
   box-shadow: var(--item-shadow);
 }
@@ -666,14 +666,15 @@
   align-items: center;
 }
 .gum.sheet.item .description-actions button {
-  padding: 6px 10px;
-  font-size: 0.82rem;
+  padding: 4px 2px 4px 6px;
+  font-size: 0.7rem;
   border-radius: 8px;
   border: 1px solid var(--item-border);
-  background: #ffffff;
+  background: var(--item-bg-panel);
   color: var(--item-text);
   font-weight: 700;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  align-items: center;
 }
 .gum.sheet.item .description-actions button:hover {
   background: var(--item-accent);
@@ -1113,7 +1114,7 @@
   flex-direction: column;
   gap: 10px;
 }
-.gum.sheet.item .effect-group.success { border-color: #74c48a; box-shadow: 0 4px 10px rgba(116,196,138,0.15); }
+.gum.sheet.item .effect-group.success { border-color: #74c48a; box-shadow: 0 4px 10px rgba(116,196,138,0.15); margin-bottom: 10px;}
 .gum.sheet.item .effect-group.failure { border-color: #c45e5e; box-shadow: 0 4px 10px rgba(196,94,94,0.15); }
 .gum.sheet.item .effect-group.passive { border-color: #6a8bb5; box-shadow: 0 4px 10px rgba(106,139,181,0.15); }
 
@@ -1391,13 +1392,13 @@
 /* BOTÕES                                                            */
 /* ------------------------------------------------------------------- */
 .gum.sheet.item button {
-  background: #ffffff;
+  background: var(--item-bg-panel);
   color: var(--item-text);
   border: 1px solid var(--item-border);
   border-radius: 6px;
-  padding: 6px 10px;
+  font-size: x-small;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 400;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   transition: background 0.2s, border-color 0.2s, transform 0.1s;
   display: inline-flex;
