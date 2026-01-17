@@ -182,6 +182,10 @@ async getData(options) {
                     if (originalEffectItem) {
                         effectData.name = originalEffectItem.name; 
                         effectData.img = originalEffectItem.img;
+                        if (originalEffectItem.system?.type === "status" && originalEffectItem.system?.statusId) {
+                            const statusEffect = CONFIG.statusEffects.find(status => status.id === originalEffectItem.system.statusId);
+                            effectData.appliedStatusLabel = statusEffect?.name || originalEffectItem.system.statusId;
+                        }
                     }
                 }
                 

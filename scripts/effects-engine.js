@@ -256,16 +256,18 @@ if (effectSystem.attachedStatusId) {
         // CASO STATUS (RESTAURADO - Usa toggleStatusEffect)
         // Controla apenas o ícone visual no token.
         // =======================================================
-        case 'status': {
+       case 'status': {
             if (!effectSystem.statusId) break; // Precisa de um ID de status
             
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
                 const statusId = effectSystem.statusId;
+                const statusEffect = CONFIG.statusEffects.find(effect => effect.id === statusId);
+                const statusIcon = statusEffect?.icon ?? statusEffect?.img ?? effectItem.img;
 
                 const activeEffectData = {
                     name: effectItem.name,
-                    img: effectItem.img,
+                    img: statusIcon,
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
                     statuses: [statusId],
