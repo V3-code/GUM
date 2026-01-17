@@ -2126,6 +2126,17 @@ async function processConditions(actor, eventData = null) {
                                 && effect?.flags?.gum?.effectUuid === effectItem.uuid
                             );
                             if (!existingConditionEffect) {
+                                const effectSystem = effectItem.system;
+                                const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                                const startMode = gumDuration.startMode || "apply";
+                                const endMode = gumDuration.endMode || "turnEnd";
+                                const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+                                const pendingCombat = gumDuration.inCombat && !game.combat;
+                                gumDuration.startMode = startMode;
+                                gumDuration.endMode = endMode;
+                                if (shouldDelayStart) gumDuration.pendingStart = true;
+                                if (pendingCombat) gumDuration.pendingCombat = true;
+
                                 const effectData = {
                                     name: effectItem.name,
                                     img: effectItem.img,
@@ -2136,19 +2147,58 @@ async function processConditions(actor, eventData = null) {
                                         gum: {
                                             conditionEffect: true,
                                             conditionId: condition.id,
-                                            effectUuid: effectItem.uuid
+                                            effectUuid: effectItem.uuid,
+                                            duration: gumDuration
                                         }
-                                    }
+                                    },
+                                    disabled: pendingCombat || shouldDelayStart
                                 };
-                                const coreStatusId = effectItem.name.slugify({ strict: true });
+
+                                const coreStatusId = effectSystem.type === "status" && effectSystem.statusId
+                                    ? effectSystem.statusId
+                                    : (effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true }));
                                 foundry.utils.setProperty(effectData, "flags.core.statusId", coreStatusId);
-                                if (effectItem.system.type === "attribute" && effectItem.system.path) {
-                                    const normalizedPath = normalizeEffectPath(effectItem.system.path);
-                                    let computedValue = evaluateEffectValue(effectItem.system.value);
-                                    if (effectItem.system.operation === "SUB") {
+
+                                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                                    effectData.duration = {};
+                                    const value = parseInt(effectSystem.duration.value) || 1;
+                                    const unit = effectSystem.duration.unit;
+
+                                    if (unit === "turns") {
+                                        effectData.duration.turns = value;
+                                    } else if (unit === "seconds") {
+                                        if (effectSystem.duration.inCombat && game.combat) {
+                                            effectData.duration.turns = value;
+                                        } else {
+                                            effectData.duration.seconds = value;
+                                        }
+                                    } else if (unit === "rounds") {
+                                        effectData.duration.rounds = value;
+                                    } else if (unit === "minutes") {
+                                        effectData.duration.seconds = value * 60;
+                                    } else if (unit === "hours") {
+                                        effectData.duration.seconds = value * 60 * 60;
+                                    } else if (unit === "days") {
+                                        effectData.duration.seconds = value * 60 * 60 * 24;
+                                    }
+
+                                    if (effectSystem.duration.inCombat && game.combat) {
+                                        effectData.duration.combat = game.combat.id;
+                                    }
+                                    if (!pendingCombat && !shouldDelayStart) {
+                                        effectData.duration.startRound = game.combat?.round ?? null;
+                                        effectData.duration.startTurn = game.combat?.turn ?? null;
+                                        effectData.duration.startTime = game.time?.worldTime ?? null;
+                                    }
+                                }
+
+                                if (effectSystem.type === "attribute" && effectSystem.path) {
+                                    const normalizedPath = normalizeEffectPath(effectSystem.path);
+                                    let computedValue = evaluateEffectValue(effectSystem.value);
+                                    if (effectSystem.operation === "SUB") {
                                         computedValue = -Math.abs(Number(computedValue) || 0);
                                     }
-                                    const mode = (effectItem.system.operation === "OVERRIDE" || effectItem.system.operation === "SET")
+                                    const mode = (effectSystem.operation === "OVERRIDE" || effectSystem.operation === "SET")
                                         ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE
                                         : CONST.ACTIVE_EFFECT_MODES.ADD;
                                     effectData.changes.push({
@@ -2157,16 +2207,23 @@ async function processConditions(actor, eventData = null) {
                                         value: computedValue
                                     });
                                 }
-                                if (effectItem.system.type === "roll_modifier") {
+                                if (effectSystem.type === "roll_modifier") {
                                     effectData.flags.gum.rollModifier = {
-                                        value: effectItem.system.roll_modifier_value ?? effectItem.system.value ?? 0,
-                                        cap: effectItem.system.roll_modifier_cap ?? "",
-                                        context: effectItem.system.roll_modifier_context ?? "all"
+                                        value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                        cap: effectSystem.roll_modifier_cap ?? "",
+                                        context: effectSystem.roll_modifier_context ?? "all"
                                     };
                                 }
-                                if (effectItem.system.type === "status" && effectItem.system.statusId) {
-                                    effectData.statuses.push(effectItem.system.statusId);
+
+                                const statuses = new Set();
+                                if (effectSystem.type === "status" && effectSystem.statusId) {
+                                    statuses.add(effectSystem.statusId);
                                 }
+                                if (effectSystem.attachedStatusId) {
+                                    statuses.add(effectSystem.attachedStatusId);
+                                }
+                                effectData.statuses = Array.from(statuses);
+
                                 await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
                             }
                         }
