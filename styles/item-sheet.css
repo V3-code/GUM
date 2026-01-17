@@ -163,10 +163,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  align-items: center;
 }
 
-.gum.sheet.item .sheet-header input[name="name"] {
+.gum.sheet.item .sheet-header textarea[name="name"] {
   font-family: var(--item-font-serif);
   font-size: 1.2rem;
   font-weight: 700;
@@ -175,12 +176,33 @@
   color: var(--item-text);
   border-radius: 6px;
   padding: 6px 10px;
+  min-height: 42px;
+  resize: none;
+  text-align: center;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-.gum.sheet.item .sheet-header input[name="name"]:focus {
+.gum.sheet.item .sheet-header textarea[name="name"]:focus {
   border-color: var(--item-accent);
   background: rgba(0, 0, 0, 0.4);
   box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.2);
+}
+
+.gum.sheet.item .sheet-header .header-main-line,
+.gum.sheet.item .sheet-header .header-subline {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.gum.sheet.item .sheet-header .header-subline {
+  margin-top: -2px;
+}
+
+.gum.sheet.item .sheet-header .header-divider {
+  width: 130px;
+  height: 16px;
+  background: var(--item-divider) no-repeat center / contain;
+  opacity: 0.8;
 }
 
 .gum.sheet.item .item-type-tag {

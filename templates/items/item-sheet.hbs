@@ -349,11 +349,14 @@
   <div class="header-info">
     <div class="header-main-line">
       <textarea name="name" rows="1" placeholder="Nome do Item">{{item.name}}</textarea>
-      <span class="item-tag small-tag">{{lookup (object 
+    </div>
+    <div class="header-subline">
+      <span class="item-type-tag">{{lookup (object 
         armor="Armadura" melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
         equipment="Equipamento" skill="Perícia" spell="Magia" 
         advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip." gm_modifier="GM MOD") item.type}}</span>
     </div>
+    <span class="header-divider" aria-hidden="true"></span>
   </div>
 </header>
 
