@@ -275,15 +275,15 @@
   border: 1px solid var(--item-border);
   border-radius: 10px;
   padding: 18px 12px 12px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   box-shadow: var(--item-shadow);
 }
 
 .gum.sheet.item .section-title {
   position: absolute;
   top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 12px;
+  transform: none;
   font-family: var(--item-font-condensed);
   font-size: var(--item-font-size-sm);
   color: var(--item-text);
