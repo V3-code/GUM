@@ -1,7 +1,7 @@
-2026/01/16-16:31:27.211 3fbc Recovering log #161
-2026/01/16-16:31:27.223 3fbc Delete type=0 #161
-2026/01/16-16:31:27.223 3fbc Delete type=3 #160
-2026/01/16-21:09:53.635 45b8 Level-0 table #165: started
-2026/01/16-21:09:53.635 45b8 Level-0 table #165: 0 bytes OK
-2026/01/16-21:09:53.637 45b8 Delete type=0 #163
-2026/01/16-21:09:53.637 45b8 Manual compaction at level-0 from 'undefined' @ 72057594037927935 : 1 .. 'undefined' @ 0 : 0; will stop at (end)
+2026/01/16-23:55:35.286 5574 Recovering log #164
+2026/01/16-23:55:35.286 5574 Delete type=0 #164
+2026/01/16-23:55:35.286 5574 Delete type=3 #162
+2026/01/17-08:03:34.896 45b8 Level-0 table #169: started
+2026/01/17-08:03:34.896 45b8 Level-0 table #169: 0 bytes OK
+2026/01/17-08:03:34.897 45b8 Delete type=0 #167
+2026/01/17-08:03:34.919 45b8 Manual compaction at level-0 from 'undefined' @ 72057594037927935 : 1 .. 'undefined' @ 0 : 0; will stop at (end)
