@@ -599,7 +599,7 @@ _onAddAttack(ev) {
         new Dialog({
             title,
             content,
-            classes: ["gum-dialog", "attack-editor-dialog"],
+            classes: ["gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"],
             buttons: {
                 save: {
                     icon: '<i class="fas fa-save"></i>',
@@ -813,11 +813,13 @@ _onAddAttack(ev) {
             </div>
         `;
 
-        return `
-            <form class="gum-dialog-content attack-editor-form">
-                ${commonFields}
-                ${attackType === "melee" ? meleeFields : rangedFields}
-            </form>
+               return `
+            <div class="attack-editor-dialog gum sheet item">
+                <form class="gum-dialog-content attack-editor-form">
+                    ${commonFields}
+                    ${attackType === "melee" ? meleeFields : rangedFields}
+                </form>
+            </div>
         `;
     }
 

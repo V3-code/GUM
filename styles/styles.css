@@ -3575,78 +3575,119 @@
 /* ------------------------------------------------------------------- */
 /* ATTACK EDITOR DIALOG                                                */
 /* ------------------------------------------------------------------- */
-.gum-dialog.attack-editor-dialog .window-content {
+.attack-editor-dialog {
     padding: 12px 14px 16px;
 }
 
-.gum-dialog.attack-editor-dialog .attack-editor-form {
+.attack-editor-dialog .attack-editor-form {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.gum-dialog.attack-editor-dialog .form-section {
-    background: var(--gum-bg-card-claro);
-    border: 1px solid var(--gum-border-light);
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: var(--gum-shadow-sutil);
+.attack-editor-dialog .form-section {
+    position: relative;
+    background:
+        linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+        var(--item-panel-texture) repeat;
+    border: 1px solid var(--item-border);
+    border-radius: 10px;
+    padding: 12px 12px 12px;
+    margin-top: 15px;
+    box-shadow: var(--item-shadow);
 }
 
-.gum-dialog.attack-editor-dialog .section-title {
-    margin: 0 0 8px;
-    font-family: var(--gum-font-condensed);
-    font-size: 0.75rem;
-    letter-spacing: 0.18em;
+.attack-editor-dialog .section-title {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    transform: none;
+    font-family: var(--item-font-condensed);
+    font-size: var(--item-font-size-sm);
+    color: var(--item-text);
+    margin: 0;
+    padding: 2px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(201, 161, 94, 0.45);
+    background: var(--item-bg-panel-contrast);
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--gum-text-escuro);
+    box-shadow: var(--item-shadow-soft);
 }
 
-.gum-dialog.attack-editor-dialog .form-grid-2 {
+.attack-editor-dialog .form-grid-2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
-.gum-dialog.attack-editor-dialog .form-grid-3 {
+.attack-editor-dialog .form-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
 }
 
-.gum-dialog.attack-editor-dialog .form-group {
+.attack-editor-dialog .form-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.attack-editor-dialog .form-section .form-grid-2,
+.attack-editor-dialog .form-section .form-grid-3,
+.attack-editor-dialog .form-section .form-grid-4 {
+    margin-top: 4px;
+}
+
+.attack-editor-dialog .form-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
-.gum-dialog.attack-editor-dialog .form-group label {
-    font-family: var(--gum-font-condensed);
-    font-size: 0.65rem;
+.attack-editor-dialog .form-group label {
+    font-family: var(--item-font-condensed);
+    font-size: var(--item-font-size-xs);
     font-weight: 700;
-    text-transform: uppercase;
+    color: var(--item-text-muted);
     letter-spacing: 0.12em;
-    color: var(--gum-text-subtitulo);
+    text-transform: uppercase;
 }
 
-.gum-dialog.attack-editor-dialog .custom-checkbox {
+.attack-editor-dialog input[type="text"],
+.attack-editor-dialog input[type="number"],
+.attack-editor-dialog select,
+.attack-editor-dialog textarea {
+    width: 100%;
+    background: var(--item-input-bg);
+    border: 1px solid var(--item-input-border);
+    border-radius: 6px;
+    color: var(--item-input-text);
+    font-size: var(--item-font-size-sm);
+    padding: 4px 8px;
+    min-height: 28px;
+    font-family: var(--item-font-base);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.attack-editor-dialog .custom-checkbox {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 0.7rem;
-    color: var(--gum-text-escuro);
+    color: var(--item-text);
 }
 
-.gum-dialog.attack-editor-dialog .custom-checkbox input[type="checkbox"] {
+.attack-editor-dialog .custom-checkbox input[type="checkbox"] {
     margin: 0;
 }
 
-.gum-dialog.attack-editor-dialog details.form-section summary {
+.attack-editor-dialog details.form-section summary {
     cursor: pointer;
     font-weight: 700;
-    color: var(--gum-text-escuro);
+    color: var(--item-text);
 }
 
-.gum-dialog.attack-editor-dialog details.form-section[open] summary {
+.attack-editor-dialog details.form-section[open] summary {
     margin-bottom: 8px;
 }
