@@ -1352,8 +1352,11 @@
      <div class="tab" data-tab="attacks">
         
         {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
-        <div class="form-section attacks-editor-section">
-         <h4 class="section-title">Ataques Corpo a Corpo</h4>
+        <div class="attacks-editor-section">
+         <div class="attack-section-header">
+            <h4 class="attack-section-title">Ataques Corpo a Corpo</h4>
+            <a class="attack-add-button add-attack" data-type="melee" title="Adicionar Ataque Corpo a Corpo"><i class="fas fa-plus"></i></a>
+         </div>
          <ol class="attack-list">
            {{#each system.melee_attacks as |attack key|}}
            <li class="attack-item melee-attack-item" data-attack-id="{{key}}" data-attack-type="melee">
@@ -1527,14 +1530,14 @@
                  </li>
                  {{/each}}
              </ol>
-         <div class="attack-toolbar">
-             <a class="add-attack button" data-type="melee"><i class="fas fa-plus"></i> Adicionar Ataque C.C.</a>
-         </div>
-         </div>
+        </div>
 
         {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
-        <div class="form-section attacks-editor-section">
-         <h4 class="section-title">Ataques à Distância</h4>
+        <div class="attacks-editor-section">
+         <div class="attack-section-header">
+            <h4 class="attack-section-title">Ataques à Distância</h4>
+            <a class="attack-add-button add-attack" data-type="ranged" title="Adicionar Ataque à Distância"><i class="fas fa-plus"></i></a>
+         </div>
          <ol class="attack-list">
            {{#each system.ranged_attacks as |attack key|}}
            <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
@@ -1560,7 +1563,7 @@
                              {{/if}}
                              <span class="attack-controls">
                                  <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                 <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+                                 <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
                              </span>
                          </h4>
                          <div class="form-grid-3 attack-display-grid ranged-grid">
@@ -1729,11 +1732,7 @@
                  </div>
                  </li>
                  {{/each}}
-             </ol
-             <div class="attack-toolbar">
-             <a class="add-attack button" data-type="ranged"><i class="fas fa-plus"></i> Adicionar Ataque L.D.</a>
-
-             </div>
+             </ol>
              </div>
          </div>
      

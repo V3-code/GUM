@@ -3571,3 +3571,82 @@
 .gum-rd-form .gurps-rd-table .table-row .loc-rd-total strong {
     color: #b64040;
 }
+
+/* ------------------------------------------------------------------- */
+/* ATTACK EDITOR DIALOG                                                */
+/* ------------------------------------------------------------------- */
+.gum-dialog.attack-editor-dialog .window-content {
+    padding: 12px 14px 16px;
+}
+
+.gum-dialog.attack-editor-dialog .attack-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gum-dialog.attack-editor-dialog .form-section {
+    background: var(--gum-bg-card-claro);
+    border: 1px solid var(--gum-border-light);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: var(--gum-shadow-sutil);
+}
+
+.gum-dialog.attack-editor-dialog .section-title {
+    margin: 0 0 8px;
+    font-family: var(--gum-font-condensed);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gum-text-escuro);
+}
+
+.gum-dialog.attack-editor-dialog .form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.gum-dialog.attack-editor-dialog .form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.gum-dialog.attack-editor-dialog .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gum-dialog.attack-editor-dialog .form-group label {
+    font-family: var(--gum-font-condensed);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gum-text-subtitulo);
+}
+
+.gum-dialog.attack-editor-dialog .custom-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--gum-text-escuro);
+}
+
+.gum-dialog.attack-editor-dialog .custom-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
+.gum-dialog.attack-editor-dialog details.form-section summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--gum-text-escuro);
+}
+
+.gum-dialog.attack-editor-dialog details.form-section[open] summary {
+    margin-bottom: 8px;
+}

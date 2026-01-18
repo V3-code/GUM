@@ -53,6 +53,7 @@
   --item-bg-panel: #1d1b20;
   --item-bg-panel-2: #24222a;
   --item-bg-panel-contrast: #16151a;
+  --item-bg-extra-red: #7c272f;
   --item-border: #3b3742;
   --item-border-light: #2b2831;
   --item-accent: #c9a15e;
@@ -275,7 +276,7 @@
   border: 1px solid var(--item-border);
   border-radius: 10px;
   padding: 12px 12px 12px;
-  margin-bottom: 15px;
+  margin-top: 15px;
   box-shadow: var(--item-shadow);
 }
 
@@ -817,6 +818,52 @@
 /* ------------------------------------------------------------------- */
 /* ATAQUES                                                           */
 /* ------------------------------------------------------------------- */
+.gum.sheet.item .attacks-editor-section {
+  background: var(--item-bg-extra-red);
+  border: 1px solid rgba(201, 161, 94, 0.35);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.gum.sheet.item .attack-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gum.sheet.item .attack-section-title {
+  margin: 0 0 0 5px;
+  font-family: var(--item-font-condensed);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--item-text);
+}
+
+.gum.sheet.item .attack-add-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #14111a;
+  border: 1px solid rgba(201, 161, 94, 0.55);
+  color: var(--item-text);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.gum.sheet.item .attack-add-button:hover {
+  background: #1f1b25;
+  color: var(--item-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
 .gum.sheet.item .attack-list {
   list-style: none;
   padding: 0;

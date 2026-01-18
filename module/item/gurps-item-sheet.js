@@ -346,9 +346,8 @@ export class GurpsItemSheet extends ItemSheet {
         
         // Modo Edição de Ataque
         html.find('.edit-attack-mode').click(ev => {
-             ev.preventDefault();
-             $(ev.currentTarget).closest('.attack-item').find('.attack-display-mode').hide();
-             $(ev.currentTarget).closest('.attack-item').find('.attack-edit-mode').show();
+            ev.preventDefault();
+            this._onEditAttack(ev);
         });
 
         const saveAttackHandler = this._onSaveAttackMode ? this._onSaveAttackMode.bind(this) : null;
@@ -527,14 +526,299 @@ export class GurpsItemSheet extends ItemSheet {
         }
     }
 
-    _onAddAttack(ev) {
+_onAddAttack(ev) {
+        ev.preventDefault();
         const attackType = $(ev.currentTarget).data('type');
         const newAttackId = foundry.utils.randomID(16);
-        const newAttackData = (attackType === 'melee') 
-            ? { "mode": "Novo Ataque", "damage_formula": "GdB", "damage_type": "cort", "reach": "C", "parry": "0", "skill_name": "" }
-            : { "mode": "Novo Tiro", "damage_formula": "GdP", "damage_type": "perf", "range": "100/200", "rof": "1", "shots": "1", "skill_name": "" };
-        
-        this.item.update({ [`system.${attackType}_attacks.${newAttackId}`]: newAttackData });
+        const newAttackData = this._getDefaultAttackData(attackType);
+
+        this._openAttackEditorDialog({
+            attackType,
+            attackId: newAttackId,
+            attackData: newAttackData
+        });
+    }
+
+    _getDefaultAttackData(attackType) {
+        const baseAttack = {
+            mode: "",
+            skill_name: "",
+            skill_level_mod: 0,
+            damage_formula: "",
+            damage_type: "",
+            armor_divisor: null,
+            min_strength: null,
+            unbalanced: false,
+            fencing: false,
+            follow_up_damage: {
+                formula: "",
+                type: "",
+                armor_divisor: null
+            },
+            fragmentation_damage: {
+                formula: "",
+                type: "",
+                armor_divisor: null
+            }
+        };
+
+        if (attackType === "melee") {
+            return {
+                ...baseAttack,
+                mode: "Novo Ataque",
+                damage_formula: "GdB",
+                damage_type: "cort",
+                reach: "C",
+                parry: "0",
+                block: "",
+                min_strength: ""
+            };
+        }
+
+        return {
+            ...baseAttack,
+            mode: "Novo Tiro",
+            damage_formula: "GdP",
+            damage_type: "perf",
+            accuracy: "",
+            range: "100/200",
+            rof: "1",
+            shots: "1",
+            rcl: "",
+            mag: "",
+            min_strength: ""
+        };
+    }
+
+    _openAttackEditorDialog({attackType, attackId, attackData, isEdit = false}) {
+        const title = isEdit
+            ? (attackType === "melee" ? "Editar Ataque Corpo a Corpo" : "Editar Ataque à Distância")
+            : (attackType === "melee" ? "Novo Ataque Corpo a Corpo" : "Novo Ataque à Distância");
+        const content = this._renderAttackEditorForm(attackType, attackId, attackData);
+
+        new Dialog({
+            title,
+            content,
+            classes: ["gum-dialog", "attack-editor-dialog"],
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: async (html) => {
+                        const form = html.find("form")[0];
+                        const updateData = this._collectAttackFormData(form);
+                        if (Object.keys(updateData).length > 0) {
+                            await this.item.update(updateData);
+                        }
+                    }
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: "Cancelar"
+                }
+            },
+            default: "save"
+        }).render(true);
+    }
+
+    _onEditAttack(ev) {
+        const attackItem = $(ev.currentTarget).closest('.attack-item');
+        const attackId = attackItem.data('attack-id');
+        const attackType = attackItem.data('attack-type');
+        if (!attackId || !attackType) return;
+
+        const attackData = foundry.utils.getProperty(this.item, `system.${attackType}_attacks.${attackId}`);
+        if (!attackData) return;
+
+        this._openAttackEditorDialog({
+            attackType,
+            attackId,
+            attackData,
+            isEdit: true
+        });
+    }
+
+    _collectAttackFormData(form) {
+        const inputs = Array.from(form.querySelectorAll("[data-name]"));
+        const updateData = {};
+
+        inputs.forEach((input) => {
+            const path = input.dataset.name;
+            if (!path) return;
+
+            let value;
+            if (input.type === "checkbox") {
+                value = input.checked;
+            } else if (input.type === "number") {
+                const raw = input.value.trim();
+                if (raw === "") {
+                    value = null;
+                } else {
+                    const normalized = raw.replace(',', '.');
+                    const parsed = Number(normalized);
+                    value = Number.isNaN(parsed) ? normalized : parsed;
+                }
+            } else {
+                value = input.value;
+            }
+
+            foundry.utils.setProperty(updateData, path, value);
+        });
+
+        return updateData;
+    }
+
+    _renderAttackEditorForm(attackType, attackId, attackData) {
+        const safe = (value) => foundry.utils.escapeHTML(String(value ?? ""));
+        const basePath = `system.${attackType}_attacks.${attackId}`;
+        const followUp = attackData.follow_up_damage ?? {};
+        const fragmentation = attackData.fragmentation_damage ?? {};
+
+        const commonFields = `
+            <div class="form-section">
+                <h4 class="section-title">Identificação</h4>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Modo de Uso</label>
+                        <input type="text" data-name="${basePath}.mode" value="${safe(attackData.mode)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Perícia Vinculada</label>
+                        <input type="text" data-name="${basePath}.skill_name" value="${safe(attackData.skill_name)}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Mod. NH</label>
+                        <input type="number" data-name="${basePath}.skill_level_mod" value="${safe(attackData.skill_level_mod)}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <h4 class="section-title">Atributos de Combate</h4>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Dano</label>
+                        <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/>
+                    </div>
+                    <div class="form-group" title="Divisor de Armadura">
+                        <label>Div.</label>
+                        <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <h4 class="section-title">Características</h4>
+                <div class="form-grid-2">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" data-name="${basePath}.unbalanced" ${attackData.unbalanced ? "checked" : ""}/>
+                        <span>Desbalanceada (U)</span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" data-name="${basePath}.fencing" ${attackData.fencing ? "checked" : ""}/>
+                        <span>Esgrima (F)</span>
+                    </label>
+                </div>
+            </div>
+            <details class="form-section">
+                <summary>Danos Avançados</summary>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Fórmula Acompanh.</label>
+                        <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Acompanh.</label>
+                        <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/>
+                    </div>
+                    <div class="form-group" title="Divisor">
+                        <label>Div. Acompanh.</label>
+                        <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Fórmula Frag.</label>
+                        <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Frag.</label>
+                        <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
+                    </div>
+                    <div class="form-group" title="Divisor">
+                        <label>Div. Frag.</label>
+                        <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}"/>
+                    </div>
+                </div>
+            </details>
+        `;
+
+        const meleeFields = `
+            <div class="form-section">
+                <h4 class="section-title">Defesas & Alcance</h4>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Aparar</label>
+                        <input type="text" data-name="${basePath}.parry" value="${safe(attackData.parry)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Bloqueio</label>
+                        <input type="text" data-name="${basePath}.block" value="${safe(attackData.block)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Alcance</label>
+                        <input type="text" data-name="${basePath}.reach" value="${safe(attackData.reach)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>ST Mín.</label>
+                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const rangedFields = `
+            <div class="form-section">
+                <h4 class="section-title">Precisão & Alcance</h4>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Prec.</label>
+                        <input type="text" data-name="${basePath}.accuracy" value="${safe(attackData.accuracy)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Alcance</label>
+                        <input type="text" data-name="${basePath}.range" value="${safe(attackData.range)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>CdT</label>
+                        <input type="text" data-name="${basePath}.rof" value="${safe(attackData.rof)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiros</label>
+                        <input type="text" data-name="${basePath}.shots" value="${safe(attackData.shots)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Recuo</label>
+                        <input type="text" data-name="${basePath}.rcl" value="${safe(attackData.rcl)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Mag.</label>
+                        <input type="text" data-name="${basePath}.mag" value="${safe(attackData.mag)}"/>
+                    </div>
+                    <div class="form-group">
+                        <label>ST Mín.</label>
+                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return `
+            <form class="gum-dialog-content attack-editor-form">
+                ${commonFields}
+                ${attackType === "melee" ? meleeFields : rangedFields}
+            </form>
+        `;
     }
 
     _onDeleteAttack(ev) {
