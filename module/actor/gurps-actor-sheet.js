@@ -511,11 +511,30 @@ async getData(options) {
         // ================================================================== //
         
         // 1. Usamos a lista 'context.equipmentInUse' que você já calculou
+ const calculateDefaultDefense = (nhValue) => {
+            const parsed = Number(nhValue);
+            if (!Number.isFinite(parsed)) return null;
+            return Math.floor(parsed / 2) + 3;
+        };
+
+        const normalizeDefenseValue = (value) => {
+            if (value === null || value === undefined) return null;
+            const trimmed = String(value).trim();
+            if (trimmed === "" || trimmed === "0" || trimmed === "-") return null;
+            return trimmed;
+        };
+
         const equipmentAttackGroups = (context.equipmentInUse || []).map(item => {
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
             // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
             const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
+                const finalNh = attack.final_nh || 10;
+                const defaultDefense = calculateDefaultDefense(finalNh);
+                const parryValue = attack.parry_default && defaultDefense !== null ? defaultDefense : attack.parry;
+                const blockValue = attack.block_default && defaultDefense !== null ? defaultDefense : attack.block;
+                const normalizedParry = normalizeDefenseValue(parryValue);
+                const normalizedBlock = normalizeDefenseValue(blockValue);
                 return {
                     ...attack, // Traz todos os campos do 'attack_melee'
                     id: id,
@@ -527,8 +546,12 @@ async getData(options) {
                     groupId: item.id,
                     itemId: item.id,
                     // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
-                    final_nh: attack.final_nh || 10, 
-                    skill_name: attack.skill_name || "N/A"
+                    final_nh: finalNh,
+                    skill_name: attack.skill_name || "N/A",
+                    parry: normalizedParry ?? "",
+                    block: normalizedBlock ?? "",
+                    final_parry: normalizedParry,
+                    final_block: normalizedBlock
                 };
             });
 

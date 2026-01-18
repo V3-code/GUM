@@ -563,7 +563,7 @@ _onAddAttack(ev) {
         };
 
         if (attackType === "melee") {
-            return {
+        return {
                 ...baseAttack,
                 mode: "Novo Ataque",
                 damage_formula: "GdB",
@@ -571,6 +571,8 @@ _onAddAttack(ev) {
                 reach: "C",
                 parry: "0",
                 block: "",
+                parry_default: false,
+                block_default: false,
                 min_strength: ""
             };
         }
@@ -674,104 +676,162 @@ _onAddAttack(ev) {
         const followUp = attackData.follow_up_damage ?? {};
         const fragmentation = attackData.fragmentation_damage ?? {};
 
+       const defaultParry = Boolean(attackData.parry_default);
+        const defaultBlock = Boolean(attackData.block_default);
+        const resolveDefaultDefense = (nhValue) => {
+            const parsed = Number(nhValue);
+            if (!Number.isFinite(parsed)) return "";
+            return Math.floor(parsed / 2) + 3;
+        };
+        const defaultDefenseValue = resolveDefaultDefense(attackData.final_nh);
+        const parryValue = defaultParry && defaultDefenseValue !== "" ? defaultDefenseValue : attackData.parry;
+        const blockValue = defaultBlock && defaultDefenseValue !== "" ? defaultDefenseValue : attackData.block;
+
         const commonFields = `
             <div class="form-section">
                 <h4 class="section-title">Identificação</h4>
-                <div class="form-grid-2">
-                    <div class="form-group">
-                        <label>Modo de Uso</label>
+                <div class="form-row">
+                    <div class="row-label">Modo de Uso</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.mode" value="${safe(attackData.mode)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Perícia Vinculada</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Perícia Vinculada</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.skill_name" value="${safe(attackData.skill_name)}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
                     </div>
-                    <div class="form-group">
-                        <label>Mod. NH</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Mod. NH</div>
+                    <div class="row-fields">
                         <input type="number" data-name="${basePath}.skill_level_mod" value="${safe(attackData.skill_level_mod)}"/>
                     </div>
                 </div>
-            </div>
-            <div class="form-section">
-                <h4 class="section-title">Atributos de Combate</h4>
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Dano</label>
-                        <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/>
+                ${attackType === "melee" ? `
+                <div class="form-row">
+                    <div class="row-label">Alcance</div>
+                    <div class="row-fields">
+                        <input type="text" data-name="${basePath}.reach" value="${safe(attackData.reach)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/>
+                </div>
+                ` : `
+                <div class="form-row">
+                    <div class="row-label">Alcance</div>
+                    <div class="row-fields">
+                        <input type="text" data-name="${basePath}.range" value="${safe(attackData.range)}"/>
                     </div>
-                    <div class="form-group" title="Divisor de Armadura">
-                        <label>Div.</label>
-                        <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}"/>
+                </div>
+                `}
+                <div class="form-row">
+                    <div class="row-label">ST Mín.</div>
+                    <div class="row-fields">
+                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/>
                     </div>
                 </div>
             </div>
             <div class="form-section">
-                <h4 class="section-title">Características</h4>
-                <div class="form-grid-2">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" data-name="${basePath}.unbalanced" ${attackData.unbalanced ? "checked" : ""}/>
-                        <span>Desbalanceada (U)</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" data-name="${basePath}.fencing" ${attackData.fencing ? "checked" : ""}/>
-                        <span>Esgrima (F)</span>
-                    </label>
+                <h4 class="section-title">Dano</h4>
+                <div class="form-row">
+                    <div class="row-label">Dano Primário</div>
+                    <div class="row-fields">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label>Fórmula</label>
+                                <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/>
+                            </div>
+                            <div class="form-group" title="Divisor de Armadura">
+                                <label>Divisor</label>
+                                <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Dano Acompanh.</div>
+                    <div class="row-fields">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label>Fórmula</label>
+                                <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/>
+                            </div>
+                            <div class="form-group" title="Divisor">
+                                <label>Divisor</label>
+                                <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Dano Frag.</div>
+                    <div class="row-fields">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label>Fórmula</label>
+                                <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
+                            </div>
+                            <div class="form-group" title="Divisor">
+                                <label>Divisor</label>
+                                <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}"/>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <details class="form-section">
-                <summary>Danos Avançados</summary>
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Fórmula Acompanh.</label>
-                        <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo Acompanh.</label>
-                        <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/>
-                    </div>
-                    <div class="form-group" title="Divisor">
-                        <label>Div. Acompanh.</label>
-                        <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Fórmula Frag.</label>
-                        <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo Frag.</label>
-                        <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
-                    </div>
-                    <div class="form-group" title="Divisor">
-                        <label>Div. Frag.</label>
-                        <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}"/>
-                    </div>
-                </div>
-            </details>
         `;
 
         const meleeFields = `
             <div class="form-section">
-                <h4 class="section-title">Defesas & Alcance</h4>
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Aparar</label>
-                        <input type="text" data-name="${basePath}.parry" value="${safe(attackData.parry)}"/>
+                <h4 class="section-title">Defesa</h4>
+                <div class="form-row">
+                    <div class="row-label">Aparar</div>
+                    <div class="row-fields">
+                        <div class="form-grid-2">
+                            <input type="text" data-name="${basePath}.parry" value="${safe(parryValue)}" ${defaultParry ? "disabled" : ""}/>
+                            <label class="custom-checkbox defense-toggle">
+                                <input type="checkbox" data-name="${basePath}.parry_default" ${defaultParry ? "checked" : ""}/>
+                                <span>Aparar Padrão</span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Bloqueio</label>
-                        <input type="text" data-name="${basePath}.block" value="${safe(attackData.block)}"/>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Bloqueio</div>
+                    <div class="row-fields">
+                        <div class="form-grid-2">
+                            <input type="text" data-name="${basePath}.block" value="${safe(blockValue)}" ${defaultBlock ? "disabled" : ""}/>
+                            <label class="custom-checkbox defense-toggle">
+                                <input type="checkbox" data-name="${basePath}.block_default" ${defaultBlock ? "checked" : ""}/>
+                                <span>Bloqueio Padrão</span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Alcance</label>
-                        <input type="text" data-name="${basePath}.reach" value="${safe(attackData.reach)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>ST Mín.</label>
-                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Características</div>
+                    <div class="row-fields">
+                        <div class="form-grid-2">
+                            <label class="custom-checkbox">
+                                <input type="checkbox" data-name="${basePath}.unbalanced" ${attackData.unbalanced ? "checked" : ""}/>
+                                <span>Desbalanceada (U)</span>
+                            </label>
+                            <label class="custom-checkbox">
+                                <input type="checkbox" data-name="${basePath}.fencing" ${attackData.fencing ? "checked" : ""}/>
+                                <span>Esgrima (F)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -780,34 +840,34 @@ _onAddAttack(ev) {
         const rangedFields = `
             <div class="form-section">
                 <h4 class="section-title">Precisão & Alcance</h4>
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Prec.</label>
+                <div class="form-row">
+                    <div class="row-label">Precisão</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.accuracy" value="${safe(attackData.accuracy)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Alcance</label>
-                        <input type="text" data-name="${basePath}.range" value="${safe(attackData.range)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>CdT</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">CdT</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.rof" value="${safe(attackData.rof)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Tiros</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Tiros</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.shots" value="${safe(attackData.shots)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Recuo</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Recuo</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.rcl" value="${safe(attackData.rcl)}"/>
                     </div>
-                    <div class="form-group">
-                        <label>Mag.</label>
+                </div>
+                <div class="form-row">
+                    <div class="row-label">Mag.</div>
+                    <div class="row-fields">
                         <input type="text" data-name="${basePath}.mag" value="${safe(attackData.mag)}"/>
-                    </div>
-                    <div class="form-group">
-                        <label>ST Mín.</label>
-                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/>
                     </div>
                 </div>
             </div>

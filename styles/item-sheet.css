@@ -1000,6 +1000,162 @@
   box-shadow: 0 0 4px rgba(185,137,60,0.35);
 }
 
+/* ------------------------------------------------------------------- */
+/* ATTACK EDITOR DIALOG                                                */
+/* ------------------------------------------------------------------- */
+.attack-editor-dialog {
+  padding: 12px 14px 16px;
+  background: var(--item-bg-panel);
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+}
+
+.attack-editor-dialog .attack-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attack-editor-dialog .form-section {
+  position: relative;
+  background: var(--item-bg-panel-2);
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 15px;
+  box-shadow: var(--item-shadow);
+}
+
+.attack-editor-dialog .section-title {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  transform: none;
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-sm);
+  color: var(--item-text);
+  margin: 0;
+  padding: 2px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 161, 94, 0.45);
+  background: var(--item-bg-panel-contrast);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: var(--item-shadow-soft);
+}
+
+.attack-editor-dialog .form-row {
+  display: grid;
+  grid-template-columns: 1fr 2.2fr;
+  gap: 8px 14px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.attack-editor-dialog .row-label {
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-xs);
+  font-weight: 700;
+  color: var(--item-text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.attack-editor-dialog .row-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attack-editor-dialog .form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attack-editor-dialog .form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attack-editor-dialog .form-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.attack-editor-dialog .form-row .form-grid-2,
+.attack-editor-dialog .form-row .form-grid-3,
+.attack-editor-dialog .form-row .form-grid-4 {
+  margin-top: 2px;
+}
+
+.attack-editor-dialog .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.attack-editor-dialog .form-group label {
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-xs);
+  font-weight: 700;
+  color: var(--item-text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.attack-editor-dialog input[type="text"],
+.attack-editor-dialog input[type="number"],
+.attack-editor-dialog select,
+.attack-editor-dialog textarea {
+  width: 100%;
+  background: var(--item-input-bg);
+  border: 1px solid var(--item-input-border);
+  border-radius: 6px;
+  color: var(--item-input-text);
+  font-size: var(--item-font-size-sm);
+  padding: 4px 8px;
+  min-height: 28px;
+  font-family: var(--item-font-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.attack-editor-dialog .custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--item-text);
+}
+
+.attack-editor-dialog .custom-checkbox input[type="checkbox"] {
+  margin: 0;
+}
+
+.attack-editor-dialog .defense-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.attack-editor-dialog .defense-field input[type="text"] {
+  max-width: 140px;
+}
+
+.attack-editor-dialog .defense-toggle {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.attack-editor-dialog input[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* Polimento do bloco de avançados dentro do modo de ataque */
 .gum.sheet.item .attack-edit-mode details.item-sheet-advanced {
   background: #ffffff;
@@ -1049,12 +1205,6 @@
   border-color: var(--item-border);
   background: rgba(0,0,0,0.05);
 }
-.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
-  background-color: var(--item-accent);
-  border-color: var(--item-accent);
-  box-shadow: 0 0 4px rgba(185,137,60,0.35);
-}
-
 
 /* ------------------------------------------------------------------- */
 /* EFEITOS / CONDIÇÕES                                                */

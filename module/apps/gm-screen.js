@@ -579,6 +579,19 @@ activateListeners(html) {
         // ---------------------------------------------------------
         const attackGroups = {};
 
+      const calculateDefaultDefense = (nhValue) => {
+            const parsed = Number(nhValue);
+            if (!Number.isFinite(parsed)) return null;
+            return Math.floor(parsed / 2) + 3;
+        };
+
+        const normalizeDefenseValue = (value) => {
+            if (value === null || value === undefined) return null;
+            const trimmed = String(value).trim();
+            if (trimmed === "" || trimmed === "0" || trimmed === "-") return null;
+            return trimmed;
+        };
+
         const processAttack = (item, atk) => {
             if (!atk || !atk.mode) return;
             if (!attackGroups[item.id]) attackGroups[item.id] = { name: item.name, modes: [] };
@@ -586,9 +599,11 @@ activateListeners(html) {
             const nh = atk.final_nh !== undefined ? atk.final_nh : atk.level;
             const rawDmg = atk.damage || atk.damage_formula || "";
             const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
-            
-            const parry = (atk.parry && atk.parry != "0" && atk.parry != "-") ? atk.parry : null;
-            const block = (atk.block && atk.block != "0" && atk.block != "-") ? atk.block : null;
+            const defaultDefense = calculateDefaultDefense(nh);
+            const parryValue = atk.parry_default && defaultDefense !== null ? defaultDefense : atk.parry;
+            const blockValue = atk.block_default && defaultDefense !== null ? defaultDefense : atk.block;
+            const parry = normalizeDefenseValue(parryValue);
+            const block = normalizeDefenseValue(blockValue);
 
             attackGroups[item.id].modes.push({
                 label: atk.mode,
