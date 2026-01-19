@@ -598,10 +598,9 @@ _onAddAttack(ev) {
             : (attackType === "melee" ? "Novo Ataque Corpo a Corpo" : "Novo Ataque à Distância");
         const content = this._renderAttackEditorForm(attackType, attackId, attackData);
 
-        new Dialog({
+new Dialog({
             title,
             content,
-            classes: ["gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"],
             buttons: {
                 save: {
                     icon: '<i class="fas fa-save"></i>',
@@ -620,6 +619,8 @@ _onAddAttack(ev) {
                 }
             },
             default: "save"
+        }, {
+            classes: ["dialog", "gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"]
         }).render(true);
     }
 
@@ -825,11 +826,11 @@ _onAddAttack(ev) {
                         <div class="form-grid-2">
                             <label class="custom-checkbox">
                                 <input type="checkbox" data-name="${basePath}.unbalanced" ${attackData.unbalanced ? "checked" : ""}/>
-                                <span>Desbalanceada (U)</span>
+                                <span>Desbalanceada(U)</span>
                             </label>
                             <label class="custom-checkbox">
                                 <input type="checkbox" data-name="${basePath}.fencing" ${attackData.fencing ? "checked" : ""}/>
-                                <span>Esgrima (F)</span>
+                                <span>Esgrima(F)</span>
                             </label>
                         </div>
                     </div>
