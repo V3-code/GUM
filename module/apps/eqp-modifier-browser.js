@@ -73,10 +73,9 @@ export class EqpModifierBrowser extends FormApplication {
     const context = await super.getData();
     
     const pack = game.packs.get("gum.eqp_modifiers");
-    let packItems = await (pack ? pack.getDocuments() : []);
-    const worldItems = game.items.filter(i => i.type === "eqp_modifier");
+    const packItems = await (pack ? pack.getDocuments() : []);
 
-    this.allModifiers = [...packItems, ...worldItems].map(item => ({
+    this.allModifiers = packItems.map(item => ({
         id: item.id,
         uuid: item.uuid,
         name: item.name, 

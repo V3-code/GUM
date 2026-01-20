@@ -1034,12 +1034,27 @@ new Dialog({
         const modId = $(ev.currentTarget).closest('[data-modifier-id]').data('modifier-id');
         const modData = this.item.system.eqp_modifiers?.[modId];
         if (!modData) return;
-        const desc = await TextEditorImpl.enrichHTML(modData.features || "<i>Sem descrição.</i>", { async: true });
-        new Dialog({
-            title: modData.name || "Modificador de Equipamento",
-            content: `<div class="gum-dialog-content"><b>CF:</b> ${modData.cost_factor ?? "-"} | <b>Peso:</b> ${modData.weight_mod ?? "-"}<hr>${desc}</div>`,
-            buttons: { close: { label: "Fechar" } }
-        }).render(true);
+
+        if (modData.source_uuid) {
+            const sourceModifier = await fromUuid(modData.source_uuid).catch(() => null);
+            if (sourceModifier?.sheet) return sourceModifier.sheet.render(true);
+        }
+
+        const tempItem = await Item.create({
+            name: modData.name || "Modificador de Equipamento",
+            type: "eqp_modifier",
+            img: modData.img || "icons/svg/mystery-man.svg",
+            system: {
+                cost_factor: modData.cost_factor ?? 0,
+                weight_mod: modData.weight_mod ?? "x1",
+                tech_level_mod: modData.tech_level_mod ?? "",
+                target_type: modData.target_type ?? {},
+                features: modData.features ?? "",
+                ref: modData.ref ?? ""
+            }
+        }, { temporary: true, renderSheet: true });
+
+        tempItem?.sheet?.render(true);
     }
 
      activateEditor(name, options = {}, ...args) {
