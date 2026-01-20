@@ -53,7 +53,7 @@
   --item-bg-panel: #1d1b20;
   --item-bg-panel-2: #24222a;
   --item-bg-panel-contrast: #16151a;
-  --item-bg-extra-red: #7c272f;
+  --item-bg-extra-red: #601b21;
   --item-border: #3b3742;
   --item-border-light: #2b2831;
   --item-accent: #c9a15e;
@@ -816,26 +816,31 @@
 }
 
 /* ------------------------------------------------------------------- */
-/* ATAQUES                                                           */
+/* ATAQUES                                                             */
 /* ------------------------------------------------------------------- */
+
+/* A seção NÃO fica toda vermelha. Vermelho só no header. */
 .gum.sheet.item .attacks-editor-section {
-  background: var(--item-bg-extra-red);
-  border: 1px solid rgba(201, 161, 94, 0.35);
-  border-radius: 12px;
-  padding: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
   margin-bottom: 16px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
 }
 
+/* Cabeçalho vermelho (igual sua ideia do print) */
 .gum.sheet.item .attack-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--item-bg-extra-red);
+    border-radius: 3px;
+    padding: 10px 12px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
 }
 
 .gum.sheet.item .attack-section-title {
-  margin: 0 0 0 5px;
+  margin: 0;
   font-family: var(--item-font-condensed);
   font-size: 0.85rem;
   letter-spacing: 0.16em;
@@ -844,24 +849,39 @@
 }
 
 .gum.sheet.item .attack-add-button {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: auto;
+  height: auto;
+  padding: 2px 4px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #14111a;
-  border: 1px solid rgba(201, 161, 94, 0.55);
-  color: var(--item-text);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+  background: transparent;
+  border: none;
+
+  color: var(--item-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  opacity: 0.55;
+
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .gum.sheet.item .attack-add-button:hover {
-  background: #1f1b25;
+  opacity: 1;
   color: var(--item-accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+.gum.sheet.item .attack-add-button:active {
+  transform: translateY(0);
+  opacity: 0.85;
 }
 
 .gum.sheet.item .attack-list {
@@ -870,78 +890,212 @@
   margin: 0;
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
-.gum.sheet.item .attack-card {
-  background: linear-gradient(135deg, #ffffff, #f7f2ea);
-  border: 1px solid var(--item-border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  font-size: 12px;
-}
+/* ===================================================== */
+/* NOVO “CARD-LINHA” (MELEE + RANGED)                    */
+/* ===================================================== */
 
-.gum.sheet.item .attack-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* Card horizontal único (vale para ambos) */
+.gum.sheet.item .attack-item .attack-display-card {
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+              var(--item-panel-texture) repeat;
+  border-left: 3.6px solid var(--item-bg-extra-red);
+  border-radius: 4px;
   padding-bottom: 4px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--item-border-light);
 }
-.gum.sheet.item .attack-mode-name { color: var(--item-accent); font-weight: 700; font-size: 0.95rem; }
-.gum.sheet.item .attack-controls a { color: var(--item-text-muted); margin-left: 8px; font-size: 0.8rem; }
-.gum.sheet.item .attack-controls a:hover { color: var(--item-accent); }
 
-.gum.sheet.item .attack-stats {
+/* Linha interna com colunas (base) */
+.gum.sheet.item .attack-item .attack-line {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 0;
+  align-items: stretch;
 }
-.gum.sheet.item .attack-stat {
-  background: #fbf7f1;
-  border: 1px solid var(--item-border);
-  border-radius: 6px;
-  padding: 4px 5px;
-  text-align: center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+
+/* GRID específico: MELEE */
+.gum.sheet.item .melee-attack-item .attack-line {
+  grid-template-columns:
+    minmax(150px, 2.2fr) /* perícia + modo + flags */
+    0.6fr                /* NH */
+    1.6fr                /* Dano */
+    0.7fr                /* APR */
+    0.7fr                /* BLQ */
+    0.6fr                /* ALC */
+    0.7fr                /* ST MIN */
+    34px;                /* ações */
 }
-.gum.sheet.item .attack-stat label {
-  display: block;
-  font-size: 0.58rem;
+
+/* GRID específico: RANGED */
+.gum.sheet.item .ranged-attack-item .attack-line {
+  grid-template-columns:
+    minmax(150px, 2.2fr) /* perícia + modo + flags */
+    0.6fr                /* NH */
+    1.6fr                /* Dano */
+    0.7fr                /* PREC */
+    0.9fr                /* CdT×T */
+    0.6fr                /* RCO */
+    0.9fr                /* ALC */
+    0.6fr                /* Mag */
+    0.7fr                /* ST MIN */
+    34px;                /* ações */
+}
+
+/* Cada “célula” com divisor vertical (vale para ambos) */
+.gum.sheet.item .attack-item .attack-cell {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+}
+.gum.sheet.item .attack-item .attack-cell + .attack-cell {
+  border-left: 1px solid rgba(201, 161, 94, 0.16);
+}
+
+/* Labels pequenos (em cima) e valores (embaixo) */
+.gum.sheet.item .attack-item .attack-label {
+  font-family: var(--item-font-condensed);
+  font-size: 0.52rem;
+  font-weight: 800;
   color: var(--item-text-muted);
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
   margin-bottom: 2px;
 }
-.gum.sheet.item .attack-stat span {
-  font-size: 0.82rem;
-  font-weight: 700;
+
+.gum.sheet.item .attack-item .attack-value {
+  font-size: 0.78rem;
+  font-weight: 800;
   color: var(--item-text);
+  line-height: 1.12;
 }
 
-/* Ajustes específicos da aba Modos de Ataque (lista + edição) */
-.gum.sheet.item .tab[data-tab="attacks"] .attack-list {
-  padding: 0;
-  margin: 0;
+/* ajuste do mod ao lado da perícia */
+.gum.sheet.item .attack-skill-mod {
+  opacity: 0.9;
 }
-.gum.sheet.item .attack-item {
-  font-size: 12px;
-  border-radius: 8px;
+
+/* símbolo de NH pendente */
+.gum.sheet.item .nh-pending {
+  opacity: 0.7;
+  font-size: 0.9em;
 }
-.gum.sheet.item .attack-display-grid .display-stat span {
+
+/* Primeira coluna: skill um tiquinho maior, mas ainda compacta */
+.gum.sheet.item .attack-item .attack-identity .attack-skill {
   font-size: 0.82rem;
+  font-weight: 900;
 }
-.gum.sheet.item .attack-display-grid .display-stat label {
-  font-size: 0.58rem;
+
+/* Identidade: perícia + modo + flags no mesmo bloco */
+.gum.sheet.item .attack-item .attack-identity .attack-value {
+  font-size: 0.92rem;
 }
-.gum.sheet.item .attack-display-card .pill-stat {
-  font-size: 0.75rem;
+
+.gum.sheet.item .attack-item .attack-skill-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.gum.sheet.item .attack-item .attack-mode-sub {
+  margin-top: 2px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--item-text-soft);
+  line-height: 1.05;
+}
+
+/* Flags (U/F/efeito) ao lado, sem quebrar */
+.gum.sheet.item .attack-item .attack-flags {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  transform: translateY(-1px);
+}
+
+.gum.sheet.item .attack-item .attack-flags .pill-stat {
+  font-size: 0.70rem;
   padding: 1px 5px;
 }
-.gum.sheet.item .attack-display-card .attack-controls a {
-  font-size: 0.78rem;
+
+/* Sub-linha (ex: Alcance abaixo do modo) */
+.gum.sheet.item .attack-line-sub {
+  margin-top: 2px;
+  font-size: 0.62rem;
+  font-weight: 650;
+  font-style: italic;
+  color: var(--item-text-muted);
+  opacity: 0.9;
+  line-height: 1.05;
 }
+
+/* Dano: principal + secundários menores sem quebrar o layout */
+.gum.sheet.item .attack-item .attack-damage-main {
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gum.sheet.item .attack-item .attack-damage-sub {
+  margin-top: 1px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--item-text-muted);
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gum.sheet.item .attack-item .nh-pending {
+  font-size: 0.80rem;
+  opacity: 0.75;
+}
+
+/* Centro nas colunas numéricas */
+.gum.sheet.item .attack-item .attack-cell.is-center {
+  align-items: center;
+  text-align: center;
+}
+
+/* Ações: botões pequenos, um em cima do outro */
+.gum.sheet.item .attack-item .attack-actions {
+  padding: 6px 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gum.sheet.item .attack-item .attack-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.gum.sheet.item .attack-item .attack-controls a {
+  color: var(--item-text-muted);
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.gum.sheet.item .attack-item .attack-controls a:hover {
+  color: var(--item-accent);
+}
+
+/* Hover leve (sem ficar “branco”) */
+.gum.sheet.item .attack-item .attack-display-card:hover {
+  border-color: rgba(201, 161, 94, 0.45);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+  background: rgb(201 161 94 / 15%);
+}
+
+
+/* Mantém seus ajustes do modo edição (não mexi na essência) */
 .gum.sheet.item .attack-edit-mode {
   background: #ffffff;
   border: 1px solid var(--item-border);
@@ -950,55 +1104,13 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   font-size: 12px;
 }
-.gum.sheet.item .attack-edit-mode .form-group label {
-  font-size: 0.62rem;
-}
+.gum.sheet.item .attack-edit-mode .form-group label { font-size: 0.62rem; }
 .gum.sheet.item .attack-edit-mode input,
 .gum.sheet.item .attack-edit-mode select {
   font-size: 12px;
   padding: 4px 6px;
 }
-.gum.sheet.item .attack-controls-edit{
-  margin-top: 8px;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 6px 10px;
-    align-items: center;
-    display: grid
-;
-}
-.gum.sheet.item .attack-controls-edit .button {
-  font-size: 12px;
-  padding: 6px 10px;
-}
 
-/* Checkboxes U/F alinhados e visíveis */
-.gum.sheet.item .attack-flags-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 6px 10px;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid var(--item-border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin: 5px;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox {
-  font-size: 0.8rem;
-  color: var(--item-text);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox span::before {
-  border-color: var(--item-border);
-  background: rgba(0,0,0,0.05);
-}
-.gum.sheet.item .attack-flags-grid .custom-checkbox input[type="checkbox"]:checked + span::before {
-  background-color: var(--item-accent);
-  border-color: var(--item-accent);
-  box-shadow: 0 0 4px rgba(185,137,60,0.35);
-}
 
 /* ------------------------------------------------------------------- */
 /* ATTACK EDITOR DIALOG                                                */

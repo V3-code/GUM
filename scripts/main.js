@@ -1952,6 +1952,18 @@ Handlebars.registerHelper('obj', function(...args) {
     }
     return obj;
 });
+ Handlebars.registerHelper("isNumeric", function (value) {
+    if (value === null || value === undefined) return false;
+    const s = String(value).trim().replace(",", ".");
+    if (s === "") return false;
+    return Number.isFinite(Number(s));
+  });
+  // Helper: retorna "+2", "-1" ou "" (se 0/vazio)
+Handlebars.registerHelper("signedMod", function (value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n === 0) return "";
+  return n > 0 ? `+${n}` : `${n}`;
+});
 
 const normalizeLookupKey = (value) => value
     ?.toString()

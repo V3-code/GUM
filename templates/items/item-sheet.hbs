@@ -1361,67 +1361,113 @@
            {{#each system.melee_attacks as |attack key|}}
            <li class="attack-item melee-attack-item" data-attack-id="{{key}}" data-attack-type="melee">
              
-                 {{!-- MODO EXIBIÇÃO - ATAQUE C.C. --}}
-                 <div class="attack-display-mode">
-                     <div class="form-section attack-display-card">
-                         <h4 class="section-title">
-                             <span class="pill-skill">
-                                 {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
-                                 ({{attack.mode}})
-                             </span>
-                               {{#if (objectValues attack.onDamageEffects)}}
-                                 <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
-                                     <i class="fas fa-magic"></i>
-                                 </span>
-                             {{/if}}
-                             {{#if attack.unbalanced}}
-                                 <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                             {{/if}}
-                            {{#if attack.fencing}}
-                                 <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                             {{/if}}
-                             <span class="attack-controls">
-                                 <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                             </span>
-                         </h4>
-                         <div class="form-grid-3 attack-display-grid melee-grid">
+{{!-- MODO EXIBIÇÃO - ATAQUE C.C. (NOVO CARD HORIZONTAL) --}}
+<div class="attack-display-mode">
+  <div class="attack-display-card">
+    <div class="attack-line">
 
-                                <div class="display-stat damage-stat">
-                                    <label>NH</label>
-                                    <span>
-                                    {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}
-                                    </span>
+      {{!-- Perícia + modo + flags --}}
+<div class="attack-cell attack-identity">
+  <div class="attack-skill-line">
+    <span class="attack-skill">
+      {{#if (isNumeric attack.skill_name)}}
+        Valor Fixo
+      {{else}}
+        {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+        {{#if (signedMod attack.skill_level_mod)}}
+        <span class="attack-skill-mod">{{signedMod attack.skill_level_mod}}</span>
+      {{/if}}
+      {{/if}}
+    </span>
 
-                                </div>
-                            
-                             <div class="display-stat damage-stat">
-                                 <label>Dano</label>
-                                 <span>
-                                     ({{attack.damage_formula}}) {{attack.damage_type}}
-                                     {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
-                                     {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
-                                 </span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Aparar</label>
-                                 <span>{{attack.parry}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Alcance</label>
-                                 <span>{{attack.reach}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Bloqueio</label>
-                                 <span>{{attack.block}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>ST Mín.</label>
-                                 <span>{{attack.min_strength}}</span>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
+    <span class="attack-flags">
+      {{#if (objectValues attack.onDamageEffects)}}
+        <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
+      {{/if}}
+      {{#if attack.unbalanced}}
+        <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+      {{/if}}
+      {{#if attack.fencing}}
+        <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+      {{/if}}
+    </span>
+  </div>
+  
+  <div class="attack-mode-sub">{{attack.mode}}</div>
+</div>
+
+      {{!-- NH --}}
+        <div class="attack-cell is-center">
+        <div class="attack-label">NH</div>
+        <div class="attack-value">
+            {{#if (isNumeric attack.skill_name)}}
+            {{attack.skill_name}}
+            {{else}}
+             {{#if attack.final_nh}}
+                {{attack.final_nh}}
+                {{else}}
+                 <span class="nh-pending" title="Calculado quando o item estiver em uma ficha.">⧗</span>
+                  {{/if}}
+            {{/if}}
+        </div>
+        </div>
+
+      {{!-- Dano --}}
+      <div class="attack-cell">
+        <div class="attack-label">Dano</div>
+        <div class="attack-value attack-damage-main">
+          ({{attack.damage_formula}}) {{attack.damage_type}}
+        </div>
+
+        {{#with attack.follow_up_damage}}
+          {{#if this.formula}}
+            <div class="attack-damage-sub">(FU: {{this.formula}}) {{this.type}}</div>
+          {{/if}}
+        {{/with}}
+
+        {{#with attack.fragmentation_damage}}
+          {{#if this.formula}}
+            <div class="attack-damage-sub">[FR: {{this.formula}} {{this.type}}]</div>
+          {{/if}}
+        {{/with}}
+      </div>
+
+      {{!-- APR --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">APR</div>
+        <div class="attack-value">{{attack.parry}}</div>
+      </div>
+
+      {{!-- BLQ --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">BLQ</div>
+        <div class="attack-value">{{attack.block}}</div>
+      </div>
+
+      {{!-- ALC --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">ALC</div>
+        <div class="attack-value">{{attack.reach}}</div>
+      </div>
+
+      {{!-- ST MIN --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">ST Min</div>
+        <div class="attack-value">{{attack.min_strength}}</div>
+      </div>
+
+      {{!-- Ações --}}
+      <div class="attack-cell attack-actions">
+        <span class="attack-controls">
+          <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+          <a class="delete-attack" data-list="melee_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+        </span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
                  {{!-- MODO EDIÇÃO (O FORMULÁRIO) --}}
                  <div class="attack-edit-mode" style="display:none;">
@@ -1542,77 +1588,124 @@
            {{#each system.ranged_attacks as |attack key|}}
            <li class="attack-item ranged-attack-item" data-attack-id="{{key}}" data-attack-type="ranged">
              
-                 {{!-- MODO EXIBIÇÃO - ATAQUE L.D.  --}}
-                                 <div class="attack-display-mode">
-                     <div class="form-section attack-display-card">
-                         <h4 class="section-title">
-                             <span class="pill-skill">
-                                 {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
-                                 ({{attack.mode}})
-                             </span>
-                               {{#if (objectValues attack.onDamageEffects)}}
-                                 <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos.">
-                                     <i class="fas fa-magic"></i>
-                                 </span>
-                             {{/if}}
-                             {{#if attack.unbalanced}}
-                                 <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
-                             {{/if}}
-                             {{#if attack.fencing}}
-                                 <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
-                             {{/if}}
-                             <span class="attack-controls">
-                                 <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
-                                 <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
-                             </span>
-                         </h4>
-                         <div class="form-grid-3 attack-display-grid ranged-grid">
-                                <div class="display-stat damage-stat">
-                                    <label>NH</label>
-                                    <span>
-                                    {{#if (gt attack.skill_level_mod 0)}}+{{/if}}{{attack.skill_level_mod}}
-                                    </span>
+{{!-- MODO EXIBIÇÃO - ATAQUE L.D. (NOVO CARD HORIZONTAL) --}}
+<div class="attack-display-mode">
+  <div class="attack-display-card">
+    <div class="attack-line">
 
-                                </div>
-                             <div class="display-stat damage-stat">
-                                 <label>Dano</label>
-                                 <span>
-                                     ({{attack.damage_formula}}) {{attack.damage_type}}
-                                     {{#with attack.follow_up_damage}}{{#if this.formula}} + ({{this.formula}}) {{this.type}}{{/if}}{{/with}}
-                                     {{#with attack.fragmentation_damage}}{{#if this.formula}} + [{{this.formula}} {{this.type}}]{{/if}}{{/with}}
-                                 </span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Prec.</label>
-                                 <span>{{attack.accuracy}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Alcance</label>
-                                 <span>{{attack.range}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>CdT</label>
-                                 <span>{{attack.rof}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Tiros</label>
-                                 <span>{{attack.shots}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Recuo</label>
-                                 <span>{{attack.rcl}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>Mag.</label>
-                                 <span>{{attack.mag}}</span>
-                             </div>
-                             <div class="display-stat">
-                                 <label>ST Mín.</label>
-                                 <span>{{attack.min_strength}}</span>
-                             </div>
-                         </div>
-                     </div>
-                   </div>
+      {{!-- Perícia + modo + flags --}}
+      <div class="attack-cell attack-identity">
+        <div class="attack-skill-line">
+          <span class="attack-skill">
+            {{#if (isNumeric attack.skill_name)}}
+              Valor Fixo
+            {{else}}
+              {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
+              {{#if (signedMod attack.skill_level_mod)}}
+                <span class="attack-skill-mod">{{signedMod attack.skill_level_mod}}</span>
+              {{/if}}
+            {{/if}}
+          </span>
+
+          <span class="attack-flags">
+            {{#if (objectValues attack.onDamageEffects)}}
+              <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
+            {{/if}}
+            {{#if attack.unbalanced}}
+              <span class="pill-stat flag-u" title="Desbalanceada (Não pode aparar no próximo turno)">U</span>
+            {{/if}}
+            {{#if attack.fencing}}
+              <span class="pill-stat flag-f" title="Esgrima (Bônus em aparar sucessivo)">F</span>
+            {{/if}}
+          </span>
+        </div>
+
+        <div class="attack-mode-sub">{{attack.mode}}</div>
+        {{#if attack.range}}
+            <div class="attack-line-sub">Alc.: {{attack.range}}</div>
+        {{/if}}
+      </div>
+
+      {{!-- NH --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">NH</div>
+        <div class="attack-value">
+          {{#if (isNumeric attack.skill_name)}}
+            {{attack.skill_name}}
+          {{else}}
+            {{#if attack.final_nh}}
+              {{attack.final_nh}}
+            {{else}}
+              <span class="nh-pending" title="Calculado quando o item estiver em uma ficha.">⧗</span>
+            {{/if}}
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Dano --}}
+      <div class="attack-cell">
+        <div class="attack-label">Dano</div>
+        <div class="attack-value attack-damage-main">
+          ({{attack.damage_formula}}) {{attack.damage_type}}
+        </div>
+
+        {{#with attack.follow_up_damage}}
+          {{#if this.formula}}
+            <div class="attack-damage-sub">(FU: {{this.formula}}) {{this.type}}</div>
+          {{/if}}
+        {{/with}}
+
+        {{#with attack.fragmentation_damage}}
+          {{#if this.formula}}
+            <div class="attack-damage-sub">[FR: {{this.formula}} {{this.type}}]</div>
+          {{/if}}
+        {{/with}}
+      </div>
+
+      {{!-- PREC --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">PREC</div>
+        <div class="attack-value">{{attack.accuracy}}</div>
+      </div>
+
+      {{!-- CdT×T --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">CdT×T</div>
+        <div class="attack-value">
+          {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}×{{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}}
+        </div>
+      </div>
+
+      {{!-- RCO --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">RCO</div>
+        <div class="attack-value">{{attack.rcl}}</div>
+      </div>
+
+      {{!-- Mag --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">Mag</div>
+        <div class="attack-value">{{attack.mag}}</div>
+      </div>
+
+      {{!-- ST MIN --}}
+      <div class="attack-cell is-center">
+        <div class="attack-label">ST Min</div>
+        <div class="attack-value">{{attack.min_strength}}</div>
+      </div>
+
+      {{!-- Ações --}}
+      <div class="attack-cell attack-actions">
+        <span class="attack-controls">
+          <a class="edit-attack-mode" title="Editar Modo"><i class="fas fa-edit"></i></a>
+          <a class="delete-attack" data-list="ranged_attacks" title="Remover Modo"><i class="fas fa-trash"></i></a>
+        </span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
                  {{!-- MODO EDIÇÃO (O FORMULÁRIO) L.D. --}}
                  <div class="attack-edit-mode" style="display:none;">
