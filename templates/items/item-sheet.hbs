@@ -133,7 +133,7 @@
                     {{!-- Coluna: ações --}}
                     <div class="effects-cell effects-actions">
                     <span class="effects-controls">
-                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                        <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
                         <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
                     </span>
                     </div>
@@ -175,7 +175,7 @@
 
                     <div class="effects-cell effects-actions">
                     <span class="effects-controls">
-                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                        <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
                         <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
                     </span>
                     </div>
@@ -224,7 +224,7 @@
 
                     <div class="effects-cell effects-actions">
                     <span class="effects-controls">
-                        <a class="view-original-effect" title="Ver Efeito Original"><i class="fas fa-eye"></i></a>
+                        <a class="view-original-effect" title="Ver Efeito Original" data-uuid="{{effect.uuid}}"><i class="fas fa-eye"></i></a>
                         <a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a>
                     </span>
                     </div>
@@ -292,7 +292,7 @@
 
                     <div class="effects-cell effects-actions">
                     <span class="effects-controls">
-                        <a class="view-original-condition" title="Ver Condição Original"><i class="fas fa-eye"></i></a>
+                        <a class="view-original-condition" title="Ver Condição Original" data-uuid="{{condition.uuid}}"><i class="fas fa-eye"></i></a>
                         <a class="delete-effect" title="Remover Condição"><i class="fas fa-trash"></i></a>
                     </span>
                     </div>
@@ -1542,7 +1542,11 @@
                      </div>
                  </div>
                  </li>
-                 {{/each}}
+                   {{else}}
+                    <li class="attack-empty">
+                    Nenhum ataque corpo a corpo adicionado.
+                    </li>
+                 {{/each}}          
              </ol>
         </div>
 
@@ -1792,6 +1796,10 @@
                      </div>
                  </div>
                  </li>
+                   {{else}}
+                    <li class="attack-empty">
+                    Nenhum ataque a Distância adicionado.
+                    </li>
                  {{/each}}
              </ol>
              </div>

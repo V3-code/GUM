@@ -292,9 +292,16 @@ export class GurpsItemSheet extends ItemSheet {
             ev.preventDefault();
             new EqpModifierBrowser(this.item).render(true);
         });
-         html.find('.delete-eqp-modifier').click(ev => {
+ html.find('.delete-eqp-modifier').click(async ev => {
+            ev.preventDefault();
             const modId = $(ev.currentTarget).closest('[data-modifier-id]').data('modifier-id');
-            if (modId) this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
+            if (!modId) return;
+            const confirmed = await Dialog.confirm({
+                title: "Remover modificador de equipamento",
+                content: "<p>Tem certeza que deseja remover este modificador?</p>"
+            });
+            if (!confirmed) return;
+            await this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null });
         });
         html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this));
 
@@ -303,12 +310,56 @@ export class GurpsItemSheet extends ItemSheet {
             ev.preventDefault();
             new ModifierBrowser(this.item).render(true);
         });
-        html.find('.delete-modifier').click(ev => {
+html.find('.delete-modifier').click(async ev => {
+            ev.preventDefault();
             const modId = $(ev.currentTarget).data('modifier-id');
-            this.item.update({ [`system.modifiers.-=${modId}`]: null });
+            if (!modId) return;
+            const confirmed = await Dialog.confirm({
+                title: "Remover modificador",
+                content: "<p>Tem certeza que deseja remover este modificador?</p>"
+            });
+            if (!confirmed) return;
+            await this.item.update({ [`system.modifiers.-=${modId}`]: null });
         });
-        html.find('.view-modifier').click(ev => {
-            // Lógica de visualização rápida
+        html.find('.view-modifier').click(async ev => {
+            ev.preventDefault();
+            const modId = $(ev.currentTarget).data('modifier-id');
+            const modifierData = this.item.system.modifiers?.[modId];
+            if (!modifierData) return;
+            if (modifierData.source_id) {
+                const sourceItem = await fromUuid(modifierData.source_id).catch(() => null);
+                if (sourceItem?.sheet) return sourceItem.sheet.render(true);
+            }
+
+            const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
+            const tags = [
+                createTag("Custo", modifierData.cost),
+                createTag("Referência", modifierData.ref),
+                createTag("Efeito", modifierData.applied_effect)
+            ].join("");
+            const description = await TextEditorImpl.enrichHTML(modifierData.description || "<i>Sem descrição.</i>", { async: true });
+            const content = `
+                <div class="gurps-dialog-canvas">
+                    <div class="gurps-item-preview-card">
+                        <header class="preview-header">
+                            <h3>${modifierData.name || "Modificador"}</h3>
+                            <div class="header-controls"><span class="preview-item-type">Modificador</span></div>
+                        </header>
+                        <div class="preview-content">
+                            <div class="preview-properties">${tags}</div>
+                            <hr class="preview-divider">
+                            <div class="preview-description">${description}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            new Dialog({
+                title: `Detalhes: ${modifierData.name || "Modificador"}`,
+                content,
+                buttons: { close: { label: "Fechar" } },
+                default: "close",
+                options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+            }).render(true);
         });
         
         // Efeitos
@@ -325,11 +376,27 @@ export class GurpsItemSheet extends ItemSheet {
                 }
             }).render(true);
         });
-        html.find('.delete-effect').click(ev => {
+       html.find('.delete-effect').click(async ev => {
+            ev.preventDefault();
             const target = $(ev.currentTarget);
-            const listName = target.closest('.effect-entry').data('list-name');
-            const effectId = target.closest('.effect-entry').data('effect-id');
-            this.item.update({ [`system.${listName}.-=${effectId}`]: null });
+            const entry = target.closest('[data-list-name][data-effect-id]');
+            const listName = entry.data('list-name');
+            const effectId = entry.data('effect-id');
+            if (!listName || !effectId) return;
+            const confirmed = await Dialog.confirm({
+                title: "Remover efeito",
+                content: "<p>Tem certeza que deseja remover este efeito?</p>"
+            });
+            if (!confirmed) return;
+            await this.item.update({ [`system.${listName}.-=${effectId}`]: null });
+        });
+        html.find('.view-original-effect, .view-original-condition').click(async ev => {
+            ev.preventDefault();
+            const uuid = $(ev.currentTarget).data('uuid');
+            if (!uuid) return ui.notifications.warn("Nenhum item vinculado foi encontrado.");
+            const linkedItem = await fromUuid(uuid).catch(() => null);
+            if (!linkedItem) return ui.notifications.warn("Item vinculado não encontrado.");
+            linkedItem.sheet?.render(true);
         });
         html.find('.add-general-condition').click(ev => {
              new ConditionBrowser(this.item, {
@@ -962,14 +1029,15 @@ new Dialog({
         }).render(true);
     }
     
-    async _onViewEqpModifier(ev) {
-        const modId = $(ev.currentTarget).closest('.modifier-tag').data('modifier-id');
-        const modData = this.item.system.eqp_modifiers[modId];
+ async _onViewEqpModifier(ev) {
+        ev.preventDefault();
+        const modId = $(ev.currentTarget).closest('[data-modifier-id]').data('modifier-id');
+        const modData = this.item.system.eqp_modifiers?.[modId];
         if (!modData) return;
-        const desc = await TextEditor.enrichHTML(modData.features || "", { async: true });
+        const desc = await TextEditorImpl.enrichHTML(modData.features || "<i>Sem descrição.</i>", { async: true });
         new Dialog({
-            title: modData.name,
-            content: `<div class="gum-dialog-content"><b>CF:</b> ${modData.cost_factor} | <b>Peso:</b> ${modData.weight_mod}<hr>${desc}</div>`,
+            title: modData.name || "Modificador de Equipamento",
+            content: `<div class="gum-dialog-content"><b>CF:</b> ${modData.cost_factor ?? "-"} | <b>Peso:</b> ${modData.weight_mod ?? "-"}<hr>${desc}</div>`,
             buttons: { close: { label: "Fechar" } }
         }).render(true);
     }

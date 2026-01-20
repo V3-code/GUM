@@ -893,6 +893,13 @@
   gap: 0;
 }
 
+.gum.sheet.item .attack-empty {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--item-text-muted);
+  opacity: 0.85;
+}
+
 /* ===================================================== */
 /* NOVO “CARD-LINHA” (MELEE + RANGED)                    */
 /* ===================================================== */
