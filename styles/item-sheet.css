@@ -2555,3 +2555,417 @@
   display: inline;
   font-size: 0.78rem;
 }
+
+/* ------------------------------------------------------------------- */
+/* EFEITOS - LISTA EM LINHA (PADRÃO ATAQUES)                            */
+/* ------------------------------------------------------------------- */
+
+.gum.sheet.item .effects-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gum.sheet.item .effects-block {
+  background: transparent;
+  border: none;
+}
+
+/* Header vermelho igual ataques */
+.gum.sheet.item .effects-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  background: var(--item-bg-extra-red);
+  border-radius: 4px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.gum.sheet.item .effects-block-title {
+  margin: 0;
+  font-family: var(--item-font-condensed);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--item-text);
+}
+
+/* Botão + minimalista */
+.gum.sheet.item .effects-add-button {
+  width: auto;
+  height: auto;
+  padding: 2px 4px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+
+  color: var(--item-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  opacity: 0.55;
+
+  transition: opacity 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.gum.sheet.item .effects-add-button:hover {
+  opacity: 1;
+  color: var(--item-accent);
+  transform: translateY(-1px);
+}
+.gum.sheet.item .effects-add-button:active {
+  transform: translateY(0);
+  opacity: 0.85;
+}
+
+/* Lista */
+.gum.sheet.item .effects-line-list {
+  list-style: none;
+  padding: 0;
+  margin: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gum.sheet.item .effects-empty {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--item-text-muted);
+  opacity: 0.9;
+}
+
+/* Item / Linha base */
+.gum.sheet.item .effects-line {
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+              var(--item-panel-texture) repeat;
+  border-left: 5px solid var(--item-bg-extra-red);
+  border-radius: 6.5px;
+
+  display: grid;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* 1) Success/Fail (Nome | Dest | Ações) */
+.gum.sheet.item .effects-line.effects-line-basic {
+  grid-template-columns:
+    minmax(220px, 2.4fr)
+    140px
+    34px;
+}
+
+/* 2) OnDamage (Nome | Lesão | Tipo | Chance | Ações) */
+.gum.sheet.item .effects-line.effects-line-damage {
+  grid-template-columns:
+    minmax(150px, 2.2fr)
+    90px
+    90px
+    90px
+    34px;
+}
+
+/* 3) Passive/General (Nome | Ações) */
+.gum.sheet.item .effects-line.effects-line-passive {
+  grid-template-columns:
+    minmax(220px, 1fr)
+    34px;
+}
+
+/* Células com divisores verticais */
+.gum.sheet.item .effects-cell {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 40px;
+}
+.gum.sheet.item .effects-cell + .effects-cell {
+  border-left: 1px solid rgba(201, 161, 94, 0.16);
+}
+
+.gum.sheet.item .effects-cell.is-center {
+  align-items: center;
+  text-align: center;
+}
+
+/* Identidade */
+.gum.sheet.item .effects-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.gum.sheet.item .effects-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex: 0 0 18px;
+  opacity: 0.95;
+}
+
+.gum.sheet.item .effects-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--item-text);
+  line-height: 1.1;
+}
+
+/* Labels mini */
+.gum.sheet.item .effects-label {
+  font-family: var(--item-font-condensed);
+  font-size: 0.52rem;
+  font-weight: 800;
+  color: var(--item-text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+/* Inputs compactos */
+.gum.sheet.item .effects-mini-input,
+.gum.sheet.item .effects-recipient select {
+  width: 100%;
+  background: var(--item-input-bg);
+  border: 1px solid var(--item-input-border);
+  border-radius: 6px;
+  color: var(--item-input-text);
+  font-size: 0.72rem;
+  padding: 3px 6px;
+  min-height: 26px;
+  font-family: var(--item-font-base);
+}
+
+/* Ações (coluna estreita, vertical) */
+.gum.sheet.item .effects-actions {
+  padding: 6px 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gum.sheet.item .effects-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.gum.sheet.item .effects-controls a {
+  color: var(--item-text-muted);
+  font-size: 0.80rem;
+  line-height: 1;
+}
+.gum.sheet.item .effects-controls a:hover {
+  color: var(--item-accent);
+}
+
+/* Hover leve */
+.gum.sheet.item .effects-line:hover {
+  border-color: rgba(201, 161, 94, 0.45);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+  background: rgb(201 161 94 / 15%);
+}
+
+/* ------------------------------------------------------------------- */
+/* MODIFICADORES DE EQUIPAMENTO - LISTA EM LINHA (PADRÃO ATAQUES/EFEITOS) */
+/* ------------------------------------------------------------------- */
+
+.gum.sheet.item .eqpmod-block {
+  background: transparent;
+  border: none;
+}
+
+/* Header vermelho + plus minimalista */
+.gum.sheet.item .eqpmod-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  background: var(--item-bg-extra-red);
+  border-radius: 4px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.gum.sheet.item .eqpmod-block-title {
+  margin: 0;
+  font-family: var(--item-font-condensed);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--item-text);
+}
+
+/* "+" minimalista */
+.gum.sheet.item .eqpmod-add-button {
+  width: auto;
+  height: auto;
+  padding: 2px 4px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+
+  color: var(--item-text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  opacity: 0.55;
+
+  transition: opacity 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.gum.sheet.item .eqpmod-add-button:hover {
+  opacity: 1;
+  color: var(--item-accent);
+  transform: translateY(-1px);
+}
+.gum.sheet.item .eqpmod-add-button:active {
+  transform: translateY(0);
+  opacity: 0.85;
+}
+
+/* Lista */
+.gum.sheet.item .eqpmod-line-list {
+  list-style: none;
+  padding: 0;
+  margin: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gum.sheet.item .eqpmod-empty {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--item-text-muted);
+  opacity: 0.9;
+}
+
+/* Linha: (Nome+ícone) | CF | Peso | Ações */
+.gum.sheet.item .eqpmod-line {
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+              var(--item-panel-texture) repeat;
+  border-left: 5px solid var(--item-bg-extra-red);
+  border-radius: 6.5px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 2.4fr)
+    90px
+    90px
+    34px;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Células + divisor */
+.gum.sheet.item .eqpmod-cell {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 40px;
+}
+.gum.sheet.item .eqpmod-cell + .eqpmod-cell {
+  border-left: 1px solid rgba(201, 161, 94, 0.16);
+}
+
+.gum.sheet.item .eqpmod-cell.is-center {
+  align-items: center;
+  text-align: center;
+}
+
+/* Identidade */
+.gum.sheet.item .eqpmod-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.gum.sheet.item .eqpmod-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex: 0 0 18px;
+  opacity: 0.95;
+}
+
+.gum.sheet.item .eqpmod-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--item-text);
+  line-height: 1.1;
+}
+
+/* Labels/valores compactos */
+.gum.sheet.item .eqpmod-label {
+  font-family: var(--item-font-condensed);
+  font-size: 0.52rem;
+  font-weight: 800;
+  color: var(--item-text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.gum.sheet.item .eqpmod-value {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--item-text);
+  line-height: 1.1;
+}
+
+/* Ações (vertical, compacto) */
+.gum.sheet.item .eqpmod-actions {
+  padding: 6px 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gum.sheet.item .eqpmod-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.gum.sheet.item .eqpmod-controls a {
+  color: var(--item-text-muted);
+  font-size: 0.80rem;
+  line-height: 1;
+}
+.gum.sheet.item .eqpmod-controls a:hover {
+  color: var(--item-accent);
+}
+
+/* Sub-linha opcional (features), discreta */
+.gum.sheet.item .eqpmod-subline {
+  margin-top: 4px;
+  padding: 0 10px 6px 10px;
+  font-size: 0.70rem;
+  color: var(--item-text-muted);
+  opacity: 0.95;
+}
+
+/* Hover leve */
+.gum.sheet.item .eqpmod-line:hover {
+  border-color: rgba(201, 161, 94, 0.45);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+  background: rgb(201 161 94 / 15%);
+}
