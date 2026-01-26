@@ -2976,3 +2976,150 @@
   box-shadow: 0 10px 22px rgba(0,0,0,0.35);
   background: rgb(201 161 94 / 15%);
 }
+/* ------------------------------------------------------------------- */
+/* EFFECT SHEET - HEADERS & GRIDS (PADRÃO "SEÇÕES COM CABEÇALHO")       */
+/* ------------------------------------------------------------------- */
+
+.gum-item-sheet.effect-sheet .effect-section {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 14px;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  /* cor “da paleta do efeito” — ajuste aqui sem mexer no resto */
+  background: var(--item-bg-panel-contrast);
+  border: 1px solid rgba(201, 161, 94, 0.30);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+.gum-item-sheet.effect-sheet .effect-section-title {
+  margin: 0;
+  font-family: var(--item-font-condensed);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--item-text);
+}
+
+/* Dropdown do header (Tipo / Duração) */
+.gum-item-sheet.effect-sheet .effect-section-select select {
+  height: 28px;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+}
+
+/* Toggle do header (Barreira) */
+.gum-item-sheet.effect-sheet .effect-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-toggle input {
+  display: none;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-toggle span {
+  width: 42px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(201,161,94,0.35);
+  position: relative;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-toggle span::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--item-text);
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  transition: left .2s ease, background .2s ease;
+  opacity: 0.9;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-toggle input:checked + span {
+  background: rgba(201, 161, 94, 0.22);
+  border-color: rgba(201,161,94,0.65);
+}
+
+.gum-item-sheet.effect-sheet .effect-section-toggle input:checked + span::after {
+  left: 22px;
+  background: var(--item-accent);
+}
+
+/* corpo da seção */
+.gum-item-sheet.effect-sheet .effect-section-body {
+  margin-top: 8px;
+  background: var(--item-bg-dark); /* igual ao equipamento */
+  border-left: 5px solid rgba(201, 161, 94, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.gum-item-sheet.effect-sheet .effect-section-body.is-muted {
+  opacity: 0.75;
+}
+
+/* grid “linha” para configurações */
+.gum-item-sheet.effect-sheet .effect-row-grid {
+  display: grid;
+  gap: 10px;
+  align-items: end;
+}
+
+.gum-item-sheet.effect-sheet .effect-resistance-grid {
+  grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
+}
+
+.gum-item-sheet.effect-sheet .effect-duration-grid {
+  grid-template-columns: 1.3fr 0.7fr 1.3fr;
+}
+
+.gum-item-sheet.effect-sheet .effect-field .effect-label {
+  font-family: var(--item-font-condensed);
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--item-text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.gum-item-sheet.effect-sheet .effect-field input,
+.gum-item-sheet.effect-sheet .effect-field select {
+  width: 100%;
+  min-height: 28px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  padding: 4px 8px;
+}
+
+/* checkbox de linha (texto compacto) */
+.gum-item-sheet.effect-sheet .effect-inline-checkbox {
+  margin-top: 10px;
+}
+.gum-item-sheet.effect-sheet .effect-inline-checkbox span {
+  font-size: 0.74rem;
+}
+
+/* ocultar checkboxes "reais" quando usamos dropdown (opcional) */
+.gum-item-sheet.effect-sheet .duration-hidden {
+  display: none;
+}

@@ -278,6 +278,18 @@ activateListeners(html) {
         contextCheckboxes.on('change', updateRollModifierContext);
         updateRollModifierContext();
     }
+    html.find(".duration-mode-select").on("change", async (ev) => {
+    const mode = ev.currentTarget.value;
+
+    const isPermanent = mode === "permanent";
+    const inCombat = mode === "combat";
+
+    await this.item.update({
+        "system.duration.isPermanent": isPermanent,
+        "system.duration.inCombat": inCombat
+    });
+    });
+
 }
 
      // ✅ FUNÇÃO AUXILIAR PARA ABRIR O EDITOR DE TEXTO (A PARTE QUE FALTAVA) ✅
