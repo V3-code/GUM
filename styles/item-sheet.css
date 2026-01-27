@@ -97,6 +97,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: linear-gradient(135deg, rgba(14, 13, 17, 0.9), rgba(22, 20, 27, 0.95));
 }
 
 .gum.sheet.item .sheet-content {
@@ -2988,17 +2989,15 @@
 }
 
 .gum-item-sheet.effect-sheet .effect-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  /* cor “da paleta do efeito” — ajuste aqui sem mexer no resto */
-  background: var(--item-bg-panel-contrast);
-  border: 1px solid rgba(201, 161, 94, 0.30);
-  border-radius: 12px;
-  padding: 10px 12px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(201, 161, 94, 0.30);
+    border-radius: 3px;
+    padding: 10px 12px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+    margin-top: 8px;
 }
 
 .gum-item-sheet.effect-sheet .effect-section-title {
@@ -3066,15 +3065,14 @@
 
 /* corpo da seção */
 .gum-item-sheet.effect-sheet .effect-section-body {
-  margin-top: 8px;
-  background: var(--item-bg-dark); /* igual ao equipamento */
-  border-left: 5px solid rgba(201, 161, 94, 0.35);
-  border-radius: 10px;
-  padding: 10px 12px;
+    background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)), var(--item-panel-texture) repeat;
+    border-left: 3.6px solid rgba(201, 161, 94, 0.35);
+    border-radius: 4px;
+    padding: 10px 12px;
 }
 
 .gum-item-sheet.effect-sheet .effect-section-body.is-muted {
-  opacity: 0.75;
+  opacity: 0.45;
 }
 
 /* grid “linha” para configurações */

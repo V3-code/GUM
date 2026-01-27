@@ -17,140 +17,30 @@
         <div class="sheet-body-content effect-sheet-body">
             <div class="tab active" data-tab="configuracao" data-group="primary">
 
-                <div class="effect-grid">
-                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
-<section class="form-section effect-card effect-section">
-  {{!-- HEADER (estilo “ataques”) --}}
-  <div class="effect-section-header">
-    <h4 class="effect-section-title">Barreira de Resistência</h4>
 
-    <label class="effect-section-toggle" title="Ativar registro de barreira">
-      <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
-      <span></span>
-    </label>
-  </div>
+                    {{!-- SEÇÃO DE SELEÇÃO DO EFEITO --}}
+                    <section class="effect-card effect-section">
+                        <div class="effect-section-header">
+                            <h4 class="effect-section-title">Tipo de Efeito</h4>
 
-  {{!-- BODY --}}
-  <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
-    <div class="effect-row-grid effect-resistance-grid">
-      <div class="effect-field">
-        <div class="effect-label">Aplicar efeito em</div>
-        <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-          <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
-          <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
-        </select>
-      </div>
-
-      <div class="effect-field">
-        <div class="effect-label">Atributo</div>
-        <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-      </div>
-
-      <div class="effect-field">
-        <div class="effect-label">Modificador</div>
-        <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-      </div>
-
-      <div class="effect-field">
-        <div class="effect-label">Margem Min</div>
-        <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-      </div>
-    </div>
-
-    <label class="custom-checkbox block effect-inline-checkbox">
-      <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-      <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
-    </label>
-  </div>
-</section>
-
-
-                    {{!-- SEÇÃO EFEITO --}}
-                    <section class="form-section effect-card">
-<div class="effect-section-header">
-  <h4 class="effect-section-title">Tipo de Efeito</h4>
-
-  <div class="effect-section-select">
-    <select name="system.type">
-      <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
-      <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
-      <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
-      <option value="roll_modifier" {{#if (eq system.type 'roll_modifier')}}selected{{/if}}>Modificador de Rolagem</option>
-      <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
-      <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
-      <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
-    </select>
-  </div>
-</div>
-
-                        <div class="hint-area">
-                            {{#if system.type}}
-                                <div class="hint-card single active">
-                                   {{#if (eq system.type 'attribute')}}
-                                        <h5>Modificador de Atributo</h5>
-                                        <p>Use para efeitos contínuos no ator, como +1 ST ou -2 DX. Cria um efeito ativo.</p>
-                                    {{else}}
-                                        {{#if (eq system.type 'resource_change')}}
-                                            <h5>Alteração de Recurso</h5>
-                                            <p>Aplicação pontual: custo de PF, flechas gastas ou cura/dano imediato.</p>
-                                        {{else}}
-                                            {{#if (eq system.type 'status')}}
-                                                <h5>Status</h5>
-                                                <p>Aplica um ícone de status no token do alvo.</p>
-                                            {{else}}
-                                                {{#if (eq system.type 'roll_modifier')}}
-                                                    <h5>Modificador de Rolagem</h5>
-                                                    <p>Cria um modificador temporário para testes, respeitando contexto e teto.</p>
-                                                {{else}}
-                                                    {{#if (eq system.type 'macro')}}
-                                                        <h5>Macro</h5>
-                                                        <p>Executa uma macro existente. Ideal para ações complexas.</p>
-                                                    {{else}}
-                                                        {{#if (eq system.type 'flag')}}
-                                                            <h5>Flag</h5>
-                                                            <p>Define um estado personalizado que outras condições podem consultar.</p>
-                                                        {{else}}
-                                                            {{#if (eq system.type 'chat')}}
-                                                                <h5>Mensagem de Chat</h5>
-                                                                <p>Envia um texto informativo e, opcionalmente, inclui um teste rápido.</p>
-                                                            {{/if}}
-                                                        {{/if}}
-                                                    {{/if}}
-                                                {{/if}}
-                                            {{/if}}
-                                        {{/if}}
-                                    {{/if}}
-                                </div>
-                            {{else}}
-                                <div class="hint-card single muted">
-                                    <h5>Escolha um tipo</h5>
-                                    <p>Selecione um tipo de efeito para ver um resumo rápido do seu comportamento.</p>
-                                </div>
-                            {{/if}}
-                        </div>
-                    </section>
-                </div>
-
-                <section class="form-section effect-card">
-                    <div class="section-header">
-                        <div>
-                            <p class="eyebrow">Configuração dinâmica</p>
-                            <h4 class="section-title">Campos do Tipo Selecionado</h4>
+                        <div class="effect-section-select">
+                            <select name="system.type">
+                            <option value="attribute" {{#if (eq system.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
+                            <option value="status" {{#if (eq system.type 'status')}}selected{{/if}}>Status</option>
+                            <option value="resource_change" {{#if (eq system.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
+                            <option value="roll_modifier" {{#if (eq system.type 'roll_modifier')}}selected{{/if}}>Modificador de Rolagem</option>
+                            <option value="chat" {{#if (eq system.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
+                            <option value="macro" {{#if (eq system.type 'macro')}}selected{{/if}}>Macro</option>
+                            <option value="flag" {{#if (eq system.type 'flag')}}selected{{/if}}>Flag</option>
+                            </select>
                         </div>
                     </div>
 
+                    {{!-- CONTEÚDO DO EFEITO SELECIONADO--}}
                     <div class="conditional-fields modern">
                         {{!-- BLOCO COMBINADO PARA ATTRIBUTE e FLAG --}}
                         {{#if (or (eq system.type 'attribute') (eq system.type 'flag'))}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Dados principais</p>
-                                        <h5>{{#if (eq system.type 'attribute')}}Configuração do Atributo{{else}}Configuração da Flag{{/if}}</h5>
-                                    </div>
-                                    <span class="chip subtle">{{#if (eq system.type 'attribute')}}Contínuo{{else}}Marcador{{/if}}</span>
-                                </div>
-
                                 {{#if (eq system.type 'attribute')}}
                                     <div class="effect-detail-grid">
                                         <div class="form-row stacked">
@@ -209,13 +99,6 @@
                         {{!-- SEÇÃO PARA STATUS --}}
                         {{#if (eq system.type 'status')}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Marca visual</p>
-                                        <h5>Ícone de Status</h5>
-                                    </div>
-                                    <span class="chip subtle">Token</span>
-                                </div>
                                 <div class="form-row stacked">
                                     <label class="row-label">Ícone de Status a Aplicar</label>
                                     <select name="system.statusId">
@@ -226,19 +109,12 @@
                                         {{/each}}
                                     </select>
                                 </div>
- </div>
+                            </div>
                         {{/if}}
 
                         {{!-- SEÇÃO PARA ROLL_MODIFIER --}}
                         {{#if (eq system.type 'roll_modifier')}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Ajuste de teste</p>
-                                        <h5>Modificador de Rolagem</h5>
-                                    </div>
-                                    <span class="chip subtle">Contextual</span>
-                                </div>
                                 <div class="effect-detail-grid">
                                     <div class="form-row stacked">
                                         <label class="row-label">Valor do Modificador</label>
@@ -248,7 +124,7 @@
                                         <label class="row-label">Teto (Cap)</label>
                                         <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
                                     </div>
-<div class="form-row stacked">
+                                    <div class="form-row stacked">
                                         <label class="row-label">Contextos Afetados</label>
                                         <input type="hidden" name="system.roll_modifier_context" value="{{rollModifierContextValue}}"/>
                                         <div class="roll-context-all">
@@ -281,13 +157,6 @@
                         {{!-- SEÇÃO PARA RESOURCE_CHANGE --}}
                         {{#if (eq system.type 'resource_change')}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Impacto imediato</p>
-                                        <h5>Alteração de Recurso</h5>
-                                    </div>
-                                    <span class="chip subtle">Consumir / Restaurar</span>
-                                </div>
                                 <div class="effect-detail-grid">
                                     <div class="form-row stacked">
                                         <label class="row-label">Valor da Alteração</label>
@@ -325,13 +194,6 @@
                         {{!-- SEÇÃO PARA MACRO --}}
                         {{#if (eq system.type 'macro')}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Automação</p>
-                                        <h5>Macro</h5>
-                                    </div>
-                                    <span class="chip subtle">Execução</span>
-                                </div>
                                 <div class="form-row stacked">
                                     <label class="row-label">Nome da Macro</label>
                                     <div class="input-with-validation">
@@ -350,13 +212,6 @@
                         {{!-- SEÇÃO PARA CHAT --}}
                         {{#if (eq system.type 'chat')}}
                             <div class="conditional-card">
-                                <div class="conditional-card-header">
-                                    <div>
-                                        <p class="eyebrow">Comunicação</p>
-                                        <h5>Mensagem de Chat</h5>
-                                    </div>
-                                    <span class="chip subtle">Texto</span>
-                                </div>
                                     <div class="form-group">
                                         <label>Texto da Mensagem</label>
                                             <textarea name="system.chat_text" rows="3">{{system.chat_text}}</textarea>
@@ -375,69 +230,113 @@
                                 </div>
                         {{/if}}
                     </div>
-                </section>
+                   </section>
 
-                {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
-<section class="form-section effect-card effect-section">
-  <div class="effect-section-header">
-    <h4 class="effect-section-title">Duração do Efeito</h4>
 
-    {{!-- DROPDOWN de modo (visual) --}}
-    <div class="effect-section-select">
-      <select class="duration-mode-select" name="system.duration._uiMode">
-        <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
-        <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
-        <option value="timed" {{#if (and (not system.duration.isPermanent) (not system.duration.inCombat))}}selected{{/if}}>Temporária</option>
-      </select>
-    </div>
-  </div>
+                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
+                    <section class="effect-card effect-section">
+                    {{!-- HEADER (estilo “ataques”) --}}
+                    <div class="effect-section-header">
+                        <h4 class="effect-section-title">Barreira de Resistência</h4>
 
-  {{!-- Mantemos os campos reais do sistema (pode deixar oculto via CSS) --}}
-  <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
-  <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                        <label class="effect-section-toggle" title="Ativar registro de barreira">
+                        <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                        <span></span>
+                        </label>
+                    </div>
 
-  <div class="effect-section-body">
+                    {{!-- BODY --}}
+                    <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
+                        <div class="effect-row-grid effect-resistance-grid">
+                        <div class="effect-field">
+                            <div class="effect-label">Aplicar efeito em</div>
+                            <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                            <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
+                            <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
+                            </select>
+                        </div>
 
-    {{!-- Só aparece quando NÃO for permanente --}}
-    {{#unless system.duration.isPermanent}}
+                        <div class="effect-field">
+                            <div class="effect-label">Atributo</div>
+                            <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                        </div>
 
-      {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
-      {{#if system.duration.inCombat}}
-        <div class="effect-row-grid effect-duration-grid">
-          <div class="effect-field">
-            <div class="effect-label">Início da contagem</div>
-            <select name="system.duration.startMode">
-              <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
-              <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
-            </select>
-          </div>
+                        <div class="effect-field">
+                            <div class="effect-label">Modificador</div>
+                            <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                        </div>
 
-          <div class="effect-field">
-            <div class="effect-label">Rodadas (seg)</div>
-            <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
-          </div>
+                        <div class="effect-field">
+                            <div class="effect-label">Margem Min</div>
+                            <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                        </div>
+                        </div>
 
-          <div class="effect-field">
-            <div class="effect-label">Fim da contagem</div>
-            <select name="system.duration.endMode">
-              <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
-              <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
-            </select>
-          </div>
-        </div>
-      {{/if}}
+                        <label class="custom-checkbox block effect-inline-checkbox">
+                        <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                        <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
+                        </label>
+                    </div>
+                    </section>
 
-      {{!-- Se “Temporária” (fora de combate) no futuro: você decide o que mostrar aqui --}}
-      {{#if (and (not system.duration.inCombat))}}
-        <p class="hint">Modo temporário fora de combate: (se quiser usar depois, definimos a UI aqui).</p>
-      {{/if}}
+                    {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
+                    {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
+                    <section class="effect-card effect-section">
+                    <div class="effect-section-header">
+                        <h4 class="effect-section-title">Duração do Efeito</h4>
 
-    {{/unless}}
+                        {{!-- DROPDOWN de modo (visual) --}}
+                        <div class="effect-section-select">
+                        <select class="duration-mode-select" name="system.duration._uiMode">
+                            <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
+                            <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
+                        </select>
+                        </div>
+                    </div>
 
-  </div>
-</section>
+                    {{!-- Mantemos os campos reais do sistema (pode deixar oculto via CSS) --}}
+                    <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
+                    <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
 
-                {{/if}}
+                    <div class="effect-section-body">
+                        {{#if system.duration.isPermanent}}
+                        <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
+                        {{/if}}
+                        {{!-- Só aparece quando NÃO for permanente --}}
+                        {{#unless system.duration.isPermanent}}
+                    
+                        {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
+                        {{#if system.duration.inCombat}}
+                            <div class="effect-row-grid effect-duration-grid">
+                            <div class="effect-field">
+                                <div class="effect-label">Início da contagem</div>
+                                <select name="system.duration.startMode">
+                                <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
+                                <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
+                                </select>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Rodadas (seg)</div>
+                                <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Fim da contagem</div>
+                                <select name="system.duration.endMode">
+                                <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
+                                <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
+                                </select>
+                            </div>
+                            </div>
+                        {{/if}}
+
+                        {{/unless}}
+
+                    </div>
+                    </section>
+
+                    {{/if}}
             </div>
 
             {{! ========================================================= }}
