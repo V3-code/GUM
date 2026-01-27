@@ -64,6 +64,7 @@
   --item-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   --item-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.3);
   --item-header-banner: url("assets/items/item-header-banner.webp");
+  --item-header-banner-bottom: url("assets/items/item-header-banner-bottom.webp");
   --item-bg-texture: url("assets/items/item-bg-texture-dark.webp");
   --item-panel-texture: url("assets/items/item-bg-panel.webp");
   --item-panel-texture-contrast: url("assets/items/item-bg-panel-contrast.webp");
@@ -135,10 +136,8 @@
   background:
     var(--item-header-banner) no-repeat center / cover,
     linear-gradient(90deg, rgba(18, 17, 20, 0.92), rgba(27, 25, 31, 0.94));
-  border-bottom: 1px solid var(--item-border);
   box-shadow: 0 10px 20px rgba(0,0,0,0.45);
   z-index: 2;
-  position: relative;
 }
 
 .gum.sheet.item .sheet-header::after {
@@ -231,7 +230,9 @@
   gap: 4px;
   padding: 8px 16px 0;
   background: rgba(0, 0, 0, 0.2);
+  border-top:none;
   border-bottom: 1px solid var(--item-border);
+  margin: 0;
 }
 
 .gum.sheet.item .sheet-tabs .item {
@@ -336,7 +337,7 @@
   color: var(--item-input-text);
   font-size: var(--item-font-size-sm);
   padding: 4px 8px;
-  min-height: 28px;
+  /*min-height: 28px;*/
   font-family: var(--item-font-base);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -1285,7 +1286,7 @@
   align-items: center;
   gap: 2px;
   font-size: 0.7rem;
-  color: var(--item-text);
+  color: var(--item-bg-dark);
 }
 
 .attack-editor-dialog .custom-checkbox input[type="checkbox"] {
@@ -2401,14 +2402,14 @@
 }
 
 .gum.sheet.item.effect-sheet .conditional-card {
-  border: 1px solid var(--item-border);
-  border-radius: 10px;
-  padding: 10px;
-  background: #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    border-radius: 4px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)), var(--item-panel-texture) repeat;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 3.6px solid rgba(201, 161, 94, 0.35);
 }
 
 .gum.sheet.item.effect-sheet .conditional-card-header {
@@ -2465,7 +2466,7 @@
   padding: 6px 8px;
   border: 1px solid var(--item-border-light);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--item-bg-dark);
 }
 
 .gum.sheet.item.effect-sheet .roll-context-all .gm-checkbox {
@@ -2513,6 +2514,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: space-around;
 }
 
 .gum.sheet.item.effect-sheet .custom-radio {
@@ -3090,6 +3092,29 @@
   grid-template-columns: 1.3fr 0.7fr 1.3fr;
 }
 
+/* DURAÇÃO: modo compacto (3 linhas / 2 colunas) */
+.gum-item-sheet.effect-sheet .effect-duration-grid.is-two-col-rows {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.gum-item-sheet.effect-sheet .effect-field.effect-field-row {
+  display: grid;
+  grid-template-columns: 1.05fr 1.95fr; /* label | input */
+  gap: 10px;
+  align-items: center;
+}
+
+.gum-item-sheet.effect-sheet .effect-field.effect-field-row .effect-label {
+  margin: 0;                 /* tira o “label em cima” */
+  line-height: 1.1;
+}
+
+.gum-item-sheet.effect-sheet .effect-field.effect-field-row input,
+.gum-item-sheet.effect-sheet .effect-field.effect-field-row select {
+  margin: 0;
+}
+
 .gum-item-sheet.effect-sheet .effect-field .effect-label {
   font-family: var(--item-font-condensed);
   font-size: 0.55rem;
@@ -3100,12 +3125,15 @@
   margin-bottom: 3px;
 }
 
+.gum-item-sheet.effect-sheet .effect-dropmenu-text {
+  color: var(--item-bg-dark);
+}
 .gum-item-sheet.effect-sheet .effect-field input,
 .gum-item-sheet.effect-sheet .effect-field select {
-  width: 100%;
+  width: auto;
   min-height: 28px;
   border-radius: 8px;
-  font-size: 0.78rem;
+  font-size: 0.65rem;
   padding: 4px 8px;
 }
 

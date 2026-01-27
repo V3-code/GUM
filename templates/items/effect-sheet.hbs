@@ -1,11 +1,17 @@
 <form class="{{cssClass}} gum-item-sheet effect-sheet" autocomplete="off">
 
     {{!-- CABEÇALHO --}}
-    <header class="sheet-header item-header">
+    <header class="sheet-header">
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Efeito"/></h1>
+    <div class="header-info">
+        <div class="header-main-line">
+            <textarea name="name" rows="1" placeholder="Nome do Item">{{item.name}}</textarea>
         </div>
+        <div class="header-subline">
+            <span class="item-type-tag">Efeito</span>
+        </div>
+        <span class="header-divider" aria-hidden="true"></span>
+    </div>
     </header>
 
     <nav class="sheet-tabs tabs" data-group="primary">
@@ -42,56 +48,56 @@
                         {{#if (or (eq system.type 'attribute') (eq system.type 'flag'))}}
                             <div class="conditional-card">
                                 {{#if (eq system.type 'attribute')}}
-                                    <div class="effect-detail-grid">
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Caminho</label>
+                                    <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Caminho</label>
                                             <textarea name="system.path" rows="1" placeholder="Ex: system.attributes.dx.mod">{{system.path}}</textarea>
                                         </div>
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Operação</label>
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Operação</label>
                                             <div class="radio-group horizontal">
-                                                <label class="custom-radio"><input type="radio" name="system.operation" value="ADD" {{checked (or (eq system.operation 'ADD') (eq system.operation 'SUB') (not system.operation))}}><span>Adicionar (ADD)</span></label>
-                                                <label class="custom-radio"><input type="radio" name="system.operation" value="OVERRIDE" {{checked (eq system.operation 'OVERRIDE')}}><span>Definir (SET/OVERRIDE)</span></label>
+                                                <label class="custom-radio"><input type="radio" name="system.operation" value="ADD" {{checked (or (eq system.operation 'ADD') (eq system.operation 'SUB') (not system.operation))}}><span>ADD/SUB</span></label>
+                                                <label class="custom-radio"><input type="radio" name="system.operation" value="OVERRIDE" {{checked (eq system.operation 'OVERRIDE')}}><span>Definir</span></label>
                                             </div>
                                         </div>
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Valor</label>
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Valor</label>
                                             <textarea name="system.value" rows="1" placeholder="Ex: -2 ou @st.mod">{{system.value}}</textarea>
                                         </div>
                                     </div>
-                                    <p class="hint inline">Use valores negativos para subtrair com "ADD". "SET" sobrescreve o valor base.</p>
+
                                 {{/if}}
 
                                 {{#if (eq system.type 'flag')}}
-                                    <div class="effect-detail-grid">
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Chave da Flag (Key)</label>
-                                            <input type="text" name="system.key" value="{{system.key}}" placeholder="Ex: em_chamas"/>
-                                        </div>
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Valor da Flag</label>
-                                            <div class="radio-group horizontal">
-                                                <label class="custom-radio">
-                                                    <input type="radio" name="system.flag_value_selector" value="true" {{checked (eq flagValueSelection 'true')}}>
-                                                    <span>Verdadeiro</span>
-                                                </label>
-                                                <label class="custom-radio">
-                                                    <input type="radio" name="system.flag_value_selector" value="false" {{checked (eq flagValueSelection 'false')}}>
-                                                    <span>Falso</span>
-                                                </label>
-                                                <label class="custom-radio">
-                                                    <input type="radio" name="system.flag_value_selector" value="custom" {{checked (eq flagValueSelection 'custom')}}>
-                                                    <span>Outro</span>
-                                                </label>
+                                        <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                            <div class="effect-field effect-field-row">
+                                                <label class="effect-label">Chave da Flag (Key)</label>
+                                                <input type="text" name="system.key" value="{{system.key}}" placeholder="Ex: em_chamas"/>
                                             </div>
-                                        </div>
-                                        {{#unless (eq flagValueSelection)}}
-                                            <div class="form-row stacked">
-                                                <label class="row-label">Valor Customizado</label>
-                                                <input type="text" name="system.flag_value" value="{{system.flag_value}}"/>
+                                            <div class="effect-field effect-field-row">
+                                                <label class="effect-label">Valor da Flag</label>
+                                                <div class="radio-group horizontal">
+                                                    <label class="custom-radio">
+                                                        <input type="radio" name="system.flag_value_selector" value="true" {{checked (eq flagValueSelection 'true')}}>
+                                                        <span>Verdadeiro</span>
+                                                    </label>
+                                                    <label class="custom-radio">
+                                                        <input type="radio" name="system.flag_value_selector" value="false" {{checked (eq flagValueSelection 'false')}}>
+                                                        <span>Falso</span>
+                                                    </label>
+                                                    <label class="custom-radio">
+                                                        <input type="radio" name="system.flag_value_selector" value="custom" {{checked (eq flagValueSelection 'custom')}}>
+                                                        <span>Outro</span>
+                                                    </label>
+                                                </div>
                                             </div>
-                                        {{/unless}}
-                                    </div>
+                                            {{#unless (eq flagValueSelection)}}
+                                                <div class="effect-field effect-field-row">
+                                                    <label class="effect-label">Valor da Flag</label>
+                                                    <input type="text" name="system.flag_value" value="{{system.flag_value}}"/>
+                                                </div>
+                                            {{/unless}}
+                                        </div>
                                 {{/if}}
                             </div>
                         {{/if}}
@@ -99,15 +105,17 @@
                         {{!-- SEÇÃO PARA STATUS --}}
                         {{#if (eq system.type 'status')}}
                             <div class="conditional-card">
-                                <div class="form-row stacked">
-                                    <label class="row-label">Ícone de Status a Aplicar</label>
-                                    <select name="system.statusId">
-                                        {{#each statusEffects as |status|}}
-                                            <option value="{{status.id}}" {{#if (eq ../system.statusId status.id)}}selected{{/if}}>
-                                                {{status.label}}
-                                            </option>
-                                        {{/each}}
-                                    </select>
+                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                    <div class="effect-field effect-field-row">
+                                    <label class="effect-label">Ícone de Status a Aplicar</label>
+                                        <select name="system.statusId">
+                                            {{#each statusEffects as |status|}}
+                                                <option value="{{status.id}}" {{#if (eq ../system.statusId status.id)}}selected{{/if}}>
+                                                    {{status.label}}
+                                                </option>
+                                            {{/each}}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         {{/if}}
@@ -115,17 +123,19 @@
                         {{!-- SEÇÃO PARA ROLL_MODIFIER --}}
                         {{#if (eq system.type 'roll_modifier')}}
                             <div class="conditional-card">
-                                <div class="effect-detail-grid">
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Valor do Modificador</label>
-                                        <input type="text" name="system.roll_modifier_value" value="{{system.roll_modifier_value}}" placeholder="Ex: +2 ou -1"/>
+                                    <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Valor do Modificador</label>
+                                            <input type="text" name="system.roll_modifier_value" value="{{system.roll_modifier_value}}" placeholder="Ex: +2 ou -1"/>
+                                        </div>
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Limite do NH afetado (Cap)</label>
+                                            <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
+                                        </div>
                                     </div>
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Teto (Cap)</label>
-                                        <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
-                                    </div>
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Contextos Afetados</label>
+
+                                    <div class="advanced-options">
+                                        <h6>Contextos Afetados</h6>
                                         <input type="hidden" name="system.roll_modifier_context" value="{{rollModifierContextValue}}"/>
                                         <div class="roll-context-all">
                                             <label class="gm-checkbox">
@@ -135,7 +145,7 @@
                                         </div>
                                         <div class="roll-context-columns">
                                             {{#each rollModifierContextGroups as |group|}}
-                                                <div class="roll-context-group">
+                                                <div class="roll-context-group roll-context-all">
                                                     <p class="roll-context-title">{{group.title}}</p>
                                                     <div class="roll-context-list {{group.listClass}}">
                                                         {{#each group.contexts as |ctx|}}
@@ -148,7 +158,6 @@
                                                 </div>
                                             {{/each}}
                                         </div>
-                                        <p class="hint">Selecione mais de um contexto. "Qualquer rolagem" substitui as demais opções.</p>
                                     </div>
                                 </div>
                             </div>
@@ -156,14 +165,10 @@
 
                         {{!-- SEÇÃO PARA RESOURCE_CHANGE --}}
                         {{#if (eq system.type 'resource_change')}}
-                            <div class="conditional-card">
-                                <div class="effect-detail-grid">
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Valor da Alteração</label>
-                                        <input type="text" name="system.value" value="{{system.value}}" placeholder="Ex: -1 ou 2d6"/>
-                                    </div>
-                                    <div class="form-row stacked">
-                                        <label class="row-label">Alvo da Alteração</label>
+                        <div class="conditional-card">
+                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                    <div class="effect-field effect-field-row">
+                                        <label class="effect-label">Alvo da Alteração</label>
                                         <select name="system.category">
                                             <option value="hp" {{#if (eq system.category 'hp')}}selected{{/if}}>Pontos de Vida</option>
                                             <option value="fp" {{#if (eq system.category 'fp')}}selected{{/if}}>Pontos de Fadiga</option>
@@ -173,11 +178,15 @@
                                         </select>
                                     </div>
                                     {{#if (or (eq system.category 'energy_reserve') (eq system.category 'combat_tracker') (eq system.category 'item_quantity'))}}
-                                        <div class="form-row stacked">
-                                            <label class="row-label">Nome Específico</label>
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Nome Específico</label>
                                             <input type="text" name="system.name" value="{{system.name}}" placeholder="Digite o nome exato"/>
                                         </div>
                                     {{/if}}
+                                    <div class="effect-field effect-field-row">
+                                        <label class="effect-label">Valor da Alteração</label>
+                                        <input type="text" name="system.value" value="{{system.value}}" placeholder="Ex: -1 ou 2d6"/>
+                                    </div>
                                 </div>
 
                                 <div class="advanced-options">
@@ -194,17 +203,19 @@
                         {{!-- SEÇÃO PARA MACRO --}}
                         {{#if (eq system.type 'macro')}}
                             <div class="conditional-card">
-                                <div class="form-row stacked">
-                                    <label class="row-label">Nome da Macro</label>
-                                    <div class="input-with-validation">
-                                        <input type="text" name="system.value" value="{{system.value}}" list="macro-list" autocomplete="off"/>
-                                        <span class="validation-icon"></span>
+                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                    <div class="effect-field effect-field-row">
+                                        <label class="effect-label">Nome da Macro</label>
+                                            <div class="input-with-validation radio-group horizontal">
+                                                <input type="text" name="system.value" value="{{system.value}}" list="macro-list" autocomplete="off"/>
+                                                <span class="validation-icon"></span>
+                                            </div>
+                                            <datalist id="macro-list">
+                                                {{#each macros as |macroName|}}
+                                                    <option value="{{macroName}}">
+                                                {{/each}}
+                                            </datalist>
                                     </div>
-                                    <datalist id="macro-list">
-                                        {{#each macros as |macroName|}}
-                                            <option value="{{macroName}}">
-                                        {{/each}}
-                                    </datalist>
                                 </div>
                             </div>
                         {{/if}}
@@ -212,13 +223,15 @@
                         {{!-- SEÇÃO PARA CHAT --}}
                         {{#if (eq system.type 'chat')}}
                             <div class="conditional-card">
-                                    <div class="form-group">
-                                        <label>Texto da Mensagem</label>
-                                            <textarea name="system.chat_text" rows="3">{{system.chat_text}}</textarea>
-                                            <label class="custom-checkbox hint block">
-                                                <input type="checkbox" name="system.has_roll" {{checked system.has_roll}}/>
-                                                <span>Incluir teste?</span>
-                                            </label>
+                                    <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                        <div class="effect-field effect-field-row">
+                                            <label class="effect-label">Texto da Mensagem</label>
+                                                <textarea name="system.chat_text" rows="1">{{system.chat_text}}</textarea>
+                                        </div>
+                                        <label class="custom-checkbox block effect-inline-checkbox advanced-options">
+                                            <input type="checkbox" name="system.has_roll" {{checked system.has_roll}}/>
+                                            <span>Incluir teste?</span>
+                                        </label>
                                         {{#if system.has_roll}}
                                             <div class="form-grid-3">
                                                 <div class="form-group"><label>Rótulo</label><input type="text" name="system.roll_label" value="{{system.roll_label}}"/></div>
@@ -287,10 +300,10 @@
 
                         {{!-- DROPDOWN de modo (visual) --}}
                         <div class="effect-section-select">
-                        <select class="duration-mode-select" name="system.duration._uiMode">
-                            <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
-                            <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
-                        </select>
+                            <select class="duration-mode-select" name="system.duration._uiMode">
+                                <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
+                                <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
+                            </select>
                         </div>
                     </div>
 
@@ -307,35 +320,37 @@
                     
                         {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
                         {{#if system.duration.inCombat}}
-                            <div class="effect-row-grid effect-duration-grid">
-                            <div class="effect-field">
+                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+
+                            <div class="effect-field effect-field-row">
                                 <div class="effect-label">Início da contagem</div>
-                                <select name="system.duration.startMode">
+                                <select class="effect-dropmenu-text" name="system.duration.startMode">
                                 <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
                                 <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
                                 </select>
                             </div>
 
-                            <div class="effect-field">
+                            <div class="effect-field effect-field-row">
                                 <div class="effect-label">Rodadas (seg)</div>
                                 <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
                             </div>
 
-                            <div class="effect-field">
+                            <div class="effect-field effect-field-row">
                                 <div class="effect-label">Fim da contagem</div>
                                 <select name="system.duration.endMode">
                                 <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
                                 <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
                                 </select>
                             </div>
+
                             </div>
+
                         {{/if}}
 
                         {{/unless}}
 
                     </div>
                     </section>
-
                     {{/if}}
             </div>
 
@@ -354,7 +369,7 @@
                       {{#if editable}}
                       <div class="description-actions">
                         <button type="button" class="toggle-editor" data-field="system.chat_description">
-                          <i class="fas fa-pen"></i> Editar
+                          <i class="fas fa-pen"></i> 
                         </button>
                       </div>
                       {{/if}}
@@ -380,7 +395,7 @@
                       {{#if editable}}
                       <div class="description-actions">
                         <button type="button" class="toggle-editor" data-field="system.description">
-                          <i class="fas fa-pen"></i> Editar
+                          <i class="fas fa-pen"></i> 
                         </button>
                       </div>
                       {{/if}}
