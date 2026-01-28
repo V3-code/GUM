@@ -1,59 +1,46 @@
-<form class="{{cssClass}} gum-item-sheet trigger-sheet" autocomplete="off">
+<form class="{{cssClass}} gum-item-sheet trigger-sheet condition-sheet effect-sheet" autocomplete="off">
 
     {{!-- Cabeçalho Padrão --}}
-    <header class="sheet-header item-header">
+    <header class="sheet-header">
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-        <div class="header-fields">
-            <h1 class="charname"><input name="name" type="text" value="{{item.name}}" placeholder="Nome do Gatilho"/></h1>
-        </div>
+        <div class="header-info">
+            <div class="header-main-line">
+                <textarea name="name" rows="1" placeholder="Nome do Gatilho">{{item.name}}</textarea>
+            </div>
+            <div class="header-subline">
+                <span class="item-type-tag">Gatilho</span>
+            </div>
+                <span class="header-divider" aria-hidden="true"></span>
+            </div>
     </header>
 
+    <section class="sheet-content">
     {{!-- NAVEGAÇÃO DAS ABAS --}}
     <nav class="sheet-tabs tabs">
-        <a class="item" data-tab="codigo">Código</a>
-        <a class="item" data-tab="detalhes">Descrição</a>   
+        <a class="item" data-tab="detalhes">Descrição</a>  
+        <a class="item" data-tab="codigo">Código</a> 
     </nav>
 
-    <main class="sheet-body">
         <div class="sheet-body-content">
             
-            {{!-- ABA DE CÓDIGO --}}
-            <div class="tab active" data-tab="codigo">
-                <div class="form-section trigger-code-card">
+            {{!-- ABA DE CÓDIGO --}} 
+            <div class="tab" data-tab="codigo">
+                <section class="form-section condition-card">
                     <div class="section-header">
-                        <div class="section-lead">
-                            <p class="label">Biblioteca de Gatilhos</p>
-                            <h4 class="section-title">Código do Gatilho</h4>
-                            <p class="hint">Insira a condição em JavaScript que será avaliada como verdadeira ou falsa.</p>
-                        </div>
-                        <div class="code-meta">
-                            <span class="chip">Somente texto</span>
-                            <span class="chip accent">Avaliação lógica</span>
+                        <div>
+                            <h4 class="section-title">Gatilho</h4>
                         </div>
                     </div>
-
-                    <div class="trigger-code-area">
-                        <textarea class="trigger-code-input" name="system.code" rows="10" placeholder="Ex: actor.system.attributes.hp.value &lt;= 0">{{system.code}}</textarea>
-                        <p class="hint">Use este espaço para armazenar a lógica do gatilho que ficará disponível em sua biblioteca.</p>
+                    <p class="hint">Item de qualidade de vida, não essencial. Use este espaço para armazenar a lógica do gatilho e o armazeno no compêndio [GUM] Gatilho para ser utilizado via busca rápida no item Condição.</p>
+                    <div class="condition-input-area">
+                       <textarea name="system.code" rows="10" placeholder="Ex: actor.system.attributes.hp.value &lt;= 0">{{system.code}}</textarea>
                     </div>
-                </div>
+                </section>
             </div>
 
             {{!-- ABA DE DETALHES --}}
             <div class="tab" data-tab="detalhes">
                 <div class="description-tab">
-                    <div class="description-hero">
-                        <div class="hero-text">
-                            <p class="eyebrow">Referência do Sistema</p>
-                            <h3>Descrição do Gatilho</h3>
-                            <p class="hint">Documente como e quando este gatilho deve ser usado na sua biblioteca.</p>
-                        </div>
-                        <div class="hero-meta">
-                            <div class="meta-chip"><i class="fas fa-bookmark"></i> Biblioteca</div>
-                            <div class="meta-chip"><i class="fas fa-stream"></i> Contexto</div>
-                        </div>
-                    </div>
-
                     <div class="description-grid">
                         <div class="form-section description-section">
                             <div class="description-header">
@@ -76,5 +63,5 @@
             </div>
 
         </div>
-    </main>
+    </section>
 </form>
