@@ -488,23 +488,13 @@
 {{!-- 		ABA DETALHES: MODIFICADOR DO MESTRE (LAYOUT COMPACTO)        --}}
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "gm_modifier")}}
-<div class="gm-modifier-layout compact">
-    <div class="gm-header-row">
-        <div>
-            <p class="eyebrow">Ferramenta do Mestre</p>
-            <h3>Modificador do Mestre</h3>
-            <p class="hint">Crie modificadores que serão aplicados a rolagens de acordo com a selação abaixo.</p>
-        </div>
-    </div>
 
-    <div class="gm-quick-grid">
-        <div class="gm-card">
-            <div>
-            <h4 class="section-title">Onde aparece?</h4>
-            <p class="hint">Use para organizar o modificador na janela de rolagem e na ficha do personagem.</p>
-            </div>
-            <div class="form-group">
-                <label>Bloco na Janela de Rolagem</label>
+
+        <div class="form-section">
+            <h4 class="section-title">Organização</h4>
+            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                <div class="effect-field effect-field-row-auto">
+                <label class="effect-label">Bloco na Janela de Rolagem</label>
                 <select name="system.ui_category">
                     {{selectOptions (object 
                         location="Localização de Acerto" 
@@ -524,14 +514,12 @@
                         other="Outros / Customizado"
                     ) selected=system.ui_category}}
                 </select>
+                </div>
             </div>
         </div>
 
-        <div class="gm-card gm-stats-card">
-            <div>
+        <div class="form-section">
             <h4 class="section-title">Valor do Modificador</h4>
-            <p class="hint">Coloque o valor do modificador e se tiver um limite para a rolagem (como na manobra mover e atacar).</p>
-            </div>
             <div class="gm-stats-grid dense two-rows">
                 <div class="gm-stat wide" title="O valor que será somado (ex: -2, +1)">
                     <div class="skill-stat-card level-card">
@@ -545,29 +533,26 @@
                 </div>
                 <div class="gm-stat" title="O valor máximo permitido para o teste (ex: 9 para Mover e Atacar). Deixe vazio para sem limite.">
                     <div class="skill-stat-card">
-                        <div class="stat-label">NH Máximo</div>
+                        <div class="stat-label">Limite do NH (teto)</div>
                         <div class="stat-value">
                             <input type="number" name="system.nh_cap" value="{{system.nh_cap}}" placeholder="9" class="tight-input"/>
                         </div>
                     </div>
                 </div>
                 <div class="gm-stat full-row" title="Lembrete de duração">
-                    <label class="stat-label">Duração</label>
+                    <label class="stat-label">Obersvações</label>
                     <div class="stat-input centered">
-                        <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: 1 rodada" class="tight-input"/>
+                        <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: Terreno difícil" class="tight-input"/>
                     </div>
-                    <p class="hint">A duração não é automatizada, apenas serve como referência e aviso para o Mestre.</p>
+                    <p class="hint">Campo não automatizado. Serve apenas como referência ou lembrete para o Mestre.</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="gm-card">
-        <div>
-        <h4 class="section-title">Alvos &amp; Contextos</h4>
-        <p class="hint">Escolha em quais rolagens o modificador será aplicado - o sistema diferencia os contextos de rolagens.</p>
-        </div>
-        <div class="gm-chip-grid tight two-cols top-row">
+
+    <div class="form-section">
+        <h4 class="section-title"> Rolagens Afetadas pelo modificador</h4>
+        <div class="form-grid-3">
                     <label class="gm-chip">
                         <input type="checkbox" name="system.target_type.global" {{checked system.target_type.global}}/>
                         <div class="chip-body">
@@ -588,7 +573,7 @@
                                 <span class="chip-title">Verificação de Pânico</span>
                             </div>
                     </label>
-                </div>
+        </div>
 
         <details class="gm-tree-group" id="gm-tree-combat">
            
@@ -600,35 +585,35 @@
                 </div>
                 <span class="gm-pill subtle">Ataques/Defesas</span>
             </summary>
-            <div class="gm-tree-content">
-                <label class="gm-checkbox parent-check">
-                    <input type="checkbox" name="system.target_type.combat_all" {{checked system.target_type.combat_all}}/>
-                    <span>Todos os Testes de Combate</span>
-                </label>
-                
-                <div class="combat-grid condensed">
-                    <div class="subgroup">
-                        <strong class="subgroup-title">Ataque</strong>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_melee" {{checked system.target_type.combat_attack_melee}}/> <span>Corpo a Corpo</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_ranged" {{checked system.target_type.combat_attack_ranged}}/> <span>Distância</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_spell" {{checked system.target_type.combat_attack_spell}}/> <span>Magia</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_power" {{checked system.target_type.combat_attack_power}}/> <span>Poder</span></label>
-                    </div>
-                     <div class="subgroup">
-                        <strong class="subgroup-title">Dano</strong>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_melee" {{checked system.target_type.combat_damage_melee}}/> <span>C.C.</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_ranged" {{checked system.target_type.combat_damage_ranged}}/> <span>Dist.</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_spell" {{checked system.target_type.combat_damage_spell}}/> <span>Magia</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_power" {{checked system.target_type.combat_damage_power}}/> <span>Poder</span></label>
-                    </div>
-                    <div class="subgroup">
-                        <strong class="subgroup-title">Defesa</strong>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_dodge" {{checked system.target_type.combat_defense_dodge}}/> <span>Esquiva</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_parry" {{checked system.target_type.combat_defense_parry}}/> <span>Aparar</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_block" {{checked system.target_type.combat_defense_block}}/> <span>Bloqueio</span></label>
+                <div class="gm-tree-content">
+                    <label class="gm-checkbox parent-check">
+                        <input type="checkbox" name="system.target_type.combat_all" {{checked system.target_type.combat_all}}/>
+                        <span>Todos os Testes de Combate</span>
+                    </label>
+                    
+                    <div class="combat-grid condensed">
+                        <div class="subgroup">
+                            <strong class="subgroup-title">Ataque</strong>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_melee" {{checked system.target_type.combat_attack_melee}}/> <span>Corpo a Corpo</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_ranged" {{checked system.target_type.combat_attack_ranged}}/> <span>Distância</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_spell" {{checked system.target_type.combat_attack_spell}}/> <span>Magia</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_attack_power" {{checked system.target_type.combat_attack_power}}/> <span>Poder</span></label>
+                        </div>
+                        <div class="subgroup">
+                            <strong class="subgroup-title">Dano</strong>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_melee" {{checked system.target_type.combat_damage_melee}}/> <span>C.C.</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_ranged" {{checked system.target_type.combat_damage_ranged}}/> <span>Dist.</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_spell" {{checked system.target_type.combat_damage_spell}}/> <span>Magia</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_damage_power" {{checked system.target_type.combat_damage_power}}/> <span>Poder</span></label>
+                        </div>
+                        <div class="subgroup">
+                            <strong class="subgroup-title">Defesa</strong>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_dodge" {{checked system.target_type.combat_defense_dodge}}/> <span>Esquiva</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_parry" {{checked system.target_type.combat_defense_parry}}/> <span>Aparar</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.combat_defense_block" {{checked system.target_type.combat_defense_block}}/> <span>Bloqueio</span></label>
+                        </div>
                     </div>
                 </div>
-            </div>
         </details>
 
         <details class="gm-tree-group" id="gm-tree-attributes">
@@ -640,70 +625,70 @@
                 </div>
                 <span class="gm-pill subtle">Testes gerais</span>
             </summary>
-            <div class="gm-tree-content">
-                
-                <div class="gm-chip-grid tight two-cols top-row">
-                    <label class="gm-chip">
-                        <input type="checkbox" name="system.target_type.attr_all" {{checked system.target_type.attr_all}}/>
-                        <div class="chip-body">
-                            <span class="chip-title">Todos os Atributos</span>
-                        </div>
-                    </label>
-                    <label class="gm-chip">
-                        <input type="checkbox" name="system.target_type.skill_all" {{checked system.target_type.skill_all}}/>
-                        <div class="chip-body">
-                            <span class="chip-title">Todas as Perícias</span>
-                        </div>
-                    </label>
+                <div class="gm-tree-content">
+                    
+                    <div class="gm-chip-grid tight two-cols top-row">
+                        <label class="gm-chip">
+                            <input type="checkbox" name="system.target_type.attr_all" {{checked system.target_type.attr_all}}/>
+                            <div class="chip-body">
+                                <span class="chip-title">Todos os Atributos</span>
+                            </div>
+                        </label>
+                        <label class="gm-chip">
+                            <input type="checkbox" name="system.target_type.skill_all" {{checked system.target_type.skill_all}}/>
+                            <div class="chip-body">
+                                <span class="chip-title">Todas as Perícias</span>
+                            </div>
+                        </label>
 
-                </div>
-
-                <div class="gm-attributes-grid">
-                    {{!-- CABEÇALHO DA TABELA --}}
-                    <div class="attr-row header-row">
-                        <span class="attr-label">Base</span>
-                        <span title="Teste direto do atributo (ex: rolar DX)">Atributo</span>
-                        <span title="Perícias baseadas neste atributo">Perícia</span>
-                        <span title="Magias baseadas neste atributo">Magia</span>
-                        <span title="Poderes baseados neste atributo">Poder</span>
                     </div>
 
-                    {{!-- LINHAS (ST, DX, etc.) --}}
-                    {{#each (object Per="per" Vont="will" IQ="iq" HT="ht" DX="dx" ST="st") as |key label|}}
-                    <div class="attr-row">
-                        {{!-- Coluna 1: Rótulo + Selecionar Linha --}}
-                        <div class="attr-label">
-                            <label class="gm-checkbox parent-row-check" title="Marcar toda a linha {{label}}">
-                                <input type="checkbox" class="attr-parent-toggle" data-attr="{{key}}" name="system.target_type.attr_{{key}}_all" {{checked (lookup ../system.target_type (concat "attr_" key "_all"))}}/>
-                                <span>{{label}}</span>
-                            </label>
+                    <div class="gm-attributes-grid">
+                        {{!-- CABEÇALHO DA TABELA --}}
+                        <div class="attr-row header-row">
+                            <span class="attr-label">Base</span>
+                            <span title="Teste direto do atributo (ex: rolar DX)">Atributo</span>
+                            <span title="Perícias baseadas neste atributo">Perícia</span>
+                            <span title="Magias baseadas neste atributo">Magia</span>
+                            <span title="Poderes baseados neste atributo">Poder</span>
                         </div>
-                        
-                        {{!-- Colunas: As opções específicas --}}
-                        <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.check_{{key}}" {{checked (lookup ../system.target_type (concat "check_" key))}} title="Teste de {{label}} Puro"/></div>
-                        <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.skill_{{key}}" {{checked (lookup ../system.target_type (concat "skill_" key))}} title="Perícias de {{label}}"/></div>
-                        <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.spell_{{key}}" {{checked (lookup ../system.target_type (concat "spell_" key))}} title="Magias de {{label}}"/></div>
-                        <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.power_{{key}}" {{checked (lookup ../system.target_type (concat "power_" key))}} title="Poderes de {{label}}"/></div>
-                    </div>
-                        {{/each}}
-                </div>
 
-                {{!-- EXTRAS (Pânico e Sentidos) --}}
-                <div class="gm-extras compact">
-                    <div class="gm-senses wrap">
-                        <span class="senses-label">Sentidos:</span>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_vision" {{checked system.target_type.sense_vision}}/> <span>Visão</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_hearing" {{checked system.target_type.sense_hearing}}/> <span>Audição</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_tastesmell" {{checked system.target_type.sense_tastesmell}}/> <span>Olfato</span></label>
-                        <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_touch" {{checked system.target_type.sense_touch}}/> <span>Tato</span></label>
+                        {{!-- LINHAS (ST, DX, etc.) --}}
+                        {{#each (object Per="per" Vont="will" IQ="iq" HT="ht" DX="dx" ST="st") as |key label|}}
+                        <div class="attr-row">
+                            {{!-- Coluna 1: Rótulo + Selecionar Linha --}}
+                            <div class="attr-label">
+                                <label class="gm-checkbox parent-row-check" title="Marcar toda a linha {{label}}">
+                                    <input type="checkbox" class="attr-parent-toggle" data-attr="{{key}}" name="system.target_type.attr_{{key}}_all" {{checked (lookup ../system.target_type (concat "attr_" key "_all"))}}/>
+                                    <span>{{label}}</span>
+                                </label>
+                            </div>
+                            
+                            {{!-- Colunas: As opções específicas --}}
+                            <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.check_{{key}}" {{checked (lookup ../system.target_type (concat "check_" key))}} title="Teste de {{label}} Puro"/></div>
+                            <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.skill_{{key}}" {{checked (lookup ../system.target_type (concat "skill_" key))}} title="Perícias de {{label}}"/></div>
+                            <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.spell_{{key}}" {{checked (lookup ../system.target_type (concat "spell_" key))}} title="Magias de {{label}}"/></div>
+                            <div><input type="checkbox" class="attr-child-{{key}}" name="system.target_type.power_{{key}}" {{checked (lookup ../system.target_type (concat "power_" key))}} title="Poderes de {{label}}"/></div>
+                        </div>
+                            {{/each}}
                     </div>
-                </div>
 
-            </div>
+                    {{!-- EXTRAS (Pânico e Sentidos) --}}
+                    <div class="gm-extras compact">
+                        <div class="gm-senses wrap">
+                            <span class="senses-label">Sentidos:</span>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_vision" {{checked system.target_type.sense_vision}}/> <span>Visão</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_hearing" {{checked system.target_type.sense_hearing}}/> <span>Audição</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_tastesmell" {{checked system.target_type.sense_tastesmell}}/> <span>Olfato</span></label>
+                            <label class="gm-checkbox"><input type="checkbox" name="system.target_type.sense_touch" {{checked system.target_type.sense_touch}}/> <span>Tato</span></label>
+                        </div>
+                    </div>
+
+                </div>
         </details>
 
     </div>
-</div>
+
 {{/if}}
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS				 --}}
