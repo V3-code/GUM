@@ -3,14 +3,26 @@ import { GUM_DEFAULTS } from "../gum-defaults.js";
 
 export class GurpsRollPrompt extends FormApplication {
     
-    constructor(actor, rollData, options = {}) {
+ constructor(actor, rollData, options = {}) {
         super(options);
         this.actor = actor;
         this.rollData = rollData;
         this.selectedModifiers = [];
         this.onRoll = options.onRoll;
+        this.baseAttributeOptions = [];
+        this.baseAttributeOptionsMap = new Map();
+        this.baseDefaultKey = "skill";
+        this.baseDefaultLabel = "Perícia";
+        this.currentBaseKey = "skill";
+        this.currentBaseLabel = "Perícia";
+        this.originalBaseValue = parseInt(this.rollData.value) || 10;
+        this.currentBaseValue = this.originalBaseValue;
+        this.baseDelta = 0;
+        this.baseModifierParts = [];
+        this.baseAttributeSourceLabel = "Perícia";
 
         this.context = this._determineContext();
+
 
         // 1. Carrega modificadores globais (Escudo)
         this._loadGMModifiers();
@@ -127,7 +139,173 @@ export class GurpsRollPrompt extends FormApplication {
         if (type === 'attack') return 'attack_melee';
         if (type === 'skill' || type === 'attribute') return 'skill';
 
-        return 'default';
+return 'default';
+    }
+
+    _normalizeAttributeKey(key) {
+        if (!key) return null;
+        const normalized = key.toString().trim().toLowerCase();
+        if (normalized === "will") return "vont";
+        return normalized;
+    }
+
+    _formatBaseLabelValue(key) {
+        if (!key) return "Perícia";
+        const normalizedKey = this._normalizeAttributeKey(key);
+        const labelMap = {
+            st: "ST",
+            dx: "DX",
+            iq: "IQ",
+            ht: "HT",
+            per: "Per",
+            vont: "Vont"
+        };
+        if (labelMap[normalizedKey]) return labelMap[normalizedKey];
+        const fixedNumber = Number(normalizedKey);
+        if (!Number.isNaN(fixedNumber)) return `${fixedNumber}`;
+        return key.toString().trim();
+    }
+
+    _collectBaseModifiers(sourceItem) {
+        if (!sourceItem || !["skill", "spell", "power"].includes(sourceItem.type)) {
+            return [];
+        }
+        const relativeLevel = Number(sourceItem.system?.skill_level) || 0;
+        const otherMods = Number(sourceItem.system?.other_mods) || 0;
+        const parts = [];
+        if (relativeLevel !== 0) parts.push(relativeLevel);
+        if (otherMods !== 0) parts.push(otherMods);
+        return parts;
+    }
+
+    _getBaseAttributeKey() {
+        const attributeKey = this.rollData.attributeKey?.toLowerCase?.() || this.rollData.attribute?.toLowerCase?.();
+        if (attributeKey) return attributeKey;
+        if (this.rollData.itemId) {
+            const item = this.actor.items.get(this.rollData.itemId);
+            return item?.system?.base_attribute?.toString?.().trim() || null;
+        }
+        return null;
+    }
+
+    _resolveBaseValue(key, { fallbackValue = null } = {}) {
+        if (!key) return fallbackValue;
+        const normalizedKey = this._normalizeAttributeKey(key);
+        const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
+
+        if (attributeKeys.includes(normalizedKey)) {
+            const value = foundry.utils.getProperty(this.actor.system, `attributes.${normalizedKey}.final`);
+            return value !== undefined && value !== null ? value : fallbackValue;
+        }
+
+        const fixedNumber = Number(normalizedKey);
+        if (!Number.isNaN(fixedNumber)) return fixedNumber;
+
+        const normalizedTarget = normalizedKey.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+        const skills = this.actor.items?.filter(item => item.type === "skill") || [];
+        const matchedSkill = skills.find(skill => {
+            const skillName = skill.name?.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+            return skillName === normalizedTarget;
+        });
+
+        if (matchedSkill) {
+            const nhValue = matchedSkill.system?.final_nh ?? matchedSkill.system?.nh;
+            if (nhValue !== undefined && nhValue !== null) return nhValue;
+        }
+
+        return fallbackValue;
+    }
+
+    _shouldApplyBaseDelta(sourceItem) {
+        const rollType = this.rollData.type;
+        if (["skill", "spell", "power"].includes(rollType)) return true;
+        if (sourceItem && ["skill", "spell", "power"].includes(sourceItem.type)) return true;
+        return false;
+    }
+
+    _prepareBaseAttributeOptions() {
+        this.baseAttributeOptionsMap.clear();
+        const baseAttributeKey = this._getBaseAttributeKey();
+        const normalizedBaseAttributeKey = this._normalizeAttributeKey(baseAttributeKey);
+        const sourceItem = this.rollData.itemId ? this.actor.items.get(this.rollData.itemId) : null;
+        const baseAttributeValue = this._resolveBaseValue(baseAttributeKey);
+        const canApplyDelta = this._shouldApplyBaseDelta(sourceItem);
+
+        this.baseDelta = canApplyDelta && baseAttributeValue !== null
+            ? this.originalBaseValue - baseAttributeValue
+            : 0;
+
+        this.baseModifierParts = this._collectBaseModifiers(sourceItem);
+        this.baseAttributeSourceLabel = this._formatBaseLabelValue(baseAttributeKey);
+
+        const options = [
+            { key: "st", label: "ST", type: "attribute" },
+            { key: "dx", label: "DX", type: "attribute" },
+            { key: "iq", label: "IQ", type: "attribute" },
+            { key: "ht", label: "HT", type: "attribute" },
+            { key: "per", label: "Per", type: "attribute" },
+            { key: "vont", label: "Vont", type: "attribute" },
+            { key: "skill", label: "Perícia", type: "skill" },
+            { key: "fixed_8", label: "8", type: "fixed", value: 8 },
+            { key: "fixed_12", label: "12", type: "fixed", value: 12 },
+            { key: "fixed_16", label: "16", type: "fixed", value: 16 }
+        ];
+
+        const fixedMatch = Number.isNaN(Number(normalizedBaseAttributeKey))
+            ? null
+            : options.find(option => option.type === "fixed" && option.value === Number(normalizedBaseAttributeKey));
+
+        if (normalizedBaseAttributeKey && options.some(option => option.key === normalizedBaseAttributeKey)) {
+            this.baseDefaultKey = normalizedBaseAttributeKey;
+        } else if (fixedMatch) {
+            this.baseDefaultKey = fixedMatch.key;
+        } else {
+            this.baseDefaultKey = "skill";
+        }
+
+        options.forEach(option => {
+            if (option.type === "attribute") {
+                option.value = this._resolveBaseValue(option.key, { fallbackValue: 10 });
+            }
+        });
+
+        const defaultOption = options.find(option => option.key === this.baseDefaultKey) || options.find(option => option.key === "skill");
+        this.baseDefaultLabel = defaultOption?.label || "Perícia";
+        this.currentBaseKey = this.baseDefaultKey;
+        this.currentBaseLabel = this.baseDefaultLabel;
+        this.currentBaseValue = this._computeBaseValueFromOption(defaultOption);
+
+        options.forEach(option => {
+            option.isSelected = option.key === this.currentBaseKey;
+            this.baseAttributeOptionsMap.set(option.key, option);
+        });
+
+        this.baseAttributeOptions = options;
+        return options;
+    }
+
+    _getCurrentBaseLabelValue(option) {
+        if (!option) return this.baseAttributeSourceLabel;
+        if (option.type === "skill") return this.baseAttributeSourceLabel;
+        if (option.type === "fixed") return `${option.value ?? option.label ?? ""}`;
+        return option.label;
+    }
+
+    _buildBaseDetailLabel(option) {
+        const baseLabelValue = this._getCurrentBaseLabelValue(option);
+        if (!this.baseModifierParts.length) return baseLabelValue;
+        const modifierText = this.baseModifierParts
+            .map(value => `${value >= 0 ? "+" : ""}${value}`)
+            .join("");
+        return `${baseLabelValue}${modifierText}`;
+    }
+
+    _computeBaseValueFromOption(option) {
+        if (!option) return this.originalBaseValue;
+        if (option.type === "skill") return this.originalBaseValue;
+        const optionValue = Number(option.value);
+        const resolvedValue = Number.isNaN(optionValue) ? this.originalBaseValue : optionValue;
+        return resolvedValue + this.baseDelta;
     }
 
     async _fetchAndOrganizeModifiers() {
@@ -225,12 +403,17 @@ export class GurpsRollPrompt extends FormApplication {
         return validKeys.some(k => targets[k] === true);
     }
 
-    async getData() {
+   async getData() {
         const context = await super.getData();
         context.actor = this.actor;
         context.label = this.rollData.label || "Teste";
         context.img = this.rollData.img || this.actor.img || "icons/svg/d20.svg";
         context.baseValue = parseInt(this.rollData.value) || 10;
+        context.baseAttributeOptions = this._prepareBaseAttributeOptions();
+        context.baseAttributePrimary = context.baseAttributeOptions.filter(option => option.type === "attribute");
+        context.baseAttributeSecondary = context.baseAttributeOptions.filter(option => option.type !== "attribute");
+        const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
+        context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
         
         context.blocks = await this._fetchAndOrganizeModifiers();
         return context;
@@ -334,6 +517,24 @@ export class GurpsRollPrompt extends FormApplication {
                 this.selectedModifiers.push(modData);
                 btn.addClass('active');
             }
+           this._updateTotals(html);
+        });
+
+        html.find('.base-attr-btn').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            const key = btn.data('key');
+            const option = this.baseAttributeOptionsMap.get(key);
+
+            if (!option) return;
+
+            html.find('.base-attr-btn').removeClass('active');
+            btn.addClass('active');
+
+            this.currentBaseKey = option.key;
+            this.currentBaseLabel = option.label;
+            this.currentBaseValue = this._computeBaseValueFromOption(option);
+
             this._updateTotals(html);
         });
         
@@ -342,10 +543,11 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
 _updateTotals(html) {
-        const base = parseInt(this.rollData.value) || 10;
+        const base = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
         let manual = parseInt(html.find('input[name="manualMod"]').val()) || 0;
         let selected = 0;
         let activeCaps = [];
+        const baseChanged = this.currentBaseKey !== this.baseDefaultKey;
 
         // 1. Soma os modificadores e coleta os tetos
         this.selectedModifiers.forEach(m => {
@@ -380,11 +582,15 @@ _updateTotals(html) {
         const stackContainer = html.find('.active-mods-list');
         stackContainer.empty();
 
+        if (baseChanged) {
+            stackContainer.append(`<span class="mod-tag locked base-attr-tag">Base: ${this.currentBaseLabel}</span>`);
+        }
+
         if (manual !== 0) {
             stackContainer.append(`<span class="mod-tag locked">Manual <strong>${manual > 0 ? '+' : ''}${manual}</strong></span>`);
         }
         
-        if (this.selectedModifiers.length === 0 && manual === 0) {
+       if (this.selectedModifiers.length === 0 && manual === 0 && !baseChanged) {
              stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">Nenhum modificador.</span>`);
         }
 
@@ -402,8 +608,13 @@ _updateTotals(html) {
         });
 
         // Cores do Modificador Total
-        const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' : '#777');
+const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' : '#777');
         html.find('.total-mod-val').text((totalMod >= 0 ? '+' : '') + totalMod).css('color', color);
+
+        html.find('.base-value-box .value').text(base);
+        const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
+        html.find('.base-attr-label').text(this._buildBaseDetailLabel(currentOption));
+        html.find('.base-summary').text(`Base ${base}`);
         
         // Atualiza Valor Final
         const finalEl = html.find('.final-val');
@@ -434,6 +645,7 @@ async _updateObject(event, formData) {
         const manualMod = parseInt(formData.manualMod) || 0;
         let buttonsMod = 0;
         let activeCaps = [];
+        const baseValue = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
 
         this.selectedModifiers.forEach(m => {
             buttonsMod += m.value;
@@ -458,8 +670,8 @@ async _updateObject(event, formData) {
 const rollPayload = {
             ...this.rollData,
             // Enviamos o valor matemático puro, o performGURPSRoll aplica o corte visualmente
-            value: parseInt(this.rollData.value) + totalMod,
-            originalValue: this.rollData.value,
+            value: baseValue + totalMod,
+            originalValue: baseValue,
             modifier: totalMod
         };
         const rollOptions = {

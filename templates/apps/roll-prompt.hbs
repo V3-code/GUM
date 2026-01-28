@@ -52,11 +52,39 @@
             </div>
         </div>
 
+        {{!-- 2. ATRIBUTO BASE (SELETOR) --}}
+        <div class="base-attribute-panel">
+            <label class="section-label">Atributo Base</label>
+            <div class="base-attribute-row base-attribute-row--primary">
+                {{#each baseAttributePrimary as |option|}}
+                <button type="button" class="base-attr-btn {{#if option.isSelected}}active{{/if}}"
+                        data-key="{{option.key}}"
+                        data-label="{{option.label}}"
+                        data-value="{{option.value}}"
+                        data-type="{{option.type}}">
+                    {{option.label}}
+                </button>
+                {{/each}}
+            </div>
+            <div class="base-attribute-row base-attribute-row--secondary">
+                {{#each baseAttributeSecondary as |option|}}
+                <button type="button" class="base-attr-btn {{#if option.isSelected}}active{{/if}}"
+                        data-key="{{option.key}}"
+                        data-label="{{option.label}}"
+                        data-value="{{option.value}}"
+                        data-type="{{option.type}}">
+                    {{option.label}}
+                </button>
+                {{/each}}
+            </div>
+        </div>
+
         {{!-- 2. NH BASE (Destaque) --}}
         <div class="base-value-box">
-            <span class="label">NH Base</span>
+            <span class="label">NH Base (<span class="base-attr-label">{{baseAttributeLabel}}</span>)</span>
             <span class="value">{{baseValue}}</span>
         </div>
+
 
         {{!-- 3. MODIFICADOR MANUAL --}}
         <div class="manual-mod-panel compact">
@@ -98,7 +126,7 @@
             
             {{!-- LINHA DE DETALHE --}}
             <div class="calc-row detail">
-                <span class="detail-text">Base {{baseValue}} <span class="total-mod-val">+0</span></span>
+                <span class="detail-text"><span class="base-summary">Base {{baseValue}}</span> <span class="total-mod-val">+0</span></span>
             </div>
 
             {{!-- LINHA DE TETO (CAP) --}}

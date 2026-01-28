@@ -214,6 +214,55 @@
 }
 .roll-subtitle { font-size: 0.8em; opacity: 0.7; font-style: italic; }
 
+/* Seleção de Atributo Base */
+.base-attribute-panel {
+    background: rgba(0,0,0,0.15);
+    border: 1px solid #3b3b3b;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.base-attribute-row {
+    display: grid;
+    gap: 6px;
+}
+
+.base-attribute-row--primary {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.base-attribute-row--secondary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.base-attr-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #555;
+    color: #bbb;
+    padding: 3px 8px;
+    font-size: 0.75em;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.base-attr-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-color: var(--gum-accent-gold);
+}
+
+.base-attr-btn.active {
+    background: var(--gum-accent-gold);
+    color: #000;
+    font-weight: bold;
+    border-color: var(--gum-accent-gold);
+}
+
 /* Valor Base */
 .base-value-box {
     background: rgba(255,255,255,0.05); border: 1px solid #444;
@@ -221,6 +270,7 @@
     display: flex; justify-content: space-between; align-items: center;
 }
 .base-value-box .label { font-size: 0.8em; text-transform: uppercase; color: #aaa; font-weight: bold; }
+.base-value-box .base-attr-label { color: var(--gum-accent-gold); }
 .base-value-box .value { font-size: 1.2em; font-weight: bold; color: #fff; }
 
 /* Modificador Manual */
