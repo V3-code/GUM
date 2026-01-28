@@ -399,8 +399,11 @@
 /* ------------------------------------------------------------------- */
 .gum.sheet.item .section-hint {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.55rem;
   color: var(--item-text-muted);
+  font-style: italic;
+  font-weight: 400;
+  margin-bottom: 5px;
 }
 .gum.sheet.item .skill-section-header {
   display: flex;
@@ -475,7 +478,7 @@
 .gum.sheet.item .skill-ability-toggle .inline-checkbox {
   width: 100%;
   justify-content: center;
-  background: rgba(0,0,0,0.04);
+  background: var(--item-bg-dark);
   border: 1px solid var(--item-border);
   padding: 8px 10px;
   border-radius: 8px;
@@ -504,6 +507,7 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
   align-items: stretch;
+  margin:8px;
 }
 .gum.sheet.item .skill-ability-grid.trio {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -514,7 +518,7 @@
   gap: 10px;
 }
 .gum.sheet.item .skill-stat-card {
-  background: linear-gradient(135deg, #ffffff, #f7f2ea);
+  background: var(--item-bg-dark);
   border: 1px solid var(--item-border);
   border-radius: 8px;
   padding: 8px 10px;
@@ -555,13 +559,13 @@
   align-items: center;
   justify-content: center;
   width: 26px;
-  height: 26px;
+  /*height: 26px;*/
   border-radius: 6px;
-  background: #ffffff;
   border: 1px solid var(--item-border);
   color: var(--item-text);
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
+  border: none;
 }
 .gum.sheet.item .adjust-value:hover {
   background: var(--item-accent);
@@ -1286,7 +1290,7 @@
   align-items: center;
   gap: 2px;
   font-size: 0.7rem;
-  color: var(--item-bg-dark);
+  color: var(--item-text);
 }
 
 .attack-editor-dialog .custom-checkbox input[type="checkbox"] {
@@ -1309,6 +1313,7 @@
   font-size: xx-small;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: var(--item-text);
 }
 
 .attack-editor-dialog input[disabled] {
@@ -2436,12 +2441,22 @@
   color: var(--item-text-muted);
 }
 
-.gum.sheet.item.effect-sheet .advanced-options {
+.gum.sheet.item.effect-sheet .advanced-options,
+.gum.sheet.item .advanced-options {
   border-top: 1px solid var(--item-border-light);
   padding-top: 8px;
 }
 
-.gum.sheet.item.effect-sheet .advanced-options h6 {
+.gum.sheet.item.effect-sheet .advanced-options-2,
+.gum.sheet.item .advanced-options-2 {
+  border-top: 1px solid var(--item-border-light);
+  border-bottom: 1px solid var(--item-border-light);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.gum.sheet.item.effect-sheet .advanced-options h6,
+.gum.sheet.item .advanced-options h6 {
   margin: 0 0 6px;
   font-size: 0.82rem;
   color: var(--item-text-muted);
@@ -3101,6 +3116,13 @@
 .gum-item-sheet.effect-sheet .effect-field.effect-field-row {
   display: grid;
   grid-template-columns: 1.05fr 1.95fr; /* label | input */
+  gap: 10px;
+  align-items: center;
+}
+
+.gum-item-sheet.effect-sheet .effect-field.effect-field-row-auto {
+  display: grid;
+  grid-template-columns: 0.3fr 1fr; /* label | input */
   gap: 10px;
   align-items: center;
 }

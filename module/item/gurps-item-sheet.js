@@ -767,7 +767,7 @@ new Dialog({
                 <div class="form-row">
                     <div class="row-label">Perícia Vinculada</div>
                     <div class="row-fields">
-                        <input type="text" data-name="${basePath}.skill_name" value="${safe(attackData.skill_name)}" placeholder="Nome da Perícia ou Atributo (ex: DX)"/>
+                        <input type="text" data-name="${basePath}.skill_name" value="${safe(attackData.skill_name)}" placeholder="Atributo, Perícia ou Valor Fixo"/>
                     </div>
                 </div>
                 <div class="form-row">
@@ -906,7 +906,7 @@ new Dialog({
         `;
 
         const rangedFields = `
-            <div class="form-section">
+            <div class="form-section  form-grid-3">
                 <h4 class="section-title">Precisão & Alcance</h4>
                 <div class="form-row">
                     <div class="row-label">Precisão</div>
