@@ -1988,49 +1988,86 @@
          {{> effectsTab}}
      </div>
 
-     {{!-- ===================================================================== --}}
-     {{!--    ABA ESPECIAL: MODIFICADORES (RECUPERADA)                         --}}
-     {{!-- ===================================================================== --}}
-     <div class="tab" data-tab="modifiers">
-         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
-         
-             <div class="modifiers-tab">
-                 <div class="form-section modifiers-panel">
-                     <div class="mod-panel-header">
-                         <div>
-                             <h4 class="section-title">Lista de Modificadores</h4>
-                             <p class="hint">Clique para visualizar detalhes ou remover rapidamente.</p>
-                         </div>
-                         <a class="button item-add-button add-modifier"><i class="fas fa-plus"></i> Adicionar Modificador</a>
-                     </div>
+{{!-- ===================================================================== --}}
+{{!--    ABA ESPECIAL: MODIFICADORES (MESMO LAYOUT DO EQP_MODIFIERS)         --}}
+{{!-- ===================================================================== --}}
+<div class="tab" data-tab="modifiers">
+  {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
 
-                     <ol class="modifier-list">
-                         {{#each sortedModifiers as |modifier|}}
-                             <li class="modifier-card {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}" data-modifier-id="{{modifier.id}}">
-                                 <div class="mod-info">
-                                     <div class="mod-name">{{modifier.name}}</div>
-                                     {{#if modifier.applied_effect}}
-                                         <div class="mod-effect">{{modifier.applied_effect}}</div>
-                                     {{/if}}
-                                 </div>
-                                 <div class="mod-meta">
-                                     <span class="mod-cost-badge">{{modifier.cost}}</span>
-                                     <div class="modifier-controls">
-                                         <a class="view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}"><i class="fas fa-eye"></i></a>
-                                         <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}"><i class="fas fa-trash"></i></a>
-                                     </div>
-                                 </div>
-                             </li>
-                         {{else}}
-                             <li class="placeholder-text">
-                                 <p>Nenhum modificador aplicado.</p>
-                             </li>
-                         {{/each}}
-                     </ol>
-                 </div>
-             </div>
-         {{/if}}
-     </div>
+    <div class="modifiers-tab">
+      <div class="eqpmod-block">
+
+        {{!-- Header padrão + plus minimalista --}}
+        <div class="eqpmod-block-header">
+          <h4 class="eqpmod-block-title">Modificadores</h4>
+          <a class="eqpmod-add-button add-modifier" title="Adicionar Modificador">
+            <i class="fas fa-plus"></i>
+          </a>
+        </div>
+
+        {{!-- Lista em linhas (mesma do eqp_modifiers) --}}
+        <ol class="eqpmod-line-list">
+          {{#each sortedModifiers as |modifier|}}
+            <li class="eqpmod-line-item {{#if modifier.isLimitation}}is-limitation{{else}}is-enhancement{{/if}}"
+                data-modifier-id="{{modifier.id}}">
+              <div class="eqpmod-line">
+
+                {{!-- Identidade: ícone + nome --}}
+                <div class="eqpmod-cell eqpmod-identity">
+                  {{#if modifier.img}}
+                    <img src="{{modifier.img}}" class="eqpmod-icon" />
+                  {{else}}
+                    <img src="icons/svg/aura.svg" class="eqpmod-icon" />
+                  {{/if}}
+
+                  <div class="eqpmod-text">
+                    <div class="eqpmod-name">{{modifier.name}}</div>
+                        {{!-- Subline discreta: efeito aplicado --}}
+                        {{#if modifier.applied_effect}}
+                            <div class="eqpmod-subline">{{modifier.applied_effect}}</div>
+                        {{/if}}
+                  </div>
+                </div>
+
+
+                {{!-- Custo (%) --}}
+                <div class="eqpmod-cell eqpmod-stat is-center">
+                  <div class="eqpmod-label">Custo</div>
+                  <div class="eqpmod-value">{{modifier.cost}}</div>
+                </div>
+
+                {{!-- Nível --}}
+                <div class="eqpmod-cell eqpmod-stat is-center">
+                  <div class="eqpmod-label">Nível</div>
+                  <div class="eqpmod-value">{{modifier.level}}</div>
+                </div>
+
+                {{!-- Ações --}}
+                <div class="eqpmod-cell eqpmod-actions">
+                  <span class="eqpmod-controls">
+                    <a class="view-modifier" title="Visualizar Detalhes" data-modifier-id="{{modifier.id}}">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a class="delete-modifier" title="Remover" data-modifier-id="{{modifier.id}}">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </span>
+                </div>
+
+              </div>
+            </li>
+
+          {{else}}
+            <li class="eqpmod-empty">Nenhum modificador aplicado.</li>
+          {{/each}}
+        </ol>
+
+      </div>
+    </div>
+
+  {{/if}}
+</div>
+
        
        {{!-- ===================================================================== --}}
     {{!--           ABA ESPECIAL: MODIFICADORES DE EQUIPAMENTO                  --}}

@@ -1512,7 +1512,7 @@
   gap: 8px;
 }
 .gum.sheet.item .effect-group .effect-entry {
-  background: #ffffff;
+  background: var(--item-bg-dark);
   border: 1px solid var(--item-border);
   border-radius: 10px;
   box-shadow: 0 6px 12px rgba(0,0,0,0.08);

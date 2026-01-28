@@ -1,14 +1,16 @@
-<form class="{{cssClass}} gum-item-sheet condition-sheet" autocomplete="off">
-
+<form class="{{cssClass}} gum-item-sheet condition-sheet effect-sheet" autocomplete="off">
     {{!-- CABEÇALHO ALINHADO AO PADRÃO DOS ITENS --}}
     <header class="sheet-header">
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
         <div class="header-info">
             <div class="header-main-line">
                 <textarea name="name" rows="1" placeholder="Nome da Condição">{{item.name}}</textarea>
-                <span class="item-tag small-tag">Condição</span>
             </div>
-        </div>
+            <div class="header-subline">
+                <span class="item-type-tag">Condição</span>
+            </div>
+                <span class="header-divider" aria-hidden="true"></span>
+            </div>
     </header>
 
     <section class="sheet-content">
@@ -25,24 +27,6 @@
             {{!-- ABA: DESCRIÇÃO (MODELO PADRÃO) --}}
             <div class="tab" data-group="primary" data-tab="description">
                 <div class="description-tab">
-                    <div class="description-hero">
-                        <div class="hero-text">
-                            <p class="eyebrow">Narrativa & Referência</p>
-                            <h3>Descrição da Condição</h3>
-                            <p class="hint">Mantenha um resumo rápido para o chat e uma versão completa para consultas detalhadas.</p>
-                        </div>
-                        <div class="hero-meta">
-                            <div class="meta-chip">
-                                <i class="fas fa-book-open"></i>
-                                <span>Resumo (Chat)</span>
-                            </div>
-                            <div class="meta-chip">
-                                <i class="fas fa-scroll"></i>
-                                <span>Completa</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="description-grid">
                         <div class="form-section description-section">
                             <div class="description-header">
@@ -53,7 +37,7 @@
                                 {{#if editable}}
                                 <div class="description-actions">
                                     <button type="button" class="toggle-editor" data-field="system.chat_description">
-                                        <i class="fas fa-pen"></i> Editar
+                                        <i class="fas fa-pen"></i>
                                     </button>
                                 </div>
                                 {{/if}}
@@ -79,7 +63,7 @@
                                 {{#if editable}}
                                 <div class="description-actions">
                                     <button type="button" class="toggle-editor" data-field="system.description">
-                                        <i class="fas fa-pen"></i> Editar
+                                        <i class="fas fa-pen"></i>
                                     </button>
                                 </div>
                                 {{/if}}
@@ -129,53 +113,58 @@
             {{!-- ABA: EFEITOS --}}
             <div class="tab" data-group="primary" data-tab="effects">
 
-                <section class="form-section condition-card">
-                    <div class="section-header">
-                        <div>
-                            <p class="eyebrow">Vínculo de efeitos</p>
-                            <h4 class="section-title">Gerenciador de Efeitos</h4>
-                        </div>
-                     <a class="button item-add-button add-effect"><i class="fas fa-plus"></i> Adicionar</a>
-                    </div>
-                    <p class="hint">Use o buscador para anexar efeitos existentes a esta condição.</p>
+                <section class="modifiers-tab">
+                   <div class="eqpmod-block">
 
-                    <div class="effect-group">
-                        <div class="group-header">
-                            <div class="group-heading">
-                                <h5 class="group-title"><i class="fas fa-link"></i> Efeitos Vinculados</h5>
-                                <p class="group-subtitle">Lista de efeitos atualmente associados.</p>
-                            </div>
-  
+                        {{!-- Header padrão + plus minimalista (MESMO DO EQP_MODIFIERS) --}}
+                        <div class="eqpmod-block-header">
+                            <h4 class="eqpmod-block-title">Efeitos Vinculados</h4>
+                            <a class="eqpmod-add-button add-effect" title="Adicionar Efeito">
+                                <i class="fas fa-plus"></i>
+                            </a>
                         </div>
-                        {{#if preparedEffects.length}}
-                        <ol class="effects-list">
-                            {{#each preparedEffects as |effect|}}
-                                <li class="effect-entry" data-effect-index="{{effect.index}}" data-effect-uuid="{{effect.uuid}}">
-                                    <div class="effect-header">
-                                        <div class="effect-main">
-                                            <img src="{{effect.img}}" class="effect-icon"/>
-                                            <div class="effect-text">
-                                                <span class="effect-name">{{effect.name}}</span>
-                                                <span class="effect-context">{{capitalize effect.type}}</span>
-                                            </div>
-                                        </div>
-                                        <div class="effect-controls">
-                                            <a class="view-effect" title="Ver Item Efeito Original"><i class="fas fa-eye"></i></a>
-                                            <a class="delete-effect" title="Remover Link do Efeito"><i class="fas fa-trash"></i></a>
-                                        </div>
-                                    </div>
-                                    {{#if effect.summary}}
-                                        <div class="effect-summary-line">{{effect.summary}}</div>
-                                    {{/if}}
-                                    {{#if effect.chat_description}}
-                                        <div class="effect-summary-line muted">"{{effect.chat_description}}"</div>
-                                    {{/if}}
-                                </li>
-                            {{/each}}
-                        </ol>
-                        {{else}}
-                            <p class="empty-hint">Nenhum efeito vinculado.</p>
-                        {{/if}}
+
+<div class="effects-line-list">
+  {{#if preparedEffects.length}}
+    <ol class="effects-list effects-line-list">
+      {{#each preparedEffects as |effect|}}
+        <li class="effect-entry effects-line-item"
+            data-effect-index="{{effect.index}}"
+            data-effect-uuid="{{effect.uuid}}">
+
+          {{!-- Mantém effect-header/effect-main/effect-controls (hooks do JS),
+               mas usa também o layout effects-line + effects-cell --}}
+          <div class="effect-header effects-line effects-line-passive">
+
+            <div class="effect-main effects-cell effects-identity">
+              <img src="{{effect.img}}" class="effect-icon effects-icon"/>
+              <div class="effect-text effects-text">
+                <span class="effect-name effects-name">{{effect.name}}</span>
+              </div>
+            </div>
+
+            <div class="effect-controls effects-cell effects-actions">
+              <span class="effects-controls">
+                <a class="view-effect" title="Ver Item Efeito Original">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a class="delete-effect" title="Remover Link do Efeito">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </span>
+            </div>
+
+          </div>
+        </li>
+      {{/each}}
+    </ol>
+  {{else}}
+    <ol class="effects-list effects-line-list">
+      <li class="effects-empty empty-hint">Nenhum efeito vinculado.</li>
+    </ol>
+  {{/if}}
+</div>
+
                     </div>
                 </section>
             </div>
