@@ -867,19 +867,23 @@
                 </div>
             </div>
 
-            <div class="form-group">
+           <div class="form-group">
                 <label>Atributo Base</label>
                 <div class="form-fields">
-                    <select name="system.base_attribute">
-                        {{#select system.base_attribute}}
+                    <select name="system.base_attribute_select">
+                        {{#select skillBaseAttributeSelect}}
                         <option value="st">ST</option>
                         <option value="dx">DX</option>
                         <option value="iq">IQ</option>
                         <option value="ht">HT</option>
                         <option value="per">Per</option>
                         <option value="will">Vont</option>
+                        <option value="skill">Perícia</option>
                         {{/select}}
                     </select>
+                </div>
+                <div class="form-fields skill-base-attribute-custom" {{#unless (eq skillBaseAttributeSelect "skill")}}style="display:none;"{{/unless}}>
+                    <input type="text" name="system.base_attribute_custom" value="{{skillBaseAttributeCustom}}" placeholder="Nome da perícia base"/>
                 </div>
             </div>
 

@@ -1,0 +1,5 @@
+2026/01/28-10:02:42.596 4ab0 Recovering log #370
+2026/01/28-10:02:42.596 4ab0 Level-0 table #372: started
+2026/01/28-10:02:42.606 4ab0 Level-0 table #372: 1193 bytes OK
+2026/01/28-10:02:42.606 4ab0 Delete type=0 #370
+2026/01/28-10:02:42.606 4ab0 Delete type=3 #369

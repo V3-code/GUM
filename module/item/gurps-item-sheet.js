@@ -69,6 +69,15 @@ export class GurpsItemSheet extends ItemSheet {
         context.skillDifficulties = context.config.difficulties;
         context.hierarchyTypes = context.config.hierarchyTypes;
 
+        if (this.item.type === 'skill') {
+            const baseAttrValue = (itemData.system.base_attribute ?? "").toString();
+            const baseAttrNormalized = baseAttrValue.trim().toLowerCase();
+            const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"];
+            const isStandardAttr = standardSkillAttrs.includes(baseAttrNormalized);
+            context.skillBaseAttributeSelect = isStandardAttr ? baseAttrNormalized : "skill";
+            context.skillBaseAttributeCustom = isStandardAttr ? "" : baseAttrValue;
+        }
+
         const defaultBlockId = this.item.type === 'disadvantage' ? 'block3' : 'block2';
         context.characteristic_blocks = {
             [defaultBlockId]: "Nenhuma",
@@ -186,12 +195,24 @@ export class GurpsItemSheet extends ItemSheet {
     /* Listeners e Callbacks                       */
     /* -------------------------------------------- */
 
-    activateListeners(html) {
+ activateListeners(html) {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
         // Auto-Cálculo
         html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"]').on('change', this._onAutoCalcPoints.bind(this));    
+
+        const baseAttributeSelect = html.find('select[name="system.base_attribute_select"]');
+        if (baseAttributeSelect.length) {
+            const toggleCustomField = () => {
+                const isSkillBased = baseAttributeSelect.val() === "skill";
+                const customField = html.find('.skill-base-attribute-custom');
+                customField.toggle(isSkillBased);
+                customField.find('input').prop('disabled', !isSkillBased);
+            };
+            toggleCustomField();
+            baseAttributeSelect.on('change', toggleCustomField);
+        }
 
           // Ajuste de Valor (+/-)
         html.find('.adjust-value').click(ev => {
@@ -1109,10 +1130,22 @@ new Dialog({
         }
     }
     
-    async _updateObject(event, formData) {
+async _updateObject(event, formData) {
         for (const [k, v] of Object.entries(formData)) {
             const isDescriptionField = k.includes("description");
             if (!isDescriptionField && typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
+        }
+        if (formData["system.base_attribute_select"] !== undefined) {
+            const selected = formData["system.base_attribute_select"];
+            const customValue = (formData["system.base_attribute_custom"] ?? "").toString().trim();
+            const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"];
+            if (selected === "skill") {
+                formData["system.base_attribute"] = customValue;
+            } else if (standardSkillAttrs.includes(selected)) {
+                formData["system.base_attribute"] = selected;
+            }
+            delete formData["system.base_attribute_select"];
+            delete formData["system.base_attribute_custom"];
         }
         this._saveUIState();
         return super._updateObject(event, formData);
