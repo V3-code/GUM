@@ -166,7 +166,7 @@
 .gum.sheet.actor .sheet-sidebar { grid-area: sidebar; position: relative; z-index: 2; }
 .gum.sheet.actor .sheet-main-area { 
     grid-area: main; position: relative; z-index: 1;
-    display: flex; flex-direction: column; padding: 0.5rem; gap: 0.5rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
     overflow: hidden;
 }
 
@@ -2144,7 +2144,58 @@
     padding: 4px 10px;
     border-bottom: 1px solid rgba(0,0,0,0.03);
     font-size: 11px; /* Fonte mais sutil */
-    transition: background 0.1s;
+  transition: background 0.1s;
+}
+.gum.sheet.actor .dr-location-row.dr-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+.gum.sheet.actor .dr-row-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+.gum.sheet.actor .dr-group-toggle {
+    border: none;
+    background: transparent;
+    color: var(--gum-text-medio);
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.gum.sheet.actor .dr-group-toggle i {
+    transition: transform 0.2s ease;
+}
+.gum.sheet.actor .dr-group.is-expanded .dr-group-toggle i {
+    transform: rotate(90deg);
+}
+.gum.sheet.actor .dr-group-children {
+    list-style: none;
+    padding: 0 0 4px 18px;
+    margin: 0;
+    display: none;
+}
+.gum.sheet.actor .dr-group.is-expanded .dr-group-children {
+    display: block;
+}
+.gum.sheet.actor .dr-location-row.is-child {
+    padding: 3px 0;
+    border-bottom: none;
+    font-size: 10px;
+}
+.gum.sheet.actor .dr-row-extra {
+    padding: 0 10px 4px;
+    font-size: 10px;
+    color: var(--gum-text-medio);
+}
+.gum.sheet.actor .dr-row-extra.is-child {
+    padding: 0 0 4px 0;
 }
 
 /* Efeito Zebrado Sutil */

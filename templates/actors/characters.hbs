@@ -1369,17 +1369,41 @@
                 <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
               </div>
             </div>
-            <ol class="dr-location-list">
-              {{#each hitLocations as |loc key|}}
-                <li class="dr-location-row" data-location-key="{{key}}">
-                  <span class="location-name">
-                    {{loc.label}}
-                    {{#if loc.roll}}{{/if}}
-                  </span>
-                  <span class="location-dr-value" title="{{formatDR (lookup ../actor.system.combat.dr_locations key)}}">
-                    {{formatDR (lookup ../actor.system.combat.dr_locations key)}}
-                  </span>
-                </li>
+<ol class="dr-location-list">
+              {{#each drDisplayRows as |row|}}
+                {{#if row.isGroup}}
+                  <li class="dr-location-row dr-group" data-group-id="{{row.id}}">
+                    <div class="dr-row-main">
+                      <button class="dr-group-toggle" type="button" title="Expandir grupo">
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                      <span class="location-name">{{row.label}}</span>
+                      <span class="location-dr-value">{{row.base}}</span>
+                    </div>
+                    {{#if row.extraLine}}
+                      <div class="dr-row-extra">{{row.extraLine}}</div>
+                    {{/if}}
+                    <ol class="dr-group-children">
+                      {{#each row.children as |child|}}
+                        <li class="dr-location-row is-child" data-location-key="{{child.key}}">
+                          <span class="location-name">{{child.label}}</span>
+                          <span class="location-dr-value">{{child.base}}</span>
+                        </li>
+                        {{#if child.extraLine}}
+                          <li class="dr-row-extra is-child">{{child.extraLine}}</li>
+                        {{/if}}
+                      {{/each}}
+                    </ol>
+                  </li>
+                {{else}}
+                  <li class="dr-location-row" data-location-key="{{row.key}}">
+                    <span class="location-name">{{row.label}}</span>
+                    <span class="location-dr-value">{{row.base}}</span>
+                  </li>
+                  {{#if row.extraLine}}
+                    <li class="dr-row-extra">{{row.extraLine}}</li>
+                  {{/if}}
+                {{/if}}
               {{/each}}
             </ol>
           </div>

@@ -123,12 +123,15 @@ async _resolveOnDamageEffects() {
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
         game.gum = game.gum || {};
         game.gum.activeDamageApplication = this;
-        const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
+const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
         const locationsData = profile.locations || {};
+        const locationOrder = profile.order || Object.keys(locationsData);
         const totalDrLocations = this.targetActor.system.combat.dr_locations || {};
 
-        context.locations = Object.entries(locationsData).map(([key, data]) => {
+        context.locations = locationOrder.map((key) => {
+            const data = locationsData[key];
+            if (!data) return null;
             const drData = totalDrLocations[key] || {};
             const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
 
@@ -138,17 +141,24 @@ async _resolveOnDamageEffects() {
                 roll: data.roll ?? "--",
                 totalDR: baseDR
             };
-        });
+        }).filter(Boolean);
 
         context.locations.push({ key: "custom", label: "Outro", roll: "--", totalDR: 0, custom: true });
 
-        context.locations.sort((a, b) => {
-            const firstRollA = parseInt(a.roll.split(/[,-]/)[0]);
-            const firstRollB = parseInt(b.roll.split(/[,-]/)[0]);
-            if (isNaN(firstRollA)) return 1;
-            if (isNaN(firstRollB)) return -1;
-            return firstRollA - firstRollB;
+        const hasNumericRoll = context.locations.some(loc => {
+            const firstRoll = parseInt(loc.roll.split(/[,-]/)[0]);
+            return !isNaN(firstRoll);
         });
+
+        if (hasNumericRoll) {
+            context.locations.sort((a, b) => {
+                const firstRollA = parseInt(a.roll.split(/[,-]/)[0]);
+                const firstRollB = parseInt(b.roll.split(/[,-]/)[0]);
+                if (isNaN(firstRollA)) return 1;
+                if (isNaN(firstRollB)) return -1;
+                return firstRollA - firstRollB;
+            });
+        }
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
         const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
         let defaultModFound = false;

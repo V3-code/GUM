@@ -287,7 +287,7 @@ const add_sub_modifiers = {};
                 target[type] = (target[type] || 0) + (Number(value) || 0);
             }
         }
-         const profileId = combat?.body_profile || "humanoid";
+        const profileId = combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
         const locationKeys = Object.keys(profile.locations || {});
         const locationKeySet = new Set(locationKeys);

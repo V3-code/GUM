@@ -179,7 +179,7 @@ export class GurpsArmorSheet extends GurpsItemSheet {
             }
         }
         
-  return drObject;
+        return drObject;
     }
 
     _hasVisibleDR(drObject) {
@@ -221,7 +221,7 @@ export class GurpsArmorSheet extends GurpsItemSheet {
         // 1. Listeners da aba de Efeitos
         // 2. Listeners da aba de Modificadores
         // 3. Listeners dos botões "Editar/Salvar/Cancelar" da Descrição
- super.activateListeners(html);
+super.activateListeners(html);
 
         // Se você precisar de listeners *específicos* apenas para a
         // aba "Proteção" da armadura, eles iriam aqui.

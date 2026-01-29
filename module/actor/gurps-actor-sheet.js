@@ -32,6 +32,9 @@ async getData(options) {
         context.bodyProfileId = profileId;
         context.bodyProfiles = listBodyProfiles();         // útil pra dropdown depois
         context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
+        context.hitLocationOrder = profile.order || [];
+        context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {});
+
 
 
         // Agrupa todos os itens por tipo
@@ -799,7 +802,104 @@ _getSubmitData(updateData) {
              parts.shift(); 
         }
         
-        return parts.join(", ");
+      return parts.join(", ");
+    }
+
+    _buildDrDisplayRows(profile, drLocations) {
+        const rows = [];
+        const order = profile.order ?? Object.keys(profile.locations || {});
+        const locations = profile.locations || {};
+        const items = [];
+
+        for (const key of order) {
+            const loc = locations[key];
+            if (!loc) continue;
+            const drObject = drLocations?.[key] || {};
+            const base = Number(drObject?.base) || 0;
+            const extraLine = this._formatDRExtraLine(drObject);
+            items.push({
+                key,
+                label: loc.label ?? loc.name ?? key,
+                groupKey: loc.groupKey,
+                groupLabel: loc.groupLabel,
+                groupPlural: loc.groupPlural,
+                base,
+                extraLine,
+                drSignature: this._getDRSignature(drObject)
+            });
+        }
+
+        const groupedKeys = new Set();
+        const groups = new Map();
+
+        for (const item of items) {
+            if (!item.groupKey) continue;
+            if (!groups.has(item.groupKey)) groups.set(item.groupKey, []);
+            groups.get(item.groupKey).push(item);
+        }
+
+        const groupSummaries = new Map();
+        for (const [groupKey, groupItems] of groups.entries()) {
+            if (groupItems.length < 2) continue;
+            const signature = groupItems[0].drSignature;
+            const isUniform = groupItems.every(member => member.drSignature === signature);
+            if (!isUniform) continue;
+            groupItems.forEach(member => groupedKeys.add(member.key));
+
+            const labelBase = groupItems[0].groupPlural || groupItems[0].groupLabel || groupKey;
+            groupSummaries.set(groupKey, {
+                id: `group-${groupKey}`,
+                isGroup: true,
+                label: `${labelBase} (${groupItems.length})`,
+                base: groupItems[0].base,
+                extraLine: groupItems[0].extraLine,
+                children: groupItems
+            });
+        }
+
+        const renderedGroups = new Set();
+        for (const item of items) {
+            if (item.groupKey && groupSummaries.has(item.groupKey)) {
+                if (renderedGroups.has(item.groupKey)) continue;
+                rows.push(groupSummaries.get(item.groupKey));
+                renderedGroups.add(item.groupKey);
+                continue;
+            }
+            if (groupedKeys.has(item.key)) continue;
+            rows.push({
+                ...item,
+                isGroup: false
+            });
+        }
+
+        return rows;
+    }
+
+    _formatDRExtraLine(drObject) {
+        if (!drObject || typeof drObject !== "object") return "";
+        const base = Number(drObject.base) || 0;
+        const extras = [];
+
+        for (const [type, mod] of Object.entries(drObject)) {
+            if (type === "base") continue;
+            const finalValue = Math.max(0, base + (Number(mod) || 0));
+            if (finalValue === base) continue;
+            extras.push(`${finalValue} ${type}`);
+        }
+
+        return extras.join(", ");
+    }
+
+    _getDRSignature(drObject) {
+        if (!drObject || typeof drObject !== "object") return "0";
+        const normalized = {};
+        for (const [key, value] of Object.entries(drObject)) {
+            const numeric = Number(value) || 0;
+            if (numeric === 0) continue;
+            normalized[key] = numeric;
+        }
+        const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b));
+        return JSON.stringify(sortedEntries);
     }
 
 /**
@@ -1261,6 +1361,13 @@ html.on('click', 'details > summary a, details > summary button, details > summa
 html.on('click', '.edit-basic-damage', this._onEditBasicDamage.bind(this));
 html.on('click', '.view-hit-locations', this._onViewHitLocations.bind(this));
 html.on('click', '.attack-group-details .group-summary .item-edit', this._onEditAttackGroupItem.bind(this));
+html.on('click', '.dr-group-toggle', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const groupRow = ev.currentTarget.closest('.dr-group');
+    if (!groupRow) return;
+    groupRow.classList.toggle('is-expanded');
+});
 
 
     // -------------------------------------------------------------
@@ -2729,8 +2836,14 @@ async _onViewHitLocations(ev) {
   const actorDR_Temp  = actor.system.combat.dr_temp_mods || {};
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
-  let tableRows = "";
-  for (const [key, loc] of Object.entries(sheetData.hitLocations)) {
+   let tableRows = "";
+  const locationOrder = sheetData.hitLocationOrder?.length
+    ? sheetData.hitLocationOrder
+    : Object.keys(sheetData.hitLocations || {});
+
+  for (const key of locationOrder) {
+    const loc = sheetData.hitLocations?.[key];
+    if (!loc) continue;
     const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);
     const tempDR_String   = this._formatDRObjectToString(actorDR_Temp[key]);
     const manualMod_String= this._formatDRObjectToString(actorDR_Mods[key]);
@@ -2738,7 +2851,7 @@ async _onViewHitLocations(ev) {
 
     tableRows += `
       <div class="table-row">
-        <div class="loc-label">${loc.label}</div>
+        <div class="loc-label">${loc.label ?? loc.name ?? key}</div>
         <div class="loc-rd-armor" title="RD da Armadura">${armorDR_String}</div>
         <div class="loc-rd-temp" title="Bônus Temporários">${tempDR_String}</div>
         <div class="loc-rd-mod">
