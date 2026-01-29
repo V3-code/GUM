@@ -18,6 +18,7 @@ import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
+import { getBodyProfile } from "../module/config/body-profiles.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -286,19 +287,30 @@ const add_sub_modifiers = {};
                 target[type] = (target[type] || 0) + (Number(value) || 0);
             }
         }
-        const drFromArmor = { head:{}, torso:{}, vitals:{}, groin:{}, face:{}, eyes:{}, neck:{}, arm_l:{}, arm_r:{}, hand_l:{}, hand_r:{}, leg_l:{}, leg_r:{}, foot_l:{}, foot_r:{} };
+         const profileId = combat?.body_profile || "humanoid";
+        const profile = getBodyProfile(profileId);
+        const locationKeys = Object.keys(profile.locations || {});
+        const locationKeySet = new Set(locationKeys);
+        const drFromArmor = {};
+
+        for (const key of locationKeys) {
+            drFromArmor[key] = {};
+        }
+
         for (let i of this.items) { 
             if (i.type === 'armor' && i.system.location === 'equipped') {
                 const itemDrLocations = i.system.dr_locations || {};
-                for (let loc in drFromArmor) {
-                    _mergeDRObjects(drFromArmor[loc], itemDrLocations[loc]);
+                for (const [loc, drObject] of Object.entries(itemDrLocations)) {
+                    if (!locationKeySet.has(loc)) continue;
+                    _mergeDRObjects(drFromArmor[loc], drObject);
                 }
             }
         }
+
         const totalDr = {};
         const drMods = combat.dr_mods || {}; 
         const drTempMods = combat.dr_temp_mods || {}; 
-        for (let key in drFromArmor) {
+        for (let key of locationKeys) {
             totalDr[key] = {}; 
             _mergeDRObjects(totalDr[key], drFromArmor[key]); 
             _mergeDRObjects(totalDr[key], drMods[key]);      

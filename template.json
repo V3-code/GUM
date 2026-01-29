@@ -148,23 +148,7 @@
         "templates": ["base", "equipment_base"], 
         "defense_bonus": 0,
         "equip_time": 10,
-        "dr_locations": {
-            "torso": { "base": 0 }, 
-            "head": { "base": 0 }, 
-            "face": { "base": 0 }, 
-            "eyes": { "base": 0 }, 
-            "neck": { "base": 0 }, 
-            "vitals": { "base": 0 }, 
-            "groin": { "base": 0 }, 
-            "arm_l": { "base": 0 },
-            "arm_r": { "base": 0 },
-            "hand_l": { "base": 0 },
-            "hand_r": { "base": 0 },
-            "leg_l": { "base": 0 },
-            "leg_r": { "base": 0 },
-            "foot_l": { "base": 0 },
-            "foot_r": { "base": 0 }
-        } 
+        "dr_locations": {} 
     },
     "spell": {
       "templates": ["base"],

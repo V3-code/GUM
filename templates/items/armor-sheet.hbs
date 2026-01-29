@@ -217,7 +217,7 @@
       </div>
     </div>
 
-    {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
+   {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
     <div class="tab" data-tab="protection">
         <div class="form-section protection-grid">
             <div class="section-heading">
@@ -225,24 +225,32 @@
                 <p class="hint">
                     Digite a RD para cada local (ex: 5 | 5, 2 cont | 3 pi++).
                 </p>
+                <a class="button item-add-button add-dr-location"><i class="fas fa-plus"></i> Adicionar RD</a>
             </div>
 
-            <div class="hit-locations-grid-inputs">
-                {{!-- Loop pelos 15 locais de acerto --}}
-                {{#each (array "head" "face" "eyes" "neck" "torso" "vitals" "groin" "arm_l" "arm_r" "hand_l" "hand_r" "leg_l" "leg_r" "foot_l" "foot_r") as |loc|}}
-                    <div class="hit-location-card">
-                        <div class="hit-location-meta">
-                            <span class="location-name">{{lookup (object 
-                                head="Crânio" face="Rosto" eyes="Olhos" neck="Pescoço" torso="Torso" vitals="Órg. Vitais" groin="Virilha" 
-                                arm_l="Braço E" arm_r="Braço D" hand_l="Mão E" hand_r="Mão D" 
-                                leg_l="Perna E" leg_r="Perna D" foot_l="Pé E" foot_r="Pé D"
-                            ) loc}}</span>
-                            <span class="location-tag">RD</span>
+            <div class="dr-locations-table">
+                <div class="dr-location-row dr-location-header">
+                    <span>Parte do corpo</span>
+                    <span>RD</span>
+                    <span></span>
+                </div>
+                {{#each drLocationRows as |row|}}
+                    <div class="dr-location-row" data-dr-location-row>
+                        <div class="dr-location-cell">
+                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="{{row.label}}" placeholder="Ex: Braço E"/>
+                            <input class="dr-location-key" type="hidden" value="{{row.key}}"/>
                         </div>
-                        <input class="hit-location-input" type="text" name="system.dr_locations.{{loc}}" value="{{lookup ../formattedDrLocations loc}}" />
+                        <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
+                        <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
                     </div>
                 {{/each}}
             </div>
+
+            <datalist id="gum-body-location-options">
+                {{#each bodyLocationOptions as |loc|}}
+                    <option value="{{loc.name}}" data-key="{{loc.id}}"></option>
+                {{/each}}
+            </datalist>
         </div>
     </div>
 

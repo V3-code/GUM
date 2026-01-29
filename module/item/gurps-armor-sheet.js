@@ -1,6 +1,7 @@
 // systems/gum/module/apps/gurps-armor-sheet.js
 
 import { GurpsItemSheet } from "./gurps-item-sheet.js";
+import { listBodyLocations } from "../config/body-profiles.js";
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 /**
@@ -29,13 +30,21 @@ export class GurpsArmorSheet extends GurpsItemSheet {
         const context = await super.getData(options);
         
         // --- Lógica Específica da Armadura ---
-        context.formattedDrLocations = {};
         const drLocations = this.item.system.dr_locations || {};
-        
-        for (const [loc, drObject] of Object.entries(drLocations)) {
-            // Chama a função de formatação (que também existe nesta classe)
-            context.formattedDrLocations[loc] = this._formatDRObjectToString(drObject);
-        }
+        const bodyLocationOptions = listBodyLocations();
+        const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option]));
+
+        context.bodyLocationOptions = bodyLocationOptions;
+        context.drLocationRows = Object.entries(drLocations)
+            .filter(([, drObject]) => this._hasVisibleDR(drObject))
+            .map(([key, drObject]) => {
+                const option = locationLookup.get(key);
+                return {
+                    key,
+                    label: option?.name ?? key,
+                    dr: this._formatDRObjectToString(drObject)
+                };
+            });
         
         // Prepara a descrição para o editor
         context.system.description = await TextEditorImpl.enrichHTML(this.item.system.description || "", {
@@ -69,20 +78,15 @@ export class GurpsArmorSheet extends GurpsItemSheet {
     _getSubmitData(updateData) {
         // Pega os dados do formulário (flat object, e.g., "system.dr_locations.torso": "5, 2 cont")
         const data = super._getSubmitData(updateData);
-        
-        // Itera sobre as chaves do objeto 'data'
+
         for (const key in data) {
-            // Se a chave for uma de nossas RDs...
             if (key.startsWith("system.dr_locations.")) {
-                // ...pega a string (ex: "5, 2 cont")...
-                const drString = data[key];
-                // ...e substitui no objeto 'data' pelo objeto processado.
-                data[key] = this._parseDRStringToObject(drString);
+                delete data[key];
             }
         }
-        
-        // Retorna o objeto 'data' agora modificado
-        // (ex: "system.dr_locations.torso": { base: 5, cont: 2 })
+
+        data["system.dr_locations"] = this._collectDRLocationsFromForm();
+
         return data;
     }
 
@@ -175,7 +179,34 @@ export class GurpsArmorSheet extends GurpsItemSheet {
             }
         }
         
-        return drObject;
+  return drObject;
+    }
+
+    _hasVisibleDR(drObject) {
+        if (!drObject || typeof drObject !== "object") return false;
+        return Object.values(drObject).some(value => Number(value) !== 0);
+    }
+
+    _collectDRLocationsFromForm() {
+        const drLocations = {};
+        const rows = this.element?.[0]?.querySelectorAll("[data-dr-location-row]") || [];
+
+        rows.forEach(row => {
+            const keyInput = row.querySelector(".dr-location-key");
+            const labelInput = row.querySelector(".dr-location-label");
+            const valueInput = row.querySelector(".dr-location-value");
+
+            const label = labelInput?.value?.trim() || "";
+            const resolvedKey = label ? this._getLocationKeyFromLabel(label) : (keyInput?.value?.trim() || "");
+            if (!resolvedKey) return;
+
+            const drString = valueInput?.value?.trim();
+            if (!drString) return;
+
+            drLocations[resolvedKey] = this._parseDRStringToObject(drString);
+        });
+
+        return drLocations;
     }
 
     /**
@@ -190,9 +221,67 @@ export class GurpsArmorSheet extends GurpsItemSheet {
         // 1. Listeners da aba de Efeitos
         // 2. Listeners da aba de Modificadores
         // 3. Listeners dos botões "Editar/Salvar/Cancelar" da Descrição
-        super.activateListeners(html);
+ super.activateListeners(html);
 
         // Se você precisar de listeners *específicos* apenas para a
         // aba "Proteção" da armadura, eles iriam aqui.
+        if (!this.isEditable) return;
+
+        html.on("click", ".add-dr-location", () => {
+            this._addDrLocationRow(html);
+        });
+
+        html.on("click", ".dr-location-delete", (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            ev.currentTarget.closest("[data-dr-location-row]")?.remove();
+        });
+
+        html.on("change", ".dr-location-label", (ev) => {
+            this._syncDrLocationKey(ev.currentTarget);
+        });
+    }
+
+    _addDrLocationRow(html, { label = "", key = "", dr = "" } = {}) {
+        const container = html.find(".dr-locations-table");
+        if (!container.length) return;
+
+        const rowHtml = `
+            <div class="dr-location-row" data-dr-location-row>
+                <div class="dr-location-cell">
+                    <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="Ex: Braço E"/>
+                    <input class="dr-location-key" type="hidden" value="${key}"/>
+                </div>
+                <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/>
+                <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+
+        container.append(rowHtml);
+    }
+
+    _syncDrLocationKey(input) {
+        const row = input.closest("[data-dr-location-row]");
+        if (!row) return;
+
+        const keyInput = row.querySelector(".dr-location-key");
+        if (!keyInput) return;
+
+        const label = input.value?.trim();
+        if (!label) {
+            keyInput.value = "";
+            return;
+        }
+
+        keyInput.value = this._getLocationKeyFromLabel(label);
+    }
+
+    _getLocationKeyFromLabel(label) {
+        const list = this.element?.[0]?.querySelector("#gum-body-location-options");
+        if (!list) return label;
+
+        const escape = window.CSS?.escape || ((value) => value.replace(/["\\]/g, "\\$&"));
+        const option = list.querySelector(`option[value="${escape(label)}"]`);
+        return option?.dataset?.key || label;
     }
 }

@@ -704,44 +704,60 @@
   font-size: 0.78rem;
   color: var(--item-text-muted);
 }
-.gum.sheet.item .hit-locations-grid-inputs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
-}
-.gum.sheet.item .hit-location-card {
-  background: var(--item-bg-panel-2);
-  border: 1px solid var(--item-border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.08);
+.gum.sheet.item .dr-locations-table {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
-.gum.sheet.item .hit-location-meta {
-  display: flex;
+.gum.sheet.item .dr-location-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 120px 36px;
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
+  padding: 6px 8px;
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  background: var(--item-bg-panel-2);
 }
-.gum.sheet.item .hit-location-meta .location-name {
-  font-weight: 800;
-  color: var(--item-text);
-}
-.gum.sheet.item .hit-location-meta .location-tag {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(185,137,60,0.15);
-  color: var(--item-accent);
-  border: 1px solid rgba(185,137,60,0.3);
-  font-weight: 800;
+.gum.sheet.item .dr-location-header {
+  background: transparent;
+  border: none;
+  padding: 0 4px;
   font-size: 0.7rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--item-text-muted);
 }
-.gum.sheet.item .hit-location-input {
-  text-align: center;
+.gum.sheet.item .dr-location-header span {
   font-weight: 700;
-  background: rgba(0,0,0,0.04);
+}
+.gum.sheet.item .dr-location-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gum.sheet.item .dr-location-label,
+.gum.sheet.item .dr-location-value {
+  font-weight: 600;
+}
+.gum.sheet.item .dr-location-value {
+  text-align: center;
+}
+.gum.sheet.item .dr-location-delete {
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--item-text-muted);
+  height: 32px;
+  width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gum.sheet.item .dr-location-delete:hover {
+  color: #fff;
+  background: #b74646;
+  border-color: #b74646;
 }
 
 /* ------------------------------------------------------------------- */

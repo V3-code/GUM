@@ -1,5 +1,6 @@
 import { applyContingentCondition } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
+import { getBodyProfile } from "../../module/config/body-profiles.js";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -122,14 +123,32 @@ async _resolveOnDamageEffects() {
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
         game.gum = game.gum || {};
         game.gum.activeDamageApplication = this;
-        const locationsData = { "head": { label: "Crânio", roll: "3-4", dr: 0 }, "face": { label: "Rosto", roll: "5", dr: 0 }, "leg": { label: "Perna", roll: "6-7, 13-14", dr: 0 }, "arm": { label: "Braço", roll: "8, 12", dr: 0 }, "torso": { label: "Torso", roll: "9-11", dr: 0 }, "groin": { label: "Virilha", roll: "11", dr: 0 }, "vitals": { label: "Órg. Vitais", roll: "--", dr: 0 }, "hand": { label: "Mão", roll: "15", dr: 0 }, "foot": { label: "Pé", roll: "16", dr: 0 }, "neck": { label: "Pescoço", roll: "17-18", dr: 0 }, "eyes": { label: "Olhos", roll: "--", dr: 0 } };
-        locationsData["custom"] = { label: "Outro", roll: "--", dr: 0, custom: true };
-        const manualDRMods = this.targetActor.system.combat.dr_mods || {};
-        for (const [key, mod] of Object.entries(manualDRMods)) { if (locationsData[key]) { locationsData[key].dr += parseInt(mod) || 0; } }
-        const equippedArmor = this.targetActor.items.filter(i => i.type === 'armor' && i.system.location === 'equipped');
-        for (const armor of equippedArmor) { const armorDR = parseInt(armor.system.dr) || 0; if (armor.system.worn_locations) { for (const locationKey of armor.system.worn_locations) { if (locationsData[locationKey]) { locationsData[locationKey].dr += armorDR; } } } }
-        context.locations = Object.entries(locationsData).map(([key, data]) => { data.key = key; data.totalDR = data.dr; return data; });
-        context.locations.sort((a, b) => { const firstRollA = parseInt(a.roll.split(/[,-]/)[0]); const firstRollB = parseInt(b.roll.split(/[,-]/)[0]); if (isNaN(firstRollA)) return 1; if (isNaN(firstRollB)) return -1; return firstRollA - firstRollB; });
+        const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
+        const profile = getBodyProfile(profileId);
+        const locationsData = profile.locations || {};
+        const totalDrLocations = this.targetActor.system.combat.dr_locations || {};
+
+        context.locations = Object.entries(locationsData).map(([key, data]) => {
+            const drData = totalDrLocations[key] || {};
+            const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
+
+            return {
+                key,
+                label: data.label ?? data.name ?? key,
+                roll: data.roll ?? "--",
+                totalDR: baseDR
+            };
+        });
+
+        context.locations.push({ key: "custom", label: "Outro", roll: "--", totalDR: 0, custom: true });
+
+        context.locations.sort((a, b) => {
+            const firstRollA = parseInt(a.roll.split(/[,-]/)[0]);
+            const firstRollB = parseInt(b.roll.split(/[,-]/)[0]);
+            if (isNaN(firstRollA)) return 1;
+            if (isNaN(firstRollB)) return -1;
+            return firstRollA - firstRollB;
+        });
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
         const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
         let defaultModFound = false;

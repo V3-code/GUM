@@ -424,12 +424,10 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 }
                 for (const loc of locationsToApply) {
                     const systemLocs = (loc === "arm") ? ["arm_l", "arm_r"] : (loc === "leg") ? ["leg_l", "leg_r"] : [loc];
-                    for (const finalLoc of systemLocs) {
-                        if (template.dr_locations.hasOwnProperty(finalLoc)) {
-                            let drObject = template.dr_locations[finalLoc] || {};
-                            drObject[drKey] = (drObject[drKey] || 0) + drValue;
-                            template.dr_locations[finalLoc] = drObject;
-                        }
+                                      for (const finalLoc of systemLocs) {
+                        let drObject = template.dr_locations[finalLoc] || {};
+                        drObject[drKey] = (drObject[drKey] || 0) + drValue;
+                        template.dr_locations[finalLoc] = drObject;
                     }
                 }
             }
