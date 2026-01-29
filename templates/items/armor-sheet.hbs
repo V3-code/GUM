@@ -228,7 +228,6 @@
             </div>
 
             <ol class="attack-list dr-locations-table">
-
                 {{#each drLocationRows as |row|}}
                     <li class="attack-item dr-location-item" data-dr-location-row>
                         <div class="attack-display-card">
@@ -237,7 +236,7 @@
                                     <input class="dr-location-label" type="text" list="gum-body-location-options" value="{{row.label}}" placeholder="Ex: Braço E"/>
                                     <input class="dr-location-key" type="hidden" value="{{row.key}}"/>
                                 </div>
-                                <div class="attack-cell">
+                                <div class="attack-cell">                                  
                                     <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
                                 </div>
                                 <div class="attack-cell">

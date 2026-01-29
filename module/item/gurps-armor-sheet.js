@@ -85,7 +85,8 @@ export class GurpsArmorSheet extends GurpsItemSheet {
             }
         }
 
-        data["system.dr_locations"] = this._collectDRLocationsFromForm();
+        const drLocations = this._collectDRLocationsFromForm();
+        Object.assign(data, this._buildDRLocationsUpdate(drLocations));
 
         return data;
     }
@@ -184,7 +185,7 @@ export class GurpsArmorSheet extends GurpsItemSheet {
 
     _hasVisibleDR(drObject) {
         if (!drObject || typeof drObject !== "object") return false;
-        return Object.values(drObject).some(value => Number(value) !== 0);
+         return Object.keys(drObject).length > 0;
     }
 
     _collectDRLocationsFromForm() {
@@ -200,13 +201,29 @@ export class GurpsArmorSheet extends GurpsItemSheet {
             const resolvedKey = label ? this._getLocationKeyFromLabel(label) : (keyInput?.value?.trim() || "");
             if (!resolvedKey) return;
 
-            const drString = valueInput?.value?.trim();
-            if (!drString) return;
+            const rawDrString = valueInput?.value;
+            const drString = typeof rawDrString === "string" ? rawDrString.trim() : "";
+            const normalizedDrString = drString === "" ? "0" : drString;
 
-            drLocations[resolvedKey] = this._parseDRStringToObject(drString);
+            drLocations[resolvedKey] = this._parseDRStringToObject(normalizedDrString);
         });
 
         return drLocations;
+    }
+
+    _buildDRLocationsUpdate(drLocations) {
+        const update = {
+            "system.dr_locations": drLocations
+        };
+        const existing = this.item.system.dr_locations || {};
+
+        for (const key of Object.keys(existing)) {
+            if (!(key in drLocations)) {
+                update[`system.dr_locations.-=${key}`] = null;
+            }
+        }
+
+        return update;
     }
 
     /**
@@ -235,9 +252,7 @@ super.activateListeners(html);
             ev.preventDefault();
             ev.stopPropagation();
             ev.currentTarget.closest("[data-dr-location-row]")?.remove();
-            await this.object.update({
-                "system.dr_locations": this._collectDRLocationsFromForm()
-            });
+            await this.object.update(this._buildDRLocationsUpdate(this._collectDRLocationsFromForm()));
         });
 
         html.on("change", ".dr-location-label", (ev) => {
