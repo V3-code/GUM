@@ -1,4 +1,5 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
+import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 
@@ -1054,6 +1055,22 @@ _onDragStart(event) {
     }
 
     return super._onDragStart(event);
+}
+
+async _onDrop(event) {
+    const data = TextEditorImpl.getDragEventData(event);
+    if (data?.type === "Item") {
+        const item = await Item.fromDropData(data);
+        if (item?.type === "effect") {
+            event.preventDefault();
+            const activeTokens = this.actor.getActiveTokens(true);
+            const targets = activeTokens.length ? activeTokens : [{ actor: this.actor }];
+            await applySingleEffect(item, targets, { actor: this.actor, origin: item });
+            return;
+        }
+    }
+
+    return super._onDrop(event);
 }
 
 activateListeners(html) {
