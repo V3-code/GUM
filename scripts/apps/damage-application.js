@@ -1,6 +1,6 @@
 import { applyContingentCondition } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
-import { getBodyProfile } from "../../module/config/body-profiles.js";
+import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -80,7 +80,100 @@ async _resolveOnDamageEffects() {
         if (!damageType || damageType === "base") return baseDR;
 
         const typeMod = typeof drData === "object" ? (parseInt(drData[damageType]) || 0) : 0;
-        return Math.max(0, baseDR + typeMod);
+ return Math.max(0, baseDR + typeMod);
+    }
+
+    _getDRSignature(drObject) {
+        if (!drObject || typeof drObject !== "object") return "0";
+        const normalized = {};
+        for (const [key, value] of Object.entries(drObject)) {
+            const numeric = Number(value) || 0;
+            if (numeric === 0) continue;
+            normalized[key] = numeric;
+        }
+        const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b));
+        return JSON.stringify(sortedEntries);
+    }
+
+    _buildLocationRows(profile, drLocations) {
+        const locationsData = profile.locations || {};
+        const baseOrder = profile.order || Object.keys(locationsData);
+        const extraKeys = Object.keys(drLocations || {})
+            .filter(key => !locationsData[key] && getBodyLocationDefinition(key))
+            .sort((a, b) => {
+                const aLabel = getBodyLocationDefinition(a)?.label ?? a;
+                const bLabel = getBodyLocationDefinition(b)?.label ?? b;
+                return aLabel.localeCompare(bLabel);
+            });
+        const combinedOrder = [...baseOrder, ...extraKeys];
+
+        const items = [];
+        for (const key of combinedOrder) {
+            const data = locationsData[key] ?? getBodyLocationDefinition(key);
+            if (!data) continue;
+            const drData = drLocations[key] || {};
+            const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
+
+            items.push({
+                key,
+                label: data.label ?? data.name ?? key,
+                roll: data.roll ?? "--",
+                totalDR: baseDR,
+                groupKey: data.groupKey,
+                groupLabel: data.groupLabel,
+                groupPlural: data.groupPlural,
+                drSignature: this._getDRSignature(drData)
+            });
+        }
+
+        const groupedKeys = new Set();
+        const groups = new Map();
+
+        for (const item of items) {
+            if (!item.groupKey) continue;
+            if (!groups.has(item.groupKey)) groups.set(item.groupKey, []);
+            groups.get(item.groupKey).push(item);
+        }
+
+        const groupSummaries = new Map();
+        for (const [groupKey, groupItems] of groups.entries()) {
+            if (groupItems.length < 2) continue;
+            const signature = groupItems[0].drSignature;
+            const isUniform = groupItems.every(member => member.drSignature === signature);
+            if (!isUniform) continue;
+            groupItems.forEach(member => groupedKeys.add(member.key));
+
+            const labelBase = groupItems[0].groupPlural || groupItems[0].groupLabel || groupKey;
+            const rollLabel = groupItems.map(member => member.roll).filter(Boolean).join(", ");
+            groupSummaries.set(groupKey, {
+                key: groupItems[0].key,
+                isGroup: true,
+                label: `${labelBase} (${groupItems.length})`,
+                roll: rollLabel || "--",
+                totalDR: groupItems[0].totalDR
+            });
+        }
+
+        const rows = [];
+        const renderedGroups = new Set();
+        for (const item of items) {
+            if (item.groupKey && groupSummaries.has(item.groupKey)) {
+                if (renderedGroups.has(item.groupKey)) continue;
+                rows.push(groupSummaries.get(item.groupKey));
+                renderedGroups.add(item.groupKey);
+                continue;
+            }
+            if (groupedKeys.has(item.key)) continue;
+            rows.push({
+                key: item.key,
+                label: item.label,
+                roll: item.roll,
+                totalDR: item.totalDR,
+                isGroup: false
+            });
+        }
+
+        return rows;
     }
 
     static get defaultOptions() {
@@ -125,23 +218,9 @@ async _resolveOnDamageEffects() {
         game.gum.activeDamageApplication = this;
 const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
-        const locationsData = profile.locations || {};
-        const locationOrder = profile.order || Object.keys(locationsData);
         const totalDrLocations = this.targetActor.system.combat.dr_locations || {};
 
-        context.locations = locationOrder.map((key) => {
-            const data = locationsData[key];
-            if (!data) return null;
-            const drData = totalDrLocations[key] || {};
-            const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
-
-            return {
-                key,
-                label: data.label ?? data.name ?? key,
-                roll: data.roll ?? "--",
-                totalDR: baseDR
-            };
-        }).filter(Boolean);
+        context.locations = this._buildLocationRows(profile, totalDrLocations);
 
         context.locations.push({ key: "custom", label: "Outro", roll: "--", totalDR: 0, custom: true });
 

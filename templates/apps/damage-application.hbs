@@ -57,7 +57,7 @@
                 </div>
                 {{!-- Lista de Locais --}}
                 {{#each locations}}
-                <div class="location-row" data-location-key="{{this.key}}" data-dr="{{this.totalDR}}">
+                <div class="location-row {{#if this.isGroup}}is-group{{/if}}" data-location-key="{{this.key}}" data-dr="{{this.totalDR}}">
                     <span class="roll">{{this.roll}}</span>
                     <span class="label">{{this.label}}</span>
                         <span class="dr">
