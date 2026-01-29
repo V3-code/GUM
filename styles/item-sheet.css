@@ -705,43 +705,31 @@
   color: var(--item-text-muted);
 }
 .gum.sheet.item .dr-locations-table {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-top: 10px;
 }
-.gum.sheet.item .dr-location-row {
-  display: grid;
-  grid-template-columns: minmax(160px, 1fr) 120px 36px;
-  gap: 8px;
+.gum.sheet.item .dr-location-item .attack-line {
+  grid-template-columns: minmax(160px, 1.6fr) 0.8fr 34px;
+}
+.gum.sheet.item .dr-location-item .attack-cell {
+  min-height: 40px;
+}
+.gum.sheet.item .dr-location-item .attack-cell:last-child {
   align-items: center;
-  padding: 6px 8px;
-  border: 1px solid var(--item-border);
-  border-radius: 8px;
-  background: var(--item-bg-panel-2);
+  justify-content: center;
 }
-.gum.sheet.item .dr-location-header {
-  background: transparent;
-  border: none;
-  padding: 0 4px;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--item-text-muted);
-}
-.gum.sheet.item .dr-location-header span {
-  font-weight: 700;
-}
-.gum.sheet.item .dr-location-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.gum.sheet.item .dr-location-label,
-.gum.sheet.item .dr-location-value {
+.gum.sheet.item .dr-location-item input {
+  width: 100%;
   font-weight: 600;
 }
-.gum.sheet.item .dr-location-value {
-  text-align: center;
+.gum.sheet.item .dr-location-header .attack-display-card {
+  background: transparent;
+  border-left: none;
+  box-shadow: none;
+  padding-bottom: 0;
+}
+.gum.sheet.item .dr-location-header .attack-cell {
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 .gum.sheet.item .dr-location-delete {
   border: 1px solid var(--item-border);

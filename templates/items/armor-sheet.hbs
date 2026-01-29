@@ -217,34 +217,37 @@
       </div>
     </div>
 
-   {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
+    {{!-- ABA: PROTEÇÃO (Específica da Armadura) --}}
     <div class="tab" data-tab="protection">
         <div class="form-section protection-grid">
-            <div class="section-heading">
-                <h4 class="section-title">Proteção por Localização</h4>
-                <p class="hint">
-                    Digite a RD para cada local (ex: 5 | 5, 2 cont | 3 pi++).
-                </p>
-                <a class="button item-add-button add-dr-location"><i class="fas fa-plus"></i> Adicionar RD</a>
+            <div class="attacks-editor-section">
+                <div class="attack-section-header">
+                    <h4 class="attack-section-title">Proteção por Localização</h4>
+                    <a class="attack-add-button add-dr-location" title="Adicionar RD"><i class="fas fa-plus"></i></a>
+                </div>
             </div>
 
-            <div class="dr-locations-table">
-                <div class="dr-location-row dr-location-header">
-                    <span>Parte do corpo</span>
-                    <span>RD</span>
-                    <span></span>
-                </div>
+            <ol class="attack-list dr-locations-table">
+
                 {{#each drLocationRows as |row|}}
-                    <div class="dr-location-row" data-dr-location-row>
-                        <div class="dr-location-cell">
-                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="{{row.label}}" placeholder="Ex: Braço E"/>
-                            <input class="dr-location-key" type="hidden" value="{{row.key}}"/>
+                    <li class="attack-item dr-location-item" data-dr-location-row>
+                        <div class="attack-display-card">
+                            <div class="attack-line">
+                                <div class="attack-cell">
+                                    <input class="dr-location-label" type="text" list="gum-body-location-options" value="{{row.label}}" placeholder="Ex: Braço E"/>
+                                    <input class="dr-location-key" type="hidden" value="{{row.key}}"/>
+                                </div>
+                                <div class="attack-cell">
+                                    <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
+                                </div>
+                                <div class="attack-cell">
+                                    <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
                         </div>
-                        <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
-                        <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
-                    </div>
+                    </li>
                 {{/each}}
-            </div>
+            </ol>
 
             <datalist id="gum-body-location-options">
                 {{#each bodyLocationOptions as |loc|}}
@@ -253,6 +256,7 @@
             </datalist>
         </div>
     </div>
+
 
     {{!-- ABA: MODIFICADORES DE EQUIPAMENTO (NOVA) --}}
      <div class="tab" data-tab="eqp_modifiers">

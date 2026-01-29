@@ -231,10 +231,13 @@ super.activateListeners(html);
             this._addDrLocationRow(html);
         });
 
-        html.on("click", ".dr-location-delete", (ev) => {
+        html.on("click", ".dr-location-delete", async (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
             ev.currentTarget.closest("[data-dr-location-row]")?.remove();
+            await this.object.update({
+                "system.dr_locations": this._collectDRLocationsFromForm()
+            });
         });
 
         html.on("change", ".dr-location-label", (ev) => {
@@ -247,14 +250,22 @@ super.activateListeners(html);
         if (!container.length) return;
 
         const rowHtml = `
-            <div class="dr-location-row" data-dr-location-row>
-                <div class="dr-location-cell">
-                    <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="Ex: Braço E"/>
-                    <input class="dr-location-key" type="hidden" value="${key}"/>
+            <li class="attack-item dr-location-item" data-dr-location-row>
+                <div class="attack-display-card">
+                    <div class="attack-line">
+                        <div class="attack-cell">
+                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="Ex: Braço E"/>
+                            <input class="dr-location-key" type="hidden" value="${key}"/>
+                        </div>
+                        <div class="attack-cell">
+                            <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/>
+                        </div>
+                        <div class="attack-cell">
+                            <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
                 </div>
-                <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/>
-                <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
-            </div>
+            </li>
         `;
 
         container.append(rowHtml);
