@@ -1,4 +1,4 @@
-<form class="{{cssClass}} actor-sheet" autocomplete="off">
+<form class="{{cssClass}} actor-sheet " autocomplete="off">
 
   {{! A ficha inteira é um grande "grid" que define as macrorregiões --}}
   <div class="sheet-grid">
@@ -1480,26 +1480,35 @@
 
         <div class="group-content">
             {{#each group.attacks as |attack|}}
-             <div class="attack-row item-row" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+              <div class="attack-row item-row attack-row--{{attack.attack_type}}" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
                 <div class="attack-icon">
                     {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
                     {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
                 </div>
                 <div class="attack-info">
-                    <div class="attack-header">
-                        <span class="attack-mode">{{attack.skill_name}}</span>
-                        <span class="attack-submode">({{attack.name}})</span>
-                         {{#if this.unbalanced}}<span class="attack-flag u" title="Desbalanceada">U</span>{{/if}}
-                         {{#if this.fencing}}<span class="attack-flag f" title="Esgrima">F</span>{{/if}}
-                    </div>
-                    <div class="attack-tags">
-                        <span class="tag-box">
-                            <label>NH</label>
-                            <a class="rollable value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
-                        </span>
-                        <span class="tag-box damage">
-                            <label>Dano</label>
-                            <a class="rollable-damage value"
+                    <div class="attack-line">
+                        <div class="attack-cell attack-identity">
+                            <div class="attack-skill-line">
+                                <span class="attack-skill">{{attack.skill_name}}</span>
+                                <span class="attack-flags">
+                                  {{#if this.unbalanced}}<span class="attack-flag u" title="Desbalanceada">U</span>{{/if}}
+                                  {{#if this.fencing}}<span class="attack-flag f" title="Esgrima">F</span>{{/if}}
+                                </span>
+                            </div>
+                            <div class="attack-mode-sub">{{attack.name}}</div>
+                            {{#if (eq attack.attack_type "ranged")}}
+                              {{#if attack.range}}
+                                <div class="attack-line-sub">Alc.: {{attack.range}}</div>
+                              {{/if}}
+                            {{/if}}
+                        </div>
+                        <div class="attack-cell is-center">
+                            <div class="attack-label">NH</div>
+                            <a class="rollable attack-value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
+                        </div>
+                        <div class="attack-cell">
+                            <div class="attack-label">Dano</div>
+                            <a class="rollable-damage attack-value attack-damage-main"
                                 title="Rolar Dano"
                                 data-item-id="{{attack.itemId}}"
                                 data-attack-id="{{attack.id}}"
@@ -1513,25 +1522,58 @@
                                   {{/if}}
                                 {{/with}}>
                                 {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
-                                {{#with attack.follow_up_damage}}{{#if this.formula}} + {{this.formula}} {{this.type}}{{/if}}{{/with}}
-                              </a>
-
-                        </span>
-                        {{!-- Outros stats (Alcance, etc) mantidos iguais --}}
-                         {{#if (eq attack.attack_type "melee")}}
-                            <span class="tag-box"><label>Aparar</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a></span>
-                            {{#if attack.final_block}}
-                              <span class="tag-box"><label>Bloqueio</label><a class="rollable value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio">{{attack.final_block}}</a></span>
-                            {{/if}}
-                            <span class="tag-box"><label>Alcance</label><span class="value">{{attack.reach}}</span></span>
-                         {{/if}}
-                         {{#if (eq attack.attack_type "ranged")}}
-                            <span class="tag-box"><label>Prec</label><span class="value">{{attack.accuracy}}</span></span>
-                            <span class="tag-box"><label>Alcance</label><span class="value">{{attack.range}}</span></span>
-                            <span class="tag-box"><label>CdT</label><span class="value">{{attack.rof}}</span></span>
-                            <span class="tag-box"><label>Tiros</label><span class="value">{{attack.shots}}</span></span>
-                            <span class="tag-box"><label>RCO</label><span class="value">{{attack.rcl}}</span></span>
-                         {{/if}}
+                            </a>
+                            {{#with attack.fragmentation_damage}}
+                              {{#if this.formula}}
+                                <div class="attack-damage-sub">[ {{this.formula}} {{this.type}}]</div>
+                              {{/if}}
+                            {{/with}}
+                            {{#with attack.follow_up_damage}}
+                              {{#if this.formula}}
+                                <div class="attack-damage-sub">( {{this.formula}} {{this.type}})</div>
+                              {{/if}}
+                            {{/with}}
+                        </div>
+                        {{#if (eq attack.attack_type "melee")}}
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">APR</div>
+                            <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a>
+                          </div>
+                          {{#if attack.final_block}}
+                            <div class="attack-cell is-center">
+                              <div class="attack-label">BLQ</div>
+                              <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio">{{attack.final_block}}</a>
+                            </div>
+                          {{/if}}
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">ALC</div>
+                            <div class="attack-value">{{attack.reach}}</div>
+                          </div>
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">ST Min</div>
+                            <div class="attack-value">{{attack.min_strength}}</div>
+                          </div>
+                        {{/if}}
+                        {{#if (eq attack.attack_type "ranged")}}
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">Prec</div>
+                            <div class="attack-value">{{attack.accuracy}}</div>
+                          </div>
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">CdTxT (RCO)</div>
+                            <div class="attack-value">
+                              {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}x{{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}} ({{#if attack.rcl}}{{attack.rcl}}{{else}}—{{/if}})
+                            </div>
+                          </div>
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">Mag</div>
+                            <div class="attack-value">{{attack.mag}}</div>
+                          </div>
+                          <div class="attack-cell is-center">
+                            <div class="attack-label">ST Min</div>
+                            <div class="attack-value">{{attack.min_strength}}</div>
+                          </div>
+                        {{/if}}
                     </div>
                 </div>
              </div>

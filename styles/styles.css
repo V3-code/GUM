@@ -2516,28 +2516,88 @@
 
 /* Container de Informações */
 .gum.sheet.actor .attack-info {
+    display: block;
+}
+
+/* Linha de dados do ataque (colunas internas) */
+.gum.sheet.actor .attack-line {
+    display: grid;
+    grid-template-columns: 1.5fr 0.6fr 1.2fr 0.6fr 0.6fr 0.6fr 0.6fr;
+    gap: 5px;
+    align-items: start;
+}
+
+.gum.sheet.actor .attack-cell {
     display: flex;
     flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.gum.sheet.actor .attack-cell.is-center {
+    align-items: center;
+    text-align: center;
+}
+
+.gum.sheet.actor .attack-cell + .attack-cell {
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    padding-left: 8px;
+}
+
+.gum.sheet.actor .attack-label {
+    text-transform: uppercase;
+    font-size: 0.7em;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: var(--gum-text-medio);
+}
+
+.gum.sheet.actor .attack-value {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--gum-text-escuro);
+    display: inline-flex;
+    align-items: center;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.gum.sheet.actor .attack-value.attack-damage-main {
+    color: var(--gum-accent-red);
+}
+
+.gum.sheet.actor .attack-damage-sub {
+    font-size: 0.72em;
+    color: var(--gum-text-medio);
+}
+
+.gum.sheet.actor .attack-identity {
+    gap: 4px;
+}
+
+.gum.sheet.actor .attack-skill-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
-/* Cabeçalho do Ataque (Nome + Submodo) */
-.gum.sheet.actor .attack-header {
-    display: flex; 
-    align-items: center; 
-    gap: 8px;
-    flex-wrap: wrap; /* Permite quebrar linha se o nome for longo */
-}
-.gum.sheet.actor .attack-mode {
+.gum.sheet.actor .attack-skill {
     font-family: var(--gum-font-primary);
-    font-weight: 700; 
-    font-size: 0.95em; 
+    font-weight: 700;
+    font-size: 0.95em;
     color: var(--gum-text-escuro);
 }
-.gum.sheet.actor .attack-submode {
-    font-size: 0.85em; 
-    color: var(--gum-text-medio); 
+
+.gum.sheet.actor .attack-mode-sub {
+    font-size: 0.85em;
+    color: var(--gum-text-medio);
     font-style: italic;
+}
+
+.gum.sheet.actor .attack-line-sub {
+    font-size: 0.75em;
+    color: var(--gum-text-medio);
 }
 
 /* Flags (U = Desbalanceada, F = Esgrima) */
@@ -2555,76 +2615,9 @@
 .gum.sheet.actor .attack-flag.u { background: var(--gum-accent-orange); }
 .gum.sheet.actor .attack-flag.f { background: var(--gum-accent-blue); }
 
-/* --- Tags de Dados (NH, Dano, etc.) --- */
-.gum.sheet.actor .attack-tags {
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 6px;
-    align-items: center;
-}
-
-/* Estilo Base da Tag */
-.gum.sheet.actor .tag-box {
-    display: inline-flex;
-    align-items: stretch;
-    border: 1px solid var(--gum-border-light);
-    border-radius: 3px;
-    font-size: 0.8em;
-    background: #f9f9f9;
-    overflow: hidden;
-    height: 22px; /* Altura fixa para alinhamento perfeito */
-}
-
-/* Rótulo da Tag */
-.gum.sheet.actor .tag-box label {
-    background: rgba(0,0,0,0.04);
-    color: var(--gum-text-medio);
-    padding: 0 6px;
-    font-weight: 700;
-    border-right: 1px solid var(--gum-border-light);
-    display: flex;
-    align-items: center;
-    font-size: 0.85em;
-    text-transform: uppercase;
-}
-
-/* Valor da Tag */
-.gum.sheet.actor .tag-box .value {
-    padding: 0 8px;
-    color: var(--gum-text-escuro);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    background: transparent;
-    transition: all 0.2s;
-}
-
-/* Variação: Dano */
-.gum.sheet.actor .tag-box.damage {
-    border-color: rgba(165, 53, 65, 0.2);
-}
-.gum.sheet.actor .tag-box.damage label {
-    background: rgba(165, 53, 65, 0.05);
-    color: var(--gum-accent-red);
-    border-right-color: rgba(165, 53, 65, 0.2);
-}
-.gum.sheet.actor .tag-box.damage .value {
-    color: var(--gum-accent-red);
-}
-
-/* Variação: NH (Destaque Principal) */
-.gum.sheet.actor .tag-box:first-child { /* Assume que NH é sempre o primeiro */
-    border-color: var(--gum-border-gold);
-}
-.gum.sheet.actor .tag-box:first-child label {
-    background: rgba(197, 160, 91, 0.1);
-    color: var(--gum-accent-bronze);
-    border-right-color: var(--gum-border-gold);
-}
-
 /* Interatividade (Links Roláveis) */
-.gum.sheet.actor .tag-box a.rollable:hover,
-.gum.sheet.actor .tag-box a.rollable-damage:hover {
+.gum.sheet.actor .attack-value.rollable:hover,
+.gum.sheet.actor .attack-value.rollable-damage:hover {
     background: var(--gum-accent-gold);
     color: #fff !important; /* Força texto branco no hover */
     text-decoration: none;
