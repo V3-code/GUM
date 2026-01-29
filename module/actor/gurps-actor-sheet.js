@@ -1,6 +1,6 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
-import { getBodyProfile, listBodyProfiles } from "../config/body-profiles.js";
+import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -805,14 +805,22 @@ _getSubmitData(updateData) {
       return parts.join(", ");
     }
 
-    _buildDrDisplayRows(profile, drLocations) {
+ _buildDrDisplayRows(profile, drLocations) {
         const rows = [];
         const order = profile.order ?? Object.keys(profile.locations || {});
         const locations = profile.locations || {};
         const items = [];
+        const extraKeys = Object.keys(drLocations || {})
+            .filter(key => !locations[key] && getBodyLocationDefinition(key))
+            .sort((a, b) => {
+                const aLabel = getBodyLocationDefinition(a)?.label ?? a;
+                const bLabel = getBodyLocationDefinition(b)?.label ?? b;
+                return aLabel.localeCompare(bLabel);
+            });
+        const combinedOrder = [...order, ...extraKeys];
 
-        for (const key of order) {
-            const loc = locations[key];
+        for (const key of combinedOrder) {
+            const loc = locations[key] ?? getBodyLocationDefinition(key);
             if (!loc) continue;
             const drObject = drLocations?.[key] || {};
             const base = Number(drObject?.base) || 0;
@@ -2837,12 +2845,20 @@ async _onViewHitLocations(ev) {
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
    let tableRows = "";
-  const locationOrder = sheetData.hitLocationOrder?.length
+   const baseOrder = sheetData.hitLocationOrder?.length
     ? sheetData.hitLocationOrder
     : Object.keys(sheetData.hitLocations || {});
+  const extraKeys = Object.keys(actor.system.combat?.dr_locations || {})
+    .filter(key => !sheetData.hitLocations?.[key] && getBodyLocationDefinition(key))
+    .sort((a, b) => {
+      const aLabel = getBodyLocationDefinition(a)?.label ?? a;
+      const bLabel = getBodyLocationDefinition(b)?.label ?? b;
+      return aLabel.localeCompare(bLabel);
+    });
+  const locationOrder = [...baseOrder, ...extraKeys];
 
   for (const key of locationOrder) {
-    const loc = sheetData.hitLocations?.[key];
+    const loc = sheetData.hitLocations?.[key] ?? getBodyLocationDefinition(key);
     if (!loc) continue;
     const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);
     const tempDR_String   = this._formatDRObjectToString(actorDR_Temp[key]);

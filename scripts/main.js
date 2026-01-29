@@ -18,7 +18,7 @@ import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
-import { getBodyProfile } from "../module/config/body-profiles.js";
+import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -289,9 +289,25 @@ const add_sub_modifiers = {};
         }
         const profileId = combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
-        const locationKeys = Object.keys(profile.locations || {});
-        const locationKeySet = new Set(locationKeys);
+         const baseLocationKeys = Object.keys(profile.locations || {});
+        const locationKeySet = new Set(baseLocationKeys);
+        const extraLocationKeys = new Set();
         const drFromArmor = {};
+
+        for (let i of this.items) { 
+            if (i.type === 'armor' && i.system.location === 'equipped') {
+                const itemDrLocations = i.system.dr_locations || {};
+                for (const [loc, drObject] of Object.entries(itemDrLocations)) {
+                    if (!locationKeySet.has(loc)) {
+                        if (!getBodyLocationDefinition(loc)) continue;
+                        extraLocationKeys.add(loc);
+                    }
+                }
+            }
+        }
+
+        const locationKeys = [...baseLocationKeys, ...extraLocationKeys];
+        const allLocationKeySet = new Set(locationKeys);
 
         for (const key of locationKeys) {
             drFromArmor[key] = {};
@@ -301,7 +317,7 @@ const add_sub_modifiers = {};
             if (i.type === 'armor' && i.system.location === 'equipped') {
                 const itemDrLocations = i.system.dr_locations || {};
                 for (const [loc, drObject] of Object.entries(itemDrLocations)) {
-                    if (!locationKeySet.has(loc)) continue;
+                    if (!allLocationKeySet.has(loc)) continue;
                     _mergeDRObjects(drFromArmor[loc], drObject);
                 }
             }

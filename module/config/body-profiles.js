@@ -22,6 +22,56 @@ const location = (name, { groupKey = null, roll = null } = {}) => ({
   groupPlural: groupKey ? LOCATION_GROUPS[groupKey]?.plural : null
 });
 
+export const EXTRA_BODY_LOCATIONS = {
+  shoulder_1: location("Ombro 1"),
+  shoulder_2: location("Ombro 2"),
+  chest_1: location("Peito 1"),
+  chest_2: location("Peito 2"),
+  abdomen_1: location("Abdômen 1"),
+  abdomen_2: location("Abdômen 2"),
+  joint_1: location("Articulação 1"),
+  joint_2: location("Articulação 2"),
+  joint_3: location("Articulação 3"),
+  spine_1: location("Coluna 1"),
+  spine_2: location("Coluna 2"),
+  artery_1: location("Artéria 1"),
+  artery_2: location("Artéria 2"),
+  jaw_1: location("Mandíbula 1"),
+  jaw_2: location("Mandíbula 2"),
+  wing_1: location("ex-Asa 1", { groupKey: "wing" }),
+  wing_2: location("ex-Asa 2", { groupKey: "wing" }),
+  wing_3: location("ex-Asa 3", { groupKey: "wing" }),
+  wing_4: location("ex-Asa 4", { groupKey: "wing" }),
+  tail_1: location("ex-Cauda 1", { groupKey: "tail" }),
+  tail_2: location("ex-Cauda 2", { groupKey: "tail" }),
+  fin_1: location("ex-Nadadeira 1", { groupKey: "fin" }),
+  fin_2: location("ex-Nadadeira 2", { groupKey: "fin" }),
+  horn_1: location("Chifre 1"),
+  horn_2: location("Chifre 2"),
+  horn_3: location("Chifre 3"),
+  horn_4: location("Chifre 4"),
+  arm_1: location("ex-Braço 1", { groupKey: "arm" }),
+  arm_2: location("ex-Braço 2", { groupKey: "arm" }),
+  arm_3: location("ex-Braço 3", { groupKey: "arm" }),
+  arm_4: location("ex-Braço 4", { groupKey: "arm" }),
+  leg_1: location("ex-Perna 1", { groupKey: "leg" }),
+  leg_2: location("ex-Perna 2", { groupKey: "leg" }),
+  leg_3: location("ex-Perna 3", { groupKey: "leg" }),
+  leg_4: location("ex-Perna 4", { groupKey: "leg" }),
+  hand_1: location("ex-Mão 1", { groupKey: "hand" }),
+  hand_2: location("ex-Mão 2", { groupKey: "hand" }),
+  hand_3: location("ex-Mão 3", { groupKey: "hand" }),
+  hand_4: location("ex-Mão 4", { groupKey: "hand" }),
+  foot_1: location("ex-Pé 1", { groupKey: "foot" }),
+  foot_2: location("ex-Pé 2", { groupKey: "foot" }),
+  foot_3: location("ex-Pé 3", { groupKey: "foot" }),
+  foot_4: location("ex-Pé 4", { groupKey: "foot" }),
+  nose_1: location("Nariz 1"),
+  nose_2: location("Nariz 2"),
+  ear_1: location("Orelha 1"),
+  ear_2: location("Orelha 2")
+};
+
 export const BODY_PROFILES = {
   humanoid: {
     id: "humanoid",
@@ -287,12 +337,32 @@ export const BODY_PROFILES = {
   }
 };
 
+const LOCATION_INDEX = (() => {
+  const index = {};
+
+  for (const profile of Object.values(BODY_PROFILES)) {
+    for (const [id, loc] of Object.entries(profile.locations || {})) {
+      index[id] = loc;
+    }
+  }
+
+  for (const [id, loc] of Object.entries(EXTRA_BODY_LOCATIONS)) {
+    index[id] = loc;
+  }
+
+  return index;
+})();
+
 export function getBodyProfile(profileId) {
   const profile = BODY_PROFILES[profileId] ?? BODY_PROFILES.humanoid;
   return {
     ...profile,
     order: profile.order ?? Object.keys(profile.locations || {})
   };
+}
+
+export function getBodyLocationDefinition(locationId) {
+  return LOCATION_INDEX[locationId];
 }
 
 export function listBodyProfiles() {
@@ -316,6 +386,16 @@ export function listBodyLocations(profileId) {
         label: loc.label ?? loc.name ?? id
       });
     }
+  }
+
+  for (const [id, loc] of Object.entries(EXTRA_BODY_LOCATIONS)) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    locations.push({
+      id,
+      name: loc.name ?? loc.label ?? id,
+      label: loc.label ?? loc.name ?? id
+    });
   }
 
   return locations;
