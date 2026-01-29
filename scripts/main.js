@@ -295,7 +295,10 @@ const add_sub_modifiers = {};
         const drFromArmor = {};
 
         for (let i of this.items) { 
-            if (i.type === 'armor' && i.system.location === 'equipped') {
+            const hasArmorDR = (i.type === 'armor' || i.type === 'equipment')
+                && i.system.location === 'equipped'
+                && i.system.dr_locations;
+            if (hasArmorDR) {
                 const itemDrLocations = i.system.dr_locations || {};
                 for (const [loc, drObject] of Object.entries(itemDrLocations)) {
                     if (!locationKeySet.has(loc)) {
@@ -314,7 +317,10 @@ const add_sub_modifiers = {};
         }
 
         for (let i of this.items) { 
-            if (i.type === 'armor' && i.system.location === 'equipped') {
+            const hasArmorDR = (i.type === 'armor' || i.type === 'equipment')
+                && i.system.location === 'equipped'
+                && i.system.dr_locations;
+            if (hasArmorDR) {
                 const itemDrLocations = i.system.dr_locations || {};
                 for (const [loc, drObject] of Object.entries(itemDrLocations)) {
                     if (!allLocationKeySet.has(loc)) continue;

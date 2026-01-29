@@ -342,6 +342,11 @@
         {{#if (eq item.type "equipment")}}
         <a class="item" data-tab="attacks">Modos de Ataque</a>
         {{/if}}
+
+        {{!-- Bloco 2.1: Aba "Proteção" para Equipamentos --}}
+        {{#if (eq item.type "equipment")}}
+        <a class="item" data-tab="protection">Proteção</a>
+        {{/if}}
         
         {{!-- Bloco 3: Aba "Efeitos" (lógica original) --}}
         {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
@@ -1417,7 +1422,50 @@
         
         </div>
         {{/if}}
-    </div>
+ </div>
+
+     {{!-- ===================================================================== --}}
+     {{!-- 		ABA PROTEÇÃO: ITEM EQUIPAMENTO 				 --}}
+     {{!-- ===================================================================== --}}
+     {{#if (eq item.type "equipment")}}
+     <div class="tab" data-tab="protection">
+        <div class="form-section protection-grid">
+            <div class="attacks-editor-section">
+                <div class="attack-section-header">
+                    <h4 class="attack-section-title">Proteção por Localização</h4>
+                    <a class="attack-add-button add-dr-location" title="Adicionar RD"><i class="fas fa-plus"></i></a>
+                </div>
+            </div>
+
+            <ol class="attack-list dr-locations-table">
+                {{#each drLocationRows as |row|}}
+                    <li class="attack-item dr-location-item" data-dr-location-row>
+                        <div class="attack-display-card">
+                            <div class="attack-line">
+                                <div class="attack-cell">
+                                    <input class="dr-location-label" type="text" list="gum-body-location-options" value="{{row.label}}" placeholder="Ex: Braço E"/>
+                                    <input class="dr-location-key" type="hidden" value="{{row.key}}"/>
+                                </div>
+                                <div class="attack-cell">
+                                    <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
+                                </div>
+                                <div class="attack-cell">
+                                    <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                {{/each}}
+            </ol>
+
+            <datalist id="gum-body-location-options">
+                {{#each bodyLocationOptions as |loc|}}
+                    <option value="{{loc.name}}" data-key="{{loc.id}}"></option>
+                {{/each}}
+            </datalist>
+        </div>
+     </div>
+     {{/if}}
 
      {{! ========================================================= }}
     {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}

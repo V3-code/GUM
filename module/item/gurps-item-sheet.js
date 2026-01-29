@@ -2,6 +2,7 @@ import { EffectBrowser } from "../apps/effect-browser.js";
 import { ConditionBrowser } from "../apps/condition-browser.js";
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
+import { listBodyLocations } from "../config/body-profiles.js";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -117,9 +118,27 @@ export class GurpsItemSheet extends ItemSheet {
             context.calculatedFinalWeight = baseWeight * weightMultiplier;
             
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-            context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+ context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             context.hasCostChange = finalCostMultiplier !== 1;
             context.hasWeightChange = weightMultiplier !== 1;
+        }
+
+        if (this.item.type === "equipment") {
+            const drLocations = this.item.system.dr_locations || {};
+            const bodyLocationOptions = listBodyLocations();
+            const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option]));
+
+            context.bodyLocationOptions = bodyLocationOptions;
+            context.drLocationRows = Object.entries(drLocations)
+                .filter(([, drObject]) => this._hasVisibleDR(drObject))
+                .map(([key, drObject]) => {
+                    const option = locationLookup.get(key);
+                    return {
+                        key,
+                        label: option?.name ?? key,
+                        dr: this._formatDRObjectToString(drObject)
+                    };
+                });
         }
 
         // =======================================================
@@ -300,6 +319,23 @@ export class GurpsItemSheet extends ItemSheet {
             section.find(".description-editor").hide();
             section.find(".description-view, .toggle-editor").show();
         });
+
+if (this.item?.type === "equipment") {
+            html.on("click", ".add-dr-location", () => {
+                this._addDrLocationRow(html);
+            });
+
+            html.on("click", ".dr-location-delete", async (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                ev.currentTarget.closest("[data-dr-location-row]")?.remove();
+                await this.object.update(this._buildDRLocationsUpdate(this._collectDRLocationsFromForm()));
+            });
+
+            html.on("change", ".dr-location-label", (ev) => {
+                this._syncDrLocationKey(ev.currentTarget);
+            });
+        }
 
         // Adicionar/Remover Ataques
         html.find('.add-attack').click(this._onAddAttack.bind(this));
@@ -1130,7 +1166,24 @@ new Dialog({
         }
     }
     
-async _updateObject(event, formData) {
+ _getSubmitData(updateData) {
+        const data = super._getSubmitData(updateData);
+
+        if (this.item?.type === "equipment") {
+            for (const key in data) {
+                if (key.startsWith("system.dr_locations.")) {
+                    delete data[key];
+                }
+            }
+
+            const drLocations = this._collectDRLocationsFromForm();
+            Object.assign(data, this._buildDRLocationsUpdate(drLocations));
+        }
+
+        return data;
+    }
+
+    async _updateObject(event, formData) {
         for (const [k, v] of Object.entries(formData)) {
             const isDescriptionField = k.includes("description");
             if (!isDescriptionField && typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
@@ -1146,8 +1199,170 @@ async _updateObject(event, formData) {
             }
             delete formData["system.base_attribute_select"];
             delete formData["system.base_attribute_custom"];
-        }
+ }
         this._saveUIState();
         return super._updateObject(event, formData);
+    }
+
+    _formatDRObjectToString(drObject) {
+        if (!drObject || typeof drObject !== 'object' || Object.keys(drObject).length === 0) return "0";
+
+        const parts = [];
+        const baseDR = drObject.base || 0;
+        parts.push(baseDR.toString());
+
+        for (const [type, mod] of Object.entries(drObject)) {
+            if (type === 'base') continue;
+
+            const finalDR = Math.max(0, baseDR + (mod || 0));
+            if (finalDR !== baseDR) {
+                parts.push(`${finalDR} ${type}`);
+            }
+        }
+
+        if (parts.length === 1 && parts[0] === "0") return "0";
+
+        if (parts.length > 1 && parts[0] === "0") {
+            parts.shift();
+        }
+
+        return parts.join(", ");
+    }
+
+    _parseDRStringToObject(drString) {
+        if (typeof drString === 'object' && drString !== null) return drString;
+        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {};
+
+        const DAMAGE_TYPE_MAP = {
+            "cr": "cont", "cut": "cort", "imp": "perf", "pi": "pa",
+            "pi-": "pa-", "pi+": "pa+", "pi++": "pa++", "burn": "qmd",
+            "corr": "cor", "tox": "tox"
+        };
+
+        const drObject = {};
+        const parts = drString.split(',').map(s => s.trim().toLowerCase());
+
+        let baseDR = 0;
+
+        for (const part of parts) {
+            const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
+            if (segments.length === 1 && !isNaN(Number(segments[0]))) {
+                baseDR = Number(segments[0]);
+                drObject['base'] = baseDR;
+                break;
+            }
+        }
+
+        for (const part of parts) {
+            const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
+            if (segments.length === 2 && !isNaN(Number(segments[0]))) {
+                let type = segments[1];
+                const value = Number(segments[0]);
+
+                type = DAMAGE_TYPE_MAP[type] || type;
+
+                if (baseDR > 0) {
+                    drObject[type] = value - baseDR;
+                } else {
+                    drObject[type] = value;
+                }
+            }
+        }
+
+        return drObject;
+    }
+
+    _hasVisibleDR(drObject) {
+        if (!drObject || typeof drObject !== "object") return false;
+        return Object.keys(drObject).length > 0;
+    }
+
+    _collectDRLocationsFromForm() {
+        const drLocations = {};
+        const rows = this.element?.[0]?.querySelectorAll("[data-dr-location-row]") || [];
+
+        rows.forEach(row => {
+            const keyInput = row.querySelector(".dr-location-key");
+            const labelInput = row.querySelector(".dr-location-label");
+            const valueInput = row.querySelector(".dr-location-value");
+
+            const label = labelInput?.value?.trim() || "";
+            const resolvedKey = label ? this._getLocationKeyFromLabel(label) : (keyInput?.value?.trim() || "");
+            if (!resolvedKey) return;
+
+            const rawDrString = valueInput?.value;
+            const drString = typeof rawDrString === "string" ? rawDrString.trim() : "";
+            const normalizedDrString = drString === "" ? "0" : drString;
+
+            drLocations[resolvedKey] = this._parseDRStringToObject(normalizedDrString);
+        });
+
+        return drLocations;
+    }
+
+    _buildDRLocationsUpdate(drLocations) {
+        const update = {
+            "system.dr_locations": drLocations
+        };
+        const existing = this.item.system.dr_locations || {};
+
+        for (const key of Object.keys(existing)) {
+            if (!(key in drLocations)) {
+                update[`system.dr_locations.-=${key}`] = null;
+            }
+        }
+
+        return update;
+    }
+
+    _addDrLocationRow(html, { label = "", key = "", dr = "" } = {}) {
+        const container = html.find(".dr-locations-table");
+        if (!container.length) return;
+
+        const rowHtml = `
+            <li class="attack-item dr-location-item" data-dr-location-row>
+                <div class="attack-display-card">
+                    <div class="attack-line">
+                        <div class="attack-cell">
+                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="Ex: Braço E"/>
+                            <input class="dr-location-key" type="hidden" value="${key}"/>
+                        </div>
+                        <div class="attack-cell">
+                            <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/>
+                        </div>
+                        <div class="attack-cell">
+                            <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        `;
+
+        container.append(rowHtml);
+    }
+
+    _syncDrLocationKey(input) {
+        const row = input.closest("[data-dr-location-row]");
+        if (!row) return;
+
+        const keyInput = row.querySelector(".dr-location-key");
+        if (!keyInput) return;
+
+        const label = input.value?.trim();
+        if (!label) {
+            keyInput.value = "";
+            return;
+        }
+
+        keyInput.value = this._getLocationKeyFromLabel(label);
+    }
+
+    _getLocationKeyFromLabel(label) {
+        const list = this.element?.[0]?.querySelector("#gum-body-location-options");
+        if (!list) return label;
+
+        const escape = window.CSS?.escape || ((value) => value.replace(/["\\]/g, "\\$&"));
+        const option = list.querySelector(`option[value="${escape(label)}"]`);
+        return option?.dataset?.key || label;
     }
 }
