@@ -1374,10 +1374,12 @@
                 {{#if row.isGroup}}
                   <li class="dr-location-row dr-group" data-group-id="{{row.id}}">
                     <div class="dr-row-main">
+                      <div "dr-row-start">
                       <button class="dr-group-toggle" type="button" title="Expandir grupo">
                         <i class="fas fa-chevron-right"></i>
                       </button>
                       <span class="location-name">{{row.label}}</span>
+                      </div>
                       <span class="location-dr-value">{{row.base}}</span>
                     </div>
                     {{#if row.extraLine}}

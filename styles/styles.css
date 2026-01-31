@@ -402,7 +402,7 @@
 /* Blocos/Cards Padrão */
 .gum.sheet.actor .gum-block, .gum.sheet.actor .skill-block {
     background: var(--gum-bg-card-claro); border: 1px solid var(--gum-border);
-    padding: 0.75rem; border-radius: 3px; margin-bottom: 10px;
+    padding: 0.65rem; border-radius: 3px; 
 }
 .gum.sheet.actor .block-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -2100,9 +2100,9 @@
 /* Layout Principal: 2 Colunas Assimétricas */
 .gum.sheet.actor .combat-main-content {
     display: grid;
-    /* Coluna RD fixa (140px) | Espaço | Coluna Ataques (Resto) */
-    grid-template-columns: 150px 1fr; 
-    gap: 15px;
+    /* Coluna RD  | Espaço | Coluna Ataques (Resto) */
+    grid-template-columns: 0.35fr 1fr; 
+    gap: 5px;
     align-items: start;
     height: 100%; /* Garante que preencha a altura */
 }
@@ -2156,6 +2156,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 6px;
+}
+
+.gum.sheet.actor .dr-row-start{
+    align-items: flex-start;
 }
 .gum.sheet.actor .dr-group-toggle {
     border: none;
