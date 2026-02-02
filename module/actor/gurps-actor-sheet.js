@@ -2271,6 +2271,8 @@ default: 'save'
         const hearing = getAttr('hearing');
         const tastesmell = getAttr('tastesmell');
         const touch = getAttr('touch');
+        const thrustDamage = attrs.thrust_damage ?? "";
+        const swingDamage = attrs.swing_damage ?? "";
                 const content = `
         <form class="secondary-stats-editor">
             <div class="form-header-grid">
@@ -2354,7 +2356,7 @@ default: 'save'
                     <span class="final-display">${tastesmell.final}</span>
                 </div>
 
-                <div class="form-row">
+                 <div class="form-row">
                     <label>Tato</label>
                     <input type="number" name="touch.value" value="${touch.value}"/>
                     <input type="number" name="touch.mod" value="${touch.mod}"/>
@@ -2364,6 +2366,15 @@ default: 'save'
                     <span class="final-display">${touch.final}</span>
                 </div>
 
+                <div class="form-section-title">Dano Básico</div>
+                <div class="form-row basic-damage-row">
+                    <label>GdP (Thrust)</label>
+                    <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d-2"/>
+                </div>
+                <div class="form-row basic-damage-row">
+                    <label>GeB (Swing)</label>
+                    <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d"/>
+                </div>
             </div>
         </form>
         <style>
@@ -2375,6 +2386,20 @@ default: 'save'
                 align-items: center;
                 text-align: center;
                 margin-bottom: 5px;
+            }
+            .secondary-stats-editor .form-section-title {
+                grid-column: 1 / -1;
+                font-weight: bold;
+                text-align: left;
+                margin: 8px 0 4px;
+                color: #a53541;
+            }
+            .secondary-stats-editor .basic-damage-row {
+                grid-template-columns: 110px 1fr;
+                text-align: left;
+            }
+            .secondary-stats-editor .basic-damage-row input {
+                text-align: left;
             }
             .secondary-stats-editor .form-header-grid span { font-weight: bold; font-size: 0.85em; white-space: nowrap; }
             .secondary-stats-editor label { text-align: left; font-weight: bold; font-size: 0.9em; }
@@ -2396,7 +2421,7 @@ default: 'save'
                         const formData = new FormDataExtended(form).object;
                         const updateData = {};
                         
-                        const fields = [
+                       const fields = [
                             "basic_speed.value", "basic_speed.mod", "basic_speed.points",
                             "basic_move.value", "basic_move.mod", "basic_move.points",
                             "mt.value", "mt.mod", "mt.points",
@@ -2412,6 +2437,13 @@ default: 'save'
                                 updateData[`system.attributes.${field}`] = Number(formData[field]);
                             }
                         });
+
+                        if (formData.thrust_damage !== undefined) {
+                            updateData["system.attributes.thrust_damage"] = formData.thrust_damage.toString().trim();
+                        }
+                        if (formData.swing_damage !== undefined) {
+                            updateData["system.attributes.swing_damage"] = formData.swing_damage.toString().trim();
+                        }
                         
                         this.actor.update(updateData);
                     }

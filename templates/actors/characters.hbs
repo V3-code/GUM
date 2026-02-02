@@ -116,31 +116,29 @@
               <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
             </div>
           </div>
-        </div>
 
-        {{!-- 4. DANO BÁSICO --}}
-        <div class="sidebar-block gum-block basic-damage-card sidebar-basic-damage">
-          <div class="sidebar-basic-damage-header">
-            <span class="sidebar-basic-damage-title">Dano Básico</span>
-            <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-cog"></i></a>
-          </div>
-          <div class="sidebar-basic-damage-values">
-            <a class="sidebar-basic-damage-item rollable-basic-damage" 
-               data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
-               data-label="Dano de Golpe de Ponta (GdP)">
-              <span class="label">GdP</span>
-              <span class="value">{{actor.system.attributes.thrust_damage}}</span>
-            </a>
-            <a class="sidebar-basic-damage-item rollable-basic-damage" 
-               data-roll-formula="{{actor.system.attributes.swing_damage}}" 
-               data-label="Dano de Golpe em Balanço (GeB)">
-              <span class="label">GeB</span>
-              <span class="value">{{actor.system.attributes.swing_damage}}</span>
-            </a>
+          <div class="basic-damage-card sidebar-basic-damage secondary-basic-damage">
+            <div class="sidebar-basic-damage-header">
+              <span class="sidebar-basic-damage-title">Dano Básico</span>
+            </div>
+            <div class="sidebar-basic-damage-values">
+              <a class="sidebar-basic-damage-item rollable-basic-damage" 
+                 data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+                 data-label="Dano de Golpe de Ponta (GdP)">
+                <span class="label">GdP</span>
+                <span class="value">{{actor.system.attributes.thrust_damage}}</span>
+              </a>
+              <a class="sidebar-basic-damage-item rollable-basic-damage" 
+                 data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+                 data-label="Dano de Golpe em Balanço (GeB)">
+                <span class="label">GeB</span>
+                <span class="value">{{actor.system.attributes.swing_damage}}</span>
+              </a>
+            </div>
           </div>
         </div>
 
-        {{!-- 5. BARRAS --}}
+        {{!-- 4. BARRAS --}}
         <div class="sidebar-block bars-block">
           <div class="bar-group">
             <div class="bar-label">
