@@ -118,7 +118,29 @@
           </div>
         </div>
 
-        {{!-- 4. BARRAS --}}
+        {{!-- 4. DANO BÁSICO --}}
+        <div class="sidebar-block gum-block basic-damage-card sidebar-basic-damage">
+          <div class="sidebar-basic-damage-header">
+            <span class="sidebar-basic-damage-title">Dano Básico</span>
+            <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-cog"></i></a>
+          </div>
+          <div class="sidebar-basic-damage-values">
+            <a class="sidebar-basic-damage-item rollable-basic-damage" 
+               data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+               data-label="Dano de Golpe de Ponta (GdP)">
+              <span class="label">GdP</span>
+              <span class="value">{{actor.system.attributes.thrust_damage}}</span>
+            </a>
+            <a class="sidebar-basic-damage-item rollable-basic-damage" 
+               data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+               data-label="Dano de Golpe em Balanço (GeB)">
+              <span class="label">GeB</span>
+              <span class="value">{{actor.system.attributes.swing_damage}}</span>
+            </a>
+          </div>
+        </div>
+
+        {{!-- 5. BARRAS --}}
         <div class="sidebar-block bars-block">
           <div class="bar-group">
             <div class="bar-label">
@@ -150,7 +172,7 @@
           </div>
         </div>
 
-        {{!-- 5. SOBREVIVÊNCIA (AGORA COM DETAILS/SUMMARY NATIVO) --}}
+        {{!-- 6. SOBREVIVÊNCIA (AGORA COM DETAILS/SUMMARY NATIVO) --}}
         <div class="sidebar-footer">
           <details class="sidebar-collapsible" data-group-id="sidebar-survival" {{collapsibleState "sidebar-survival" @root.collapsedData}}>
             <summary class="sidebar-summary">
@@ -1328,36 +1350,6 @@
 
         {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
         <div class="combat-left-column">
-
-          {{! ================================================= }}
-          {{!     CARD DE DANO BÁSICO UNIFICADO    }}
-          {{! ================================================= }}
-          <div class="gum-block basic-damage-card">
-            <div class="block-header">
-              <h4>Dano Básico</h4>
-              <div class="header-controls">
-                {{! O único botão de editar }}
-                <a class="edit-basic-damage" title="Editar Dano Básico"><i class="fas fa-edit"></i></a>
-              </div>
-            </div>
-            {{! O container com as duas metades clicáveis }}
-            <div class="damage-halves">
-              {{! Metade GdP }}
-              <a class="damage-half thrust rollable-basic-damage" 
-                 data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
-                 data-label="Dano de Golpe de Ponta (GdP)">
-                <label>GdP</label>
-                <div class="value">{{actor.system.attributes.thrust_damage}}</div>
-              </a>
-              {{! Metade GeB }}
-              <a class="damage-half swing rollable-basic-damage" 
-                 data-roll-formula="{{actor.system.attributes.swing_damage}}" 
-                 data-label="Dano de Golpe em Balanço (GeB)">
-                <label>GeB</label>
-                <div class="value">{{actor.system.attributes.swing_damage}}</div>
-              </a>
-            </div>
-          </div>
 
           {{! ================================================= }}
           {{!     PAINEL DE RD   }}

@@ -2253,6 +2253,64 @@
     background: var(--gum-bg-card-claro);
     overflow: hidden;
 }
+.gum.sheet.actor .sheet-sidebar .basic-damage-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(197, 160, 91, 0.2);
+    padding: 6px 8px;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-title {
+    font-family: var(--gum-font-secondary);
+    font-size: 10px;
+    color: var(--gum-text-subtitulo);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .edit-basic-damage {
+    font-size: 11px;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .edit-basic-damage:hover {
+    color: var(--gum-accent-gold);
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-values {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-item:hover {
+    background: rgba(197, 160, 91, 0.18);
+    border-color: rgba(197, 160, 91, 0.4);
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-item .label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--gum-text-subtitulo);
+    text-transform: uppercase;
+}
+.gum.sheet.actor .sheet-sidebar .basic-damage-card .sidebar-basic-damage-item .value {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+}
 .gum.sheet.actor .combat-meters-box .meter-list,
 .gum.sheet.actor .energy-reserves-box .meter-list {
     display: grid;
