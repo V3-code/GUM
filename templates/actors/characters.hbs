@@ -1356,18 +1356,19 @@
             <div class="block-header">
               <h4>
                 <span class="dr-header-title">Tabela de RD</span>
-                <span class="dr-header-subtitle">[{bodyProfileLabel}}</span>
+                <span class="dr-header-subtitle">{{bodyProfileLabel}}</span>
               </h4>
               <div class="header-controls">
                 <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
               </div>
             </div>
+            
 <ol class="dr-location-list">
               {{#each drDisplayRows as |row|}}
                 {{#if row.isGroup}}
                   <li class="dr-location-row dr-group" data-group-id="{{row.id}}">
                     <div class="dr-row-main">
-                      <div "dr-row-start">
+                      <div class="dr-row-start">
                       <button class="dr-group-toggle" type="button" title="Expandir grupo">
                         <i class="fas fa-chevron-right"></i>
                       </button>
