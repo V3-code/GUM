@@ -1,7 +1,3 @@
-2026/01/31-07:35:39.042 1f0c Recovering log #213
-2026/01/31-07:35:39.044 1f0c Delete type=0 #213
-2026/01/31-07:35:39.044 1f0c Delete type=3 #211
-2026/01/31-07:36:24.870 598c Level-0 table #218: started
-2026/01/31-07:36:24.870 598c Level-0 table #218: 0 bytes OK
-2026/01/31-07:36:24.870 598c Delete type=0 #216
-2026/01/31-07:36:24.870 598c Manual compaction at level-0 from '!macros!4VFRDTvuTQpmdyjn' @ 72057594037927935 : 1 .. '!macros!q2eFGmmGN2pg9lSc' @ 0 : 0; will stop at (end)
+2026/01/31-21:23:25.204 254c Recovering log #229
+2026/01/31-21:23:25.208 254c Delete type=0 #229
+2026/01/31-21:23:25.208 254c Delete type=3 #227

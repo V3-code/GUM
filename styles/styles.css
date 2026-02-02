@@ -40,10 +40,19 @@
 .condition-browser,
 .eqp-modifier-browser,
 .gm-modifier-browser {
-  /* -- Fontes -- */
+    /* -- Fontes -- */
   --gum-font-primary: 'Roboto', sans-serif;
   --gum-font-secondary: 'Cinzel', serif;
   --gum-font-condensed: 'Roboto Condensed', sans-serif;
+
+  /* -- Tipografia (Hierarquia) -- */
+  --gum-font-size-base: 13px;
+  --gum-font-size-title: 16px;
+  --gum-font-size-header: 14px;
+  --gum-font-size-body: 11px;
+  --gum-font-size-body-small: 12px;
+  --gum-font-size-meta: 10px;
+
 
   /* -- Paleta Base (Papiro/Claro) -- */
   --gum-bg-papiro: #f1e8e7;
@@ -87,7 +96,7 @@
 .gum {
     font-family: var(--gum-font-primary);
     color: var(--gum-text-escuro);
-    font-size: 13px;
+    font-size: var(--gum-font-size-base);
 }
 
 /* Links */
@@ -407,9 +416,12 @@
 .gum.sheet.actor .block-header {
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--gum-border-gold); margin-bottom: 8px; padding-bottom: 2px;
+    font-size: var(--gum-font-size-header);
+    line-height: 1.2;
 }
 .gum.sheet.actor .block-header h4 {
     font-family: var(--gum-font-secondary); color: var(--gum-text-escuro); margin: 0; font-weight: 700;
+    font-size: inherit;
 }
 
 /* =================================================================== */
@@ -1694,6 +1706,7 @@
     list-style: none;
     border-bottom: 1px solid transparent;
     transition: background 0.2s;
+    font-size: var(--gum-font-size-header);
 }
 .gum.sheet.actor .skill-tree-summary:hover {
     background: rgba(0,0,0,0.06);
@@ -1714,7 +1727,7 @@
 .gum.sheet.actor .st-group-count {
     background: rgba(0,0,0,0.1);
     color: var(--gum-text-medio);
-    font-size: 0.75em;
+    font-size: var(--gum-font-size-meta);
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
@@ -1722,7 +1735,7 @@
 }
 
 .gum.sheet.actor .st-icon {
-    font-size: 0.8em;
+    font-size: var(--gum-font-size-body-small);
     transition: transform 0.2s;
     color: var(--gum-text-medio);
 }
@@ -2404,6 +2417,7 @@
     align-items: center;
     border-bottom: 1px solid transparent; /* Invisível quando fechado */
     transition: background 0.2s, border-color 0.2s;
+    font-size: var(--gum-font-size-header);
 }
 
 .gum.sheet.actor .group-summary:hover {
@@ -2427,7 +2441,7 @@
 }
 
 .gum.sheet.actor .indicator {
-    font-size: 0.8em; 
+    font-size: var(--gum-font-size-body-small);
     color: var(--gum-text-medio); 
     transition: transform 0.2s;
 }
@@ -2440,7 +2454,7 @@
     font-family: var(--gum-font-secondary); /* Cinzel para elegância */
     font-weight: 700;
     color: var(--gum-text-escuro);
-    font-size: 1.05em; /* Ligeiramente maior */
+    font-size: 1em;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -2450,7 +2464,7 @@
 
 /* Tags do Cabeçalho */
 .gum.sheet.actor .group-tag {
-    font-size: 0.75em;
+    font-size: var(--gum-font-size-meta);
     padding: 2px 6px;
     border-radius: 3px;
     font-weight: 600;
@@ -2526,7 +2540,7 @@
 /* Linha de dados do ataque (colunas internas) */
 .gum.sheet.actor .attack-line {
     display: grid;
-    grid-template-columns: 1.5fr 0.6fr 1.2fr 0.6fr 0.6fr 0.6fr 0.6fr;
+    grid-template-columns: 1.5fr 0.6fr 1.35fr 0.6fr 0.6fr 0.6fr 0.6fr;
     gap: 5px;
     align-items: start;
 }
@@ -2550,14 +2564,14 @@
 
 .gum.sheet.actor .attack-label {
     text-transform: uppercase;
-    font-size: 0.7em;
+    font-size: var(--gum-font-size-meta);
     letter-spacing: 0.5px;
     font-weight: 700;
     color: var(--gum-text-medio);
 }
 
 .gum.sheet.actor .attack-value {
-    font-size: 0.85em;
+    font-size: var(--gum-font-size-body-small);
     font-weight: 600;
     color: var(--gum-text-escuro);
     display: inline-flex;
@@ -2571,7 +2585,7 @@
 }
 
 .gum.sheet.actor .attack-damage-sub {
-    font-size: 0.72em;
+    font-size: var(--gum-font-size-meta);
     color: var(--gum-text-medio);
 }
 
@@ -2589,18 +2603,18 @@
 .gum.sheet.actor .attack-skill {
     font-family: var(--gum-font-primary);
     font-weight: 700;
-    font-size: 0.95em;
+    font-size: var(--gum-font-size-body);
     color: var(--gum-text-escuro);
 }
 
 .gum.sheet.actor .attack-mode-sub {
-    font-size: 0.85em;
+    font-size: var(--gum-font-size-body-small);
     color: var(--gum-text-medio);
     font-style: italic;
 }
 
 .gum.sheet.actor .attack-line-sub {
-    font-size: 0.75em;
+    font-size: var(--gum-font-size-meta);
     color: var(--gum-text-medio);
 }
 
@@ -3006,7 +3020,7 @@
 
 /* Cabeçalho do Subgrupo */
 .gum.sheet.actor .subgroup-summary {
-    font-size: 0.85em;
+    font-size: var(--gum-font-size-body-small);
     font-weight: 700;
     color: var(--gum-text-subtitulo);
     text-transform: uppercase;
