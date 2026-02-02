@@ -31,6 +31,7 @@ async getData(options) {
         const profile = getBodyProfile(profileId);
 
         context.bodyProfileId = profileId;
+        context.bodyProfileLabel = profile?.label ?? profileId;
         context.bodyProfiles = listBodyProfiles();         // útil pra dropdown depois
         context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
         context.hitLocationOrder = profile.order || [];
