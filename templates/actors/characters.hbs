@@ -631,10 +631,10 @@
             
             {{!-- Transforma a DIV em DETAILS para ser colapsável --}}
             {{!-- O ID é importante para o sistema lembrar o que está aberto/fechado --}}
-            <details class="form-section gum-details" id="char-section-{{block.id}}" data-group-id="char-section-{{block.id}}" {{collapsibleState (concat "char-section-" block.id) @root.collapsedData}}>
+            <details class="form-section gum-details gum-unified-section" id="char-section-{{block.id}}" data-group-id="char-section-{{block.id}}" {{collapsibleState (concat "char-section-" block.id) @root.collapsedData}}>
                 
                 {{!-- O Summary atua como o cabeçalho clicável --}}
-                <summary class="block-header">
+                <summary class="block-header gum-unified-header">
                     <div class="header-left">
                         <i class="fas fa-chevron-right indicator"></i>
                         <h4 class="block-title">{{block.title}}</h4>
@@ -1206,8 +1206,8 @@
     <div class="equipment-columns">
 
 {{!-- 1. EM USO (Equipped) --}}
-<details class="gum-details equipment-column" data-section="equip_equipped" {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
-    <summary class="list-header">
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_equipped" {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
+    <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">Em Uso (Mãos/Corpo)</h4>
     </summary>
@@ -1252,8 +1252,8 @@
 </details>
 
 {{!-- 2. CARREGADO (Mochila) --}}
-<details class="gum-details equipment-column" data-section="equip_carried" {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
-    <summary class="list-header">
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_carried" {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
+    <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">Carregado (Mochila)</h4>
     </summary>
@@ -1293,8 +1293,8 @@
 </details>
 
 {{!-- 3. ARMAZENADO (Banco/Casa) --}}
-<details class="gum-details equipment-column" data-section="equip_stored" {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
-    <summary class="list-header">
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_stored" {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
+    <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">Armazenado (Banco/Casa)</h4>
     </summary>
@@ -1452,9 +1452,9 @@
 <div class="attack-group-list-v2">
     {{#each attackGroups as |group|}}
     {{!-- USANDO group.id EM VEZ DE group.name --}}
-    <details class="attack-group-details" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
+    <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
     
-        <summary class="group-summary">
+        <summary class="group-summary gum-unified-header">
             <div class="summary-left">
             <i class="fas fa-chevron-right indicator"></i>
             <i class="fas fa-khanda-alt item-icon"></i> 
@@ -1698,8 +1698,8 @@
     {{!-- ============================================================= --}}
     {{!--     SEÇÃO 1: EFEITOS TEMPORÁRIOS                              --}}
     {{!-- ============================================================= --}}
-    <details class="form-section gum-details temporary-section" data-group-id="cond-temp" {{collapsibleState "cond-temp" @root.collapsedData}}>
-        <summary class="block-header">
+    <details class="form-section gum-details temporary-section gum-unified-section" data-group-id="cond-temp" {{collapsibleState "cond-temp" @root.collapsedData}}>
+        <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
                 <span class="header-title">Efeitos Temporários</span>
@@ -1755,8 +1755,8 @@
     {{!-- ============================================================= --}}
     {{!--     SEÇÃO 2: EFEITOS PERMANENTES                              --}}
     {{!-- ============================================================= --}}
-    <details class="form-section gum-details permanent-section" data-group-id="cond-perm" {{collapsibleState "cond-perm" @root.collapsedData}}>
-        <summary class="block-header">
+    <details class="form-section gum-details permanent-section gum-unified-section" data-group-id="cond-perm" {{collapsibleState "cond-perm" @root.collapsedData}}>
+        <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
                 <span class="header-title">Efeitos Permanentes</span>
@@ -1807,8 +1807,8 @@
     {{!-- ============================================================= --}}
     {{!--     SEÇÃO 3: CONDIÇÕES PASSIVAS (REGRAS / INSTALLED)          --}}
     {{!-- ============================================================= --}}
-    <details class="form-section gum-details passive-section" data-group-id="cond-passive" {{collapsibleState "cond-passive" @root.collapsedData}}>
-        <summary class="block-header">
+    <details class="form-section gum-details passive-section gum-unified-section" data-group-id="cond-passive" {{collapsibleState "cond-passive" @root.collapsedData}}>
+        <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
                 <span class="header-title">Condições Passivas (Regras)</span>

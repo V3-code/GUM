@@ -58,6 +58,7 @@
   --gum-bg-papiro: #f1e8e7;
   --gum-bg-card-claro: #f8f4f1;
   --gum-bg-card-sutil: rgba(0, 0, 0, 0.05);
+
   
   /* -- Paleta Escura (Contrastes/Cabeçalhos) -- */
   --gum-bg-darkest: #191813;
@@ -65,12 +66,15 @@
   --gum-bg-sidebar: #1a1a1a;
   --gum-bg-dark: #2b2a29;
   --gum-bg-medium: #3a3836;
-  
+  --gum-bg-body: #2b3038;
+
   /* -- Texto -- */
   --gum-text-escuro: #352425;
-  --gum-text-claro: #f8f4f1;
+  --gum-text-claro: #f3eadc;
   --gum-text-subtitulo: #977c63;
   --gum-text-medio: #a9a6a0;
+  --gum-text-label: rgba(247,233,215,0.75);
+  
 
   /* -- Acentos e Cores Semânticas -- */
   --gum-accent-gold: #c5a05b;
@@ -428,15 +432,17 @@
     line-height: 1.2;
 }
 .gum.sheet.actor .block-header h4 {
-    font-family: var(--gum-font-primary); color: var(--gum-text-escuro); margin: 0; font-weight: 700;
+    font-family: var(--gum-font-primary); color: var(--gum-accent-bronze); margin: 0; font-weight: 700;
     text-transform: uppercase;
     font-size: var(--gum-font-size-body);
 }
 .gum.sheet.actor .block-header h4 .dr-header-subtitle {
     font-size: var(--gum-font-size-meta);
     font-family: var(--gum-font-condensed);
-    font-style: italic;
-    color: var(--gum-bg-medium);
+    color: var(--gum-bg-cabecalho);
+    background: var(--gum-bg-card-claro);
+    padding: 2px;
+    border-radius: 4px;
 } 
 /* =================================================================== */
 /* 7. CHAT CARDS & OUTROS COMPONENTES                                 */
@@ -2143,7 +2149,7 @@
 
 /* --- Tabela de RD (Estilo "Livro de Regras") --- */
 .gum.sheet.actor .dr-location-block {
-    background: var(--gum-bg-card-claro);
+    background: var(--gum-bg-body);
     border: 1px solid var(--gum-border);
     padding: 0; /* Remove padding para o header encostar */
     border-radius: 4px;
@@ -2152,10 +2158,10 @@
 }
 
 .gum.sheet.actor .dr-location-block .block-header {
-    background: rgba(0,0,0,0.05);
+    background: var(--gum-bg-sidebar);
     padding: 6px 10px;
-    border-bottom: 1px solid var(--gum-border-light);
     margin: 0; /* Remove margem para colar na lista */
+    border-bottom: none;
 }
 
 .gum.sheet.actor .dr-location-list {
@@ -2242,8 +2248,7 @@
 }
 
 .gum.sheet.actor .location-name {
-    color: var(--gum-text-escuro);
-    font-weight: 500;
+    color: var(--gum-text-claro);
 }
 /* O número pequeno do dado (ex: 3-4) */
 .gum.sheet.actor .location-name span {
@@ -2255,7 +2260,7 @@
 .gum.sheet.actor .location-dr-value {
     font-family: var(--gum-font-condensed);
     font-weight: 700;
-    color: var(--gum-accent-blue); /* Azul para defesa */
+    color: var(--gum-accent-bronze); 
     font-size: 1.1em;
 }
 
@@ -2788,18 +2793,6 @@
 .gum.sheet.actor .tab[data-tab="characteristics"] details[open] .indicator {
     transform: rotate(90deg);
     color: var(--gum-accent-gold);
-}
-
-/* O Título do Bloco */
-.gum.sheet.actor .tab[data-tab="characteristics"] .block-title {
-    font-family: var(--gum-font-condensed);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 1.1em;
-    font-weight: 700;
-    color: var(--gum-text-subtitulo);
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-    margin: 0;
 }
 
 /* Ícone de Ordenar */
@@ -3714,4 +3707,318 @@
 .gum-rd-form .gurps-rd-table .table-row .loc-rd-total strong {
     color: #b64040;
 }
+
+/* =================================================================== */
+/* 22. HEADER UNIFICADO (COMBATE/EQUIPAMENTOS/CARACTERÍSTICAS/CONDIÇÕES) */
+/* =================================================================== */
+
+.gum.sheet.actor .gum-unified-section {
+    background: #2a2f37;
+    border: 1px solid #3a3f49;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.gum.sheet.actor .conditions-tab details.form-section.gum-unified-section,
+.gum.sheet.actor .tab[data-tab="characteristics"] details.form-section.gum-unified-section {
+    background: #2a2f37;
+    border: 1px solid #3a3f49;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.gum.sheet.actor .gum-unified-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    list-style: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #5c2028 0%, #45161d 100%);
+    border-bottom: 1px dotted rgba(255,255,255,0.18);
+    color: #f0e4d4;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: var(--gum-font-secondary);
+    font-size: var(--gum-font-size-header);
+}
+
+.gum.sheet.actor .gum-unified-header:hover {
+    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
+}
+
+.gum.sheet.actor .conditions-tab .gum-unified-header,
+.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header {
+    background: linear-gradient(180deg, #5c2028 0%, #45161d 100%);
+}
+
+.gum.sheet.actor .conditions-tab .gum-unified-header:hover,
+.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header:hover {
+    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
+}
+
+.gum.sheet.actor .gum-unified-header::-webkit-details-marker {
+    display: none;
+}
+
+.gum.sheet.actor .gum-unified-section[open] > .gum-unified-header {
+    background: linear-gradient(180deg, #6b242e 0%, #4b1821 100%);
+    border-bottom-color: rgba(255,255,255,0.25);
+}
+
+.gum.sheet.actor .gum-unified-header .header-left,
+.gum.sheet.actor .gum-unified-header .summary-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gum.sheet.actor .gum-unified-header .summary-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gum.sheet.actor .gum-unified-header .header-title,
+.gum.sheet.actor .gum-unified-header .block-title,
+.gum.sheet.actor .gum-unified-header .group-name {
+    color: inherit;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: none;
+    font-family: var(--gum-font-secondary);
+    font-size: var(--gum-font-size-header);
+}
+
+.gum.sheet.actor .gum-unified-header .header-counter {
+    background: rgba(0,0,0,0.35);
+    color: #f7e9d7;
+    font-size: 0.7em;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.gum.sheet.actor .gum-unified-header .header-hint {
+    margin: 0;
+    font-size: 0.75em;
+    color: rgba(247,233,215,0.8);
+    text-transform: none;
+    font-style: italic;
+    font-family: var(--gum-font-secondary);
+}
+
+.gum.sheet.actor .gum-unified-header .indicator,
+.gum.sheet.actor .gum-unified-header .toggle-icon {
+    color: rgba(247,233,215,0.8);
+    transition: transform 0.2s ease;
+}
+
+.gum.sheet.actor .gum-unified-section[open] > .gum-unified-header .indicator,
+.gum.sheet.actor .gum-unified-section[open] > .gum-unified-header .toggle-icon {
+    transform: rotate(90deg);
+    color: #f9d899;
+}
+
+.gum.sheet.actor .gum-unified-header .sort-control,
+.gum.sheet.actor .gum-unified-header .item-edit {
+    color: rgba(247,233,215,0.7);
+    transition: color 0.2s ease;
+}
+
+.gum.sheet.actor .gum-unified-header .sort-control:hover,
+.gum.sheet.actor .gum-unified-header .item-edit:hover {
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .gum-unified-header .group-tag.weight {
+    background: rgba(255,255,255,0.12);
+    color: #f0e4d4;
+}
+
+.gum.sheet.actor .gum-unified-section[open] .group-name {
+    color: inherit;
+}
+
+.gum.sheet.actor .gum-unified-section[open] .group-tag.weight {
+    background: rgba(255,255,255,0.12);
+    color: #f0e4d4;
+}
+
+.gum.sheet.actor .gum-unified-section[open] .group-summary .item-edit {
+    color: rgba(247,233,215,0.7);
+}
+
+.gum.sheet.actor .gum-unified-section .list-content,
+.gum.sheet.actor .gum-unified-section .group-content,
+.gum.sheet.actor .gum-unified-section .effects-grid-container,
+.gum.sheet.actor .gum-unified-section .flex-wrap-container {
+    background: #262b33;
+    border-top: 1px dotted rgba(255,255,255,0.12);
+}
+
+/* Combate: linhas e separadores no padrão unificado */
+.gum.sheet.actor .gum-unified-section .attack-row {
+    background: #2b3038;
+    border-bottom: 1px dotted rgba(255,255,255,0.12);
+}
+
+.gum.sheet.actor .gum-unified-section .attack-row:hover {
+    background: #323843;
+}
+
+.gum.sheet.actor .gum-unified-section .attack-cell + .attack-cell {
+    border-left: 1px dotted rgba(255,255,255,0.12);
+}
+
+.gum.sheet.actor .gum-unified-section .attack-label {
+    color: rgba(247,233,215,0.75);
+}
+
+.gum.sheet.actor .gum-unified-section .attack-value {
+    color: #f3eadc;
+}
+
+.gum.sheet.actor .gum-unified-section .attack-skill {
+    color: #f3eadc;
+}
+
+.gum.sheet.actor .gum-unified-section .attack-damage-sub,
+.gum.sheet.actor .gum-unified-section .attack-mode-sub,
+.gum.sheet.actor .gum-unified-section .attack-line-sub {
+    color: rgba(247,233,215,0.6);
+}
+
+/* Cards em Equipamentos/Características/Condições */
+.gum.sheet.actor .gum-unified-section .equipment-card,
+.gum.sheet.actor .gum-unified-section .characteristic-card,
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced {
+    background: #2f343d;
+    border: 1px dotted rgba(255,255,255,0.15);
+    box-shadow: none;
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card:hover,
+.gum.sheet.actor .gum-unified-section .characteristic-card:hover,
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced:hover {
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-name a,
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-name a,
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced .pill-name {
+    color: #f3eadc;
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-name a:hover,
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-name a:hover {
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-controls {
+    border-top: 1px dotted rgba(255,255,255,0.12);
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-control {
+    color: rgba(247,233,215,0.7);
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-control:hover {
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-icon,
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-icon {
+    border-color: rgba(255,255,255,0.15);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card::before {
+    background: rgba(255,255,255,0.15);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .card-points {
+    background: rgba(197, 160, 91, 0.25);
+    color: #f1d3a1;
+    border-color: rgba(197, 160, 91, 0.35);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .card-cr {
+    background: rgba(86, 129, 156, 0.25);
+    color: #cfe5ff;
+    border-color: rgba(86, 129, 156, 0.35);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-controls {
+    border-left: 1px dotted rgba(255,255,255,0.12);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-controls a {
+    color: rgba(247,233,215,0.7);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-controls a:hover {
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .item-controls a.item-delete:hover {
+    color: #ffb2b2;
+}
+
+.gum.sheet.actor .gum-unified-section .placeholder-text {
+    color: rgba(247,233,215,0.7);
+}
+
+.gum.sheet.actor .gum-unified-section .equip-stat-tag {
+    background: rgba(255,255,255,0.08);
+    color: rgba(247,233,215,0.9);
+    border-color: rgba(255,255,255,0.18);
+}
+
+.gum.sheet.actor .gum-unified-section .equip-stat-tag.shield-tag {
+    background: rgba(66, 133, 244, 0.2);
+    color: #d6e6ff;
+    border-color: rgba(66, 133, 244, 0.35);
+}
+
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced .pill-icon {
+    background: #1f2229;
+    border-color: rgba(255,255,255,0.12);
+}
+
+.gum.sheet.actor .gum-unified-section .pill-tag {
+    background: rgba(255,255,255,0.08);
+    color: rgba(247,233,215,0.8);
+}
+
+.gum.sheet.actor .gum-unified-section .pill-tag.duration {
+    background: rgba(197, 160, 91, 0.2);
+    color: #f1d3a1;
+}
+
+.gum.sheet.actor .gum-unified-section .pill-tag.source {
+    background: rgba(0,0,0,0.25);
+    color: rgba(247,233,215,0.85);
+}
+
+.gum.sheet.actor .gum-unified-section .pill-tag.status.on {
+    color: #9fe3b2;
+    background: rgba(56, 156, 104, 0.2);
+}
+
+.gum.sheet.actor .gum-unified-section .pill-tag.status.off {
+    color: rgba(247,233,215,0.65);
+    background: rgba(0,0,0,0.25);
+}
+
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced .pill-controls {
+    border-left: 1px dotted rgba(255,255,255,0.15);
+}
+
+.gum.sheet.actor .gum-unified-section .effect-pill-enhanced .effect-control {
+    color: rgba(247,233,215,0.7);
+}
+
 
