@@ -402,6 +402,7 @@
 .gum.sheet.actor nav.sheet-tabs {
     display: flex; justify-content: space-around; gap: 0.5rem;
     border-bottom: 1px solid var(--gum-border-gold); margin-bottom: 10px;
+    border-top:none;
 }
 .gum.sheet.actor .sheet-tabs .item {
     width: 42px; height: 38px; display: grid; place-items: center;
@@ -435,6 +436,9 @@
     font-family: var(--gum-font-primary); color: var(--gum-accent-bronze); margin: 0; font-weight: 700;
     text-transform: uppercase;
     font-size: var(--gum-font-size-body);
+    display: flex;
+    flex-direction:column;
+    gap: 4px;
 }
 .gum.sheet.actor .block-header h4 .dr-header-subtitle {
     font-size: var(--gum-font-size-meta);
@@ -1429,7 +1433,6 @@
     align-items: center;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.3);
-    border-bottom: 1px solid var(--gum-border-light);
     cursor: pointer;
     list-style: none;
     outline: none;
@@ -2260,7 +2263,7 @@
 .gum.sheet.actor .location-dr-value {
     font-family: var(--gum-font-condensed);
     font-weight: 700;
-    color: var(--gum-accent-bronze); 
+    color: var(--gum-text-medio); 
     font-size: 1.1em;
 }
 
@@ -2756,7 +2759,6 @@
     align-items: center;
     
     background: rgba(255,255,255,0.2); /* Destaque sutil no header */
-    border-bottom: 1px solid var(--gum-border-light);
     padding: 8px 12px;
     margin: 0; /* Remove margem para colar no topo */
     cursor: pointer;
@@ -3750,7 +3752,7 @@
 
 .gum.sheet.actor .conditions-tab .gum-unified-header,
 .gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header {
-    background: linear-gradient(180deg, #5c2028 0%, #45161d 100%);
+    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
 }
 
 .gum.sheet.actor .conditions-tab .gum-unified-header:hover,
