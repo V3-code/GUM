@@ -91,6 +91,15 @@
   --gum-border-gold: rgba(197, 165, 106, 0.4);
   --gum-shadow-sutil: 0 1px 3px rgba(0,0,0,0.1);
   --gum-shadow-forte: 0 4px 8px rgba(0,0,0,0.5);
+
+  --item-header-banner: url("assets/items/item-header-banner.webp");
+  --item-header-banner-bottom: url("assets/items/item-header-banner-bottom.webp");
+  --item-bg-texture: url("assets/items/item-bg-texture-dark.webp");
+  --item-panel-texture: url("assets/items/item-bg-panel.webp");
+  --item-panel-texture-contrast: url("assets/items/item-bg-panel-contrast.webp");
+  --item-divider: url("assets/items/item-divider.svg.svg");
+  --character-bg-texture: url("assets/items/character-bg-texture.webp");
+  --character-bg-texture-2: url("assets/items/character-bg-texture-2.png");
 }
 
 /* =================================================================== */
@@ -171,11 +180,10 @@
         "header header"
         "sidebar main";
     height: 100%;
-    background:
-        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.06), transparent 35%),
-        radial-gradient(circle at 80% 25%, rgba(255, 255, 255, 0.04), transparent 30%),
-        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 2px, rgba(0, 0, 0, 0) 2px 6px),
-        linear-gradient(180deg, #2b2726 0%, #1f1c1b 100%);
+    background: linear-gradient(rgb(25 25 25), rgb(48 47 47 / 0%)), var(--character-bg-texture);
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
     overflow: hidden;
 }
 
@@ -412,7 +420,7 @@
 }
 .gum.sheet.actor .sheet-tabs .item {
     width: 42px; height: 38px; display: grid; place-items: center;
-    color: var(--gum-bg-cabecalho); border-radius: 3px 3px 0 0; 
+    color: var(--gum-border-light); border-radius: 3px 3px 0 0; 
     border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s;
 }
 .gum.sheet.actor .sheet-tabs .item:hover { color: #fff; background: var(--gum-bg-card-sutil); }
@@ -2159,17 +2167,18 @@
 /* --- Tabela de RD (Estilo "Livro de Regras") --- */
 .gum.sheet.actor .dr-location-block {
     background: var(--gum-bg-body);
-    border: 1px solid var(--gum-border);
+    border: none;
     padding: 0; /* Remove padding para o header encostar */
     border-radius: 4px;
     overflow: hidden; /* Para os cantos arredondados */
-    box-shadow: var(--gum-shadow-sutil);
+    box-shadow:  0 4px 14px rgba(0,0,0,0.45),
+    inset 0 0 0 1px rgba(201,161,94,0.15);
 }
 
 .gum.sheet.actor .dr-location-block .block-header {
-    background: var(--gum-bg-sidebar);
+    background: var(--gum-bg-cabecalho);
     padding: 6px 10px;
-    margin: 0; /* Remove margem para colar na lista */
+    margin: 0;
     border-bottom: none;
 }
 
@@ -3743,13 +3752,14 @@
     list-style: none;
     cursor: pointer;
     padding: 8px 12px;
-    background: linear-gradient(180deg, #5c2028 0%, #45161d 100%);
-    border-bottom: 1px dotted rgba(255,255,255,0.18);
+    background: var(--gum-bg-cabecalho);
+    /* border-bottom: 1px dotted rgba(255,255,255,0.18);*/
     color: #f0e4d4;
     text-transform: uppercase;
     letter-spacing: 0.6px;
     font-family: var(--gum-font-secondary);
     font-size: var(--gum-font-size-header);
+    border: none;
 }
 
 .gum.sheet.actor .gum-unified-header:hover {
