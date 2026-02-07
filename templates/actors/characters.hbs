@@ -1433,12 +1433,20 @@
                       <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
                     </div>
                     <div class="item-controls meter-controls">
-                    <a class="item-control edit-combat-meter" title="Editar"><i class="fas fa-edit"></i></a>
-                    <a class="item-control hide-combat-meter" title="{{#if this.meter.hidden}}Reexibir Registro{{else}}Ocultar Registro{{/if}}">
-                      <i class="fas {{#if this.meter.hidden}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
-                    </a>
-                    <a class="item-control delete-combat-meter" title="Deletar Registro"><i class="fas fa-trash"></i></a>
-                  </div>
+                      <div class="gum-action-menu js-action-menu">
+                        <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do registro">
+                          <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                          <a class="item-control hide-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.hidden}}Reexibir Registro{{else}}Ocultar Registro{{/if}}">
+                            <i class="fas {{#if this.meter.hidden}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
+                            <span>{{#if this.meter.hidden}}Reexibir{{else}}Ocultar{{/if}}</span>
+                          </a>
+                          <a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="Deletar Registro"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               {{/each}}

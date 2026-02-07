@@ -437,8 +437,11 @@
 
 /* Blocos/Cards Padrão */
 .gum.sheet.actor .gum-block, .gum.sheet.actor .skill-block {
-    background: var(--gum-bg-card-claro); border: 1px solid var(--gum-border);
-    padding: 0.65rem; border-radius: 3px; 
+    background: var(--gum-bg-cabecalho);
+    /* border: 1px solid var(--gum-border); */
+    padding: 0.35rem;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
 .gum.sheet.actor .block-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -447,7 +450,7 @@
     line-height: 1.2;
 }
 .gum.sheet.actor .block-header h4 {
-    font-family: var(--gum-font-primary); color: var(--gum-accent-bronze); margin: 0; font-weight: 700;
+    font-family: var(--gum-font-condensed); color: var(--gum-border); margin: 0; font-weight: 700;
     text-transform: uppercase;
     font-size: var(--gum-font-size-body);
     display: flex;
@@ -1227,7 +1230,6 @@
 /* --- BLOCO SUPERIOR: DETALHES FÍSICOS (GRID HORIZONTAL) --- */
 .gum.sheet.actor .biography-details {
     background: rgba(0,0,0,0.03);
-    border: 1px solid var(--gum-border-light);
     border-radius: 4px;
     padding: 10px;
     flex-shrink: 0; /* Não encolhe, mantém altura necessária */
@@ -1236,8 +1238,6 @@
 /* Título da Seção de Detalhes (Opcional, se houver no HTML) */
 .gum.sheet.actor .biography-details h4 {
     margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--gum-border-light);
     color: var(--gum-text-subtitulo);
 }
 
@@ -2266,7 +2266,7 @@
 }
 
 .gum.sheet.actor .location-name {
-    color: var(--gum-text-claro);
+    color: var(--gum-accent-bronze);
 }
 /* O número pequeno do dado (ex: 3-4) */
 .gum.sheet.actor .location-name span {
@@ -2427,6 +2427,55 @@
     gap: 6px;
     padding-top: 5px;
     border-top: 1px dotted var(--gum-border-light);
+    position: relative;
+}
+
+.gum.sheet.actor .gum-action-menu {
+    position: relative;
+}
+
+.gum.sheet.actor .gum-action-menu__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+}
+
+.gum.sheet.actor .gum-action-menu__panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    display: none;
+    flex-direction: column;
+    min-width: 140px;
+    background: #fff;
+    border: 1px solid var(--gum-border-light);
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    z-index: 20;
+    overflow: hidden;
+}
+
+.gum.sheet.actor .gum-action-menu.is-open .gum-action-menu__panel {
+    display: flex;
+}
+
+.gum.sheet.actor .gum-action-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    color: var(--gum-text-medio);
+}
+
+.gum.sheet.actor .gum-action-menu__item:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--gum-accent-blue);
+    text-decoration: none;
+}
+
+.gum.sheet.actor .gum-action-menu__item.is-danger:hover {
+    color: var(--gum-accent-red);
 }
 
 .gum.sheet.actor .combat-meters-box .meter-card .item-control i,
@@ -2529,7 +2578,7 @@
 .gum.sheet.actor .attack-group-details[open] .group-summary {
     background: var(--gum-bg-medium); /* Mais escuro quando aberto para destaque */
     color: var(--gum-text-claro); /* Inverte a cor do texto para contraste */
-    border-bottom: 1px solid var(--gum-border-light);
+    border-bottom: none;
 }
 
 .gum.sheet.actor .group-summary::-webkit-details-marker { display: none; }
@@ -2576,11 +2625,7 @@
     color: var(--gum-text-medio);
     background: rgba(0,0,0,0.1);
 }
-/* Adaptação das tags quando o cabeçalho fica escuro (aberto) */
-.gum.sheet.actor .attack-group-details[open] .group-tag.weight {
-    color: #ccc;
-    background: rgba(255,255,255,0.1);
-}
+
 
 .gum.sheet.actor .group-tag.db { background: var(--gum-accent-blue); color: #fff; }
 .gum.sheet.actor .group-tag.pw { background: var(--gum-accent-green); color: #fff; }
@@ -2594,9 +2639,7 @@
 .gum.sheet.actor .group-summary .item-edit:hover {
     color: var(--gum-accent-gold);
 }
-.gum.sheet.actor .attack-group-details[open] .group-summary .item-edit {
-    color: rgba(255,255,255,0.6);
-}
+
 .gum.sheet.actor .attack-group-details[open] .group-summary .item-edit:hover {
     color: #fff;
 }
@@ -3730,9 +3773,9 @@
 /* =================================================================== */
 
 .gum.sheet.actor .gum-unified-section {
-    background: #2a2f37;
-    border: 1px solid #3a3f49;
+    background: var(--gum-bg-cabecalho);
     border-radius: 6px;
+    border: none;
     overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
@@ -3740,7 +3783,7 @@
 .gum.sheet.actor .conditions-tab details.form-section.gum-unified-section,
 .gum.sheet.actor .tab[data-tab="characteristics"] details.form-section.gum-unified-section {
     background: #2a2f37;
-    border: 1px solid #3a3f49;
+    border: none;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
 
@@ -3760,7 +3803,7 @@
     font-family: var(--gum-font-secondary);
     font-size: var(--gum-font-size-header);
     border: none;
-}
+}f
 
 .gum.sheet.actor .gum-unified-header:hover {
     background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
@@ -3768,12 +3811,12 @@
 
 .gum.sheet.actor .conditions-tab .gum-unified-header,
 .gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header {
-    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
+    background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
 .gum.sheet.actor .conditions-tab .gum-unified-header:hover,
 .gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header:hover {
-    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
+    background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
 .gum.sheet.actor .gum-unified-header::-webkit-details-marker {
@@ -3781,8 +3824,8 @@
 }
 
 .gum.sheet.actor .gum-unified-section[open] > .gum-unified-header {
-    background: linear-gradient(180deg, #6b242e 0%, #4b1821 100%);
-    border-bottom-color: rgba(255,255,255,0.25);
+    background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4b1821 100%);
+    /*border-bottom-color: rgba(255,255,255,0.25);*/
 }
 
 .gum.sheet.actor .gum-unified-header .header-left,
@@ -3801,11 +3844,11 @@
 .gum.sheet.actor .gum-unified-header .header-title,
 .gum.sheet.actor .gum-unified-header .block-title,
 .gum.sheet.actor .gum-unified-header .group-name {
-    color: inherit;
+    color: var(--gum-border);
     font-weight: 700;
     margin: 0;
     text-shadow: none;
-    font-family: var(--gum-font-secondary);
+    font-family: var(--gum-font-condensed);
     font-size: var(--gum-font-size-header);
 }
 

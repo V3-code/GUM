@@ -1329,6 +1329,7 @@ html.on("click", ".delete-combat-meter", (ev) => this._onDeleteCombatMeter(ev));
 html.on("click", ".hide-combat-meter", (ev) => this._onToggleCombatMeterVisibility(ev));
 html.on("click", ".show-hidden-meters", (ev) => this._onToggleHiddenMeters(ev));
 html.on("change", ".combat-meters-box .meter-inputs input", (ev) => this._onCombatMeterInputChange(ev));
+this._setupActionMenuListeners(html);
 
 // -------------------------------------------------------------
 //  RESERVAS DE ENERGIA (MAGIA / PODER)
@@ -3010,6 +3011,49 @@ const dlg = new Dialog({
 
 dlg.render(true);
 
+}
+
+_setupActionMenuListeners(html) {
+  const namespace = `.gumActionMenu-${this.appId}`;
+  $(document).off(`click${namespace}`);
+  $(document).on(`click${namespace}`, (ev) => this._handleDocumentActionMenuClick(ev));
+
+  html.on("click", ".js-action-menu-toggle", (ev) => this._onActionMenuToggle(ev));
+  html.on("click", ".js-action-menu-panel .item-control", () => this._closeAllActionMenus());
+}
+
+_handleDocumentActionMenuClick(ev) {
+  if (!this.element?.length) return;
+  if ($(ev.target).closest(".js-action-menu").length) return;
+  this._closeAllActionMenus();
+}
+
+_onActionMenuToggle(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const menu = ev.currentTarget.closest(".js-action-menu");
+  if (!menu) return;
+
+  const isOpen = menu.classList.contains("is-open");
+  this._closeAllActionMenus();
+
+  if (!isOpen) {
+    menu.classList.add("is-open");
+    const toggle = menu.querySelector(".js-action-menu-toggle");
+    if (toggle) toggle.setAttribute("aria-expanded", "true");
+  }
+}
+
+_closeAllActionMenus() {
+  if (!this.element?.length) return;
+  this.element.find(".js-action-menu.is-open").removeClass("is-open")
+    .find(".js-action-menu-toggle").attr("aria-expanded", "false");
+}
+
+async close(options = {}) {
+  $(document).off(`click.gumActionMenu-${this.appId}`);
+  return super.close(options);
 }
 
 async _onAddCombatMeter(ev) {
