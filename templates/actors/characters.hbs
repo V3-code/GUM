@@ -891,6 +891,8 @@
     {{!  ABA DE CONJURAÇÕES (ESTRUTURA REFINADA E PADRONIZADA)    }}
     {{! ========================================================= }}
     <div class="tab" data-group="primary" data-tab="spells">
+      <div class="spells-tab-layout">
+        <div class="spells-left-column">
 
       {{!-- Bloco da Habilidade de Conjuração (Mantido) --}}
       <div class="casting-ability-box skill-block">
@@ -916,7 +918,7 @@
             <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
           </div>
         </div>
-        <div class="meter-list energy-reserves-list">
+                <div class="meter-list energy-reserves-list">
           {{#each spellReserves}}
           <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
             <div class="meter-main">
@@ -926,109 +928,103 @@
                 <span>/</span>
                 <input type="number" data-property="max" value="{{this.max}}"/>
               </div>
-            </div>
-            <div class="item-controls meter-controls">
-              <a class="item-control edit-energy-reserve" title="Editar"><i class="fas fa-edit"></i></a>
-              <a class="item-control delete-energy-reserve" title="Deletar"><i class="fas fa-trash"></i></a>
+              <div class="item-controls meter-controls">
+                <div class="gum-action-menu js-action-menu">
+                  <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </a>
+                  <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
+                    <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                    <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           {{/each}}
         </div>
       </div>
+      </div>
 
-      {{!-- LISTA DE MAGIAS (NOVA ESTRUTURA COLAPSÁVEL) --}}
-      <div class="skill-block spells-list-box">
-        <div class="block-header">
-          <h4>Lista de Magias</h4>
-          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-        
-        <div class="spell-list-v2">
-          {{#each itemsByType.spell}}
-<div class="item-wrapper item" data-item-id="{{this.id}}" draggable="true"> {{!-- Wrapper novo --}}
-    
-    <details class="spell-card-details" data-group-id="spell-card-{{this.id}}" {{collapsibleState (concat "spell-card-" this.id) @root.collapsedData}}>
-            {{!-- CABEÇALHO (Resumo) --}}
-            <summary class="spell-summary">
-                <div class="spell-main-info">
-                    <i class="fas fa-chevron-right indicator"></i>
-                    <span class="spell-name">{{this.name}}</span>
-                </div>
-
-                <div class="spell-quick-stats">
-                    {{!-- NH (Destaque Principal) --}}
-                    <div class="quick-stat nh">
-                        <label>NH</label>
-                        <a class="rollable value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                    </div>
-                    {{!-- Custo (Info rápida) --}}
-                    <div class="quick-stat cost">
-                        <i class="fas fa-bolt"></i> {{this.system.mana_cost}}
-                    </div>
-
-                    {{!-- Classe (Info rápida) --}}
-                    <div class="group-tag sp_cl">
-                        <label>{{this.system.spell_class}}</label>
-                    </div>
-
-                    {{!-- Controles --}}
-                    <div class="item-controls">
-                      <a class="item-control item-quick-view" data-item-id="{{this.id}}" title="Visualizar Card"><i class="fas fa-eye"></i></a>
-                        <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                        <a class="item-control item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
-                    </div>
-                </div>
-            </summary>
-
-            {{!-- CONTEÚDO EXPANDIDO (Detalhes) --}}
-            <div class="spell-expanded-content">
-                <div class="spell-tags-row">
-                    
-                    {{!-- Ataque (Se houver) --}}
-                    {{#if this.system.attack_nh}}
-                    <span class="tag-box attack">
-                        <label>Ataque</label>
-                        <a class="rollable value" data-type="attack" data-attack-type="spell" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque com {{this.name}}" data-item-id="{{this.id}}">{{this.system.attack_nh}}</a>
-                    </span>
-                    {{/if}}
-
-                    {{!-- Dano (Se houver) --}}
-                    {{#if this.system.damage.formula}}
-                    <span class="tag-box damage">
-                        <label>Dano</label>
-                        <a class="rollable-damage value" title="Rolar Dano" data-item-id="{{this.id}}">
-                            {{this.system.damage.formula}} {{this.system.damage.type}}
-                        </a>
-                    </span>
-                    {{/if}}
-
-                    {{!-- Outros Detalhes --}}
-                    
-                    <span class="tag-box"><label>Tempo</label> <span class="value">{{this.system.casting_time}}</span></span>
-                    <span class="tag-box"><label>Duração</label> <span class="value">{{this.system.duration}}</span></span>
-                    <span class="tag-box"><label>Custo</label> <span class="value">{{this.system.mana_cost}}</span></span>
-                    
-                    {{#if (ne this.system.mana_maint "0")}}
-                    <span class="tag-box"><label>Manut.</label> <span class="value">{{this.system.mana_maint}}</span></span>
-                    {{/if}}
-                    
-                    {{#if this.system.resistance}}
-                    <span class="tag-box resistance"><label>Resiste</label> <span class="value">{{this.system.resistance}}</span></span>
-                    {{/if}}
-                    <span class="tag-box"><label>Escola</label> <span class="value">{{this.system.spell_school}}</span></span>
-                </div>
-
-                {{!-- Efeito Descritivo --}}
-                {{#if this.system.effect}}
-                <div class="spell-effect-text">
-                    <strong>Efeito:</strong> {{this.system.effect}}
-                </div>
-                {{/if}}
+      {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
+      <div class="spells-right-column">
+      <div class="spell-groups-grid">
+        {{#each spellGroupsKeys as |groupName|}}
+          {{#with (lookup ../spellsByGroup groupName) as |spells|}}
+          <div class="skill-block spells-list-box spell-group-box">
+            <div class="block-header">
+              <h4>{{groupName}} <span class="st-group-count">{{spells.length}}</span></h4>
             </div>
-          </details>
+
+            <div class="spell-list-v2 grouped attack-style">
+              {{#each spells}}
+              <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
+                <div class="spell-row-main">
+                  <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+
+                  <div class="spell-name-stack">
+                    <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
+                    <div class="spell-school-line">{{this.system.spell_school}} · {{this.system.spell_class}}</div>
+                  </div>
+
+                  <div class="spell-meta-cell">
+                    <span class="spell-meta-label">NH</span>
+                    <a class="rollable spell-meta-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                  </div>
+
+                  <div class="spell-meta-cell damage">
+                    <span class="spell-meta-label">Dano</span>
+                    {{#if this.system.damage.formula}}
+                    <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                    {{else}}
+                    <span class="spell-meta-value">—</span>
+                    {{/if}}
+                    {{#if this.system.damage.follow_up_damage.formula}}
+                    <span class="spell-meta-sub">FU: {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                    {{/if}}
+                    {{#if this.system.damage.fragmentation_damage.formula}}
+                    <span class="spell-meta-sub">FR: {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                    {{/if}}
+                  </div>
+
+                  <div class="spell-meta-cell">
+                    <span class="spell-meta-label">TxD</span>
+                    <span class="spell-meta-value">{{this.system.casting_time}} × {{this.system.duration}}</span>
+                  </div>
+
+                  <div class="spell-meta-cell">
+                    <span class="spell-meta-label">CCxCM</span>
+                    <span class="spell-meta-value">{{this.system.mana_cost}} × {{this.system.mana_maint}}</span>
+                  </div>
+
+                  <div class="item-controls spell-controls-row">
+                    <div class="gum-action-menu js-action-menu">
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da magia" aria-label="Opções da magia" role="button" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da magia">
+                        <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              {{/each}}
+            </div>
           </div>
-          {{/each}}
+          {{/with}}
+        {{/each}}
+
+        {{#unless spellGroupsKeys}}
+        <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
+          <p>Nenhuma magia adicionada.</p>
         </div>
+        {{/unless}}
+      </div>
+      </div>
       </div>
     </div>
     
@@ -1403,12 +1399,7 @@
               {{/each}}
             </ol>
           </div>
-        </div>
-
-        {{! --- COLUNA DA DIREITA (LARGA) --- }}
-        <div class="combat-right-column">
-          
-          {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
+                    {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
  <div class="gum-block combat-meters-box">
             <div class="block-header">
               <h4>Registros de Combate</h4>
@@ -1455,6 +1446,12 @@
               {{/unless}}
             </div>
           </div>
+        </div>
+
+        {{! --- COLUNA DA DIREITA (LARGA) --- }}
+        <div class="combat-right-column">
+          
+
 
           {{!-- Bloco de Lista de ataque --}}
 <div class="attack-group-list-v2">

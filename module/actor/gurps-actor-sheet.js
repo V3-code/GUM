@@ -470,17 +470,44 @@ async getData(options) {
         }
         
 
+  // ================================================================== //
+        //    AGRUPAMENTO DE MAGIAS (EM BLOCOS COMO PERÍCIAS)
+        // ================================================================== //
+        const spellSortPref = this.actor.system.sorting?.spell || 'manual';
+        const spellSortFn = getSortFunction(spellSortPref);
+        const spells = itemsByType.spell || [];
+        const spellsByGroup = {};
+
+        spells.forEach((spell) => {
+            let groupName = (spell.system.group || 'Geral').trim();
+            if (!groupName) groupName = 'Geral';
+            if (!spellsByGroup[groupName]) spellsByGroup[groupName] = [];
+            spellsByGroup[groupName].push(spell);
+        });
+
+        Object.keys(spellsByGroup).forEach((groupName) => {
+            spellsByGroup[groupName].sort(spellSortFn);
+        });
+
+        context.spellsByGroup = spellsByGroup;
+        context.spellGroupsKeys = Object.keys(spellsByGroup).sort((a, b) => {
+            if (a === 'Geral') return -1;
+            if (b === 'Geral') return 1;
+            return a.localeCompare(b);
+        });
+
         // ================================================================== //
         //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
         // ================================================================== //
-           const simpleSortTypes = ['spell', 'power'];
-                for (const type of simpleSortTypes) {
-                    if (itemsByType[type]) {
-                        const sortPref = this.actor.system.sorting?.[type] || 'manual';
-                        itemsByType[type].sort(getSortFunction(sortPref));
-                    }
-                }
-                context.itemsByType = itemsByType; // Salva os itens já ordenados no contexto
+        const simpleSortTypes = ['power'];
+        for (const type of simpleSortTypes) {
+            if (itemsByType[type]) {
+                const sortPref = this.actor.system.sorting?.[type] || 'manual';
+                itemsByType[type].sort(getSortFunction(sortPref));
+            }
+        }
+        context.itemsByType = itemsByType; // Salva os itens já ordenados no contexto
+
 
 // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (VERSÃO FINAL)          //

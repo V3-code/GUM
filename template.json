@@ -152,7 +152,7 @@
     },
     "spell": {
       "templates": ["base"],
-      "points": 4, "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Comum", "spell_school": "Fogo", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "", "auto_points": true,
+      "points": 4, "group": "Geral",  "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Comum", "spell_school": "Fogo", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "", "auto_points": true,
       "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
       "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
     },
