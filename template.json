@@ -35,6 +35,7 @@
       "combat": { "body_profile": "humanoid", "defense_bonus": 0, "dr_mods": {}, "dr_temp_mods": {}, "combat_meters": {} },
       "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
       "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
+      "casting_abilities": {},
       "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "description": "Descreva aqui a fonte de poder.", "power_talent": 0 },
       "spell_reserves": {},
       "power_reserves": {},

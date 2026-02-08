@@ -1983,7 +1983,7 @@
 /* O Título (Ex: Magery 3) */
 .gum.sheet.actor .casting-ability-box h4 {
     font-family: var(--gum-font-secondary); /* Cinzel */
-    font-size: 1.4em;
+    font-size: 1.05em;
     font-weight: 700;
     color: var(--gum-text-escuro);
     margin: 0;
@@ -2011,7 +2011,6 @@
 }
 .gum.sheet.actor .casting-ability-box .header-controls a:hover {
     color: var(--gum-accent-gold);
-    transform: rotate(30deg); /* Efeito sutil de rotação */
 }
 
 /* Área de Descrição */
@@ -2030,6 +2029,74 @@
 }
 .gum.sheet.actor .casting-ability-box .ability-description p:last-child {
     margin-bottom: 0;
+}
+
+.gum.sheet.actor .casting-abilities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+}
+
+.gum.sheet.actor .casting-ability-card {
+    border: 1px solid var(--gum-border-light);
+    border-left: 3px solid var(--gum-accent-purple);
+    border-radius: 3px;
+    background: #fff;
+}
+
+.gum.sheet.actor .casting-ability-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 8px;
+}
+
+.gum.sheet.actor .casting-ability-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.gum.sheet.actor .casting-ability-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.gum.sheet.actor .casting-ability-name {
+    font-family: var(--gum-font-condensed);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--gum-text-escuro);
+}
+
+.gum.sheet.actor .casting-ability-level {
+    font-family: var(--gum-font-condensed);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gum-text-subtitulo);
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .casting-ability-source {
+    margin-top: 2px;
+    font-family: var(--gum-font-condensed);
+    font-size: 0.76rem;
+    color: var(--gum-text-medio);
+    line-height: 1.2;
+}
+
+.gum.sheet.actor .casting-ability-controls .gum-action-menu__toggle {
+    font-size: 0.82rem;
+}
+
+.gum.sheet.actor .casting-abilities-list .empty-placeholder.compact {
+    text-align: center;
+    color: var(--gum-text-medio);
+    font-size: 0.82rem;
+    padding: 6px 0;
 }
 
 .gum.sheet.actor .spell-list-v2 {

@@ -894,19 +894,45 @@
       <div class="spells-tab-layout">
         <div class="spells-left-column">
 
-      {{!-- Bloco da Habilidade de Conjuração (Mantido) --}}
-      <div class="casting-ability-box skill-block">
+            {{!-- Bloco da Habilidade de Conjuração (v3 - múltiplas entradas) --}}
+      <div class="casting-ability-box skill-block casting-abilities-box">
         <div class="block-header">
-          <div class="header-main-info">
-            <h4>{{actor.system.casting_ability.name}} {{actor.system.casting_ability.level}}</h4>
-            <span class="header-subtitle">{{actor.system.casting_ability.source}}</span>
-          </div>
+       <h4>Habilidade de Conjuração</h4>
           <div class="header-controls">
-            <a class="edit-casting-ability" title="Editar Habilidade"><i class="fas fa-edit"></i></a>
+           <a class="add-casting-ability" title="Adicionar Habilidade"><i class="fas fa-plus"></i></a>
           </div>
         </div>
-        <div class="ability-description">
-          {{{actor.system.casting_ability.description}}}
+ <div class="casting-abilities-list">
+          {{#each castingAbilities}}
+          <div class="casting-ability-card" data-ability-id="{{this.id}}">
+            <div class="casting-ability-main">
+              <div class="casting-ability-text">
+                <div class="casting-ability-title-row">
+                  <span class="casting-ability-name">{{this.name}}</span>
+                  <span class="casting-ability-level">Nv {{this.level}}</span>
+                </div>
+                <div class="casting-ability-source">{{this.source}}</div>
+              </div>
+              <div class="item-controls casting-ability-controls">
+                <div class="gum-action-menu js-action-menu">
+                  <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da habilidade" aria-label="Opções da habilidade" role="button" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </a>
+                  <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
+                    <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
+                    <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                    <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+          {{#unless castingAbilities.length}}
+          <div class="empty-placeholder compact">
+            <p>Nenhuma habilidade de conjuração adicionada.</p>
+          </div>
+          {{/unless}}
         </div>
       </div>
 
@@ -949,7 +975,7 @@
       {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
       <div class="spells-right-column">
       <div class="spell-groups-grid">
- {{#each spellGroupsKeys as |groupName|}}
+      {{#each spellGroupsKeys as |groupName|}}
           {{#with (lookup ../spellsByGroup groupName) as |spells|}}
           <details class="attack-group-details gum-unified-section spell-group-box" data-group-id="spell-group-{{groupName}}" {{collapsibleState (concat "spell-group-" groupName) @root.collapsedData}}>
             <summary class="group-summary gum-unified-header">

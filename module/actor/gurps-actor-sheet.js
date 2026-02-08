@@ -684,7 +684,8 @@ async getData(options) {
                 context.preparedCombatMeters = preparedCombatMeters;
                 context.showHiddenMeters = includeHiddenMeters;
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
-                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                context.castingAbilities = this._prepareCastingAbilities();
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
                 context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
@@ -1365,6 +1366,14 @@ html.on("click", ".add-energy-reserve", (ev) => this._onAddEnergyReserve(ev));
 html.on("click", ".edit-energy-reserve", (ev) => this._onEditEnergyReserve(ev));
 html.on("click", ".delete-energy-reserve", (ev) => this._onDeleteEnergyReserve(ev));
 html.on("change", ".reserve-card .meter-inputs input", (ev) => this._onEnergyReserveInputChange(ev));
+
+// -------------------------------------------------------------
+//  HABILIDADES DE CONJURAÇÃO
+// -------------------------------------------------------------
+html.on("click", ".add-casting-ability", (ev) => this._onAddCastingAbility(ev));
+html.on("click", ".edit-casting-ability", (ev) => this._onEditCastingAbility(ev));
+html.on("click", ".delete-casting-ability", (ev) => this._onDeleteCastingAbility(ev));
+html.on("click", ".view-casting-ability", (ev) => this._onViewCastingAbility(ev));
 
 // -------------------------------------------------------------
 //  ASPECTOS SOCIAIS
@@ -3311,6 +3320,216 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
     },
  rejectClose: false
   });
+}
+
+
+_prepareCastingAbilities() {
+  const collection = foundry.utils.duplicate(this.actor.system.casting_abilities || {});
+  const abilities = Object.entries(collection).map(([id, ability]) => ({
+    id,
+    name: ability?.name || "Habilidade de Conjuração",
+    source: ability?.source || "Fonte indefinida",
+    level: Number(ability?.level) || 0,
+    points: Number(ability?.points) || 0,
+    description: ability?.description || ""
+  }));
+
+  if (!abilities.length) {
+    const legacy = this.actor.system.casting_ability || {};
+    const hasLegacyData = Boolean(
+      String(legacy.name || "").trim() ||
+      String(legacy.source || "").trim() ||
+      String(legacy.description || "").trim() ||
+      Number(legacy.level) ||
+      Number(legacy.points)
+    );
+
+    if (hasLegacyData) {
+      abilities.push({
+        id: "legacy",
+        name: legacy.name || "Habilidade de Conjuração",
+        source: legacy.source || "Fonte Mágica",
+        level: Number(legacy.level) || 0,
+        points: Number(legacy.points) || 0,
+        description: legacy.description || ""
+      });
+    }
+  }
+
+  return abilities.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+_getCastingAbilityById(abilityId) {
+  if (!abilityId) return null;
+
+  if (abilityId === "legacy") {
+    const legacy = this.actor.system.casting_ability || {};
+    return {
+      id: "legacy",
+      name: legacy.name || "Habilidade de Conjuração",
+      source: legacy.source || "Fonte Mágica",
+      level: Number(legacy.level) || 0,
+      points: Number(legacy.points) || 0,
+      description: legacy.description || ""
+    };
+  }
+
+  const ability = this.actor.system.casting_abilities?.[abilityId];
+  if (!ability) return null;
+
+  return {
+    id: abilityId,
+    name: ability.name || "Habilidade de Conjuração",
+    source: ability.source || "Fonte indefinida",
+    level: Number(ability.level) || 0,
+    points: Number(ability.points) || 0,
+    description: ability.description || ""
+  };
+}
+
+async _promptCastingAbilityData(initialData = {}, { isEdit = false } = {}) {
+  const data = {
+    name: initialData?.name || "",
+    source: initialData?.source || "",
+    level: Number(initialData?.level) || 0,
+    points: Number(initialData?.points) || 0,
+    description: initialData?.description || ""
+  };
+
+  const content = `
+    <form class="gum-meter-form casting-ability-form">
+      <div class="form-group">
+        <label>Habilidade de Conjuração</label>
+        <input type="text" name="name" value="${data.name}" required/>
+      </div>
+      <div class="form-group">
+        <label>Fonte</label>
+        <input type="text" name="source" value="${data.source}" />
+      </div>
+      <div class="form-group">
+        <label>Nível</label>
+        <input type="number" name="level" value="${data.level}" />
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" name="points" value="${data.points}" />
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea name="description" rows="6">${data.description}</textarea>
+      </div>
+    </form>`;
+
+  return Dialog.prompt({
+    title: isEdit ? "Editar Habilidade de Conjuração" : "Nova Habilidade de Conjuração",
+    content,
+    label: "Salvar",
+    callback: (html) => {
+      const form = html[0].querySelector("form");
+      const name = form.name.value.trim();
+      if (!name) return ui.notifications.warn("Informe o nome da habilidade de conjuração.");
+
+      return {
+        name,
+        source: form.source.value.trim(),
+        level: Number(form.level.value) || 0,
+        points: Number(form.points.value) || 0,
+        description: form.description.value.trim()
+      };
+    },
+    rejectClose: false
+  });
+}
+
+async _onAddCastingAbility(ev) {
+  ev.preventDefault();
+  const abilityData = await this._promptCastingAbilityData({}, { isEdit: false });
+  if (!abilityData) return;
+
+  const abilityId = foundry.utils.randomID();
+  await this.actor.update({ [`system.casting_abilities.${abilityId}`]: abilityData });
+}
+
+async _onEditCastingAbility(ev) {
+  ev.preventDefault();
+  const card = ev.currentTarget.closest(".casting-ability-card");
+  const abilityId = card?.dataset?.abilityId;
+  if (!abilityId) return;
+
+  const current = this._getCastingAbilityById(abilityId);
+  if (!current) return;
+
+  const updated = await this._promptCastingAbilityData(current, { isEdit: true });
+  if (!updated) return;
+
+  if (abilityId === "legacy") {
+    await this.actor.update({ "system.casting_ability": updated });
+    return;
+  }
+
+  await this.actor.update({ [`system.casting_abilities.${abilityId}`]: updated });
+}
+
+async _onDeleteCastingAbility(ev) {
+  ev.preventDefault();
+  const card = ev.currentTarget.closest(".casting-ability-card");
+  const abilityId = card?.dataset?.abilityId;
+  if (!abilityId) return;
+
+  const ability = this._getCastingAbilityById(abilityId);
+  if (!ability) return;
+
+  Dialog.confirm({
+    title: `Excluir ${ability.name}?`,
+    content: "<p>Tem certeza que deseja remover esta habilidade de conjuração?</p>",
+    yes: async () => {
+      if (abilityId === "legacy") {
+        await this.actor.update({
+          "system.casting_ability": {
+            name: "",
+            source: "",
+            level: 0,
+            points: 0,
+            description: ""
+          }
+        });
+        return;
+      }
+
+      await this.actor.update({ [`system.casting_abilities.-=${abilityId}`]: null });
+    }
+  });
+}
+
+_onViewCastingAbility(ev) {
+  ev.preventDefault();
+  const card = ev.currentTarget.closest(".casting-ability-card");
+  const abilityId = card?.dataset?.abilityId;
+  if (!abilityId) return;
+
+  const ability = this._getCastingAbilityById(abilityId);
+  if (!ability) return;
+
+  const description = ability.description || "<em>Sem descrição.</em>";
+
+  new Dialog({
+    title: `${ability.name} (Nv ${ability.level})`,
+    content: `
+      <div class="casting-ability-preview">
+        <p><strong>Fonte:</strong> ${ability.source || "-"}</p>
+        <p><strong>Pontos:</strong> ${ability.points}</p>
+        <hr>
+        <div>${description}</div>
+      </div>
+    `,
+    buttons: {
+      close: {
+        icon: '<i class="fas fa-times"></i>',
+        label: "Fechar"
+      }
+    },
+    default: "close"
+  }).render(true);
 }
 
 _getSocialEntryConfig(type) {
