@@ -949,13 +949,21 @@
       {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
       <div class="spells-right-column">
       <div class="spell-groups-grid">
-        {{#each spellGroupsKeys as |groupName|}}
+ {{#each spellGroupsKeys as |groupName|}}
           {{#with (lookup ../spellsByGroup groupName) as |spells|}}
-          <div class="skill-block spells-list-box spell-group-box">
-            <div class="block-header">
-              <h4>{{groupName}} <span class="st-group-count">{{spells.length}}</span></h4>
-            </div>
+          <details class="attack-group-details gum-unified-section spell-group-box" data-group-id="spell-group-{{groupName}}" {{collapsibleState (concat "spell-group-" groupName) @root.collapsedData}}>
+            <summary class="group-summary gum-unified-header">
+              <div class="summary-left">
+                <i class="fas fa-chevron-right indicator"></i>
+                <i class="fas fa-hat-wizard item-icon"></i>
+                <span class="group-name">{{groupName}}</span>
+              </div>
+              <div class="summary-right">
+                <span class="group-tag sp_cl">{{spells.length}} Magias</span>
+              </div>
+            </summary>
 
+            <div class="group-content">
             <div class="spell-list-v2 grouped attack-style">
               {{#each spells}}
               <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
@@ -1014,7 +1022,8 @@
               </div>
               {{/each}}
             </div>
-          </div>
+            </div>
+          </details>
           {{/with}}
         {{/each}}
 
