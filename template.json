@@ -36,7 +36,7 @@
       "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
       "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
       "casting_abilities": {},
-      "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "description": "Descreva aqui a fonte de poder.", "power_talent": 0 },
+      "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "focus": "", "description": "Descreva aqui a fonte de poder.", "power_talent_name": "", "power_talent_level": 0, "power_talent_points": 0, "power_talent": 0 },
       "spell_reserves": {},
       "power_reserves": {},
       "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" } },

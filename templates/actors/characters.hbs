@@ -1084,7 +1084,9 @@
                 <span class="casting-ability-name">{{actor.system.power_source.name}}</span>
                 <span class="casting-ability-level">Nv {{actor.system.power_source.level}}</span>
               </div>
-              <div class="casting-ability-source">{{actor.system.power_source.source}} · Talento de Poder: +{{actor.system.power_source.power_talent}}</div>
+              <div class="casting-ability-source">{{actor.system.power_source.source}} · {{actor.system.power_source.focus}}</div>
+              <hr class="casting-ability-divider">
+              <div class="casting-ability-source talent">{{actor.system.power_source.power_talent_name}} · Nv {{actor.system.power_source.power_talent_level}}</div>
             </div>
             <div class="item-controls casting-ability-controls">
               <div class="gum-action-menu js-action-menu">
@@ -1094,12 +1096,10 @@
                 <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
                   <a class="item-control view-power-source gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
                   <a class="item-control edit-power-source gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                  <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="ability-description">
-            {{{actor.system.power_source.description}}}
           </div>
         </div>
     </div>

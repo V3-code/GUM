@@ -1176,8 +1176,8 @@
 
 .gum.sheet.actor .social-block,
 .gum.sheet.actor .social-block-fullwidth {
-    background: var(--gum-bg-card-claro);
-    border: 1px solid var(--gum-border);
+    background: var(--gum-bg-body);
+    border: none;
     border-radius: 4px;
     padding: 10px;
     display: flex;
