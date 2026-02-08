@@ -1966,11 +1966,11 @@
 /* O Cabeçalho (Título e Subtítulo) */
 .gum.sheet.actor .casting-ability-box .block-header {
     background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.01));
-    padding: 10px 12px;
+    padding: 4px;
     border-bottom: 1px solid var(--gum-border-light);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* Alinha no topo caso o texto quebre */
+    align-items: flex-start;
 }
 
 /* Container do Texto Principal */
@@ -1982,8 +1982,8 @@
 
 /* O Título (Ex: Magery 3) */
 .gum.sheet.actor .casting-ability-box h4 {
-    font-family: var(--gum-font-secondary); /* Cinzel */
-    font-size: 1.05em;
+    font-family: var(--gum-font-condensed);
+    font-size: var(--gum-font-size-base);
     font-weight: 700;
     color: var(--gum-text-escuro);
     margin: 0;
@@ -2035,7 +2035,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 8px;
 }
 
 .gum.sheet.actor .casting-ability-card {
