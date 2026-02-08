@@ -3076,6 +3076,8 @@ _onActionMenuToggle(ev) {
 
   if (!isOpen) {
     menu.classList.add("is-open");
+    const controls = menu.closest(".item-controls");
+    if (controls) controls.classList.add("menu-open");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
   }
@@ -3083,6 +3085,7 @@ _onActionMenuToggle(ev) {
 
 _closeAllActionMenus() {
   if (!this.element?.length) return;
+  this.element.find(".item-controls.menu-open").removeClass("menu-open");
   this.element.find(".js-action-menu.is-open").removeClass("is-open")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }
