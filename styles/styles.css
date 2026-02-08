@@ -4091,8 +4091,9 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
 
-/* Na aba de Magias, os menus de ação precisam escapar do card do grupo. */
-.gum.sheet.actor .tab[data-tab="spells"] .spell-group-box.gum-unified-section {
+/* Nas abas de Magias e Poderes, os menus de ação precisam escapar do card do grupo. */
+.gum.sheet.actor .tab[data-tab="spells"] .spell-group-box.gum-unified-section,
+.gum.sheet.actor .tab[data-tab="powers"] .spell-group-box.gum-unified-section {
     overflow: visible;
 }
 
