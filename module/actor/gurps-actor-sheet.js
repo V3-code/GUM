@@ -497,9 +497,35 @@ async getData(options) {
         });
 
         // ================================================================== //
+        //    AGRUPAMENTO DE PODERES (MESMO PADRÃO DA ABA DE MAGIAS)
+        // ================================================================== //
+        const powerSortPref = this.actor.system.sorting?.power || 'manual';
+        const powerSortFn = getSortFunction(powerSortPref);
+        const powers = itemsByType.power || [];
+        const powersByGroup = {};
+
+        powers.forEach((power) => {
+            let groupName = (power.system.group || 'Geral').trim();
+            if (!groupName) groupName = 'Geral';
+            if (!powersByGroup[groupName]) powersByGroup[groupName] = [];
+            powersByGroup[groupName].push(power);
+        });
+
+        Object.keys(powersByGroup).forEach((groupName) => {
+            powersByGroup[groupName].sort(powerSortFn);
+        });
+
+        context.powersByGroup = powersByGroup;
+        context.powerGroupsKeys = Object.keys(powersByGroup).sort((a, b) => {
+            if (a === 'Geral') return -1;
+            if (b === 'Geral') return 1;
+            return a.localeCompare(b);
+        });
+
+        // ================================================================== //
         //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
         // ================================================================== //
-        const simpleSortTypes = ['power'];
+        const simpleSortTypes = [];
         for (const type of simpleSortTypes) {
             if (itemsByType[type]) {
                 const sortPref = this.actor.system.sorting?.[type] || 'manual';
@@ -1374,6 +1400,9 @@ html.on("click", ".add-casting-ability", (ev) => this._onAddCastingAbility(ev));
 html.on("click", ".edit-casting-ability", (ev) => this._onEditCastingAbility(ev));
 html.on("click", ".delete-casting-ability", (ev) => this._onDeleteCastingAbility(ev));
 html.on("click", ".view-casting-ability", (ev) => this._onViewCastingAbility(ev));
+html.on("click", ".add-power-source", (ev) => this._onAddPowerSource(ev));
+html.on("click", ".edit-power-source", (ev) => this._onEditPowerSource(ev));
+html.on("click", ".view-power-source", (ev) => this._onViewPowerSource(ev));
 
 // -------------------------------------------------------------
 //  ASPECTOS SOCIAIS
@@ -3521,6 +3550,120 @@ _onViewCastingAbility(ev) {
       <div class="casting-ability-preview">
         <p><strong>Fonte:</strong> ${ability.source || "-"}</p>
         <p><strong>Pontos:</strong> ${ability.points}</p>
+        <hr>
+        <div>${description}</div>
+      </div>
+    `,
+    buttons: {
+      close: {
+        icon: '<i class="fas fa-times"></i>',
+        label: "Fechar"
+      }
+    },
+    default: "close"
+  }).render(true);
+}
+
+_getPowerSourceData() {
+  const source = this.actor.system.power_source || {};
+  return {
+    name: source.name || "Fonte de Poder",
+    source: source.source || "",
+    level: Number(source.level) || 0,
+    points: Number(source.points) || 0,
+    power_talent: Number(source.power_talent) || 0,
+    description: source.description || ""
+  };
+}
+
+async _promptPowerSourceData(initialData = {}, { isEdit = false } = {}) {
+  const data = {
+    name: initialData?.name || "",
+    source: initialData?.source || "",
+    level: Number(initialData?.level) || 0,
+    points: Number(initialData?.points) || 0,
+    power_talent: Number(initialData?.power_talent) || 0,
+    description: initialData?.description || ""
+  };
+
+  const content = `
+    <form class="gum-meter-form power-source-form">
+      <div class="form-group">
+        <label>Fonte de Poder</label>
+        <input type="text" name="name" value="${data.name}" required/>
+      </div>
+      <div class="form-group">
+        <label>Origem</label>
+        <input type="text" name="source" value="${data.source}"/>
+      </div>
+      <div class="form-group">
+        <label>Nível</label>
+        <input type="number" name="level" value="${data.level}" />
+      </div>
+      <div class="form-group">
+        <label>Pontos</label>
+        <input type="number" name="points" value="${data.points}" />
+      </div>
+      <div class="form-group">
+        <label>Talento de Poder</label>
+        <input type="number" name="power_talent" value="${data.power_talent}" />
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea name="description" rows="6">${data.description}</textarea>
+      </div>
+    </form>`;
+
+  return Dialog.prompt({
+    title: isEdit ? "Editar Fonte de Poder" : "Configurar Fonte de Poder",
+    content,
+    label: "Salvar",
+    callback: (html) => {
+      const form = html[0].querySelector("form");
+      const name = form.name.value.trim();
+      if (!name) return ui.notifications.warn("Informe o nome da fonte de poder.");
+
+      return {
+        name,
+        source: form.source.value.trim(),
+        level: Number(form.level.value) || 0,
+        points: Number(form.points.value) || 0,
+        power_talent: Number(form.power_talent.value) || 0,
+        description: form.description.value.trim()
+      };
+    },
+    rejectClose: false
+  });
+}
+
+async _onAddPowerSource(ev) {
+  ev.preventDefault();
+  const current = this._getPowerSourceData();
+  const updated = await this._promptPowerSourceData(current, { isEdit: false });
+  if (!updated) return;
+  await this.actor.update({ "system.power_source": updated });
+}
+
+async _onEditPowerSource(ev) {
+  ev.preventDefault();
+  const current = this._getPowerSourceData();
+  const updated = await this._promptPowerSourceData(current, { isEdit: true });
+  if (!updated) return;
+  await this.actor.update({ "system.power_source": updated });
+}
+
+_onViewPowerSource(ev) {
+  ev.preventDefault();
+  const source = this._getPowerSourceData();
+  const description = source.description || "<em>Sem descrição.</em>";
+
+  new Dialog({
+    title: `${source.name} (Nv ${source.level})`,
+    content: `
+      <div class="casting-ability-preview">
+        <p><strong>Origem:</strong> ${source.source || "-"}</p>
+        <p><strong>Pontos:</strong> ${source.points}</p>
+        <p><strong>Talento de Poder:</strong> +${source.power_talent}</p>
         <hr>
         <div>${description}</div>
       </div>

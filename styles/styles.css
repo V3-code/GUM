@@ -180,7 +180,7 @@
         "header header"
         "sidebar main";
     height: 100%;
-    background: linear-gradient(rgb(25 25 25), rgb(48 47 47 / 0%)), var(--character-bg-texture);
+    background: linear-gradient(180deg, rgb(0 0 0 / 98%) 0%, rgb(47 45 45 / 90%) 70%, rgb(47 46 46 / 53%) 100%), radial-gradient(circle at 10% 35%, rgb(255 255 255 / 25%), #0000001f 45%), var(--character-bg-texture-2);
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
