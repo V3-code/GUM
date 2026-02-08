@@ -100,6 +100,7 @@
   --item-divider: url("assets/items/item-divider.svg.svg");
   --character-bg-texture: url("assets/items/character-bg-texture.webp");
   --character-bg-texture-2: url("assets/items/character-bg-texture-2.png");
+  --character-banner: url("assets/items/character-banner.webp");
 }
 
 /* =================================================================== */
@@ -190,10 +191,32 @@
 /* Banner Superior */
 .gum.sheet.actor .sheet-grid::before {
     content: '';
-    position: absolute; top: 0; left: 0; width: 100%; height: 125px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 125px;
+
     background:
-        linear-gradient(180deg, rgba(109, 36, 45, 0.98) 0%, rgba(66, 23, 30, 0.9) 70%, rgba(43, 23, 23, 0) 100%),
-        radial-gradient(circle at 10% 35%, rgba(255, 255, 255, 0.08), transparent 45%);
+        linear-gradient(
+            180deg,
+            rgba(15, 15, 15, 0.92) 0%,
+            rgba(15, 15, 15, 0.75) 65%,
+            rgba(15, 15, 15, 0.0) 100%
+        ),
+        radial-gradient(
+            circle at 8% 35%, 
+            rgba(255,255,255,0.06), 
+            transparent 40%
+        ),
+
+        var(--character-banner);
+
+    background-size: 110%;
+    filter: brightness(0.85) contrast(0.9);
+    background-position: center top;
+    background-repeat: no-repeat;
+
     z-index: 0;
 }
 

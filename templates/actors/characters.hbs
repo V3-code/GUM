@@ -1072,21 +1072,23 @@
 
     <div class="casting-ability-box skill-block casting-abilities-box">
         <div class="block-header">
-            <h4>Fonte de Poder</h4>
+            <h4>Poder</h4>
           <div class="header-controls">
             <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder"><i class="fas fa-plus"></i></a>
           </div>
         </div>
-        <div class="casting-ability-card power-source-card" data-power-source-id="main">
+ <div class="casting-abilities-list">
+          {{#each powerSources}}
+        <div class="casting-ability-card power-source-card" data-power-source-id="{{this.id}}">
           <div class="casting-ability-main">
             <div class="casting-ability-text">
               <div class="casting-ability-title-row">
-                <span class="casting-ability-name">{{actor.system.power_source.name}}</span>
-                <span class="casting-ability-level">Nv {{actor.system.power_source.level}}</span>
+                <span class="casting-ability-name">{{this.name}}</span>
+                <span class="casting-ability-level">Nv {{this.level}}</span>
               </div>
-              <div class="casting-ability-source">{{actor.system.power_source.source}} · {{actor.system.power_source.focus}}</div>
+              <div class="casting-ability-source">{{this.source}} · {{this.focus}}</div>
               <hr class="casting-ability-divider">
-              <div class="casting-ability-source talent">{{actor.system.power_source.power_talent_name}} · Nv {{actor.system.power_source.power_talent_level}}</div>
+              <div class="casting-ability-source talent">{{this.power_talent_name}} · Nv {{this.power_talent_level}}</div>
             </div>
             <div class="item-controls casting-ability-controls">
               <div class="gum-action-menu js-action-menu">
@@ -1101,6 +1103,13 @@
               </div>
             </div>
           </div>
+        </div>
+          {{/each}}
+          {{#unless powerSources.length}}
+          <div class="empty-placeholder compact">
+            <p>Nenhuma fonte de poder adicionada.</p>
+          </div>
+          {{/unless}}
         </div>
     </div>
 

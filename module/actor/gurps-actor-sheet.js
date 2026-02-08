@@ -712,6 +712,7 @@ async getData(options) {
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
                                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
                 context.castingAbilities = this._prepareCastingAbilities();
+                context.powerSources = this._preparePowerSources();
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
                 context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
@@ -3565,9 +3566,79 @@ _onViewCastingAbility(ev) {
   }).render(true);
 }
 
-_getPowerSourceData() {
-  const source = this.actor.system.power_source || {};
+_preparePowerSources() {
+  const collection = foundry.utils.duplicate(this.actor.system.power_sources || {});
+  const sources = Object.entries(collection).map(([id, source]) => ({
+    id,
+    name: source?.name || "Fonte de Poder",
+    source: source?.source || "",
+    focus: source?.focus || "",
+    level: Number(source?.level) || 0,
+    points: Number(source?.points) || 0,
+    power_talent_name: source?.power_talent_name || "",
+    power_talent_level: Number(source?.power_talent_level) || Number(source?.power_talent) || 0,
+    power_talent_points: Number(source?.power_talent_points) || 0,
+    description: source?.description || ""
+  }));
+
+  if (!sources.length) {
+    const legacy = this.actor.system.power_source || {};
+    const hasLegacyData = Boolean(
+      String(legacy.name || "").trim() ||
+      String(legacy.source || "").trim() ||
+      String(legacy.focus || "").trim() ||
+      String(legacy.description || "").trim() ||
+      Number(legacy.level) ||
+      Number(legacy.points) ||
+      String(legacy.power_talent_name || "").trim() ||
+      Number(legacy.power_talent_level) ||
+      Number(legacy.power_talent_points) ||
+      Number(legacy.power_talent)
+    );
+
+    if (hasLegacyData) {
+      sources.push({
+        id: "legacy",
+        name: legacy.name || "Fonte de Poder",
+        source: legacy.source || "",
+        focus: legacy.focus || "",
+        level: Number(legacy.level) || 0,
+        points: Number(legacy.points) || 0,
+        power_talent_name: legacy.power_talent_name || "",
+        power_talent_level: Number(legacy.power_talent_level) || Number(legacy.power_talent) || 0,
+        power_talent_points: Number(legacy.power_talent_points) || 0,
+        description: legacy.description || ""
+      });
+    }
+  }
+
+  return sources.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+_getPowerSourceById(sourceId) {
+  if (!sourceId) return null;
+
+  if (sourceId === "legacy") {
+    const legacy = this.actor.system.power_source || {};
+    return {
+      id: "legacy",
+      name: legacy.name || "Fonte de Poder",
+      source: legacy.source || "",
+      focus: legacy.focus || "",
+      level: Number(legacy.level) || 0,
+      points: Number(legacy.points) || 0,
+      power_talent_name: legacy.power_talent_name || "",
+      power_talent_level: Number(legacy.power_talent_level) || Number(legacy.power_talent) || 0,
+      power_talent_points: Number(legacy.power_talent_points) || 0,
+      description: legacy.description || ""
+    };
+  }
+
+  const source = this.actor.system.power_sources?.[sourceId];
+  if (!source) return null;
+
   return {
+    id: sourceId,
     name: source.name || "Fonte de Poder",
     source: source.source || "",
     focus: source.focus || "",
@@ -3666,34 +3737,50 @@ async _promptPowerSourceData(initialData = {}, { isEdit = false } = {}) {
 
 async _onAddPowerSource(ev) {
   ev.preventDefault();
-  const current = this._getPowerSourceData();
-  const updated = await this._promptPowerSourceData(current, { isEdit: false });
-  if (!updated) return;
-  await this.actor.update({ "system.power_source": updated });
+  const sourceData = await this._promptPowerSourceData({}, { isEdit: false });
+  if (!sourceData) return;
+
+  const sourceId = foundry.utils.randomID();
+  await this.actor.update({ [`system.power_sources.${sourceId}`]: sourceData });
 }
 
 async _onEditPowerSource(ev) {
   ev.preventDefault();
-  const current = this._getPowerSourceData();
+  const card = ev.currentTarget.closest(".power-source-card");
+  const sourceId = card?.dataset?.powerSourceId;
+  if (!sourceId) return;
+
+  const current = this._getPowerSourceById(sourceId);
+  if (!current) return;
+
   const updated = await this._promptPowerSourceData(current, { isEdit: true });
   if (!updated) return;
-  await this.actor.update({ "system.power_source": updated });
+
+  if (sourceId === "legacy") {
+    await this.actor.update({ "system.power_source": updated });
+    return;
+  }
+
+  await this.actor.update({ [`system.power_sources.${sourceId}`]: updated });
 }
 
 async _onDeletePowerSource(ev) {
   ev.preventDefault();
+  const card = ev.currentTarget.closest(".power-source-card");
+  const sourceId = card?.dataset?.powerSourceId;
+  if (!sourceId) return;
 
-  new Dialog({
-    title: "Remover Fonte de Poder",
+  const source = this._getPowerSourceById(sourceId);
+  if (!source) return;
+
+  Dialog.confirm({
+    title: `Excluir ${source.name}?`,
     content: "<p>Tem certeza que deseja remover esta fonte de poder?</p>",
-    buttons: {
-      yes: {
-        icon: '<i class="fas fa-check"></i>',
-        label: "Sim",
-        callback: async () => {
+    yes: async () => {
+          if (sourceId === "legacy") {
           await this.actor.update({
             "system.power_source": {
-              name: "Fonte de Poder",
+              name: "",
               source: "",
               focus: "",
               level: 0,
@@ -3701,23 +3788,26 @@ async _onDeletePowerSource(ev) {
               power_talent_name: "",
               power_talent_level: 0,
               power_talent_points: 0,
-              description: ""
+             description: ""
             }
           });
-        }
-      },
-      no: {
-        icon: '<i class="fas fa-times"></i>',
-        label: "Não"
-      }
-    },
-    default: "no"
-  }).render(true);
+          return;
+          }
+
+          await this.actor.update({ [`system.power_sources.-=${sourceId}`]: null });
+    }
+  });
 }
 
 _onViewPowerSource(ev) {
   ev.preventDefault();
-  const source = this._getPowerSourceData();
+  const card = ev.currentTarget.closest(".power-source-card");
+  const sourceId = card?.dataset?.powerSourceId;
+  if (!sourceId) return;
+
+  const source = this._getPowerSourceById(sourceId);
+  if (!source) return;
+
   const description = source.description || "<em>Sem descrição.</em>";
 
   new Dialog({
