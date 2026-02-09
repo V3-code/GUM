@@ -1716,39 +1716,39 @@
 
               {{!-- a classe .item-row para padronização futura --}}
               <div class="item-row detail-item">
-                <span class="detail-label">Gênero</span>
+                <span class="detail-label">Gênero:</span>
                 <span class="detail-value">{{actor.system.details.gender}}</span>
               </div>
               <div class="item-row detail-item">
-                <span class="detail-label">Idade</span>
+                <span class="detail-label">Idade:</span>
                 <span class="detail-value">{{actor.system.details.age}}</span>
               </div>
               <div class="item-row detail-item">
-                <span class="detail-label">Altura</span>
+                <span class="detail-label">Altura:</span>
                 <span class="detail-value">{{actor.system.details.height}}</span>
               </div>
               <div class="item-row detail-item">
-                <span class="detail-label">Peso</span>
+                <span class="detail-label">Peso:</span>
                 <span class="detail-value">{{actor.system.details.weight}}</span>
               </div>
               <div class="item-row detail-item">
-                <span class="detail-label">Pele</span>
+                <span class="detail-label">Pele:</span>
                 <span class="detail-value">{{actor.system.details.skin}}</span>
               </div>
               <div class="item-row detail-item">
-                <span class="detail-label">Cabelos</span>
+                <span class="detail-label">Cabelos:</span>
                 <span class="detail-value">{{actor.system.details.hair}}</span>
               </div>
               <div class="item-row detail-item full-width">
-                <span class="detail-label">Olhos</span>
+                <span class="detail-label">Olhos:</span>
                 <span class="detail-value">{{actor.system.details.eyes}}</span>
               </div>
               <div class="item-row detail-item full-width">
-                <span class="detail-label">Alinhamento</span>
+                <span class="detail-label">Alinhamento:</span>
                 <span class="detail-value">{{actor.system.details.alignment}}</span>
               </div>
               <div class="item-row detail-item full-width">
-                <span class="detail-label">Crença / Fé</span>
+                <span class="detail-label">Crença / Fé:</span>
                 <span class="detail-value">{{actor.system.details.belief}}</span>
               </div>
               
@@ -1758,8 +1758,15 @@
 
     {{!-- Coluna Principal: História do Personagem --}}
     <div class="biography-details">
-    <div class="biography-story">
-        <h3 class="block-title">História do Personagem</h3>
+    <div class="biography-story skill-block">
+        <div class="block-header biography-story-header">
+            <h4>História do Personagem</h4>
+            {{#if editable}}
+            <a class="toggle-editor biography-story-toggle" data-target="system.details.backstory" title="Editar História">
+                <i class="fas fa-edit"></i>
+            </a>
+            {{/if}}
+        </div>
         
         {{!-- ✅ INÍCIO: Nova estrutura de Editor de Texto --}}
         <div class="description-section">
@@ -1768,13 +1775,6 @@
             <div class="description-view">
                 {{{enrichedBackstory}}}
             </div>
-            
-            {{!-- 2. Botão "Editar" (Apenas para o dono) --}}
-            {{#if editable}}
-            <button type="button" class="toggle-editor" data-target="system.details.backstory">
-                <i class="fas fa-edit"></i> Editar
-            </button>
-            {{/if}}
 
             {{!-- 3. Modo de Edição (Escondido) --}}
             <div class="description-editor" style="display: none;">

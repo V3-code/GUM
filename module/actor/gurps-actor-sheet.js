@@ -1237,10 +1237,16 @@ html.on("click", ".edit-biography-details", (ev) => {
 });
 
 html.find(".biography-story .toggle-editor").on("click", ev => {
-  const section = $(ev.currentTarget).closest(".description-section");
+  ev.preventDefault();
+  ev.stopPropagation();
+  const trigger = $(ev.currentTarget);
+  const story = trigger.closest(".biography-story");
+  const section = story.find(".description-section").first();
+  if (!section.length) return;
   const field = $(ev.currentTarget).data("field") ?? $(ev.currentTarget).data("target");
   const editorWrapper = section.find(".description-editor");
   section.find(".description-view, .toggle-editor").hide();
+  trigger.hide();
   editorWrapper.show();
   const editor = this._getEditorInstance(field);
   if (editor?.focus) {
@@ -1252,8 +1258,10 @@ html.find(".biography-story .toggle-editor").on("click", ev => {
 
 html.find(".biography-story .cancel-description").on("click", ev => {
   const section = $(ev.currentTarget).closest(".description-section");
+  const story = $(ev.currentTarget).closest(".biography-story");
   section.find(".description-editor").hide();
   section.find(".description-view, .toggle-editor").show();
+  story.find(".biography-story-toggle").show();
 });
 
 html.find(".biography-story .expand-description").on("click", ev => {
@@ -1283,9 +1291,11 @@ html.find(".biography-story .save-description").on("click", async ev => {
   await this.actor.update({ [field]: content });
 
   const enriched = await TextEditorImpl.enrichHTML(content || "", { async: true, secrets: this.actor.isOwner });
+  const story = btn.closest(".biography-story");
   section.find(".description-view").html(enriched);
   section.find(".description-editor").hide();
   section.find(".description-view, .toggle-editor").show();
+  story.find(".biography-story-toggle").show();
 });
 
 // -------------------------------------------------------------
