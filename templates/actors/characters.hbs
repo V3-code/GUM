@@ -974,6 +974,18 @@
 
       {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
       <div class="spells-right-column">
+      <div class="skills-header-tools">
+        <div class="skills-search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" class="spell-search-input" placeholder="Buscar magia..." autocomplete="off">
+        </div>
+
+        <div class="skills-header-buttons">
+          <a class="item-create" data-type="spell" title="Nova Magia"><i class="fas fa-plus"></i> Nova</a>
+          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+      </div>
+
       <div class="spell-groups-grid">
       {{#each spellGroupsKeys as |groupName|}}
           {{#with (lookup ../spellsByGroup groupName) as |spells|}}
@@ -1067,7 +1079,8 @@
     {{!  ABA DE PODERES (ESTRUTURA REFINADA E PADRONIZADA)        }}
     {{! ========================================================= }}
     <div class="tab" data-group="primary" data-tab="powers">
-      <div class="spells-tab-layout">
+
+     <div class="spells-tab-layout">
         <div class="spells-left-column">
 
     <div class="casting-ability-box skill-block casting-abilities-box">
@@ -1151,6 +1164,19 @@
 
       {{!-- LISTA DE PODERES (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
       <div class="spells-right-column">
+
+      <div class="skills-header-tools">
+        <div class="skills-search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" class="power-search-input" placeholder="Buscar poder..." autocomplete="off">
+        </div>
+
+        <div class="skills-header-buttons">
+          <a class="item-create" data-type="power" title="Novo Poder"><i class="fas fa-plus"></i> Novo</a>
+          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+      </div>
+
       <div class="spell-groups-grid">
       {{#each powerGroupsKeys as |groupName|}}
           {{#with (lookup ../powersByGroup groupName) as |powers|}}

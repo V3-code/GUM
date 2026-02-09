@@ -1382,8 +1382,59 @@ html.find(".modifier-search").on("input", (ev) => {
  html.find(".context-wrapper").each((_, el) => {
     const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
     $(el).toggle(hasVisible);
-  });
+    });
 });
+
+const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
+  tab.find('.spell-row-v3').each((_, el) => {
+    const row = $(el);
+    const name = row.find('.spell-name').first().text().toLowerCase();
+    const extra = row.find(extraTextSelector).first().text().toLowerCase();
+    const match = !term || name.includes(term) || extra.includes(term);
+
+    row.attr('data-search-match', match ? '1' : '0');
+    row.toggle(match);
+  });
+
+  tab.find('.spell-group-box').each((_, el) => {
+    const group = $(el);
+    const matchedItems = group.find('.spell-row-v3[data-search-match="1"]').length;
+    group.toggle(matchedItems > 0);
+  });
+};
+
+this._tabSearchState ??= { spells: "", powers: "" };
+
+// Busca de magias
+html.find(".spell-search-input").on("input", (ev) => {
+  const rawTerm = String(ev.currentTarget.value || "");
+  const term = rawTerm.toLowerCase().trim();
+  this._tabSearchState.spells = rawTerm;
+  const tab = $(ev.currentTarget).closest('.tab[data-tab="spells"]');
+  applyGroupedItemSearch(tab, term, '.spell-school-line');
+});
+
+// Busca de poderes
+html.find(".power-search-input").on("input", (ev) => {
+  const rawTerm = String(ev.currentTarget.value || "");
+  const term = rawTerm.toLowerCase().trim();
+  this._tabSearchState.powers = rawTerm;
+  const tab = $(ev.currentTarget).closest('.tab[data-tab="powers"]');
+  applyGroupedItemSearch(tab, term, '.spell-school-line');
+});
+
+const spellSearchInput = html.find('.spell-search-input');
+if (spellSearchInput.length) {
+  spellSearchInput.val(this._tabSearchState.spells || '');
+  spellSearchInput.trigger('input');
+}
+
+const powerSearchInput = html.find('.power-search-input');
+if (powerSearchInput.length) {
+  powerSearchInput.val(this._tabSearchState.powers || '');
+  powerSearchInput.trigger('input');
+}
+
 
 // -------------------------------------------------------------
 //  REGISTROS DE COMBATE

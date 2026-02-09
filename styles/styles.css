@@ -2396,8 +2396,8 @@ background-color: var(--gum-accent-gold);
 
 /* O Container Principal */
 .gum.sheet.actor .casting-ability-box {
-    background: var(--gum-bg-card-claro);
-    border: 1px solid var(--gum-border);
+    background: var(--item-panel-texture-contrast);
+    border: 2px solid var(--gum-border-gold);
     border-top: 3px solid var(--gum-accent-gold); /* Topo dourado para destaque */
     border-radius: 4px;
     margin-bottom: 15px; /* Separação da lista de magias */
@@ -2408,8 +2408,8 @@ background-color: var(--gum-accent-gold);
 /* O Cabeçalho (Título e Subtítulo) */
 .gum.sheet.actor .casting-ability-box .block-header {
     background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.01));
-    padding: 4px;
-    border-bottom: 1px solid var(--gum-border-light);
+    padding: 8px 4px 9px 4px;
+    border-bottom: 2px solid var(--gum-border-gold);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -2427,10 +2427,9 @@ background-color: var(--gum-accent-gold);
     font-family: var(--gum-font-condensed);
     font-size: var(--gum-font-size-base);
     font-weight: 700;
-    color: var(--gum-text-escuro);
+    color: var(--gum-border-light);
     margin: 0;
     line-height: 1.2;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.8);
 }
 
 /* O Subtítulo (Ex: Fonte: Divina | Talento +2) */
@@ -3767,7 +3766,7 @@ background-color: var(--gum-accent-gold);
     align-items: center;
     padding: 8px 10px;
     background: none;
-    border-bottom: 1px solid var(--gum-border-gold);
+    border-bottom: 2px solid var(--gum-border-gold);
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     flex-shrink: 0;
     margin-bottom: 10px;
