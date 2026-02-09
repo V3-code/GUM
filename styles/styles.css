@@ -169,63 +169,161 @@
 .gum ::-webkit-scrollbar-thumb:hover { background: var(--gum-accent-bronze); }
 
 /* =================================================================== */
-/* 4. ESTRUTURA GERAL DA FICHA DE ATOR                                */
+/* 4. ESTRUTURA GERAL DA FICHA DE ATOR  (BANNER + CORPO + TRANSIÇÃO)   */
+/* =================================================================== */
+
+.gum.sheet.actor {
+  /* Banner */
+  --banner-height: 280px; /* era 170px → mais “vertical” (teste: 200–260) */
+  --banner-fade-start: 45%;
+  --banner-fade-end: 100%;
+  --banner-seam-start: 110px;
+  --banner-seam-height: 220px;         
+  --banner-zoom: 112%;             /* 100%–130% */
+  --banner-brightness: 0.74;       /* 0.75–1.00 */
+  --banner-contrast: 0.83;         /* 0.80–1.10 */
+  --banner-saturate: 0.95;         /* 0.85–1.10 */
+
+  /* Overlay do banner (legibilidade do texto por cima) */
+  --banner-overlay-top: 0.94;      /* 0–1 */
+  --banner-overlay-mid: 0.78;      /* 0–1 */
+  --banner-overlay-bottom: 0.05;   /* 0–0.20 (um “filme” no final do banner) */
+
+  /* “Brilho”/vinheta suave (bem contido) */
+  --banner-radial-alpha: 0.04;     /* 0–0.10 */
+  --banner-blend: multiply;        /* normal | multiply | overlay */
+
+  /* Costura/transição (remove linha dura) */
+  --banner-seam-start: 80px;       /* quanto antes do fim do banner começa o fade */
+  --banner-seam-height: 160px;     /* altura da névoa de transição */
+  --banner-seam-dark: 0.92;        /* quão escuro termina a costura */
+
+  /* Corpo */
+  --body-radial-alpha: 0.12;       /* 0.08–0.18 */
+  --body-fixed-bg: fixed;          /* fixed | scroll (performance) */
+}
+
+/* =================================================================== */
+/* 4.1 Grid + Corpo (Fundo geral da ficha)                              */
 /* =================================================================== */
 
 .gum.sheet.actor .sheet-grid {
-    display: grid;
-    position: relative;
-    grid-template-columns: 250px 1fr; /* Sidebar | Conteúdo */
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "header header"
-        "sidebar main";
-    height: 100%;
-    background: linear-gradient(180deg, rgb(0 0 0 / 98%) 0%, rgb(47 45 45 / 90%) 70%, rgb(47 46 46 / 53%) 100%), radial-gradient(circle at 10% 35%, rgb(255 255 255 / 25%), #0000001f 45%), var(--character-bg-texture-2);
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
-    overflow: hidden;
+  display: grid;
+  position: relative;
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  height: 100%;
+
+  background:
+    /* corpo mais coeso com o banner (mais ébano, menos cinza) */
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,0.92) 0%,
+      rgba(12,12,12,0.90) 25%,
+      rgba(24,24,24,0.86) 65%,
+      rgba(0,0,0,0.88) 100%
+    ),
+
+    /* radial MUITO mais discreto (sem “holofote”) */
+    radial-gradient(
+      circle at 12% 22%,
+      rgba(197,160,91,0.035),
+      rgba(0,0,0,0) 52%
+    ),
+
+    /* sua textura */
+    var(--character-bg-texture-2);
+
+  background-size: cover;
+  background-attachment: fixed; /* se pesar, troque pra scroll */
+  background-position: center;
+  overflow: hidden;
 }
 
-/* Banner Superior */
-.gum.sheet.actor .sheet-grid::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 125px;
+/* =================================================================== */
+/* 4.2 Banner Superior (Imagem + overlays)                              */
+/* =================================================================== */
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(15, 15, 15, 0.92) 0%,
-            rgba(15, 15, 15, 0.75) 65%,
-            rgba(15, 15, 15, 0.0) 100%
-        ),
-        radial-gradient(
-            circle at 8% 35%, 
-            rgba(255,255,255,0.06), 
-            transparent 40%
-        ),
+.gum.sheet.actor .sheet-grid::before{
+  content:'';
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height: var(--banner-height);
+  z-index:0;
 
-        var(--character-banner);
+  background:
+    /* 1) Filme escuro principal (legibilidade + fade no fim) */
+    linear-gradient(
+      180deg,
+      rgba(12,12,12,var(--banner-overlay-top)) 0%,
+      rgba(12,12,12,var(--banner-overlay-mid)) 40%,
+      rgba(12,12,12,0.10) var(--banner-fade-start),
+      rgba(10,8,6,0.96) var(--banner-fade-end)
+    ),
 
-    background-size: 110%;
-    filter: brightness(0.85) contrast(0.9);
-    background-position: center top;
-    background-repeat: no-repeat;
+    /* 2) brilho suave (bem contido) */
+    radial-gradient(
+      circle at 10% 40%,
+      rgba(255,255,255,var(--banner-radial-alpha)),
+      transparent 45%
+    ),
 
-    z-index: 0;
+    /* 3) banner */
+    var(--character-banner);
+
+  background-size: var(--banner-zoom) auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-blend-mode: var(--banner-blend);
+
+  filter: brightness(var(--banner-brightness))
+          contrast(var(--banner-contrast))
+          saturate(var(--banner-saturate));
 }
 
-.gum.sheet.actor .sheet-header { grid-area: header; position: relative; z-index: 1; }
+/* =================================================================== */
+/* 4.3 Costura do banner para o corpo (transição suave)                 */
+/* =================================================================== */
+
+/* Costura do banner → corpo (suave, sem “linha preta”) */
+.gum.sheet.actor .sheet-grid::after{
+  content:'';
+  position:absolute;
+  left:0;
+  width:100%;
+  height: 120px;                 /* pequeno só para acabamento */
+  top: calc(var(--banner-height) - 90px);
+  z-index:0;
+  pointer-events:none;
+
+  /* verniz dourado MUITO sutil (opcional) */
+  background: linear-gradient(
+    180deg,
+    rgba(197,160,91,0.00) 0%,
+    rgba(197,160,91,0.03) 45%,
+    rgba(0,0,0,0.00) 100%
+  );
+}
+
+
+/* =================================================================== */
+/* 4.4 Camadas (conteúdo acima do banner)                               */
+/* =================================================================== */
+
+.gum.sheet.actor .sheet-header  { grid-area: header;  position: relative; z-index: 1; }
 .gum.sheet.actor .sheet-sidebar { grid-area: sidebar; position: relative; z-index: 2; }
-.gum.sheet.actor .sheet-main-area { 
-    grid-area: main; position: relative; z-index: 1;
-    display: flex; flex-direction: column; gap: 0.5rem;
-    overflow: hidden;
+.gum.sheet.actor .sheet-main-area {
+  grid-area: main;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
 }
 
 /* --- 4.1 Cabeçalho --- */
@@ -438,8 +536,8 @@
 /* Abas de Navegação */
 .gum.sheet.actor nav.sheet-tabs {
     display: flex; justify-content: space-around; gap: 0.5rem;
-    border-bottom: 1px solid var(--gum-border-gold); margin-bottom: 10px;
-    border-top:none;
+    margin-bottom: 10px;
+    border:none;
 }
 .gum.sheet.actor .sheet-tabs .item {
     width: 42px; height: 38px; display: grid; place-items: center;
@@ -448,7 +546,8 @@
 }
 .gum.sheet.actor .sheet-tabs .item:hover { color: #fff; background: var(--gum-bg-card-sutil); }
 .gum.sheet.actor .sheet-tabs .item.active {
-    background: var(--gum-bg-card-claro); color: var(--gum-accent-gold);
+    background: none;
+    color: indianred;
     border-bottom-color: var(--gum-accent-gold);
 }
 
@@ -3347,7 +3446,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 10px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.3));
+    background: none;
     border-bottom: 1px solid var(--gum-border-gold);
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     flex-shrink: 0;
