@@ -152,7 +152,7 @@
     border-color: var(--gum-accent-gold);
     box-shadow: 0 0 5px rgba(197, 160, 91, 0.3);
     outline: none;
-    background-color: #fff;
+    color: var(--gum-bg-dark);
 }
 
 .gum input:disabled {
@@ -467,7 +467,8 @@
 .gum.sheet.actor .sidebar-summary::-webkit-details-marker { display: none; }
 .gum.sheet.actor .sidebar-summary[open] .expand-icon { transform: rotate(180deg); }
 
-.gum.sheet.actor .block-title { font-family: var(--gum-font-secondary); font-size: 10px; color: var(--gum-accent-gold); margin: 0; }
+.gum.sheet.actor .block-title { 
+    font-family: var(--gum-font-secondary); font-size: 10px; color: var(--gum-accent-gold); margin: 0; }
 .gum.sheet.actor .survival-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px 0; }
 .gum.sheet.actor .survival-item { background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 3px; padding: 4px; text-align: center; }
 .gum.sheet.actor .survival-item.radiation { border-color: #5a4a20; background: rgba(50, 40, 10, 0.2); }
@@ -1055,75 +1056,351 @@
 /* =================================================================== */
 /* 8. ABA DE EQUIPAMENTOS (Refinada)                                  */
 /* =================================================================== */
+/* =================================================================== */
+/* SUMÁRIO DE CARGA — 2 LINHAS / PREMIUM (BLINDADO)                    */
+/* Depende de: .encumbrance-inline[data-enc="0..4"]                     */
+/* =================================================================== */
 
-/* --- Sumário de Carga (Painel Fixo) --- */
-.gum-panel {
-    background: var(--gum-bg-card-sutil);
-    border: 1px solid var(--gum-border-gold);
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin-bottom: 15px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+.encumbrance-inline {
+  padding: 6px 10px;
+  margin-bottom: 10px;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15)),
+    var(--item-panel-texture);
+
+  border: 1px solid var(--gum-border-gold);
+  border-radius: 4px;
 }
 
-.gum-panel .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--gum-border-light);
-    padding-bottom: 4px;
+/* ---------- Linhas ---------- */
+.encumbrance-row {
+  display: grid;
+  align-items: center;
+  gap: 10px;
 }
 
-.gum-panel .panel-title {
-    font-family: var(--gum-font-primary);
-    color: var(--gum-primary);
-    font-size: 1.1em;
-    margin: 0;
+.encumbrance-row-top {
+  grid-template-columns: auto minmax(200px, 320px) auto auto;
 }
 
-.encumbrance-total .value {
-    font-weight: bold;
-    color: var(--gum-accent-red);
-    font-size: 1.1em;
+.encumbrance-row-bottom {
+  margin-top: 6px;
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  gap: 8px;
 }
 
-/* Medidor Visual de Carga */
-.encumbrance-meter {
-    display: flex;
-    gap: 2px;
-    height: 28px;
-    background: #ccc;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
-    border: 1px solid #999;
+/* ---------- Label ---------- */
+.encumbrance-inline-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gum-text-medio);
+  white-space: nowrap;
 }
 
-.encumbrance-step {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: #f0f0f0;
-    font-size: 0.7em;
-    color: #888;
-    cursor: help;
-    transition: all 0.2s;
+/* ---------- Barra (TRILHO) ---------- */
+.encumbrance-inline-meter {
+  position: relative;
+  height: 14px;
+  width: 100%;
+  justify-self: center;
+
+  border-radius: 999px;
+  overflow: hidden;
+
+  background: rgba(0,0,0,0.33);
+  border: 1px solid rgba(197,160,91,0.22);
+
+  /* “bevel” premium */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.45),
+    inset 0 0 0 1px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(0,0,0,0.18);
 }
 
-.encumbrance-step.active {
-    background: var(--gum-accent-red); /* Cor de destaque quando ativo */
-    color: #fff;
-    font-weight: bold;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+/* brilho interno no trilho (DnD-like) */
+.encumbrance-inline-meter::before{
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 999px;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.10) 0%,
+      rgba(255,255,255,0.03) 35%,
+      rgba(0,0,0,0.12) 70%,
+      rgba(0,0,0,0.30) 100%
+    );
+  opacity: 0.9;
 }
 
-.encumbrance-step .step-limit {
-    font-size: 0.85em;
-    opacity: 0.8;
+/* highlight fino no topo */
+.encumbrance-inline-meter::after{
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 2px;
+  height: 1px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: rgba(255,255,255,0.08);
 }
+
+/* ---------- Preenchimento (FILL) ---------- */
+.encumbrance-inline-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+
+  /* default (caso falhe data-enc) */
+  background: linear-gradient(90deg, #6fa86b 0%, #c9a24d 60%, #a53541 100%);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 0 10px rgba(0,0,0,0.20);
+}
+
+/* brilho no fill */
+.encumbrance-inline-fill::before{
+  content:"";
+  position:absolute;
+  inset: 1px 1px auto 1px;
+  height: 55%;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.00));
+  opacity: 0.9;
+}
+
+/* ---------- Marcadores ---------- */
+.encumbrance-inline-marker {
+  position: absolute;
+  top: -2px;
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,0.22);
+}
+
+.encumbrance-inline-marker.active {
+  background: var(--gum-accent-gold);
+  width: 2px;
+  box-shadow: 0 0 6px rgba(197,160,91,0.25);
+}
+
+/* ---------- Valor e Estado ---------- */
+.encumbrance-inline-value {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--gum-text-claro);
+  white-space: nowrap;
+}
+
+/* Badge (sem ícone) */
+.encumbrance-inline-state{
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(197,160,91,0.22);
+  background: rgba(0,0,0,0.22);
+
+  color: var(--gum-accent-gold);
+}
+
+/* =================================================================== */
+/* CORES POR NÍVEL (fill + borda do trilho + badge)                     */
+/* =================================================================== */
+
+/* nível 0 - neutro */
+.encumbrance-inline[data-enc="0"] .encumbrance-inline-state{
+  color: rgba(243,234,220,0.82);
+  border-color: rgba(197,160,91,0.16);
+  background: rgba(0,0,0,0.16);
+}
+.encumbrance-inline[data-enc="0"] .encumbrance-inline-meter{
+  border-color: rgba(197,160,91,0.16);
+}
+.encumbrance-inline[data-enc="0"] .encumbrance-inline-fill{
+  background: linear-gradient(90deg, rgba(160,160,160,0.50), rgba(160,160,160,0.18));
+}
+
+/* nível 1 - verde */
+.encumbrance-inline[data-enc="1"] .encumbrance-inline-state{
+  color: rgba(180,220,170,0.95);
+  border-color: rgba(111,168,107,0.32);
+  background: rgba(18,30,18,0.34);
+}
+.encumbrance-inline[data-enc="1"] .encumbrance-inline-meter{
+  border-color: rgba(111,168,107,0.30);
+}
+.encumbrance-inline[data-enc="1"] .encumbrance-inline-fill{
+  background: linear-gradient(90deg, rgba(111,168,107,0.95), rgba(111,168,107,0.55));
+}
+
+/* nível 2 - ouro */
+.encumbrance-inline[data-enc="2"] .encumbrance-inline-state{
+  color: rgba(240,216,160,0.96);
+  border-color: rgba(201,162,77,0.36);
+  background: rgba(35,28,12,0.38);
+}
+.encumbrance-inline[data-enc="2"] .encumbrance-inline-meter{
+  border-color: rgba(201,162,77,0.34);
+}
+.encumbrance-inline[data-enc="2"] .encumbrance-inline-fill{
+  background: linear-gradient(90deg, rgba(201,162,77,0.95), rgba(201,162,77,0.55));
+}
+
+/* nível 3 - âmbar */
+.encumbrance-inline[data-enc="3"] .encumbrance-inline-state{
+  color: rgba(245,190,150,0.96);
+  border-color: rgba(197,120,70,0.40);
+  background: rgba(40,18,10,0.42);
+}
+.encumbrance-inline[data-enc="3"] .encumbrance-inline-meter{
+  border-color: rgba(197,120,70,0.38);
+}
+.encumbrance-inline[data-enc="3"] .encumbrance-inline-fill{
+  background: linear-gradient(90deg, rgba(197,120,70,0.98), rgba(197,120,70,0.55));
+}
+
+/* nível 4 - vermelho */
+.encumbrance-inline[data-enc="4"] .encumbrance-inline-state{
+  color: rgba(255,205,205,0.96);
+  border-color: rgba(165,53,65,0.48);
+  background: rgba(45,10,14,0.52);
+}
+.encumbrance-inline[data-enc="4"] .encumbrance-inline-meter{
+  border-color: rgba(165,53,65,0.46);
+}
+.encumbrance-inline[data-enc="4"] .encumbrance-inline-fill{
+  background: linear-gradient(90deg, rgba(165,53,65,0.98), rgba(165,53,65,0.55));
+}
+
+/* alerta extra (3+) */
+.encumbrance-inline[data-enc="3"],
+.encumbrance-inline[data-enc="4"]{
+  box-shadow:
+    0 0 0 1px rgba(165,53,65,0.12),
+    inset 0 0 0 1px rgba(0,0,0,0.25);
+}
+
+/* =================================================================== */
+/* LINHA 2 (Ignorar)                                                    */
+/* =================================================================== */
+
+.encumbrance-inline-subtitle {
+  font-size: var(--gum-font-size-body);
+  color: var(--gum-text-medio);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* pill (única versão — sem duplicação) */
+.encumbrance-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 3px 10px;
+
+  background: rgba(0,0,0,0.14);
+
+  font-size: 0.70rem;
+  color: var(--gum-text-medio);
+  white-space: nowrap;
+
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.encumbrance-pill:hover{
+  border-color: rgba(197,160,91,0.28);
+  background: rgba(0,0,0,0.18);
+}
+
+/* círculo com check ✓ */
+.encumbrance-pill input{
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 13px;
+  height: 13px;
+  flex: 1 1 6px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(197,160,91,0.38);
+  background: rgba(0,0,0,0.22);
+  display: inline-grid;
+  place-content: center;
+  margin: 0;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.35);
+
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.encumbrance-pill input:checked{
+  border-color: rgba(197,160,91,0.70);
+  background: rgba(197,160,91,0.12);
+  box-shadow:
+    0 0 0 2px rgba(197,160,91,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.30);
+}
+
+.encumbrance-pill input:checked::before{
+  content: "●";
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 900;
+  color: var(--gum-accent-gold);
+  transform: translateY(-0.5px);
+  display: contents;
+}
+
+
+/* placeholder desativado */
+.encumbrance-pill.is-disabled {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 840px) {
+  .encumbrance-row-top {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .encumbrance-row-bottom {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
 
 /* --- Colunas Colapsáveis (Details/Summary) --- */
 .gum-details.equipment-column {
@@ -1342,7 +1619,6 @@
 .gum.sheet.actor .biography-layout {
     display: flex;
     flex-direction: column;
-    gap: 20px;
     height: 100%;
     overflow-y: auto; /* Scroll na aba inteira se necessário */
     padding-right: 5px;
@@ -1376,11 +1652,12 @@
 /* O Item de Detalhe (Caixinha) */
 .gum.sheet.actor .detail-item {
     display: flex;
-    flex-direction: column; /* Rótulo em cima, valor embaixo */
+    flex-direction: row;
     background: #fff;
     border: 1px solid rgba(0,0,0,0.1);
     border-radius: 3px;
     padding: 4px 8px;
+    gap: 5px;
 }
 
 .gum.sheet.actor .detail-label {
@@ -1394,7 +1671,7 @@
 .gum.sheet.actor .detail-value {
     font-weight: 600;
     color: var(--gum-text-escuro);
-    font-size: 0.95em;
+    font-size: var(--gum-font-size-body);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1410,7 +1687,7 @@
     background: var(--gum-bg-card-claro);
     border: 1px solid var(--gum-border);
     border-radius: 4px;
-    padding: 20px 25px; /* Margens generosas como um livro */
+    padding: 0.35rem; /* Margens generosas como um livro */
     box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
     min-height: 300px; /* Garante um tamanho bom para escrever */
 }

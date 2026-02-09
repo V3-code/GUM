@@ -1245,30 +1245,64 @@
     
 <div class="tab" data-group="primary" data-tab="equipment">
 
-    {{!-- SUMÁRIO DE CARGA --}}
-    <div class="encumbrance-block gum-panel">
-        <div class="panel-header">
-            <h4 class="panel-title"><i class="fas fa-weight-hanging"></i> Sumário de Carga</h4>
-            <div class="encumbrance-total">
-                <span class="label">Peso Total:</span>
-                <span class="value">{{actor.system.encumbrance.total_weight}} kg</span>
-            </div>
-        </div>
-        <div class="encumbrance-meter">
-            {{#each actor.system.encumbrance.level_data}}
-            <div class="encumbrance-step {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}">
-                <span class="step-name">{{this.name}}</span>
-                <span class="step-limit">≤ {{this.max}}</span>
-            </div>
-            {{/each}}
-        </div>
-        <div class="panel-footer">
-            <label class="checkbox-label">
-                <input type="checkbox" name="system.encumbrance.ignore_carried_weight" {{checked actor.system.encumbrance.ignore_carried_weight}}/>
-                Ignorar peso carregado
-            </label>
-        </div>
+{{!-- SUMÁRIO DE CARGA (2 LINHAS / PREMIUM) --}}
+<div class="encumbrance-inline gum-panel" data-enc="{{actor.system.encumbrance.level_value}}">
+
+  {{!-- LINHA 1 --}}
+  <div class="encumbrance-row encumbrance-row-top">
+    <div class="encumbrance-inline-label">
+      <i class="fas fa-weight-hanging"></i>
+      <span>Sumário de Carga</span>
     </div>
+
+    <div class="encumbrance-inline-meter"
+         role="img"
+         aria-label="Carga atual {{actor.system.encumbrance.total_weight}} de {{actor.system.encumbrance.max_capacity}} kg">
+
+      <div class="encumbrance-inline-fill"
+           style="width: {{actor.system.encumbrance.progress_percent}}%;"></div>
+
+      {{#each actor.system.encumbrance.level_data}}
+        <span class="encumbrance-inline-marker
+              {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}"
+              style="left: {{this.marker_percent}}%;"
+              title="{{this.tooltip}}">
+        </span>
+      {{/each}}
+    </div>
+
+    <div class="encumbrance-inline-value">
+      {{actor.system.encumbrance.total_weight}} /
+      {{actor.system.encumbrance.max_capacity}} kg
+    </div>
+
+    <div class="encumbrance-inline-state">
+      {{actor.system.encumbrance.level_name}}
+    </div>
+  </div>
+
+  {{!-- LINHA 2 --}}
+  <div class="encumbrance-row encumbrance-row-bottom">
+    <div class="encumbrance-inline-subtitle">
+      Ignorar:
+    </div>
+
+    {{!-- Funcional (já existe no sistema) --}}
+    <label class="encumbrance-pill">
+      <input type="checkbox"
+             name="system.encumbrance.ignore_carried_weight"
+             {{checked actor.system.encumbrance.ignore_carried_weight}} />
+      <span>Carregado</span>
+    </label>
+
+    {{!-- Placeholder visual (você implementa depois) --}}
+    <label class="encumbrance-pill is-disabled" title="(Ainda não implementado)">
+      <input type="checkbox" disabled />
+      <span>Em uso</span>
+    </label>
+  </div>
+
+</div>
 
     <div class="equipment-columns">
 
@@ -1723,6 +1757,7 @@
         </div>
 
     {{!-- Coluna Principal: História do Personagem --}}
+    <div class="biography-details">
     <div class="biography-story">
         <h3 class="block-title">História do Personagem</h3>
         
@@ -1764,6 +1799,7 @@
         </div>
         {{!-- ✅ FIM: Nova estrutura de Editor de Texto --}}
         
+    </div>
     </div>
   </div>
 {{!-- ============================================================= --}}

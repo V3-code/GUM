@@ -245,12 +245,54 @@ const add_sub_modifiers = {};
                 xheavy: (basicLift * 10).toFixed(2)
             }
         });
-        const levels = this.system.encumbrance.levels; 
-        this.system.encumbrance.level_data = [ 
-            { name: 'Nenhuma', max: levels.none }, { name: 'Leve', max: levels.light },
-            { name: 'Média', max: levels.medium }, { name: 'Pesada', max: levels.heavy },
-            { name: 'M. Pesada', max: levels.xheavy }
-        ];
+        const levels = this.system.encumbrance.levels;
+        const maxEncumbrance = Number(levels.xheavy) || 0;
+        const progressPercent = maxEncumbrance > 0
+            ? Math.min(100, Math.max(0, (totalWeight / maxEncumbrance) * 100))
+            : 0;
+
+        this.system.encumbrance.max_capacity = Math.round(maxEncumbrance * 100) / 100;
+        this.system.encumbrance.progress_percent = Math.round(progressPercent * 100) / 100;
+this.system.encumbrance.level_data = [
+  { name: 'Nenhuma', max: levels.none },
+  { name: 'Leve', max: levels.light },
+  { name: 'Média', max: levels.medium },
+  { name: 'Pesada', max: levels.heavy },
+  { name: 'M. Pesada', max: levels.xheavy }
+].map((level, idx, arr) => {
+  const numericMax = Number(level.max) || 0;
+  const markerPercent = maxEncumbrance > 0
+    ? Math.min(100, Math.max(0, (numericMax / maxEncumbrance) * 100))
+    : 0;
+
+  // Limite inferior (para texto "acima de")
+  const prevMax = idx === 0 ? 0 : (Number(arr[idx - 1].max) || 0);
+
+  // Texto curto para legenda: "até X" / "acima de X"
+  const labelShort = idx === 0
+    ? `até ${numericMax.toFixed(2)} kg`
+    : `acima de ${prevMax.toFixed(2)} kg`;
+
+  // Tooltip mais completo (intervalo)
+  const labelRange = idx === 0
+    ? `Até ${numericMax.toFixed(2)} kg`
+    : (idx === arr.length - 1
+        ? `Acima de ${prevMax.toFixed(2)} kg`
+        : `Acima de ${prevMax.toFixed(2)} kg até ${numericMax.toFixed(2)} kg`);
+
+  // Penalidade (casando com sua regra enc.level_value)
+  const penalty = idx === 0 ? 0 : -idx; // 0, -1, -2, -3, -4
+
+  return {
+    ...level,
+    marker_percent: Math.round(markerPercent * 100) / 100,
+
+    // Campos novos (não quebram nada se não usados)
+    min: Math.round(prevMax * 100) / 100,
+    label_short: labelShort,
+    tooltip: `${level.name}: ${labelRange} • Penalidade ${penalty >= 0 ? `0` : penalty}`
+  };
+});
 
         // --- DEFESAS ATIVAS ---
         const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
