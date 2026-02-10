@@ -602,9 +602,8 @@
           {{#each actor.system.bond_entries}}
           <li class="item item-row bond-row" data-entry-id="{{@key}}">
             <div class="item-content-wrapper">
-            <span class="bond-name"><strong>{{this.name}}</strong></span>
-            <span class="bond-type">[{{this.bond_type}}]</span>
-            <span class="bond-description">{{this.description}}</span>
+            <span class="item-name"><strong>{{this.name}} | </strong><span class="item-details">{{this.bond_type}}</span></span>
+            <span class="item-details">{{this.description}}</span>
             </div>
             <div class="item-controls">
               <a class="item-control edit-social-entry" data-type="bond"><i class="fas fa-edit"></i></a>

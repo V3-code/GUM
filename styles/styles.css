@@ -572,11 +572,14 @@
     line-height: 1.2;
 }
 .gum.sheet.actor .block-header h4 {
-    font-family: var(--gum-font-condensed); color: var(--gum-border); margin: 0; font-weight: 700;
+    font-family: var(--gum-font-condensed);
+    color: var(--gum-text-subtitulo);
+    margin: 0;
+    font-weight: 700;
     text-transform: uppercase;
     font-size: var(--gum-font-size-body);
     display: flex;
-    flex-direction:column;
+    flex-direction: column;
     gap: 4px;
 }
 .gum.sheet.actor .block-header h4 .dr-header-subtitle {
@@ -1575,12 +1578,12 @@
 
 .gum.sheet.actor .social-block,
 .gum.sheet.actor .social-block-fullwidth {
-    background: var(--gum-bg-body);
-    border: none;
+    background: color-mix(in srgb, var(--gum-bg-body) 92%, white 8%);
     border-radius: 4px;
-    padding: 10px;
+    padding: 6px;
     display: flex;
     flex-direction: column;
+    /* gap: 8px; */
 }
 
 .gum.sheet.actor .social-block-fullwidth {
@@ -1588,29 +1591,71 @@
     margin-top: 15px;
 }
 
+.gum.sheet.actor .tab[data-tab="social"] .item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* Item da Lista Social */
 .gum.sheet.actor .tab[data-tab="social"] .item-row {
-    padding: 6px 8px;
-    border-bottom: 1px dashed var(--gum-border-light);
+    padding: 4px;
+    /* border: 1px solid color-mix(in srgb, var(--gum-border-light) 85%, white 15%); */
+    border-radius: 4px;
+    background: var(--gum-bg-sidebar);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .item-row:hover {
+    border-color: var(--gum-border-highlight);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-content-wrapper {
     display: flex;
     flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-name {
     font-weight: 700;
-    color: var(--gum-text-escuro);
+    color: var(--gum-border-light);
+    line-height: 1.3;
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-details {
     font-size: 0.85em;
     color: var(--gum-text-medio);
     font-style: italic;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .item-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .item-control {
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .item-control:hover {
+    border-color: var(--gum-border-highlight);
+    color: var(--gum-text-escuro);
 }
 /* =================================================================== */
 /* 10. ABA BIOGRAFIA (LAYOUT VERTICAL: CABEÇALHO + HISTÓRIA)           */
