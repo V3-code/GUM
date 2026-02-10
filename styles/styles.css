@@ -3887,7 +3887,7 @@ background-color: var(--gum-accent-gold);
     transition: background 0.2s;
 }
 .gum.sheet.actor .context-summary:hover {
-    background: rgba(255,255,255,0.8);
+    background: var(--gum-accent-red);
 }
 .gum.sheet.actor .context-details[open] .context-summary {
     border-bottom-color: var(--gum-border-light);
@@ -3964,7 +3964,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .subgroup-summary::before {
     content: '\f0da'; /* Caret Right */
     font-family: "Font Awesome 6 Free";
-    color: var(--gum-text-medio);
+    color: var(--gum-text-subtitulo);
     transition: transform 0.2s;
 }
 .gum.sheet.actor .subgroup-details[open] .subgroup-summary::before {

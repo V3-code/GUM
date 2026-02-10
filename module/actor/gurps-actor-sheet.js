@@ -1368,26 +1368,36 @@ html.find(".toggle-default-mods").on("change", async (ev) => {
   this.render(false);
 });
 
+this._tabSearchState ??= { spells: "", powers: "", modifiers: "" };
+
+const applyModifierSearch = (rawTerm = "") => {
+  const term = String(rawTerm).toLowerCase().trim();
+  this._tabSearchState.modifiers = String(rawTerm);
+
+  html.find(".mod-mini-card").each((_, el) => {
+    const card = $(el);
+    const name = card.find(".mod-name").text().toLowerCase();
+    const match = !term || name.includes(term);
+    card.attr("data-search-match", match ? "1" : "0");
+    card.toggle(match);
+  });
+
+  html.find(".subgroup-details").each((_, el) => {
+    const subgroup = $(el);
+    const matchedCards = subgroup.find('.mod-mini-card[data-search-match="1"]').length;
+    subgroup.toggle(matchedCards > 0);
+  });
+
+  html.find(".context-wrapper").each((_, el) => {
+    const contextWrapper = $(el);
+    const matchedCards = contextWrapper.find('.mod-mini-card[data-search-match="1"]').length;
+    contextWrapper.toggle(matchedCards > 0);
+  });
+};
+
 // Busca de modificadores
 html.find(".modifier-search").on("input", (ev) => {
-  const term = String(ev.currentTarget.value || "").toLowerCase().trim();
-
-  const cards = html.find(".mod-mini-card");
-  cards.each((_, el) => {
-    const name = $(el).find(".mod-name").text().toLowerCase();
-    const match = !term || name.includes(term);
-    $(el).toggle(match);
-  });
-
-  // Esconde subgrupos/contexts vazios após o filtro
-  html.find(".subgroup-details").each((_, el) => {
-    const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
-    $(el).toggle(hasVisible);
-  });
- html.find(".context-wrapper").each((_, el) => {
-    const hasVisible = $(el).find(".mod-mini-card:visible").length > 0;
-    $(el).toggle(hasVisible);
-    });
+  applyModifierSearch(ev.currentTarget.value || "");
 });
 
 const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
@@ -1407,8 +1417,6 @@ const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
     group.toggle(matchedItems > 0);
   });
 };
-
-this._tabSearchState ??= { spells: "", powers: "" };
 
 // Busca de magias
 html.find(".spell-search-input").on("input", (ev) => {
@@ -1438,6 +1446,12 @@ const powerSearchInput = html.find('.power-search-input');
 if (powerSearchInput.length) {
   powerSearchInput.val(this._tabSearchState.powers || '');
   powerSearchInput.trigger('input');
+}
+
+const modifierSearchInput = html.find('.modifier-search');
+if (modifierSearchInput.length) {
+  modifierSearchInput.val(this._tabSearchState.modifiers || '');
+  applyModifierSearch(this._tabSearchState.modifiers || '');
 }
 
 
