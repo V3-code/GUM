@@ -3876,12 +3876,14 @@ background-color: var(--gum-accent-gold);
 
 /* Cabeçalho do Contexto */
 .gum.sheet.actor .context-summary {
-    background: rgba(255,255,255,0.5);
+    background: var(--gum-bg-cabecalho);
     padding: 8px 10px;
-    border-bottom: 1px solid transparent;
+    /* border-bottom: 1px solid transparent; */
     cursor: pointer;
     list-style: none;
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: background 0.2s;
 }
 .gum.sheet.actor .context-summary:hover {
@@ -3895,11 +3897,13 @@ background-color: var(--gum-accent-gold);
 
 /* Título e Ícone (Com Seta CSS) */
 .gum.sheet.actor .ctx-title {
-    font-family: var(--gum-font-secondary);
+    font-family: var(--gum-font-condensed);
     font-weight: 700;
-    color: var(--gum-text-escuro);
+    color: var(--gum-border-light);
     font-size: 1em;
-    display: flex; align-items: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* Adiciona a seta via CSS (FontAwesome) antes do ícone */
@@ -3969,7 +3973,9 @@ background-color: var(--gum-accent-gold);
 
 /* Grid de Itens Pequenos */
 .gum.sheet.actor .mod-mini-grid {
-    display: flex; flex-wrap: wrap; gap: 5px;
+    display: flex; 
+    flex-direction: column;
+    gap: 5px;
 }
 
 /* --- MINI CARD DE MODIFICADOR --- */

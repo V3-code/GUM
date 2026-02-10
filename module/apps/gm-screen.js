@@ -856,7 +856,7 @@ async _applyModifiersToActor(actor) {
         let tagsHtml = '';
         const modSign = s.modifier > 0 ? '+' : '';
         tagsHtml += createTag('Valor', `${modSign}${s.modifier}`);
-        const catLabels = { location: "Localização", maneuver: "Manobra", situation: "Situação", attack_opt: "Opção Atq.", defense_opt: "Opção Def.", posture: "Postura", range: "Distância", time: "Tempo", effort: "Esforço", lighting: "Iluminação", cover: "Cobertura", difficulty: "Dificuldade" };
+        const catLabels = { location: "Pontos de Impacto", maneuver: "Manobras", attack_opt: "Opções de Ataque", defense_opt: "Opções de Defesa", posture: "Cobertura e Postura", range: "Distância e Velocidade", terrain_light: "Terreno e Iluminação", state_affliction: "Estado e Atribulações", task_difficulty: "Dificuldade da Tarefa", ritual: "Operação Mágica", power_operation: "Operação de Poderes", time: "Modo de Execução", effort: "Esforço Adicional", situation: "Cenário", equipment: "Equipamento", other: "Customizado" };
         tagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
         if (s.nh_cap) tagsHtml += createTag('Teto (Cap)', s.nh_cap);
         if (s.duration) tagsHtml += createTag('Duração', s.duration);

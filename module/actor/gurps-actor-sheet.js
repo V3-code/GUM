@@ -57,13 +57,18 @@ async getData(options) {
             maneuver: "Manobras",
             attack_opt: "Opções de Ataque",
             defense_opt: "Opções de Defesa",
-            posture: "Postura",
-            range: "Distância / Alcance",
-            ritual: "Ritual & Mana",
-            time: "Tempo / Duração",
-            effort: "Esforço Extra",
-            situation: "Situação / Condição",
-            other: "Customizado / Outros"
+            posture: "Cobertura e Postura",
+            range: "Distância e Velocidade",
+            terrain_light: "Terreno e Iluminação",
+            state_affliction: "Estado e Atribulações",
+            task_difficulty: "Dificuldade da Tarefa",
+            ritual: "Operação Mágica",
+            power_operation: "Operação de Poderes",
+            time: "Modo de Execução",
+            effort: "Esforço Adicional",
+            situation: "Cenário",
+            equipment: "Equipamento",
+            other: "Customizado"
         };
 
         const getSubgroup = (contextObj, catKey) => {

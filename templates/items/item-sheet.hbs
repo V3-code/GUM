@@ -502,21 +502,26 @@
                 <label class="effect-label">Bloco na Janela de Rolagem</label>
                 <select name="system.ui_category">
                     {{selectOptions (object 
-                        location="Localização de Acerto" 
+                        location="Pontos de Impacto" 
                         maneuver="Manobras" 
                         
                         attack_opt="Opções de Ataque" 
                         defense_opt="Opções de Defesa" 
                         
-                        posture="Postura"
-                        range="Distância / Alcance"
+                        posture="Cobertura e Postura"
+                        range="Distância e Velocidade"
+                        terrain_light="Terreno e Iluminação"
+                        state_affliction="Estado e Atribulações"
+                        task_difficulty="Dificuldade da Tarefa"
                         
-                        ritual="Magia: Ritual & Mana"
-                        time="Tempo / Duração"
-                        effort="Esforço Extra"
+                        ritual="Operação Mágica"
+                        power_operation="Operação de Poderes"
+                        time="Modo de Execução"
+                        effort="Esforço Adicional"
                         
-                        situation="Situação / Condição"
-                        other="Outros / Customizado"
+                        situation="Cenário"
+                        equipment="Equipamento"
+                        other="Customizado"
                     ) selected=system.ui_category}}
                 </select>
                 </div>
@@ -540,7 +545,7 @@
                     <div class="skill-stat-card">
                         <div class="stat-label">Limite do NH (teto)</div>
                         <div class="stat-value">
-                            <input type="number" name="system.nh_cap" value="{{system.nh_cap}}" placeholder="9" class="tight-input"/>
+                            <input type="number" name="system.nh_cap" value="{{system.nh_cap}}" placeholder="valor" class="tight-input"/>
                         </div>
                     </div>
                 </div>
