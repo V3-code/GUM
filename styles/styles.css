@@ -1193,15 +1193,31 @@
 .encumbrance-inline-marker {
   position: absolute;
   top: -2px;
-  width: 1px;
+  width: 4px;
   height: 18px;
   background: rgba(255,255,255,0.22);
+  z-index: 3;
 }
 
 .encumbrance-inline-marker.active {
   background: var(--gum-accent-gold);
   width: 2px;
   box-shadow: 0 0 6px rgba(197,160,91,0.25);
+}
+
+.encumbrance-inline-segment-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.65);
+  pointer-events: none;
 }
 
 /* ---------- Valor e Estado ---------- */

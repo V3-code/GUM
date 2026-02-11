@@ -1292,10 +1292,20 @@
            style="width: {{actor.system.encumbrance.progress_percent}}%;"></div>
 
       {{#each actor.system.encumbrance.level_data}}
+      {{#if this.is_divider}}
         <span class="encumbrance-inline-marker
               {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}"
               style="left: {{this.marker_percent}}%;"
-              title="{{this.tooltip}}">
+              title="{{this.barrier_tooltip}}">
+        </span>
+      {{/if}}
+      {{/each}}
+
+      {{#each actor.system.encumbrance.segment_labels}}
+        <span class="encumbrance-inline-segment-label"
+              style="left: {{this.midpoint_percent}}%;"
+              title="{{this.name}}">
+          {{this.short}}
         </span>
       {{/each}}
     </div>

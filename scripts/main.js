@@ -254,11 +254,11 @@ const add_sub_modifiers = {};
         this.system.encumbrance.max_capacity = Math.round(maxEncumbrance * 100) / 100;
         this.system.encumbrance.progress_percent = Math.round(progressPercent * 100) / 100;
 this.system.encumbrance.level_data = [
-  { name: 'Nenhuma', max: levels.none },
-  { name: 'Leve', max: levels.light },
-  { name: 'Média', max: levels.medium },
-  { name: 'Pesada', max: levels.heavy },
-  { name: 'M. Pesada', max: levels.xheavy }
+  { name: 'Nenhuma', short: '', max: levels.none },
+  { name: 'Leve', short: 'L', max: levels.light },
+  { name: 'Média', short: 'M', max: levels.medium },
+  { name: 'Pesada', short: 'P', max: levels.heavy },
+  { name: 'M. Pesada', short: 'MP', max: levels.xheavy }
 ].map((level, idx, arr) => {
   const numericMax = Number(level.max) || 0;
   const markerPercent = maxEncumbrance > 0
@@ -290,7 +290,23 @@ this.system.encumbrance.level_data = [
     // Campos novos (não quebram nada se não usados)
     min: Math.round(prevMax * 100) / 100,
     label_short: labelShort,
-    tooltip: `${level.name}: ${labelRange} • Penalidade ${penalty >= 0 ? `0` : penalty}`
+    barrier_tooltip: `${numericMax.toFixed(2)} kg`,
+    tooltip: `${level.name}: ${labelRange} • Penalidade ${penalty >= 0 ? `0` : penalty}`,
+    is_divider: idx < arr.length - 1
+  };
+});
+
+this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map((level, idx, arr) => {
+  const segmentStart = idx === 0 ? 0 : (Number(arr[idx - 1].max) || 0);
+  const segmentEnd = Number(level.max) || 0;
+  const midpoint = maxEncumbrance > 0
+    ? ((segmentStart + segmentEnd) / 2 / maxEncumbrance) * 100
+    : 0;
+
+  return {
+    short: level.short,
+    name: level.name,
+    midpoint_percent: Math.round(Math.min(100, Math.max(0, midpoint)) * 100) / 100
   };
 });
 
