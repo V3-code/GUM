@@ -3196,7 +3196,8 @@ background-color: var(--gum-accent-gold);
     font-weight: 500;
     color: var(--gum-text-escuro);
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: start;
     gap: 6px;
     font-size: smaller;
 }
@@ -3215,7 +3216,6 @@ background-color: var(--gum-accent-gold);
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 6px;
     background: rgba(0,0,0,0.03);
     border: 1px solid var(--gum-border-light);
     border-radius: 5px;
@@ -3729,11 +3729,13 @@ background-color: var(--gum-accent-gold);
     align-items: center; overflow: hidden; min-width: 0; gap: 5px;
 }
 
-.gum.sheet.actor .characteristic-card .item-name { flex-grow: 1; overflow: hidden; min-width: 0; }
+.gum.sheet.actor .characteristic-card .item-name { flex-grow: 1; min-width: 0; }
 .gum.sheet.actor .characteristic-card .item-name a {
     font-family: var(--gum-font-primary); font-weight: 600; font-size: 0.9em;
     color: var(--gum-text-escuro); text-decoration: none; line-height: 1.1;
-    display: block; overflow: hidden; text-overflow: ellipsis;
+    display: block;
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 .gum.sheet.actor .characteristic-card .item-name a:hover { color: var(--gum-accent-red); }
 
@@ -3748,9 +3750,13 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .characteristic-card .item-controls {
-    display: flex; gap: 4px; opacity: 0; transition: opacity 0.1s; padding-left: 4px; border-left: 1px solid rgba(0,0,0,0.1);
+    display: none;
+    gap: 4px;
+    margin-left: 4px;
+    padding-left: 4px;
+    border-left: 1px solid rgba(0,0,0,0.1);
 }
-.gum.sheet.actor .characteristic-card:hover .item-controls { opacity: 1; }
+.gum.sheet.actor .characteristic-card:hover .item-controls { display: flex; }
 .gum.sheet.actor .characteristic-card .item-controls a { color: var(--gum-text-medio); font-size: 0.85em; padding: 2px; }
 .gum.sheet.actor .characteristic-card .item-controls a:hover { color: var(--gum-accent-gold); }
 .gum.sheet.actor .characteristic-card .item-controls a.item-delete:hover { color: var(--gum-accent-red); }
