@@ -30,7 +30,7 @@
         "swing_damage": "1d6"
       },
       "points": { "total": 100, "unspent": 100 },
-      "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "backstory": "" },
+      "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "race_name": "", "backstory": "" },
       "money": { "value": 0 },
       "encumbrance": { "ignore_carried_weight": false },
       "combat": { "body_profile": "humanoid", "defense_bonus": 0, "dr_mods": {}, "dr_temp_mods": {}, "combat_meters": {} },

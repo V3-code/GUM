@@ -3760,6 +3760,63 @@ background-color: var(--gum-accent-gold);
     padding: 10px; font-size: 0.85em; opacity: 0.7;
 }
 
+.gum.sheet.actor .characteristics-main-content {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr;
+    gap: 8px;
+    align-items: start;
+}
+
+.gum.sheet.actor .characteristics-left-column,
+.gum.sheet.actor .characteristics-right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--gum-bg-sidebar);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-name-label {
+    font-weight: 700;
+    color: var(--gum-text-medio);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75em;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-name-value {
+    flex: 1;
+    color: var(--gum-border-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--gum-font-size-body);
+    letter-spacing: 1.2px;
+    padding-left: 10px;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .edit-race-name {
+    color: var(--gum-text-medio);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .edit-race-name:hover {
+    color: var(--gum-accent-gold);
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .racial-divider {
+    list-style: none;
+    width: 100%;
+    height: 1px;
+    margin: 2px 0;
+    background: rgba(255, 255, 255, 0.2);
+}
+
 .gum.sheet.actor .tab[data-tab="characteristics"] .racial-section {
     display: grid;
     gap: 14px;

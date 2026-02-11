@@ -685,9 +685,15 @@ async getData(options) {
             const racialBlockId = 'block1';
             const racialItems = context.characteristicsByBlock[racialBlockId] || [];
             context.racialCharacteristics = {
-                advantages: racialItems.filter((item) => item.type === 'advantage'),
-                disadvantages: racialItems.filter((item) => item.type === 'disadvantage')
+                advantages: racialItems
+                    .filter((item) => Number(item.system.points) >= 0)
+                    .sort((a, b) => Number(b.system.points || 0) - Number(a.system.points || 0)),
+                disadvantages: racialItems
+                    .filter((item) => Number(item.system.points) < 0)
+                    .sort((a, b) => Number(b.system.points || 0) - Number(a.system.points || 0))
             };
+            context.racialCharacteristics.hasAny = racialItems.length > 0;
+            context.raceName = this.actor.system.details?.race_name || "";
 
         // ================================================================== //
         //    ENRIQUECIMENTO DE TEXTO (Seu código original)
@@ -1492,6 +1498,7 @@ html.on("click", ".delete-power-source", (ev) => this._onDeletePowerSource(ev));
 html.on("click", ".add-social-entry", (ev) => this._onAddSocialEntry(ev));
 html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
 html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
+html.on("click", ".edit-race-name", (ev) => this._onEditRaceName(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -3837,6 +3844,29 @@ async _promptPowerSourceData(initialData = {}, { isEdit = false } = {}) {
     },
     rejectClose: false
   });
+}
+
+async _onEditRaceName(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const currentName = this.actor.system.details?.race_name || "";
+  const raceName = await Dialog.prompt({
+    title: "Nome da Raça",
+    content: `
+      <form class="gum-dialog-form">
+        <div class="form-group">
+          <label>Raça</label>
+          <input type="text" name="race_name" value="${foundry.utils.escapeHTML(currentName)}" placeholder="Ex: Elfo, Anão, Humano..." autofocus />
+        </div>
+      </form>
+    `,
+    callback: (html) => html.find('[name="race_name"]').val()?.trim() ?? "",
+    rejectClose: false
+  });
+
+  if (raceName === null || raceName === undefined) return;
+  await this.actor.update({ "system.details.race_name": raceName });
 }
 
 async _onAddPowerSource(ev) {
