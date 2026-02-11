@@ -57,7 +57,7 @@ _prepareCharacterItems() {
         };
 
         // --- ETAPA 0: RESETAR VALORES ---
-        const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'lifting_st', 'dodge',
+const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'enhanced_move', 'lifting_st', 'dodge',
             'vision', 'hearing', 'tastesmell', 'touch'];
         allAttributes.forEach(attr => {
             if (attributes[attr]) {

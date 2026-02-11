@@ -23,11 +23,13 @@ export const GUM_DATA = {
         "attributes.mt.temp": "MT (Mod. Temp.)",
         "attributes.basic_speed.temp": "Velocidade Básica (Mod. Temp.)",
         "attributes.basic_move.temp": "Deslocamento Básico (Mod. Temp.)",
+        "attributes.enhanced_move.temp": "Deslocamento Ampliado (Mod. Temp.)",
         
         // Atributos Calculados (Modificadores Diretos)
         "attributes.final_dodge": "Esquiva Final",
         "attributes.final_move": "Deslocamento Final",
-
+        "attributes.enhanced_move.final": "Deslocamento Ampliado Final",
+        
         // ✅ NOVOS: Modificadores de RD por Local
         "combat.dr_mods.head": "RD - Crânio (Mod.)",
         "combat.dr_mods.face": "RD - Rosto (Mod.)",

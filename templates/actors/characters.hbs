@@ -86,7 +86,11 @@
             </div>
             <div class="d6-stat main-d6" title="Deslocamento">
               <div class="d6-face">
+                {{#if actor.system.attributes.enhanced_move.final}}
+                <span class="d6-val d6-val-split">{{actor.system.attributes.basic_move.final}} <small style="color:#c2c2c2">/{{actor.system.attributes.enhanced_move.final}}</small></span>
+                {{else}}
                 <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
+                {{/if}}
                 <span class="d6-label">DESLOC.</span>
               </div>
             </div>

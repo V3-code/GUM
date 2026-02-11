@@ -2422,6 +2422,7 @@ default: 'save'
         const touch = getAttr('touch');
         const thrustDamage = attrs.thrust_damage ?? "";
         const swingDamage = attrs.swing_damage ?? "";
+        const enhancedMove = getAttr('enhanced_move');
                 const content = `
         <form class="secondary-stats-editor">
             <div class="form-header-grid">
@@ -2453,6 +2454,15 @@ default: 'save'
                     <span class="read-only">${fmt(attrs.basic_move.temp)}</span>
                     <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
                     <span class="final-display">${attrs.basic_move.final}</span>
+                </div>
+                <div class="form-row">
+                    <label>Desloc. Ampliado</label>
+                    <input type="number" name="enhanced_move.value" value="${enhancedMove.value}"/>
+                    <input type="number" name="enhanced_move.mod" value="${enhancedMove.mod}"/>
+                    <span class="read-only">${fmt(enhancedMove.passive)}</span>
+                    <span class="read-only">${fmt(enhancedMove.temp)}</span>
+                    <input type="number" name="enhanced_move.points" value="${enhancedMove.points || 0}"/>
+                    <span class="final-display">${enhancedMove.final}</span>
                 </div>
                 <div class="form-row">
                     <label>MT (SM)</label>
@@ -2573,6 +2583,7 @@ default: 'save'
                        const fields = [
                             "basic_speed.value", "basic_speed.mod", "basic_speed.points",
                             "basic_move.value", "basic_move.mod", "basic_move.points",
+                            "enhanced_move.value", "enhanced_move.mod", "enhanced_move.points",
                             "mt.value", "mt.mod", "mt.points",
                             "dodge.mod", "dodge.points",
                             "vision.value", "vision.mod", "vision.points",
@@ -2644,6 +2655,7 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
 
   const basic_speed = safe(attrs.basic_speed, { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
   const basic_move  = safe(attrs.basic_move,  { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
+  const enhanced_move = safe(attrs.enhanced_move,  { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
   const mt          = safe(attrs.mt,          { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
   const dodge       = safe(attrs.dodge,       { value: 0, mod: 0, passive: 0, temp: 0, points: 0, final: 0 });
 
@@ -2682,6 +2694,18 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
           <input type="number" name="basic_move.points" value="${basic_move.points ?? 0}"/>
           <span class="final-display">${basic_move.final ?? 0}</span>
         </div>
+
+        <!-- Deslocamento Ampliado -->
+        <div class="form-row">
+          <label>Desloc. Ampliado</label>
+          <input type="number" name="enhanced_move.value" value="${enhanced_move.value ?? 0}"/>
+          <input type="number" name="enhanced_move.mod" value="${enhanced_move.mod ?? 0}"/>
+          <span class="read-only">${fmt(enhanced_move.passive ?? 0)}</span>
+          <span class="read-only">${fmt(enhanced_move.temp ?? 0)}</span>
+          <input type="number" name="enhanced_move.points" value="${enhanced_move.points ?? 0}"/>
+          <span class="final-display">${enhanced_move.final ?? 0}</span>
+        </div>
+
 
         <!-- Modificador de Tamanho -->
         <div class="form-row">
