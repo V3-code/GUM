@@ -2960,7 +2960,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-main-content {
     display: grid;
     /* Coluna RD  | Espaço | Coluna Ataques (Resto) */
-    grid-template-columns: 0.35fr 1fr; 
+    grid-template-columns: minmax(0, 0.35fr) minmax(0, 1fr);
     gap: 5px;
     align-items: start;
     height: 100%; /* Garante que preencha a altura */
@@ -2971,6 +2971,12 @@ background-color: var(--gum-accent-gold);
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 0;
+}
+
+.gum.sheet.actor .combat-left-column .gum-block,
+.gum.sheet.actor .combat-right-column .gum-block {
+    min-width: 0;
 }
 
 /* --- Tabela de RD (Estilo "Livro de Regras") --- */
@@ -3164,10 +3170,15 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .stats-cluster .secondary-basic-damage {
     margin-top: 8px;
 }
-.gum.sheet.actor .combat-meters-box .meter-list,
+.gum.sheet.actor .combat-meters-box .meter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .gum.sheet.actor .energy-reserves-box .meter-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 6px;
 }
 
@@ -3185,9 +3196,9 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .combat-meters-box .meter-card .meter-main,
 .gum.sheet.actor .energy-reserves-box .meter-card .meter-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
     gap: 8px;
 }
 
@@ -3215,10 +3226,20 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .energy-reserves-box .meter-card .meter-inputs {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
+    /* width: fit-content; */
     background: rgba(0,0,0,0.03);
     border: 1px solid var(--gum-border-light);
     border-radius: 5px;
+}
+
+.gum.sheet.actor .combat-meters-box .meter-card .item-name {
+    line-height: 1.1;
+}
+
+.gum.sheet.actor .combat-meters-box .meter-card .meter-inputs {
+    margin-top: 2px;
 }
 
 .gum.sheet.actor .combat-meters-box .meter-card .meter-inputs input,
@@ -3234,8 +3255,8 @@ background-color: var(--gum-accent-gold);
     display: flex;
     justify-content: flex-end;
     gap: 6px;
-    padding-top: 5px;
-    border-top: 1px dotted var(--gum-border-light);
+    padding-top: 0;
+    border-top: none;
     position: relative;
 }
 
