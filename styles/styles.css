@@ -2226,9 +2226,6 @@ background-color: var(--gum-accent-gold);
 
 /* --- O GRUPO (FOLDER) --- */
 .gum.sheet.actor .skill-tree-group {
-    background: var(--gum-bg-card-claro);
-    border: 1px solid var(--gum-border);
-    border-radius: 4px;
     margin-bottom: 8px;
     break-inside: avoid;
     display: inline-block;
@@ -2237,73 +2234,73 @@ background-color: var(--gum-accent-gold);
 
 /* Cabeçalho do Grupo */
 .gum.sheet.actor .skill-tree-summary {
-    background: rgba(0,0,0,0.03);
-    padding: 6px 10px;
+    padding: 8px 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
     list-style: none;
-    border-bottom: 1px solid transparent;
-    transition: background 0.2s;
-    font-size: var(--gum-font-size-header);
+    gap: 10px;
 }
 .gum.sheet.actor .skill-tree-summary:hover {
-    background: rgba(0,0,0,0.06);
-}
-.gum.sheet.actor .skill-tree-group[open] .skill-tree-summary {
-    border-bottom: 1px solid var(--gum-border-light);
+    background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
 }
 .gum.sheet.actor .skill-tree-summary::-webkit-details-marker { display: none; }
 
 .gum.sheet.actor .st-group-title {
     flex-grow: 1;
-    font-family: var(--gum-font-secondary);
-    color: var(--gum-text-escuro);
-    font-size: 0.95em;
+    font-family: var(--gum-font-condensed);
+    color: var(--gum-border);
+    font-size: var(--gum-font-size-header);
     font-weight: 700;
 }
 
 .gum.sheet.actor .st-group-count {
-    background: rgba(0,0,0,0.1);
-    color: var(--gum-text-medio);
+    background: rgba(255,255,255,0.12);
+    color: #f0e4d4;
     font-size: var(--gum-font-size-meta);
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 10px;
-    margin-right: 8px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
 }
 
 .gum.sheet.actor .st-icon {
     font-size: var(--gum-font-size-body-small);
-    transition: transform 0.2s;
-    color: var(--gum-text-medio);
+    transition: transform 0.2s ease;
+    color: rgba(247,233,215,0.8);
 }
-.gum.sheet.actor .skill-tree-group[open] .st-icon { transform: rotate(180deg); }
+.gum.sheet.actor .skill-tree-group[open] .st-icon { transform: rotate(90deg); color: #f9d899; }
+
+
+.gum.sheet.actor .skill-tree-list.group-content {
+    margin: 0;
+    padding: 4px 6px 6px;
+    list-style: none;
+}
 
 
 /* --- ITEM DE PERÍCIA INDIVIDUAL (AJUSTE DE ESPAÇO) --- */
 .gum.sheet.actor .skill-tree-item {
     display: flex;
-    align-items: center; /* Centraliza verticalmente se o texto tiver 2 linhas */
-    padding: 4px 6px; /* Padding lateral reduzido para ganhar espaço */
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px dotted rgba(255,255,255,0.12);
     position: relative;
-    gap: 6px; /* Gap reduzido entre ícone, texto e dado */
-    min-height: 40px;
-    background: transparent;
-    transition: background 0.1s;
+    gap: 8px;
+    min-height: 44px;
+    background: #2b3038;
+    transition: background 0.15s ease;
 }
 .gum.sheet.actor .skill-tree-item:last-child { border-bottom: none; }
 .gum.sheet.actor .skill-tree-item:hover {
-    background: rgba(255,255,255,0.4);
+    background: #323843;
 }
 
 /* Ícone da Perícia */
 .gum.sheet.actor .st-item-icon {
-    width: 32px; height: 32px;
+    width: 30px; height: 30px;
     border-radius: 4px;
-    border: 1px solid var(--gum-border);
+    border: 1px solid rgba(255,255,255,0.25);
     background-size: cover;
     flex-shrink: 0; /* Nunca encolhe */
     cursor: pointer;
@@ -2329,9 +2326,9 @@ background-color: var(--gum-accent-gold);
 /* Nome com Quebra de Linha Automática */
 .gum.sheet.actor .st-item-name h4 {
     margin: 0;
-    font-size: 12px; /* Fonte reduzida para 12px */
+    font-size: 12px;
     font-weight: 700;
-    color: var(--gum-text-escuro);
+    color: #f3eadc;
     line-height: 1.25;
     cursor: help;
     
@@ -2340,7 +2337,7 @@ background-color: var(--gum-accent-gold);
     word-break: break-word; 
 }
 .gum.sheet.actor .st-item-name h4:hover {
-    color: var(--gum-accent-red);
+    color: #fff2d8;
 }
 
 /* Breadcrumbs (Caminho) */
@@ -2351,7 +2348,7 @@ background-color: var(--gum-accent-gold);
     gap: 3px;
     font-size: 9px;
     margin-top: 2px;
-    color: var(--gum-text-medio);
+    color: rgba(247,233,215,0.65);
 }
 
 /* --- NH BOX (O Dado Robusto) - AJUSTE DE LARGURA --- */
@@ -2361,10 +2358,10 @@ background-color: var(--gum-accent-gold);
     align-items: center;
     justify-content: center;
     
-    width: 34px; /* Largura fixa ligeiramente reduzida */
+    width: 36px;
     height: 32px;
-    background: rgba(0,0,0,0.05);
-    border: 1px solid var(--gum-border);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 4px;
     flex-shrink: 0; /* Garante que não seja esmagado pelo texto */
 }
@@ -2373,7 +2370,7 @@ background-color: var(--gum-accent-gold);
     font-size: 0.65em;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--gum-text-medio);
+    color: rgba(247,233,215,0.65);
     line-height: 1;
     margin-bottom: -1px;
 }
@@ -2381,33 +2378,17 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .st-nh-box a {
     font-size: 1.2em;
     font-weight: 800;
-    color: var(--gum-text-escuro);
+    color: #f3eadc;
     line-height: 1;
     text-decoration: none;
 }
 .gum.sheet.actor .st-nh-box:hover {
-    background: #fff;
+    background: rgba(255,255,255,0.14);
     border-color: var(--gum-accent-gold);
     box-shadow: 0 0 5px rgba(197, 160, 91, 0.3);
 }
 .gum.sheet.actor .st-nh-box:hover a {
-    color: var(--gum-accent-gold);
-}
-
-/* Pontos (Estrela) */
-.gum.sheet.actor .st-pts-box {
-    font-size: 10px;
-    color: var(--gum-text-medio);
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0; /* Não encolhe */
-    min-width: 30px;
-    justify-content: flex-end;
-}
-.gum.sheet.actor .st-pts-box i {
-    font-size: 9px;
-    color: var(--gum-accent-gold);
+    color: #fff2d8;
 }
 
 /* Controles (Editar/Deletar) - SEMPRE ALINHADOS */
@@ -2422,10 +2403,10 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .skill-tree-item:hover .st-controls { opacity: 1; }
 
 .gum.sheet.actor .st-controls a {
-    color: var(--gum-text-medio);
+    color: rgba(247,233,215,0.7);
     font-size: 11px;
 }
-.gum.sheet.actor .st-controls a:hover { color: var(--gum-text-escuro); }
+.gum.sheet.actor .st-controls a:hover { color: #fff2d8; }
 
 /* --- LINHAS GUIA (Modo Árvore) --- */
 /* Mantidas iguais para não quebrar o modo Tree */
@@ -2436,21 +2417,35 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::before,
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::before,
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::before {
-    content: ''; position: absolute; left: 10px; top: -50%; height: 100%; width: 1px;
-    border-left: 1px solid rgba(0,0,0,0.15); z-index: 1;
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: -20%;
+    height: 70%;
+    width: 5px;
+    border-left: 2px dotted var(--gum-border-gold);
+    z-index: 1;
 }
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::after,
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::after,
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::after {
-    content: ''; position: absolute; top: 50%; height: 1px; width: 10px;
-    border-top: 1px solid rgba(0,0,0,0.15); z-index: 1;
+    content: '';
+    position: absolute;
+    top: 50%;
+    height: 1px;
+    width: 18px;
+    border-left: 2px dotted var(--gum-border-gold);
+    z-index: 1;
 }
 /* Ajustes de posição */
-.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::after { left: 10px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-1::after {     left: 14px;
+    border-bottom: 2px dotted var(--gum-border-gold); }
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::before { left: 30px; }
-.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::after { left: 30px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-2::after {     left: 30px;
+    border-bottom: 2px dotted var(--gum-border-gold); }
 .gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::before { left: 50px; }
-.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::after { left: 50px; }
+.gum.sheet.actor .skills-scroll-area.tree .skill-tree-item.indent-3::after {     left: 50px;
+    border-bottom: 2px dotted var(--gum-border-gold); }
 
 /* =================================================================== */
 /* 13. ABA MAGIAS E PODERES (Refinado: Sutileza)                       */

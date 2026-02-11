@@ -770,14 +770,16 @@
             {{#with (lookup ../skillsByGroup groupName) as |skills|}}
             
             {{!-- O ID único combina "skill-" com o nome do grupo para evitar conflitos com outras abas --}}
-            <details class="skill-tree-group" data-group-id="skill-{{groupName}}" {{collapsibleState (concat "skill-" groupName) @root.collapsedData}}>
-                <summary class="skill-tree-summary">
-                    <span class="st-group-title">{{groupName}}</span>
+            <details class="skill-tree-group gum-unified-section" data-group-id="skill-{{groupName}}" {{collapsibleState (concat "skill-" groupName) @root.collapsedData}}>
+                <summary class="skill-tree-summary gum-unified-header">
+                    <div class="summary-left">
+                        <i class="fas fa-chevron-right st-icon"></i>
+                        <span class="st-group-title">{{groupName}}</span>
+                    </div>
                     <span class="st-group-count">{{skills.length}}</span>
-                    <i class="fas fa-chevron-down st-icon"></i>
                 </summary>
                 
-            <ul class="skill-tree-list">
+            <ul class="skill-tree-list group-content">
                     {{#each skills}}
                     <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" 
                         data-item-id="{{this._id}}" 
@@ -853,11 +855,6 @@
                                data-attribute-key="{{this.system.base_attribute}}">
                                {{this.system.final_nh}}
                             </a>
-                        </div>
-
-                        {{!-- Pontos --}}
-                        <div class="st-pts-box" title="Pontos">
-                            <i class="fas fa-star"></i> {{this.system.points}}
                         </div>
 
                         {{!-- Controles --}}
