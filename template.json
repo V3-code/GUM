@@ -27,7 +27,9 @@
         "lifting_st": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
         "basic_lift": { "value": 20 },
         "thrust_damage": "1d6-2",
-        "swing_damage": "1d6"
+        "swing_damage": "1d6",
+        "thrust_damage_alt": "",
+        "swing_damage_alt": ""
       },
       "points": { "total": 100, "unspent": 100 },
       "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "race_name": "", "backstory": "" },

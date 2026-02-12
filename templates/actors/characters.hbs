@@ -138,6 +138,18 @@
                 <span class="label">GeB</span>
                 <span class="value">{{actor.system.attributes.swing_damage}}</span>
               </a>
+              <a class="sidebar-basic-damage-item rollable-basic-damage" 
+                 data-roll-formula="{{#if actor.system.attributes.thrust_damage_alt}}{{actor.system.attributes.thrust_damage_alt}}{{else}}{{actor.system.attributes.thrust_damage}}{{/if}}" 
+                 data-label="Dano Alternativo de Golpe de Ponta (GdPa)">
+                <span class="label">GdPa</span>
+                <span class="value">{{#if actor.system.attributes.thrust_damage_alt}}{{actor.system.attributes.thrust_damage_alt}}{{else}}—{{/if}}</span>
+              </a>
+              <a class="sidebar-basic-damage-item rollable-basic-damage" 
+                 data-roll-formula="{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}{{actor.system.attributes.swing_damage}}{{/if}}" 
+                 data-label="Dano Alternativo em Balanço (GeBa)">
+                <span class="label">GeBa</span>
+                <span class="value">{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}—{{/if}}</span>
+              </a>
             </div>
           </div>
         </div>

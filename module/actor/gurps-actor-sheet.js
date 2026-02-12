@@ -1996,6 +1996,15 @@ html.on("click", ".rollable-damage", async (ev) => {
 
     const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
     const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
+    const thrustAltRaw = String(actor.system.attributes.thrust_damage_alt || "").trim();
+    const swingAltRaw  = String(actor.system.attributes.swing_damage_alt || "").trim();
+    const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
+    const swingAlt  = (swingAltRaw || swing).toLowerCase();
+
+    f = f.replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`);
+    f = f.replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`);
+    f = f.replace(/\b(gdpg)\b/gi, `(${thrustAlt})`);
+    f = f.replace(/\b(gebg)\b/gi, `(${swingAlt})`);
 
     f = f.replace(/\b(gdp|thrust)\b/gi, `(${thrust})`);
     f = f.replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
@@ -2208,8 +2217,16 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
   const resolveBaseDamage = (f) => {
     const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
     const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
+    const thrustAltRaw = String(actor.system.attributes.thrust_damage_alt || "").trim();
+    const swingAltRaw  = String(actor.system.attributes.swing_damage_alt || "").trim();
+    const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
+    const swingAlt  = (swingAltRaw || swing).toLowerCase();
 
     return String(f)
+      .replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`)
+      .replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`)
+      .replace(/\b(gdpg)\b/gi, `(${thrustAlt})`)
+      .replace(/\b(gebg)\b/gi, `(${swingAlt})`)
       .replace(/\b(gdp|thrust)\b/gi, `(${thrust})`)
       .replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
   };
@@ -2434,6 +2451,8 @@ default: 'save'
         const touch = getAttr('touch');
         const thrustDamage = attrs.thrust_damage ?? "";
         const swingDamage = attrs.swing_damage ?? "";
+        const thrustDamageAlt = attrs.thrust_damage_alt ?? "";
+        const swingDamageAlt = attrs.swing_damage_alt ?? "";
         const enhancedMove = getAttr('enhanced_move');
                 const content = `
         <form class="secondary-stats-editor">
@@ -2537,14 +2556,31 @@ default: 'save'
                     <span class="final-display">${touch.final}</span>
                 </div>
 
-                <div class="form-section-title">Dano Básico</div>
-                <div class="form-row basic-damage-row">
-                    <label>GdP (Thrust)</label>
-                    <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d-2"/>
-                </div>
-                <div class="form-row basic-damage-row">
-                    <label>GeB (Swing)</label>
-                    <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d"/>
+              <hr style="grid-column: 1 / -1; border-color: #aaa; margin-top: 5px;">
+
+                <div class="basic-damage-grid">
+                    <div class="basic-damage-col">
+                        <div class="basic-damage-col-title">Dano Básico</div>
+                        <div class="form-row basic-damage-row">
+                            <label>GdP</label>
+                            <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d-2"/>
+                        </div>
+                        <div class="form-row basic-damage-row">
+                            <label>GeB</label>
+                            <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d"/>
+                        </div>
+                    </div>
+                    <div class="basic-damage-col">
+                        <div class="basic-damage-col-title">Dano Alternativo</div>
+                        <div class="form-row basic-damage-row">
+                            <label>GdPa</label>
+                            <input type="text" name="thrust_damage_alt" value="${thrustDamageAlt}" placeholder="ex: 2d-1"/>
+                        </div>
+                        <div class="form-row basic-damage-row">
+                            <label>GeBa</label>
+                            <input type="text" name="swing_damage_alt" value="${swingDamageAlt}" placeholder="ex: 2d"/>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -2565,8 +2601,20 @@ default: 'save'
                 margin: 8px 0 4px;
                 color: #a53541;
             }
+            .secondary-stats-editor .basic-damage-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 6px;
+            }
+            .secondary-stats-editor .basic-damage-col-title {
+                font-weight: bold;
+                margin-bottom: 6px;
+                color: #a53541;
+                text-align: left;
+            }     
             .secondary-stats-editor .basic-damage-row {
-                grid-template-columns: 110px 1fr;
+                grid-template-columns: 80px 1fr;
                 text-align: left;
             }
             .secondary-stats-editor .basic-damage-row input {
@@ -2615,6 +2663,12 @@ default: 'save'
                         }
                         if (formData.swing_damage !== undefined) {
                             updateData["system.attributes.swing_damage"] = formData.swing_damage.toString().trim();
+                        }
+                        if (formData.thrust_damage_alt !== undefined) {
+                            updateData["system.attributes.thrust_damage_alt"] = formData.thrust_damage_alt.toString().trim();
+                        }
+                        if (formData.swing_damage_alt !== undefined) {
+                            updateData["system.attributes.swing_damage_alt"] = formData.swing_damage_alt.toString().trim();
                         }
                         
                         this.actor.update(updateData);
@@ -3023,6 +3077,8 @@ async _onEditBasicDamage(ev) {
   const attrs = this.actor.system.attributes || {};
   const thrust = attrs.thrust_damage ?? "";
   const swing = attrs.swing_damage ?? "";
+  const thrustAlt = attrs.thrust_damage_alt ?? "";
+  const swingAlt = attrs.swing_damage_alt ?? "";
 
   const content = `
     <form class="gum-dialog-content basic-damage-editor">
@@ -3033,6 +3089,15 @@ async _onEditBasicDamage(ev) {
       <div class="form-group">
         <label>GeB (Swing)</label>
         <input type="text" name="swing" value="${swing}" placeholder="ex: 1d" />
+      </div>
+      <hr/>
+      <div class="form-group">
+        <label>GdPa (Thrust Alt)</label>
+        <input type="text" name="thrust_alt" value="${thrustAlt}" placeholder="ex: 2d-1" />
+      </div>
+      <div class="form-group">
+        <label>GeBa (Swing Alt)</label>
+        <input type="text" name="swing_alt" value="${swingAlt}" placeholder="ex: 2d" />
       </div>
       <p style="opacity:0.75; font-size: 12px; margin-top: 8px;">
         Dica: aqui você pode registrar a fórmula final exibida na ficha (ex.: <b>2d+1</b>).
@@ -3052,7 +3117,9 @@ async _onEditBasicDamage(ev) {
           const fd = new FormData(form);
           const update = {
             "system.attributes.thrust_damage": (fd.get("thrust") ?? "").toString().trim(),
-            "system.attributes.swing_damage": (fd.get("swing") ?? "").toString().trim()
+            "system.attributes.swing_damage": (fd.get("swing") ?? "").toString().trim(),
+            "system.attributes.thrust_damage_alt": (fd.get("thrust_alt") ?? "").toString().trim(),
+            "system.attributes.swing_damage_alt": (fd.get("swing_alt") ?? "").toString().trim()
           };
           await this.actor.update(update);
         }
