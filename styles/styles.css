@@ -203,6 +203,11 @@
   --body-fixed-bg: fixed;          /* fixed | scroll (performance) */
 }
 
+/* Preenche o padding interno padrão do Foundry com o mesmo tom escuro da ficha */
+.gum.sheet.actor.app.window-app .window-content {
+  background: #0b0b0d;
+}
+
 /* =================================================================== */
 /* 4.1 Grid + Corpo (Fundo geral da ficha)                              */
 /* =================================================================== */
@@ -3076,7 +3081,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .location-name {
-    color: var(--gum-accent-bronze);
+    color: var(--gum-border);
 }
 /* O número pequeno do dado (ex: 3-4) */
 .gum.sheet.actor .location-name span {

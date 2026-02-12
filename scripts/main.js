@@ -230,10 +230,10 @@ const add_sub_modifiers = {};
         }
 
         let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
-        if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada", level_value: 4, penalty: -4 };
-        else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada", level_value: 3, penalty: -3 };
-        else if (totalWeight > basicLift * 2) enc = { level_name: "Média", level_value: 2, penalty: -2 };
-        else if (totalWeight > basicLift) enc = { level_name: "Leve", level_value: 1, penalty: -1 };
+        if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada (4)", level_value: 4, penalty: -4 };
+        else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada (3)", level_value: 3, penalty: -3 };
+        else if (totalWeight > basicLift * 2) enc = { level_name: "Média (2)", level_value: 2, penalty: -2 };
+        else if (totalWeight > basicLift) enc = { level_name: "Leve (1)", level_value: 1, penalty: -1 };
         
         foundry.utils.mergeObject(this.system.encumbrance, { 
             total_weight: Math.round(totalWeight * 100) / 100,
