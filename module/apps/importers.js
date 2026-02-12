@@ -755,3 +755,139 @@ async function parseGCSCharacter(gcsData) {
         items: itemsToCreate 
     };
 }
+
+/**
+ * Exporta todos os itens de um compêndio para um arquivo JSON.
+ */
+export async function exportCompendiumToJson() {
+    const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
+    if (allItemPacks.length === 0) {
+        return ui.notifications.error("Nenhum compêndio de Itens encontrado no mundo.");
+    }
+
+    const packOptions = allItemPacks.map(pack => {
+        return `<option value="${pack.collection}">${pack.title}</option>`;
+    }).join("");
+
+    new Dialog({
+        title: "Exportar Compêndio para JSON",
+        content: `
+            <div style="padding: 10px 0;">
+                <p>Selecione qual compêndio deseja exportar:</p>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label style="font-weight: bold;">Compêndio:</label>
+                    <select name="compendium-target" style="width: 100%;">
+                        ${packOptions}
+                    </select>
+                </div>
+            </div>
+        `,
+        buttons: {
+            export: {
+                icon: '<i class="fas fa-file-export"></i>',
+                label: "Exportar",
+                callback: async (html) => {
+                    const packName = html.find('select[name="compendium-target"]').val();
+                    if (!packName) return;
+
+                    const pack = game.packs.get(packName);
+                    if (!pack) {
+                        return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
+                    }
+
+                    const documents = await pack.getDocuments();
+                    if (!documents.length) {
+                        return ui.notifications.warn(`O compêndio "${pack.title}" está vazio.`);
+                    }
+
+                    const data = documents.map(doc => doc.toObject());
+                    downloadJsonFile(data, `${sanitizeFileName(pack.metadata.label || pack.metadata.name)}.json`);
+                    ui.notifications.info(`Exportação concluída! ${data.length} itens de "${pack.title}" foram exportados.`);
+                }
+            },
+            cancel: {
+                icon: '<i class="fas fa-times"></i>',
+                label: "Cancelar"
+            }
+        },
+        default: "export"
+    }).render(true);
+}
+
+/**
+ * Exporta uma ficha de personagem (Ator) para um arquivo JSON.
+ */
+export async function exportCharacterToJson() {
+    const characters = game.actors.filter(actor => actor.type === "character");
+
+    if (characters.length === 0) {
+        return ui.notifications.warn("Nenhuma ficha de personagem encontrada para exportar.");
+    }
+
+    const actorOptions = characters.map(actor => {
+        return `<option value="${actor.id}">${actor.name}</option>`;
+    }).join("");
+
+    new Dialog({
+        title: "Exportar Ficha para JSON",
+        content: `
+            <div style="padding: 10px 0;">
+                <p>Selecione a ficha de personagem que deseja exportar:</p>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label style="font-weight: bold;">Personagem:</label>
+                    <select name="actor-target" style="width: 100%;">
+                        ${actorOptions}
+                    </select>
+                </div>
+            </div>
+        `,
+        buttons: {
+            export: {
+                icon: '<i class="fas fa-user-export"></i>',
+                label: "Exportar",
+                callback: async (html) => {
+                    const actorId = html.find('select[name="actor-target"]').val();
+                    if (!actorId) return;
+
+                    const actor = game.actors.get(actorId);
+                    if (!actor) {
+                        return ui.notifications.error("Erro: Personagem selecionado não pôde ser encontrado.");
+                    }
+
+                    const actorData = actor.toObject();
+                    downloadJsonFile(actorData, `${sanitizeFileName(actor.name)}.json`);
+                    ui.notifications.info(`Ficha "${actor.name}" exportada com sucesso.`);
+                }
+            },
+            cancel: {
+                icon: '<i class="fas fa-times"></i>',
+                label: "Cancelar"
+            }
+        },
+        default: "export"
+    }).render(true);
+}
+
+function downloadJsonFile(data, filename) {
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+}
+
+function sanitizeFileName(name = "export") {
+    return String(name)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9-_ ]/g, "")
+        .trim()
+        .replace(/\s+/g, "_")
+        .toLowerCase() || "export";
+}

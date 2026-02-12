@@ -52,7 +52,7 @@ async function syncCompendiumRules() {
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
-import { importFromJson, importFromGCS } from "./apps/importers.js";
+import { importFromJson, importFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
@@ -154,6 +154,36 @@ export const registerSystemSettings = function() {
             if (value) {
                 importFromJson(); // Chama a função do importers.js
                 game.settings.set("gum", "importJSONButton", false); // Reseta o botão
+            }
+        }
+ });
+
+    game.settings.register("gum", "exportJSONCompendiumButton", {
+        name: "Exportar Compêndio (JSON)",
+        hint: "Ferramenta do Mestre. Exporta o conteúdo de um compêndio de Itens para um arquivo .json.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: (value) => {
+            if (value) {
+                exportCompendiumToJson();
+                game.settings.set("gum", "exportJSONCompendiumButton", false);
+            }
+        }
+    });
+
+    game.settings.register("gum", "exportCharacterJSONButton", {
+        name: "Exportar Ficha de Personagem (JSON)",
+        hint: "Exporta uma ficha de personagem para um arquivo .json para backup e reutilização.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: (value) => {
+            if (value) {
+                exportCharacterToJson();
+                game.settings.set("gum", "exportCharacterJSONButton", false);
             }
         }
     });
