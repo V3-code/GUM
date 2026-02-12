@@ -4245,6 +4245,8 @@ background-color: var(--gum-accent-gold);
 .window-app.gurps-item-preview-dialog .window-header {
     border: none !important;
     box-shadow: none !important;
+    background: var(--color-border-dark);
+    color: #c5a05b;
 }
 
 .dialog.gurps-item-preview-dialog .window-content,
@@ -4445,7 +4447,7 @@ background-color: var(--gum-accent-gold);
 .chat-message .gurps-item-preview-card .chat-description-actions {
     margin-top: 10px;
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .chat-message .gurps-item-preview-card .chat-show-details {
@@ -4462,6 +4464,7 @@ background-color: var(--gum-accent-gold);
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    width: 100%;
 }
 
 .chat-message .gurps-item-preview-card .chat-show-details:hover {

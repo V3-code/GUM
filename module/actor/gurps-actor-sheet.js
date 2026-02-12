@@ -3054,17 +3054,11 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
    // 7. Renderização do Dialog
     const hasMeaningfulDescription = description && description.trim() !== "<i>Sem descrição.</i>";
 
-    new Dialog({
+     new Dialog({
       title: `Detalhes: ${data.name}`,
       content: content,
       buttons: {},
       default: "",
-      options: {
-        classes: ["dialog", "gurps-item-preview-dialog"],
-        width: 620,
-        height: "auto",
-        resizable: true
-      },
       render: (html) => {
         // Listener do Botão "Enviar para o Chat"
         html.find('.send-to-chat').on('click', async () => {
@@ -3105,6 +3099,11 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
           ui.notifications.info("Enviado para o chat.");
         });
       }
+    }, {
+      classes: ["gurps-item-preview-dialog"],
+      width: 480,
+      height: "auto",
+      resizable: true
     }).render(true);
   }
 
