@@ -822,7 +822,10 @@
         {{!-- BRANCH --}}
         {{#if (eq system.hierarchy_type "branch")}}
         <div class="skill-hierarchy-card">
-            <label>Vinculado ao Tronco (Opcional)</label>
+            <label>
+                Vinculado ao Tronco (Opcional)
+                <a class="link-skill-button" data-link-target="system.root_parent" data-skill-filter="trunk" title="Buscar Tronco"><i class="fas fa-link"></i></a>
+            </label>
             <input type="text" name="system.root_parent" value="{{system.root_parent}}" placeholder="Nome do Tronco Pai (se diferente do Grupo)"/>
         </div>
         {{/if}}
@@ -830,22 +833,22 @@
         {{!-- TWIG --}}
         {{#if (eq system.hierarchy_type "twig")}}
         <div class="skill-hierarchy-card">
-            <label>Vinculado ao Ramo (Branch)</label>
-            <div class="input-with-button">
-                <input type="text" name="system.branch_parent" value="{{system.branch_parent}}" placeholder="Nome exato da perícia Ramo"/>
-                <a class="link-skill-button" title="Buscar Ramo"><i class="fas fa-link"></i></a>
-            </div>
+            <label>
+                Vinculado ao Ramo (Branch)
+                <a class="link-skill-button" data-link-target="system.branch_parent" data-skill-filter="branch" title="Buscar Ramo"><i class="fas fa-link"></i></a>
+            </label>
+            <input type="text" name="system.branch_parent" value="{{system.branch_parent}}" placeholder="Nome exato da perícia Ramo"/>
         </div>
         {{/if}}
 
         {{!-- LEAF --}}
         {{#if (eq system.hierarchy_type "leaf")}}
         <div class="skill-hierarchy-card">
-            <label>Vinculado ao Pai (Twig/Branch)</label>
-            <div class="input-with-button">
-                <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
-                <a class="link-skill-button" title="Buscar Pai"><i class="fas fa-link"></i></a>
-            </div>
+            <label>
+                Vinculado ao Pai (Twig/Branch)
+                <a class="link-skill-button" data-link-target="system.twig_parent" data-skill-filter="twig|branch" title="Buscar Pai"><i class="fas fa-link"></i></a>
+            </label>
+            <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
         </div>
         {{/if}}
         </div>

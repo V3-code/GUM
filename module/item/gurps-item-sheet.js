@@ -1064,14 +1064,31 @@ new Dialog({
         attackItem.find('.attack-display-mode').show();
     }
 
-    _onLinkSkill(ev) {
+ _onLinkSkill(ev) {
         if (!this.item.isOwned) return ui.notifications.warn("Item precisa estar em um ator.");
         const actor = this.item.parent;
-        const skills = actor.items.filter(i => i.type === 'skill').sort((a,b) => a.name.localeCompare(b.name));
-        
-        const input = $(ev.currentTarget).closest('.form-group').find('input[type="text"]');
-        let path = input.attr('name') || input.data('name');
+        const trigger = $(ev.currentTarget);
+        const skillFilter = (trigger.data('skill-filter') || '').toString().trim();
+        let skills = actor.items.filter(i => i.type === 'skill');
+
+        if (skillFilter) {
+            const allowedTypes = new Set(skillFilter.split('|').map(type => type.trim()).filter(Boolean));
+            if (allowedTypes.size > 0) {
+                skills = skills.filter(skill => allowedTypes.has(skill.system?.hierarchy_type));
+            }
+        }
+
+        skills = skills.sort((a,b) => a.name.localeCompare(b.name));
+
+        const explicitPath = trigger.data('link-target');
+        const scopedInput = trigger.closest('.form-group, .skill-hierarchy-card').find('input[type="text"]').first();
+        const input = scopedInput.length ? scopedInput : trigger.closest('label').siblings('input[type="text"]').first();
+        let path = explicitPath || input.attr('name') || input.data('name');
         if (!path) return;
+
+        if (!skills.length) {
+            return ui.notifications.warn("Nenhuma perícia compatível foi encontrada neste ator.");
+        }
 
         let options = skills.map(s => `<option value="${s.name}">${s.name} (NH ${s.system.final_nh})</option>`).join('');
         new Dialog({
