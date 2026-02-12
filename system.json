@@ -10,7 +10,7 @@
     }
   ],
   "compatibility": {
-    "minimum": "11",
+    "minimum": "12",
     "verified": "13"
   },
   "grid": {
@@ -42,7 +42,7 @@
     "module/apps/eqp-modifier-browser.js",
     "module/item/gurps-armor-sheet.js",
     "module/apps/trigger-browser.js",
-    "module/apps/importers.js" 
+    "module/apps/importers.js"
   ],
   "styles": [
     "styles/styles.css",
@@ -95,7 +95,6 @@
       "type": "Item",
       "private": false
     },
-    
     {
       "name": "skills",
       "label": "[GUM] Perícias",
@@ -168,7 +167,7 @@
       "type": "Item",
       "private": false
     },
-        {
+    {
       "name": "gm_modifiers",
       "label": "[GUM] Modificadores de Rolagem",
       "system": "gum",
@@ -179,7 +178,9 @@
   ],
   "license": "CC BY-NC-ND 4.0",
   "url": "https://github.com/V3-code/GUM",
-  "manifest": "https://github.com/V3-code/GUM/blob/master/system.json",
-  "readme": "https://github.com/V3-code/GUM/blob/master/README.md",
+  "manifest": "https://raw.githubusercontent.com/V3-code/GUM/master/system.json",
+  "download": "https://github.com/V3-code/GUM/releases/latest/download/gum.zip",
+  "readme": "https://raw.githubusercontent.com/V3-code/GUM/master/README.md",
+  "changelog": "https://raw.githubusercontent.com/V3-code/GUM/master/CHANGELOG.md",
   "bugs": "https://github.com/V3-code/GUM/issues"
 }
