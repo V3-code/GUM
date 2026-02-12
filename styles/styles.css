@@ -4696,6 +4696,68 @@ background-color: var(--gum-accent-gold);
     margin: 0;
 }
 
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+    align-items: start;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .hint,
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .form-group--full {
+    grid-column: 1 / -1;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .form-group--textarea textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .form-group--divider hr {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin: 6px 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--gum-text-claro);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-popup-form .checkbox input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog.gum-magic-view-dialog .casting-ability-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog.gum-magic-view-dialog .casting-ability-preview p {
+    margin: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog.gum-magic-view-dialog .casting-ability-preview hr {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin: 4px 0;
+}
+
 .dialog.gum.gum-sheet-edit-dialog .resource-grid {
     display: grid;
     grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(70px, 1fr));
@@ -4782,6 +4844,11 @@ background-color: var(--gum-accent-gold);
     }
 
     .dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .dialog.gum.gum-sheet-edit-dialog .gum-popup-form {
         grid-template-columns: 1fr;
         gap: 6px;
     }

@@ -3321,20 +3321,21 @@ async _onCombatMeterInputChange(ev) {
 async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
   const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", allowHidden: true });
   const content = `
-    <form class="gum-meter-form">
-      <div class="form-group">
+    <form class="gum-meter-form gum-popup-form gum-combat-meter-form" autocomplete="off">
+      <p class="hint form-group--full">Preencha os dados do registro de combate. Você pode editar depois no card.</p>
+      <div class="form-group form-group--full">
         <label>Nome do Registro</label>
-        <input type="text" name="name" value="${data.name || ""}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${data.name || ""}" required/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Valor Atual</label>
         <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Valor Máximo</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label class="checkbox">
           <input type="checkbox" name="hidden" ${data.hidden ? "checked" : ""}/>
           Ocultar na ficha
@@ -3344,22 +3345,42 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
 
   const title = isEdit ? "Editar Registro" : "Novo Registro";
 
-  return Dialog.prompt({
-    title,
-    content,
-    label: "Salvar",
-    callback: (html) => {
-      const form = html[0].querySelector("form");
-      const name = form.name.value.trim();
-      if (!name) return ui.notifications.warn("Informe um nome para o registro.");
+ return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
 
-      const current = Number(form.current.value) || 0;
-      const max = Number(form.max.value) || 0;
-      const hidden = form.hidden?.checked ?? false;
+    new Dialog({
+      title,
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const name = form.name.value.trim();
+            if (!name) return ui.notifications.warn("Informe um nome para o registro.");
 
-      return { name, current, max, value: current, hidden };
-    },
-    rejectClose: false
+            const current = Number(form.current.value) || 0;
+            const max = Number(form.max.value) || 0;
+            const hidden = form.hidden?.checked ?? false;
+
+            finish({ name, current, max, value: current, hidden });
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-meter-edit-dialog"] }).render(true);
   });
 }
 
@@ -3430,20 +3451,21 @@ async _onEnergyReserveInputChange(ev) {
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
   const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? "Reserva de Poder" : "Reserva de Magia" });
   const content = `
-    <form class="gum-meter-form">
-      <div class="form-group">
+    <form class="gum-meter-form gum-popup-form gum-energy-reserve-form" autocomplete="off">
+      <p class="hint form-group--full">Configure a reserva e origem. Você pode editar depois no card.</p>
+      <div class="form-group form-group--full">
         <label>Nome</label>
-        <input type="text" name="name" value="${data.name || ""}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${data.name || ""}" required/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label>Fonte / Origem</label>
-        <input type="text" name="source" value="${data.source || ""}" />
+        <input class="gum-input-left" type="text" name="source" value="${data.source || ""}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Valor Atual</label>
         <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Valor Máximo</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
@@ -3453,22 +3475,42 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
     ? isEdit ? "Editar Reserva de Poder" : "Nova Reserva de Poder"
     : isEdit ? "Editar Reserva de Magia" : "Nova Reserva de Magia";
 
-  return Dialog.prompt({
-    title,
-    content,
-    label: "Salvar",
-    callback: (html) => {
-      const form = html[0].querySelector("form");
-      const name = form.name.value.trim();
-      if (!name) return ui.notifications.warn("Informe um nome para a reserva.");
+ return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
 
-      const source = form.source.value.trim();
-      const current = Number(form.current.value) || 0;
-      const max = Number(form.max.value) || 0;
+    new Dialog({
+      title,
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const name = form.name.value.trim();
+            if (!name) return ui.notifications.warn("Informe um nome para a reserva.");
 
-      return { name, source, current, max, value: current };
-    },
- rejectClose: false
+            const source = form.source.value.trim();
+            const current = Number(form.current.value) || 0;
+            const max = Number(form.max.value) || 0;
+
+            finish({ name, source, current, max, value: current });
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-meter-edit-dialog"] }).render(true);
   });
 }
 
@@ -3546,48 +3588,69 @@ async _promptCastingAbilityData(initialData = {}, { isEdit = false } = {}) {
     description: initialData?.description || ""
   };
 
-  const content = `
-    <form class="gum-meter-form casting-ability-form">
-      <div class="form-group">
+const content = `
+    <form class="gum-meter-form gum-popup-form casting-ability-form" autocomplete="off">
+      <p class="hint form-group--full">Defina a habilidade de conjuração base da aba Magias.</p>
+      <div class="form-group form-group--full">
         <label>Habilidade de Conjuração</label>
-        <input type="text" name="name" value="${data.name}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${data.name}" required/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label>Fonte</label>
-        <input type="text" name="source" value="${data.source}" />
+        <input class="gum-input-left" type="text" name="source" value="${data.source}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Nível</label>
         <input type="number" name="level" value="${data.level}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Pontos</label>
         <input type="number" name="points" value="${data.points}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full form-group--textarea">
         <label>Descrição</label>
-        <textarea name="description" rows="6">${data.description}</textarea>
+        <textarea class="gum-input-left" name="description" rows="6">${data.description}</textarea>
       </div>
     </form>`;
 
-  return Dialog.prompt({
-    title: isEdit ? "Editar Habilidade de Conjuração" : "Nova Habilidade de Conjuração",
-    content,
-    label: "Salvar",
-    callback: (html) => {
-      const form = html[0].querySelector("form");
-      const name = form.name.value.trim();
-      if (!name) return ui.notifications.warn("Informe o nome da habilidade de conjuração.");
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
 
-      return {
-        name,
-        source: form.source.value.trim(),
-        level: Number(form.level.value) || 0,
-        points: Number(form.points.value) || 0,
-        description: form.description.value.trim()
-      };
-    },
-    rejectClose: false
+    new Dialog({
+      title: isEdit ? "Editar Habilidade de Conjuração" : "Nova Habilidade de Conjuração",
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const name = form.name.value.trim();
+            if (!name) return ui.notifications.warn("Informe o nome da habilidade de conjuração.");
+
+            finish({
+              name,
+              source: form.source.value.trim(),
+              level: Number(form.level.value) || 0,
+              points: Number(form.points.value) || 0,
+              description: form.description.value.trim()
+            });
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-magic-edit-dialog"] }).render(true);
   });
 }
 
@@ -3679,7 +3742,7 @@ _onViewCastingAbility(ev) {
       }
     },
     default: "close"
-  }).render(true);
+  }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
 }
 
 _preparePowerSources() {
@@ -3781,73 +3844,94 @@ async _promptPowerSourceData(initialData = {}, { isEdit = false } = {}) {
   };
 
   const content = `
-    <form class="gum-meter-form power-source-form">
-      <div class="form-group">
+    <form class="gum-meter-form gum-popup-form power-source-form" autocomplete="off">
+      <p class="hint form-group--full">Configure a fonte principal e o talento vinculado.</p>
+      <div class="form-group form-group--full">
         <label>Nome do Poder</label>
-        <input type="text" name="name" value="${data.name}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${data.name}" required/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label>Origem/Fonte</label>
-        <input type="text" name="source" value="${data.source}"/>
+        <input class="gum-input-left" type="text" name="source" value="${data.source}"/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label>Foco do Poder</label>
-        <input type="text" name="focus" value="${data.focus}"/>
+        <input class="gum-input-left" type="text" name="focus" value="${data.focus}"/>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Nível</label>
         <input type="number" name="level" value="${data.level}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Pontos</label>
         <input type="number" name="points" value="${data.points}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full form-group--divider">
         <hr>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full">
         <label>Talento de Poder</label>
-        <input type="text" name="power_talent_name" value="${data.power_talent_name}" />
+        <input class="gum-input-left" type="text" name="power_talent_name" value="${data.power_talent_name}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Nível do talento</label>
         <input type="number" name="power_talent_level" value="${data.power_talent_level}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--number">
         <label>Pontos (Talento de Poder)</label>
         <input type="number" name="power_talent_points" value="${data.power_talent_points}" />
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full form-group--divider">
         <hr>
       </div>
-      <div class="form-group">
+      <div class="form-group form-group--full form-group--textarea">
         <label>Descrição do Poder</label>
-        <textarea name="description" rows="6">${data.description}</textarea>
+        <textarea class="gum-input-left" name="description" rows="6">${data.description}</textarea>
       </div>
     </form>`;
 
-  return Dialog.prompt({
-    title: isEdit ? "Editar Fonte de Poder" : "Configurar Fonte de Poder",
-    content,
-    label: "Salvar",
-    callback: (html) => {
-      const form = html[0].querySelector("form");
-      const name = form.name.value.trim();
-      if (!name) return ui.notifications.warn("Informe o nome da fonte de poder.");
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
 
-      return {
-        name,
-        source: form.source.value.trim(),
-        focus: form.focus.value.trim(),
-        level: Number(form.level.value) || 0,
-        points: Number(form.points.value) || 0,
-        power_talent_name: form.power_talent_name.value.trim(),
-        power_talent_level: Number(form.power_talent_level.value) || 0,
-        power_talent_points: Number(form.power_talent_points.value) || 0,
-        description: form.description.value.trim()
-      };
-    },
-    rejectClose: false
+    new Dialog({
+      title: isEdit ? "Editar Fonte de Poder" : "Configurar Fonte de Poder",
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const name = form.name.value.trim();
+            if (!name) return ui.notifications.warn("Informe o nome da fonte de poder.");
+
+            finish({
+              name,
+              source: form.source.value.trim(),
+              focus: form.focus.value.trim(),
+              level: Number(form.level.value) || 0,
+              points: Number(form.points.value) || 0,
+              power_talent_name: form.power_talent_name.value.trim(),
+              power_talent_level: Number(form.power_talent_level.value) || 0,
+              power_talent_points: Number(form.power_talent_points.value) || 0,
+              description: form.description.value.trim()
+            });
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-magic-edit-dialog"] }).render(true);
   });
 }
 
@@ -3856,18 +3940,39 @@ async _onEditRaceName(event) {
   event.stopPropagation();
 
   const currentName = this.actor.system.details?.race_name || "";
-  const raceName = await Dialog.prompt({
-    title: "Nome da Raça",
-    content: `
-      <form class="gum-dialog-form">
-        <div class="form-group">
+  const raceName = await new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    new Dialog({
+      title: "Nome da Raça",
+      content: `
+      <form class="gum-dialog-form gum-popup-form gum-race-name-form" autocomplete="off">
+        <div class="form-group form-group--full">
           <label>Raça</label>
-          <input type="text" name="race_name" value="${foundry.utils.escapeHTML(currentName)}" placeholder="Ex: Elfo, Anão, Humano..." autofocus />
+          <input class="gum-input-left" type="text" name="race_name" value="${foundry.utils.escapeHTML(currentName)}" placeholder="Ex: Elfo, Anão, Humano..." autofocus />
         </div>
       </form>
     `,
-    callback: (html) => html.find('[name="race_name"]').val()?.trim() ?? "",
-    rejectClose: false
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => finish(html.find('[name="race_name"]').val()?.trim() ?? "")
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-race-edit-dialog"] }).render(true);
   });
 
   if (raceName === null || raceName === undefined) return;
@@ -3972,7 +4077,7 @@ _onViewPowerSource(ev) {
       }
     },
     default: "close"
-  }).render(true);
+  }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
 }
 
 _getSocialEntryConfig(type) {
