@@ -1640,6 +1640,55 @@ $('body').on('click', '.chat-message .rollable', async (ev) => {
         } else {
             performGURPSRoll(actor, { label: rollLabel, value: rollValue, modifier: 0 });
         }
+  });
+
+$('body').on('click', '.chat-message .chat-show-details', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const button = ev.currentTarget;
+        const messageEl = button.closest('.message');
+        const cardEl = button.closest('.gurps-item-preview-card');
+        if (!messageEl || !cardEl) return;
+
+        const messageId = messageEl.dataset.messageId;
+        const message = messageId ? game.messages.get(messageId) : null;
+        if (!message) return;
+
+        const title = cardEl.querySelector('.header-text h3')?.textContent?.trim() || 'Detalhes do Item';
+        const type = cardEl.querySelector('.preview-item-type')?.textContent?.trim() || '';
+        const icon = cardEl.querySelector('.header-icon')?.getAttribute('src') || 'icons/svg/item-bag.svg';
+        const descriptionHTML = cardEl.querySelector('.chat-description-payload')?.innerHTML?.trim() || '<i>Sem descrição.</i>';
+
+        const content = `
+            <div class="gurps-dialog-canvas">
+                <div class="gurps-item-preview-card chat-details-dialog">
+                    <header class="preview-header">
+                        <img src="${icon}" class="header-icon"/>
+                        <div class="header-text">
+                            <h3>${title}</h3>
+                            <span class="preview-item-type">${type}</span>
+                        </div>
+                    </header>
+                    <div class="preview-content">
+                        <div class="preview-description">${descriptionHTML}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        new Dialog({
+            title: `Detalhes: ${title}`,
+            content,
+            buttons: {},
+            default: "",
+            options: {
+                classes: ["dialog", "gurps-item-preview-dialog"],
+                width: 520,
+                height: "auto",
+                resizable: true
+            }
+        }).render(true);
     });
 
 // ==========================================================

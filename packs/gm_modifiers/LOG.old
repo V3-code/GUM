@@ -1,3 +1,5 @@
-2026/02/11-21:38:48.957 5fd8 Recovering log #235
-2026/02/11-21:38:48.957 5fd8 Delete type=0 #235
-2026/02/11-21:38:48.957 5fd8 Delete type=3 #233
+2026/02/11-23:30:18.680 3ed4 Recovering log #238
+2026/02/11-23:30:18.680 3ed4 Level-0 table #240: started
+2026/02/11-23:30:18.692 3ed4 Level-0 table #240: 760 bytes OK
+2026/02/11-23:30:18.695 3ed4 Delete type=0 #238
+2026/02/11-23:30:18.695 3ed4 Delete type=3 #237

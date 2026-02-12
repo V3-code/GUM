@@ -4234,53 +4234,81 @@ background-color: var(--gum-accent-gold);
 /* =================================================================== */
 
 /* --- Ajuste da Janela do Dialog (O Container do Foundry) --- */
-.dialog.gurps-item-preview-dialog .dialog-content {
-    padding: 0; /* Remove padding padrão do Foundry para usarmos o nosso */
+/* --- Ajuste da Janela do Dialog (O Container do Foundry) --- */
+.window-app.gurps-item-preview-dialog,
+.dialog.gurps-item-preview-dialog {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.window-app.gurps-item-preview-dialog .window-header {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.dialog.gurps-item-preview-dialog .window-content,
+.dialog.gurps-item-preview-dialog .dialog-content,
+.window-app.gurps-item-preview-dialog .window-content {
+    padding: 0 !important; /* Remove padding padrão do Foundry para usarmos o nosso */
+    margin: 0;
     background: transparent;
-    overflow: hidden; /* Garante que bordas arredondadas funcionem */
+    border: none !important;
+    overflow: visible;
+}
+
+.dialog.gurps-item-preview-dialog {
+    min-width: 620px;
+}
+
+.gurps-dialog-canvas {
+    margin: 0;
+    padding: 0;
 }
 
 /* --- O Card Principal --- */
 .gurps-item-preview-card {
-    background: var(--gum-bg-paper, #fdfaf5); /* Cor creme/papel */
-    color: var(--gum-text-escuro, #2c2c2c);
-    font-family: var(--gum-font-primary, "Roboto", sans-serif);
-    border: 1px solid var(--gum-border-light, #d0c0a0);
-    border-radius: 0 0 4px 4px; /* Dialog já tem topo arredondado */
+    background: linear-gradient(180deg, #fdfcf8 0%, #f7f4ee 100%);
+    color: #262626;
+    font-family: "Roboto", "Segoe UI", sans-serif;
+    border: 1px solid #d6ccba;
+    border-radius: 0 0 6px 6px; /* Dialog já tem topo arredondado */
     display: flex;
     flex-direction: column;
-    min-width: 380px;
-    box-shadow: inset 0 0 30px rgba(139, 69, 19, 0.05); /* Textura sutil interna */
+    width: 100%;
+    min-width: 0;
+    box-shadow: 0 8px 22px rgba(18, 18, 18, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* Ajuste específico para quando o Card aparece no CHAT */
 .chat-message .gurps-item-preview-card {
     min-width: auto;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    font-size: 0.9em;
+    border: 1px solid #dcd2c1;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,243,235,0.9));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 12px;
 }
 
 /* --- Cabeçalho (Imagem + Título + Tipo) --- */
-.gurps-item-preview-card .preview-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
-    border-bottom: 2px solid var(--gum-border-gold, #c5a563);
-}
+.gurps-item-preview-card .preview-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 10px 12px; 
+    background: linear-gradient(to bottom, #ffffff, #f7f3eb);
+    border-bottom: 1px solid #d7ccb9;
+} 
 
-.gurps-item-preview-card .header-icon {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid var(--gum-border-dark, #5a4a3a);
-    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-    flex-shrink: 0;
-}
+.gurps-item-preview-card .header-icon { 
+    width: 46px;
+    height: 46px;
+    object-fit: cover; 
+    border-radius: 6px;
+    border: 1px solid #cfc4b2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+    flex-shrink: 0; 
+} 
 
 .gurps-item-preview-card .header-text {
     flex-grow: 1;
@@ -4292,29 +4320,30 @@ background-color: var(--gum-accent-gold);
 
 .gurps-item-preview-card .header-text h3 {
     margin: 0;
-    font-family: var(--gum-font-secondary, "Cinzel", serif);
+    font-family: "Roboto", "Segoe UI", sans-serif;
     font-weight: 700;
-    font-size: 1.3em;
-    color: var(--gum-primary, #4a3b2a);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    color: #2a2a2a;
     border: none; /* Remove bordas padrões de H3 do Foundry */
 }
 
 .gurps-item-preview-card .preview-item-type {
-    font-size: 0.75em;
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--gum-text-medio, #666);
-    font-weight: bold;
+    letter-spacing: 0.09em;
+    color: #727272;
+    font-weight: 600;
 }
 
 /* Botões do Header (Enviar pro Chat) */
-.gurps-item-preview-card .header-controls a {
-    color: var(--gum-text-medio, #888);
-    cursor: pointer;
-    transition: color 0.2s;
-    font-size: 1.1em;
-    padding: 4px;
-}
+.gurps-item-preview-card .header-controls a { 
+    color: #8a8a8a;
+    cursor: pointer; 
+    transition: color 0.2s; 
+    font-size: 13px;
+    padding: 4px; 
+} 
 
 .gurps-item-preview-card .header-controls a:hover {
     color: var(--gum-accent-blue, #1e88e5);
@@ -4322,65 +4351,65 @@ background-color: var(--gum-accent-gold);
 }
 
 /* --- Área de Conteúdo --- */
-.gurps-item-preview-card .preview-content {
-    padding: 12px;
-    background: var(--gum-bg-paper, #fdfaf5);
-}
+.gurps-item-preview-card .preview-content { 
+    padding: 12px; 
+    background: transparent;
+} 
 
 /* --- Grid de Propriedades (Tags) --- */
-.gurps-item-preview-card .preview-properties {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
-}
+.gurps-item-preview-card .preview-properties { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 7px;
+    margin-bottom: 10px; 
+} 
 
 /* A Tag Individual (Caixinha) */
-.gurps-item-preview-card .property-tag {
-    display: flex;
-    flex-direction: column; /* Label em cima, valor embaixo */
-    align-items: center;
-    background: rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 4px;
-    padding: 4px 8px;
-    min-width: 50px;
-    flex-grow: 1; /* Faz as tags esticarem para preencher linhas */
-    flex-basis: 0; /* Distribuição igual */
-}
+.gurps-item-preview-card .property-tag { 
+    display: flex; 
+    flex-direction: column; /* Label em cima, valor embaixo */ 
+    align-items: center; 
+    background: #f2eee6;
+    border: 1px solid #dbd1c0;
+    border-radius: 6px;
+    padding: 5px 8px;
+    min-width: 50px; 
+    flex-grow: 1; /* Faz as tags esticarem para preencher linhas */ 
+    flex-basis: 0; /* Distribuição igual */ 
+} 
 
 /* Label da Tag (ex: "Dano", "Peso") */
 .gurps-item-preview-card .property-tag label {
-    font-size: 0.65em;
+    font-size: 10px;
     text-transform: uppercase;
-    font-weight: bold;
-    color: var(--gum-text-medio, #777);
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: #6f6f6f;
     margin-bottom: 2px;
     line-height: 1;
 }
 
 /* Valor da Tag (ex: "2d+1 cut", "1 kg") */
-.gurps-item-preview-card .property-tag span {
-    font-weight: 600;
-    font-size: 0.95em;
-    color: var(--gum-text-escuro, #222);
-    text-align: center;
-    white-space: nowrap;
-}
-
+.gurps-item-preview-card .property-tag span { 
+    font-weight: 600; 
+    font-size: 12px;
+    color: #262626;
+    text-align: center; 
+    white-space: nowrap; 
+} 
 /* --- Divisória Decorativa --- */
-.gurps-item-preview-card .preview-divider {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(197, 165, 99, 0.75), rgba(0, 0, 0, 0));
-    margin: 8px 0 12px 0;
-}
+.gurps-item-preview-card .preview-divider { 
+    border: 0; 
+    height: 1px; 
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(135, 135, 135, 0.35), rgba(0, 0, 0, 0));
+    margin: 8px 0 12px 0; 
+} 
 
 /* --- Descrição do Item --- */
 .gurps-item-preview-card .preview-description {
-    font-size: 0.95em;
-    line-height: 1.5;
-    color: #333;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #383838;
     text-align: justify;
 }
 
@@ -4388,14 +4417,23 @@ background-color: var(--gum-accent-gold);
     margin-bottom: 0.5em;
 }
 
+.gurps-item-preview-card .preview-description i,
+.gurps-item-preview-card .preview-description em {
+    font-size: 11px;
+    color: #4a4a4a;
+}
+
 /* Estilos para Enriched HTML (Links de UUID, rolagens) */
 .gurps-item-preview-card .preview-description a.content-link,
 .gurps-item-preview-card .preview-description a.inline-roll {
-    background: rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--gum-border-light);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid #d8cebd;
     padding: 0 4px;
     border-radius: 2px;
-    color: var(--gum-primary);
+    color: #454545;
     text-decoration: none;
 }
 
@@ -4403,6 +4441,39 @@ background-color: var(--gum-accent-gold);
     background: var(--gum-primary);
     color: #fff;
 }
+
+.chat-message .gurps-item-preview-card .chat-description-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.chat-message .gurps-item-preview-card .chat-show-details {
+    cursor: pointer;
+    padding: 7px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #5f5f5f;
+    border: 1px solid #ddd3c2;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #f7f4ed, #eee7db);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-message .gurps-item-preview-card .chat-show-details:hover {
+    color: #404040;
+    border-color: #cec2ad;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.chat-message .gurps-item-preview-card .chat-description-payload {
+    display: none;
+}
+
 
 /* =================================================================== */
 /* Chat: Cards de Dano (GURPS)                                         */

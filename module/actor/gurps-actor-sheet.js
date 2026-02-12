@@ -2889,7 +2889,11 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         spell: "Magia",
         power: "Poder",
         condition: "Condição",
-        gm_modifier: "Modificador"
+        modifier: "Modificador",
+        eqp_modifier: "Mod. Equipamento",
+        gm_modifier: "Modificador GM",
+        effect: "Efeito",
+        trigger: "Gatilho"
       };
       return typeMap[type] || type.toUpperCase();
     };
@@ -2955,9 +2959,52 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         mechanicalTagsHtml += createTag('Duração', s.duration);
         break;
 
-      case 'advantage':
+  case 'advantage':
       case 'disadvantage':
         mechanicalTagsHtml += createTag('Pontos', s.points);
+        mechanicalTagsHtml += createTag('CR', s.self_control_roll);
+        break;
+
+      case 'equipment':
+        mechanicalTagsHtml += createTag('TL', s.tech_level);
+        mechanicalTagsHtml += createTag('LC', s.legality_class);
+        mechanicalTagsHtml += createTag('Local', s.location);
+        break;
+
+      case 'condition':
+        mechanicalTagsHtml += createTag('Quando', s.when);
+        mechanicalTagsHtml += createTag('Efeitos', Array.isArray(s.effects) ? s.effects.length : null);
+        break;
+
+      case 'modifier':
+        mechanicalTagsHtml += createTag('Custo', s.cost);
+        mechanicalTagsHtml += createTag('Nível', s.level);
+        mechanicalTagsHtml += createTag('Efeito', s.applied_effect);
+        break;
+
+      case 'eqp_modifier':
+        mechanicalTagsHtml += createTag('Custo', s.cost_factor);
+        mechanicalTagsHtml += createTag('Peso', s.weight_mod);
+        mechanicalTagsHtml += createTag('TL', s.tech_level_mod || s.tech_level);
+        mechanicalTagsHtml += createTag('Tags', s.tags);
+        break;
+
+      case 'gm_modifier':
+        mechanicalTagsHtml += createTag('Valor', s.modifier);
+        mechanicalTagsHtml += createTag('Cap NH', s.nh_cap);
+        mechanicalTagsHtml += createTag('Duração', s.duration);
+        mechanicalTagsHtml += createTag('Categoria', s.ui_category);
+        break;
+
+      case 'effect':
+        mechanicalTagsHtml += createTag('Tipo', s.type);
+        mechanicalTagsHtml += createTag('Caminho', s.path);
+        mechanicalTagsHtml += createTag('Operação', s.operation);
+        mechanicalTagsHtml += createTag('Valor', s.value);
+        break;
+
+      case 'trigger':
+        mechanicalTagsHtml += createTag('Código', s.code ? 'Configurado' : 'Vazio');
         break;
     }
 
@@ -3004,37 +3051,56 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         </div>
     `;
 
-    // 7. Renderização do Dialog
+   // 7. Renderização do Dialog
+    const hasMeaningfulDescription = description && description.trim() !== "<i>Sem descrição.</i>";
+
     new Dialog({
       title: `Detalhes: ${data.name}`,
       content: content,
-      buttons: {
-        close: {
-          icon: '<i class="fas fa-times"></i>',
-          label: "Fechar"
-        }
-      },
-      default: "close",
+      buttons: {},
+      default: "",
       options: {
         classes: ["dialog", "gurps-item-preview-dialog"],
-        width: 420,
+        width: 620,
         height: "auto",
         resizable: true
       },
       render: (html) => {
         // Listener do Botão "Enviar para o Chat"
-        html.find('.send-to-chat').on('click', (event) => {
-          const cardHTML = $(event.currentTarget).closest('.gurps-item-preview-card').html();
-          // Remove os controles de header antes de mandar pro chat para ficar limpo
-          const cleanHTML = cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, ``);
-          
-          const chatContent = `<div class="gurps-item-preview-card chat-card">${cleanHTML}</div>`;
-          
-          ChatMessage.create({
+        html.find('.send-to-chat').on('click', async () => {
+          const chatDescriptionBlock = hasMeaningfulDescription
+            ? `
+              <div class="chat-description-actions">
+                <button type="button" class="chat-show-details" aria-label="Ver detalhes do item">
+                  <i class="fas fa-align-left"></i>
+                  <span>Ver detalhes</span>
+                </button>
+                <div class="chat-description-payload" hidden>${description}</div>
+              </div>
+            `
+            : '<div class="preview-description"><i>Sem descrição.</i></div>';
+
+          const chatContent = `
+            <div class="gurps-item-preview-card chat-card" data-item-id="${item.id}">
+              <header class="preview-header">
+                <img src="${data.img}" class="header-icon"/>
+                <div class="header-text">
+                  <h3>${data.name}</h3>
+                  <span class="preview-item-type">${data.type}</span>
+                </div>
+              </header>
+              <div class="preview-content">
+                <div class="preview-properties">${mechanicalTagsHtml}</div>
+                ${chatDescriptionBlock}
+              </div>
+            </div>
+          `;
+
+          await ChatMessage.create({
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
             content: chatContent,
-             style: CONST.CHAT_MESSAGE_STYLES.OTHER
+            style: CONST.CHAT_MESSAGE_STYLES.OTHER
           });
           ui.notifications.info("Enviado para o chat.");
         });

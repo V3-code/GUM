@@ -798,14 +798,10 @@
                         data-item-type="skill"
                         draggable="true">
                         
-                        {{!-- Ícone (Rola) --}}
-                        <div class="st-item-icon rollable" 
+                        {{!-- Ícone (Visualização Rápida) --}}
+                        <div class="st-item-icon item-quick-view"
                              style="background-image: url('{{this.img}}');"
-                             data-roll-value="{{this.system.final_nh}}" 
-                             data-label="Teste de {{this.name}}" 
-                             data-type="skill"
-                             data-attribute-key="{{this.system.base_attribute}}"
-                             title="Rolar Perícia">
+                             title="Visualizar Perícia">
                         </div>
 
                         {{!-- Info Central --}}
@@ -834,14 +830,6 @@
                                     </span>
                                 {{/if}}
 
-                                {{!-- REQ 1: Meu Próprio Atributo + Nível (SEMPRE VISÍVEL) --}}
-                                <span class="path-node self" title="Base: {{this.system.base_attribute}}">
-                                    {{this.system.base_attribute}}
-                                    <span class="path-val">
-                                        {{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}
-                                    </span>
-                                </span>
-
                                 {{!-- Caminho dos Ancestrais (APENAS NO MODO ÁRVORE) --}}
                                 {{#if (eq @root.skillsViewMode "tree")}}
                                     {{#if this.inheritancePath.length}}
@@ -853,6 +841,16 @@
                                         {{/each}}
                                     {{/if}}
                                 {{/if}}
+
+                                {{!-- REQ 1: Meu Próprio Atributo + Nível (SEMPRE VISÍVEL) --}}
+                                <span class="path-node self" title="Base: {{this.system.base_attribute}}">
+                                    <i class="fas fa-chevron-right path-separator"></i>  {{this.system.base_attribute}}
+                                    <span class="path-val">
+                                     {{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}
+                                    </span>
+                                </span>
+
+
                             </div>
                         </div>
 
@@ -1995,6 +1993,7 @@
                     </div>
 
                     <div class="pill-controls">
+                        <a class="effect-control item-quick-view" title="Visualizar Regra"><i class="fas fa-eye"></i></a>
                         <a class="effect-control item-edit" title="Editar Regra"><i class="fas fa-edit"></i></a>
                         <a class="effect-control item-delete" title="Remover Regra"><i class="fas fa-trash"></i></a>
                     </div>
