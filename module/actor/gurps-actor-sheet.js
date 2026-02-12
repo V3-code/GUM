@@ -4052,24 +4052,31 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
 
   const fieldHtml = config.fields.map((field) => {
     const value = initialData[field.name] ?? "";
+    const groupClasses = ["form-group", `form-group--${field.type}`];
+    if (field.type === "textarea") groupClasses.push("form-group--full");
+
     if (field.type === "textarea") {
       return `
-        <div class="form-group">
+        <div class="${groupClasses.join(" ")}">
           <label>${field.label}</label>
-          <textarea name="${field.name}" rows="3" placeholder="${field.placeholder || ""}">${value}</textarea>
+          <textarea class="gum-input-left" name="${field.name}" rows="3" placeholder="${field.placeholder || ""}">${value}</textarea>
         </div>`;
     }
+
     const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : "";
     const min = field.type === "number" ? "min=\"0\"" : "";
+    const inputClass = field.type === "number" ? "" : "gum-input-left";
+
     return `
-      <div class="form-group">
+      <div class="${groupClasses.join(" ")}">
         <label>${field.label}</label>
-        <input type="${field.type}" name="${field.name}" value="${value}" ${placeholder} ${min}/>
+        <input class="${inputClass}" type="${field.type}" name="${field.name}" value="${value}" ${placeholder} ${min}/>
       </div>`;
   }).join("");
 
   const content = `
-    <form class="gum-social-entry-form">
+    <form class="gum-social-entry-form" autocomplete="off">
+      <p class="hint">Preencha os dados do aspecto social. Você pode editar depois no card desta seção.</p>
       ${fieldHtml}
     </form>`;
 
@@ -4114,7 +4121,7 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
       },
       default: "save",
       close: () => finish(null)
-    }, { classes: ["dialog", "gum"] }).render(true);
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-edit-dialog"] }).render(true);
   });
 }
 

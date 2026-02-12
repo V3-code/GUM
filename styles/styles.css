@@ -4734,6 +4734,39 @@ background-color: var(--gum-accent-gold);
     font-family: var(--gum-font-condensed);
 }
 
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+    align-items: start;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .hint {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .form-group--full,
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .form-group--textarea {
+    grid-column: 1 / -1;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .gum-input-left {
+    text-align: left;
+}
+
 @media (max-width: 520px) {
     .dialog.gum.gum-sheet-edit-dialog .resource-grid {
         grid-template-columns: 1fr;
@@ -4747,7 +4780,13 @@ background-color: var(--gum-accent-gold);
     .dialog.gum.gum-sheet-edit-dialog .resource-grid--values .resource-col--label {
         margin-bottom: 2px;
     }
+
+    .dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
 }
+
 
 .gum-rd-form {
     font-family: var(--gum-font-condensed);
