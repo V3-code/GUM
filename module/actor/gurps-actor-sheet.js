@@ -1244,7 +1244,7 @@ html.on("click", ".edit-biography-details", (ev) => {
       }
     },
     default: "save"
-  }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+}, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"] }).render(true);
 });
 
 html.find(".biography-story .toggle-editor").on("click", ev => {
@@ -2312,16 +2312,21 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
         const attrs = this.actor.system.attributes;
 
         const content = `
-            <form class="secondary-stats-editor">
+            <form class="secondary-stats-editor resource-bar-editor">
                 <p class="hint">Ajuste os valores base e os modificadores temporários aqui.</p>
-                <div class="form-header">
-                    <span></span><span>Base</span><span>Mod. Temp.</span><span>Final</span>
+
+                <div class="resource-grid resource-grid--header" aria-hidden="true">
+                    <span class="resource-col resource-col--label"></span>
+                    <span class="resource-col">Base</span>
+                    <span class="resource-col">Mod. Temp.</span>
+                    <span class="resource-col">Final</span>
                 </div>
-                <div class="form-grid">
-                    <label>${statLabel} (Máximo)</label>
-                    <input type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
+
+                <div class="resource-grid resource-grid--values">
+                    <label class="resource-col resource-col--label" for="${statKey}-max-input">${statLabel} (Máximo)</label>
+                    <input id="${statKey}-max-input" type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
                     <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
-                    <span class="final-display">${attrs[statKey].final}</span>
+                    <span class="final-display" title="Valor final atual">${attrs[statKey].final}</span>
                 </div>
             </form>
         `;
@@ -2344,7 +2349,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                 }
             },
 default: 'save'
-        }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+      }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"] }).render(true);
     });
 
     // EDITOR DE ST DE CARGA
@@ -2413,7 +2418,7 @@ default: 'save'
                 }
             },
             default: 'save'
-        }, { classes: ["dialog", "gum", "secondary-stats-dialog"] }).render(true);
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"] }).render(true);
     });
 
     // EDITOR DE ATRIBUTOS SECUNDÁRIOS
@@ -2617,7 +2622,7 @@ default: 'save'
                 }
             },
             default: 'save'
-        }, { classes: ["dialog", "gum", "secondary-stats-dialog"], width: 600 }).render(true);
+       }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], width: 600 }).render(true);
     });
 
     // QUICK VIEW ORIGIN
@@ -3055,7 +3060,7 @@ async _onEditBasicDamage(ev) {
       cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
     },
     default: "save"
-  }, { classes: ["dialog", "gum"], width: 360 }).render(true);
+  }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"], width: 360 }).render(true);
 }
 
 async _onViewHitLocations(ev) {
@@ -3112,12 +3117,12 @@ async _onViewHitLocations(ev) {
 ).join("");
 
 const profileSelectorHtml = `
-  <div class="gum-rd-profile-row" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-    <label style="font-weight:700; white-space:nowrap;">Tipo Corporal</label>
+  <div class="gum-rd-profile-row">
+    <label>Tipo Corporal</label>
     <select class="gum-body-profile-select" name="body_profile">
       ${profileOptionsHtml}
     </select>
-    <span style="opacity:.7; font-size:12px;">(altera as localizações exibidas)</span>
+    <span class="gum-rd-profile-hint">(altera as localizações exibidas)</span>
   </div>
 `;
 
@@ -3185,7 +3190,7 @@ const dlg = new Dialog({
     });
   }
 
-}, { classes: ["dialog", "gum"], width: 650 });
+}, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-rd-edit-dialog"], width: 650 });
 
 dlg.render(true);
 

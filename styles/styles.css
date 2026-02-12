@@ -4599,46 +4599,201 @@ background-color: var(--gum-accent-gold);
 /* =================================================================== */
 /* RD Manual Dialog                                                    */
 /* =================================================================== */
+.dialog.gum.gum-sheet-edit-dialog .window-content {
+    background: var(--gum-bg-body);
+    color: var(--gum-text-claro);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content {
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+    color: var(--gum-text-claro);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content form {
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .hint,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content small,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .gum-rd-profile-hint {
+    font-size: 10px;
+    color: rgba(243, 234, 220, 0.7);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content label,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .form-header-grid span,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .form-header span,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .table-header > div {
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--gum-text-label);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content input,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content select,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content textarea {
+    background: color-mix(in srgb, var(--gum-bg-body) 86%, white 14%);
+    border: 1px solid color-mix(in srgb, var(--gum-border) 55%, transparent);
+    border-radius: 6px;
+    color: var(--gum-text-claro);
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+    box-shadow: none;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content input:focus,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content select:focus,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--gum-accent-gold) 55%, var(--gum-border) 45%);
+    box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.2);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content input[type="number"] {
+    text-align: center;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .gum-input-left,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .gum-input-left input,
+.dialog.gum.gum-sheet-edit-dialog .dialog-content .gum-input-left input[type="number"] {
+    text-align: left;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-buttons {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 8px;
+    gap: 6px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-buttons button {
+    background: color-mix(in srgb, var(--gum-bg-body) 82%, white 18%);
+    color: var(--gum-text-claro);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    box-shadow: none;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .dialog-buttons button:hover {
+    background: color-mix(in srgb, var(--gum-bg-body) 70%, white 30%);
+    border-color: rgba(255, 255, 255, 0.24);
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-bar-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-bar-editor .hint {
+    margin: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(70px, 1fr));
+    gap: 6px;
+    align-items: center;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid--header {
+    padding: 0 2px;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid--header .resource-col {
+    text-align: center;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid--values .resource-col--label {
+    text-align: left;
+    font-weight: 700;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid--values input[type="number"] {
+    width: 100%;
+    min-width: 0;
+}
+
+.dialog.gum.gum-sheet-edit-dialog .resource-grid--values .final-display {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--gum-bg-body) 78%, white 22%);
+    color: var(--gum-text-claro);
+    font-size: 11px;
+    font-family: var(--gum-font-condensed);
+}
+
+@media (max-width: 520px) {
+    .dialog.gum.gum-sheet-edit-dialog .resource-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .dialog.gum.gum-sheet-edit-dialog .resource-grid--header {
+        display: none;
+    }
+
+    .dialog.gum.gum-sheet-edit-dialog .resource-grid--values .resource-col--label {
+        margin-bottom: 2px;
+    }
+}
+
 .gum-rd-form {
-    font-family: "Roboto", "Segoe UI", sans-serif;
-    color: #2f2b28;
+    font-family: var(--gum-font-condensed);
+    color: var(--gum-text-claro);
+    font-size: 11px;
 }
 .gum-rd-form .gum-rd-profile-row {
-    background: #f8f4ed;
-    border: 1px solid #e6ddcd;
+    background: color-mix(in srgb, var(--gum-bg-body) 85%, white 15%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     padding: 8px 10px;
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.gum-rd-form .gum-rd-profile-row label {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gum-rd-form .gum-rd-profile-hint {
+    opacity: .7;
+    font-size: 10px;
 }
 .gum-rd-form .gum-body-profile-select {
     flex: 0 0 180px;
-    padding: 4px 6px;
-    border: 1px solid #d7ccb8;
-    border-radius: 6px;
-    background: #fff;
-    color:black;
+    text-align: left;
 }
 .gum-rd-form .gurps-rd-table {
-    border: 1px solid #e0d5c7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     overflow: hidden;
-    background: #fdfbf6;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    background: color-mix(in srgb, var(--gum-bg-body) 92%, black 8%);
 }
 .gum-rd-form .gurps-rd-table .table-header {
     display: grid;
     grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
-    background: #f4efe8;
-    color: #6b5e55;
+    background: color-mix(in srgb, var(--gum-bg-body) 82%, white 18%);
+    color: var(--gum-text-label);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     padding: 8px 10px;
-    border-bottom: 1px solid #e6ddcd;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .gum-rd-form .gurps-rd-table .table-body {
     max-height: 420px;
@@ -4649,27 +4804,22 @@ background-color: var(--gum-accent-gold);
     grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
     align-items: center;
     padding: 8px 10px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
     gap: 6px;
 }
 .gum-rd-form .gurps-rd-table .table-row:nth-child(even) {
-    background: rgba(0,0,0,0.01);
+    background: rgba(255,255,255,0.02);
 }
 .gum-rd-form .gurps-rd-table .table-row .loc-label {
     font-weight: 800;
-    color: #2f2b28;
+    color: var(--gum-text-claro);
 }
 .gum-rd-form .gurps-rd-table .table-row input[type="text"] {
     width: 100%;
-    padding: 4px 6px;
-    border: 1px solid #d7ccb8;
-    border-radius: 6px;
-    background: #fff;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
-    color: black;
+    text-align: left;
 }
 .gum-rd-form .gurps-rd-table .table-row .loc-rd-total strong {
-    color: #b64040;
+    color: var(--gum-accent-gold);
 }
 
 /* =================================================================== */
