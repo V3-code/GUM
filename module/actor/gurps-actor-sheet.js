@@ -1056,8 +1056,8 @@ _getSubmitData(updateData) {
      * @param {boolean} reset - Se true, apaga os existentes antes de importar.
      */
     async _importModifiersFromCompendium(reset = false) {
-        const pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
-        if (!pack) return ui.notifications.warn("Compêndio de Modificadores não encontrado.");
+        const pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
+        if (!pack) return ui.notifications.warn("Compêndio [GUM] Modificadores de Rolagem não encontrado.");
 
         const sourceItems = await pack.getDocuments();
         if (sourceItems.length === 0) return ui.notifications.warn("O Compêndio está vazio.");

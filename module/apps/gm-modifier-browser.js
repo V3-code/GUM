@@ -26,7 +26,7 @@ export class GMModifierBrowser extends FormApplication {
     // Busca no compêndio correto
     let pack = game.packs.get("gum.gm_modifiers") || 
                game.packs.get("world.modificadores-basicos") ||
-               game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
+               game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
     
     if (pack) {
         const content = await pack.getDocuments();

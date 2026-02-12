@@ -57,7 +57,7 @@
   "packs": [
     {
       "name": "modifiers",
-      "label": "[GUM] Modificadores",
+      "label": "[GUM] Ampliações e Limitações",
       "system": "gum",
       "path": "./packs/modifiers",
       "type": "Item",
@@ -89,7 +89,7 @@
     },
     {
       "name": "Regras",
-      "label": "[GUM] Regras",
+      "label": "[GUM] Condições Passivas",
       "system": "gum",
       "path": "./packs/regras",
       "type": "Item",
@@ -170,7 +170,7 @@
     },
         {
       "name": "gm_modifiers",
-      "label": "[GUM] Modificadores Básicos",
+      "label": "[GUM] Modificadores de Rolagem",
       "system": "gum",
       "path": "./packs/gm_modifiers",
       "type": "Item",

@@ -8,7 +8,7 @@ async function syncCompendiumRules() {
 
     const pack = game.packs.get("gum.Regras");
     if (!pack) {
-        return ui.notifications.error("Compêndio de regras [GUM] Regras (gum.Regras) não encontrado.");
+        return ui.notifications.error("Compêndio [GUM] Condições Passivas (gum.Regras) não encontrado.");
     }
 
     const sourceRules = await pack.getDocuments();
@@ -18,7 +18,7 @@ async function syncCompendiumRules() {
     }
 
     if (sourceRulesMap.size === 0) {
-        return ui.notifications.warn("Compêndio [GUM] Regras está vazio. Nenhuma regra para sincronizar.");
+        return ui.notifications.warn("Compêndio [GUM] Condições Passivas está vazio. Nenhuma regra para sincronizar.");
     }
 
     let updateCount = 0;
@@ -100,7 +100,7 @@ export const registerSystemSettings = function() {
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
         name: "Adicionar Regras Padrão na Criação",
-        hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Regras a todos os novos Atores de personagem criados.",
+        hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados.",
         scope: "world",
         config: true,
         type: Boolean,
@@ -110,7 +110,7 @@ export const registerSystemSettings = function() {
     // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
         name: "Sincronizar Regras do Compêndio",
-        hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Regras. A caixa desmarcará automaticamente após o uso.",
+        hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso.",
         scope: "world",
         config: true,
         type: Boolean,

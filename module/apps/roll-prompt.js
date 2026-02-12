@@ -322,7 +322,7 @@ return 'default';
         const useDefaults = this.actor.getFlag("gum", "useDefaultModifiers");
 
         if (useDefaults) {
-            let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
+            let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
             if (pack) {
                 const packIndex = await pack.getDocuments(); 
                 allModifierItems.push(...packIndex);
