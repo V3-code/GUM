@@ -1,0 +1,70 @@
+name: Validate System Manifest
+
+on:
+  push:
+    paths:
+      - "system.json"
+      - "README.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "system.json"
+      - "README.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/validate.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JSON and required fields
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path('system.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+
+          required = ['id', 'title', 'version', 'compatibility', 'manifest', 'download', 'readme']
+          missing = [k for k in required if k not in data]
+          if missing:
+              raise SystemExit(f'Campos obrigatórios ausentes em system.json: {missing}')
+
+          comp = data.get('compatibility', {})
+          for k in ['minimum', 'verified']:
+              if k not in comp:
+                  raise SystemExit(f'compatibility.{k} ausente em system.json')
+
+          print('system.json validado com sucesso')
+          PY
+
+      - name: Validate local paths in manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('system.json').read_text(encoding='utf-8'))
+          misses = []
+
+          for key in ('esmodules', 'styles'):
+              for rel in data.get(key, []):
+                  if not Path(rel).exists():
+                      misses.append((key, rel))
+
+          for pack in data.get('packs', []):
+              rel = pack.get('path')
+              if rel and not Path(rel).exists():
+                  misses.append(('packs.path', rel))
+
+          if misses:
+              raise SystemExit(f'Caminhos ausentes no manifesto: {misses}')
+
+          print('Caminhos do manifesto validados com sucesso')
+          PY
