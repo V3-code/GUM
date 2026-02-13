@@ -774,6 +774,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         sound: CONFIG.sounds.dice
     });
 
+    if (rollData.type === "defense") {
+        await processConditions(actor, {
+            pulse: true,
+            type: "defense_roll",
+            defenseType: rollData.defenseType || null,
+            inCombat: Boolean(game.combat)
+        });
+    }
+
     // --- 8. DISPARO DE EFEITOS DE ATIVAÇÃO (SUCESSO/FALHA) ---
     // Executamos depois de criar a mensagem para que o card da rolagem apareça antes do pedido de resistência.
     if (sourceItem?.system?.activationEffects && sourceItem.system.activationEffects[rollOutcome]) {
@@ -792,7 +801,13 @@ function _determineRollContext(actor, rollData) {
     const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
     const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
 
-    if (type === 'defense') return 'defense';
+    if (type === 'defense') {
+        const defenseType = rollData.defenseType?.toLowerCase?.();
+        if (defenseType === 'dodge') return 'defense_dodge';
+        if (defenseType === 'parry') return 'defense_parry';
+        if (defenseType === 'block') return 'defense_block';
+        return 'defense';
+    }
 
     if (type === 'attack') {
         if (rollData.attackType === 'ranged') return 'attack_ranged';
@@ -839,6 +854,7 @@ function _matchesRollContext(modContext, rollContext) {
         return modContext.split(',').map(c => c.trim()).includes(rollContext);
     }
     if (modContext === 'attack') return rollContext.startsWith('attack');
+    if (modContext === 'defense') return rollContext.startsWith('defense');
     if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
     return modContext === rollContext;
 }
@@ -2205,18 +2221,27 @@ async function processConditions(actor, eventData = null) {
         for (const condition of conditions) {
              const wasActive = condition.getFlag("gum", "wasActive") || false;
              const isManuallyDisabled = condition.getFlag("gum", "manual_override") || false;
-             let isConditionActiveNow = false; 
-             try { isConditionActiveNow = !condition.system.when || Function("actor", "game", "eventData", `return (${condition.system.when})`)(actor, game, eventData); } catch (e) {}
+             let isConditionActiveNow = false;
+             try {
+                 isConditionActiveNow = !condition.system.when
+                     || Function("actor", "game", "eventData", `return (${condition.system.when})`)(actor, game, eventData);
+             } catch (e) {
+                 isConditionActiveNow = false;
+             }
+
              const isEffectivelyActiveNow = isConditionActiveNow && !isManuallyDisabled;
              const stateChanged = isEffectivelyActiveNow !== wasActive;
+             const isPulseEvent = Boolean(eventData?.pulse);
+             const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow) || (isPulseEvent && isEffectivelyActiveNow);
 
              if (stateChanged) {
                  // Salva o novo estado
                  await condition.setFlag("gum", "wasActive", isEffectivelyActiveNow);
-                 
-                 const effectLinks = condition.system.effects || []; // Pega os links de efeito dentro da condição
+             }
 
- if (isEffectivelyActiveNow) { // Condição acabou de LIGAR
+             const effectLinks = condition.system.effects || []; // Pega os links de efeito dentro da condição
+
+             if (shouldExecuteActivation) { // Condição acabou de LIGAR OU gatilho pulsado
                      for (const link of effectLinks) {
                         if(!link.uuid) continue; // Pula se não for um link válido
                         const effectItem = await fromUuid(link.uuid); // Carrega o Item Efeito original
@@ -2278,7 +2303,7 @@ async function processConditions(actor, eventData = null) {
                                 effect?.flags?.gum?.conditionId === condition.id
                                 && effect?.flags?.gum?.effectUuid === effectItem.uuid
                             );
-                            if (!existingConditionEffect) {
+                            if (!existingConditionEffect || isPulseEvent) {
                                 const effectSystem = effectItem.system;
                                 const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
                                 const startMode = gumDuration.startMode || "apply";
@@ -2381,7 +2406,9 @@ async function processConditions(actor, eventData = null) {
                             }
                         }
                      }
-                 } else { // Condição acabou de DESLIGAR
+                 }
+
+                 if (stateChanged && !isEffectivelyActiveNow) { // Condição acabou de DESLIGAR
                      for (const link of effectLinks) {
                         if(!link.uuid) continue;
                         const effectItem = await fromUuid(link.uuid);
@@ -2403,7 +2430,6 @@ async function processConditions(actor, eventData = null) {
                         // Outras ações de "desligar" poderiam ir aqui no futuro
                      }
                  }
-             } // Fim do if (stateChanged)
         } // Fim do loop de Conditions
 
         // Nenhuma lógica de sincronização de ícones ('toggleStatusEffect') aqui.

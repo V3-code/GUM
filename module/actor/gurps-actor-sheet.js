@@ -1099,7 +1099,8 @@ _getRollDataFromElement(element) {
         img: dataset.img || "",
         attackType: dataset.attackType || null,
         isRanged: dataset.isRanged === "true",
-        attributeKey: dataset.attributeKey || null
+        attributeKey: dataset.attributeKey || null,
+        defenseType: dataset.defenseType || null
     };
 }
 

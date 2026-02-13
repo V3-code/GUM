@@ -91,6 +91,7 @@ export class GurpsRollPrompt extends FormApplication {
             return modContext.split(",").map(c => c.trim()).includes(rollContext);
         }
         if (modContext === "attack") return rollContext.startsWith("attack");
+        if (modContext === "defense") return rollContext.startsWith("defense");
         if (modContext === "skill") return rollContext.startsWith("skill_") || rollContext === "skill";
         return modContext === rollContext;
     }
@@ -102,7 +103,13 @@ export class GurpsRollPrompt extends FormApplication {
         const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
         const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
         
-        if (type === 'defense') return 'defense';
+        if (type === 'defense') {
+            const defenseType = this.rollData.defenseType?.toLowerCase?.();
+            if (defenseType === 'dodge') return 'defense_dodge';
+            if (defenseType === 'parry') return 'defense_parry';
+            if (defenseType === 'block') return 'defense_block';
+            return 'defense';
+        }
 
         if (type === 'attack') {
             if (this.rollData.attackType === 'ranged') return 'attack_ranged';

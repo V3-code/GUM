@@ -51,7 +51,10 @@ export class EffectSheet extends ItemSheet {
             { id: "attack", label: "Ataque (qualquer)" },
             { id: "attack_melee", label: "Ataque corpo-a-corpo" },
             { id: "attack_ranged", label: "Ataque à distância" },
-            { id: "defense", label: "Defesa" },
+            { id: "defense", label: "Defesa (qualquer)" },
+            { id: "defense_dodge", label: "Esquiva" },
+            { id: "defense_parry", label: "Aparar" },
+            { id: "defense_block", label: "Bloqueio" },
             { id: "spell", label: "Magias" },
             { id: "power", label: "Poderes" },
             { id: "sense_vision", label: "Visão" },
@@ -102,7 +105,10 @@ export class EffectSheet extends ItemSheet {
                     contextsById.attack,
                     contextsById.attack_melee,
                     contextsById.attack_ranged,
-                    contextsById.defense
+                    contextsById.defense,
+                    contextsById.defense_dodge,
+                    contextsById.defense_parry,
+                    contextsById.defense_block
                 ],
                 listClass: "roll-context-list-columns"
             },

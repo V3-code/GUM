@@ -56,7 +56,7 @@
                 <circle class="badge-bg" cx="50" cy="50" r="48" />
                 <circle class="badge-border" cx="50" cy="50" r="44" />
               </svg>
-              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva">
+              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva" data-defense-type="dodge">
                 {{actor.system.attributes.dodge.final}}
               </a>
               <div class="badge-label-curved">ESQUIVA</div>
@@ -1681,12 +1681,12 @@
                         {{#if (eq attack.attack_type "melee")}}
                           <div class="attack-cell is-center">
                             <div class="attack-label">APR</div>
-                            <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.parry}}">{{attack.parry}}</a>
+                            <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.parry}}" data-label="Teste de Aparar" data-defense-type="parry">{{attack.parry}}</a>
                           </div>
                           {{#if attack.final_block}}
                             <div class="attack-cell is-center">
                               <div class="attack-label">BLQ</div>
-                              <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio">{{attack.final_block}}</a>
+                              <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block">{{attack.final_block}}</a>
                             </div>
                           {{/if}}
                           <div class="attack-cell is-center">
