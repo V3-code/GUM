@@ -28,10 +28,10 @@ export class EffectSheet extends ItemSheet {
         const flagValue = context.system.flag_value;
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
             context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
- context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description, { async: true });
-        context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
-        context.owner = this.item.isOwner;
-        context.editable = this.options.editable;
+        context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
+        context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description || "", { async: true });
+        context.owner = context.owner ?? this.item.isOwner;
+        context.editable = this.options.editable ?? this.isEditable;
 
        const rawContext = context.system.roll_modifier_context;
 

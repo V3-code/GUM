@@ -242,178 +242,179 @@
                                     </div>
                                 </div>
                         {{/if}}
-                    </div>
                    </section>
-
 
                     {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
                     <section class="effect-card effect-section">
-                    {{!-- HEADER (estilo “ataques”) --}}
-                    <div class="effect-section-header">
-                        <h4 class="effect-section-title">Barreira de Resistência</h4>
+                        {{!-- HEADER (estilo “ataques”) --}}
+                        <div class="effect-section-header">
+                            <h4 class="effect-section-title">Barreira de Resistência</h4>
 
-                        <label class="effect-section-toggle" title="Ativar registro de barreira">
-                        <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
-                        <span></span>
-                        </label>
-                    </div>
-
-                    {{!-- BODY --}}
-                    <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
-                        <div class="effect-row-grid effect-resistance-grid">
-                        <div class="effect-field">
-                            <div class="effect-label">Aplicar efeito em</div>
-                            <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                            <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
-                            <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
-                            </select>
+                            <label class="effect-section-toggle" title="Ativar registro de barreira">
+                            <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                            <span></span>
+                            </label>
                         </div>
 
-                        <div class="effect-field">
-                            <div class="effect-label">Atributo</div>
-                            <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                        </div>
+                        {{!-- BODY --}}
+                        <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
+                            <div class="effect-row-grid effect-resistance-grid">
+                            <div class="effect-field">
+                                <div class="effect-label">Aplicar efeito em</div>
+                                <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
+                                <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
+                                </select>
+                            </div>
 
-                        <div class="effect-field">
-                            <div class="effect-label">Modificador</div>
-                            <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                        </div>
+                            <div class="effect-field">
+                                <div class="effect-label">Atributo</div>
+                                <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
 
-                        <div class="effect-field">
-                            <div class="effect-label">Margem Min</div>
-                            <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                        </div>
-                        </div>
+                            <div class="effect-field">
+                                <div class="effect-label">Modificador</div>
+                                <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
 
-                        <label class="custom-checkbox block effect-inline-checkbox">
-                        <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                        <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
-                        </label>
-                    </div>
+                            <div class="effect-field">
+                                <div class="effect-label">Margem Min</div>
+                                <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
+                            </div>
+
+                            <label class="custom-checkbox block effect-inline-checkbox">
+                            <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
+                            </label>
+                        </div>
                     </section>
 
                     {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
                     {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
                     <section class="effect-card effect-section">
-                    <div class="effect-section-header">
-                        <h4 class="effect-section-title">Duração do Efeito</h4>
+                        <div class="effect-section-header">
+                            <h4 class="effect-section-title">Duração do Efeito</h4>
 
-                        {{!-- DROPDOWN de modo (visual) --}}
-                        <div class="effect-section-select">
-                            <select class="duration-mode-select" name="system.duration._uiMode">
-                                <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
-                                <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
-                            </select>
+                            {{!-- DROPDOWN de modo (visual) --}}
+                            <div class="effect-section-select">
+                                <select class="duration-mode-select" name="system.duration._uiMode">
+                                    <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
+                                    <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
-                    {{!-- Mantemos os campos reais do sistema (pode deixar oculto via CSS) --}}
-                    <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
-                    <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                        {{!-- Mantemos os campos reais do sistema (pode deixar oculto via CSS) --}}
+                        <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
+                        <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
 
-                    <div class="effect-section-body">
-                        {{#if system.duration.isPermanent}}
-                        <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
-                        {{/if}}
-                        {{!-- Só aparece quando NÃO for permanente --}}
-                        {{#unless system.duration.isPermanent}}
-                    
-                        {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
-                        {{#if system.duration.inCombat}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                        <div class="effect-section-body">
+                            {{#if system.duration.isPermanent}}
+                            <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
+                            {{/if}}
+                            {{!-- Só aparece quando NÃO for permanente --}}
+                            {{#unless system.duration.isPermanent}}
+                        
+                            {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
+                            {{#if system.duration.inCombat}}
+                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
 
-                            <div class="effect-field effect-field-row">
-                                <div class="effect-label">Início da contagem</div>
-                                <select class="effect-dropmenu-text" name="system.duration.startMode">
-                                <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
-                                <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
-                                </select>
-                            </div>
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Início da contagem</div>
+                                    <select class="effect-dropmenu-text" name="system.duration.startMode">
+                                    <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
+                                    <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
+                                    </select>
+                                </div>
 
-                            <div class="effect-field effect-field-row">
-                                <div class="effect-label">Rodadas (seg)</div>
-                                <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
-                            </div>
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Rodadas (seg)</div>
+                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
+                                </div>
 
-                            <div class="effect-field effect-field-row">
-                                <div class="effect-label">Fim da contagem</div>
-                                <select name="system.duration.endMode">
-                                <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
-                                <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
-                                </select>
-                            </div>
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Fim da contagem</div>
+                                    <select name="system.duration.endMode">
+                                    <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
+                                    <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
+                                    </select>
+                                </div>
 
-                            </div>
+                                </div>
 
-                        {{/if}}
+                            {{/if}}
 
-                        {{/unless}}
+                            {{/unless}}
 
-                    </div>
+                        </div>
                     </section>
                     {{/if}}
-            </div>
-
-            {{! ========================================================= }}
-            {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
-            {{! ========================================================= }}
-            <div class="tab" data-tab="description" data-group="primary">
-              <div class="description-tab">
-                <div class="description-grid">
-                  <div class="form-section description-section">
-                    <div class="description-header">
-                      <div>
-                        <h4 class="section-title">Descrição Resumida (Chat)</h4>
-                        <p class="hint">Use para tooltips e mensagens rápidas.</p>
-                      </div>
-                      {{#if editable}}
-                      <div class="description-actions">
-                        <button type="button" class="toggle-editor" data-field="system.chat_description">
-                          <i class="fas fa-pen"></i> 
-                        </button>
-                      </div>
-                      {{/if}}
-                    </div>
-                    <div class="description-view">{{{system.chat_description}}}</div>
-
-                    <div class="description-editor" style="display:none;">
-                      {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
-                      <div class="description-actions">
-                        <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
-                        <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                        <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="form-section description-section">
-                    <div class="description-header">
-                      <div>
-                        <h4 class="section-title">Descrição Completa</h4>
-                        <p class="hint">Inclua detalhes extensos, efeitos narrativos e referências.</p>
-                      </div>
-                      {{#if editable}}
-                      <div class="description-actions">
-                        <button type="button" class="toggle-editor" data-field="system.description">
-                          <i class="fas fa-pen"></i> 
-                        </button>
-                      </div>
-                      {{/if}}
-                    </div>
-                    <div class="description-view">{{{system.description}}}</div>
-
-                    <div class="description-editor" style="display:none;">
-                      {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
-                      <div class="description-actions">
-                        <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
-                        <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                        <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
+
+                {{! ========================================================= }}
+                {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
+                {{! ========================================================= }}
+                <div class="tab" data-tab="description" data-group="primary">
+                    <div class="description-tab">
+                        <div class="description-grid">
+                        <div class="form-section description-section">
+                            <div class="description-header">
+                            <div>
+                                <h4 class="section-title">Descrição Resumida (Chat)</h4>
+                                <p class="hint">Use para tooltips e mensagens rápidas.</p>
+                            </div>
+                            {{#if editable}}
+                            <div class="description-actions">
+                                <button type="button" class="toggle-editor" data-field="system.chat_description">
+                                <i class="fas fa-pen"></i> 
+                                </button>
+                            </div>
+                            {{/if}}
+                            </div>
+                            <div class="description-view">{{{enrichedChatDescription}}}</div>
+
+
+
+                            <div class="description-editor" style="display:none;">
+                            {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+                            <div class="description-actions">
+                                <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                                <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
+                                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section description-section">
+                            <div class="description-header">
+                            <div>
+                                <h4 class="section-title">Descrição Completa</h4>
+                                <p class="hint">Inclua detalhes extensos, efeitos narrativos e referências.</p>
+                            </div>
+                            {{#if editable}}
+                            <div class="description-actions">
+                                <button type="button" class="toggle-editor" data-field="system.description">
+                                <i class="fas fa-pen"></i> 
+                                </button>
+                            </div>
+                            {{/if}}
+                            </div>
+                            <div class="description-view">{{{enrichedDescription}}}</div>
+
+                            <div class="description-editor" style="display:none;">
+                            {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+                            <div class="description-actions">
+                                <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                                <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
+                                <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
               </div>
-            </div>
+           </div>
         </div>
     </main>
 </form>
