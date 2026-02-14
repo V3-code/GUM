@@ -21,7 +21,11 @@ import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
-
+const isEffectDurationPermanent = (duration = {}) => {
+    if (!duration || typeof duration !== "object") return false;
+    if (duration._uiMode === "permanent") return true;
+    return duration.isPermanent === true;
+};
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
 // ================================================================== //
@@ -1177,7 +1181,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                     };
 
                     // --- INÍCIO DO CÓDIGO DE DURAÇÃO COMPLETO ---
-                    if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                    if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
                         activeEffectData.duration = {};
                         const value = parseInt(effectSystem.duration.value) || 1;
                         const unit = effectSystem.duration.unit;
@@ -1317,7 +1321,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             disabled: pendingCombat || shouldDelayStart
                         };
 
-                        if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                        if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
                             activeEffectData.duration = {};
                             const value = parseInt(effectSystem.duration.value) || 1;
                             const unit = effectSystem.duration.unit;
@@ -2337,7 +2341,7 @@ async function processConditions(actor, eventData = null) {
                                     : (effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true }));
                                 foundry.utils.setProperty(effectData, "flags.core.statusId", coreStatusId);
 
-                                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
                                     effectData.duration = {};
                                     const value = parseInt(effectSystem.duration.value) || 1;
                                     const unit = effectSystem.duration.unit;

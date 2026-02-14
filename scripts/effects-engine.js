@@ -43,6 +43,12 @@ const resolveRollBaseValue = (actor, rollAttribute) => {
     return null;
 };
 
+const isEffectDurationPermanent = (duration = {}) => {
+    if (!duration || typeof duration !== "object") return false;
+    if (duration._uiMode === "permanent") return true;
+    return duration.isPermanent === true;
+};
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
@@ -104,7 +110,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                // =============================================================
                 // ✅ LÓGICA DE DURAÇÃO FINAL (Sincronizada com createItem)
                 // =============================================================
-if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
                     activeEffectData.duration = {};
                     const value = parseInt(effectSystem.duration.value) || 1; 
                     const unit = effectSystem.duration.unit;
@@ -206,7 +212,7 @@ if (effectSystem.attachedStatusId) {
                     disabled: pendingCombat || shouldDelayStart
                 };
 
-                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
                     activeEffectData.duration = {};
                     const value = parseInt(effectSystem.duration.value) || 1;
                     const unit = effectSystem.duration.unit;
@@ -282,7 +288,7 @@ if (effectSystem.attachedStatusId) {
                 };
 
                 // Duração (mesma lógica dos outros tipos)
-                if (effectSystem.duration && !effectSystem.duration.isPermanent) {
+                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
                     activeEffectData.duration = {};
                     const value = parseInt(effectSystem.duration.value) || 1; 
                     const unit = effectSystem.duration.unit;
