@@ -781,6 +781,7 @@ _getSubmitData(updateData) {
     activateEditor(name, options = {}, ...args) {
         options.engine = "prosemirror";
         options.minHeight ??= 300;
+        options.documentTypes ??= ["JournalEntry", "JournalEntryPage", "Item"];
         return super.activateEditor(name, options, ...args);
     }
     // ================================================================== //
@@ -817,11 +818,12 @@ _getSubmitData(updateData) {
     }
     
       async _updateObject(event, formData) {
-        // Processa a conversão de vírgula para ponto
+        // Processa conversão decimal apenas em campos numéricos (evita alterar texto livre, como biografia)
         for (const key in formData) {
-          if (typeof formData[key] === 'string' && formData[key].includes(',')) {
-            formData[key] = formData[key].replace(',', '.');
-          }
+          const value = formData[key];
+          if (typeof value !== 'string' || !value.includes(',')) continue;
+          if (!/^\s*-?\d+,\d+\s*$/.test(value)) continue;
+          formData[key] = value.replace(',', '.');
         }
 
         return this.actor.update(formData);

@@ -1780,7 +1780,7 @@
 
 /* Parágrafos */
 .gum.sheet.actor .description-view p {
-    margin-bottom: 0.8em; /* Menos espaço entre parágrafos */
+    margin-bottom: 0.5px; /* Menos espaço entre parágrafos */
     text-indent: 10px; /* Recuo levemente menor */
     margin-top: 0;
 }

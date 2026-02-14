@@ -757,16 +757,20 @@ async function parseGCSCharacter(gcsData) {
 }
 
 /**
- * Exporta todos os itens de um compêndio para um arquivo JSON.
+ * Exporta todos os documentos de um compêndio para um arquivo JSON.
  */
 export async function exportCompendiumToJson() {
-    const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
-    if (allItemPacks.length === 0) {
-        return ui.notifications.error("Nenhum compêndio de Itens encontrado no mundo.");
+    const allPacks = game.packs.contents;
+    if (allPacks.length === 0) {
+        return ui.notifications.error("Nenhum compêndio encontrado no mundo.");
     }
 
-    const packOptions = allItemPacks.map(pack => {
-        return `<option value="${pack.collection}">${pack.title}</option>`;
+    const packOptions = allPacks
+        .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
+        .map(pack => {
+            const packageType = pack.metadata.packageType || "desconhecido";
+            const documentType = pack.metadata.type || "Documento";
+            return `<option value="${pack.collection}">${pack.title} (${documentType} • ${packageType})</option>`;
     }).join("");
 
     new Dialog({
@@ -802,7 +806,7 @@ export async function exportCompendiumToJson() {
 
                     const data = documents.map(doc => doc.toObject());
                     downloadJsonFile(data, `${sanitizeFileName(pack.metadata.label || pack.metadata.name)}.json`);
-                    ui.notifications.info(`Exportação concluída! ${data.length} itens de "${pack.title}" foram exportados.`);
+                    ui.notifications.info(`Exportação concluída! ${data.length} registros de "${pack.title}" foram exportados.`);
                 }
             },
             cancel: {
