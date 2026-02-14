@@ -168,7 +168,7 @@
   align-items: center;
 }
 
-.gum.sheet.item .sheet-header textarea[name="name"] {
+.gum.sheet.item .sheet-header input[name="name"] {
   font-family: var(--item-font-serif);
   font-size: 1.2rem;
   font-weight: 700;
@@ -178,11 +178,11 @@
   border-radius: 6px;
   padding: 6px 10px;
   min-height: 42px;
-  resize: none;
+  line-height: 1.2;
   text-align: center;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-.gum.sheet.item .sheet-header textarea[name="name"]:focus {
+.gum.sheet.item .sheet-header input[name="name"]:focus {
   border-color: var(--item-accent);
   background: rgba(0, 0, 0, 0.4);
   box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.2);

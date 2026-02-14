@@ -1221,6 +1221,12 @@ Hooks.on("createItem", async (item, options, userId) => {
                             value: effectSystem.value
                         };
                         activeEffectData.changes.push(change);
+                    } else if (effectSystem.type === 'roll_modifier') {
+                        foundry.utils.setProperty(activeEffectData.flags, "gum.rollModifier", {
+                            value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                            cap: effectSystem.roll_modifier_cap ?? "",
+                            context: effectSystem.roll_modifier_context ?? "all"
+                        });
                     } else if (effectSystem.type === 'flag') {
                         let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
                         foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
@@ -1358,6 +1364,12 @@ Hooks.on("createItem", async (item, options, userId) => {
                                 value: effectSystem.value
                             };
                             activeEffectData.changes.push(change);
+                        } else if (effectSystem.type === 'roll_modifier') {
+                            foundry.utils.setProperty(activeEffectData.flags, "gum.rollModifier", {
+                                value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                cap: effectSystem.roll_modifier_cap ?? "",
+                                context: effectSystem.roll_modifier_context ?? "all"
+                            });
                         } else if (effectSystem.type === 'flag') {
                             let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
                             foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
