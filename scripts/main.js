@@ -938,10 +938,10 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         });
         return;
     }
-     const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
+    const applyOnText = rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha';
     const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
     const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
-    const modifierClass = rollData.modifier > 0 ? 'positive' : rollData.modifier < 0 ? 'negative' : 'neutral';
+    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${modifierValue === '0' ? '' : modifierValue}`;
 
  const chatPayload = {
         mode: options.mode || "activation",
@@ -966,7 +966,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                 </div>
             </header>
             <div class="card-content">
-                <div class="resistance-info">
+                <div class="resistance-info resistance-info-compact">
                     <div class="info-row">
                         <span class="label">Alvo</span>
                         <span class="value with-img">
@@ -978,13 +978,9 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                         <span class="label">Origem</span>
                         <span class="value">${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</span>
                     </div>
-                    <div class="pill-row dual">
-                        <div class="pill pill-attribute"><strong>Atributo:</strong> ${(rollData.attribute || 'HT').toUpperCase()}</div>
-                        <div class="pill pill-modifier ${modifierClass}"><strong>Mod:</strong> ${modifierValue}</div>
-                    </div>
-                    <div class="pill-row dual">
-                        <div class="pill pill-condition"><strong></strong> ${applyOnText}</div>
-                        <div class="pill pill-margin"><strong>Margem Mínima:</strong> ${marginValue}</div>
+                    <div class="resistance-test-block">
+                        <div class="test-main">Teste de ${testLabel}</div>
+                        <div class="test-sub">${applyOnText} | Margem mín: ${marginValue}</div>
                     </div>
                     <div class="pill-row action-row">
                         <button type="button" class="resistance-roll-button full-width" data-roll-data='${JSON.stringify(chatPayload)}'>
@@ -1754,7 +1750,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
     });
 
-   const computeTargetValue = (actor, extraModifier = 0) => {
+   const computeTargetValue = (actor, extraModifier = 0, { includesEffectModifier = false } = {}) => {
         if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
         const attributeKey = rollConfig.attribute || "ht";
         const resolvedBaseValue = resolveRollBaseValue(actor, attributeKey);
@@ -1763,7 +1759,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
             : 10;
 
         const effectModifier = parseInt(rollConfig.modifier) || 0;
-        const totalModifier = effectModifier + extraModifier;
+        const totalModifier = includesEffectModifier ? extraModifier : effectModifier + extraModifier;
         return {
             finalTarget: baseAttributeValue + totalModifier,
             base: baseAttributeValue,
@@ -1780,9 +1776,9 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         return;
     }
 
-    const performResistanceRoll = async (extraModifier = 0) => {
+    const performResistanceRoll = async (extraModifier = 0, options = {}) => {
         button.disabled = true;
-        const targetCalc = computeTargetValue(resistingActor, extraModifier);
+        const targetCalc = computeTargetValue(resistingActor, extraModifier, options);
         const finalTarget = targetCalc.finalTarget;
 
         const roll = new Roll("3d6");
@@ -1942,13 +1938,16 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         label: "Teste de Resistência",
         type: "attribute",
         attribute: rollConfig.attribute || "ht",
-        value: promptTarget.finalTarget,
+        value: promptTarget.base,
+        modifier: promptTarget.effectModifier,
+        modifierLabel: "Barreira",
+        lockInitialModifier: true,
         img: effectItemData?.img || resistingActor.img
     };
 
     new GurpsRollPrompt(resistingActor, promptData, {
         onRoll: async (_actor, promptPayload) => {
-            await performResistanceRoll(promptPayload.modifier || 0);
+            await performResistanceRoll(promptPayload.modifier || 0, { includesEffectModifier: true });
         }
     }).render(true);
 });

@@ -89,20 +89,20 @@
         {{!-- 3. MODIFICADOR MANUAL --}}
         <div class="manual-mod-panel compact">
             <div class="mod-controls-row">
-                <button type="button" class="step-btn" data-action="decrease"><i class="fas fa-minus"></i></button>
+                <button type="button" class="step-btn" data-action="decrease" {{#if lockInitialModifier}}disabled{{/if}}><i class="fas fa-minus"></i></button>
                 <div class="manual-input-wrapper">
-                    <label>Manual</label>
-                    <input style="color:rgba(255, 255, 255, 0.747);"type="number" name="manualMod" value="0" class="manual-input"/>
+                    <label>{{manualLabel}}</label>
+                    <input style="color:rgba(255, 255, 255, 0.747);" type="number" name="manualMod" value="{{initialManualMod}}" class="manual-input" {{#if lockInitialModifier}}readonly{{/if}}/>
                 </div>
-                <button type="button" class="step-btn" data-action="increase"><i class="fas fa-plus"></i></button>
+                <button type="button" class="step-btn" data-action="increase" {{#if lockInitialModifier}}disabled{{/if}}><i class="fas fa-plus"></i></button>
             </div>
             <div class="presets-row">
-                <button type="button" class="quick-btn" data-value="-6">-6</button>
-                <button type="button" class="quick-btn" data-value="-4">-4</button>
-                <button type="button" class="quick-btn" data-value="-2">-2</button>
-                <button type="button" class="quick-btn" data-value="2">+2</button>
-                <button type="button" class="quick-btn" data-value="4">+4</button>
-                <button type="button" class="quick-btn" data-value="6">+6</button>
+                <button type="button" class="quick-btn" data-value="-6" {{#if lockInitialModifier}}disabled{{/if}}>-6</button>
+                <button type="button" class="quick-btn" data-value="-4" {{#if lockInitialModifier}}disabled{{/if}}>-4</button>
+                <button type="button" class="quick-btn" data-value="-2" {{#if lockInitialModifier}}disabled{{/if}}>-2</button>
+                <button type="button" class="quick-btn" data-value="2" {{#if lockInitialModifier}}disabled{{/if}}>+2</button>
+                <button type="button" class="quick-btn" data-value="4" {{#if lockInitialModifier}}disabled{{/if}}>+4</button>
+                <button type="button" class="quick-btn" data-value="6" {{#if lockInitialModifier}}disabled{{/if}}>+6</button>
             </div>
         </div>
 
