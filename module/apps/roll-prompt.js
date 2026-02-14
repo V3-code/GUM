@@ -419,6 +419,8 @@ return 'default';
         context.initialManualMod = parseInt(this.rollData.modifier) || 0;
         context.manualLabel = this.rollData.modifierLabel || "Manual";
         context.lockInitialModifier = this.rollData.lockInitialModifier === true;
+        context.fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        context.fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
         context.baseAttributeOptions = this._prepareBaseAttributeOptions();
         context.baseAttributePrimary = context.baseAttributeOptions.filter(option => option.type === "attribute");
         context.baseAttributeSecondary = context.baseAttributeOptions.filter(option => option.type !== "attribute");
@@ -555,6 +557,8 @@ return 'default';
 _updateTotals(html) {
         const base = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
         let manual = parseInt(html.find('input[name="manualMod"]').val()) || 0;
+        const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        const fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
         let selected = 0;
         let activeCaps = [];
         const baseChanged = this.currentBaseKey !== this.baseDefaultKey;
@@ -568,7 +572,7 @@ _updateTotals(html) {
             }
         });
         
-        const totalMod = manual + selected;
+        const totalMod = fixedModifier + manual + selected;
         
         // 2. Calcula o valor matemático (sem corte)
         const mathValue = base + totalMod;
@@ -599,8 +603,12 @@ _updateTotals(html) {
         if (manual !== 0) {
             stackContainer.append(`<span class="mod-tag locked">Manual <strong>${manual > 0 ? '+' : ''}${manual}</strong></span>`);
         }
+
+        if (fixedModifier !== 0) {
+            stackContainer.append(`<span class="mod-tag locked gm-locked">${fixedModifierLabel} <strong>${fixedModifier > 0 ? '+' : ''}${fixedModifier}</strong></span>`);
+        }
         
-       if (this.selectedModifiers.length === 0 && manual === 0 && !baseChanged) {
+       if (this.selectedModifiers.length === 0 && manual === 0 && fixedModifier === 0 && !baseChanged) {
              stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">Nenhum modificador.</span>`);
         }
 
@@ -653,6 +661,7 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
 
 async _updateObject(event, formData) {
         const manualMod = parseInt(formData.manualMod) || 0;
+        const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
         let buttonsMod = 0;
         let activeCaps = [];
         const baseValue = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
@@ -666,7 +675,7 @@ async _updateObject(event, formData) {
             }
         });
 
-        const totalMod = manualMod + buttonsMod;
+        const totalMod = fixedModifier + manualMod + buttonsMod;
         
         // Calcula qual é o teto mais baixo (ou Infinity se não tiver nenhum)
         let lowestCap = Infinity;

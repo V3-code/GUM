@@ -1939,9 +1939,9 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         type: "attribute",
         attribute: rollConfig.attribute || "ht",
         value: promptTarget.base,
-        modifier: promptTarget.effectModifier,
-        modifierLabel: "Barreira",
-        lockInitialModifier: true,
+        modifier: 0,
+        fixedModifier: promptTarget.effectModifier,
+        fixedModifierLabel: "Barreira",
         img: effectItemData?.img || resistingActor.img
     };
 
