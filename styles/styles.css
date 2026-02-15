@@ -3804,6 +3804,10 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .characteristic-card .card-cr {
     font-size: 0.75em; font-weight: 700; color: var(--gum-accent-blue); background: rgba(86, 129, 156, 0.1);
     padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(86, 129, 156, 0.2); white-space: nowrap;
+        text-decoration: none;
+}
+.gum.sheet.actor .characteristic-card a.card-cr:hover {
+    filter: brightness(1.08);
 }
 
 .gum.sheet.actor .characteristic-card .item-controls {

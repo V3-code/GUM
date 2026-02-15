@@ -659,7 +659,7 @@
                     <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span>
                     <div class="card-details">
                       <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                      {{#if this.system.self_control_roll}}<span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>{{/if}}
+                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
                     </div>
                   </div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
@@ -677,7 +677,7 @@
                     <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span>
                     <div class="card-details">
                       <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
-                      {{#if this.system.self_control_roll}}<span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>{{/if}}
+                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
                     </div>
                   </div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
@@ -699,7 +699,7 @@
               {{#each characteristicsByBlock.block4}}
                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
                   <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>{{/if}}</div></div>
+                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div></div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
               {{/each}}
@@ -718,7 +718,7 @@
               {{#each characteristicsByBlock.block2}}
                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
                   <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>{{/if}}</div></div>
+                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div></div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
               {{/each}}
@@ -735,7 +735,7 @@
               {{#each characteristicsByBlock.block3}}
                 <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
                   <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<span class="card-cr" title="Nº de Autocontrole">CR: {{this.system.self_control_roll}}</span>{{/if}}</div></div>
+                  <div class="card-info"><span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}</a></span><div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div></div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
               {{/each}}

@@ -1089,19 +1089,84 @@ _getSubmitData(updateData) {
             ui.notifications.info("Nenhum modificador novo para importar.");
         }
  }
+
+ _resolveNamedRollValue(rawValue) {
+    const normalizedInput = String(rawValue ?? "")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .trim()
+        .toLowerCase();
+
+    const aliasMap = {
+        forca: "st",
+        destreza: "dx",
+        inteligencia: "iq",
+        saude: "ht",
+        vontade: "vont",
+        percepcao: "per"
+    };
+    const attributeKey = aliasMap[normalizedInput] || normalizedInput;
+    const actorAttributes = this.actor?.system?.attributes || {};
+    const attributeValue = Number(actorAttributes?.[attributeKey]?.final);
+
+    if (!Number.isNaN(attributeValue)) {
+        return { value: attributeValue, type: "attribute", attributeKey };
+    }
+
+    const skills = this.actor?.items?.filter(item => item.type === "skill") || [];
+    const matchedSkill = skills.find(skill => {
+        const skillName = String(skill.name || "")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .trim()
+            .toLowerCase();
+        return skillName === normalizedInput;
+    });
+
+    if (matchedSkill) {
+        return {
+            value: Number(matchedSkill.system?.final_nh) || 10,
+            type: "skill",
+            attributeKey: matchedSkill.system?.base_attribute || null,
+            itemId: matchedSkill.id
+        };
+    }
+
+    const fixedValue = parseInt(normalizedInput, 10);
+    if (!Number.isNaN(fixedValue)) {
+        return { value: fixedValue, type: "attribute", attributeKey: null };
+    }
+
+    return { value: 10, type: "attribute", attributeKey: null };
+}
     
 _getRollDataFromElement(element) {
     const dataset = element.dataset;
+        const itemId = dataset.itemId || $(element).closest('.item').data('itemId') || "";
+    const rawRollValue = dataset.rollValue;
+
+    let value = parseInt(rawRollValue, 10);
+    let type = dataset.type || "attribute";
+    let attributeKey = dataset.attributeKey || null;
+    let resolvedItemId = itemId;
+
+    if (Number.isNaN(value) && rawRollValue !== undefined) {
+        const resolved = this._resolveNamedRollValue(rawRollValue);
+        value = resolved.value;
+        type = dataset.type || resolved.type;
+        attributeKey = dataset.attributeKey || resolved.attributeKey;
+        resolvedItemId = resolved.itemId || resolvedItemId;
+    }
 
     return {
         label: dataset.label || "Teste",
-        value: parseInt(dataset.rollValue) || 10,
-        type: dataset.type || "attribute",
-        itemId: dataset.itemId || $(element).closest('.item').data('itemId') || "",
+        value: value || 10,
+        type,
+        itemId: resolvedItemId,
         img: dataset.img || "",
         attackType: dataset.attackType || null,
         isRanged: dataset.isRanged === "true",
-        attributeKey: dataset.attributeKey || null,
+        attributeKey,
         defenseType: dataset.defenseType || null
     };
 }
