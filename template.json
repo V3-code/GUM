@@ -145,8 +145,8 @@
       },
 
 
-    "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "modifiers": {} },
-    "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "modifiers": {} },
+    "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "specialization": "", "characteristics": "", "modifiers": {} },
+    "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "specialization": "", "characteristics": "", "modifiers": {} },
     "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M", "auto_points": true },
     "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {}, "defense_bonus": 0, "equip_time": 1, "dr_locations": {} },
     "armor": { 

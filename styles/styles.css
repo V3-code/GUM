@@ -3756,7 +3756,7 @@ background-color: var(--gum-accent-gold);
     flex-basis: calc(50% - 3px); 
     flex-grow: 1;
     min-width: 200px;
-    height: 36px;
+    fmin-height: 44px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     position: relative;
     overflow: hidden;
@@ -3783,7 +3783,15 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .characteristic-card .card-info {
     flex-grow: 1; display: flex; flex-direction: row; justify-content: space-between;
-    align-items: center; overflow: hidden; min-width: 0; gap: 5px;
+    align-items: flex-start; overflow: hidden; min-width: 0; gap: 8px;
+}
+
+.gum.sheet.actor .characteristic-card .card-main {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .gum.sheet.actor .characteristic-card .item-name { flex-grow: 1; min-width: 0; }
@@ -3795,6 +3803,15 @@ background-color: var(--gum-accent-gold);
     white-space: normal;
 }
 .gum.sheet.actor .characteristic-card .item-name a:hover { color: var(--gum-accent-red); }
+
+.gum.sheet.actor .characteristic-card .characteristic-notes {
+    font-size: 0.72em;
+    color: var(--gum-text-medio);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .gum.sheet.actor .characteristic-card .card-details { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .gum.sheet.actor .characteristic-card .card-points {
@@ -5290,6 +5307,10 @@ background-color: var(--gum-accent-gold);
     background: rgba(86, 129, 156, 0.25);
     color: #cfe5ff;
     border-color: rgba(86, 129, 156, 0.35);
+}
+
+.gum.sheet.actor .gum-unified-section .characteristic-card .characteristic-notes {
+    color: rgba(247,233,215,0.7);
 }
 
 .gum.sheet.actor .gum-unified-section .characteristic-card .item-controls {

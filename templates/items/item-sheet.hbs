@@ -730,8 +730,8 @@
                 </div>
             </div>
             </div>
-            {{!-- Grupo 3: Mecânica e Detalhes --}}
-            <div class="form-section"><h4 class="section-title">Mecânica e Detalhes</h4>
+            {{!-- Grupo 3: Mecânica e Contexto --}}
+            <div class="form-section"><h4 class="section-title">Mecânica e Contexto</h4>
             <div class="form-grid-3">
                 <div class="form-group">
                     <label>Nível</label>
@@ -741,12 +741,21 @@
                     <label>Rolagem de Auto-Controle</label>
                     <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
                 </div>
+                <div class="form-group">
+                    <label>Especialização</label>
+                    <input type="text" name="system.specialization" value="{{system.specialization}}" placeholder="Ex: Espadas, Fogo, Social"/>
+                </div>
+            </div>
+            <div class="form-grid-2" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label>Características</label>
+                    <input type="text" name="system.characteristics" value="{{system.characteristics}}" placeholder="Notas curtas para exibir na ficha"/>
+                </div>
                 {{!-- Campo REF com botão --}}
                 <div class="form-group">
                     <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>Ref. Página</label>
                     <div class="input-with-button">
                         <input type="text" name="system.ref" value="{{system.ref}}"/>
-
                     </div>
                 </div>
             </div>
