@@ -761,7 +761,7 @@ async _openPdfReferencePage(pdfPage, targetPage) {
   // 1) abre o Journal na página PDF correta
   await journal.sheet.render(true, { pageId: pdfPage.id, mode: "view" });
 
-  // 2) tenta achar o iframe do viewer no DOM inteiro (mais confiável)
+  // 3) tenta achar o iframe do viewer no DOM inteiro (mais confiável)
   const tryPosition = () => {
     const frames = this._findPdfViewerIframesBySource(sourcePath);
 
@@ -774,7 +774,7 @@ async _openPdfReferencePage(pdfPage, targetPage) {
     return ok;
   };
 
-  // 3) estratégia: polling + load-event (porque o viewer inicializa assíncrono)
+  // 4) estratégia: polling + load-event (porque o viewer inicializa assíncrono)
   const delays = [0, 80, 180, 350, 600, 900, 1300, 1800, 2500];
   for (const d of delays) {
     await new Promise(r => setTimeout(r, d));
