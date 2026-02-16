@@ -112,6 +112,53 @@ _setPageOnPdfViewerIframe(iframe, page) {
   return true;
 }
 
+async _openSingleReference(parsed) {
+  const match = this._findPdfPageByCode(parsed.code);
+  if (!match) {
+    return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+  }
+
+  const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+  await this._openPdfReferencePage(match.page, pageNumber);
+}
+
+_promptMultipleReferences(parsedList) {
+  // monta botões com base no que existe de fato
+  const buttons = {};
+  const missing = [];
+
+  for (const parsed of parsedList) {
+    const match = this._findPdfPageByCode(parsed.code);
+    if (!match) {
+      missing.push(`${parsed.code}${parsed.page}`);
+      continue;
+    }
+
+    const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+    const key = `${parsed.code}${parsed.page}`;
+
+    buttons[key] = {
+      label: `${parsed.code}${parsed.page}`,
+      callback: () => this._openPdfReferencePage(match.page, pageNumber)
+    };
+  }
+
+  if (!Object.keys(buttons).length) {
+    return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+  }
+
+  // conteúdo do dialog (mostra também refs não encontradas)
+  const missingHtml = missing.length
+    ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+    : "";
+
+  new Dialog({
+    title: "Múltiplas Referências",
+    content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+    buttons,
+    default: Object.keys(buttons)[0]
+  }).render(true);
+}
 
     async getData(options) {
         // Recupera os dados básicos
@@ -573,57 +620,54 @@ html.find('.delete-modifier').click(async ev => {
         }
     }
 
- async _onOpenReferenceLink(event) {
-        event.preventDefault();
-        event.stopPropagation();
+async _onOpenReferenceLink(event) {
+  event.preventDefault();
+  event.stopPropagation();
 
-        const trigger = event.currentTarget;
-        const container = trigger.closest('.form-group') ?? this.form;
-        const refInput = container?.querySelector('input[name="system.ref"]') ?? this.form?.querySelector('input[name="system.ref"]');
-        const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
+  const trigger = event.currentTarget;
+  const container = trigger.closest('.form-group') ?? this.form;
+  const refInput =
+    container?.querySelector('input[name="system.ref"]') ??
+    this.form?.querySelector('input[name="system.ref"]');
 
-        if (!rawRef) {
-            return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
-        }
+  const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
 
-        const parsed = this._parseReferenceCode(rawRef);
-        if (!parsed) {
-            return ui.notifications.warn("Formato de REF inválido. Use no formato LETRANÚMERO (ex.: B23, MA125).");
-        }
+  if (!rawRef) {
+    return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+  }
 
-        const match = this._findPdfPageByCode(parsed.code);
-        if (!match) {
-            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
-        }
+  const parsedList = this._parseReferenceCodes(rawRef);
 
-        const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
-        await this._openPdfReferencePage(match.page, pageNumber);
-    }
+  if (!parsedList.length) {
+    return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+  }
 
-    _parseReferenceCode(rawRef) {
-    if (rawRef == null) return null;
+  // Se for só uma, abre direto (comportamento atual)
+  if (parsedList.length === 1) {
+    return this._openSingleReference(parsedList[0]);
+  }
 
-    let s = String(rawRef).trim().toUpperCase();
+  // Múltiplas referências: perguntar qual abrir
+  return this._promptMultipleReferences(parsedList);
+}
 
-    // remove wrappers comuns
-    s = s.replace(/[\[\]\(\)\{\}]/g, "");
 
-    // normaliza separadores e remove espaços duplicados
-    s = s.replace(/\s+/g, " ").trim();
 
-    // remove palavras comuns de página (sem destruir o código)
-    // ex: "B pg 24" => "B 24"
-    s = s.replace(/\b(PG|PÁG|PAG|PÁGINA|PAGINA|PAGE|P)\b\.?/g, " ");
+_parseReferenceCodes(rawRef) {
+  const text = (rawRef ?? "").toString().trim().toUpperCase();
+  if (!text) return [];
 
-    // agora remove espaços para facilitar matching
-    s = s.replace(/\s+/g, "");
+  // separadores aceitos: vírgula, ponto e vírgula, quebra de linha e espaços
+  const parts = text.split(/[,;]+|\s+/).map(s => s.trim()).filter(Boolean);
 
-    // aceita B24, B-24, B.24, B:24
-    const m = s.match(/^([A-Z]{1,6})[-.:]?(\d+)$/);
-    if (!m) return null;
-
-    return { code: m[1], page: Number(m[2]) };
-    }
+  const out = [];
+  for (const part of parts) {
+    const match = part.replace(/\s+/g, "").match(/^([A-Z]+)(\d+)$/);
+    if (!match) continue;
+    out.push({ code: match[1], page: Number(match[2]) });
+  }
+  return out;
+}
 
 
     _findPdfPageByCode(code) {
@@ -1531,7 +1575,8 @@ new Dialog({
     async _updateObject(event, formData) {
         for (const [k, v] of Object.entries(formData)) {
             const isDescriptionField = k.includes("description");
-            if (!isDescriptionField && typeof v === 'string' && v.includes(',')) formData[k] = v.replace(',', '.');
+            const isNumericStringWithComma = typeof v === 'string' && /^[+-]?\d+(,\d+)?$/.test(v.trim());
+            if (!isDescriptionField && isNumericStringWithComma && v.includes(',')) formData[k] = v.replace(',', '.');
         }
         if (formData["system.base_attribute_select"] !== undefined) {
             const selected = formData["system.base_attribute_select"];
