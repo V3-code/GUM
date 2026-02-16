@@ -7,6 +7,7 @@ import { ConditionBrowser } from "../module/apps/condition-browser.js";
 import { EffectBrowser } from "../module/apps/effect-browser.js";
 import { GurpsArmorSheet } from "../module/item/gurps-armor-sheet.js";
 import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
+import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';

@@ -5383,4 +5383,122 @@ background-color: var(--gum-accent-gold);
     color: rgba(247,233,215,0.7);
 }
 
+/* ============================================= */
+/* GUM - PDF Metadata Fields                     */
+/* ============================================= */
 
+.journal-page-sheet .gum-pdf-meta-fields {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-light-primary);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.08);
+}
+
+.journal-page-sheet .gum-pdf-meta-fields legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.gum-pdf-meta-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.gum-pdf-meta-row .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gum-pdf-meta-row label {
+  font-size: 12px;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.gum-pdf-meta-row input {
+  height: 32px;
+  border-radius: 4px;
+}
+
+/* ============================================= */
+/* GUM - PDF Meta Fields (Journal PDF)           */
+/* (compatível com .gum-pdf-meta-row)            */
+/* ============================================= */
+
+.journal-page-sheet .gum-pdf-meta-fields,
+.sheet.journal-entry-page .gum-pdf-meta-fields,
+.app.sheet .gum-pdf-meta-fields {
+  border: 1px solid var(--color-border-light-primary);
+  border-radius: 6px;
+  margin: 0.25rem 0;
+}
+
+.gum-pdf-meta-fields legend {
+  font-weight: 700;
+  padding: 0 0.25rem;
+}
+
+/* Linha com 2 campos lado a lado */
+.gum-pdf-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+/* Cada form-group vira “label + input” alinhados */
+.gum-pdf-meta-row .form-group {
+  margin: 0;               /* tira espaçamento padrão */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+/* label fixo sem quebrar linha */
+.gum-pdf-meta-row .form-group > label {
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* inputs */
+.gum-pdf-meta-row .form-group > input {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+}
+
+/* Em telas estreitas, vira uma coluna */
+@media (max-width: 520px) {
+  .gum-pdf-meta-row {
+    grid-template-columns: 1fr;
+  }
+  .gum-pdf-meta-row .form-group {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .gum-pdf-meta-row .form-group > label {
+    margin-bottom: 2px;
+  }
+}
+
+/* (opcional) só pra ficar com cara “mais leve” */
+.gum-pdf-meta-fields .hint {
+  margin: 4px 0 0 0;
+  opacity: 0.85;
+}
+
+/* fontes que você já estava usando */
+.sheet.journal-entry .journal-header .title {
+  font-family: "Modesto Condensed";
+}
+
+.sheet.journal-entry .journal-entry-page h1 {
+  font-family: "Modesto Condensed";
+}

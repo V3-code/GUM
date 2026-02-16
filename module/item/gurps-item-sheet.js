@@ -27,6 +27,92 @@ export class GurpsItemSheet extends ItemSheet {
         });
     }
 
+    _findPdfViewerIframesBySource(sourcePath) {
+  const iframes = Array.from(document.querySelectorAll("iframe"));
+  if (!iframes.length) return [];
+
+  const want = (sourcePath || "").toString();
+  const wantName = want.split("/").pop();
+
+  const matches = (candidate) => {
+    if (!candidate) return false;
+    if (!want) return true;
+
+    // match direto
+    if (candidate.includes(want)) return true;
+
+    // match por nome do arquivo
+    if (wantName && (candidate.includes(wantName) || candidate.includes(encodeURIComponent(wantName)))) return true;
+
+    // match pelo parâmetro ?file=...
+    try {
+      const u = new URL(candidate, window.location.origin);
+      const file = u.searchParams.get("file");
+      if (!file) return false;
+      const decoded = decodeURIComponent(file);
+      return decoded.includes(want) || (wantName && decoded.includes(wantName));
+    } catch (_e) {
+      return false;
+    }
+  };
+
+  return iframes.filter((f) => {
+    const src = f.getAttribute("src") || "";
+    const dataSrc = f.getAttribute("data-src") || f.getAttribute("data-url") || f.dataset?.src || f.dataset?.url || "";
+    const cand = src || dataSrc;
+    if (!cand) return false;
+
+    // normalmente viewer do pdfjs tem "pdfjs" e/ou "viewer.html"
+    const looksLikePdfViewer = /pdfjs|viewer\.html/i.test(cand);
+    if (!looksLikePdfViewer) return false;
+
+    return matches(cand);
+  });
+}
+
+_setPageOnPdfViewerIframe(iframe, page) {
+  if (!(iframe instanceof HTMLIFrameElement)) return false;
+  const target = Math.max(1, Number(page) || 1);
+
+  // 1) tenta API do PDF.js (melhor)
+  try {
+    const app = iframe.contentWindow?.PDFViewerApplication;
+    if (app?.pdfViewer) {
+      app.pdfViewer.currentPageNumber = target;
+      app.page = target;
+      return true;
+    }
+  } catch (_e) {
+    // sandbox/cross-origin ou ainda não carregou
+  }
+
+  // 2) fallback: força #page=N no src/data-src
+  const attr = "src";
+  const current = iframe.getAttribute(attr) || "";
+  const dataSrc = iframe.getAttribute("data-src") || iframe.getAttribute("data-url") || iframe.dataset?.src || iframe.dataset?.url || "";
+  const candidate = current || dataSrc;
+  if (!candidate) return false;
+
+  const updated = (() => {
+    const [base, rawHash = ""] = candidate.split("#");
+    const params = new URLSearchParams(rawHash);
+    params.set("page", String(target));
+    return `${base}#${params.toString()}`;
+  })();
+
+  // atualiza ambos pra evitar o Foundry “repor” o src depois
+  if (dataSrc) {
+    iframe.setAttribute("data-src", updated);
+    iframe.setAttribute("data-url", updated);
+    iframe.dataset.src = updated;
+    iframe.dataset.url = updated;
+  }
+  iframe.setAttribute("src", updated);
+
+  return true;
+}
+
+
     async getData(options) {
         // Recupera os dados básicos
         const context = await super.getData(options);
@@ -216,6 +302,8 @@ export class GurpsItemSheet extends ItemSheet {
 
  activateListeners(html) {
         super.activateListeners(html);
+
+        html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));
         if (!this.isEditable) return;
 
         // Auto-Cálculo
@@ -485,7 +573,247 @@ html.find('.delete-modifier').click(async ev => {
         }
     }
 
-     /* -------------------------------------------- */
+ async _onOpenReferenceLink(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const trigger = event.currentTarget;
+        const container = trigger.closest('.form-group') ?? this.form;
+        const refInput = container?.querySelector('input[name="system.ref"]') ?? this.form?.querySelector('input[name="system.ref"]');
+        const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
+
+        if (!rawRef) {
+            return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+        }
+
+        const parsed = this._parseReferenceCode(rawRef);
+        if (!parsed) {
+            return ui.notifications.warn("Formato de REF inválido. Use no formato LETRANÚMERO (ex.: B23, MA125).");
+        }
+
+        const match = this._findPdfPageByCode(parsed.code);
+        if (!match) {
+            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+        }
+
+        const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+        await this._openPdfReferencePage(match.page, pageNumber);
+    }
+
+    _parseReferenceCode(rawRef) {
+    if (rawRef == null) return null;
+
+    let s = String(rawRef).trim().toUpperCase();
+
+    // remove wrappers comuns
+    s = s.replace(/[\[\]\(\)\{\}]/g, "");
+
+    // normaliza separadores e remove espaços duplicados
+    s = s.replace(/\s+/g, " ").trim();
+
+    // remove palavras comuns de página (sem destruir o código)
+    // ex: "B pg 24" => "B 24"
+    s = s.replace(/\b(PG|PÁG|PAG|PÁGINA|PAGINA|PAGE|P)\b\.?/g, " ");
+
+    // agora remove espaços para facilitar matching
+    s = s.replace(/\s+/g, "");
+
+    // aceita B24, B-24, B.24, B:24
+    const m = s.match(/^([A-Z]{1,6})[-.:]?(\d+)$/);
+    if (!m) return null;
+
+    return { code: m[1], page: Number(m[2]) };
+    }
+
+
+    _findPdfPageByCode(code) {
+        const journals = game.journal ? Array.from(game.journal) : [];
+
+        for (const journal of journals) {
+            const pages = journal?.pages ? Array.from(journal.pages) : [];
+            for (const page of pages) {
+                if (page?.type !== 'pdf') continue;
+
+                const pageCode = (page.getFlag('gum', 'pdfCode') ?? '').toString().trim().toUpperCase();
+                if (!pageCode || pageCode !== code) continue;
+
+                return {
+                    journal,
+                    page,
+                    pageOffset: Number(page.getFlag('gum', 'pageOffset') ?? 0)
+                };
+            }
+        }
+
+        return null;
+    }
+
+    _setPdfPageInUrl(url, page) {
+        if (!url) return url;
+        const [base, rawHash = ''] = url.split('#');
+        const hash = rawHash.trim();
+
+        if (!hash) return `${base}#page=${page}`;
+
+        if (hash.includes('=')) {
+            const params = new URLSearchParams(hash);
+            params.set('page', String(page));
+            return `${base}#${params.toString()}`;
+        }
+
+        return `${base}#page=${page}`;
+    }
+
+
+    _matchesPdfSource(candidate, sourcePath) {
+        if (!candidate) return false;
+        if (!sourcePath) return true;
+
+        if (candidate.includes(sourcePath)) return true;
+
+        let decodedCandidate = candidate;
+        try {
+            decodedCandidate = decodeURIComponent(candidate);
+            if (decodedCandidate.includes(sourcePath)) return true;
+        } catch (_e) {
+            // noop
+        }
+
+        const sourceName = sourcePath.split('/').pop();
+        if (!sourceName) return false;
+
+        if (candidate.includes(encodeURIComponent(sourceName)) || decodedCandidate.includes(sourceName)) {
+            return true;
+        }
+
+        try {
+            const absolute = new URL(candidate, window.location.origin);
+            const fileParam = absolute.searchParams.get('file');
+            if (!fileParam) return false;
+            const decodedFile = decodeURIComponent(fileParam);
+            return decodedFile.includes(sourcePath) || decodedFile.includes(sourceName);
+        } catch (_e) {
+            return false;
+        }
+    }
+
+    _applyPdfPageToEmbed(root, sourcePath, targetPage) {
+        if (!root) return false;
+
+        const embeds = Array.from(
+  root.querySelectorAll(
+    'iframe, iframe.pdf, iframe.pdf-viewer, iframe[src*="pdfjs" i], object[type="application/pdf"], embed[type="application/pdf"]'
+  )
+);
+        let positioned = false;
+
+        for (const el of embeds) {
+            const attr = el instanceof HTMLObjectElement ? 'data' : 'src';
+            const current = el.getAttribute(attr) || '';
+            const dataSrc = el.getAttribute('data-src') || el.getAttribute('data-url') || '';
+            const candidate = current || dataSrc;
+            if (!candidate) continue;
+
+            if (!this._matchesPdfSource(candidate, sourcePath)) continue;
+
+            // PDF.js embutido em iframe: tenta atualizar por API primeiro (sem recarregar o documento).
+            if (el instanceof HTMLIFrameElement) {
+            try {
+                const cw = el.contentWindow;
+                const viewerApp = cw?.PDFViewerApplication;
+                const viewer = viewerApp?.pdfViewer;
+
+                if (viewerApp && viewer) {
+                viewer.currentPageNumber = targetPage;
+                viewerApp.page = targetPage;
+                positioned = true;
+                }
+            } catch (_e) {
+                // sandbox/cross-origin -> ignora e cai pro fallback por URL
+            }
+            }
+
+
+            const updated = this._setPdfPageInUrl(candidate, targetPage);
+            if (updated !== current) {
+                el.setAttribute(attr, updated);
+                positioned = true;
+                continue;
+            }
+
+            // Se já está com a URL correta, ainda consideramos sucesso.
+            if (updated === current) {
+                positioned = true;
+            }
+        }
+
+        return positioned;
+    }
+
+
+async _openPdfReferencePage(pdfPage, targetPage) {
+  const journal = pdfPage?.parent;
+  if (!journal) return;
+
+  const page = Math.max(1, Number(targetPage) || 1);
+  const sourcePath = (pdfPage.src ?? pdfPage.system?.src ?? "").toString();
+
+  // 1) abre o Journal na página PDF correta
+  await journal.sheet.render(true, { pageId: pdfPage.id, mode: "view" });
+
+  // 2) tenta achar o iframe do viewer no DOM inteiro (mais confiável)
+  const tryPosition = () => {
+    const frames = this._findPdfViewerIframesBySource(sourcePath);
+
+    // se não conseguiu casar por source, tenta “o último viewer aberto”
+    const fallback = frames.length ? frames : Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
+    if (!fallback.length) return false;
+
+    let ok = false;
+    for (const f of fallback) ok = this._setPageOnPdfViewerIframe(f, page) || ok;
+    return ok;
+  };
+
+  // 3) estratégia: polling + load-event (porque o viewer inicializa assíncrono)
+  const delays = [0, 80, 180, 350, 600, 900, 1300, 1800, 2500];
+  for (const d of delays) {
+    await new Promise(r => setTimeout(r, d));
+    if (tryPosition()) return;
+  }
+
+  // Se ainda não deu, adiciona “uma última tentativa” quando o iframe carregar
+  const frames = this._findPdfViewerIframesBySource(sourcePath);
+  for (const f of frames) {
+    f.addEventListener("load", () => {
+      try { this._setPageOnPdfViewerIframe(f, page); } catch (_e) {}
+    }, { once: true });
+  }
+
+  // DEBUG: lista iframes candidatos pra você ver o que o Foundry realmente está renderizando
+try {
+  const all = Array.from(document.querySelectorAll('iframe'));
+  const pdfish = all
+    .map(f => ({
+      src: f.getAttribute("src") || "",
+      dataSrc: f.getAttribute("data-src") || f.getAttribute("data-url") || f.dataset?.src || f.dataset?.url || ""
+    }))
+    .filter(x => /pdfjs|viewer\.html/i.test(x.src || x.dataSrc));
+
+  console.warn("GUM | Falha ao posicionar PDF", {
+    targetPage: page,
+    sourcePath,
+    pdfViewerIframes: pdfish
+  });
+} catch (_e) {}
+
+  ui.notifications.warn("Não foi possível posicionar o PDF na página solicitada automaticamente.");
+}
+
+
+
+
+
+    /* -------------------------------------------- */
     /* Métodos Auxiliares                          */
     /* -------------------------------------------- */
 

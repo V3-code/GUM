@@ -22,6 +22,7 @@
   "initiative": "@attributes.basic_speed.final + (@attributes.dx.final/100) + (1d6/1000)",
   "esmodules": [
     "scripts/main.js",
+    "scripts/journal-pdf.js",
     "scripts/gum-data.js",
     "module/config.js",
     "module/item/gurps-item-sheet.js",
