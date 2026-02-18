@@ -79,6 +79,7 @@
       "base": {
         "description": "",
         "chat_description": "",
+        "favorite_in_combat": false,
         "ref": "",
         "activationEffects": {
           "success": {},

@@ -1618,7 +1618,133 @@
         {{! --- COLUNA DA DIREITA (LARGA) --- }}
         <div class="combat-right-column">
           
+                  {{!-- Bloco de Favoritos de Combate --}}
+          <div class="attack-group-list-v2 combat-favorites-list">
+            {{#each combatFavoriteGroupKeys as |groupName groupIndex|}}
+              {{#with (lookup @root.combatFavoritesByGroup groupName)}}
+              <details class="attack-group-details gum-unified-section" data-group-id="combat-favorites-group-{{groupIndex}}" {{collapsibleState (concat "combat-favorites-group-" groupIndex) @root.collapsedData}}>
+                <summary class="group-summary gum-unified-header">
+                  <div class="summary-left">
+                    <i class="fas fa-chevron-right indicator"></i>
+                    <i class="fas fa-star item-icon"></i>
+                    <span class="group-name">{{groupName}}</span>
+                  </div>
+                  <div class="summary-right">
+                    <span class="group-tag">{{this.length}} favorito(s)</span>
+                  </div>
+                </summary>
+                <div class="group-content">
+                  {{#each this}}
+                    {{#if (or (eq this.type "advantage") (eq this.type "disadvantage"))}}
+                    <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                      <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                      <div class="card-info">
+                        <div class="card-main">
+                          <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}}{{this.system.level}}{{/if}}</a></span>
+                          {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
+                        </div>
+                        <div class="card-details">
+                          {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
+                          <span class="card-points" title="Custo em Pontos">{{this.system.points}} pts</span>
+                        </div>
+                      </div>
+                      <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
+                    </li>
+                    {{/if}}
 
+                    {{#if (eq this.type "skill")}}
+                    <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" data-item-id="{{this._id}}" data-item-type="skill" draggable="true">
+                      <div class="st-item-icon item-quick-view" style="background-image: url('{{this.img}}');" title="Visualizar Perícia"></div>
+                      <div class="st-item-name">
+                        <h4 class="item-quick-view" title="Clique para ver detalhes">{{this.name}}</h4>
+                        <div class="st-inheritance-path">
+                          <div class="st-meta">
+                            {{#unless this.isTrunk}}<span>[{{this.system.difficulty}}]</span>{{/unless}}
+                          </div>
+                          {{#if (ne this.system.other_mods 0)}}
+                          <span class="path-node mod" title="Modificadores Inatos/Outros">
+                            <i class="fas fa-adjust"></i>
+                            <span class="path-val">{{#if (gte this.system.other_mods 0)}}+{{/if}}{{this.system.other_mods}}</span>
+                          </span>
+                          {{/if}}
+                          <span class="path-node self" title="Base: {{this.system.base_attribute}}">
+                            <i class="fas fa-chevron-right path-separator"></i> {{this.system.base_attribute}}
+                            <span class="path-val">{{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="st-nh-box">
+                        <span>NH</span>
+                        <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.system.base_attribute}}">{{this.system.final_nh}}</a>
+                      </div>
+                      <div class="st-controls">
+                        <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                      </div>
+                    </li>
+                    {{/if}}
+
+                    {{#if (or (eq this.type "spell") (eq this.type "power"))}}
+                    <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
+                      <div class="spell-row-main">
+                        <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+                        <div class="spell-name-stack">
+                          <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
+                          <div class="spell-school-line">
+                            {{#if (eq this.type "spell")}}{{this.system.spell_school}} · {{this.system.spell_class}}{{/if}}
+                            {{#if (eq this.type "power")}}{{this.system.source}} · {{this.system.spell_class}}{{/if}}
+                          </div>
+                        </div>
+                        <div class="spell-meta-cell">
+                          <span class="spell-meta-label">NH</span>
+                          <a class="rollable spell-meta-value" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                        </div>
+                        <div class="spell-meta-cell damage">
+                          <span class="spell-meta-label">Dano</span>
+                          {{#if this.system.damage.formula}}
+                          <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                          {{else}}
+                          <span class="spell-meta-value">—</span>
+                          {{/if}}
+                        </div>
+                        <div class="spell-meta-cell">
+                          <span class="spell-meta-label">TxD</span>
+                          <span class="spell-meta-value">
+                            {{#if (eq this.type "spell")}}{{this.system.casting_time}} × {{this.system.duration}}{{/if}}
+                            {{#if (eq this.type "power")}}{{this.system.activation_time}} × {{this.system.duration}}{{/if}}
+                          </span>
+                        </div>
+                        <div class="spell-meta-cell">
+                          <span class="spell-meta-label">CCxCM</span>
+                          <span class="spell-meta-value">
+                            {{#if (eq this.type "spell")}}{{this.system.mana_cost}} × {{this.system.mana_maint}}{{/if}}
+                            {{#if (eq this.type "power")}}{{this.system.activation_cost}} × {{this.system.maint_cost}}{{/if}}
+                          </span>
+                        </div>
+                        <div class="item-controls spell-controls-row">
+                          <div class="gum-action-menu js-action-menu">
+                            <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções" aria-label="Opções" role="button" aria-haspopup="true" aria-expanded="false">
+                              <i class="fas fa-ellipsis-v"></i>
+                            </a>
+                            <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações">
+                              <a class="item-control item-quick-view gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
+                              <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                              <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {{/if}}
+                  {{/each}}
+                </div>
+              </details>
+              {{/with}}
+            {{/each}}
+            {{#unless combatFavoriteGroupKeys}}
+              <div class="placeholder-text">Nenhum favorito marcado para combate.</div>
+            {{/unless}}
+          </div>
 
           {{!-- Bloco de Lista de ataque --}}
 <div class="attack-group-list-v2">

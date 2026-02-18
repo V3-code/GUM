@@ -527,6 +527,46 @@ async getData(options) {
             return a.localeCompare(b);
         });
 
+                // ================================================================== //
+        //    FAVORITOS DA ABA DE COMBATE
+        // ================================================================== //
+        const combatFavoriteTypes = new Set(["advantage", "disadvantage", "skill", "spell", "power"]);
+        const combatFavoritesByGroup = {};
+
+        const resolveFavoriteGroup = (item) => {
+            const typedGroup = (item.system?.group || "").trim();
+            if (typedGroup) return typedGroup;
+
+            if (item.type === "advantage") return "Vantagens";
+            if (item.type === "disadvantage") return "Desvantagens";
+            if (item.type === "skill") return "Perícias";
+            if (item.type === "spell") return "Magias";
+            if (item.type === "power") return "Poderes";
+
+            return "Geral";
+        };
+
+        for (const item of this.actor.items) {
+            if (!combatFavoriteTypes.has(item.type)) continue;
+            if (item.system?.favorite_in_combat !== true) continue;
+
+            const groupName = resolveFavoriteGroup(item);
+            if (!combatFavoritesByGroup[groupName]) combatFavoritesByGroup[groupName] = [];
+
+            combatFavoritesByGroup[groupName].push(item);
+        }
+
+        const combatFavoriteSortFn = getSortFunction('name');
+        Object.values(combatFavoritesByGroup).forEach((groupItems) => groupItems.sort(combatFavoriteSortFn));
+
+        context.combatFavoritesByGroup = combatFavoritesByGroup;
+        context.combatFavoriteGroupKeys = Object.keys(combatFavoritesByGroup).sort((a, b) => {
+            if (a === 'Geral') return -1;
+            if (b === 'Geral') return 1;
+            return a.localeCompare(b);
+        });
+
+
         // ================================================================== //
         //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
         // ================================================================== //
