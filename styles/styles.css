@@ -770,6 +770,89 @@
     font-size: 0.88rem;
 }
 
+.attack-summary-card {
+    border: 1px solid #cdbca2;
+    box-shadow: 0 8px 18px rgba(24, 18, 13, 0.16);
+}
+
+.attack-summary-card .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attack-summary-card .summary-actors {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(232, 223, 208, 0.45));
+    border: 1px solid #deceb8;
+    border-radius: 8px;
+}
+
+.attack-summary-card .actor-line {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+    color: #2f2b28;
+}
+
+.attack-summary-card .actor-line .actor-token-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid #c9b79f;
+    object-fit: cover;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.attack-summary-card .arrow-line {
+    color: #8a7355;
+    font-size: 0.85rem;
+}
+
+.attack-summary-card .summary-block {
+    border: 1px solid #ddcdb7;
+    border-radius: 8px;
+    background: rgba(255, 252, 246, 0.76);
+    padding: 7px 8px;
+}
+
+.attack-summary-card .minicard-title {
+    margin: 0 0 4px;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #695744;
+}
+
+.attack-summary-card .summary-block p {
+    margin: 0;
+    line-height: 1.35;
+    color: #322c27;
+}
+
+.attack-summary-card .summary-block p + p {
+    margin-top: 3px;
+}
+
+.attack-summary-card .result-card {
+    border-left: 3px solid #9b7f5e;
+}
+
+.attack-summary-card .effects-card {
+    border-left: 3px solid #4b6f5a;
+}
+
+.attack-summary-card .pending-card {
+    border-left: 3px solid #8a5f3d;
+    background: rgba(255, 249, 238, 0.9);
+}
+
 /* Cartas de resistência (aplicação de efeitos) */
 .resistance-roll-card {
     border: 1px solid #d1c4af;

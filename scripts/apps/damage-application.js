@@ -793,16 +793,16 @@ if (shouldPublish) {
     let resultLine = '';
 
     if (applyAsHeal && finalInjury > 0) {
-        resultLine = `<p>Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+        resultLine = `<p>${this.targetActor.name} Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
     } else if (finalInjury > 0 && !effectsOnlyChecked) {
-        resultLine = `<p>Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+        resultLine = `<p>${this.targetActor.name} Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
     } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
         resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
     }
 
     // Monta o HTML final com a nova estrutura de texto
     let messageContent = `
-        <div class="gurps-roll-card">
+        <div class="gurps-roll-card premium attack-summary-card">
             <header class="card-header">
                 <h3>Resumo do Ataque</h3>
             </header>
@@ -822,21 +822,21 @@ if (shouldPublish) {
                 </div>
 
                  ${resultLine ? `
-                <div class="minicard result-card">
+                <div class="summary-block result-card">
                     <div class="minicard-title">Resultado</div>
                     ${resultLine}
                 </div>
                 ` : ''}
 
                 ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
-                <div class="minicard effects-card">
+                <div class="summary-block effects-card">
                     <div class="minicard-title">Efeitos Aplicados</div>
                     ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
                 </div>
                 ` : ''}
 
                 ${pendingEffectNames.length > 0 ? `
-                <div class="minicard pending-card">
+                 <div class="summary-block pending-card">
                     <div class="minicard-title">Efeitos Pendentes</div>
                     <p>Aguardando teste de resistência:</p>
                     ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
