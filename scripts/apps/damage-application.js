@@ -623,6 +623,71 @@ async _updateDamageCalculation(form) {
         ChatMessage.create({ content: resultText, whisper: ChatMessage.getWhisperRecipients("GM") });
     }
     
+      async _applyShockEffect(injury) {
+        if (!this.targetActor || !game.combat) return 0;
+
+        const injuryAmount = Math.max(0, Math.floor(Number(injury) || 0));
+        const shockIncrement = Math.min(4, injuryAmount);
+        if (shockIncrement <= 0) return 0;
+
+        const allShockEffects = this.targetActor.effects.filter((effect) =>
+            foundry.utils.getProperty(effect, "flags.gum.specialEffect") === "shock"
+        );
+        const pendingShockEffects = allShockEffects.filter((effect) =>
+            foundry.utils.getProperty(effect, "flags.gum.duration.pendingStart") === true
+        );
+
+        const extraPending = pendingShockEffects.slice(1);
+        if (extraPending.length > 0) {
+            await this.targetActor.deleteEmbeddedDocuments("ActiveEffect", extraPending.map((effect) => effect.id));
+        }
+
+        const pendingShock = pendingShockEffects[0] || null;
+        const currentPendingValue = Math.max(0, Number(foundry.utils.getProperty(pendingShock, "flags.gum.shockValue")) || 0);
+        const nextShockValue = Math.min(4, currentPendingValue + shockIncrement);
+
+        const rollContext = ["check_dx", "skill_dx", "check_iq", "skill_iq", "attack_melee", "attack_ranged"].join(",");
+
+        const effectPayload = {
+            name: `Choque (-${nextShockValue})`,
+            img: pendingShock?.img || "icons/svg/daze.svg",
+            changes: [],
+            statuses: [],
+            flags: {
+                gum: {
+                    specialEffect: "shock",
+                    shockValue: nextShockValue,
+                    rollModifier: {
+                        value: -nextShockValue,
+                        cap: "",
+                        context: rollContext
+                    },
+                    duration: {
+                        inCombat: true,
+                        value: 1,
+                        unit: "turns",
+                        startMode: "nextTurnStart",
+                        endMode: "turnEnd",
+                        pendingStart: true
+                    }
+                }
+            },
+            duration: {
+                turns: 1,
+                combat: game.combat?.id ?? null
+            },
+            disabled: true
+        };
+
+        if (pendingShock) {
+            await pendingShock.update(effectPayload);
+        } else {
+            await this.targetActor.createEmbeddedDocuments("ActiveEffect", [effectPayload]);
+        }
+
+        return nextShockValue;
+    }
+
     async _onApplyDamage(form, shouldClose, shouldPublish) {
         const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (this.isApplying) return;
@@ -630,6 +695,7 @@ async _updateDamageCalculation(form) {
         try {
             const finalInjury = this.finalInjury || 0;
             const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+            const applyShock = form.querySelector('[name="special_apply_shock"]')?.checked ?? true;
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
@@ -659,6 +725,7 @@ async _updateDamageCalculation(form) {
 
            const appliedEffectNames = [];
             const pendingEffectNames = [];
+            let shockAppliedValue = 0;
             const pendingResistanceQueue = [];
             let pendingResistance = false;
             const effectTargets = this._resolveEffectTargets();
@@ -694,6 +761,14 @@ async _updateDamageCalculation(form) {
                     this.pendingResistanceEffects.delete(effect.id);
                 }
             }
+                if (applyShock && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
+                shockAppliedValue = await this._applyShockEffect(finalInjury);
+                if (shockAppliedValue > 0) {
+                    appliedEffectNames.push(`Choque (-${shockAppliedValue})`);
+                }
+            }
+
+
             const contingentApplied = [];
             const contingentEffects = this.damageData.contingentEffects || {};
             if (contingentEffects) {
