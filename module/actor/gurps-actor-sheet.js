@@ -3022,6 +3022,10 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
       return '';
     };
 
+    const refTags = this._parseReferenceCodes(item.system?.ref)
+      .map(ref => `<a class="open-reference-link" data-ref="${ref.code}${ref.page}" title="Abrir referência">${ref.code}${ref.page}</a>`)
+      .join(', ');
+
     // 4. Montagem das Tags Específicas por Tipo
     let mechanicalTagsHtml = '';
     const s = data.system;
@@ -3123,6 +3127,8 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
        mechanicalTagsHtml += createTag('Custo', s.total_cost ? `$${s.total_cost}` : null);
     }
 
+    mechanicalTagsHtml += createTag('REF', refTags);
+
     // 5. Enriquecimento da Descrição (Links, HTML, Secrets)
     const description = await TextEditorImpl.enrichHTML(s.chat_description || s.description || "<i>Sem descrição.</i>", {
       secrets: this.actor.isOwner,
@@ -3168,6 +3174,8 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
       buttons: {},
       default: "",
       render: (html) => {
+        html.find('.open-reference-link').on('click', this._onOpenReferenceLink.bind(this));
+
         // Listener do Botão "Enviar para o Chat"
         html.find('.send-to-chat').on('click', async () => {
           const chatDescriptionBlock = hasMeaningfulDescription
@@ -3212,6 +3220,232 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
       width: 480,
       height: "auto",
       resizable: true
+    }).render(true);
+ }
+
+  async _onOpenReferenceLink(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const rawRef = (event.currentTarget?.dataset?.ref ?? '').toString().trim();
+    if (!rawRef) return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+
+    const parsedList = this._parseReferenceCodes(rawRef);
+    if (!parsedList.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+
+    if (parsedList.length === 1) return this._openSingleReference(parsedList[0]);
+    return this._promptMultipleReferences(parsedList);
+  }
+
+  _parseReferenceCodes(rawRef) {
+    const text = (rawRef ?? "").toString().trim().toUpperCase();
+    if (!text) return [];
+
+    const parts = text.split(/[,;]+|\s+/).map(s => s.trim()).filter(Boolean);
+    const out = [];
+    for (const part of parts) {
+      const match = part.replace(/\s+/g, "").match(/^([A-Z]+)(\d+)$/);
+      if (!match) continue;
+      out.push({ code: match[1], page: Number(match[2]) });
+    }
+    return out;
+  }
+
+  _findPdfPageByCode(code) {
+    const journals = game.journal ? Array.from(game.journal) : [];
+
+    for (const journal of journals) {
+      const pages = journal?.pages ? Array.from(journal.pages) : [];
+      for (const page of pages) {
+        if (page?.type !== 'pdf') continue;
+
+        const pageCode = (page.getFlag('gum', 'pdfCode') ?? '').toString().trim().toUpperCase();
+        if (!pageCode || pageCode !== code) continue;
+
+        return {
+          journal,
+          page,
+          pageOffset: Number(page.getFlag('gum', 'pageOffset') ?? 0)
+        };
+      }
+    }
+
+    return null;
+  }
+
+  _setPdfPageInUrl(url, page) {
+    if (!url) return url;
+    const [base, rawHash = ''] = url.split('#');
+    const hash = rawHash.trim();
+
+    if (!hash) return `${base}#page=${page}`;
+
+    if (hash.includes('=')) {
+      const params = new URLSearchParams(hash);
+      params.set('page', String(page));
+      return `${base}#${params.toString()}`;
+    }
+
+    return `${base}#page=${page}`;
+  }
+
+  _findPdfViewerIframesBySource(sourcePath) {
+    const iframes = Array.from(document.querySelectorAll("iframe"));
+    if (!iframes.length) return [];
+
+    const want = (sourcePath || "").toString();
+    const wantName = want.split("/").pop();
+
+    const matches = (candidate) => {
+      if (!candidate) return false;
+      if (!want) return true;
+
+      if (candidate.includes(want)) return true;
+
+      if (wantName && (candidate.includes(wantName) || candidate.includes(encodeURIComponent(wantName)))) return true;
+
+      try {
+        const u = new URL(candidate, window.location.origin);
+        const file = u.searchParams.get("file");
+        if (!file) return false;
+        const decoded = decodeURIComponent(file);
+        return decoded.includes(want) || (wantName && decoded.includes(wantName));
+      } catch (_e) {
+        return false;
+      }
+    };
+
+    return iframes.filter((f) => {
+      const src = f.getAttribute("src") || "";
+      const dataSrc = f.getAttribute("data-src") || f.getAttribute("data-url") || f.dataset?.src || f.dataset?.url || "";
+      const cand = src || dataSrc;
+      if (!cand) return false;
+
+      const looksLikePdfViewer = /pdfjs|viewer\.html/i.test(cand);
+      if (!looksLikePdfViewer) return false;
+
+      return matches(cand);
+    });
+  }
+
+  _setPageOnPdfViewerIframe(iframe, page) {
+    if (!(iframe instanceof HTMLIFrameElement)) return false;
+    const target = Math.max(1, Number(page) || 1);
+
+    try {
+      const app = iframe.contentWindow?.PDFViewerApplication;
+      if (app?.pdfViewer) {
+        app.pdfViewer.currentPageNumber = target;
+        app.page = target;
+        return true;
+      }
+    } catch (_e) {
+      // sandbox/cross-origin ou ainda não carregou
+    }
+
+    const current = iframe.getAttribute("src") || "";
+    const dataSrc = iframe.getAttribute("data-src") || iframe.getAttribute("data-url") || iframe.dataset?.src || iframe.dataset?.url || "";
+    const candidate = current || dataSrc;
+    if (!candidate) return false;
+
+    const updated = (() => {
+      const [base, rawHash = ""] = candidate.split("#");
+      const params = new URLSearchParams(rawHash);
+      params.set("page", String(target));
+      return `${base}#${params.toString()}`;
+    })();
+
+    if (dataSrc) {
+      iframe.setAttribute("data-src", updated);
+      iframe.setAttribute("data-url", updated);
+      iframe.dataset.src = updated;
+      iframe.dataset.url = updated;
+    }
+    iframe.setAttribute("src", updated);
+
+    return true;
+  }
+
+  async _openPdfReferencePage(page, targetPage) {
+    const journal = page?.parent;
+    if (!journal) return false;
+
+    const target = Math.max(1, Number(targetPage) || 1);
+    const sourcePath = (page.src ?? page.system?.src ?? "").toString();
+
+    await journal.sheet.render(true, { pageId: page.id, mode: "view" });
+
+    const tryPosition = () => {
+      const frames = this._findPdfViewerIframesBySource(sourcePath);
+      const fallback = frames.length
+        ? frames
+        : Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
+      if (!fallback.length) return false;
+
+      let ok = false;
+      for (const f of fallback) ok = this._setPageOnPdfViewerIframe(f, target) || ok;
+      return ok;
+    };
+
+    const delays = [0, 80, 180, 350, 600, 900, 1300, 1800, 2500];
+    for (const d of delays) {
+      await new Promise(r => setTimeout(r, d));
+      if (tryPosition()) return true;
+    }
+
+    const frames = this._findPdfViewerIframesBySource(sourcePath);
+    for (const f of frames) {
+      f.addEventListener("load", () => {
+        try { this._setPageOnPdfViewerIframe(f, target); } catch (_e) {}
+      }, { once: true });
+    }
+
+    return false;
+  }
+
+  async _openSingleReference(parsed) {
+    const match = this._findPdfPageByCode(parsed.code);
+    if (!match) {
+      return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+    }
+
+    const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+    await this._openPdfReferencePage(match.page, pageNumber);
+  }
+
+  _promptMultipleReferences(parsedList) {
+    const buttons = {};
+    const missing = [];
+
+    for (const parsed of parsedList) {
+      const match = this._findPdfPageByCode(parsed.code);
+      if (!match) {
+        missing.push(`${parsed.code}${parsed.page}`);
+        continue;
+      }
+
+      const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+      const key = `${parsed.code}${parsed.page}`;
+
+      buttons[key] = {
+        label: `${parsed.code}${parsed.page}`,
+        callback: () => this._openPdfReferencePage(match.page, pageNumber)
+      };
+    }
+
+    if (!Object.keys(buttons).length) {
+      return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+    }
+
+    const missingHtml = missing.length
+      ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+      : "";
+
+    new Dialog({
+      title: "Múltiplas Referências",
+      content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+      buttons,
+      default: Object.keys(buttons)[0]
     }).render(true);
   }
 

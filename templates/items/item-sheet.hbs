@@ -371,8 +371,7 @@
      <div class="tab" data-tab="details">
 
          {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "skill") (eq item.type "spell") (eq item.type "power"))}}
-            <div class="form-section">
-                <h4 class="section-title">Combate</h4>
+            <div class="skill-ability-toggle">
                 <label class="custom-checkbox inline-checkbox">
                     <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
                     <span>Favorito (mostrar na aba Combate do personagem)</span>

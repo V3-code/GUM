@@ -5077,6 +5077,27 @@ background-color: var(--gum-accent-gold);
     overflow: visible;
 }
 
+/* Na aba de combate, os atalhos favoritos também precisam liberar o dropdown dos menus. */
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .attack-group-details.gum-unified-section,
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .group-content {
+    overflow: visible;
+}
+
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .item,
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .item-wrapper,
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .spell-row-v3,
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .spell-row-main {
+    position: relative;
+}
+
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .gum-action-menu.is-open {
+    z-index: 80;
+}
+
+.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .gum-action-menu__panel {
+    z-index: 90;
+}
+
 .gum.sheet.actor .conditions-tab details.form-section.gum-unified-section,
 .gum.sheet.actor .tab[data-tab="characteristics"] details.form-section.gum-unified-section {
     background: #2a2f37;
