@@ -5606,3 +5606,83 @@ background-color: var(--gum-accent-gold);
 .sheet.journal-entry .journal-entry-page h1 {
   font-family: "Modesto Condensed";
 }
+
+/* =================================================================== */
+/* Chat: Card de Mensagem de Efeito                                    */
+/* =================================================================== */
+.chat-message .gurps-effect-chat-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(244, 239, 230, 0.95));
+    border: 1px solid #d8ccb8;
+    border-radius: 8px;
+    padding: 10px 11px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: #2f2b28;
+}
+
+.chat-message .gurps-effect-chat-card .gum-effect-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e6ddcd;
+    color: #5e5242;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+
+.chat-message .gurps-effect-chat-card .gum-effect-chat-target {
+    margin-left: auto;
+    font-size: 10px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    color: #7b6b57;
+}
+
+.chat-message .gurps-effect-chat-card .gum-effect-chat-body {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #2f2b28;
+}
+
+.chat-message .gurps-effect-chat-card .gum-effect-chat-body p:last-child {
+    margin-bottom: 0;
+}
+
+.chat-message .gurps-effect-chat-card .gum-effect-chat-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.chat-message .gurps-effect-chat-card .gum-chat-roll-button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid #cfbea7;
+    background: linear-gradient(180deg, #f9f5ec 0%, #eee3d1 100%);
+    color: #524735;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.15s ease-in-out;
+}
+
+.chat-message .gurps-effect-chat-card .gum-chat-roll-button strong {
+    color: #3f3422;
+}
+
+.chat-message .gurps-effect-chat-card .gum-chat-roll-button:hover {
+    border-color: #bda688;
+    color: #3f3422;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.62);
+    transform: translateY(-1px);
+}

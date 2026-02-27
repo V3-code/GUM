@@ -410,12 +410,13 @@ if (effectSystem.attachedStatusId) {
             }
             break;
         }
-        case 'chat': {
-                       if (!effectSystem.chat_text) break;
+         case 'chat': {
+            if (!effectSystem.chat_text) break;
             // A lógica aqui é uma adaptação da que você já tinha em `processConditions`
             for (const target of targets) {
                 const targetActor = target.actor;
-                let content = effectSystem.chat_text.replace(/{actor.name}/g, targetActor.name);
+                const chatBody = effectSystem.chat_text.replace(/{actor.name}/g, targetActor.name);
+                let rollButtonHtml = "";
                 
                 // Adiciona o botão de rolagem, se configurado
                 if (effectSystem.has_roll) {
@@ -428,8 +429,26 @@ if (effectSystem.attachedStatusId) {
                         finalTarget = finalAttr + (Number(effectSystem.roll_modifier) || 0);
                     }
                     const label = effectSystem.roll_label || `Rolar Teste`;
-                    content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
+                    rollButtonHtml = `
+                        <div class="gum-effect-chat-actions">
+                            <button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}">
+                                <i class="fas fa-dice-d20"></i>
+                                <span>${label}</span>
+                                <strong>vs ${finalTarget}</strong>
+                            </button>
+                        </div>`;
                 }
+
+                const content = `
+                    <div class="gurps-effect-chat-card">
+                        <div class="gum-effect-chat-header">
+                            <i class="fas fa-comment-dots"></i>
+                            <span>Mensagem de Efeito</span>
+                            <span class="gum-effect-chat-target">${targetActor.name}</span>
+                        </div>
+                        <div class="gum-effect-chat-body">${chatBody}</div>
+                        ${rollButtonHtml}
+                    </div>`;
                 
                 const chatData = { 
                     speaker: ChatMessage.getSpeaker({ actor: targetActor }), 

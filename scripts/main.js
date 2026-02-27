@@ -2287,7 +2287,8 @@ async function processConditions(actor, eventData = null) {
                         }
                         // Envia Mensagem de Chat (se for do tipo chat)
                         else if (effectItem.system.type === "chat" && effectItem.system.chat_text) { 
-                             let content = effectItem.system.chat_text.replace(/{actor.name}/g, actor.name);
+                             const chatBody = effectItem.system.chat_text.replace(/{actor.name}/g, actor.name);
+                             let rollButtonHtml = "";
                              // Adiciona botão de rolagem, se configurado
                              if (effectItem.system.has_roll) { 
                                 let finalTarget = 0;
@@ -2299,8 +2300,25 @@ async function processConditions(actor, eventData = null) {
                                     finalTarget = finalAttr + (Number(effectItem.system.roll_modifier) || 0);
                                 }
                                 const label = effectItem.system.roll_label || `Rolar Teste`;
-                                content += `<div style="text-align: center; margin-top: 10px;"><button class="rollable" data-roll-value="${finalTarget}" data-label="${label}">${label} (vs ${finalTarget})</button></div>`;
+                                rollButtonHtml = `
+                                    <div class="gum-effect-chat-actions">
+                                        <button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}">
+                                            <i class="fas fa-dice-d20"></i>
+                                            <span>${label}</span>
+                                            <strong>vs ${finalTarget}</strong>
+                                        </button>
+                                    </div>`;
                              }
+                                                          const content = `
+                                <div class="gurps-effect-chat-card">
+                                    <div class="gum-effect-chat-header">
+                                        <i class="fas fa-comment-dots"></i>
+                                        <span>Mensagem de Efeito</span>
+                                        <span class="gum-effect-chat-target">${actor.name}</span>
+                                    </div>
+                                    <div class="gum-effect-chat-body">${chatBody}</div>
+                                    ${rollButtonHtml}
+                                </div>`;
                              // Prepara e envia a mensagem
                              const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
                              if (effectItem.system.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
