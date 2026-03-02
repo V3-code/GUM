@@ -8,29 +8,6 @@
             <a class="item" data-tab="combat"><i class="fas fa-swords"></i> Combate</a>
         </nav>
 
-        {{!-- MANUAL MOD (Mantido igual) --}}
-        <div class="manual-mod-section">
-             <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
-                <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
-                <div class="manual-row-middle">
-                    <div class="value-controls">
-                        <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
-                        <input type="number" class="manual-value" value="{{manualCache.value}}">
-                        <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
-                </div>
-                <div class="manual-presets">
-                    <button class="preset-btn" data-val="-4">-4</button>
-                    <button class="preset-btn" data-val="-2">-2</button>
-                    <button class="preset-btn" data-val="-1">-1</button>
-                    <button class="preset-btn" data-val="1">+1</button>
-                    <button class="preset-btn" data-val="2">+2</button>
-                    <button class="preset-btn" data-val="4">+4</button>
-                </div>
-            </div>
-        </div>
-
         {{!-- CONTEÚDO --}}
         <section class="monitor-body">
             
@@ -70,8 +47,33 @@
 
         </section>
 
-        {{!-- ROLADORES (Mantido igual) --}}
+
+    </aside>
+
+    {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
+    <section class="screen-main controls-column">
+        
+        {{!-- Barra de Ferramentas da Paleta --}}
+        <section class="screen-body">
+            <div class="tab modifiers-dashboard">
+                <div class="modular-grid">
+                     {{!-- MANUAL MOD (Mantido igual) --}}
+                    <div class="manual-mod-section">
+                                            <div class="palette-actions">
+                        <div class="search-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
+                        </div>
+                        <button class="clear-selection-btn" title="Desmarcar Todos">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                                {{!-- ROLADORES (Mantido igual) --}}
+                                            <div class="dashboard-caption">
+                <i class="fas fa-dice"></i> Rolagem Rápida
+            </div>
         <div class="quick-rollers">
+
              <div class="roller-section test-section">
                 <div class="roller-row">
                     <span class="roller-label">NH</span>
@@ -85,39 +87,36 @@
             <div class="roller-section damage-section">
                 <div class="roller-row">
                     <span class="roller-label"><i class="fas fa-skull"></i></span>
-                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d+1)" value="1d">
+                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d6+1)" value="1d6">
                     <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
                     <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
                 </div>
             </div>
         </div>
 
-    </aside>
-
-    {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
-    <section class="screen-main controls-column">
-        
-        {{!-- Barra de Ferramentas da Paleta --}}
-<div class="palette-tools-bar">
-            <nav class="gum-screen-tabs screen-tabs tabs" data-group="primary">
-                <a class="item" data-tab="modifiers"><i class="fas fa-sliders-h"></i> Dashboard</a>
-                <a class="item" data-tab="macros"><i class="fas fa-terminal"></i> Macros</a>
-            </nav>
-            
-            <div class="palette-actions">
-                <div class="search-wrapper">
-                    <i class="fas fa-search"></i>
-                    <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
-                </div>
-                <button class="clear-selection-btn" title="Desmarcar Todos">
-                    <i class="fas fa-eraser"></i>
-                </button>
-            </div>
-        </div>
-
-        <section class="screen-body">
-            <div class="tab modifiers-dashboard" data-tab="modifiers">
-                <div class="modular-grid">
+                        <div class="dashboard-caption">
+                            <i class="fas fa-sliders-h"></i> Modificador Manual
+                        </div>
+                        <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+                            <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
+                            <div class="manual-row-middle">
+                                <div class="value-controls">
+                                    <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
+                                    <input type="number" class="manual-value" value="{{manualCache.value}}">
+                                    <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
+                                </div>
+                                <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
+                            </div>
+                            <div class="manual-presets">
+                                <button class="preset-btn" data-val="-4">-4</button>
+                                <button class="preset-btn" data-val="-2">-2</button>
+                                <button class="preset-btn" data-val="-1">-1</button>
+                                <button class="preset-btn" data-val="1">+1</button>
+                                <button class="preset-btn" data-val="2">+2</button>
+                                <button class="preset-btn" data-val="4">+4</button>
+                            </div>
+                        </div>
+                    </div>
                     {{#each columns as |column|}}
                     <div class="modular-column" data-col-id="{{column.id}}">
                         <div class="column-tools">
@@ -135,7 +134,7 @@
                                 </div>
                                 <div class="group-content-area">
                                     {{#each group.enrichedItems}}
-                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}"data-cap="{{this.system.nh_cap}}">
+                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
                                         <div class="mod-left">
                                             <img src="{{this.img}}" class="mod-icon"/>
                                             <span class="mod-name">{{this.name}}</span>
@@ -160,7 +159,6 @@
                     {{/each}}
                 </div>
             </div>
-            <div class="tab" data-tab="macros"><p class="instruction">Macros em breve.</p></div>
         </section>
     </section>
 </div>

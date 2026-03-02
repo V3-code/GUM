@@ -99,7 +99,7 @@ async getData() {
         return {
             actors: monitorData,
             combatants: combatData,
-            hasCombat: !!combat, 
+            hasCombat: !!(combat && combat.combatants.size > 0), 
             columns: config.columns,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache
@@ -650,42 +650,113 @@ activateListeners(html) {
         }
 
         // ---------------------------------------------------------
-        // 3. PODERES & MAGIAS
+        // 3. FAVORITOS DE COMBATE (AGRUPADOS)
         // ---------------------------------------------------------
-        const renderPowerSpell = (item) => {
-            const level = item.system.level || item.system.skill_level || item.system.points || 0;
-            if (!level) return "";
-            
-            const dmgData = item.system.damage || {};
-            const rawDmg = dmgData.formula || "";
-            const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
-            const dmgType = dmgData.type || "";
+        const favoriteGroups = {};
+        const combatFavoriteTypes = new Set(["advantage", "disadvantage", "skill", "spell", "power"]);
 
-            return `
-                <div class="gum-ctx-item">
-                    <div class="gum-ctx-attack-row">
-                        <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${item.name}" data-nh="${level}">
-                            <span>${item.name}</span> <span class="gum-ctx-val skill">${level}</span>
-                        </div>
-                        <div class="ctx-actions-right">
-                            ${resolvedDmg ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${resolvedDmg}" data-type="${dmgType}" data-label="${item.name}" title="Dano"><i class="fas fa-bolt"></i> ${rawDmg}</div>` : ''}
-                        </div>
-                    </div>
-                </div>`;
+        const resolveFavoriteGroup = (item) => {
+            const typedGroup = String(item.system?.group || "").trim();
+            if (typedGroup) return typedGroup;
+
+            if (item.type === "advantage") return "Vantagens";
+            if (item.type === "disadvantage") return "Desvantagens";
+            if (item.type === "skill") return "Perícias";
+            if (item.type === "spell") return "Magias";
+            if (item.type === "power") return "Poderes";
+
+            return "Geral";
         };
 
-        const powers = itemsArray.filter(i => i.type === 'power');
-        if(powers.length > 0) {
-             html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-bolt"></i> Poderes</div>`;
-             powers.forEach(p => html += renderPowerSpell(p));
-             html += `</div>`;
-        }
+        const extractFavoriteLevel = (item) => {
+            const candidates = [
+                item.system?.final_nh,
+                item.system?.final_level,
+                item.system?.level,
+                item.system?.skill_level,
+                item.system?.effective_level,
+                item.system?.relative_level
+            ];
 
-        const spells = itemsArray.filter(i => i.type === 'spell');
-        if (spells.length > 0) {
-            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-magic"></i> Magias</div>`;
-            spells.sort((a,b) => a.name.localeCompare(b.name)).slice(0, 15).forEach(s => html += renderPowerSpell(s));
-            if (spells.length > 15) html += `<div style="text-align:center; color:#666; font-size:0.8em;">...mais ${spells.length - 15}</div>`;
+            for (const value of candidates) {
+                const parsed = Number(value);
+                if (Number.isFinite(parsed) && parsed > 0) return parsed;
+            }
+            return null;
+        };
+
+        const extractFavoriteDamage = (item) => {
+            const candidates = [
+                item.system?.damage,
+                item.system?.damage_formula,
+                item.system?.damage?.formula
+            ];
+
+            let raw = "";
+            for (const candidate of candidates) {
+                if (typeof candidate === "string" && candidate.trim()) {
+                    raw = candidate.trim();
+                    break;
+                }
+            }
+
+            if (!raw) return null;
+
+            const resolved = this._resolveDamageFormula(actor, raw);
+            return {
+                raw,
+                resolved: resolved || raw,
+                type: item.system?.damage?.type || item.system?.damage_type || ""
+            };
+        };
+
+        itemsArray.forEach(item => {
+            if (!combatFavoriteTypes.has(item.type)) return;
+            if (item.system?.favorite_in_combat !== true) return;
+            const level = extractFavoriteLevel(item);
+            const fallbackLevel = Number(item.system?.self_control_roll);
+            const normalizedLevel = level || (Number.isFinite(fallbackLevel) && fallbackLevel > 0 ? fallbackLevel : null);
+            if (!normalizedLevel) return;
+
+            const groupName = resolveFavoriteGroup(item);
+            if (!favoriteGroups[groupName]) favoriteGroups[groupName] = [];
+
+            favoriteGroups[groupName].push({
+                name: item.name,
+                nh: normalizedLevel,
+                damage: extractFavoriteDamage(item)
+            });
+        });
+
+        const favoriteGroupEntries = Object.entries(favoriteGroups).sort((a, b) => {
+            if (a[0] === "Geral") return -1;
+            if (b[0] === "Geral") return 1;
+            return a[0].localeCompare(b[0]);
+        });
+
+        if (favoriteGroupEntries.length > 0) {
+            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-star"></i> Favoritos</div>`;
+            for (const [groupName, entries] of favoriteGroupEntries) {
+                const sortedEntries = entries.sort((a, b) => a.name.localeCompare(b.name));
+                html += `
+                <div class="gum-ctx-item has-submenu">
+                    <span>${groupName}</span> <i class="fas fa-caret-right gum-ctx-caret"></i>
+                    <div class="gum-ctx-submenu">
+                        ${sortedEntries.map(entry => `
+                            <div class="gum-ctx-item" style="cursor:default;">
+                                <div class="gum-ctx-attack-row">
+                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${entry.name}" data-nh="${entry.nh}">
+                                        <span>${entry.name}</span> <span class="gum-ctx-val skill">${entry.nh}</span>
+                                    </div>
+                                    <div class="ctx-actions-right">
+                                        ${entry.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${entry.damage.resolved}" data-type="${entry.damage.type}" data-label="${entry.name}" title="Dano: ${entry.damage.raw}"><i class="fas fa-bolt"></i> ${entry.damage.raw}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
             html += `</div>`;
         }
 
