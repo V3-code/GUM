@@ -2515,22 +2515,28 @@ background-color: var(--gum-accent-gold);
     color: #fff2d8;
 }
 
-/* Controles (Editar/Deletar) - SEMPRE ALINHADOS */
+/* Controles (menu de ações) - SEMPRE ALINHADOS */
 .gum.sheet.actor .st-controls {
     display: flex;
-    gap: 5px;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     transition: opacity 0.2s;
     margin-left: 2px;
     flex-shrink: 0; /* Não encolhe */
+    overflow: visible;
 }
-.gum.sheet.actor .skill-tree-item:hover .st-controls { opacity: 1; }
+.gum.sheet.actor .skill-tree-item:hover .st-controls,
+.gum.sheet.actor .st-controls.menu-open { opacity: 1; }
 
-.gum.sheet.actor .st-controls a {
+.gum.sheet.actor .st-controls .gum-action-menu__toggle {
     color: rgba(247,233,215,0.7);
-    font-size: 11px;
+    font-size: 12px;
+    min-width: 20px;
 }
-.gum.sheet.actor .st-controls a:hover { color: #fff2d8; }
+
+.gum.sheet.actor .st-controls .gum-action-menu__toggle:hover,
+.gum.sheet.actor .st-controls.menu-open .gum-action-menu__toggle { color: #fff2d8; }
 
 /* --- LINHAS GUIA (Modo Árvore) --- */
 /* Mantidas iguais para não quebrar o modo Tree */
@@ -3408,6 +3414,12 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .gum-action-menu.is-open .gum-action-menu__panel {
     display: flex;
 }
+
+.gum.sheet.actor .gum-action-menu.is-open.is-open-up .gum-action-menu__panel {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
 
 .gum.sheet.actor .gum-action-menu__item {
     display: flex;
@@ -5158,6 +5170,30 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .tab[data-tab="spells"] .spell-group-box.gum-unified-section,
 .gum.sheet.actor .tab[data-tab="powers"] .spell-group-box.gum-unified-section {
     overflow: visible;
+}
+
+/* Na aba de Perícias, o menu de ações por linha também precisa escapar dos grupos. */
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-group.gum-unified-section,
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-list.group-content,
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item {
+    overflow: visible;
+}
+
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item {
+    position: relative;
+    z-index: 1;
+}
+
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item.action-menu-open-row {
+    z-index: 95;
+}
+
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item .gum-action-menu.is-open {
+    z-index: 80;
+}
+
+.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item .gum-action-menu__panel {
+    z-index: 90;
 }
 
 /* Na aba de combate, os atalhos favoritos também precisam liberar o dropdown dos menus. */

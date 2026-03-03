@@ -3695,19 +3695,55 @@ _onActionMenuToggle(ev) {
   const isOpen = menu.classList.contains("is-open");
   this._closeAllActionMenus();
 
-  if (!isOpen) {
+   if (!isOpen) {
     menu.classList.add("is-open");
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
+    const row = menu.closest(".skill-tree-item, .item-row, .spell-row-v3, .spell-row-main, .item");
+    if (row) row.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
+    this._positionActionMenu(menu);
+  }
+}
+
+_positionActionMenu(menu) {
+  if (!menu) return;
+
+  menu.classList.remove("is-open-up");
+  const panel = menu.querySelector(".js-action-menu-panel");
+  const toggle = menu.querySelector(".js-action-menu-toggle");
+  if (!panel || !toggle) return;
+
+  const preferredBoundary = menu.closest(".skills-scroll-area, .spells-scroll-area, .powers-scroll-area, .combat-favorites-list");
+  const boundaryRect = preferredBoundary?.getBoundingClientRect?.() ?? {
+    top: 0,
+    bottom: window.innerHeight
+  };
+
+  const toggleRect = toggle.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  const panelHeight = panelRect.height || panel.offsetHeight || 0;
+  const gap = 4;
+
+  const spaceBelow = boundaryRect.bottom - toggleRect.bottom;
+  const spaceAbove = toggleRect.top - boundaryRect.top;
+  const shouldOpenUp = spaceBelow < (panelHeight + gap) && spaceAbove > spaceBelow;
+
+  if (shouldOpenUp) {
+    menu.classList.add("is-open-up");
+    const upRect = panel.getBoundingClientRect();
+    if (upRect.top < boundaryRect.top && spaceBelow > 0) {
+      menu.classList.remove("is-open-up");
+    }
   }
 }
 
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".js-action-menu.is-open").removeClass("is-open")
+  this.element.find(".action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }
 
