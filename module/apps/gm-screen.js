@@ -926,13 +926,29 @@ activateListeners(html) {
         }
 
         // 2. Modificadores da Paleta
+        const configuredUuids = this._getConfiguredItemUuids();
         this.selectedModifiers.forEach((mod, key) => {
-            if (key !== "manual" && mod?.type !== "effect") {
+            if (key !== "manual" && configuredUuids.has(key) && mod?.type !== "effect") {
                 total += parseInt(mod.value) || 0;
             }
         });
 
         return total;
+    }
+
+    _getConfiguredItemUuids() {
+        const config = game.settings.get("gum", "gmScreenConfig");
+        const uuids = new Set();
+
+        for (const col of config.columns || []) {
+            for (const group of col.groups || []) {
+                for (const uuid of group.items || []) {
+                    uuids.add(uuid);
+                }
+            }
+        }
+
+        return uuids;
     }
     
     // --- LÓGICA DE APLICAÇÃO ---
@@ -942,8 +958,11 @@ async _applySelectionToActor(actor, tokenId) {
         let countEffects = 0;
 
         const effectUuids = [];
+        const configuredUuids = this._getConfiguredItemUuids();
 
-        this.selectedModifiers.forEach(mod => {
+        this.selectedModifiers.forEach((mod, key) => {
+            if (key !== "manual" && !configuredUuids.has(key)) return;
+
             if (mod?.type === "effect") {
                 if (mod.uuid) effectUuids.push(mod.uuid);
                 return;
@@ -979,6 +998,10 @@ async _applySelectionToActor(actor, tokenId) {
                 countEffects++;
             }
         }
+
+        // Garante atualização visual imediata das badges do card no Escudo do Mestre,
+        // mesmo quando a criação de ActiveEffect não dispara updateActor instantaneamente.
+        this.render(false);
 
         ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s).`);
     }
@@ -1033,10 +1056,15 @@ async _applySelectionToActor(actor, tokenId) {
         const col = config.columns.find(c => c.id === colId);
         if (col) { col.groups.push({ id: foundry.utils.randomID(), name: name, items: [] }); await this._saveConfig(config); }
     }
-    async _removeGroup(colId, groupId) { 
+    async _removeGroup(colId, groupId) {
         const config = game.settings.get("gum", "gmScreenConfig");
         const col = config.columns.find(c => c.id === colId);
-        if (col) { col.groups = col.groups.filter(g => g.id !== groupId); await this._saveConfig(config); }
+        const group = col?.groups.find(g => g.id === groupId);
+        if (group) {
+            group.items.forEach(uuid => this.selectedModifiers.delete(uuid));
+            col.groups = col.groups.filter(g => g.id !== groupId);
+            await this._saveConfig(config);
+        }
     }
     async _addItemsToGroup(colId, groupId, items) { 
         const config = game.settings.get("gum", "gmScreenConfig");
@@ -1044,11 +1072,15 @@ async _applySelectionToActor(actor, tokenId) {
         const group = col?.groups.find(g => g.id === groupId);
         if (group) { items.forEach(item => { if (!group.items.includes(item.uuid)) group.items.push(item.uuid); }); await this._saveConfig(config); }
     }
-    async _removeItemFromGroup(colId, groupId, itemUuid) { 
+    async _removeItemFromGroup(colId, groupId, itemUuid) {
         const config = game.settings.get("gum", "gmScreenConfig");
         const col = config.columns.find(c => c.id === colId);
         const group = col?.groups.find(g => g.id === groupId);
-        if (group) { group.items = group.items.filter(u => u !== itemUuid); await this._saveConfig(config); }
+        if (group) {
+            group.items = group.items.filter(u => u !== itemUuid);
+            this.selectedModifiers.delete(itemUuid);
+            await this._saveConfig(config);
+        }
     }
     async _onDrop(event) { 
         const data = TextEditor.getDragEventData(event);
