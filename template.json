@@ -202,6 +202,7 @@
         "templates": ["base"], 
         "modifier": 0,
         "nh_cap": "",
+        "observation":"",
         "duration": "",
         "ui_category": "situation",
         "target_type": {

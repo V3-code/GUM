@@ -3104,15 +3104,11 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
       case 'gm_modifier':
         mechanicalTagsHtml += createTag('Valor', s.modifier);
         mechanicalTagsHtml += createTag('Cap NH', s.nh_cap);
-        mechanicalTagsHtml += createTag('Duração', s.duration);
         mechanicalTagsHtml += createTag('Categoria', s.ui_category);
         break;
 
       case 'effect':
         mechanicalTagsHtml += createTag('Tipo', s.type);
-        mechanicalTagsHtml += createTag('Caminho', s.path);
-        mechanicalTagsHtml += createTag('Operação', s.operation);
-        mechanicalTagsHtml += createTag('Valor', s.value);
         break;
 
       case 'trigger':

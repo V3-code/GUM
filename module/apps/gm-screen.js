@@ -359,10 +359,6 @@ activateListeners(html) {
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const item = await fromUuid(uuid);
             if (!item) return;
-            if (item.type === "effect") {
-                item.sheet?.render(true);
-                return;
-            }
             this._showQuickView(item);
         });
         
@@ -1006,46 +1002,128 @@ async _applySelectionToActor(actor, tokenId) {
         ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s).`);
     }
     
-        async _showQuickView(item) {
-        const s = item.system;
-        const createTag = (label, value) => {
-             if (value !== null && value !== undefined && value !== "") 
-                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
-             return '';
+       async _showQuickView(item) {
+        const s = item?.system ?? {};
+        if (!item) return;
+
+        const typeMap = {
+            gm_modifier: "Modificador GM",
+            effect: "Efeito"
         };
+
+        const createTag = (label, value) => {
+            if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+            }
+            return '';
+        };
+
+        const catLabels = {
+            location: "Pontos de Impacto",
+            maneuver: "Manobras",
+            attack_opt: "Opções de Ataque",
+            defense_opt: "Opções de Defesa",
+            posture: "Cobertura e Postura",
+            range: "Distância e Velocidade",
+            terrain_light: "Terreno e Iluminação",
+            state_affliction: "Estado e Atribulações",
+            task_difficulty: "Dificuldade da Tarefa",
+            ritual: "Operação Mágica",
+            power_operation: "Operação de Poderes",
+            time: "Modo de Execução",
+            effort: "Esforço Adicional",
+            situation: "Cenário",
+            equipment: "Equipamento",
+            other: "Customizado"
+        };
+
         let tagsHtml = '';
-        const modSign = s.modifier > 0 ? '+' : '';
-        tagsHtml += createTag('Valor', `${modSign}${s.modifier}`);
-        const catLabels = { location: "Pontos de Impacto", maneuver: "Manobras", attack_opt: "Opções de Ataque", defense_opt: "Opções de Defesa", posture: "Cobertura e Postura", range: "Distância e Velocidade", terrain_light: "Terreno e Iluminação", state_affliction: "Estado e Atribulações", task_difficulty: "Dificuldade da Tarefa", ritual: "Operação Mágica", power_operation: "Operação de Poderes", time: "Modo de Execução", effort: "Esforço Adicional", situation: "Cenário", equipment: "Equipamento", other: "Customizado" };
-        tagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
-        if (s.nh_cap) tagsHtml += createTag('Teto (Cap)', s.nh_cap);
-        if (s.duration) tagsHtml += createTag('Duração', s.duration);
-        const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
+        if (item.type === 'gm_modifier') {
+            const modValue = Number(s.modifier) || 0;
+            tagsHtml += createTag('Valor', `${modValue > 0 ? '+' : ''}${modValue}`);
+            tagsHtml += createTag('Cap NH', s.nh_cap);
+            tagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
+        }
+
+        if (item.type === 'effect') {
+            tagsHtml += createTag('Tipo', s.type);
+        }
+
+        const description = await TextEditor.enrichHTML(s.chat_description || s.description || "<i>Sem descrição.</i>", { async: true });
+        const hasMeaningfulDescription = description && description.trim() !== "<i>Sem descrição.</i>";
+
         const content = `
             <div class="gurps-dialog-canvas">
-                <div class="gurps-item-preview-card" style="border:none; box-shadow:none;">
+                <div class="gurps-item-preview-card" data-item-id="${item.id}">
                     <header class="preview-header">
-                        <h3>${item.name}</h3>
-                        <div class="header-controls"><span class="preview-item-type">Modificador</span><a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a></div>
+                        <img src="${item.img}" class="header-icon"/>
+                        <div class="header-text">
+                            <h3>${item.name}</h3>
+                            <span class="preview-item-type">${typeMap[item.type] || item.type}</span>
+                        </div>
+                        <div class="header-controls">
+                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                        </div>
                     </header>
                     <div class="preview-content">
                         <div class="preview-properties">${tagsHtml}</div>
-                        <hr class="preview-divider">
+                        ${(hasMeaningfulDescription) ? '<hr class="preview-divider">' : ''}
                         <div class="preview-description">${description}</div>
                     </div>
                 </div>
             </div>`;
+
         new Dialog({
-            title: `Detalhes: ${item.name}`, content: content, buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } }, default: "close", options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400, height: "auto" },
+            title: `Detalhes: ${item.name}`,
+            content,
+            buttons: {},
+            default: "",
             render: (dlgHtml) => {
-                dlgHtml.on('click', '.send-to-chat', (e) => {
+                dlgHtml.on('click', '.send-to-chat', async (e) => {
                     e.preventDefault();
-                    let cardHTML = $(e.currentTarget).closest('.gurps-item-preview-card').html();
-                    cardHTML = cardHTML.replace(/<div class="header-controls">.*?<\/div>/s, `<span class="preview-item-type" style="float:right;">Modificador</span>`);
-                    ChatMessage.create({ content: `<div class="gurps-item-preview-card chat-card">${cardHTML}</div>`, user: game.user.id, speaker: { alias: "Escudo do Mestre" } });
-                    ui.notifications.info("Regra enviada para o chat.");
+
+                    const chatDescriptionBlock = hasMeaningfulDescription
+                        ? `
+                            <div class="chat-description-actions">
+                                <button type="button" class="chat-show-details" aria-label="Ver detalhes do item">
+                                    <i class="fas fa-align-left"></i>
+                                    <span>Ver detalhes</span>
+                                </button>
+                                <div class="chat-description-payload" hidden>${description}</div>
+                            </div>
+                          `
+                        : '<div class="preview-description"><i>Sem descrição.</i></div>';
+
+                    const chatContent = `
+                        <div class="gurps-item-preview-card chat-card" data-item-id="${item.id}">
+                            <header class="preview-header">
+                                <img src="${item.img}" class="header-icon"/>
+                                <div class="header-text">
+                                    <h3>${item.name}</h3>
+                                    <span class="preview-item-type">${typeMap[item.type] || item.type}</span>
+                                </div>
+                            </header>
+                            <div class="preview-content">
+                                <div class="preview-properties">${tagsHtml}</div>
+                                ${chatDescriptionBlock}
+                            </div>
+                        </div>
+                    `;
+
+                    await ChatMessage.create({
+                        user: game.user.id,
+                        speaker: { alias: "Escudo do Mestre" },
+                        content: chatContent,
+                        style: CONST.CHAT_MESSAGE_STYLES.OTHER
+                    });
+                    ui.notifications.info("Enviado para o chat.");
                 });
             }
+        }, {
+            classes: ["gurps-item-preview-dialog"],
+            width: 480,
+            height: "auto",
+            resizable: true
         }).render(true);
     }
     
