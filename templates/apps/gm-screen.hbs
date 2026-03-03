@@ -129,20 +129,26 @@
                                     <span class="group-title">{{group.name}}</span>
                                     <div class="group-actions">
                                         <a class="add-mod-to-group-btn" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i></a>
+                                        <a class="add-effect-to-group-btn" data-group-id="{{group.id}}" title="Adicionar efeito"><i class="fas fa-sparkles"></i></a>
                                         <a class="delete-group-btn" data-group-id="{{group.id}}"><i class="fas fa-trash"></i></a>
                                     </div>
                                 </div>
                                 <div class="group-content-area">
                                     {{#each group.enrichedItems}}
-                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
+                                    <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
                                         <div class="mod-left">
                                             <img src="{{this.img}}" class="mod-icon"/>
                                             <span class="mod-name">{{this.name}}</span>
                                         </div>
                                         <div class="mod-right">
-                                            <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
-                                                {{numberFormat this.system.modifier sign=true}}
-                                            </span>
+                                            {{#if (eq this.type "gm_modifier")}}
+                                                <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
+                                                    {{numberFormat this.system.modifier sign=true}}
+                                                </span>
+                                            {{/if}}
+                                            {{#if (eq this.type "effect")}}
+                                                <span class="mod-val">EF</span>
+                                            {{/if}}
                                             <div class="mod-hover-controls">
                                                 <a class="mod-quick-view"><i class="fas fa-eye"></i></a>
                                                 <a class="delete-mod-btn"><i class="fas fa-times"></i></a>
@@ -201,9 +207,19 @@
                 <i class="fas fa-times remove-mod"></i>
             </span>
             {{/each}}
-        {{else}}
-            <span class="hint-text">. . .</span>
         {{/if}}
+
+        {{#if actor.activeGMEffects.length}}
+            {{#each actor.activeGMEffects}}
+            <span class="active-mod-tag">
+                <i class="fas fa-sparkles"></i> {{this.name}}
+            </span>
+            {{/each}}
+        {{/if}}
+
+        {{#unless actor.hasActiveGMBadges}}
+            <span class="hint-text">. . .</span>
+        {{/unless}}
     </div>
 </div>
 {{/inline}}

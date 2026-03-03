@@ -1,5 +1,7 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
+import { EffectBrowser } from "./effect-browser.js";
 import { performGURPSRoll } from "../../scripts/main.js";
+import { applySingleEffect } from "../../scripts/effects-engine.js";
 
 export class GumGMScreen extends Application {
     
@@ -111,6 +113,14 @@ async getData() {
      */
     _prepareActorData(actor) {
         const attr = actor.system.attributes;
+        const activeGMMods = actor.getFlag("gum", "gm_modifiers") || [];
+        const activeGMEffects = Array.from(actor.effects || [])
+            .filter(effect => !effect.disabled)
+            .map(effect => ({
+                id: effect.id,
+                name: effect.name
+            }));
+
         return {
             id: actor.id,
             name: actor.name,
@@ -122,7 +132,9 @@ async getData() {
                 parry: this._getBestDefense(actor, 'parry'),
                 block: this._getBestDefense(actor, 'block')
             },
-            activeGMMods: actor.getFlag("gum", "gm_modifiers") || []
+            activeGMMods,
+            activeGMEffects,
+            hasActiveGMBadges: activeGMMods.length > 0 || activeGMEffects.length > 0
         };
     }
 activateListeners(html) {
@@ -164,12 +176,14 @@ activateListeners(html) {
                 // Atualiza cache do manual se necessário (caso tenha digitado e não ativado)
                 if (this.selectedModifiers.has("manual")) {
                     this.selectedModifiers.set("manual", { 
+                        type: "manual",
+                        isManual: true,
                         name: this.manualCache.name, 
                         value: this.manualCache.value 
                     });
                 }
 
-                await this._applyModifiersToActor(actor);
+                await this._applySelectionToActor(actor, tokenId);
                 
                 // Feedback visual (Piscar Verde)
                 card.addClass('flash-success');
@@ -228,6 +242,7 @@ activateListeners(html) {
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
+            const itemType = btn.data('item-type') || "gm_modifier";
             const modUuid = btn.data('uuid');
             const modValue = btn.data('value');
             const modCap = btn.data('cap'); // ✅ LÊ O TETO DO HTML
@@ -238,12 +253,21 @@ activateListeners(html) {
             if (this.selectedModifiers.has(modUuid)) {
                 this.selectedModifiers.delete(modUuid);
             } else {
-                // ✅ SALVA O TETO NO MAPA DE SELEÇÃO
-                this.selectedModifiers.set(modUuid, { 
-                    name: modName, 
-                    value: modValue,
-                    cap: modCap 
-                });
+                if (itemType === "effect") {
+                    this.selectedModifiers.set(modUuid, {
+                        type: "effect",
+                        name: modName,
+                        uuid: modUuid
+                    });
+                } else {
+                    // ✅ SALVA O TETO NO MAPA DE SELEÇÃO
+                    this.selectedModifiers.set(modUuid, { 
+                        type: "gm_modifier",
+                        name: modName, 
+                        value: modValue,
+                        cap: modCap 
+                    });
+                }
             }
             this.render(false);
         });
@@ -256,6 +280,7 @@ activateListeners(html) {
             } else {
                 this.selectedModifiers.clear(); // Limpa paleta
                 this.selectedModifiers.set("manual", { 
+                    type: "manual",
                     name: this.manualCache.name, 
                     value: this.manualCache.value,
                     isManual: true
@@ -299,6 +324,7 @@ activateListeners(html) {
             
             this.selectedModifiers.clear();
             this.selectedModifiers.set("manual", { 
+                type: "manual",
                 name: this.manualCache.name, 
                 value: val, 
                 isManual: true 
@@ -332,7 +358,12 @@ activateListeners(html) {
             ev.stopPropagation(); ev.preventDefault();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const item = await fromUuid(uuid);
-            if (item) this._showQuickView(item);
+            if (!item) return;
+            if (item.type === "effect") {
+                item.sheet?.render(true);
+                return;
+            }
+            this._showQuickView(item);
         });
         
         html.find('.add-group-btn').click(async ev => {
@@ -353,6 +384,12 @@ activateListeners(html) {
             const groupId = $(ev.currentTarget).data('group-id');
             const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
             new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
+        });
+
+        html.find('.add-effect-to-group-btn').click(ev => {
+            const groupId = $(ev.currentTarget).data('group-id');
+            const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
+            new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
         });
         
         html.find('.delete-mod-btn').click(async ev => {
@@ -815,6 +852,7 @@ activateListeners(html) {
 
         // 1. Processa Modificadores da TELA (Selecionados agora)
         this.selectedModifiers.forEach(mod => {
+            if (mod?.type === "effect") return;
             totalMod += (parseInt(mod.value) || 0);
             
             // Verifica se tem teto e se é menor que o atual
@@ -889,7 +927,7 @@ activateListeners(html) {
 
         // 2. Modificadores da Paleta
         this.selectedModifiers.forEach((mod, key) => {
-            if (key !== "manual") {
+            if (key !== "manual" && mod?.type !== "effect") {
                 total += parseInt(mod.value) || 0;
             }
         });
@@ -898,11 +936,19 @@ activateListeners(html) {
     }
     
     // --- LÓGICA DE APLICAÇÃO ---
-async _applyModifiersToActor(actor) {
+async _applySelectionToActor(actor, tokenId) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
-        let count = 0;
+        let countMods = 0;
+        let countEffects = 0;
+
+        const effectUuids = [];
 
         this.selectedModifiers.forEach(mod => {
+            if (mod?.type === "effect") {
+                if (mod.uuid) effectUuids.push(mod.uuid);
+                return;
+            }
+
             currentMods.push({
                 name: mod.name,
                 value: mod.value,
@@ -910,11 +956,31 @@ async _applyModifiersToActor(actor) {
                 id: foundry.utils.randomID(),
                 source: "GM Screen"
             });
-            count++;
+            countMods++;
         });
 
-        await actor.setFlag("gum", "gm_modifiers", currentMods);
-        ui.notifications.info(`Aplicado(s) ${count} modificador(es) em ${actor.name}.`);
+        if (countMods > 0) {
+            await actor.setFlag("gum", "gm_modifiers", currentMods);
+        }
+
+        if (effectUuids.length) {
+            const targetToken = tokenId ? canvas.tokens.get(tokenId) : null;
+            const targets = targetToken ? [targetToken] : [{ actor }];
+
+            for (const effectUuid of effectUuids) {
+                const effectItem = await fromUuid(effectUuid);
+                if (!effectItem || effectItem.type !== "effect") continue;
+
+                await applySingleEffect(effectItem, targets, {
+                    actor,
+                    origin: effectItem,
+                    source: "GM Screen"
+                });
+                countEffects++;
+            }
+        }
+
+        ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s).`);
     }
     
         async _showQuickView(item) {
@@ -992,7 +1058,9 @@ async _applyModifiersToActor(actor) {
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
         const colId = $(dropTarget).closest('.modular-column').data('col-id');
         const item = await fromUuid(data.uuid);
-        if (!item || item.type !== "gm_modifier") return ui.notifications.warn("Apenas Modificadores.");
+        if (!item || !["gm_modifier", "effect"].includes(item.type)) {
+            return ui.notifications.warn("Apenas Modificadores e Efeitos.");
+        }
         await this._addItemsToGroup(colId, groupId, [item]);
     }
     _getBestDefense(actor, type) { 
