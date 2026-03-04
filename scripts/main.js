@@ -1223,10 +1223,18 @@ Hooks.on("createItem", async (item, options, userId) => {
                         };
                         activeEffectData.changes.push(change);
                     } else if (effectSystem.type === 'roll_modifier') {
+                        const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
+                            ? effectSystem.roll_modifier_entries
+                            : [{
+                                value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                cap: effectSystem.roll_modifier_cap ?? "",
+                                contexts: effectSystem.roll_modifier_context ?? "all"
+                            }];
                         foundry.utils.setProperty(activeEffectData.flags, "gum.rollModifier", {
-                            value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
-                            cap: effectSystem.roll_modifier_cap ?? "",
-                            context: effectSystem.roll_modifier_context ?? "all"
+                            entries,
+                            value: entries[0]?.value ?? 0,
+                            cap: entries[0]?.cap ?? "",
+                            context: entries[0]?.contexts ?? "all"
                         });
                     } else if (effectSystem.type === 'flag') {
                         let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
@@ -1366,10 +1374,18 @@ Hooks.on("createItem", async (item, options, userId) => {
                             };
                             activeEffectData.changes.push(change);
                         } else if (effectSystem.type === 'roll_modifier') {
+                            const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
+                                ? effectSystem.roll_modifier_entries
+                                : [{
+                                    value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                    cap: effectSystem.roll_modifier_cap ?? "",
+                                    contexts: effectSystem.roll_modifier_context ?? "all"
+                                }];
                             foundry.utils.setProperty(activeEffectData.flags, "gum.rollModifier", {
-                                value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
-                                cap: effectSystem.roll_modifier_cap ?? "",
-                                context: effectSystem.roll_modifier_context ?? "all"
+                                entries,
+                                value: entries[0]?.value ?? 0,
+                                cap: entries[0]?.cap ?? "",
+                                context: entries[0]?.contexts ?? "all"
                             });
                         } else if (effectSystem.type === 'flag') {
                             let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
@@ -2420,10 +2436,18 @@ async function processConditions(actor, eventData = null) {
                                     });
                                 }
                                 if (effectSystem.type === "roll_modifier") {
+                                    const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
+                                        ? effectSystem.roll_modifier_entries
+                                        : [{
+                                            value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                            cap: effectSystem.roll_modifier_cap ?? "",
+                                            contexts: effectSystem.roll_modifier_context ?? "all"
+                                        }];
                                     effectData.flags.gum.rollModifier = {
-                                        value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
-                                        cap: effectSystem.roll_modifier_cap ?? "",
-                                        context: effectSystem.roll_modifier_context ?? "all"
+                                        entries,
+                                        value: entries[0]?.value ?? 0,
+                                        cap: entries[0]?.cap ?? "",
+                                        context: entries[0]?.contexts ?? "all"
                                     };
                                 }
 

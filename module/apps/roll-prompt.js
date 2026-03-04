@@ -71,17 +71,34 @@ export class GurpsRollPrompt extends FormApplication {
         activeEffects.forEach(effect => {
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) return;
-            if (!this._matchesEffectContext(data.context, this.context)) return;
 
-            this.selectedModifiers.push({
-                id: effect.id,
-                label: effect.name,
-                value: parseInt(data.value) || 0,
-                nh_cap: (data.cap !== undefined && data.cap !== "") ? parseInt(data.cap) : null,
-                isGM: true,
-                isEffect: true
+            const entries = Array.isArray(data.entries) && data.entries.length
+                ? data.entries
+                : [{ value: data.value, cap: data.cap, context: data.context }];
+
+            entries.forEach((entry, index) => {
+                const context = entry?.contexts ?? entry?.context ?? "all";
+                if (!this._matchesEffectContext(context, this.context)) return;
+
+                this.selectedModifiers.push({
+                    id: `${effect.id}::${index}`,
+                    label: entry?.label ? `${effect.name} — ${entry.label}` : effect.name,
+                    value: parseInt(entry?.value) || 0,
+                    nh_cap: (entry?.cap !== undefined && entry?.cap !== "") ? parseInt(entry.cap) : null,
+                    isGM: true,
+                    isEffect: true
+                });
             });
         });
+    }
+
+    _normalizeContexts(rawContexts) {
+        if (!rawContexts) return [];
+        if (Array.isArray(rawContexts)) return rawContexts.map(c => `${c}`.trim()).filter(Boolean);
+        return `${rawContexts}`
+            .split(',')
+            .map(c => c.trim())
+            .filter(Boolean);
     }
 
     _matchesEffectContext(modContext, rollContext) {
@@ -345,11 +362,35 @@ return 'default';
         }
 
         for (const item of uniqueItemsMap.values()) {
-            if (!this._isValidForContext(item, contextKey)) continue;
+            const entryList = Array.isArray(item.system.modifier_entries) && item.system.modifier_entries.length
+                ? item.system.modifier_entries
+                : null;
 
             let uiCat = item.system.ui_category || "other";
             if (!blocksMap[uiCat]) uiCat = "other";
             if (!blocksMap[uiCat]) continue;
+
+            if (entryList) {
+                entryList.forEach((entry, index) => {
+                    const contexts = this._normalizeContexts(entry?.contexts);
+                    if (contexts.length && !this._matchesEffectContext(contexts, contextKey)) return;
+
+                    const entryId = `${item.id}::${index}`;
+                    blocksMap[uiCat].items.push({
+                        id: entryId,
+                        label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
+                        value: parseInt(entry?.value) || 0,
+                        desc: item.system.description || "",
+                        nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
+                        duration: item.system.duration,
+                        active: this.selectedModifiers.some(m => m.id === entryId),
+                        isNative: false
+                    });
+                });
+                continue;
+            }
+
+            if (!this._isValidForContext(item, contextKey)) continue;
 
             blocksMap[uiCat].items.push({
                 id: item.id,

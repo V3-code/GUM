@@ -201,6 +201,7 @@
 "gm_modifier": { 
         "templates": ["base"], 
         "modifier": 0,
+        "modifier_entries": [],
         "nh_cap": "",
         "observation":"",
         "duration": "",
@@ -288,6 +289,7 @@
       "roll_modifier_value": "0",
       "roll_modifier_cap": "",
       "roll_modifier_context": "all",
+      "roll_modifier_entries": [],
       "whisperMode": "public",
       "resistanceRoll": { "isResisted": false, "attribute": "ht", "modifier": "0", "applyOn": "failure", "margin": "", "skipPromptCard": false },
       "category": "pf",

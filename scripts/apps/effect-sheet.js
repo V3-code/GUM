@@ -3,6 +3,36 @@
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
+
+const ROLL_MODIFIER_CONTEXT_OPTIONS = [
+    { id: "all", label: "Qualquer rolagem de teste" },
+    { id: "attack", label: "Ataque (qualquer)" },
+    { id: "attack_melee", label: "Ataque corpo-a-corpo" },
+    { id: "attack_ranged", label: "Ataque à distância" },
+    { id: "defense", label: "Defesa (qualquer)" },
+    { id: "defense_dodge", label: "Esquiva" },
+    { id: "defense_parry", label: "Aparar" },
+    { id: "defense_block", label: "Bloqueio" },
+    { id: "spell", label: "Magias" },
+    { id: "power", label: "Poderes" },
+    { id: "sense_vision", label: "Visão" },
+    { id: "sense_hearing", label: "Audição" },
+    { id: "sense_tastesmell", label: "Olfato/Paladar" },
+    { id: "sense_touch", label: "Tato" },
+    { id: "check_st", label: "Atributo Específico: ST" },
+    { id: "skill_st", label: "Perícias baseadas em ST" },
+    { id: "check_dx", label: "Atributo Específico: DX" },
+    { id: "skill_dx", label: "Perícias baseadas em DX" },
+    { id: "check_iq", label: "Atributo Específico: IQ" },
+    { id: "skill_iq", label: "Perícias baseadas em IQ" },
+    { id: "check_ht", label: "Atributo Específico: HT" },
+    { id: "skill_ht", label: "Perícias baseadas em HT" },
+    { id: "check_per", label: "Atributo Específico: Per" },
+    { id: "skill_per", label: "Perícias baseadas em Per" },
+    { id: "check_vont", label: "Atributo Específico: Vont" },
+    { id: "skill_vont", label: "Perícias baseadas em Vont" }
+];
+
 export class EffectSheet extends ItemSheet {
     
     static get defaultOptions() {
@@ -33,117 +63,30 @@ export class EffectSheet extends ItemSheet {
         context.owner = context.owner ?? this.item.isOwner;
         context.editable = this.options.editable ?? this.isEditable;
 
-       const rawContext = context.system.roll_modifier_context;
-
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
             context.system.duration.endMode = context.system.duration.endMode || "turnEnd";
         }
-        const selectedContexts = Array.isArray(rawContext)
-            ? rawContext
-            : (rawContext || "")
-                .split(',')
-                .map(entry => entry.trim())
-                .filter(Boolean);
+        context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
 
-        const rollModifierContexts = [
-            { id: "all", label: "Qualquer rolagem de teste" },
-            { id: "attack", label: "Ataque (qualquer)" },
-            { id: "attack_melee", label: "Ataque corpo-a-corpo" },
-            { id: "attack_ranged", label: "Ataque à distância" },
-            { id: "defense", label: "Defesa (qualquer)" },
-            { id: "defense_dodge", label: "Esquiva" },
-            { id: "defense_parry", label: "Aparar" },
-            { id: "defense_block", label: "Bloqueio" },
-            { id: "spell", label: "Magias" },
-            { id: "power", label: "Poderes" },
-            { id: "sense_vision", label: "Visão" },
-            { id: "sense_hearing", label: "Audição" },
-            { id: "sense_tastesmell", label: "Olfato/Paladar" },
-            { id: "sense_touch", label: "Tato" },
-            { id: "check_st", label: "Atributo Específico: ST" },
-            { id: "skill_st", label: "Perícias baseadas em ST" },
-            { id: "check_dx", label: "Atributo Específico: DX" },
-            { id: "skill_dx", label: "Perícias baseadas em DX" },
-            { id: "check_iq", label: "Atributo Específico: IQ" },
-            { id: "skill_iq", label: "Perícias baseadas em IQ" },
-            { id: "check_ht", label: "Atributo Específico: HT" },
-            { id: "skill_ht", label: "Perícias baseadas em HT" },
-            { id: "check_per", label: "Atributo Específico: Per" },
-            { id: "skill_per", label: "Perícias baseadas em Per" },
-            { id: "check_vont", label: "Atributo Específico: Vont" },
-            { id: "skill_vont", label: "Perícias baseadas em Vont" }
-        ];
-
-        const hasSelections = selectedContexts.length > 0;
-        const contextsById = rollModifierContexts.reduce((acc, ctx) => {
-            acc[ctx.id] = {
-                ...ctx,
-                selected: hasSelections ? selectedContexts.includes(ctx.id) : ctx.id === "all"
-            };
-            return acc;
-        }, {});
-
-        if (selectedContexts.includes("skill")) {
-            [
-                "check_st", "skill_st",
-                "check_dx", "skill_dx",
-                "check_iq", "skill_iq",
-                "check_ht", "skill_ht",
-                "check_per", "skill_per",
-                "check_vont", "skill_vont"
-            ].forEach(id => {
-                if (contextsById[id]) contextsById[id].selected = true;
-            });
-        }
-
-        context.rollModifierContextAll = contextsById.all;
-        context.rollModifierContextGroups = [
-            {
-                title: "Combate",
-                contexts: [
-                    contextsById.attack,
-                    contextsById.attack_melee,
-                    contextsById.attack_ranged,
-                    contextsById.defense,
-                    contextsById.defense_dodge,
-                    contextsById.defense_parry,
-                    contextsById.defense_block
-                ],
-                listClass: "roll-context-list-columns"
-            },
-            {
-                title: "Específicas",
-                contexts: [
-                    contextsById.spell,
-                    contextsById.power,
-                    contextsById.sense_vision,
-                    contextsById.sense_hearing,
-                    contextsById.sense_tastesmell,
-                    contextsById.sense_touch
-                ],
-                listClass: "roll-context-list-columns"
-            },
-            {
-                title: "Atributos e Perícias",
-                contexts: [
-                    contextsById.check_st,
-                    contextsById.skill_st,
-                    contextsById.check_dx,
-                    contextsById.skill_dx,
-                    contextsById.check_iq,
-                    contextsById.skill_iq,
-                    contextsById.check_ht,
-                    contextsById.skill_ht,
-                    contextsById.check_per,
-                    contextsById.skill_per,
-                    contextsById.check_vont,
-                    contextsById.skill_vont
-                ],
-                listClass: "roll-context-list-columns"
-            }
-        ];
-        context.rollModifierContextValue = hasSelections ? selectedContexts.join(",") : "all";
+        const rawEntries = Array.isArray(context.system.roll_modifier_entries) ? context.system.roll_modifier_entries : [];
+        context.rollModifierEntries = rawEntries.length
+            ? rawEntries.map((entry, index) => ({
+                index,
+                label: entry?.label || "",
+                value: entry?.value ?? 0,
+                cap: entry?.cap ?? entry?.nh_cap ?? "",
+                contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all")
+            }))
+            : [{
+                index: 0,
+                label: "",
+                value: context.system.roll_modifier_value ?? 0,
+                cap: context.system.roll_modifier_cap ?? "",
+                contexts: Array.isArray(context.system.roll_modifier_context)
+                    ? context.system.roll_modifier_context.join(",")
+                    : (context.system.roll_modifier_context || "all")
+            }];
 
         return context;
     }
@@ -260,30 +203,50 @@ activateListeners(html) {
         validateMacro(); // Valida ao abrir a ficha
     }
 
-    const contextHiddenInput = html.find('input[name="system.roll_modifier_context"]')[0];
-    const contextCheckboxes = html.find('.roll-context-checkbox');
-    const updateRollModifierContext = (trigger) => {
-        if (!contextHiddenInput || !contextCheckboxes.length) return;
-        const target = trigger?.currentTarget;
-        if (target && target.dataset.context === "all" && target.checked) {
-            contextCheckboxes.each((_, box) => {
-                if (box.dataset.context !== "all") box.checked = false;
-            });
-        } else if (target && target.checked) {
-            contextCheckboxes.each((_, box) => {
-                if (box.dataset.context === "all") box.checked = false;
-            });
-        }
-        const selected = contextCheckboxes
-            .toArray()
-            .filter(box => box.checked)
-            .map(box => box.dataset.context);
-        contextHiddenInput.value = selected.length ? selected.join(",") : "all";
+    const contextIds = new Set(ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => opt.id));
+    const normalizeCsv = (value) => {
+        const parts = `${value || ""}`.split(',').map(v => v.trim()).filter(Boolean);
+        if (!parts.length) return "all";
+        const valid = [...new Set(parts.filter(v => contextIds.has(v)))];
+        if (!valid.length) return "all";
+        if (valid.includes("all")) return "all";
+        return valid.join(',');
     };
-    if (contextCheckboxes.length) {
-        contextCheckboxes.on('change', updateRollModifierContext);
-        updateRollModifierContext();
-    }
+
+    html.on('change blur', '.context-csv-input', (ev) => {
+        ev.currentTarget.value = normalizeCsv(ev.currentTarget.value);
+    });
+
+    html.on('click', '.open-context-picker', (ev) => {
+        ev.preventDefault();
+        const targetInputName = ev.currentTarget.dataset.targetInput;
+        const input = this.form?.querySelector(`[name="${targetInputName}"]`);
+        if (!input) return;
+        const selected = new Set(normalizeCsv(input.value).split(',').filter(Boolean));
+
+        const content = `<div class="gum-context-picker">${ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => `
+            <label class="gm-checkbox" style="display:flex; gap:6px; margin:2px 0;">
+                <input type="checkbox" name="ctx" value="${opt.id}" ${selected.has(opt.id) ? "checked" : ""}/>
+                <span>${opt.label} <small style="opacity:.7">(${opt.id})</small></span>
+            </label>`).join('')}</div>`;
+
+        new Dialog({
+            title: "Selecionar Contextos",
+            content,
+            buttons: {
+                ok: {
+                    icon: '<i class="fas fa-check"></i>',
+                    label: 'Aplicar',
+                    callback: (dlgHtml) => {
+                        const checked = dlgHtml.find('input[name="ctx"]:checked').toArray().map(el => el.value);
+                        input.value = normalizeCsv(checked.join(','));
+                    }
+                },
+                cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
+            },
+            default: 'ok'
+        }).render(true);
+    });
     html.find(".duration-mode-select").on("change", async (ev) => {
     const mode = ev.currentTarget.value;
 
@@ -294,6 +257,22 @@ activateListeners(html) {
         "system.duration.isPermanent": isPermanent,
         "system.duration.inCombat": inCombat
     });
+    });
+
+    html.on("click", ".add-roll-mod-entry", async (ev) => {
+        ev.preventDefault();
+        const entries = Array.isArray(this.item.system.roll_modifier_entries) ? foundry.utils.deepClone(this.item.system.roll_modifier_entries) : [];
+        entries.push({ label: "", value: 0, cap: "", contexts: "all" });
+        await this.item.update({ "system.roll_modifier_entries": entries });
+    });
+
+    html.on("click", ".remove-roll-mod-entry", async (ev) => {
+        ev.preventDefault();
+        const index = Number(ev.currentTarget.dataset.index);
+        const entries = Array.isArray(this.item.system.roll_modifier_entries) ? foundry.utils.deepClone(this.item.system.roll_modifier_entries) : [];
+        if (Number.isNaN(index) || index < 0 || index >= entries.length) return;
+        entries.splice(index, 1);
+        await this.item.update({ "system.roll_modifier_entries": entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all" }] });
     });
 
 }
@@ -388,4 +367,38 @@ activateListeners(html) {
         if (editorElement.length) return editorElement.val() ?? editorElement.html();
         return "";
     }
+
+    async _updateObject(event, formData) {
+        const entriesByIndex = new Map();
+        for (const [key, value] of Object.entries(formData)) {
+            const match = key.match(/^system\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts)$/);
+            if (!match) continue;
+            const index = Number(match[1]);
+            const field = match[2];
+            if (!entriesByIndex.has(index)) entriesByIndex.set(index, { label: "", value: 0, cap: "", contexts: "all" });
+            entriesByIndex.get(index)[field] = value;
+            delete formData[key];
+        }
+
+        if (entriesByIndex.size) {
+            const entries = Array.from(entriesByIndex.entries())
+                .sort((a, b) => a[0] - b[0])
+                .map(([, entry]) => ({
+                    label: (entry.label || "").toString().trim(),
+                    value: Number(entry.value) || 0,
+                    cap: (entry.cap ?? "").toString().trim(),
+                    contexts: (entry.contexts || "all").toString().trim() || "all"
+                }));
+
+            formData["system.roll_modifier_entries"] = entries;
+            if (entries.length) {
+                formData["system.roll_modifier_value"] = entries[0].value;
+                formData["system.roll_modifier_cap"] = entries[0].cap;
+                formData["system.roll_modifier_context"] = entries[0].contexts;
+            }
+        }
+
+        return super._updateObject(event, formData);
+    }
+
 }

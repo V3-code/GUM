@@ -7,6 +7,35 @@ import { listBodyLocations } from "../config/body-profiles.js";
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
+const ROLL_CONTEXT_OPTIONS = [
+    { id: "all", label: "Qualquer rolagem" },
+    { id: "attack", label: "Ataque (qualquer)" },
+    { id: "attack_melee", label: "Ataque corpo-a-corpo" },
+    { id: "attack_ranged", label: "Ataque à distância" },
+    { id: "defense", label: "Defesa (qualquer)" },
+    { id: "defense_dodge", label: "Esquiva" },
+    { id: "defense_parry", label: "Aparar" },
+    { id: "defense_block", label: "Bloqueio" },
+    { id: "spell", label: "Magias" },
+    { id: "power", label: "Poderes" },
+    { id: "check_st", label: "Teste de ST" },
+    { id: "skill_st", label: "Perícias baseadas em ST" },
+    { id: "check_dx", label: "Teste de DX" },
+    { id: "skill_dx", label: "Perícias baseadas em DX" },
+    { id: "check_iq", label: "Teste de IQ" },
+    { id: "skill_iq", label: "Perícias baseadas em IQ" },
+    { id: "check_ht", label: "Teste de HT" },
+    { id: "skill_ht", label: "Perícias baseadas em HT" },
+    { id: "check_per", label: "Teste de Per" },
+    { id: "skill_per", label: "Perícias baseadas em Per" },
+    { id: "check_vont", label: "Teste de Vont" },
+    { id: "skill_vont", label: "Perícias baseadas em Vont" },
+    { id: "sense_vision", label: "Visão" },
+    { id: "sense_hearing", label: "Audição" },
+    { id: "sense_tastesmell", label: "Olfato/Paladar" },
+    { id: "sense_touch", label: "Tato" }
+];
+
 // ================================================================== //
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    //
 // ================================================================== //
@@ -340,6 +369,26 @@ _promptMultipleReferences(parsedList) {
         });
         context.sortedModifiers = modifiersArray;
 
+        if (this.item.type === "gm_modifier") {
+            context.gmRollContextOptions = ROLL_CONTEXT_OPTIONS;
+            const rawEntries = Array.isArray(this.item.system.modifier_entries) ? this.item.system.modifier_entries : [];
+            context.gmModifierEntries = rawEntries.length
+                ? rawEntries.map((entry, index) => ({
+                    index,
+                    label: entry?.label || "",
+                    value: entry?.value ?? 0,
+                    nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
+                    contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all")
+                }))
+                : [{
+                    index: 0,
+                    label: "",
+                    value: this.item.system.modifier ?? 0,
+                    nh_cap: this.item.system.nh_cap ?? "",
+                    contexts: "all"
+                }];
+        }
+
         return context; 
     }
 
@@ -399,9 +448,69 @@ _promptMultipleReferences(parsedList) {
             }
             this.item.update(updateData);
         });
-
- if (this.item?.type === "gm_modifier") {
+if (this.item?.type === "gm_modifier") {
             this._activateGmModifierBehaviors(html);
+
+            const contextIds = new Set(ROLL_CONTEXT_OPTIONS.map(opt => opt.id));
+            const normalizeCsv = (value) => {
+                const parts = `${value || ""}`.split(',').map(v => v.trim()).filter(Boolean);
+                if (!parts.length) return "all";
+                const valid = [...new Set(parts.filter(v => contextIds.has(v)))];
+                if (!valid.length) return "all";
+                if (valid.includes("all")) return "all";
+                return valid.join(',');
+            };
+
+            html.on('change blur', '.context-csv-input', (ev) => {
+                ev.currentTarget.value = normalizeCsv(ev.currentTarget.value);
+            });
+
+            html.on('click', '.open-context-picker', (ev) => {
+                ev.preventDefault();
+                const targetInputName = ev.currentTarget.dataset.targetInput;
+                const input = this.form?.querySelector(`[name="${targetInputName}"]`);
+                if (!input) return;
+                const selected = new Set(normalizeCsv(input.value).split(',').filter(Boolean));
+
+                const content = `<div class="gum-context-picker">${ROLL_CONTEXT_OPTIONS.map(opt => `
+                    <label class="gm-checkbox" style="display:flex; gap:6px; margin:2px 0;">
+                        <input type="checkbox" name="ctx" value="${opt.id}" ${selected.has(opt.id) ? "checked" : ""}/>
+                        <span>${opt.label} <small style="opacity:.7">(${opt.id})</small></span>
+                    </label>`).join('')}</div>`;
+
+                new Dialog({
+                    title: "Selecionar Contextos",
+                    content,
+                    buttons: {
+                        ok: {
+                            icon: '<i class="fas fa-check"></i>',
+                            label: 'Aplicar',
+                            callback: (dlgHtml) => {
+                                const checked = dlgHtml.find('input[name="ctx"]:checked').toArray().map(el => el.value);
+                                input.value = normalizeCsv(checked.join(','));
+                            }
+                        },
+                        cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
+                    },
+                    default: 'ok'
+                }).render(true);
+            });
+
+            html.on("click", ".add-gm-mod-entry", async (ev) => {
+                ev.preventDefault();
+                const entries = Array.isArray(this.item.system.modifier_entries) ? foundry.utils.deepClone(this.item.system.modifier_entries) : [];
+                entries.push({ label: "", value: 0, nh_cap: "", contexts: "all" });
+                await this.item.update({ "system.modifier_entries": entries });
+            });
+
+            html.on("click", ".remove-gm-mod-entry", async (ev) => {
+                ev.preventDefault();
+                const index = Number(ev.currentTarget.dataset.index);
+                const entries = Array.isArray(this.item.system.modifier_entries) ? foundry.utils.deepClone(this.item.system.modifier_entries) : [];
+                if (Number.isNaN(index) || index < 0 || index >= entries.length) return;
+                entries.splice(index, 1);
+                await this.item.update({ "system.modifier_entries": entries.length ? entries : [{ label: "", value: 0, nh_cap: "", contexts: "all" }] });
+            });
         }
 
         // Editor de Descrição
@@ -1572,7 +1681,35 @@ new Dialog({
         return data;
     }
 
-    async _updateObject(event, formData) {
+ async _updateObject(event, formData) {
+        if (this.item?.type === "gm_modifier") {
+            const entriesByIndex = new Map();
+            for (const [key, value] of Object.entries(formData)) {
+                const match = key.match(/^system\.modifier_entries\.(\d+)\.(label|value|nh_cap|contexts)$/);
+                if (!match) continue;
+                const index = Number(match[1]);
+                const field = match[2];
+                if (!entriesByIndex.has(index)) entriesByIndex.set(index, { label: "", value: 0, nh_cap: "", contexts: "all" });
+                entriesByIndex.get(index)[field] = value;
+                delete formData[key];
+            }
+            if (entriesByIndex.size) {
+                const entries = Array.from(entriesByIndex.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([, entry]) => ({
+                        label: (entry.label || "").toString().trim(),
+                        value: Number(entry.value) || 0,
+                        nh_cap: (entry.nh_cap ?? "").toString().trim(),
+                        contexts: (entry.contexts || "all").toString().trim() || "all"
+                    }));
+                formData["system.modifier_entries"] = entries;
+                if (entries.length) {
+                    formData["system.modifier"] = entries[0].value;
+                    formData["system.nh_cap"] = entries[0].nh_cap;
+                }
+            }
+        }
+
         for (const [k, v] of Object.entries(formData)) {
             const isDescriptionField = k.includes("description");
             const isNumericStringWithComma = typeof v === 'string' && /^[+-]?\d+(,\d+)?$/.test(v.trim());

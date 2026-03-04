@@ -120,44 +120,46 @@
                             </div>
                         {{/if}}
 
-                        {{!-- SEÇÃO PARA ROLL_MODIFIER --}}
+                         {{!-- SEÇÃO PARA ROLL_MODIFIER --}}
                         {{#if (eq system.type 'roll_modifier')}}
                             <div class="conditional-card">
-                                    <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                        <div class="effect-field effect-field-row">
-                                            <label class="effect-label">Valor do Modificador</label>
-                                            <input type="text" name="system.roll_modifier_value" value="{{system.roll_modifier_value}}" placeholder="Ex: +2 ou -1"/>
-                                        </div>
-                                        <div class="effect-field effect-field-row">
-                                            <label class="effect-label">Limite do NH afetado (Cap)</label>
-                                            <input type="text" name="system.roll_modifier_cap" value="{{system.roll_modifier_cap}}" placeholder="Opcional"/>
-                                        </div>
-                                    </div>
-
                                     <div class="advanced-options">
-                                        <h6>Contextos Afetados</h6>
-                                        <input type="hidden" name="system.roll_modifier_context" value="{{rollModifierContextValue}}"/>
-                                        <div class="roll-context-all">
-                                            <label class="gm-checkbox">
-                                                <input type="checkbox" class="roll-context-checkbox" data-context="{{rollModifierContextAll.id}}" {{checked rollModifierContextAll.selected}}/>
-                                                <span>{{rollModifierContextAll.label}}</span>
-                                            </label>
+                                        <h6>Múltiplas Entradas de Modificador</h6>
+                                        <p class="notes">Use uma linha por tipo de rolagem quando o mesmo efeito tiver bônus/penalidades diferentes.</p>
+                                        <div class="form-group modifier-entry-toolbar">
+                                            <button type="button" class="add-roll-mod-entry"><i class="fas fa-plus"></i> Adicionar Entrada</button>
                                         </div>
-                                        <div class="roll-context-columns">
-                                            {{#each rollModifierContextGroups as |group|}}
-                                                <div class="roll-context-group roll-context-all">
-                                                    <p class="roll-context-title">{{group.title}}</p>
-                                                    <div class="roll-context-list {{group.listClass}}">
-                                                        {{#each group.contexts as |ctx|}}
-                                                            <label class="gm-checkbox">
-                                                                <input type="checkbox" class="roll-context-checkbox" data-context="{{ctx.id}}" {{checked ctx.selected}}/>
-                                                                <span>{{ctx.label}}</span>
-                                                            </label>
-                                                        {{/each}}
+                                        <datalist id="roll-mod-context-options">
+                                            {{#each rollModifierContextOptions as |ctx|}}
+                                                <option value="{{ctx.id}}">{{ctx.label}}</option>
+                                            {{/each}}
+                                        </datalist>
+                                        {{#each rollModifierEntries as |entry|}}
+                                            <div class="modifier-entry-row roll-mod-entry">
+                                                <div class="effect-field effect-field-row">
+                                                    <label class="effect-label">Rótulo (opcional)</label>
+                                                    <input type="text" name="system.roll_modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>
+                                                </div>
+                                                <div class="effect-field effect-field-row">
+                                                    <label class="effect-label">Contextos (csv)</label>
+                                                    <div class="modifier-entry-context-input-group">
+                                                        <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}" placeholder="Ex: attack_melee,defense_parry"/>
+                                                        <button type="button" class="open-context-picker" data-target-input="system.roll_modifier_entries.{{entry.index}}.contexts" title="Selecionar contextos" aria-label="Selecionar contextos"><i class="fas fa-search"></i></button>
                                                     </div>
                                                 </div>
-                                            {{/each}}
-                                        </div>
+                                                <div class="effect-field effect-field-row">
+                                                    <label class="effect-label">Valor</label>
+                                                    <input type="number" name="system.roll_modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
+                                                </div>
+                                                <div class="effect-field effect-field-row">
+                                                    <label class="effect-label">Cap</label>
+                                                    <input type="text" name="system.roll_modifier_entries.{{entry.index}}.cap" value="{{entry.cap}}" placeholder="Opcional"/>
+                                                </div>
+                                                <div class="effect-field effect-field-row modifier-entry-actions">
+                                                    <button type="button" class="remove-roll-mod-entry icon-only" data-index="{{entry.index}}" title="Remover entrada" aria-label="Remover entrada"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                            </div>
+                                        {{/each}}
                                     </div>
                                 </div>
                             </div>

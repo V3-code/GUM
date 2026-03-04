@@ -201,11 +201,21 @@ if (effectSystem.attachedStatusId) {
                         gum: {
                             effectUuid: effectItem.uuid,
                             duration: gumDuration,
-                            rollModifier: {
-                                value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
-                                cap: effectSystem.roll_modifier_cap ?? "",
-                                context: effectSystem.roll_modifier_context ?? "all"
-                            },
+                            rollModifier: (() => {
+                                const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
+                                    ? effectSystem.roll_modifier_entries
+                                    : [{
+                                        value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
+                                        cap: effectSystem.roll_modifier_cap ?? "",
+                                        contexts: effectSystem.roll_modifier_context ?? "all"
+                                    }];
+                                return {
+                                    entries,
+                                    value: entries[0]?.value ?? 0,
+                                    cap: entries[0]?.cap ?? "",
+                                    context: entries[0]?.contexts ?? "all"
+                                };
+                            })(),
                             ...conditionFlags
                         }
                     },

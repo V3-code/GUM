@@ -2541,6 +2541,64 @@
   gap: 6px;
 }
 
+.gum.sheet.item .modifier-entry-toolbar {
+  margin-bottom: 8px;
+}
+
+.gum.sheet.item .modifier-entry-row {
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.gum.sheet.item .modifier-entry-context-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gum.sheet.item .modifier-entry-context-input-group .context-csv-input {
+  min-width: 0;
+}
+
+.gum.sheet.item .open-context-picker {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gum.sheet.item .modifier-entry-actions {
+  text-align: right;
+}
+
+.gum.sheet.item .modifier-entry-actions .icon-only {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 820px) {
+  .gum.sheet.item .modifier-entry-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gum.sheet.item .modifier-entry-actions {
+    grid-column: 1 / -1;
+  }
+}
+
 .gum.sheet.item.effect-sheet .radio-group.horizontal {
   display: flex;
   gap: 12px;
