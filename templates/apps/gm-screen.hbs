@@ -43,56 +43,33 @@
                     <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i></button>
                 </div>
                 {{/if}}
-            </div>
-
+            </div>   
         </section>
-
-
-    </aside>
-
-    {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
-    <section class="screen-main controls-column">
-        
-        {{!-- Barra de Ferramentas da Paleta --}}
-        <section class="screen-body">
-            <div class="tab modifiers-dashboard">
-                <div class="modular-grid">
-                     {{!-- MANUAL MOD (Mantido igual) --}}
-                    <div class="manual-mod-section">
-                                            <div class="palette-actions">
-                        <div class="search-wrapper">
-                            <i class="fas fa-search"></i>
-                            <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
+     {{!-- ROLADORES (Mantido igual) --}}
+                        <div class="dashboard-caption">
+                            <i class="fas fa-dice"></i> Rolagem Rápida
                         </div>
-                        <button class="clear-selection-btn" title="Desmarcar Todos">
-                            <i class="fas fa-eraser"></i>
-                        </button>
-                    </div>
-                                {{!-- ROLADORES (Mantido igual) --}}
-                                            <div class="dashboard-caption">
-                <i class="fas fa-dice"></i> Rolagem Rápida
-            </div>
-        <div class="quick-rollers">
+                    <div class="quick-rollers">
 
-             <div class="roller-section test-section">
-                <div class="roller-row">
-                    <span class="roller-label">NH</span>
-                    <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
-                    <div class="qr-mod-display" title="Total de Modificadores Ativos">+0</div>
-                    <button class="qr-toggle-mode active" title="Modo: Apenas para mim"><i class="fas fa-eye-slash"></i></button>
-                    <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
-                </div>
-                <div class="qr-result-display" style="display:none;"></div>
-            </div>
-            <div class="roller-section damage-section">
-                <div class="roller-row">
-                    <span class="roller-label"><i class="fas fa-skull"></i></span>
-                    <input type="text" class="qr-formula" placeholder="Dano (ex: 2d6+1)" value="1d6">
-                    <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
-                    <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
-                </div>
-            </div>
-        </div>
+                        <div class="roller-section test-section">
+                            <div class="roller-row">
+                                <span class="roller-label">NH</span>
+                                <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
+                                <div class="qr-mod-display" title="Total de Modificadores Ativos">+0</div>
+                                <button class="qr-toggle-mode active" title="Modo: Apenas para mim"><i class="fas fa-eye-slash"></i></button>
+                                <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
+                            </div>
+                            <div class="qr-result-display" style="display:none;"></div>
+                        </div>
+                        <div class="roller-section damage-section">
+                            <div class="roller-row">
+                                <span class="roller-label"><i class="fas fa-skull"></i></span>
+                                <input type="text" class="qr-formula" placeholder="Dano (ex: 2d6+1)" value="1d6">
+                                <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="cont">
+                                <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
+                            </div>
+                        </div>
+                    </div>
 
                         <div class="dashboard-caption">
                             <i class="fas fa-sliders-h"></i> Modificador Manual
@@ -116,7 +93,27 @@
                                 <button class="preset-btn" data-val="4">+4</button>
                             </div>
                         </div>
-                    </div>
+
+    </aside>
+
+    {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
+    <section class="screen-main controls-column">
+        
+        {{!-- Barra de Ferramentas da Paleta --}}
+        <div class="manual-mod-section">
+            <div class="palette-actions">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
+                </div>
+                <button class="clear-selection-btn" title="Desmarcar Todos">
+                    <i class="fas fa-eraser"></i>
+                </button>
+            </div>
+        </div>
+        <section class="screen-body">
+            <div class="tab modifiers-dashboard">
+                <div class="modular-grid">
                     {{#each columns as |column|}}
                     <div class="modular-column" data-col-id="{{column.id}}">
                         <div class="column-tools">
