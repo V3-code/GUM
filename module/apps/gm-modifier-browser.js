@@ -6,6 +6,7 @@ export class GMModifierBrowser extends FormApplication {
     super({}, options);
     this.onSelect = options.onSelect; 
     this.allModifiers = [];
+    this.availableFolders = [];
   }
 
   static get defaultOptions() {
@@ -29,6 +30,11 @@ export class GMModifierBrowser extends FormApplication {
                game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
     
     if (pack) {
+        const folderMap = new Map();
+        for (const folder of pack.folders ?? []) {
+            folderMap.set(folder.id, folder.name);
+        }
+
         const content = await pack.getDocuments();
         this.allModifiers = content.map(item => {
             const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
@@ -44,15 +50,22 @@ export class GMModifierBrowser extends FormApplication {
                 displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
                 // Prepara dados para filtros
                 category: item.system.ui_category || "other",
+                folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
                 isBonus: item.system.modifier >= 0,
                 formattedVal,
                 modifierSubtitle: subtitleParts.join(" • ")
             };
         });
         this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
+
+        const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
+        this.availableFolders = Array.from(usedFolderIds)
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
     }
     
     context.modifiers = this.allModifiers;
+    context.folders = this.availableFolders;
     
     // Envia lista de categorias para gerar os checkboxes no HTML (Opcional, ou hardcoded no HBS)
     // Aqui faremos hardcoded no HBS para ter controle dos rótulos bonitos.
@@ -146,6 +159,11 @@ export class GMModifierBrowser extends FormApplication {
     const resultsList = form.querySelector(".results-list");
     
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
+
+    const selectedFolders = new Set(
+      Array.from(form.querySelectorAll('[name="filter-folder"]:checked')).map(input => input.value)
+    );
+    const hasFolderFilter = selectedFolders.size > 0;
     
     // Lê filtros de Valor
     const showBonus = form.querySelector('[name="filter-bonus"]').checked;
@@ -163,6 +181,7 @@ export class GMModifierBrowser extends FormApplication {
         const modCategory = li.dataset.category;
         const modVal = parseFloat(li.dataset.val);
         const modName = li.querySelector('.item-name').innerText.toLowerCase();
+        const modFolderId = li.dataset.folderId || null;
 
         let isVisible = true;
 
@@ -175,7 +194,10 @@ export class GMModifierBrowser extends FormApplication {
             if (modVal < 0 && !showPenalty) isVisible = false;
         }
 
-        // 3. Categoria
+        // 3. Pasta
+        if (isVisible && hasFolderFilter && !selectedFolders.has(modFolderId)) isVisible = false;
+
+        // 4. Categoria
         if (isVisible && filterCategories) {
             if (!activeCategories.includes(modCategory)) isVisible = false;
         }

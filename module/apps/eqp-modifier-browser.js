@@ -5,6 +5,7 @@ export class EqpModifierBrowser extends FormApplication {
     super(options);
     this.targetItem = targetItem;
     this.allModifiers = [];
+    this.availableFolders = [];
     
     // Define os filtros iniciais com base no item
     // Se for uma armadura, já começa com 'armor' marcado, etc.
@@ -12,6 +13,7 @@ export class EqpModifierBrowser extends FormApplication {
 
     this.filters = {
         search: "",
+        folderIds: [],
         categories: initialFilters, // Objeto { melee: true, armor: false, ... }
         cfMin: null,
         cfMax: null
@@ -74,6 +76,10 @@ export class EqpModifierBrowser extends FormApplication {
     
     const pack = game.packs.get("gum.eqp_modifiers");
     const packItems = await (pack ? pack.getDocuments() : []);
+    const folderMap = new Map();
+    for (const folder of pack?.folders ?? []) {
+        folderMap.set(folder.id, folder.name);
+    }
 
     this.allModifiers = packItems.map(item => ({
         id: item.id,
@@ -81,6 +87,7 @@ export class EqpModifierBrowser extends FormApplication {
         name: item.name, 
         system: item.system, 
         img: item.img,
+        folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
         displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
         formattedCF: (item.system.cost_factor > 0 ? '+' : '') + Number(item.system.cost_factor || 0),
         formattedWeight: item.system.weight_mod || "x1"
@@ -88,8 +95,14 @@ export class EqpModifierBrowser extends FormApplication {
 
     this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
     
+    const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
+    this.availableFolders = Array.from(usedFolderIds)
+      .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     context.modifiers = this.allModifiers;
     context.filters = this.filters; 
+    context.folders = this.availableFolders;
     
     return context;
   }
@@ -103,7 +116,13 @@ export class EqpModifierBrowser extends FormApplication {
       this._applyFilters(html);
     });
 
-    // 2. Filtro de Categoria (Checkboxes)
+    // 2. Filtro de Pasta
+    html.find('input[name="filter-folder"]').on('change', () => {
+      this.filters.folderIds = html.find('input[name="filter-folder"]:checked').map((_, el) => el.value).get();
+      this._applyFilters(html);
+    });
+
+    // 3. Filtro de Categoria (Checkboxes)
     html.find('input.category-filter').on('change', event => {
         const category = event.target.value;
         const isChecked = event.target.checked;
@@ -132,7 +151,7 @@ export class EqpModifierBrowser extends FormApplication {
         this._applyFilters(html);
     });
 
-    // 3. Filtro de CF
+    // 4. Filtro de CF
 html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
         const val = parseFloat(event.target.value);
         if (event.target.name === "cfMin") this.filters.cfMin = isNaN(val) ? null : val;
@@ -170,7 +189,7 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
    */
   _applyFilters(html) {
     const items = html.find('.result-item');
-    const { search, categories, cfMin, cfMax } = this.filters;
+   const { search, folderIds, categories, cfMin, cfMax } = this.filters;
 
     // Cria uma lista das categorias ativas (exceto 'all')
     const activeCategories = Object.keys(categories).filter(k => k !== 'all' && categories[k]);
@@ -187,7 +206,13 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
             if (!name.includes(search) && !tags.includes(search)) isVisible = false;
         }
 
-        // B. Categorias (Lógica "OU")
+        // B. Pasta
+        if (isVisible && folderIds.length > 0) {
+            const folderId = (item.data('folder-id') || "").toString();
+            if (!folderIds.includes(folderId)) isVisible = false;
+        }
+
+        // D. Categorias (Lógica "OU")
         if (isVisible && !showAll) {
             // O item deve pertencer a PELO MENOS UMA das categorias marcadas
             let matchesCategory = false;

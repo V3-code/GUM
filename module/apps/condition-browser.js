@@ -6,6 +6,7 @@ constructor(targetItem, options = {}) {
     this.targetItem = targetItem;
     this.onSelect = options.onSelect;
     this.allConditions = [];
+    this.availableFolders = [];
 }
 
   static get defaultOptions() {
@@ -21,8 +22,13 @@ constructor(targetItem, options = {}) {
     const context = await super.getData();
     context.targetItem = this.targetItem;
     
-    const pack = game.packs.get("gum.conditions");
+const pack = game.packs.get("gum.conditions");
     if (pack) {
+        const folderMap = new Map();
+        for (const folder of pack.folders ?? []) {
+            folderMap.set(folder.id, folder.name);
+        }
+
         this.allConditions = await pack.getDocuments();
         this.allConditions = this.allConditions.map(item => ({
             id: item.id,
@@ -30,11 +36,18 @@ constructor(targetItem, options = {}) {
             name: item.name, 
             system: item.system, 
             img: item.img,
+            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allConditions.sort((a, b) => a.name.localeCompare(b.name));
+
+        const usedFolderIds = new Set(this.allConditions.map(condition => condition.folderId).filter(Boolean));
+        this.availableFolders = Array.from(usedFolderIds)
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.conditions = this.allConditions; 
+    context.folders = this.availableFolders;
     return context;
   }
 
@@ -76,6 +89,11 @@ constructor(targetItem, options = {}) {
     // 1. Lê o valor da busca por nome
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
 
+    const selectedFolders = new Set(
+        Array.from(form.querySelectorAll('[name="filter-folder"]:checked')).map(input => input.value)
+    );
+    const hasFolderFilter = selectedFolders.size > 0;
+
     // ✅ 2. LÊ O ESTADO DE CADA CHECKBOX DE FILTRO DE TIPO DE EFEITO ✅
     const typesToShow = {
         attribute: form.querySelector('[name="filter-attribute"]').checked,
@@ -102,7 +120,12 @@ constructor(targetItem, options = {}) {
         isVisible = false;
       }
 
-      // ✅ 4. APLICA O FILTRO DE TIPO DE EFEITO, SE HOUVER ALGUM ATIVO ✅
+      // 4. Aplica filtro de pasta
+      if (isVisible && hasFolderFilter && !selectedFolders.has(condition.folderId)) {
+          isVisible = false;
+      }
+
+      // ✅ 5. APLICA O FILTRO DE TIPO DE EFEITO, SE HOUVER ALGUM ATIVO ✅
       if (isVisible && hasActiveTypeFilter) {
           // Pega os efeitos da condição. Garante que seja sempre um array.
           const effectsInCondition = Array.isArray(condition.system.effects) ? condition.system.effects : Object.values(condition.system.effects || {});

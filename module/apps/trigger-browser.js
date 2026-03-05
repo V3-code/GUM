@@ -7,6 +7,7 @@ export class TriggerBrowser extends FormApplication {
     super(options);
     this.textarea = textarea; // O campo de texto que vamos preencher
     this.allTriggers = [];
+    this.availableFolders = [];
   }
 
   static get defaultOptions() {
@@ -23,17 +24,29 @@ async getData() {
     
     const pack = game.packs.get("gum.gatilhos");
     if (pack) {
+        const folderMap = new Map();
+        for (const folder of pack.folders ?? []) {
+            folderMap.set(folder.id, folder.name);
+        }
+
         this.allTriggers = (await pack.getDocuments()).map(item => ({
             id: item.id,
             uuid: item.uuid,
             name: item.name,
             system: item.system,
             img: item.img,
+            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allTriggers.sort((a, b) => a.name.localeCompare(b.name));
+
+        const usedFolderIds = new Set(this.allTriggers.map(trigger => trigger.folderId).filter(Boolean));
+        this.availableFolders = Array.from(usedFolderIds)
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.triggers = this.allTriggers; 
+    context.folders = this.availableFolders;
     return context;
   }
 
@@ -41,7 +54,7 @@ async getData() {
     super.activateListeners(html);
     
     // Listener para a busca por nome permanece o mesmo
-    html.find('input[name="search"]').on('keyup change', this._onFilterResults.bind(this));
+    html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
 
     html.find('.result-item').on('click', ev => {
         if ($(ev.target).closest('input, button').length) return;
@@ -68,12 +81,23 @@ async getData() {
   }
 
   _onFilterResults(event) {
-    const searchQuery = $(event.currentTarget).val().toLowerCase();
+    const form = this.form;
+    const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
+    const selectedFolders = new Set(
+      Array.from(form.querySelectorAll('[name="filter-folder"]:checked')).map(input => input.value)
+    );
+    const hasFolderFilter = selectedFolders.size > 0;
     const resultsList = this.element.find(".results-list li");
 
     for (let li of resultsList) {
+        if (li.classList.contains("placeholder-text")) continue;
+        const triggerId = li.querySelector('input[type="radio"]').value;
+        const trigger = this.allTriggers.find(t => t.id === triggerId);
+        if (!trigger) continue;
         const triggerName = $(li).find('.item-name').text().toLowerCase();
-        li.style.display = triggerName.includes(searchQuery) ? "grid" : "none";
+        let isVisible = triggerName.includes(searchQuery);
+        if (isVisible && hasFolderFilter && !selectedFolders.has(trigger.folderId)) isVisible = false;
+        li.style.display = isVisible ? "grid" : "none";
     }
   }
 

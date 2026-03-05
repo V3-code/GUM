@@ -10,11 +10,21 @@
           <i class="fas fa-search"></i>
         </div>
       </div>
+
+      {{#if folders.length}}
+      <div class="filter-group">
+        <h3 class="filter-title">Pastas</h3>
+        {{#each folders as |folder|}}
+        <label class="filter-check"><input type="checkbox" name="filter-folder" value="{{folder.id}}"/> <span>{{folder.name}}</span></label>
+        {{/each}}
+      </div>
+      {{/if}}
       <div class="filter-group">
         <h3 class="filter-title">Custo</h3>
         <label class="filter-check"><input type="checkbox" name="filter-enhancements"/> <span>Ampliações (+)</span></label>
         <label class="filter-check"><input type="checkbox" name="filter-limitations"/> <span>Limitações (-)</span></label>
       </div>
+
     </aside>
 
     <main class="browser-content">

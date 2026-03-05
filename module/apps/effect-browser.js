@@ -8,6 +8,7 @@ constructor(targetItem, options = {}) {
     // Armazena o callback se ele for passado nas opções
     this.onSelect = options.onSelect; 
     this.allEffects = [];
+    this.availableFolders = [];
 }
 
   static get defaultOptions() {
@@ -26,6 +27,11 @@ async getData() {
     
     const pack = game.packs.get("gum.efeitos");
     if (pack) {
+        const folderMap = new Map();
+        for (const folder of pack.folders ?? []) {
+            folderMap.set(folder.id, folder.name);
+        }
+
         this.allEffects = await pack.getDocuments();
         this.allEffects = this.allEffects.map(item => ({
             id: item.id,
@@ -33,11 +39,18 @@ async getData() {
             name: item.name, 
             system: item.system, 
             img: item.img,
+            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
+
+        const usedFolderIds = new Set(this.allEffects.map(effect => effect.folderId).filter(Boolean));
+        this.availableFolders = Array.from(usedFolderIds)
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.effects = this.allEffects; 
+    context.folders = this.availableFolders;
     return context;
 }
 
@@ -81,6 +94,10 @@ _onFilterResults(event) {
     
     // Lê o valor da busca por nome
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
+    const selectedFolders = new Set(
+        Array.from(form.querySelectorAll('[name="filter-folder"]:checked')).map(input => input.value)
+    );
+    const hasFolderFilter = selectedFolders.size > 0;
 
     // ✅ LÊ O ESTADO DE CADA CHECKBOX DE FILTRO DE TIPO ✅
     const typesToShow = {
@@ -111,6 +128,11 @@ _onFilterResults(event) {
 
         // 2. Aplica o filtro de tipo, se houver algum ativo
         if (hasActiveTypeFilter && !typesToShow[effect.system.type]) {
+            isVisible = false;
+        }
+
+        // 3. Aplica o filtro de pasta
+        if (isVisible && hasFolderFilter && !selectedFolders.has(effect.folderId)) {
             isVisible = false;
         }
 

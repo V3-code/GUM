@@ -5,6 +5,7 @@ export class ModifierBrowser extends FormApplication {
     super(options);
     this.targetItem = targetItem;
     this.allModifiers = [];
+    this.availableFolders = [];
   }
 
   static get defaultOptions() {
@@ -17,20 +18,32 @@ export class ModifierBrowser extends FormApplication {
   }
 
   async getData() {
-    const context = await super.getData();
+ const context = await super.getData();
     context.targetItem = this.targetItem;
     const pack = game.packs.get("gum.modifiers");
     if (pack) {
+        const folderMap = new Map();
+        for (const folder of pack.folders ?? []) {
+          folderMap.set(folder.id, folder.name);
+        }
+
         this.allModifiers = await pack.getDocuments();
         this.allModifiers = this.allModifiers.map(item => ({
             id: item.id,
             uuid: item.uuid,
             name: item.name, system: item.system, img: item.img,
+            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
+
+        const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
+        this.availableFolders = Array.from(usedFolderIds)
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.modifiers = this.allModifiers; 
+    context.folders = this.availableFolders;
     return context;
   }
 
@@ -70,6 +83,10 @@ activateListeners(html) {
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
     const showEnhancements = form.querySelector('[name="filter-enhancements"]').checked;
     const showLimitations = form.querySelector('[name="filter-limitations"]').checked;
+    const selectedFolders = new Set(
+      Array.from(form.querySelectorAll('[name="filter-folder"]:checked')).map(input => input.value)
+    );
+    const hasFolderFilter = selectedFolders.size > 0;
 
     for (const li of resultsList.children) {
       if (li.classList.contains("placeholder-text")) continue;
@@ -85,6 +102,7 @@ activateListeners(html) {
       if (showEnhancements && !showLimitations && !isEnhancement) isVisible = false;
       if (showLimitations && !showEnhancements && !isLimitation) isVisible = false;
 if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVisible = false;
+      if (isVisible && hasFolderFilter && !selectedFolders.has(mod.folderId)) isVisible = false;
       li.style.display = isVisible ? "grid" : "none";
     }
   }

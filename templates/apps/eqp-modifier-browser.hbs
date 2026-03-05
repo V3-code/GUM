@@ -4,13 +4,27 @@
         {{!-- Sidebar (Filtros) --}}
         <div class="browser-sidebar">
             
-            <div class="filter-group">
+  <div class="filter-group">
                 <h3 class="filter-title">Buscar</h3>
                 <div class="search-box">
                     <input type="text" name="search" placeholder="Nome ou Tags..." value="{{filters.search}}" autocomplete="off">
                     <i class="fas fa-search"></i>
                 </div>
             </div>
+
+            {{#if folders.length}}
+            <div class="filter-group">
+                <h3 class="filter-title">Pastas</h3>
+                <div class="radio-filter-list">
+                    {{#each folders as |folder|}}
+                    <label class="filter-radio">
+                        <input type="checkbox" name="filter-folder" value="{{folder.id}}">
+                        <span>{{folder.name}}</span>
+                    </label>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
 
             {{!-- Checkboxes de Categoria --}}
             <div class="filter-group">
@@ -75,6 +89,7 @@
                      data-id="{{this.id}}" 
                      data-cf="{{this.system.cost_factor}}"
                      data-tags="{{this.system.tags}}"
+                     data-folder-id="{{this.folderId}}"
                      data-cat-general="{{this.system.target_type.general}}"
                      data-cat-enchantment="{{this.system.target_type.enchantment}}"
                      data-cat-melee="{{this.system.target_type.melee}}"

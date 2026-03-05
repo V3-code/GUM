@@ -13,6 +13,15 @@
                 </div>
             </div>
 
+            {{#if folders.length}}
+            <div class="filter-group">
+                <h3 class="filter-title">Pastas</h3>
+                {{#each folders as |folder|}}
+                <label class="filter-check"><input type="checkbox" name="filter-folder" value="{{folder.id}}"> <span>{{folder.name}}</span></label>
+                {{/each}}
+            </div>
+            {{/if}}
+
             {{!-- Filtro de Valor --}}
             <div class="filter-group">
                 <h3 class="filter-title">Tipo</h3>
@@ -47,7 +56,7 @@
         <main class="browser-content">
             <ol class="results-list">
                 {{#each modifiers}}
-                <li class="result-item" data-id="{{this.id}}" data-category="{{this.system.ui_category}}" data-val="{{this.system.modifier}}">
+                <li class="result-item" data-id="{{this.id}}" data-category="{{this.system.ui_category}}" data-val="{{this.system.modifier}}" data-folder-id="{{this.folderId}}">
                     
                     <div class="item-icon">
                         {{#if this.displayImg}}

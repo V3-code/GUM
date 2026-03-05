@@ -9,6 +9,15 @@
                         <i class="fas fa-search"></i>
                     </div>
                 </div>
+
+                {{#if folders.length}}
+                <div class="filter-group">
+                    <h3 class="filter-title">Pastas</h3>
+                    {{#each folders as |folder|}}
+                    <label class="filter-check"><input type="checkbox" name="filter-folder" value="{{folder.id}}"/> <span>{{folder.name}}</span></label>
+                    {{/each}}
+                </div>
+                {{/if}}
             </aside>
 
             <main class="browser-content">

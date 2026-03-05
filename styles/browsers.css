@@ -16,7 +16,7 @@
     .gum.gm-modifier-browser) .window-content {
     background: radial-gradient(ellipse at top, rgba(197, 160, 91, 0.06), transparent 45%), var(--gum-bg-dark) !important;
     color: var(--gum-text-claro);
-    padding: 12px;
+    padding: inherit;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -35,8 +35,6 @@
     grid-template-columns: 250px 1fr;
     height: 100%;
     overflow: hidden;
-    border: 1px solid var(--gum-border-light);
-    border-radius: 10px;
     box-shadow: 0 10px 35px rgba(0,0,0,0.35);
     background: linear-gradient(135deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));
     position: relative;
@@ -46,9 +44,9 @@
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 10px;
+
     pointer-events: none;
-    border: 1px solid rgba(197, 160, 91, 0.2);
+
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
@@ -221,7 +219,7 @@
 
 .gum-browser .results-list {
     list-style: none;
-    padding: 12px;
+    padding: 8px;
     margin: 0;
     overflow-y: auto;
     flex: 1;
@@ -235,12 +233,12 @@
     grid-template-columns: auto 1fr auto;
     gap: 12px;
     align-items: center;
-    padding: 10px 14px;
+    padding: 4px 8px;
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 10px;
+    border-radius: 4px;
     cursor: pointer;
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    background: rgba(255,255,255,0.015);
+    background: var(--gum-bg-body);
     position: relative;
 }
 
@@ -258,17 +256,15 @@
 }
 
 .gum-browser .item-icon img {
-    width: 38px;
-    height: 38px;
+    width: 26px;
+    height: 26px;
     border-radius: 4px;
-    border: 1px solid var(--gum-border-light);
+    /* border: 1px solid var(--gum-border-light); */
     object-fit: cover;
     background: #000;
 }
 
 .gum-browser .item-icon {
-    width: 40px;
-    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -299,11 +295,11 @@
 }
 
 .gum-browser .item-actions button {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.04);
+    width: 16px;
+    height: 16px;
+    /* border-radius: 8px; */
+    border: none;
+    background: transparent;
     color: var(--gum-text-medio);
     display: inline-flex;
     align-items: center;
