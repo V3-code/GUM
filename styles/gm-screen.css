@@ -12,16 +12,16 @@
     color: var(--gum-text-claro);
     display: flex;
     flex-direction: column;
-    height: 100%; 
-    overflow: hidden; 
+    height: 100%;
+    overflow: hidden;
 }
 
 /* Grid de Layout (Colunas) */
 .gum.gm-screen .gm-screen-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
-    height: 100%; 
-    overflow: hidden; 
+    height: 100%;
+    overflow: hidden;
 }
 
 /* ================================================================== */
@@ -31,8 +31,8 @@
     background: linear-gradient(180deg, rgba(19,19,19,0.98), rgba(14,14,14,0.98));
     display: flex;
     flex-direction: column;
-    height: 100%; 
-    overflow: hidden; 
+    height: 100%;
+    overflow: hidden;
     position: relative;
     z-index: 10;
 }
@@ -51,32 +51,34 @@
 .gum.gm-screen .section-caption i { color: var(--gum-accent-gold); }
 
 .gum.gm-screen .dashboard-caption {
-    padding: 6px 10px;
-    border: 1px solid rgba(197, 160, 91, 0.22);
-    border-radius: 6px;
-    background: var(--item-bg-texture);
-    color: var(--gum-text-medio);
+    padding: 5px 10px;
+    border: 1px solid rgba(197, 160, 91, 0.24);
+    border-radius: 7px;
+    background: linear-gradient(120deg, rgba(0,0,0,0.34), rgba(37,34,28,0.32)), var(--item-bg-texture);
+    color: #adadad;
     font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.8px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    min-height: 28px;
+    flex: 1;
 }
 .gum.gm-screen .dashboard-caption i { color: var(--gum-accent-gold); }
 
 .gum.gm-screen .sidebar-collapsible-stack {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
+    gap: 6px;
+    padding: 6px;
 }
 
 .gum.gm-screen .collapsible-block {
-    border: 1px solid rgba(197, 160, 91, 0.2);
+    border: 1px solid rgba(197, 160, 91, 0.16);
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.12);
 }
 
 .gum.gm-screen .collapse-toggle {
@@ -87,12 +89,25 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px;
+    gap: 8px;
+    padding: 4px 6px;
+    min-height: 34px;
 }
 
 .gum.gm-screen .collapse-icon {
     color: var(--gum-text-medio);
     transition: transform 0.2s ease;
+}
+.gum.gm-screen .collapse-toggle .collapse-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(197, 160, 91, 0.16);
+    flex-shrink: 0;
 }
 
 .gum.gm-screen .collapsible-block.is-open .collapse-icon {
@@ -115,11 +130,12 @@
 .gum.gm-screen .gum-monitor-tabs .item {
     flex: 1;
     text-align: center;
-    padding: 10px 0;
+    padding: 11px 0 10px;
     color: var(--gum-text-medio);
     cursor: pointer;
-    font-size: 0.85em;
-    font-weight: 600;
+    font-size: 0.9em;
+    font-weight: 700;
+    letter-spacing: 0.55px;
     text-transform: uppercase;
     transition: all 0.2s;
     border-bottom: 2px solid transparent;
@@ -133,11 +149,11 @@
 
 /* --- Área de Scroll --- */
 .gum.gm-screen .monitor-body {
-    flex: 1; 
+    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; 
-    min-height: 0;    
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .gum.gm-screen .monitor-list {
@@ -217,21 +233,21 @@
 
 
 /* --- BARRA MANUAL --- */
-.gum.gm-screen .manual-mod-section { 
+.gum.gm-screen .manual-mod-section {
     /*padding: 8px 10px;*/
     display: flex;
     flex-direction: column;
-    gap: 6px; 
+    gap: 6px;
 }
 .gum.gm-screen .manual-mod-toolbar {
     background: var(--gum-bg-dark); padding: 6px; border-radius: 4px;
     display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.2);
 }
-.gum.gm-screen .manual-mod-toolbar.active { 
-    background: rgba(197, 160, 91, 0.15); 
-    border-color: var(--gum-accent-gold); 
-    box-shadow: 0 0 10px rgba(197, 160, 91, 0.2); 
+.gum.gm-screen .manual-mod-toolbar.active {
+    background: rgba(197, 160, 91, 0.15);
+    border-color: var(--gum-accent-gold);
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.2);
 }
 .gum.gm-screen .manual-name {
     width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #ccc;
@@ -324,10 +340,10 @@
     display: flex; justify-content: space-between; padding: 8px 10px;
     position: sticky;
     bottom: 0;
-    background: #111; 
-    margin-top: auto; 
+    background: #111;
+    margin-top: auto;
     gap: 10px;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .gum.gm-screen .combat-btn {
@@ -344,9 +360,9 @@
 /* COLUNA DIREITA: DASHBOARD                                          */
 /* ================================================================== */
 .gum.gm-screen .controls-column {
-    display: flex; 
-    flex-direction: column; 
-    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     background:
         radial-gradient(120% 110% at 18% 10%, rgba(106, 13, 173, 0.12), transparent 50%),
         radial-gradient(90% 90% at 90% 6%, rgba(197, 160, 91, 0.1), transparent 45%),
@@ -374,65 +390,135 @@
 .gum.gm-screen .gum-screen-tabs .item.active { color: var(--gum-accent-gold); background: var(--gum-bg-dark); }
 
 /* Busca */
-.gum.gm-screen .palette-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 10px; }
-.gum.gm-screen .search-wrapper { position: relative; }
-.gum.gm-screen .mod-search {
-    background: #252525; border: 1px solid #444; color: #ccc;
-    padding: 2px 5px 2px 22px; border-radius: 10px; width: 260px; font-size: 0.8em;
-    transition: width 0.2s;
-    width: 180px;
+.gum.gm-screen .palette-actions {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(197, 160, 91, 0.18);
 }
-.gum.gm-screen .mod-search:focus { width: 180px; border-color: var(--gum-accent-gold); color: #fff; }
-.gum.gm-screen .search-wrapper i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: #666; }
-.gum.gm-screen .clear-selection-btn { background: transparent; border: none; color: #666; cursor: pointer; font-size: 0.9em; transition: color 0.2s; }
+.gum.gm-screen .search-wrapper { position: relative; flex: 1; min-width: 220px; }
+.gum.gm-screen .mod-search {
+    width: 100%;
+    height: 32px;
+    background: linear-gradient(140deg, rgba(34, 34, 34, 0.96), rgba(28, 28, 28, 0.94));
+    border: 1px solid rgba(197, 160, 91, 0.32);
+    color: #ccc;
+    padding: 0 12px 0 32px;
+    border-radius: 11px;
+    font-size: 0.84em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.gum.gm-screen .mod-search:focus {
+    border-color: var(--gum-accent-gold);
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.18), 0 0 16px rgba(197, 160, 91, 0.2);
+}
+.gum.gm-screen .search-wrapper i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 0.76em; color: #777; }
+.gum.gm-screen .clear-selection-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(197, 160, 91, 0.2);
+    color: #777;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
 .gum.gm-screen .clear-selection-btn:hover { color: #ff6b6b; }
 
 /* Corpo Principal */
 .gum.gm-screen .screen-body {
-    flex: 1; 
-    padding: 15px; 
+    flex: 1;
+    padding: 15px;
     overflow-y: auto;
-    min-height: 0; 
+    min-height: 0;
     scrollbar-width: thin; scrollbar-color: #555 #222;
 }
 
 /* Lista dinâmica de grupos */
 .gum.gm-screen .modifiers-dashboard .modular-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    align-items: start;
 }
 .gum.gm-screen .add-group-btn {
-    background: #222; border: 1px dashed #555; color: #888;
-    font-size: 0.8em; cursor: pointer; padding: 4px 10px; line-height: 12px;
-    border-radius: 4px;
+    min-width: 180px;
+    height: 32px;
+    background: rgba(18, 18, 18, 0.62);
+    border: 1px dashed rgba(197, 160, 91, 0.35);
+    color: #929292;
+    font-size: 0.84em;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    padding: 4px 12px;
+    line-height: 12px;
+    border-radius: 8px;
+    margin-left: auto;
 }
 .gum.gm-screen .add-group-btn:hover { border-color: var(--gum-accent-gold); color: var(--gum-accent-gold); }
 
 /* Grupo */
 .gum.gm-screen .modifier-group {
-    background: var(--gum-bg-dark); border: 1px solid #444; border-radius: 4px; margin-bottom: 10px; overflow: hidden;
+    background: var(--gum-bg-dark);
+    border: 1px solid rgba(197, 160, 91, 0.24);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 8px 22px rgba(0,0,0,0.28);
 }
 .gum.gm-screen .modifier-group.is-collapsed .group-content-area {
     display: none;
 }
 .gum.gm-screen .modifier-group .group-header {
-    background: #181818; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;
+    background: linear-gradient(90deg, rgba(15,15,15,0.98), rgba(24,22,20,0.95));
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(197, 160, 91, 0.2);
 }
 .gum.gm-screen .group-collapse-toggle {
     background: transparent;
     border: none;
-    color: #999;
+    color: #a79a84;
     cursor: pointer;
-    margin-right: 4px;
+    margin-right: 2px;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .gum.gm-screen .modifier-group .group-collapse-toggle i { transition: transform 0.2s ease; }
 .gum.gm-screen .modifier-group.is-collapsed .group-collapse-toggle i { transform: rotate(-90deg); }
-.gum.gm-screen .group-title { font-family: var(--gum-font-secondary); letter-spacing: 0.6px; font-weight: 700; font-size: 0.9em; color: var(--gum-accent-gold); text-transform: uppercase; }
-.gum.gm-screen .group-actions a { color: #666; font-size: 0.85em; margin-left: 5px; cursor: pointer; }
+.gum.gm-screen .group-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--gum-font-secondary);
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    font-size: 1.03em;
+    line-height: 1.2;
+    color: var(--gum-accent-gold);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gum.gm-screen .group-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.gum.gm-screen .group-actions a { color: #7a7a7a; font-size: 0.9em; cursor: pointer; }
 .gum.gm-screen .group-actions a:hover { color: #fff; }
-.gum.gm-screen .group-content-area { min-height: 30px; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
-.gum.gm-screen .empty-group-hint { text-align: center; font-size: 0.75em; color: #555; font-style: italic; padding: 5px; }
+.gum.gm-screen .group-content-area { min-height: 36px; padding: 6px; display: flex; flex-direction: column; gap: 3px; }
+.gum.gm-screen .empty-group-hint { text-align: center; font-size: 0.77em; color: #666; font-style: italic; padding: 6px; }
 
 /* Item da Paleta */
 .gum.gm-screen .palette-mod {
@@ -476,18 +562,18 @@
    No seu JS, você cria a div com class="gum-ctx-menu". Então o seletor é direto. */
 
 .gum-ctx-menu {
-    position: fixed; 
+    position: fixed;
     background: #1a1a1a;
     border: 1px solid var(--gum-accent-gold);
     box-shadow: 0 4px 15px rgba(0,0,0,0.8);
     border-radius: 4px;
-    z-index: 9999; 
+    z-index: 9999;
     width: 240px;
     font-size: 0.85em;
     color: #e0e0e0;
     font-family: var(--gum-font-primary); /* Garante fonte correta fora da janela */
-    
-    overflow: visible; 
+
+    overflow: visible;
     animation: fadeIn 0.1s ease-out;
 }
 
@@ -519,7 +605,7 @@
 }
 
 .gum-ctx-item {
-    position: relative; 
+    position: relative;
     padding: 6px 12px;
     cursor: pointer;
     display: flex;
@@ -556,12 +642,12 @@
 
 /* Submenu */
 .gum-ctx-submenu {
-    display: none; 
+    display: none;
     position: absolute;
-    left: 100%; 
-    top: -1px; 
-    margin-left: -2px; 
-    width: 280px; 
+    left: 100%;
+    top: -1px;
+    margin-left: -2px;
+    width: 280px;
     background: #1a1a1a;
     border: 1px solid var(--gum-accent-gold);
     box-shadow: 4px 4px 15px rgba(0,0,0,0.8);
@@ -575,7 +661,7 @@
 
 .gum-ctx-attack-row {
     display: grid;
-    grid-template-columns: 1fr auto auto; 
+    grid-template-columns: 1fr auto auto;
     align-items: center;
     gap: 8px;
     width: 100%;
@@ -648,7 +734,7 @@
 /* Grade de Atributos */
 .gum-ctx-stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); 
+    grid-template-columns: repeat(4, 1fr);
     gap: 2px;
     padding: 4px;
     background: rgba(0,0,0,0.2);
@@ -656,7 +742,7 @@
 }
 
 .gum-ctx-stats-grid.secondary {
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr);
     background: transparent;
 }
 
@@ -695,8 +781,14 @@
 }
 
 @media (max-width: 1200px) {
-  .gum.gm-screen .modifiers-dashboard .modular-grid {
-      grid-template-columns: 1fr 1fr;
+  .gum.gm-screen .palette-actions {
+      grid-template-columns: minmax(180px, 1fr) auto;
+  }
+
+  .gum.gm-screen .add-group-btn {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin-left: 0;
   }
 }
 
