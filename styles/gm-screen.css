@@ -66,6 +66,46 @@
 }
 .gum.gm-screen .dashboard-caption i { color: var(--gum-accent-gold); }
 
+.gum.gm-screen .sidebar-collapsible-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+}
+
+.gum.gm-screen .collapsible-block {
+    border: 1px solid rgba(197, 160, 91, 0.2);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.gum.gm-screen .collapse-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px;
+}
+
+.gum.gm-screen .collapse-icon {
+    color: var(--gum-text-medio);
+    transition: transform 0.2s ease;
+}
+
+.gum.gm-screen .collapsible-block.is-open .collapse-icon {
+    transform: rotate(0deg);
+}
+
+.gum.gm-screen .collapsible-block:not(.is-open) .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.gum.gm-screen .collapsible-block .collapse-content { display: none; }
+.gum.gm-screen .collapsible-block.is-open .collapse-content { display: block; }
+
 /* --- Abas de Navegação --- */
 .gum.gm-screen .gum-monitor-tabs {
     display: flex;
@@ -334,7 +374,7 @@
 .gum.gm-screen .gum-screen-tabs .item.active { color: var(--gum-accent-gold); background: var(--gum-bg-dark); }
 
 /* Busca */
-.gum.gm-screen .palette-actions { display: flex; align-items: center; gap: 4px; margin-bottom: 5px;}
+.gum.gm-screen .palette-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 10px; }
 .gum.gm-screen .search-wrapper { position: relative; }
 .gum.gm-screen .mod-search {
     background: #252525; border: 1px solid #444; color: #ccc;
@@ -356,19 +396,16 @@
     scrollbar-width: thin; scrollbar-color: #555 #222;
 }
 
-/* Grid de 3 Colunas */
+/* Lista dinâmica de grupos */
 .gum.gm-screen .modifiers-dashboard .modular-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.gum.gm-screen .modular-column {
-    display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(0,0,0,0.26), rgba(0,0,0,0.14));
-    border: 1px solid rgba(197, 160, 91, 0.22); border-radius: 8px; padding: 7px; height: 100%; overflow-y: auto;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 20px rgba(0,0,0,0.2);
-}
-.gum.gm-screen .column-tools { text-align: center; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
 .gum.gm-screen .add-group-btn {
-    width: 100%; background: #222; border: 1px dashed #555; color: #888;
-    font-size: 0.8em; cursor: pointer; padding: 4px; line-height: 12px;
+    background: #222; border: 1px dashed #555; color: #888;
+    font-size: 0.8em; cursor: pointer; padding: 4px 10px; line-height: 12px;
+    border-radius: 4px;
 }
 .gum.gm-screen .add-group-btn:hover { border-color: var(--gum-accent-gold); color: var(--gum-accent-gold); }
 
@@ -376,9 +413,21 @@
 .gum.gm-screen .modifier-group {
     background: var(--gum-bg-dark); border: 1px solid #444; border-radius: 4px; margin-bottom: 10px; overflow: hidden;
 }
+.gum.gm-screen .modifier-group.is-collapsed .group-content-area {
+    display: none;
+}
 .gum.gm-screen .modifier-group .group-header {
     background: #181818; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;
 }
+.gum.gm-screen .group-collapse-toggle {
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    margin-right: 4px;
+}
+.gum.gm-screen .modifier-group .group-collapse-toggle i { transition: transform 0.2s ease; }
+.gum.gm-screen .modifier-group.is-collapsed .group-collapse-toggle i { transform: rotate(-90deg); }
 .gum.gm-screen .group-title { font-family: var(--gum-font-secondary); letter-spacing: 0.6px; font-weight: 700; font-size: 0.9em; color: var(--gum-accent-gold); text-transform: uppercase; }
 .gum.gm-screen .group-actions a { color: #666; font-size: 0.85em; margin-left: 5px; cursor: pointer; }
 .gum.gm-screen .group-actions a:hover { color: #fff; }

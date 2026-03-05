@@ -66,11 +66,7 @@ export const registerSystemSettings = function() {
         config: false, // Invisível no menu, gerenciado via código
         type: Object,
         default: {
-            columns: [
-                { id: "col1", groups: [] },
-                { id: "col2", groups: [] },
-                { id: "col3", groups: [] }
-            ]
+            groups: []
         }
     });
     

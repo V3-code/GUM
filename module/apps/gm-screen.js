@@ -12,6 +12,12 @@ export class GumGMScreen extends Application {
         
         // Cache para os inputs manuais não resetarem ao renderizar
         this.manualCache = { name: "GM.MOD", value: 0 };
+
+        // Estado local de blocos colapsáveis da sidebar
+        this.sidebarState = {
+            quickRollCollapsed: false,
+            manualCollapsed: false
+        };
     }
 
     static get defaultOptions() {
@@ -79,22 +85,21 @@ async getData() {
             }).filter(c => c !== null);
         }
 
-        // 3. DASHBOARD (Direita) - Configuração
-        const config = game.settings.get("gum", "gmScreenConfig");
-        for (const col of config.columns) {
-            for (const group of col.groups) {
-                group.enrichedItems = [];
-                for (const itemUuid of group.items) {
-                    try {
-                        const item = await fromUuid(itemUuid);
-                        if (item) {
-                            const itemData = item.toObject();
-                            itemData.uuid = itemUuid;
-                            itemData.isSelected = this.selectedModifiers.has(itemUuid);
-                            group.enrichedItems.push(itemData);
-                        }
-                    } catch (e) {}
-                }
+             // 3. DASHBOARD (Direita) - Configuração
+        const config = await this._normalizeConfig();
+        const groups = config.groups || [];
+        for (const group of groups) {
+            group.enrichedItems = [];
+            for (const itemUuid of group.items || []) {
+                try {
+                    const item = await fromUuid(itemUuid);
+                    if (item) {
+                        const itemData = item.toObject();
+                        itemData.uuid = itemUuid;
+                        itemData.isSelected = this.selectedModifiers.has(itemUuid);
+                        group.enrichedItems.push(itemData);
+                    }
+                } catch (e) {}
             }
         }
 
@@ -102,9 +107,11 @@ async getData() {
             actors: monitorData,
             combatants: combatData,
             hasCombat: !!(combat && combat.combatants.size > 0), 
-            columns: config.columns,
+            groups,
             isManualActive: this.selectedModifiers.has("manual"),
-            manualCache: this.manualCache
+            manualCache: this.manualCache,
+            quickRollCollapsed: this.sidebarState.quickRollCollapsed,
+            manualCollapsed: this.sidebarState.manualCollapsed
         };
     }
 
@@ -142,6 +149,18 @@ activateListeners(html) {
         
         // Atualiza display do rolador assim que abre
         this._updateQRDisplay(html);
+
+        html.find('.collapse-toggle').click(ev => {
+            ev.preventDefault();
+            const block = $(ev.currentTarget).data('block');
+            if (block === 'quick-roll') {
+                this.sidebarState.quickRollCollapsed = !this.sidebarState.quickRollCollapsed;
+            }
+            if (block === 'manual-modifier') {
+                this.sidebarState.manualCollapsed = !this.sidebarState.manualCollapsed;
+            }
+            this.render(false);
+        });
 
         // ===========================================================
         // 1. APLICAÇÃO DE MODIFICADOR (CLIQUE NO CARD)
@@ -363,37 +382,38 @@ activateListeners(html) {
         });
         
         html.find('.add-group-btn').click(async ev => {
-            const colId = $(ev.currentTarget).data('col');
             new Dialog({
                 title: "Novo Grupo", content: `<div class="form-group"><label>Nome:</label><input type="text" id="group-name" autofocus/></div>`,
-                buttons: { create: { label: "Criar", callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(colId, name); } } }, default: "create"
+                buttons: { create: { label: "Criar", callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
             }).render(true);
+        });
+
+        html.find('.group-collapse-toggle').click(async ev => {
+            ev.preventDefault();
+            const groupId = $(ev.currentTarget).data('group-id');
+            await this._toggleGroupCollapse(groupId);
         });
         
         html.find('.delete-group-btn').click(async ev => {
             const groupId = $(ev.currentTarget).data('group-id');
-            const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
-            Dialog.confirm({ title: "Excluir Grupo", content: "<p>Tem certeza?</p>", yes: () => this._removeGroup(colId, groupId) });
+            Dialog.confirm({ title: "Excluir Grupo", content: "<p>Tem certeza?</p>", yes: () => this._removeGroup(groupId) });
         });
         
         html.find('.add-mod-to-group-btn').click(ev => {
             const groupId = $(ev.currentTarget).data('group-id');
-            const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
-            new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
+            new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
 
         html.find('.add-effect-to-group-btn').click(ev => {
             const groupId = $(ev.currentTarget).data('group-id');
-            const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
-            new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(colId, groupId, items); } }).render(true);
+            new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
         
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const groupId = $(ev.currentTarget).closest('.modifier-group').data('group-id');
-            const colId = $(ev.currentTarget).closest('.modular-column').data('col-id');
-            await this._removeItemFromGroup(colId, groupId, uuid);
+            await this._removeItemFromGroup(groupId, uuid);
         });
 
         // ===========================================================
@@ -936,11 +956,10 @@ activateListeners(html) {
         const config = game.settings.get("gum", "gmScreenConfig");
         const uuids = new Set();
 
-        for (const col of config.columns || []) {
-            for (const group of col.groups || []) {
-                for (const uuid of group.items || []) {
-                    uuids.add(uuid);
-                }
+        const groups = this._extractGroupsFromConfig(config);
+        for (const group of groups) {
+            for (const uuid of group.items || []) {
+                uuids.add(uuid);
             }
         }
 
@@ -1125,35 +1144,68 @@ async _applySelectionToActor(actor, tokenId) {
             height: "auto",
             resizable: true
         }).render(true);
-    }
+ }
     
+    _extractGroupsFromConfig(config) {
+        if (Array.isArray(config?.groups)) return config.groups;
+        if (Array.isArray(config?.columns)) {
+            return config.columns.flatMap(col => col.groups || []);
+        }
+        return [];
+    }
+
+    async _normalizeConfig() {
+        const config = game.settings.get("gum", "gmScreenConfig") || {};
+        if (Array.isArray(config.groups)) return config;
+
+        const groups = this._extractGroupsFromConfig(config).map(group => ({
+            id: group.id || foundry.utils.randomID(),
+            name: group.name || "Grupo",
+            items: Array.isArray(group.items) ? group.items : [],
+            collapsed: group.collapsed === true
+        }));
+
+        const normalized = { groups };
+        await game.settings.set("gum", "gmScreenConfig", normalized);
+        return normalized;
+    }
+
     // Métodos de Persistência
     async _saveConfig(newConfig) { await game.settings.set("gum", "gmScreenConfig", newConfig); this.render(false); }
-    async _addGroup(colId, name) { 
-        const config = game.settings.get("gum", "gmScreenConfig");
-        const col = config.columns.find(c => c.id === colId);
-        if (col) { col.groups.push({ id: foundry.utils.randomID(), name: name, items: [] }); await this._saveConfig(config); }
+    async _addGroup(name) {
+        const config = await this._normalizeConfig();
+        config.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false });
+        await this._saveConfig(config);
     }
-    async _removeGroup(colId, groupId) {
-        const config = game.settings.get("gum", "gmScreenConfig");
-        const col = config.columns.find(c => c.id === colId);
-        const group = col?.groups.find(g => g.id === groupId);
+    async _toggleGroupCollapse(groupId) {
+        const config = await this._normalizeConfig();
+        const group = (config.groups || []).find(g => g.id === groupId);
+        if (!group) return;
+        group.collapsed = !group.collapsed;
+        await this._saveConfig(config);
+    }
+    async _removeGroup(groupId) {
+        const config = await this._normalizeConfig();
+        const group = (config.groups || []).find(g => g.id === groupId);
         if (group) {
-            group.items.forEach(uuid => this.selectedModifiers.delete(uuid));
-            col.groups = col.groups.filter(g => g.id !== groupId);
+            (group.items || []).forEach(uuid => this.selectedModifiers.delete(uuid));
+            config.groups = (config.groups || []).filter(g => g.id !== groupId);
             await this._saveConfig(config);
         }
     }
-    async _addItemsToGroup(colId, groupId, items) { 
-        const config = game.settings.get("gum", "gmScreenConfig");
-        const col = config.columns.find(c => c.id === colId);
-        const group = col?.groups.find(g => g.id === groupId);
-        if (group) { items.forEach(item => { if (!group.items.includes(item.uuid)) group.items.push(item.uuid); }); await this._saveConfig(config); }
+    async _addItemsToGroup(groupId, items) {
+        const config = await this._normalizeConfig();
+        const group = (config.groups || []).find(g => g.id === groupId);
+        if (group) {
+            items.forEach(item => {
+                if (!group.items.includes(item.uuid)) group.items.push(item.uuid);
+            });
+            await this._saveConfig(config);
+        }
     }
-    async _removeItemFromGroup(colId, groupId, itemUuid) {
-        const config = game.settings.get("gum", "gmScreenConfig");
-        const col = config.columns.find(c => c.id === colId);
-        const group = col?.groups.find(g => g.id === groupId);
+    async _removeItemFromGroup(groupId, itemUuid) {
+        const config = await this._normalizeConfig();
+        const group = (config.groups || []).find(g => g.id === groupId);
         if (group) {
             group.items = group.items.filter(u => u !== itemUuid);
             this.selectedModifiers.delete(itemUuid);
@@ -1166,12 +1218,11 @@ async _applySelectionToActor(actor, tokenId) {
         const dropTarget = event.target.closest(".group-content-area");
         if (!dropTarget) return;
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
-        const colId = $(dropTarget).closest('.modular-column').data('col-id');
         const item = await fromUuid(data.uuid);
         if (!item || !["gm_modifier", "effect"].includes(item.type)) {
             return ui.notifications.warn("Apenas Modificadores e Efeitos.");
         }
-        await this._addItemsToGroup(colId, groupId, [item]);
+        await this._addItemsToGroup(groupId, [item]);
     }
     _getBestDefense(actor, type) { 
         let best = 0;
@@ -1239,12 +1290,13 @@ async _applySelectionToActor(actor, tokenId) {
                         
                         try {
                             const json = JSON.parse(text);
-                            // Validação simples
-                            if (!json.columns || !Array.isArray(json.columns)) {
-                                throw new Error("Formato inválido.");
-                            }
-                            
-                            await game.settings.set("gum", "gmScreenConfig", json);
+                            const groups = this._extractGroupsFromConfig(json).map(group => ({
+                                id: group.id || foundry.utils.randomID(),
+                                name: group.name || "Grupo",
+                                items: Array.isArray(group.items) ? group.items : [],
+                                collapsed: group.collapsed === true
+                            }));
+                            await game.settings.set("gum", "gmScreenConfig", { groups });
                             this.render(true);
                             ui.notifications.info("Layout do Escudo importado com sucesso!");
                         } catch (err) {
