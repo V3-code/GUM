@@ -340,6 +340,7 @@
     background: #252525; border: 1px solid #444; color: #ccc;
     padding: 2px 5px 2px 22px; border-radius: 10px; width: 260px; font-size: 0.8em;
     transition: width 0.2s;
+    width: 180px;
 }
 .gum.gm-screen .mod-search:focus { width: 180px; border-color: var(--gum-accent-gold); color: #fff; }
 .gum.gm-screen .search-wrapper i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7em; color: #666; }

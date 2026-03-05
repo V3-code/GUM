@@ -1,0 +1,5 @@
+2026/03/04-11:09:39.760 3cc0 Recovering log #524
+2026/03/04-11:09:39.760 3cc0 Level-0 table #526: started
+2026/03/04-11:09:39.762 3cc0 Level-0 table #526: 16405 bytes OK
+2026/03/04-11:09:39.766 3cc0 Delete type=0 #524
+2026/03/04-11:09:39.766 3cc0 Delete type=3 #522

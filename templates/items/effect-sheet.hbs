@@ -124,42 +124,49 @@
                         {{#if (eq system.type 'roll_modifier')}}
                             <div class="conditional-card">
                                     <div class="advanced-options">
-                                        <h6>Múltiplas Entradas de Modificador</h6>
-                                        <p class="notes">Use uma linha por tipo de rolagem quando o mesmo efeito tiver bônus/penalidades diferentes.</p>
-                                        <div class="form-group modifier-entry-toolbar">
-                                            <button type="button" class="add-roll-mod-entry"><i class="fas fa-plus"></i> Adicionar Entrada</button>
-                                        </div>
+                                        <h6>Múltiplas Entradas de Modificador </h6>
+
                                         <datalist id="roll-mod-context-options">
                                             {{#each rollModifierContextOptions as |ctx|}}
                                                 <option value="{{ctx.id}}">{{ctx.label}}</option>
                                             {{/each}}
                                         </datalist>
-                                        {{#each rollModifierEntries as |entry|}}
+                                          {{#each rollModifierEntries as |entry|}}
                                             <div class="modifier-entry-row roll-mod-entry">
-                                                <div class="effect-field effect-field-row">
-                                                    <label class="effect-label">Rótulo (opcional)</label>
-                                                    <input type="text" name="system.roll_modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>
+                                                <div class="modifier-entry-topline">
+                                                    <div class="effect-field modifier-entry-field">
+                                                        <label class="effect-label">Rótulo (opcional)</label>
+                                                        <input type="text" name="system.roll_modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>
+                                                    </div>
+                                                    <button type="button" class="remove-roll-mod-entry modifier-entry-inline-action danger" data-index="{{entry.index}}" title="Remover entrada" aria-label="Remover entrada"><i class="fas fa-trash"></i></button>
                                                 </div>
-                                                <div class="effect-field effect-field-row">
-                                                    <label class="effect-label">Contextos (csv)</label>
-                                                    <div class="modifier-entry-context-input-group">
-                                                        <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}" placeholder="Ex: attack_melee,defense_parry"/>
-                                                        <button type="button" class="open-context-picker" data-target-input="system.roll_modifier_entries.{{entry.index}}.contexts" title="Selecionar contextos" aria-label="Selecionar contextos"><i class="fas fa-search"></i></button>
+
+                                                <div class="modifier-entry-midline">
+                                                    <div class="effect-field modifier-entry-field modifier-entry-field-value">
+                                                        <label class="effect-label">Valor</label>
+                                                        <input type="number" name="system.roll_modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
+                                                    </div>
+                                                    <div class="effect-field modifier-entry-field modifier-entry-field-cap">
+                                                        <label class="effect-label">Cap NH (teto)</label>
+                                                        <input type="text" name="system.roll_modifier_entries.{{entry.index}}.cap" value="{{entry.cap}}" placeholder="Opcional"/>
                                                     </div>
                                                 </div>
-                                                <div class="effect-field effect-field-row">
-                                                    <label class="effect-label">Valor</label>
-                                                    <input type="number" name="system.roll_modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
-                                                </div>
-                                                <div class="effect-field effect-field-row">
-                                                    <label class="effect-label">Cap</label>
-                                                    <input type="text" name="system.roll_modifier_entries.{{entry.index}}.cap" value="{{entry.cap}}" placeholder="Opcional"/>
-                                                </div>
-                                                <div class="effect-field effect-field-row modifier-entry-actions">
-                                                    <button type="button" class="remove-roll-mod-entry icon-only" data-index="{{entry.index}}" title="Remover entrada" aria-label="Remover entrada"><i class="fas fa-trash"></i></button>
+
+                                                <div class="modifier-entry-bottomline">
+                                                    <div class="effect-field modifier-entry-field modifier-entry-field-context">
+                                                        <div class="modifier-entry-label-line">
+                                                            <label class="effect-label">Contextos (csv)</label>
+                                                            <button type="button" class="open-context-picker modifier-entry-inline-action" data-target-input="system.roll_modifier_entries.{{entry.index}}.contexts" title="Selecionar contextos" aria-label="Selecionar contextos"><i class="fas fa-search"></i></button>
+                                                        </div>
+                                                        <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}" placeholder="Ex: attack_melee,defense_parry"/>
+                                                    </div>
                                                 </div>
                                             </div>
                                         {{/each}}
+
+                                        <div class="form-group modifier-entry-toolbar">
+                                            <button type="button" class="add-roll-mod-entry"><i class="fas fa-plus"></i> Adicionar </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
