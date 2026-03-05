@@ -388,10 +388,43 @@ activateListeners(html) {
             }).render(true);
         });
 
-        html.find('.group-collapse-toggle').click(async ev => {
+  html.find('.group-collapse-toggle').click(async ev => {
             ev.preventDefault();
             const groupId = $(ev.currentTarget).data('group-id');
             await this._toggleGroupCollapse(groupId);
+        });
+
+        html.find('.group-menu-trigger').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const trigger = $(ev.currentTarget);
+            const actions = trigger.closest('.group-actions');
+            const isOpen = actions.hasClass('is-open');
+
+            html.find('.group-actions.is-open').removeClass('is-open');
+            if (!isOpen) actions.addClass('is-open');
+        });
+
+        html.on('click', '.edit-group-name-btn', async ev => {
+            ev.preventDefault();
+            const button = $(ev.currentTarget);
+            const groupId = button.data('group-id');
+            const currentName = button.data('group-name') || '';
+
+            new Dialog({
+                title: "Editar Nome do Grupo",
+                content: `<div class="form-group"><label>Nome:</label><input type="text" id="group-name" value="${currentName}" autofocus/></div>`,
+                buttons: {
+                    save: {
+                        label: "Salvar",
+                        callback: async dialogHtml => {
+                            const newName = dialogHtml.find('#group-name').val()?.trim();
+                            if (newName) await this._renameGroup(groupId, newName);
+                        }
+                    }
+                },
+                default: "save"
+            }).render(true);
         });
         
         html.find('.delete-group-btn').click(async ev => {
@@ -414,6 +447,13 @@ activateListeners(html) {
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const groupId = $(ev.currentTarget).closest('.modifier-group').data('group-id');
             await this._removeItemFromGroup(groupId, uuid);
+        });
+
+        html.on('click', ev => {
+            const target = $(ev.target);
+            if (!target.closest('.group-actions').length) {
+                html.find('.group-actions.is-open').removeClass('is-open');
+            }
         });
 
         // ===========================================================
@@ -1192,6 +1232,13 @@ async _applySelectionToActor(actor, tokenId) {
             config.groups = (config.groups || []).filter(g => g.id !== groupId);
             await this._saveConfig(config);
         }
+    }
+    async _renameGroup(groupId, newName) {
+        const config = await this._normalizeConfig();
+        const group = (config.groups || []).find(g => g.id === groupId);
+        if (!group) return;
+        group.name = newName;
+        await this._saveConfig(config);
     }
     async _addItemsToGroup(groupId, items) {
         const config = await this._normalizeConfig();

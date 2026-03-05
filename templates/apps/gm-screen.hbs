@@ -141,9 +141,15 @@
                                 </button>
                                 <span class="group-title">{{group.name}}</span>
                                 <div class="group-actions">
-                                    <a class="add-mod-to-group-btn" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i></a>
-                                    <a class="add-effect-to-group-btn" data-group-id="{{group.id}}" title="Adicionar efeito"><i class="fas fa-sparkles"></i></a>
-                                    <a class="delete-group-btn" data-group-id="{{group.id}}"><i class="fas fa-trash"></i></a>
+                                    <button type="button" class="group-menu-trigger" data-group-id="{{group.id}}" title="Opções do grupo">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="group-actions-menu" data-group-id="{{group.id}}">
+                                        <a class="add-mod-to-group-btn" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i> Adicionar Modificador</a>
+                                        <a class="add-effect-to-group-btn" data-group-id="{{group.id}}" title="Adicionar efeito"><i class="fas fa-sparkles"></i> Adicionar Efeito</a>
+                                        <a class="edit-group-name-btn" data-group-id="{{group.id}}" data-group-name="{{group.name}}"><i class="fas fa-pen"></i> Editar Nome do Grupo</a>
+                                        <a class="delete-group-btn" data-group-id="{{group.id}}"><i class="fas fa-trash"></i> Excluir Grupo</a>
+                                    </div>
                                 </div>
                             </div>
                             <div class="group-content-area">
