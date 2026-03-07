@@ -27,6 +27,21 @@ const isEffectDurationPermanent = (duration = {}) => {
     if (duration._uiMode === "permanent") return true;
     return duration.isPermanent === true;
 };
+
+const normalizeEffectDurationFlags = (duration = {}) => {
+    const normalized = foundry.utils.duplicate(duration || {});
+    if (isEffectDurationPermanent(normalized)) {
+        normalized.isPermanent = true;
+        normalized.inCombat = false;
+        normalized._uiMode = "permanent";
+    }
+    return normalized;
+};
+
+const isCombatDuration = (duration = {}) => {
+    if (!duration || typeof duration !== "object") return false;
+    return duration.inCombat === true && !isEffectDurationPermanent(duration);
+};
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
 // ================================================================== //
@@ -1149,7 +1164,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                         }
                     }
 
-                   const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                    const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                     const startMode = gumDuration.startMode || "apply";
                     const endMode = gumDuration.endMode || "turnEnd";
                     const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -1178,15 +1193,15 @@ Hooks.on("createItem", async (item, options, userId) => {
                     };
 
                     // --- INÍCIO DO CÓDIGO DE DURAÇÃO COMPLETO ---
-                    if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
+                     if (!isEffectDurationPermanent(gumDuration)) {
                         activeEffectData.duration = {};
-                        const value = parseInt(effectSystem.duration.value) || 1;
-                        const unit = effectSystem.duration.unit;
+                        const value = parseInt(gumDuration.value) || 1;
+                        const unit = gumDuration.unit;
 
                         if (unit === 'turns') {
                             activeEffectData.duration.turns = value;
                         } else if (unit === 'seconds') {
-                            if (effectSystem.duration.inCombat && game.combat) {
+                            if (gumDuration.inCombat && game.combat) {
                                 activeEffectData.duration.turns = value; // 1s = 1 turno em combate
                             } else {
                                 activeEffectData.duration.seconds = value;
@@ -1201,7 +1216,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             activeEffectData.duration.seconds = value * 60 * 60 * 24;
                         }
 
-                        if (effectSystem.duration.inCombat && game.combat) {
+                        if (gumDuration.inCombat && game.combat) {
                             activeEffectData.duration.combat = game.combat.id;
                         }
                         if (!pendingCombat && !shouldDelayStart) {
@@ -1312,7 +1327,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             if (statusEffect) { effectImage = statusEffect.icon; }
                         }
 
-                        const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                        const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                         const startMode = gumDuration.startMode || "apply";
                         const endMode = gumDuration.endMode || "turnEnd";
                         const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -1332,15 +1347,15 @@ Hooks.on("createItem", async (item, options, userId) => {
                             disabled: pendingCombat || shouldDelayStart
                         };
 
-                        if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
+                        if (!isEffectDurationPermanent(gumDuration)) {
                             activeEffectData.duration = {};
-                            const value = parseInt(effectSystem.duration.value) || 1;
-                            const unit = effectSystem.duration.unit;
+                            const value = parseInt(gumDuration.value) || 1;
+                            const unit = gumDuration.unit;
 
                             if (unit === 'turns') {
                                 activeEffectData.duration.turns = value;
                             } else if (unit === 'seconds') {
-                                if (effectSystem.duration.inCombat && game.combat) {
+                                if (gumDuration.inCombat && game.combat) {
                                     activeEffectData.duration.turns = value;
                                 } else {
                                     activeEffectData.duration.seconds = value;
@@ -1355,7 +1370,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                                 activeEffectData.duration.seconds = value * 60 * 60 * 24;
                             }
 
-                            if (effectSystem.duration.inCombat && game.combat) {
+                            if (gumDuration.inCombat && game.combat) {
                                 activeEffectData.duration.combat = game.combat.id;
                             }
                             activeEffectData.duration.startRound = game.combat?.round ?? null;
@@ -2355,7 +2370,7 @@ async function processConditions(actor, eventData = null) {
                             );
                             if (!existingConditionEffect || isPulseEvent) {
                                 const effectSystem = effectItem.system;
-                                const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                                 const startMode = gumDuration.startMode || "apply";
                                 const endMode = gumDuration.endMode || "turnEnd";
                                 const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -2387,15 +2402,15 @@ async function processConditions(actor, eventData = null) {
                                     : (effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true }));
                                 foundry.utils.setProperty(effectData, "flags.core.statusId", coreStatusId);
 
-                                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)) {
+                                if (!isEffectDurationPermanent(gumDuration)) {
                                     effectData.duration = {};
-                                    const value = parseInt(effectSystem.duration.value) || 1;
-                                    const unit = effectSystem.duration.unit;
+                                    const value = parseInt(gumDuration.value) || 1;
+                                    const unit = gumDuration.unit;
 
                                     if (unit === "turns") {
                                         effectData.duration.turns = value;
                                     } else if (unit === "seconds") {
-                                        if (effectSystem.duration.inCombat && game.combat) {
+                                        if (gumDuration.inCombat && game.combat) {
                                             effectData.duration.turns = value;
                                         } else {
                                             effectData.duration.seconds = value;
@@ -2410,7 +2425,7 @@ async function processConditions(actor, eventData = null) {
                                         effectData.duration.seconds = value * 60 * 60 * 24;
                                     }
 
-                                    if (effectSystem.duration.inCombat && game.combat) {
+                                    if (gumDuration.inCombat && game.combat) {
                                         effectData.duration.combat = game.combat.id;
                                     }
                                     if (!pendingCombat && !shouldDelayStart) {
@@ -2528,7 +2543,7 @@ async function manageActiveEffectDurations(actor) {
             const fallbackValue = parseInt(gumDuration.value) || 1;
             const unit = gumDuration.unit || "rounds";
 
-            if (gumDuration.inCombat) {
+            if (isCombatDuration(gumDuration)) {
                 if (unit === "turns") {
                     updateData["duration.turns"] = fallbackValue;
                 } else {
@@ -2707,7 +2722,7 @@ async function handleCombatStart(combat) {
     if (!combat || !game.user.isGM) return;
     const pendingEffects = collectCombatEffects(combat, (effect) => {
         const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
-        return gumDuration.inCombat === true
+        return isCombatDuration(gumDuration)
             && gumDuration.pendingCombat === true
             && foundry.utils.getProperty(effect, "flags.gum.manualDisabled") !== true;
     });
@@ -2754,7 +2769,7 @@ async function handleCombatEnd(combat) {
     if (!combat || !game.user.isGM) return;
     const combatEffects = collectCombatEffects(combat, (effect) => {
         const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
-        return gumDuration.inCombat === true;
+        return isCombatDuration(gumDuration);
     });
 
     if (combatEffects.size === 0) return;

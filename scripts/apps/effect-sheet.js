@@ -66,6 +66,14 @@ export class EffectSheet extends ItemSheet {
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
             context.system.duration.endMode = context.system.duration.endMode || "turnEnd";
+            if (context.system.duration.isPermanent) {
+                context.system.duration.inCombat = false;
+                context.system.duration._uiMode = "permanent";
+            } else if (context.system.duration.inCombat) {
+                context.system.duration._uiMode = "combat";
+            } else {
+                context.system.duration._uiMode = context.system.duration._uiMode || "permanent";
+            }
         }
         context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
 
@@ -249,11 +257,11 @@ activateListeners(html) {
     });
     html.find(".duration-mode-select").on("change", async (ev) => {
     const mode = ev.currentTarget.value;
-
     const isPermanent = mode === "permanent";
     const inCombat = mode === "combat";
 
     await this.item.update({
+        "system.duration._uiMode": mode,
         "system.duration.isPermanent": isPermanent,
         "system.duration.inCombat": inCombat
     });

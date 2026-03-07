@@ -49,6 +49,16 @@ const isEffectDurationPermanent = (duration = {}) => {
     return duration.isPermanent === true;
 };
 
+const normalizeEffectDurationFlags = (duration = {}) => {
+    const normalized = foundry.utils.duplicate(duration || {});
+    if (isEffectDurationPermanent(normalized)) {
+        normalized.isPermanent = true;
+        normalized.inCombat = false;
+        normalized._uiMode = "permanent";
+    }
+    return normalized;
+};
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
@@ -80,7 +90,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         case 'flag': {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
-               const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                 const startMode = gumDuration.startMode || "apply";
                 const endMode = gumDuration.endMode || "turnEnd";
                 const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -99,6 +109,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     flags: {
                         gum: {
                             effectUuid: effectItem.uuid,
+                            source: context.source || null,
                             duration: gumDuration,
                             ...conditionFlags
                         }
@@ -110,15 +121,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                // =============================================================
                 // ✅ LÓGICA DE DURAÇÃO FINAL (Sincronizada com createItem)
                 // =============================================================
-if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
+                if (!isEffectDurationPermanent(gumDuration)){
                     activeEffectData.duration = {};
-                    const value = parseInt(effectSystem.duration.value) || 1; 
-                    const unit = effectSystem.duration.unit;
+                    const value = parseInt(gumDuration.value) || 1; 
+                    const unit = gumDuration.unit;
 
                     if (unit === 'turns') {
                         activeEffectData.duration.turns = value;
                     } else if (unit === 'seconds') {
-                        if (effectSystem.duration.inCombat && game.combat) {
+                        if (gumDuration.inCombat && game.combat) {
                             activeEffectData.duration.turns = value; // 1s = 1 turno em combate
                         } else {
                             activeEffectData.duration.seconds = value;
@@ -133,7 +144,7 @@ if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
                         activeEffectData.duration.seconds = value * 60 * 60 * 24;
                     }
                     
-                  if (effectSystem.duration.inCombat && game.combat) {
+                    if (gumDuration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
                     // Marca o ponto de início para que a expiração funcione corretamente
@@ -181,7 +192,7 @@ if (effectSystem.attachedStatusId) {
         case 'roll_modifier': {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
-                const gumDuration = foundry.utils.duplicate(effectSystem.duration || {});
+                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                 const startMode = gumDuration.startMode || "apply";
                 const endMode = gumDuration.endMode || "turnEnd";
                 const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -200,6 +211,7 @@ if (effectSystem.attachedStatusId) {
                     flags: {
                         gum: {
                             effectUuid: effectItem.uuid,
+                            source: context.source || null,
                             duration: gumDuration,
                             rollModifier: (() => {
                                 const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
@@ -222,15 +234,15 @@ if (effectSystem.attachedStatusId) {
                     disabled: pendingCombat || shouldDelayStart
                 };
 
-                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
+                if (!isEffectDurationPermanent(gumDuration)){
                     activeEffectData.duration = {};
-                    const value = parseInt(effectSystem.duration.value) || 1;
-                    const unit = effectSystem.duration.unit;
+                    const value = parseInt(gumDuration.value) || 1;
+                    const unit = gumDuration.unit;
 
                     if (unit === 'turns') {
                         activeEffectData.duration.turns = value;
                     } else if (unit === 'seconds') {
-                        if (effectSystem.duration.inCombat && game.combat) {
+                        if (gumDuration.inCombat && game.combat) {
                             activeEffectData.duration.turns = value;
                         } else {
                             activeEffectData.duration.seconds = value;
@@ -245,7 +257,7 @@ if (effectSystem.attachedStatusId) {
                         activeEffectData.duration.seconds = value * 60 * 60 * 24;
                     }
 
-                   if (effectSystem.duration.inCombat && game.combat) {
+                    if (gumDuration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
                     if (!pendingCombat && !shouldDelayStart) {
@@ -280,6 +292,7 @@ if (effectSystem.attachedStatusId) {
                 const statusId = effectSystem.statusId;
                 const statusEffect = CONFIG.statusEffects.find(effect => effect.id === statusId);
                 const statusIcon = statusEffect?.icon ?? statusEffect?.img ?? effectItem.img;
+                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
 
                 const activeEffectData = {
                     name: effectItem.name,
@@ -291,22 +304,23 @@ if (effectSystem.attachedStatusId) {
                         core: { statusId },
                         gum: {
                             effectUuid: effectItem.uuid,
-                            duration: foundry.utils.duplicate(effectSystem.duration || {}),
+                            source: context.source || null,
+                            duration: gumDuration,
                             ...conditionFlags
                         }
                     }
                 };
 
                 // Duração (mesma lógica dos outros tipos)
-                if (effectSystem.duration && !isEffectDurationPermanent(effectSystem.duration)){
+                if (!isEffectDurationPermanent(gumDuration)){
                     activeEffectData.duration = {};
-                    const value = parseInt(effectSystem.duration.value) || 1; 
-                    const unit = effectSystem.duration.unit;
+                    const value = parseInt(gumDuration.value) || 1; 
+                    const unit = gumDuration.unit;
 
                     if (unit === 'turns') {
                         activeEffectData.duration.turns = value;
                     } else if (unit === 'seconds') {
-                        if (effectSystem.duration.inCombat && game.combat) {
+                        if (gumDuration.inCombat && game.combat) {
                             activeEffectData.duration.turns = value; // 1s = 1 turno em combate
                         } else {
                             activeEffectData.duration.seconds = value;
@@ -321,7 +335,7 @@ if (effectSystem.attachedStatusId) {
                         activeEffectData.duration.seconds = value * 60 * 60 * 24;
                     }
                     
-                    if (effectSystem.duration.inCombat && game.combat) {
+                    if (gumDuration.inCombat && game.combat) {
                         activeEffectData.duration.combat = game.combat.id;
                     }
                     activeEffectData.duration.startRound = game.combat?.round ?? null;

@@ -122,7 +122,11 @@ async getData() {
         const attr = actor.system.attributes;
         const activeGMMods = actor.getFlag("gum", "gm_modifiers") || [];
         const activeGMEffects = Array.from(actor.effects || [])
-            .filter(effect => !effect.disabled)
+            .filter(effect => {
+                if (effect.disabled) return false;
+                const source = foundry.utils.getProperty(effect, "flags.gum.source");
+                return source === "GM Screen";
+            })
             .map(effect => ({
                 id: effect.id,
                 name: effect.name
@@ -167,7 +171,7 @@ activateListeners(html) {
         // ===========================================================
         html.find('.monitor-card').click(async ev => {
             // Ignora cliques em botões internos (remover, link, etc)
-            if ($(ev.target).closest('.remove-mod, .actor-identity').length) return;
+            if ($(ev.target).closest('.remove-mod, .actor-identity, .active-mod-tag').length) return;
             
             // Se nada selecionado, não faz nada
             if (this.selectedModifiers.size === 0) return;
