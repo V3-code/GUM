@@ -426,6 +426,9 @@
     margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .gum.sheet.actor .cluster-title { font-family: var(--gum-font-secondary); font-size: 10px; color: var(--gum-text-subtitulo); }
+.gum.sheet.actor .cluster-actions { display: inline-flex; align-items: center; gap: 8px; }
+.gum.sheet.actor .cluster-actions a { color: var(--gum-text-subtitulo); font-size: 12px; }
+.gum.sheet.actor .cluster-actions a:hover { color: var(--gum-accent-gold); }
 
 .gum.sheet.actor .dice-row { display: flex; gap: 5px; margin-bottom: 10px; }
 .gum.sheet.actor .d6-stat { position: relative; flex: 1; height: 50px; }

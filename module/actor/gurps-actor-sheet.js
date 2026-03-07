@@ -1252,6 +1252,8 @@ activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
 
+html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecondaryStats(ev));
+
 // -------------------------------------------------------------
 //  BIOGRAFIA - Editor de História
 // -------------------------------------------------------------
@@ -2671,22 +2673,22 @@ default: 'save'
                         <div class="basic-damage-col-title">Dano Básico</div>
                         <div class="form-row basic-damage-row">
                             <label>GdP</label>
-                            <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d-2"/>
+                            <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d6-2"/>
                         </div>
                         <div class="form-row basic-damage-row">
                             <label>GeB</label>
-                            <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d"/>
+                            <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d6"/>
                         </div>
                     </div>
                     <div class="basic-damage-col">
                         <div class="basic-damage-col-title">Dano Alternativo</div>
                         <div class="form-row basic-damage-row">
                             <label>GdPa</label>
-                            <input type="text" name="thrust_damage_alt" value="${thrustDamageAlt}" placeholder="ex: 2d-1"/>
+                            <input type="text" name="thrust_damage_alt" value="${thrustDamageAlt}" placeholder="ex: 2d6-1"/>
                         </div>
                         <div class="form-row basic-damage-row">
                             <label>GeBa</label>
-                            <input type="text" name="swing_damage_alt" value="${swingDamageAlt}" placeholder="ex: 2d"/>
+                            <input type="text" name="swing_damage_alt" value="${swingDamageAlt}" placeholder="ex: 2d6"/>
                         </div>
                     </div>
                 </div>
@@ -3469,6 +3471,99 @@ _renderQuickView(item) {
 
 
 
+
+async _onRecalculateSecondaryStats(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const confirmed = await Dialog.confirm({
+    title: "Recalcular Atributos Secundários",
+    content: `
+      <p>Deseja recalcular os <b>valores base</b> dos atributos secundários usando os atributos primários atuais?</p>
+      <p style="opacity:.8">Esta ação não altera modificadores fixos, passivos, temporários ou overrides.</p>
+    `,
+    yes: () => true,
+    no: () => false,
+    defaultYes: false
+  });
+
+  if (!confirmed) return;
+
+  const actor = this.actor;
+  const attrs = actor.system.attributes || {};
+  const st = Number(attrs.st?.value) || 0;
+  const dx = Number(attrs.dx?.value) || 0;
+  const ht = Number(attrs.ht?.value) || 0;
+  const per = Number(attrs.per?.value) || 0;
+
+  const basicSpeed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
+  const basicMove = Math.floor(basicSpeed);
+  const damage = this._getBasicDamageFromST(st);
+
+  await actor.update({
+    "system.attributes.hp.max": st,
+    "system.attributes.fp.max": ht,
+    "system.attributes.basic_speed.value": basicSpeed,
+    "system.attributes.basic_move.value": basicMove,
+    "system.attributes.lifting_st.value": st,
+    "system.attributes.vision.value": per,
+    "system.attributes.hearing.value": per,
+    "system.attributes.tastesmell.value": per,
+    "system.attributes.touch.value": per,
+    "system.attributes.thrust_damage": damage.thrust,
+    "system.attributes.swing_damage": damage.swing
+  });
+
+  ui.notifications.info("Atributos secundários base recalculados com sucesso.");
+}
+
+_getBasicDamageFromST(stValue) {
+  const st = Math.max(1, Math.floor(Number(stValue) || 1));
+  const table = {
+   1: { thrust: "1d6-6", swing: "1d6-5" },
+    2: { thrust: "1d6-6", swing: "1d6-5" },
+    3: { thrust: "1d6-5", swing: "1d6-4" },
+    4: { thrust: "1d6-5", swing: "1d6-4" },
+    5: { thrust: "1d6-4", swing: "1d6-3" },
+    6: { thrust: "1d6-4", swing: "1d6-3" },
+    7: { thrust: "1d6-3", swing: "1d6-2" },
+    8: { thrust: "1d6-3", swing: "1d6-2" },
+    9: { thrust: "1d6-2", swing: "1d6-1" },
+    10: { thrust: "1d6-2", swing: "1d6" },
+    11: { thrust: "1d6-1", swing: "1d6+1" },
+    12: { thrust: "1d6-1", swing: "1d6+2" },
+    13: { thrust: "1d6", swing: "2d6-1" },
+    14: { thrust: "1d6", swing: "2d6" },
+    15: { thrust: "1d6+1", swing: "2d6+1" },
+    16: { thrust: "1d6+1", swing: "2d6+2" },
+    17: { thrust: "1d6+2", swing: "3d6-1" },
+    18: { thrust: "1d6+2", swing: "3d6" },
+    19: { thrust: "2d6-1", swing: "3d6+1" },
+    20: { thrust: "2d6-1", swing: "3d6+2" },
+    21: { thrust: "2d6", swing: "4d6-1" },
+    22: { thrust: "2d6", swing: "4d6" },
+    23: { thrust: "2d6+1", swing: "4d6+1" },
+    24: { thrust: "2d6+1", swing: "4d6+2" },
+    25: { thrust: "2d6+2", swing: "5d6-1" },
+    26: { thrust: "2d6+2", swing: "5d6" },
+    27: { thrust: "3d6-1", swing: "5d6+1" },
+    28: { thrust: "3d6-1", swing: "5d6+1" },
+    29: { thrust: "3d6", swing: "5d6+2" },
+    30: { thrust: "3d6", swing: "5d6+2" }
+  };
+
+  if (table[st]) return table[st];
+
+  const bonusDice = Math.floor((st - 30) / 10);
+  const thrustDice = 3 + bonusDice;
+  const swingDice = 5 + (bonusDice * 2);
+
+  return {
+    thrust: `${thrustDice}d`,
+    swing: `${swingDice}d`
+  };
+}
+
 /**
  * Abre um diálogo simples para editar as fórmulas de Dano Básico (GdP/GeB).
  * Campos: system.attributes.thrust_damage e system.attributes.swing_damage
@@ -3487,23 +3582,23 @@ async _onEditBasicDamage(ev) {
     <form class="gum-dialog-content basic-damage-editor">
       <div class="form-group">
         <label>GdP (Thrust)</label>
-        <input type="text" name="thrust" value="${thrust}" placeholder="ex: 1d-2" />
+        <input type="text" name="thrust" value="${thrust}" placeholder="ex: 1d6-2" />
       </div>
       <div class="form-group">
         <label>GeB (Swing)</label>
-        <input type="text" name="swing" value="${swing}" placeholder="ex: 1d" />
+        <input type="text" name="swing" value="${swing}" placeholder="ex: 1d6" />
       </div>
       <hr/>
       <div class="form-group">
         <label>GdPa (Thrust Alt)</label>
-        <input type="text" name="thrust_alt" value="${thrustAlt}" placeholder="ex: 2d-1" />
+        <input type="text" name="thrust_alt" value="${thrustAlt}" placeholder="ex: 2d6-1" />
       </div>
       <div class="form-group">
         <label>GeBa (Swing Alt)</label>
-        <input type="text" name="swing_alt" value="${swingAlt}" placeholder="ex: 2d" />
+        <input type="text" name="swing_alt" value="${swingAlt}" placeholder="ex: 2d6" />
       </div>
       <p style="opacity:0.75; font-size: 12px; margin-top: 8px;">
-        Dica: aqui você pode registrar a fórmula final exibida na ficha (ex.: <b>2d+1</b>).
+        Dica: aqui você pode registrar a fórmula final exibida na ficha (ex.: <b>2d6+1</b>).
       </p>
     </form>
   `;
