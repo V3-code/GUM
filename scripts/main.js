@@ -1490,6 +1490,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                     combatant.token.object.refresh();
                 }
             }
+            refreshGMScreen();
             return; // Encerra aqui, não precisa processar turnos
         }
         // ==========================================================
@@ -1522,6 +1523,10 @@ Hooks.on("createItem", async (item, options, userId) => {
                 actor.getActiveTokens().forEach(token => token.drawEffects()); 
             }
         }
+
+        // Mantém o Escudo do Mestre sincronizado após toda a cadeia assíncrona
+        // de início/fim de turno e expiração de efeitos.
+        refreshGMScreen();
     });
 
     // ==========================================================
@@ -2972,10 +2977,7 @@ function refreshGMScreen() {
     }
 }
 
-// 1. MUDANÇAS NO COMBATE (Turno, Rodada, Ativação)
-Hooks.on("updateCombat", refreshGMScreen);
-
-// 2. CRIAÇÃO E FIM DE COMBATE (Para limpar/popular a lista)
+// 1. CRIAÇÃO E FIM DE COMBATE (Para limpar/popular a lista)
 Hooks.on("createCombat", refreshGMScreen);
 Hooks.on("deleteCombat", refreshGMScreen); // ✅ Resolve o problema da lista não limpar
 
@@ -2992,5 +2994,19 @@ Hooks.on("updateToken", (tokenDocument) => {
     if (game.combat) refreshGMScreen();
 });
 
-// 5. MUDANÇAS NA CENA (Adicionar/Remover tokens)
+// 5. MUDANÇAS DIRETAS EM EFEITOS ATIVOS (remoção)
+// Mantemos somente a remoção aqui para evitar renders intermediários durante
+// aplicações em lote (ex.: 2+ efeitos no mesmo clique no Escudo do Mestre).
+const refreshFromDeletedActiveEffect = (effect) => {
+    const actor = effect?.parent;
+    if (!actor) return;
+
+    if (actor.hasPlayerOwner || game.combat) {
+        refreshGMScreen();
+    }
+};
+
+Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
+
+// 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
