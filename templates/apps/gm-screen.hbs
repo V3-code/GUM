@@ -35,7 +35,11 @@
                     {{/if}}
                 </div>
 
-                {{!-- NOVO: CONTROLES DE COMBATE (RODAPÉ) --}}
+
+            </div>   
+        </section>
+        <section class="sidebar-collapsible-stack">
+                            {{!-- NOVO: CONTROLES DE COMBATE (RODAPÉ) --}}
                 {{#if hasCombat}}
                 <div class="combat-controls">
                     <button class="combat-btn prev-turn" title="Turno Anterior"><i class="fas fa-backward"></i></button>
@@ -43,9 +47,6 @@
                     <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i></button>
                 </div>
                 {{/if}}
-            </div>   
-        </section>
-        <section class="sidebar-collapsible-stack">
             <div class="collapsible-block {{#unless quickRollCollapsed}}is-open{{/unless}}" data-block="quick-roll">
                 <button type="button" class="collapse-toggle" data-action="toggle-block" data-block="quick-roll">
                     <span class="dashboard-caption">

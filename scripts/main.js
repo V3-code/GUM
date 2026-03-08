@@ -2540,6 +2540,20 @@ async function manageActiveEffectDurations(actor) {
         const isPendingStart = gumDuration.pendingStart === true;
 
         if (effect.disabled || isPendingCombat || isPendingStart) continue;
+
+        // Em combate, "rounds" representa ciclos completos do alvo.
+        // O incremento do contador acontece no início do turno do alvo; aqui,
+        // no fim do turno, apenas verificamos expiração para endMode=turnEnd.
+        if (duration.rounds && isCombatDuration(gumDuration)) {
+            const elapsedTargetTurns = Number(gumDuration.elapsedTargetTurns) || 0;
+            if (endMode === "turnEnd" && elapsedTargetTurns >= Math.max(duration.rounds, 1)) {
+                effectsToDelete.push(effect.id);
+            } else if (Object.keys(updateData).length > 1) {
+                effectsToUpdate.push(updateData);
+            }
+            continue;
+        }
+
         if (endMode === "turnStart") continue;
 
         // Se o efeito foi marcado como "apenas em combate" no item original e ainda não
@@ -2589,7 +2603,7 @@ async function manageActiveEffectDurations(actor) {
             updateData["duration.startTime"] = startTime;
         }
 
-        // Expiração por rodadas
+                // Expiração por rodadas fora de combate (mantém lógica baseada em tempo global)
         if (duration.rounds) {
             const lastRound = startRound + Math.max(duration.rounds - 1, 0);
             const isExpired = currentRound >= lastRound;
@@ -2670,9 +2684,10 @@ async function handleCombatTurnStart(combatant) {
 
         const updateData = { _id: effect.id };
 
-        if (isPendingStart) {
+  if (isPendingStart) {
             setEffectStartData(effect, updateData, game.combat);
             updateData["flags.gum.duration.pendingStart"] = false;
+            updateData["flags.gum.duration.elapsedTargetTurns"] = 0;
             updateData["disabled"] = false;
             effectsToUpdate.push(updateData);
             continue;
@@ -2680,11 +2695,25 @@ async function handleCombatTurnStart(combatant) {
 
         if (effect.disabled) continue;
 
-        if (endMode !== "turnStart") continue;
-
         if (duration.startRound == null || duration.startTurn == null || duration.startTime == null) {
             setEffectStartData(effect, updateData, game.combat);
         }
+
+        if (duration.rounds && isCombatDuration(gumDuration)) {
+            const elapsedTargetTurns = Number(gumDuration.elapsedTargetTurns) || 0;
+            const nextElapsed = elapsedTargetTurns + 1;
+
+            updateData["flags.gum.duration.elapsedTargetTurns"] = nextElapsed;
+
+            if (endMode === "turnStart" && nextElapsed >= Math.max(duration.rounds, 1)) {
+                effectsToDelete.push(effect.id);
+            } else {
+                effectsToUpdate.push(updateData);
+            }
+            continue;
+        }
+
+        if (endMode !== "turnStart") continue;
 
         if (duration.rounds) {
             const startRound = duration.startRound ?? currentRound;
