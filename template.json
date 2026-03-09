@@ -73,8 +73,7 @@
       }
     }, 
   "Item": {
-    "types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier", "gm_modifier"],
-    
+"types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier", "gm_modifier", "template"],
     "templates": {
       "base": {
         "description": "",
@@ -272,6 +271,12 @@
             "sense_touch": false
         }
     },
+    "template": {
+  "templates": ["base"],
+  "schemaVersion": 1,
+  "model_category": "generic",
+  "blocks": []
+},
     "trigger": { "templates": ["base"], "code": "" },
     "effect": {
       "templates": ["base"],

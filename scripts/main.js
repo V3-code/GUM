@@ -9,6 +9,7 @@ import { GurpsArmorSheet } from "../module/item/gurps-armor-sheet.js";
 import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
+import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
 import { registerSystemSettings } from "../module/settings.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -1063,6 +1064,11 @@ Hooks.once('init', async function() {
     makeDefault: true 
     });
     ItemsCollection.registerSheet("gum", GurpsArmorSheet, { types: ["armor"], makeDefault: true, label: "Ficha de Armadura" });
+        ItemsCollection.registerSheet("gum", TemplateItemSheet, {
+        types: ["template"],
+        makeDefault: true,
+        label: "Modelo"
+    });
 
     
     

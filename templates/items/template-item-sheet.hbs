@@ -1,0 +1,197 @@
+<form class="{{cssClass}} gum-item-sheet template-item-sheet" autocomplete="off">
+  <header class="sheet-header">
+    <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+    <div class="header-info">
+      <div class="header-main-line">
+        <textarea name="name" rows="1" placeholder="Nome do Modelo">{{item.name}}</textarea>
+      </div>
+      <div class="header-subline">
+        <span class="item-type-tag">Modelo</span>
+      </div>
+      <span class="header-divider" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <section class="sheet-content">
+    <nav class="sheet-tabs tabs" data-group="primary">
+      <a class="item" data-tab="description">Descrição</a>
+      <a class="item" data-tab="structure">Estrutura</a>
+    </nav>
+
+    <section class="sheet-body-content">
+      <div class="tab" data-tab="description">
+        <div class="description-tab">
+          <div class="description-grid">
+            <div class="form-section description-section">
+              <div class="description-header">
+                <div>
+                  <h4 class="section-title">Descrição Resumida (Chat)</h4>
+                </div>
+              </div>
+              {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+            </div>
+
+            <div class="form-section description-section">
+              <div class="description-header">
+                <div>
+                  <h4 class="section-title">Descrição Completa</h4>
+                </div>
+              </div>
+              {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab template-structure-tab" data-tab="structure">
+        <div class="template-toolbar">
+          <button type="button" class="add-template-block">
+            <i class="fas fa-plus"></i> Adicionar Bloco
+          </button>
+        </div>
+
+        <div class="template-block-list">
+          {{#each blocks as |block|}}
+          <section class="template-block" data-block-id="{{block.id}}">
+            <header class="template-block-header">
+              <div class="template-block-heading">
+                <h3 class="template-block-title">{{block.displayTitle}}</h3>
+                <span class="template-block-badge">{{block.typeLabel}}</span>
+                <div class="template-block-summary">{{block.summaryText}}</div>
+              </div>
+
+              <div class="template-block-controls">
+                <a class="toggle-block-editor" data-block-id="{{block.id}}" title="Expandir/Recolher">
+                  <i class="fas {{#if block.collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
+                </a>
+                <a class="move-template-block" data-block-id="{{block.id}}" data-direction="up" title="Mover para cima">
+                  <i class="fas fa-arrow-up"></i>
+                </a>
+                <a class="move-template-block" data-block-id="{{block.id}}" data-direction="down" title="Mover para baixo">
+                  <i class="fas fa-arrow-down"></i>
+                </a>
+                <a class="delete-template-block" data-block-id="{{block.id}}" title="Remover bloco">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+            </header>
+
+            {{#unless block.collapsed}}
+            <div class="template-block-editor">
+              <div class="template-block-fields">
+                <div class="form-group">
+                  <label>Título customizado</label>
+                  <input type="text"
+                         class="block-field"
+                         data-block-id="{{block.id}}"
+                         data-field="title"
+                         value="{{block.title}}"
+                         placeholder="Deixe vazio para usar o título padrão"/>
+                </div>
+
+                {{#if block.isSelection}}
+                <div class="form-group input-narrow">
+                  <label>Quantidade a escolher</label>
+                  <input type="number"
+                         class="block-field"
+                         data-block-id="{{block.id}}"
+                         data-field="choiceCount"
+                         value="{{block.choiceCount}}"
+                         min="1"/>
+                </div>
+                {{/if}}
+
+                {{#if block.isPoints}}
+                <div class="form-group input-narrow">
+                  <label>Pontos disponíveis</label>
+                  <input type="number"
+                         class="block-field"
+                         data-block-id="{{block.id}}"
+                         data-field="pointsAvailable"
+                         value="{{block.pointsAvailable}}"
+                         min="0"/>
+                </div>
+                {{/if}}
+              </div>
+
+
+
+              <div class="template-block-table-wrap">
+                <table class="template-block-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Qtd</th>
+                      <th>Nível</th>
+                      <th>Custo</th>
+                      <th>Controles</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each block.contents as |entry|}}
+                    <tr>
+                      <td>
+                        <div class="template-entry-name">{{entry.rowName}}</div>
+                        {{#if entry.rowSubtitle}}
+                        <div class="template-entry-subtitle">{{entry.rowSubtitle}}</div>
+                        {{/if}}
+                      </td>
+                      <td>{{entry.rowQty}}</td>
+                      <td>{{entry.rowLevel}}</td>
+                      <td>{{entry.rowCost}}</td>
+                      <td>
+                        <div class="template-entry-controls">
+                          <a class="edit-block-entry"
+                             data-block-id="{{block.id}}"
+                             data-entry-id="{{entry.id}}"
+                             title="Editar">
+                            <i class="fas fa-edit"></i>
+                          </a>
+                          <a class="delete-block-entry"
+                             data-block-id="{{block.id}}"
+                             data-entry-id="{{entry.id}}"
+                             title="Remover">
+                            <i class="fas fa-trash"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                    {{/each}}
+
+                    <tr class="template-drop-row">
+                      <td colspan="5">
+                        <div class="template-dropzone" data-block-id="{{block.id}}">
+                          <i class="fas fa-box-open"></i>
+                          <span>
+                            {{#if block.contents.length}}
+                              Arraste mais itens para este bloco
+                            {{else}}
+                              Arraste perícias, vantagens, desvantagens, magias, poderes ou equipamentos para este bloco
+                            {{/if}}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+                <div class="template-block-actions">
+                    <button type="button" class="add-block-attribute" data-block-id="{{block.id}}">
+                    <i class="fas fa-sliders-h"></i> Adicionar Atributo
+                    </button>
+                </div>
+
+            </div>
+            {{/unless}}
+          </section>
+          {{else}}
+          <div class="template-empty-state">
+            Nenhum bloco criado ainda.
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </section>
+  </section>
+</form>
