@@ -44,9 +44,10 @@
       </div>
 
       <div class="tab template-structure-tab" data-tab="structure">
-        <div class="template-toolbar">
-          <button type="button" class="add-template-block">
-            <i class="fas fa-plus"></i> Adicionar Bloco
+        <div class="template-blocks-header">
+          <h3 class="template-blocks-title">Blocos</h3>
+          <button type="button" class="add-template-block template-blocks-add" title="Adicionar bloco">
+            <i class="fas fa-plus"></i>
           </button>
         </div>
 
@@ -54,23 +55,18 @@
           {{#each blocks as |block|}}
           <section class="template-block" data-block-id="{{block.id}}">
             <header class="template-block-header">
+              <img class="template-block-icon" src="{{block.icon}}" alt="{{block.typeLabel}}" />
+
               <div class="template-block-heading">
                 <h3 class="template-block-title">{{block.displayTitle}}</h3>
-                <span class="template-block-badge">{{block.typeLabel}}</span>
                 <div class="template-block-summary">{{block.summaryText}}</div>
               </div>
 
-              <div class="template-block-controls">
-                <a class="toggle-block-editor" data-block-id="{{block.id}}" title="Expandir/Recolher">
-                  <i class="fas {{#if block.collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
+              <div class="item-controls template-block-controls">
+                <a class="item-control edit-template-block" data-block-id="{{block.id}}" title="Editar bloco">
+                  <i class="fas fa-edit"></i>
                 </a>
-                <a class="move-template-block" data-block-id="{{block.id}}" data-direction="up" title="Mover para cima">
-                  <i class="fas fa-arrow-up"></i>
-                </a>
-                <a class="move-template-block" data-block-id="{{block.id}}" data-direction="down" title="Mover para baixo">
-                  <i class="fas fa-arrow-down"></i>
-                </a>
-                <a class="delete-template-block" data-block-id="{{block.id}}" title="Remover bloco">
+                <a class="item-control delete-template-block" data-block-id="{{block.id}}" title="Remover bloco">
                   <i class="fas fa-trash"></i>
                 </a>
               </div>

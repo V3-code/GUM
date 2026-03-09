@@ -31,6 +31,7 @@ export class TemplateItemSheet extends ItemSheet {
             const typeLabel = this._getBlockTypeLabel(block.type);
             const displayTitle = (block.title || "").trim() || typeLabel;
             const contents = (block.contents || []).map(entry => this._prepareEntry(entry));
+            const icon = this._getBlockIcon(block.type);
 
             return {
                 ...block,
@@ -40,6 +41,7 @@ export class TemplateItemSheet extends ItemSheet {
                 isSelection: block.type === "selection",
                 isPoints: block.type === "points",
                 summaryText: this._buildBlockSummary(block, contents),
+                icon,
                 contents
             };
         });
@@ -124,6 +126,15 @@ export class TemplateItemSheet extends ItemSheet {
         return map[type] || "Bloco";
     }
 
+    _getBlockIcon(type) {
+        const map = {
+            guaranteed: "icons/sundries/misc/lock-open-yellow.webp",
+            selection: "icons/sundries/misc/admission-ticket-grey.webp",
+            points: "icons/sundries/books/book-open-purple.webp"
+        };
+        return map[type] || "icons/svg/item-bag.svg";
+    }
+
     _getAttributeLabel(key) {
         const map = {
             st: "ST",
@@ -188,9 +199,8 @@ export class TemplateItemSheet extends ItemSheet {
         if (!this.isEditable) return;
 
         html.on("click", ".add-template-block", this._onAddBlock.bind(this));
-        html.on("click", ".toggle-block-editor", this._onToggleBlockEditor.bind(this));
+        html.on("click", ".edit-template-block", this._onEditBlock.bind(this));
         html.on("click", ".delete-template-block", this._onDeleteBlock.bind(this));
-        html.on("click", ".move-template-block", this._onMoveBlock.bind(this));
         html.on("change", ".block-field", this._onBlockFieldChange.bind(this));
 
         html.on("click", ".add-block-attribute", this._onAddAttribute.bind(this));
@@ -199,23 +209,35 @@ export class TemplateItemSheet extends ItemSheet {
 
         html.on("dragover", ".template-dropzone", ev => ev.preventDefault());
         html.on("drop", ".template-dropzone", this._onDrop.bind(this));
+
     }
 
     async _onAddBlock(event) {
         event.preventDefault();
 
         const content = `
-        <div class="form-group">
-            <label>Tipo do bloco</label>
-            <select id="template-block-type">
-                <option value="guaranteed">Garantido</option>
-                <option value="selection">Seleção</option>
-                <option value="points">Alocação por Pontos</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Título customizado (opcional)</label>
-            <input type="text" id="template-block-title" placeholder="Deixe vazio para usar o nome padrão"/>
+        <div class="template-block-create-dialog">
+            <div class="form-group">
+                <label>Nome do Bloco</label>
+                <input type="text" id="template-block-title" placeholder="Digite um nome para o bloco"/>
+            </div>
+
+            <hr>
+
+            <div class="template-block-type-list">
+                <label class="template-block-type-option">
+                    <input type="radio" name="template-block-type" value="guaranteed" checked>
+                    <span>Garantido</span>
+                </label>
+                <label class="template-block-type-option">
+                    <input type="radio" name="template-block-type" value="selection">
+                    <span>Seleção</span>
+                </label>
+                <label class="template-block-type-option">
+                    <input type="radio" name="template-block-type" value="points">
+                    <span>Alocação por pontos</span>
+                </label>
+            </div>
         </div>
         `;
 
@@ -224,20 +246,20 @@ export class TemplateItemSheet extends ItemSheet {
             content,
             buttons: {
                 create: {
-                    label: "Criar",
+                    label: "Salvar",
                     callback: async (dlgHtml) => {
-                        const type = dlgHtml.find("#template-block-type").val();
-                        const title = dlgHtml.find("#template-block-title").val();
+                        const type = dlgHtml.find("input[name='template-block-type']:checked").val();
+                        const title = (dlgHtml.find("#template-block-title").val() || "").trim();
 
                         const blocks = foundry.utils.deepClone(this.item.system.blocks || []);
                         const newBlock = {
                             id: foundry.utils.randomID(),
                             type,
-                            title: title || "",
+                            title,
                             choiceCount: 1,
                             pointsAvailable: 20,
                             contents: [],
-                            collapsed: false
+                            collapsed: true
                         };
 
                         blocks.push(newBlock);
@@ -250,12 +272,14 @@ export class TemplateItemSheet extends ItemSheet {
         }).render(true);
     }
 
-    async _onToggleBlockEditor(event) {
+    async _onEditBlock(event) {
         event.preventDefault();
+
         const blockId = event.currentTarget.dataset.blockId;
         const blocks = foundry.utils.deepClone(this.item.system.blocks || []);
         const block = blocks.find(b => b.id === blockId);
         if (!block) return;
+
         block.collapsed = !block.collapsed;
         await this.item.update({ "system.blocks": blocks });
     }
@@ -266,23 +290,6 @@ export class TemplateItemSheet extends ItemSheet {
         const blocks = foundry.utils.deepClone(this.item.system.blocks || []);
         const filtered = blocks.filter(b => b.id !== blockId);
         await this.item.update({ "system.blocks": filtered });
-    }
-
-    async _onMoveBlock(event) {
-        event.preventDefault();
-        const blockId = event.currentTarget.dataset.blockId;
-        const direction = event.currentTarget.dataset.direction;
-        const blocks = foundry.utils.deepClone(this.item.system.blocks || []);
-        const index = blocks.findIndex(b => b.id === blockId);
-        if (index < 0) return;
-
-        const target = direction === "up" ? index - 1 : index + 1;
-        if (target < 0 || target >= blocks.length) return;
-
-        const [moved] = blocks.splice(index, 1);
-        blocks.splice(target, 0, moved);
-
-        await this.item.update({ "system.blocks": blocks });
     }
 
     async _onBlockFieldChange(event) {
