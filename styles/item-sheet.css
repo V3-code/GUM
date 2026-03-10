@@ -3332,6 +3332,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--item-text);
+  border-bottom:none;
 }
 
 .template-item-sheet .template-blocks-add {
@@ -3416,6 +3417,7 @@
   color: #f1f1f1;
   font-weight: 700;
   font-family: "Modesto Condensed";
+  border-bottom: none;
 }
 
 .template-item-sheet .template-block-summary {
@@ -3638,3 +3640,32 @@
 
 .template-block-type-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 7px; }
 .template-block-type-option { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+
+.template-level-dialog__title {
+    font-weight: 700;
+    color: #f1f1f1;
+    font-family: 'Modesto Condensed';
+    text-transform: uppercase;
+    font-size: 18px;
+}
+
+.template-level-dialog__subtitle {
+  font-size: 0.55rem;
+  color: #9f9f9f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.template-level-dialog hr {
+  border-color: rgba(255,255,255,0.08);
+  margin: 10px 0;
+}
+
+.template-level-dialog__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}

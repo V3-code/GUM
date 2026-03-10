@@ -4956,9 +4956,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .dialog.gum.gum-sheet-edit-dialog .gum-popup-form .checkbox {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline;
     text-transform: none;
     letter-spacing: 0;
     color: var(--gum-text-claro);

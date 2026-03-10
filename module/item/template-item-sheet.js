@@ -724,13 +724,40 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     async _promptLevelledEntry(item, base) {
+        const levelValue = Number(item.system?.skill_level ?? item.system?.level ?? 0) || 0;
+        const difficultyValue = this._getItemDifficulty(item);
+        const pointsInfo = this._getPointsPerLevelInfo(item);
+        const itemTypeLabel = this._getItemTypeLabel(item.type);
+
         return new Promise(resolve => {
             new Dialog({
                 title: `Adicionar ${item.name}`,
                 content: `
-                <div class="form-group">
-                    <label>Nível</label>
-                    <input type="number" id="entry-level" value="${item.system?.skill_level ?? 0}">
+                <div class="template-level-dialog">
+                    <div class="template-level-dialog__title">${foundry.utils.escapeHTML(item.name || "Item")}</div>
+                    <div class="template-level-dialog__subtitle">${foundry.utils.escapeHTML(itemTypeLabel)}</div>
+                    <hr>
+
+                    ${difficultyValue ? `
+                    <div class="template-level-dialog__row">
+                        <label>Dificuldade</label>
+                        <input type="text" value="${foundry.utils.escapeHTML(difficultyValue)}" readonly>
+                    </div>` : ""}
+
+                    <div class="template-level-dialog__row">
+                        <label>Pontos por Nível</label>
+                        <input type="text" value="${foundry.utils.escapeHTML(pointsInfo)}" readonly>
+                    </div>
+
+                    <div class="template-level-dialog__row">
+                        <label>Nível Relativo no Modelo</label>
+                        <input type="number" id="entry-level" value="${levelValue}">
+                    </div>
+
+                    <div class="template-level-dialog__row">
+                        <label>Custo Total</label>
+                        <input type="number" id="entry-total-cost" value="${this._calculateLevelledItemCost(item, levelValue)}" readonly>
+                    </div>
                 </div>`,
                 buttons: {
                     save: {
@@ -747,8 +774,16 @@ export class TemplateItemSheet extends ItemSheet {
                         callback: () => resolve(null)
                     }
                 },
-                default: "save"
-            }).render(true);
+                default: "save",
+                render: (html) => {
+                    const levelInput = html.find("#entry-level");
+                    const totalInput = html.find("#entry-total-cost");
+                    levelInput.on("input", () => {
+                        const level = Number(levelInput.val()) || 0;
+                        totalInput.val(this._calculateLevelledItemCost(item, level));
+                    });
+                }
+            }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
         });
     }
 
@@ -790,6 +825,45 @@ export class TemplateItemSheet extends ItemSheet {
                 default: "save"
             }).render(true);
         });
+    }
+
+    _getItemDifficulty(item) {
+        const raw = item.system?.difficulty;
+        if (raw === undefined || raw === null || raw === "") return "";
+
+        const map = {
+            "E": "Fácil",
+            "A": "Média",
+            "H": "Difícil",
+            "VH": "Muito Difícil",
+            "F": "Fácil",
+            "M": "Média",
+            "D": "Difícil",
+            "MD": "Muito Difícil",
+            "TecM": "Técnica Média",
+            "TecD": "Técnica Difícil"
+        };
+
+        return map[raw] || String(raw);
+    }
+
+    _getPointsPerLevelInfo(item) {
+        const difficulty = item.system?.difficulty ?? "M";
+        const normalized = ({
+            "E": "F", "A": "M", "H": "D", "VH": "MD"
+        })[difficulty] || difficulty;
+
+        if (normalized === "TecM") return "Progressão técnica: +1 ponto por nível";
+        if (normalized === "TecD") return "Progressão técnica: +2 pontos por nível";
+
+        const tables = {
+            "F": "Tabela Fácil (1, 2, 4, 8, 12, 16...)",
+            "M": "Tabela Média (1, 2, 4, 8, 12, 16, 20...)",
+            "D": "Tabela Difícil (1, 2, 4, 8, 12, 16, 20, 24...)",
+            "MD": "Tabela Muito Difícil (1, 2, 4, 8, 12, 16, 20, 24, 28...)"
+        };
+
+        return tables[normalized] || "Progressão por tabela do sistema";
     }
 
     _calculateLevelledItemCost(item, level) {
