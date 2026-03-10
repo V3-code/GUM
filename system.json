@@ -58,6 +58,14 @@
   ],
   "packs": [
     {
+      "name": "templates",
+      "label": "[GUM] Modelos",
+      "system": "gum",
+      "path": "./packs/templates",
+      "type": "Item",
+      "private": false
+    },
+    {
       "name": "modifiers",
       "label": "[GUM] Ampliações e Limitações",
       "system": "gum",

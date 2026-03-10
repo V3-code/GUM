@@ -5,6 +5,7 @@ export class TemplateBrowser extends FormApplication {
     this.onSelect = options.onSelect;
     this.allTemplates = [];
     this.availableFolders = [];
+    this.templatePackId = options.templatePackId || "gum.templates";
   }
 
   static get defaultOptions() {
@@ -22,47 +23,29 @@ export class TemplateBrowser extends FormApplication {
     const context = await super.getData();
     const records = [];
 
-    const worldTemplates = game.items.filter(item => item.type === "template");
-    for (const item of worldTemplates) {
-      const folderTrail = this._getWorldFolderTrail(item.folder);
-      records.push({
-        id: item.id,
-        uuid: item.uuid,
-        name: item.name,
-        system: item.system,
-        img: item.img,
-        sourceLabel: "Mundo",
-        folderId: item.folder?.id ?? null,
-        folderTrail,
-        folderLabel: this._getWorldFolderPath(item.folder),
-        displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-      });
-    }
-
-    const itemPacks = game.packs.filter(pack => pack.documentName === "Item");
-    for (const pack of itemPacks) {
+    const templatePack = game.packs.get(this.templatePackId);
+    if (!templatePack) {
+      ui.notifications.warn("Compêndio de Modelos não encontrado. Verifique se o pack 'templates' está habilitado.");
+    } else {
       let docs = [];
       try {
-        docs = await pack.getDocuments();
+        docs = await templatePack.getDocuments();
       } catch (err) {
-        console.warn(`GUM | Falha ao ler compêndio ${pack.collection}`, err);
-        continue;
+        console.warn(`GUM | Falha ao ler compêndio ${templatePack.collection}`, err);
       }
 
       const templates = docs.filter(doc => doc.type === "template");
-      if (!templates.length) continue;
-
-      const folderInfoById = this._buildCompendiumFolderIndex(pack.folders ?? []);
+      const folderInfoById = this._buildCompendiumFolderIndex(templatePack.folders ?? []);
       for (const item of templates) {
         const folderId = item.folder?.id ?? item.folder ?? item._source?.folder ?? null;
         const folderTrail = this._getCompendiumFolderTrail(folderId, folderInfoById);
         records.push({
-          id: `${pack.collection}:${item.id}`,
+          id: `${templatePack.collection}:${item.id}`,
           uuid: item.uuid,
           name: item.name,
           system: item.system,
           img: item.img,
-          sourceLabel: pack.metadata?.label ?? pack.collection,
+          sourceLabel: templatePack.metadata?.label ?? templatePack.collection,
           folderId,
           folderTrail,
           folderLabel: this._getCompendiumFolderPath(folderId, folderInfoById),
@@ -200,30 +183,6 @@ export class TemplateBrowser extends FormApplication {
     }
 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  _getWorldFolderTrail(folder) {
-    const trail = [];
-    let cursor = folder;
-    while (cursor) {
-      trail.unshift({ id: `world:${cursor.id}`, name: cursor.name });
-      cursor = cursor.folder ?? null;
-    }
-    return trail.map((entry, idx) => ({
-      ...entry,
-      depth: idx,
-      pathName: trail.slice(0, idx + 1).map(n => n.name).join(" / ")
-    }));
-  }
-
-  _getWorldFolderPath(folder) {
-    const names = [];
-    let cursor = folder;
-    while (cursor) {
-      names.unshift(cursor.name);
-      cursor = cursor.folder ?? null;
-    }
-    return names.join(" / ");
   }
 
   _buildCompendiumFolderIndex(folders) {

@@ -269,7 +269,7 @@ export class TemplateItemSheet extends ItemSheet {
                 cancel: { label: "Cancelar" }
             },
             default: "create"
-        }).render(true);
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
 
     async _onEditBlock(event) {
@@ -314,10 +314,6 @@ export class TemplateItemSheet extends ItemSheet {
 
         const content = `
         <div class="template-attr-dialog">
-            <div class="form-group">
-                <label><input type="checkbox" id="link-secondary" checked> Vincular atributos secundários aos primários</label>
-            </div>
-
             <div class="template-attr-grid-header">
                 <span>Atributo</span>
                 <span>Incremento</span>
@@ -421,7 +417,7 @@ export class TemplateItemSheet extends ItemSheet {
                     dlgHtml.find(".template-attr-grid input[type='number']").on("input", recalc);
                     recalc();
                 }
-            }).render(true);
+            }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
 
     _calculateAttributeCost(attributes, costs = {}) {
@@ -582,7 +578,7 @@ export class TemplateItemSheet extends ItemSheet {
                 dlgHtml.find(".template-attr-grid input[type='number']").on("input", recalc);
                 recalc();
             }
-        }).render(true);
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
 
     async _editItemEntry(blockId, entryId, entry) {
@@ -626,7 +622,7 @@ export class TemplateItemSheet extends ItemSheet {
                 cancel: { label: "Cancelar" }
             },
             default: "save"
-        }).render(true);
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
 
     async _replaceEntry(blockId, entryId, newEntry) {
@@ -719,7 +715,7 @@ export class TemplateItemSheet extends ItemSheet {
                     }
                 },
                 default: "save"
-            }).render(true);
+            }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
         });
     }
 
@@ -823,7 +819,7 @@ export class TemplateItemSheet extends ItemSheet {
                     }
                 },
                 default: "save"
-            }).render(true);
+            }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
         });
     }
 
