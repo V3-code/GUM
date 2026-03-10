@@ -371,12 +371,28 @@
   gap: 4px;
 }
 .gum.sheet.actor .character-model-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.68rem;
   padding: 2px 6px;
   border-radius: 999px;
   border: 1px solid rgba(197, 160, 91, 0.45);
   color: var(--gum-text-claro);
   background: rgba(0, 0, 0, 0.35);
+}
+.gum.sheet.actor .remove-character-model-btn {
+  border: none;
+  background: transparent;
+  color: #d9a5a5;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  cursor: pointer;
+}
+.gum.sheet.actor .remove-character-model-btn:hover {
+  color: #ff6f6f;
 }
 
 .gum.sheet.actor .points-cluster { display: flex; gap: 1rem; }

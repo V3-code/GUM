@@ -21,6 +21,9 @@
               {{#each appliedModels as |model|}}
               <span class="character-model-pill" title="Aplicado em {{model.appliedAtLabel}}">
                 <i class="fas fa-check-circle"></i> {{model.templateName}}
+                <button type="button" class="remove-character-model-btn" data-application-id="{{model.applicationId}}" title="Remover modelo">
+                  <i class="fas fa-times"></i>
+                </button>
               </span>
               {{/each}}
             </div>

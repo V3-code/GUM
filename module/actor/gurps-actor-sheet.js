@@ -1256,6 +1256,7 @@ activateListeners(html) {
 
 html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecondaryStats(ev));
 html.on("click", ".add-character-model-btn", (ev) => this._onAddCharacterModel(ev));
+html.on("click", ".remove-character-model-btn", (ev) => this._onRemoveCharacterModel(ev));
 
 // -------------------------------------------------------------
 //  BIOGRAFIA - Editor de História
@@ -5233,6 +5234,56 @@ async _onEditAttackGroupItem(ev) {
 
   item.sheet.render(true);
 }
+async _onRemoveCharacterModel(ev) {
+  ev.preventDefault();
+  const applicationId = ev.currentTarget?.dataset?.applicationId;
+  if (!applicationId) return;
 
+  const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
+  const record = records.find(entry => entry.applicationId === applicationId && !entry.removedAt);
+  if (!record) return;
+
+  const confirmed = await Dialog.confirm({
+    title: `Remover Modelo: ${record.templateName || "Modelo"}`,
+    content: "<p>Deseja remover este modelo da ficha? Itens adicionados e ajustes de atributos serão revertidos.</p>"
+  });
+
+  if (!confirmed) return;
+
+  const createdItemIds = Array.isArray(record.createdItemIds) ? record.createdItemIds.filter(Boolean) : [];
+  const ownedItemIds = createdItemIds.filter(itemId => this.actor.items.has(itemId));
+  if (ownedItemIds.length) {
+    await this.actor.deleteEmbeddedDocuments("Item", ownedItemIds);
+  }
+
+  const attributeReverts = {};
+  const attributeChanges = Array.isArray(record.attributeChanges) ? record.attributeChanges : [];
+  for (const change of attributeChanges) {
+    const key = change?.key;
+    const amount = Number(change?.amount) || 0;
+    if (!key || !amount) continue;
+
+    const path = `system.attributes.${key}.value`;
+    const current = Number(foundry.utils.getProperty(this.actor, path)) || 0;
+    const previous = path in attributeReverts ? Number(attributeReverts[path]) : current;
+    attributeReverts[path] = previous - amount;
+  }
+
+  const pointsLeftover = Number(record.pointsLeftover) || 0;
+  if (pointsLeftover) {
+    const currentUnspent = Number(this.actor.system?.points?.unspent) || 0;
+    attributeReverts["system.points.unspent"] = Math.max(0, currentUnspent - pointsLeftover);
+  }
+
+  record.removedAt = new Date().toISOString();
+  record.removedBy = game.user?.id;
+
+  await this.actor.update({
+    ...attributeReverts,
+    "system.applied_models": records
+  });
+
+  ui.notifications.info(`Modelo "${record.templateName || "Modelo"}" removido com sucesso.`);
+}
 
 }
