@@ -348,6 +348,37 @@
     background: transparent !important; border: none !important; width: 100%;
 }
 
+.gum.sheet.actor .character-model-toolbar {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.gum.sheet.actor .add-character-model-btn {
+  align-self: flex-start;
+  border: 1px solid var(--gum-border-gold);
+  background: rgba(24, 24, 24, 0.9);
+  color: var(--gum-accent-gold);
+  font-size: 0.72rem;
+  padding: 4px 8px;
+}
+.gum.sheet.actor .add-character-model-btn:hover {
+  background: rgba(197, 160, 91, 0.15);
+}
+.gum.sheet.actor .character-model-applied-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gum.sheet.actor .character-model-pill {
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 91, 0.45);
+  color: var(--gum-text-claro);
+  background: rgba(0, 0, 0, 0.35);
+}
+
 .gum.sheet.actor .points-cluster { display: flex; gap: 1rem; }
 .gum.sheet.actor .points-display { display: flex; flex-direction: column; text-align: center; }
 .gum.sheet.actor .points-display label { 

@@ -1,0 +1,61 @@
+<form class="template-browser-form gum-browser">
+  <div class="browser-container">
+    <aside class="browser-sidebar">
+      <div class="filter-group">
+        <h3 class="filter-title">Buscar</h3>
+        <div class="search-box">
+          <input type="text" name="search" placeholder="Buscar modelo..." />
+          <i class="fas fa-search"></i>
+        </div>
+      </div>
+
+      {{#if folders.length}}
+      <div class="filter-group">
+        <h3 class="filter-title">Pastas e Subpastas</h3>
+        {{#each folders as |folder|}}
+        <label class="filter-check">
+          <input type="checkbox" name="filter-folder" value="{{folder.id}}" />
+          <span>{{folder.name}}</span>
+        </label>
+        {{/each}}
+      </div>
+      {{/if}}
+    </aside>
+
+    <main class="browser-content">
+      <ol class="results-list">
+        {{#each templates as |template|}}
+        <li class="result-item" data-item-id="{{template.id}}">
+          <div class="item-icon">
+            {{#if template.displayImg}}
+            <img src="{{template.displayImg}}" alt="{{template.name}}" />
+            {{/if}}
+          </div>
+
+          <div class="item-info">
+            <span class="item-name">{{template.name}}</span>
+            <small>{{template.sourceLabel}}{{#if template.folderLabel}} • {{template.folderLabel}}{{/if}}</small>
+          </div>
+
+          <div class="item-actions">
+            <button type="button" class="browser-quick-view" title="Visualizar modelo">
+              <i class="fas fa-eye"></i>
+            </button>
+            <label class="item-select" for="template-{{template.id}}">
+              <input type="radio" name="selectedTemplate" id="template-{{template.id}}" value="{{template.id}}" />
+            </label>
+          </div>
+        </li>
+        {{else}}
+        <li class="placeholder-text">Nenhum Modelo encontrado no mundo/compêndios.</li>
+        {{/each}}
+      </ol>
+    </main>
+  </div>
+
+  <footer class="browser-footer">
+    <button type="submit">
+      <i class="fas fa-check"></i> Aplicar Modelo
+    </button>
+  </footer>
+</form>

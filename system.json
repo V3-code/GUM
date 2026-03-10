@@ -40,6 +40,7 @@
     "module/apps/gm-modifier-browser.js",
     "module/apps/modifier-browser.js",
     "module/apps/effect-browser.js",
+    "module/apps/template-browser.js",
     "module/apps/eqp-modifier-browser.js",
     "module/item/gurps-armor-sheet.js",
     "module/apps/trigger-browser.js",

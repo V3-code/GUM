@@ -1,79 +1,377 @@
 {
   "Actor": {
-    "types": ["character"],
+    "types": [
+      "character"
+    ],
     "character": {
       "attributes": {
-        "st": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "dx": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "iq": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "ht": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "vont": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "per": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "vision": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
-        "hearing": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
-        "tastesmell": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
-        "touch": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 10 },
-        "hp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "fp": { "value": 10, "max": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "fome": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
-        "sede": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
-        "sono": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
-        "radiation": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 0 },
-        "mt": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 0, "final_computed": 10 },
-        "basic_speed": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 5, "final_computed": 10 },
-        "basic_move": { "value": 5, "mod": 0, "temp": 0, "passive": 0, "points": 0, "final": 5, "final_computed": 10 },
-        "enhanced_move": { "value": 0, "mod": 0, "temp": 0, "passive": 0, "points": 0, "override": null, "final": 0, "final_computed": 0 },
-        "dodge": { "value": 8, "mod": 0, "temp": 0, "passive": 0, "points": 0, "final": 8, "final_computed": 8 },
-        "lifting_st": { "value": 10, "mod": 0, "temp": 0, "passive": 0, "override": null, "final": 10, "final_computed": 10 },
-        "basic_lift": { "value": 20 },
+        "st": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "dx": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "iq": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "ht": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "vont": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "per": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "vision": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 10
+        },
+        "hearing": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 10
+        },
+        "tastesmell": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 10
+        },
+        "touch": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 10
+        },
+        "hp": {
+          "value": 10,
+          "max": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "fp": {
+          "value": 10,
+          "max": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "fome": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0
+        },
+        "sede": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0
+        },
+        "sono": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0
+        },
+        "radiation": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0
+        },
+        "mt": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 10
+        },
+        "basic_speed": {
+          "value": 5,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 5,
+          "final_computed": 10
+        },
+        "basic_move": {
+          "value": 5,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "final": 5,
+          "final_computed": 10
+        },
+        "enhanced_move": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0
+        },
+        "dodge": {
+          "value": 8,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "final": 8,
+          "final_computed": 8
+        },
+        "lifting_st": {
+          "value": 10,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10
+        },
+        "basic_lift": {
+          "value": 20
+        },
         "thrust_damage": "1d6-2",
         "swing_damage": "1d6",
         "thrust_damage_alt": "",
         "swing_damage_alt": ""
       },
-      "points": { "total": 100, "unspent": 100 },
-      "details": { "concept": "", "alignment": "", "belief": "", "gender": "", "eyes": "", "hair": "", "skin": "", "age": "", "height": "", "weight": "", "race_name": "", "backstory": "" },
-      "money": { "value": 0 },
-      "encumbrance": { "ignore_carried_weight": false },
-      "combat": { "body_profile": "humanoid", "defense_bonus": 0, "dr_mods": {}, "dr_temp_mods": {}, "combat_meters": {} },
-      "notes": { "combat": "", "skills": "", "equipment": "", "spells": "", "powers": "", "characteristics": "", "social": "" },
-      "casting_ability": { "name": "Habilidade de Conjuração", "points": 0, "level": 10, "source": "Fonte Mágica", "description": "Descreva aqui a habilidade de conjuração." },
+      "points": {
+        "total": 100,
+        "unspent": 100
+      },
+      "details": {
+        "concept": "",
+        "alignment": "",
+        "belief": "",
+        "gender": "",
+        "eyes": "",
+        "hair": "",
+        "skin": "",
+        "age": "",
+        "height": "",
+        "weight": "",
+        "race_name": "",
+        "backstory": ""
+      },
+      "money": {
+        "value": 0
+      },
+      "encumbrance": {
+        "ignore_carried_weight": false
+      },
+      "combat": {
+        "body_profile": "humanoid",
+        "defense_bonus": 0,
+        "dr_mods": {},
+        "dr_temp_mods": {},
+        "combat_meters": {}
+      },
+      "notes": {
+        "combat": "",
+        "skills": "",
+        "equipment": "",
+        "spells": "",
+        "powers": "",
+        "characteristics": "",
+        "social": ""
+      },
+      "casting_ability": {
+        "name": "Habilidade de Conjuração",
+        "points": 0,
+        "level": 10,
+        "source": "Fonte Mágica",
+        "description": "Descreva aqui a habilidade de conjuração."
+      },
       "casting_abilities": {},
-      "power_source": { "name": "Fonte de Poder", "level": 10, "points": 0, "source": "Psiônico", "focus": "", "description": "Descreva aqui a fonte de poder.", "power_talent_name": "", "power_talent_level": 0, "power_talent_points": 0, "power_talent": 0 },
+      "power_source": {
+        "name": "Fonte de Poder",
+        "level": 10,
+        "points": 0,
+        "source": "Psiônico",
+        "focus": "",
+        "description": "Descreva aqui a fonte de poder.",
+        "power_talent_name": "",
+        "power_talent_level": 0,
+        "power_talent_points": 0,
+        "power_talent": 0
+      },
       "power_sources": {},
       "spell_reserves": {},
       "power_reserves": {},
-      "skill_blocks": { "block1": { "name": "Perícias Gerais" }, "block2": { "name": "Perícias Físicas" }, "block3": { "name": "Perícias Sociais" }, "block4": { "name": "Perícias Técnicas" }, "block5": { "name": "Perícias Acadêmicas" }, "block6": { "name": "Outras Perícias" } },
-      "characteristic_blocks": { "block1": { "name": "Traços Raciais" }, "block2": { "name": "Vantagens" }, "block3": { "name": "Desvantagens" }, "block4": { "name": "Especiais" } },
-      "skill_group_order": [],
-      "social_status_entries": {}, "organization_entries": {}, "culture_entries": {}, "language_entries": {}, "reputation_entries": {}, "wealth_entries": {}, "bond_entries": {},
-      "sorting": { "spells": "manual", "powers": "manual", "skills": "manual", "characteristics": "manual", "equipment": { "equipped": "manual", "carried": "manual", "stored": "manual" } }
-    },
-  "prototypeToken": {
-        "actorLink": true,
-        "disposition": 1,
-        "displayName": 40,
-        "displayBars": 40,
-        "bar1": {
-          "attribute": "attributes.hp"
+      "skill_blocks": {
+        "block1": {
+          "name": "Perícias Gerais"
         },
-        "bar2": {
-          "attribute": "attributes.fp"
+        "block2": {
+          "name": "Perícias Físicas"
         },
-        "sight": {
-          "enabled": true,
-          "range": 0,
-          "angle": 360
+        "block3": {
+          "name": "Perícias Sociais"
         },
-        "light": {
-          "dim": 0,
-          "bright": 0,
-          "angle": 360
+        "block4": {
+          "name": "Perícias Técnicas"
+        },
+        "block5": {
+          "name": "Perícias Acadêmicas"
+        },
+        "block6": {
+          "name": "Outras Perícias"
         }
+      },
+      "characteristic_blocks": {
+        "block1": {
+          "name": "Traços Raciais"
+        },
+        "block2": {
+          "name": "Vantagens"
+        },
+        "block3": {
+          "name": "Desvantagens"
+        },
+        "block4": {
+          "name": "Especiais"
+        }
+      },
+      "skill_group_order": [],
+      "social_status_entries": {},
+      "organization_entries": {},
+      "culture_entries": {},
+      "language_entries": {},
+      "reputation_entries": {},
+      "wealth_entries": {},
+      "bond_entries": {},
+      "sorting": {
+        "spells": "manual",
+        "powers": "manual",
+        "skills": "manual",
+        "characteristics": "manual",
+        "equipment": {
+          "equipped": "manual",
+          "carried": "manual",
+          "stored": "manual"
+        }
+      },
+      "applied_models": []
+    },
+    "prototypeToken": {
+      "actorLink": true,
+      "disposition": 1,
+      "displayName": 40,
+      "displayBars": 40,
+      "bar1": {
+        "attribute": "attributes.hp"
+      },
+      "bar2": {
+        "attribute": "attributes.fp"
+      },
+      "sight": {
+        "enabled": true,
+        "range": 0,
+        "angle": 360
+      },
+      "light": {
+        "dim": 0,
+        "bright": 0,
+        "angle": 360
       }
-    }, 
+    }
+  },
   "Item": {
-"types": ["advantage", "disadvantage", "skill", "equipment", "armor", "spell", "power", "modifier", "condition", "effect", "trigger", "eqp_modifier", "gm_modifier", "template"],
+    "types": [
+      "advantage",
+      "disadvantage",
+      "skill",
+      "equipment",
+      "armor",
+      "spell",
+      "power",
+      "modifier",
+      "condition",
+      "effect",
+      "trigger",
+      "eqp_modifier",
+      "gm_modifier",
+      "template"
+    ],
     "templates": {
       "base": {
         "description": "",
@@ -94,7 +392,7 @@
         "weight": 0,
         "location": "carried",
         "tech_level": "3",
-        "tech_sm": 0, 
+        "tech_sm": 0,
         "legality_class": "4",
         "material": "",
         "quality": "",
@@ -102,213 +400,364 @@
         "item_ht": 12,
         "item_dr": 0,
         "holdout": 0,
-        "eqp_modifiers": {} 
+        "eqp_modifiers": {}
       }
     },
-
-      "attack_melee": {
-        "mode": "Novo Ataque C.C.",
-        "unbalanced": false, 
-        "fencing": false,
-        "skill_name": "",
-        "skill_level_mod": 0,
-        "damage_formula": "GdB",
-        "damage_type": "cort",
-        "armor_divisor": 1,
-        "reach": "C",
-        "parry": "0",
-        "block": "0",
-        "min_strength": 0,
-        "onDamageEffects": {},
-        "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
-        "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+    "attack_melee": {
+      "mode": "Novo Ataque C.C.",
+      "unbalanced": false,
+      "fencing": false,
+      "skill_name": "",
+      "skill_level_mod": 0,
+      "damage_formula": "GdB",
+      "damage_type": "cort",
+      "armor_divisor": 1,
+      "reach": "C",
+      "parry": "0",
+      "block": "0",
+      "min_strength": 0,
+      "onDamageEffects": {},
+      "follow_up_damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1
       },
-      "attack_ranged": {
-        "mode": "Novo Ataque L.D.",
-        "unbalanced": false, 
-        "fencing": false,
-        "skill_name": "",
-        "skill_level_mod": 0,
-        "damage_formula": "GdP",
-        "damage_type": "perf",
-        "armor_divisor": 1,
-        "accuracy": "0",
-        "range": "100/1500",
-        "rof": "1",
-        "shots": "1(3i)",
-        "rcl": "1",
-        "mag": "1",
-        "min_strength": 0,
-        "onDamageEffects": {},
-        "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 },
-        "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 }
+      "fragmentation_damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1
+      }
+    },
+    "attack_ranged": {
+      "mode": "Novo Ataque L.D.",
+      "unbalanced": false,
+      "fencing": false,
+      "skill_name": "",
+      "skill_level_mod": 0,
+      "damage_formula": "GdP",
+      "damage_type": "perf",
+      "armor_divisor": 1,
+      "accuracy": "0",
+      "range": "100/1500",
+      "rof": "1",
+      "shots": "1(3i)",
+      "rcl": "1",
+      "mag": "1",
+      "min_strength": 0,
+      "onDamageEffects": {},
+      "follow_up_damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1
       },
-
-
-    "advantage": { "templates": ["base"], "points": 10, "block_id": "block2", "self_control_roll": "", "level": "", "specialization": "", "characteristics": "", "modifiers": {} },
-    "disadvantage": { "templates": ["base"], "points": -10, "block_id": "block3", "self_control_roll": "", "level": "", "specialization": "", "characteristics": "", "modifiers": {} },
-    "skill": { "templates": ["base"], "points": 2, "group": "Geral", "base_attribute": "DX", "skill_level": 0, "other_mods": 0, "block_id": "block1", "difficulty": "M", "auto_points": true },
-    "equipment": { "templates": ["base", "equipment_base"], "melee_attacks": {}, "ranged_attacks": {}, "defense_bonus": 0, "equip_time": 1, "dr_locations": {} },
-    "armor": { 
-        "templates": ["base", "equipment_base"], 
-        "defense_bonus": 0,
-        "equip_time": 10,
-        "dr_locations": {} 
+      "fragmentation_damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1
+      }
+    },
+    "advantage": {
+      "templates": [
+        "base"
+      ],
+      "points": 10,
+      "block_id": "block2",
+      "self_control_roll": "",
+      "level": "",
+      "specialization": "",
+      "characteristics": "",
+      "modifiers": {}
+    },
+    "disadvantage": {
+      "templates": [
+        "base"
+      ],
+      "points": -10,
+      "block_id": "block3",
+      "self_control_roll": "",
+      "level": "",
+      "specialization": "",
+      "characteristics": "",
+      "modifiers": {}
+    },
+    "skill": {
+      "templates": [
+        "base"
+      ],
+      "points": 2,
+      "group": "Geral",
+      "base_attribute": "DX",
+      "skill_level": 0,
+      "other_mods": 0,
+      "block_id": "block1",
+      "difficulty": "M",
+      "auto_points": true
+    },
+    "equipment": {
+      "templates": [
+        "base",
+        "equipment_base"
+      ],
+      "melee_attacks": {},
+      "ranged_attacks": {},
+      "defense_bonus": 0,
+      "equip_time": 1,
+      "dr_locations": {}
+    },
+    "armor": {
+      "templates": [
+        "base",
+        "equipment_base"
+      ],
+      "defense_bonus": 0,
+      "equip_time": 10,
+      "dr_locations": {}
     },
     "spell": {
-      "templates": ["base"],
-      "points": 4, "group": "Geral",  "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "casting_time": "1s", "duration": "1 min", "mana_cost": "1", "mana_maint": "1", "spell_class": "Comum", "spell_school": "Fogo", "difficulty": "D", "source": "Arcana", "resistance": "", "effect": "", "auto_points": true,
-      "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
-      "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
+      "templates": [
+        "base"
+      ],
+      "points": 4,
+      "group": "Geral",
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "casting_time": "1s",
+      "duration": "1 min",
+      "mana_cost": "1",
+      "mana_maint": "1",
+      "spell_class": "Comum",
+      "spell_school": "Fogo",
+      "difficulty": "D",
+      "source": "Arcana",
+      "resistance": "",
+      "effect": "",
+      "auto_points": true,
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      }
     },
     "power": {
-      "templates": ["base"],
-      "points": 10, "group": "Geral", "base_attribute": "IQ", "skill_level": 0, "other_mods": 0, "activation_time": "1s", "duration": "1 min", "activation_cost": "1", "maint_cost":"1", "spell_class": "Regular", "difficulty": "D", "source": "Biológico", "resistance": "", "effect": "", "modifiers": {}, "points_skill": 4, "auto_points": true,
-       "attack_roll": { "skill_name": "", "skill_level_mod": 0 },
-       "damage": { "formula": "", "type": "", "armor_divisor": 1, "follow_up_damage": { "formula": "", "type": "", "armor_divisor": 1 }, "fragmentation_damage": { "formula": "", "type": "", "armor_divisor": 1 } }
+      "templates": [
+        "base"
+      ],
+      "points": 10,
+      "group": "Geral",
+      "base_attribute": "IQ",
+      "skill_level": 0,
+      "other_mods": 0,
+      "activation_time": "1s",
+      "duration": "1 min",
+      "activation_cost": "1",
+      "maint_cost": "1",
+      "spell_class": "Regular",
+      "difficulty": "D",
+      "source": "Biológico",
+      "resistance": "",
+      "effect": "",
+      "modifiers": {},
+      "points_skill": 4,
+      "auto_points": true,
+      "attack_roll": {
+        "skill_name": "",
+        "skill_level_mod": 0
+      },
+      "damage": {
+        "formula": "",
+        "type": "",
+        "armor_divisor": 1,
+        "follow_up_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        },
+        "fragmentation_damage": {
+          "formula": "",
+          "type": "",
+          "armor_divisor": 1
+        }
+      }
     },
     "condition": {
-      "templates": ["base"],
-      "when": "", "effects": [],
-      "flags": { "gum": { "manual_override": false } }
-    },
-    "modifier": { "templates": ["base"], "cost": "0%", "level": 0, "applied_effect": "" },
-    "eqp_modifier": { 
-        "templates": ["base"], 
-        "cost_factor": 0, 
-        "weight_mod": "x1", 
-        "tech_level_mod": "", 
-        "tech_level": "",     
-        "tags": "",           
-        "features": "",
-        "scenario": {         
-            "rarity": "",
-            "location": "",
-            "availability": "",
-            "components": ""
-        },
-        "target_type": {      
-            "melee": false,    
-            "ranged": false,   
-            "armor": false,    
-            "shield": false,   
-            "ammo": false,
-            "enchantment": false,     
-            "general": true    
+      "templates": [
+        "base"
+      ],
+      "when": "",
+      "effects": [],
+      "flags": {
+        "gum": {
+          "manual_override": false
         }
+      }
     },
-"gm_modifier": { 
-        "templates": ["base"], 
-        "modifier": 0,
-        "modifier_entries": [],
-        "nh_cap": "",
-        "observation":"",
-        "duration": "",
-        "ui_category": "situation",
-        "target_type": {
-            "global": false,
-            "reaction": false,
-            "skill_all": false,
-
-            "combat_all": false,         
-            "combat_attack_melee": false,
-            "combat_attack_ranged": false,
-            "combat_attack_spell": false,
-            "combat_attack_power": false, 
-            
-            "combat_damage_melee": false,
-            "combat_damage_ranged": false,
-            "combat_damage_spell": false,
-            "combat_damage_power": false,
-
-            "combat_defense_dodge": false,
-            "combat_defense_parry": false,
-            "combat_defense_block": false,
-
-            "attr_all": false, 
-
-            "attr_st_all": false, 
-            "check_st": false,
-            "skill_st": false,
-            "spell_st": false,
-            "power_st": false,
-
-            "attr_dx_all": false,
-            "check_dx": false,
-            "skill_dx": false,
-            "spell_dx": false,
-            "power_dx": false,
-
-            "attr_iq_all": false, 
-            "check_iq": false,
-            "skill_iq": false,
-            "spell_iq": false,
-            "power_iq": false,
-
-            "attr_ht_all": false,
-            "check_ht": false,
-            "skill_ht": false,
-            "spell_ht": false,
-            "power_ht": false,
-
-            "attr_will_all": false, 
-            "check_will": false,
-            "skill_will": false,
-            "spell_will": false,
-            "power_will": false,
-            "check_fright": false,
-
-            "attr_per_all": false, 
-            "check_per": false,
-            "skill_per": false,
-            "spell_per": false,
-            "power_per": false,
-            
-
-            "sense_vision": false,
-            "sense_hearing": false,
-            "sense_tastesmell": false,
-            "sense_touch": false
-        }
+    "modifier": {
+      "templates": [
+        "base"
+      ],
+      "cost": "0%",
+      "level": 0,
+      "applied_effect": ""
+    },
+    "eqp_modifier": {
+      "templates": [
+        "base"
+      ],
+      "cost_factor": 0,
+      "weight_mod": "x1",
+      "tech_level_mod": "",
+      "tech_level": "",
+      "tags": "",
+      "features": "",
+      "scenario": {
+        "rarity": "",
+        "location": "",
+        "availability": "",
+        "components": ""
+      },
+      "target_type": {
+        "melee": false,
+        "ranged": false,
+        "armor": false,
+        "shield": false,
+        "ammo": false,
+        "enchantment": false,
+        "general": true
+      }
+    },
+    "gm_modifier": {
+      "templates": [
+        "base"
+      ],
+      "modifier": 0,
+      "modifier_entries": [],
+      "nh_cap": "",
+      "observation": "",
+      "duration": "",
+      "ui_category": "situation",
+      "target_type": {
+        "global": false,
+        "reaction": false,
+        "skill_all": false,
+        "combat_all": false,
+        "combat_attack_melee": false,
+        "combat_attack_ranged": false,
+        "combat_attack_spell": false,
+        "combat_attack_power": false,
+        "combat_damage_melee": false,
+        "combat_damage_ranged": false,
+        "combat_damage_spell": false,
+        "combat_damage_power": false,
+        "combat_defense_dodge": false,
+        "combat_defense_parry": false,
+        "combat_defense_block": false,
+        "attr_all": false,
+        "attr_st_all": false,
+        "check_st": false,
+        "skill_st": false,
+        "spell_st": false,
+        "power_st": false,
+        "attr_dx_all": false,
+        "check_dx": false,
+        "skill_dx": false,
+        "spell_dx": false,
+        "power_dx": false,
+        "attr_iq_all": false,
+        "check_iq": false,
+        "skill_iq": false,
+        "spell_iq": false,
+        "power_iq": false,
+        "attr_ht_all": false,
+        "check_ht": false,
+        "skill_ht": false,
+        "spell_ht": false,
+        "power_ht": false,
+        "attr_will_all": false,
+        "check_will": false,
+        "skill_will": false,
+        "spell_will": false,
+        "power_will": false,
+        "check_fright": false,
+        "attr_per_all": false,
+        "check_per": false,
+        "skill_per": false,
+        "spell_per": false,
+        "power_per": false,
+        "sense_vision": false,
+        "sense_hearing": false,
+        "sense_tastesmell": false,
+        "sense_touch": false
+      }
     },
     "template": {
-  "templates": ["base"],
-  "schemaVersion": 1,
-  "model_category": "generic",
-  "blocks": []
-},
-    "trigger": { "templates": ["base"], "code": "" },
+      "templates": [
+        "base"
+      ],
+      "schemaVersion": 1,
+      "model_category": "generic",
+      "blocks": []
+    },
+    "trigger": {
+      "templates": [
+        "base"
+      ],
+      "code": ""
+    },
     "effect": {
-      "templates": ["base"],
-      "type": "attribute", 
-      "path": "system.attributes.st.passive", 
-      "operation": "ADD", 
-      "value": "1", 
-      "key": "", 
-      "flag_value": "", 
-      "chat_text": "", 
-      "has_roll": false, 
-      "roll_label": "Rolar Teste", 
-      "roll_attribute": "ht", 
-      "roll_modifier": "0", 
+      "templates": [
+        "base"
+      ],
+      "type": "attribute",
+      "path": "system.attributes.st.passive",
+      "operation": "ADD",
+      "value": "1",
+      "key": "",
+      "flag_value": "",
+      "chat_text": "",
+      "has_roll": false,
+      "roll_label": "Rolar Teste",
+      "roll_attribute": "ht",
+      "roll_modifier": "0",
       "roll_modifier_value": "0",
       "roll_modifier_cap": "",
       "roll_modifier_context": "all",
       "roll_modifier_entries": [],
       "whisperMode": "public",
-      "resistanceRoll": { "isResisted": false, "attribute": "ht", "modifier": "0", "applyOn": "failure", "margin": "", "skipPromptCard": false },
+      "resistanceRoll": {
+        "isResisted": false,
+        "attribute": "ht",
+        "modifier": "0",
+        "applyOn": "failure",
+        "margin": "",
+        "skipPromptCard": false
+      },
       "category": "pf",
-      "name": "", 
+      "name": "",
       "chat_notice": true,
       "confirm_prompt": false,
       "variable_value": false,
       "duration": {
-          "value": 1,
-          "unit": "rounds",
-          "inCombat": true,
-          "isPermanent": false,
-          "startMode": "apply",
-          "endMode": "turnEnd"
+        "value": 1,
+        "unit": "rounds",
+        "inCombat": true,
+        "isPermanent": false,
+        "startMode": "apply",
+        "endMode": "turnEnd"
       },
       "statusId": "dead"
     }

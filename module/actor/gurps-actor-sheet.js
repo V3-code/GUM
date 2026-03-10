@@ -2,6 +2,7 @@ import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
+import { TemplateBrowser } from "../apps/template-browser.js";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -764,6 +765,7 @@ async getData(options) {
                                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
                 context.castingAbilities = this._prepareCastingAbilities();
                 context.powerSources = this._preparePowerSources();
+                context.appliedModels = this._prepareAppliedModels();
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
                 context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
@@ -1253,6 +1255,7 @@ activateListeners(html) {
     if (!this.isEditable) return;
 
 html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecondaryStats(ev));
+html.on("click", ".add-character-model-btn", (ev) => this._onAddCharacterModel(ev));
 
 // -------------------------------------------------------------
 //  BIOGRAFIA - Editor de História
@@ -4882,6 +4885,335 @@ async _onDeleteSocialEntry(ev) {
       await this.actor.update({ [`${config.path}.-=${entryId}`]: null });
     }
   });
+}
+
+
+_prepareAppliedModels() {
+  const records = Array.isArray(this.actor.system.applied_models) ? this.actor.system.applied_models : [];
+  return records
+    .filter(record => !record.removedAt)
+    .map(record => ({
+      ...record,
+      appliedAtLabel: record.appliedAt ? new Date(record.appliedAt).toLocaleString() : "-"
+    }))
+    .sort((a, b) => (a.appliedAt || "").localeCompare(b.appliedAt || ""));
+}
+
+async _onAddCharacterModel(ev) {
+  ev.preventDefault();
+  new TemplateBrowser(this.actor, {
+    onSelect: async (selectedTemplate) => {
+      const templateDoc = selectedTemplate?.uuid ? await fromUuid(selectedTemplate.uuid).catch(() => null) : null;
+      if (!templateDoc) return ui.notifications.error("Não foi possível carregar o Modelo selecionado.");
+      await this._runTemplateApplicationFlow(templateDoc);
+    }
+  }).render(true);
+}
+
+async _runTemplateApplicationFlow(templateItem) {
+  if (!templateItem) return;
+
+  const duplicate = this._findAppliedModelRecord(templateItem);
+  if (duplicate) {
+    ui.notifications.warn(`O Modelo "${templateItem.name}" já foi aplicado nesta ficha.`);
+    return;
+  }
+
+  const blocks = Array.isArray(templateItem.system?.blocks) ? templateItem.system.blocks : [];
+  if (!blocks.length) {
+    ui.notifications.warn("Este Modelo não possui blocos para aplicação.");
+    return;
+  }
+
+  const plan = [];
+  let pointsLeftoverTotal = 0;
+
+  for (const block of blocks) {
+    const contents = Array.isArray(block.contents) ? block.contents : [];
+    if (!contents.length) continue;
+
+    if (block.type === "guaranteed") {
+      plan.push(...contents.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
+      continue;
+    }
+
+    if (block.type === "selection") {
+      const selected = await this._promptTemplateSelectionBlock(block);
+      if (selected === null) return;
+      plan.push(...selected.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
+      continue;
+    }
+
+    if (block.type === "points") {
+      const result = await this._promptTemplatePointsBlock(block);
+      if (result === null) return;
+      plan.push(...result.selected.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
+      pointsLeftoverTotal += result.leftover;
+    }
+  }
+
+  const applied = await this._applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal });
+  if (!applied) return;
+
+  ui.notifications.info(`Modelo "${templateItem.name}" aplicado com sucesso.`);
+}
+
+_findAppliedModelRecord(templateItem) {
+  const records = Array.isArray(this.actor.system.applied_models) ? this.actor.system.applied_models : [];
+  return records.find(record => {
+    if (record.removedAt) return false;
+    if (templateItem.uuid && record.templateUuid && record.templateUuid === templateItem.uuid) return true;
+    if (templateItem.id && record.templateId && record.templateId === templateItem.id) return true;
+    return (record.templateName || "").toLowerCase() === (templateItem.name || "").toLowerCase();
+  });
+}
+
+async _promptTemplateSelectionBlock(block) {
+  const contents = Array.isArray(block.contents) ? block.contents : [];
+  const maxChoices = Math.max(1, Number(block.choiceCount) || 1);
+
+  const rows = contents.map(entry => {
+    const label = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
+    const cost = Number(entry.cost) || 0;
+    return `
+      <label class="filter-check" style="display:flex;justify-content:space-between;gap:8px;">
+        <span><input type="checkbox" name="entry" value="${entry.id}"> ${label}</span>
+        <small>${cost} pts</small>
+      </label>`;
+  }).join("");
+
+  const content = `
+    <div class="template-apply-block-dialog">
+      <p><strong>${foundry.utils.escapeHTML(block.title || "Bloco de seleção")}</strong></p>
+      <p>Selecione até <strong>${maxChoices}</strong> opção(ões).</p>
+      <div class="template-apply-options">${rows}</div>
+    </div>`;
+
+  return new Promise(resolve => {
+    let done = false;
+    const finish = value => { if (done) return; done = true; resolve(value); };
+
+    new Dialog({
+      title: "Aplicar Modelo • Bloco de Seleção",
+      content,
+      buttons: {
+        apply: {
+          label: "Confirmar",
+          callback: (html) => {
+            const selectedIds = html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+            if (selectedIds.length > maxChoices) {
+              ui.notifications.warn(`Selecione no máximo ${maxChoices} opções.`);
+              return false;
+            }
+            const selected = contents.filter(entry => selectedIds.includes(entry.id));
+            finish(selected);
+          }
+        },
+        cancel: { label: "Cancelar", callback: () => finish(null) }
+      },
+      default: "apply",
+      close: () => finish(null)
+    }).render(true);
+  });
+}
+
+async _promptTemplatePointsBlock(block) {
+  const contents = Array.isArray(block.contents) ? block.contents : [];
+  const available = Math.max(0, Number(block.pointsAvailable) || 0);
+
+  const rows = contents.map(entry => {
+    const label = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
+    const cost = Number(entry.cost) || 0;
+    return `
+      <label class="filter-check" style="display:flex;justify-content:space-between;gap:8px;">
+        <span><input type="checkbox" name="entry" value="${entry.id}" data-cost="${cost}"> ${label}</span>
+        <small>${cost} pts</small>
+      </label>`;
+  }).join("");
+
+  const content = `
+    <div class="template-apply-block-dialog">
+      <p><strong>${foundry.utils.escapeHTML(block.title || "Bloco de pontos")}</strong></p>
+      <p>Pontos disponíveis: <strong>${available}</strong></p>
+      <p>Saldo: <strong id="template-points-left">${available}</strong></p>
+      <div class="template-apply-options">${rows}</div>
+    </div>`;
+
+  return new Promise(resolve => {
+    let done = false;
+    const finish = value => { if (done) return; done = true; resolve(value); };
+
+    new Dialog({
+      title: "Aplicar Modelo • Bloco por Pontos",
+      content,
+      buttons: {
+        apply: {
+          label: "Confirmar",
+          callback: (html) => {
+            const selectedInputs = html.find('input[name="entry"]:checked');
+            const selectedIds = selectedInputs.map((_, el) => el.value).get();
+            const spent = selectedInputs.map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
+            if (spent > available) {
+              ui.notifications.warn("A seleção excede os pontos disponíveis para este bloco.");
+              return false;
+            }
+            finish({
+              selected: contents.filter(entry => selectedIds.includes(entry.id)),
+              leftover: available - spent
+            });
+          }
+        },
+        cancel: { label: "Cancelar", callback: () => finish(null) }
+      },
+      default: "apply",
+      close: () => finish(null),
+      render: (html) => {
+        const leftEl = html.find("#template-points-left");
+        const recalc = () => {
+          const spent = html.find('input[name="entry"]:checked').map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
+          leftEl.text(Math.max(available - spent, 0));
+        };
+        html.find('input[name="entry"]').on("change", recalc);
+      }
+    }).render(true);
+  });
+}
+
+async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
+  const itemCreates = [];
+  const attributeUpdates = {};
+  const attributeChanges = [];
+
+  for (const entry of plan) {
+    if (entry.kind === "attribute") {
+      this._accumulateAttributeChanges(entry, attributeUpdates, attributeChanges);
+      continue;
+    }
+
+    const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
+    if (!sourceItem) continue;
+
+    const createdData = this._buildActorItemFromTemplateEntry(sourceItem, entry, templateItem);
+    itemCreates.push(createdData);
+  }
+
+  const createdItems = itemCreates.length ? await this.actor.createEmbeddedDocuments("Item", itemCreates) : [];
+
+  const updateData = { ...attributeUpdates };
+  if (Number(pointsLeftoverTotal) > 0) {
+    updateData["system.points.unspent"] = (Number(this.actor.system.points?.unspent) || 0) + Number(pointsLeftoverTotal);
+  }
+
+  if (Object.keys(updateData).length) {
+    await this.actor.update(updateData);
+  }
+
+  const applicationId = foundry.utils.randomID();
+  if (createdItems.length) {
+    await this.actor.updateEmbeddedDocuments("Item", createdItems.map(item => ({
+      _id: item.id,
+      "flags.gum.templateApplicationId": applicationId
+    })));
+  }
+
+  const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
+  records.push({
+    applicationId,
+    templateId: templateItem.id,
+    templateUuid: templateItem.uuid,
+    templateName: templateItem.name,
+    appliedAt: new Date().toISOString(),
+    appliedBy: game.user?.id,
+    createdItemIds: createdItems.map(item => item.id),
+    attributeChanges,
+    pointsLeftover: Number(pointsLeftoverTotal) || 0,
+    totalEntries: plan.length
+  });
+
+  await this.actor.update({ "system.applied_models": records });
+  return true;
+}
+
+_accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
+  const attributes = entry.attributes || {};
+  const map = {
+    st: "st",
+    dx: "dx",
+    iq: "iq",
+    ht: "ht",
+    will: "vont",
+    per: "per",
+    hp: "hp",
+    fp: "fp",
+    basic_speed: "basic_speed",
+    move: "basic_move"
+  };
+
+  for (const [sourceKey, amountRaw] of Object.entries(attributes)) {
+    const amount = Number(amountRaw) || 0;
+    if (!amount) continue;
+
+    const actorKey = map[sourceKey];
+    if (!actorKey) continue;
+    const path = `system.attributes.${actorKey}.value`;
+    const currentValue = foundry.utils.getProperty(this.actor, path) ?? foundry.utils.getProperty(this.actor.system, `attributes.${actorKey}.value`) ?? 0;
+
+    const baseValue = path in attributeUpdates ? attributeUpdates[path] : Number(currentValue) || 0;
+    attributeUpdates[path] = baseValue + amount;
+
+    attributeChanges.push({ key: actorKey, amount });
+  }
+}
+
+async _resolveTemplateEntrySourceItem(entry) {
+  if (entry.uuid) {
+    const byUuid = await fromUuid(entry.uuid).catch(() => null);
+    if (byUuid) return byUuid;
+  }
+
+  if (entry.sourceId) {
+    const worldItem = game.items.get(entry.sourceId);
+    if (worldItem) return worldItem;
+
+    for (const pack of game.packs.filter(p => p.documentName === "Item")) {
+      const doc = await pack.getDocument(entry.sourceId).catch(() => null);
+      if (doc) return doc;
+    }
+  }
+
+  return null;
+}
+
+_buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
+  const data = sourceItem.toObject();
+
+  if (["skill", "spell", "power", "advantage", "disadvantage"].includes(sourceItem.type)) {
+    data.system.points = Number(entry.cost ?? data.system?.points ?? 0);
+  }
+
+  if (["skill", "spell", "power"].includes(sourceItem.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+    data.system.skill_level = Number(entry.level) || 0;
+  }
+
+  if (["advantage", "disadvantage"].includes(sourceItem.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+    data.system.level = entry.level;
+  }
+
+  if (sourceItem.type === "equipment") {
+    data.system.quantity = Number(entry.quantity ?? data.system?.quantity ?? 1) || 1;
+    data.system.cost = Number(entry.cost ?? data.system?.cost ?? 0) || 0;
+  }
+
+  data.flags = data.flags || {};
+  data.flags.gum = data.flags.gum || {};
+  data.flags.gum.templateApplied = {
+    templateId: templateItem.id,
+    templateUuid: templateItem.uuid,
+    templateName: templateItem.name,
+    templateEntryId: entry.id
+  };
+
+  return data;
 }
 
 

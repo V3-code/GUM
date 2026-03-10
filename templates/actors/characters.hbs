@@ -12,6 +12,20 @@
           {{! Classes já alinhadas com o CSS novo }}
           <input name="name" class="char-name-input" type="text" value="{{actor.name}}" placeholder="Nome do Personagem"/>
           <input name="system.details.concept" class="char-concept-input" type="text" value="{{actor.system.details.concept}}" placeholder="Conceito, Título ou Arquétipo"/>
+          <div class="character-model-toolbar">
+            <button type="button" class="add-character-model-btn">
+              <i class="fas fa-puzzle-piece"></i> Adicionar Modelo
+            </button>
+            {{#if appliedModels.length}}
+            <div class="character-model-applied-list">
+              {{#each appliedModels as |model|}}
+              <span class="character-model-pill" title="Aplicado em {{model.appliedAtLabel}}">
+                <i class="fas fa-check-circle"></i> {{model.templateName}}
+              </span>
+              {{/each}}
+            </div>
+            {{/if}}
+          </div>
         </div>
         <div class="header-points">
           <div class="points-cluster">
