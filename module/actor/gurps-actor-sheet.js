@@ -4987,6 +4987,7 @@ async _promptTemplateSelectionBlock(block) {
     <div class="template-apply-block-dialog">
       <p><strong>${foundry.utils.escapeHTML(block.title || "Bloco de seleção")}</strong></p>
       <p>Selecione até <strong>${maxChoices}</strong> opção(ões).</p>
+      <p>Selecionadas: <strong id="template-selection-count">0/${maxChoices}</strong></p>
       <div class="template-apply-options">${rows}</div>
     </div>`;
 
@@ -5013,8 +5014,28 @@ async _promptTemplateSelectionBlock(block) {
         cancel: { label: "Cancelar", callback: () => finish(null) }
       },
       default: "apply",
-      close: () => finish(null)
-    }).render(true);
+      close: () => finish(null),
+      render: (html) => {
+        const inputs = html.find('input[name="entry"]');
+        const counterEl = html.find("#template-selection-count");
+        const applyBtn = html.find('button[data-button="apply"]');
+
+        const refreshState = () => {
+          const selectedCount = inputs.filter(":checked").length;
+          counterEl.text(`${selectedCount}/${maxChoices}`);
+
+          const atLimit = selectedCount >= maxChoices;
+          inputs.each((_, input) => {
+            if (!input.checked) input.disabled = atLimit;
+          });
+
+          if (applyBtn.length) applyBtn.prop("disabled", selectedCount > maxChoices);
+        };
+
+        inputs.on("change", refreshState);
+        refreshState();
+      }
+    }, { classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"] }).render(true);
   });
 }
 
@@ -5070,24 +5091,45 @@ async _promptTemplatePointsBlock(block) {
       close: () => finish(null),
       render: (html) => {
         const leftEl = html.find("#template-points-left");
+        const inputs = html.find('input[name="entry"]');
+        const applyBtn = html.find('button[data-button="apply"]');
+
         const recalc = () => {
-          const spent = html.find('input[name="entry"]:checked').map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
+          const spent = inputs.filter(":checked").map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
           leftEl.text(Math.max(available - spent, 0));
+
+          inputs.each((_, el) => {
+            if (el.checked) {
+              el.disabled = false;
+              return;
+            }
+
+            const nextCost = Number(el.dataset.cost) || 0;
+            el.disabled = (spent + nextCost) > available;
+          });
+
+          if (applyBtn.length) applyBtn.prop("disabled", spent > available);
         };
-        html.find('input[name="entry"]').on("change", recalc);
+
+        inputs.on("change", recalc);
+        recalc();
       }
-    }).render(true);
+    }, { classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"] }).render(true);
   });
 }
 
 async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
   const itemCreates = [];
-  const attributeUpdates = {};
+  const attributeDeltas = {};
   const attributeChanges = [];
+  let shouldRecalculateSecondary = false;
+  let hasPrimaryAttributeChange = false;
 
   for (const entry of plan) {
     if (entry.kind === "attribute") {
-      this._accumulateAttributeChanges(entry, attributeUpdates, attributeChanges);
+      const result = this._accumulateAttributeChanges(entry, attributeDeltas, attributeChanges);
+      if (entry.linkSecondary) shouldRecalculateSecondary = true;
+      if (result.primaryChanged) hasPrimaryAttributeChange = true;
       continue;
     }
 
@@ -5100,7 +5142,9 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
 
   const createdItems = itemCreates.length ? await this.actor.createEmbeddedDocuments("Item", itemCreates) : [];
 
-  const updateData = { ...attributeUpdates };
+  const updateData = this._buildTemplateAttributeUpdateData(attributeDeltas, {
+    recalculateSecondaryBases: shouldRecalculateSecondary && hasPrimaryAttributeChange
+  });
   if (Number(pointsLeftoverTotal) > 0) {
     updateData["system.points.unspent"] = (Number(this.actor.system.points?.unspent) || 0) + Number(pointsLeftoverTotal);
   }
@@ -5156,14 +5200,50 @@ _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
 
     const actorKey = map[sourceKey];
     if (!actorKey) continue;
-    const path = `system.attributes.${actorKey}.value`;
-    const currentValue = foundry.utils.getProperty(this.actor, path) ?? foundry.utils.getProperty(this.actor.system, `attributes.${actorKey}.value`) ?? 0;
-
-    const baseValue = path in attributeUpdates ? attributeUpdates[path] : Number(currentValue) || 0;
-    attributeUpdates[path] = baseValue + amount;
+    attributeUpdates[actorKey] = (Number(attributeUpdates[actorKey]) || 0) + amount;
 
     attributeChanges.push({ key: actorKey, amount });
   }
+
+  const primaryKeys = ["st", "dx", "iq", "ht", "per"];
+  return {
+    primaryChanged: primaryKeys.some(key => (Number(attributeUpdates[key]) || 0) !== 0)
+  };
+}
+
+_buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases = false } = {}) {
+  const updateData = {};
+  const getActorValue = (key) => Number(foundry.utils.getProperty(this.actor.system, `attributes.${key}.value`)) || 0;
+
+  for (const [actorKey, deltaRaw] of Object.entries(attributeDeltas)) {
+    const delta = Number(deltaRaw) || 0;
+    if (!delta) continue;
+    const path = `system.attributes.${actorKey}.value`;
+    updateData[path] = getActorValue(actorKey) + delta;
+  }
+
+  if (!recalculateSecondaryBases) return updateData;
+
+  const st = getActorValue("st") + (Number(attributeDeltas.st) || 0);
+  const dx = getActorValue("dx") + (Number(attributeDeltas.dx) || 0);
+  const ht = getActorValue("ht") + (Number(attributeDeltas.ht) || 0);
+  const per = getActorValue("per") + (Number(attributeDeltas.per) || 0);
+  const basicSpeedBase = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
+  const basicMoveBase = Math.floor(basicSpeedBase);
+  const damage = this._getBasicDamageFromST(st);
+
+  updateData["system.attributes.hp.max"] = st;
+  updateData["system.attributes.fp.max"] = ht;
+  updateData["system.attributes.lifting_st.value"] = st;
+  updateData["system.attributes.vision.value"] = per;
+  updateData["system.attributes.hearing.value"] = per;
+  updateData["system.attributes.tastesmell.value"] = per;
+  updateData["system.attributes.basic_speed.value"] = basicSpeedBase + (Number(attributeDeltas.basic_speed) || 0);
+  updateData["system.attributes.basic_move.value"] = basicMoveBase + (Number(attributeDeltas.basic_move) || 0);
+  updateData["system.attributes.thrust_damage"] = damage.thrust;
+  updateData["system.attributes.swing_damage"] = damage.swing;
+
+  return updateData;
 }
 
 async _resolveTemplateEntrySourceItem(entry) {

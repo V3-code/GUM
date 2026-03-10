@@ -51,7 +51,7 @@ export class TemplateItemSheet extends ItemSheet {
         if (entry.kind === "attribute") {
             return {
                 ...entry,
-                rowName: entry.label || "Atributos",
+                rowName: this._buildAttributeRowName(entry),
                 rowQty: "-",
                 rowLevel: "-",
                 rowCost: entry.cost ?? 0,
@@ -101,8 +101,23 @@ export class TemplateItemSheet extends ItemSheet {
             parts.push(`${label} ${sign}${numeric}`);
         }
 
-        if (!parts.length) return "Nenhuma alteração";
+         if (!parts.length) return "Nenhuma alteração";
         return parts.join(" • ");
+    }
+
+    _buildAttributeRowName(entry) {
+        const attrs = entry.attributes || {};
+        const entries = Object.entries(attrs)
+            .map(([key, raw]) => ({ key, value: Number(raw) || 0 }))
+            .filter(attr => attr.value !== 0)
+            .map(attr => {
+                const sign = attr.value > 0 ? "+" : "";
+                return `${this._getAttributeLabel(attr.key)} ${sign}${attr.value}`;
+            });
+
+        if (!entries.length) return entry.label || "Atributos";
+        if (entries.length === 1) return entries[0];
+        return `${entries[0]} +${entries.length - 1}`;
     }
 
     _getItemTypeLabel(type) {
@@ -314,6 +329,10 @@ export class TemplateItemSheet extends ItemSheet {
 
         const content = `
         <div class="template-attr-dialog">
+            <div class="form-group">
+                <label><input type="checkbox" id="link-secondary"> Vincular atributos secundários aos primários</label>
+            </div>
+
             <div class="template-attr-grid-header">
                 <span>Atributo</span>
                 <span>Incremento</span>
