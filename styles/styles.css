@@ -348,58 +348,97 @@
     background: transparent !important; border: none !important; width: 100%;
 }
 
-.gum.sheet.actor .character-model-toolbar {
-  display: flex;
-  flex-direction: column;
+.gum.sheet.actor .biography-models-block {
+  margin: 0 0 0.75rem;
+  padding: 0.2rem 0;
+  background: transparent;
+  border: none;
+}
+.gum.sheet.actor .biography-models-grid {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  column-gap: 0.55rem;
+  row-gap: 0.4rem;
+}
+.gum.sheet.actor .biography-model-add-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 0.35rem;
-}
-.gum.sheet.actor .character-model-panel {
-  margin-top: 0.75rem;
-}
-.gum.sheet.actor .character-model-empty {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--gum-text-medio);
-}
-.gum.sheet.actor .add-character-model-btn {
-  align-self: flex-start;
-  border: 1px solid var(--gum-border-gold);
-  background: rgba(24, 24, 24, 0.9);
+  border: 1px solid rgba(197, 160, 91, 0.4);
+  border-radius: 999px;
+  background: transparent;
   color: var(--gum-accent-gold);
-  font-size: 0.72rem;
-  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
-.gum.sheet.actor .add-character-model-btn:hover {
-  background: rgba(197, 160, 91, 0.15);
+.gum.sheet.actor .biography-model-add-btn:hover {
+  border-color: rgba(197, 160, 91, 0.7);
+  background: rgba(197, 160, 91, 0.12);
+  transform: translateY(-1px);
 }
-.gum.sheet.actor .character-model-applied-list {
+.gum.sheet.actor .biography-models-divider {
+  color: rgba(197, 160, 91, 0.65);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.gum.sheet.actor .biography-models-tags {
+  min-width: 0;
+}
+.gum.sheet.actor .biography-models-block .character-model-applied-list {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-.gum.sheet.actor .character-model-pill {
+.gum.sheet.actor .biography-models-block .character-model-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.68rem;
-  padding: 2px 6px;
+    min-height: 24px;
+  padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(197, 160, 91, 0.45);
-  color: var(--gum-text-claro);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(197, 160, 91, 0.22);
+  background: rgba(255, 255, 255, 0.65);
+  color: #584329;
 }
-.gum.sheet.actor .remove-character-model-btn {
-  border: none;
-  background: transparent;
-  color: #d9a5a5;
+.gum.sheet.actor .biography-models-block .character-model-pill-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.gum.sheet.actor .biography-models-block .character-model-empty {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--gum-text-medio);
+  font-style: italic;
+}
+.gum.sheet.actor .biography-models-block .remove-character-model-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   padding: 0;
-  width: 14px;
-  height: 14px;
-  line-height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(131, 46, 46, 0.1);
+  color: rgba(131, 46, 46, 0.78);
   cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-.gum.sheet.actor .remove-character-model-btn:hover {
-  color: #ff6f6f;
+.gum.sheet.actor .biography-models-block .remove-character-model-btn:hover {
+  background: rgba(131, 46, 46, 0.2);
+  color: #8a2d2d;
+}
+@media (max-width: 640px) {
+  .gum.sheet.actor .biography-models-grid {
+    grid-template-columns: 1fr;
+  }
+  .gum.sheet.actor .biography-models-divider {
+    display: none;
+  }
 }
 
 .gum.sheet.actor .points-cluster { display: flex; gap: 1rem; }
