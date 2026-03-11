@@ -2,6 +2,7 @@ import { GMModifierBrowser } from "./gm-modifier-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { performGURPSRoll } from "../../scripts/main.js";
 import { applySingleEffect } from "../../scripts/effects-engine.js";
+import { GurpsRollPrompt } from "./roll-prompt.js";
 
 export class GumGMScreen extends Application {
     
@@ -17,6 +18,11 @@ export class GumGMScreen extends Application {
         this.sidebarState = {
             quickRollCollapsed: false,
             manualCollapsed: false
+        };
+
+        this._lastContextClick = {
+            actorId: null,
+            at: 0
         };
     }
 
@@ -572,6 +578,15 @@ activateListeners(html) {
             if (!actor && actorId) actor = game.actors.get(actorId);
 
             if (actor) {
+                const now = Date.now();
+                const isDoubleRightClick = this._lastContextClick.actorId === actor.id && (now - this._lastContextClick.at) <= 350;
+                this._lastContextClick = { actorId: actor.id, at: now };
+
+                if (ev.shiftKey || isDoubleRightClick) {
+                    actor.sheet?.render(true);
+                    return;
+                }
+
                 this._createContextMenu(actor, ev.clientX, ev.clientY);
             }
         });
@@ -866,21 +881,30 @@ activateListeners(html) {
         
         menu.find('.roll-attr').click(ev => {
             const el = $(ev.currentTarget);
-            this._performContextRoll(actor, el.data('attr'), parseInt(el.data('val')));
+            this._performContextRoll(actor, el.data('attr'), parseInt(el.data('val')), {
+                quick: ev.ctrlKey,
+                rollType: 'attribute'
+            });
             menu.remove();
         });
 
         menu.find('.roll-def').click(ev => {
             ev.stopPropagation();
             const el = $(ev.currentTarget);
-            this._performContextRoll(actor, el.data('def'), parseInt(el.data('val')));
+            this._performContextRoll(actor, el.data('def'), parseInt(el.data('val')), {
+                quick: ev.ctrlKey,
+                rollType: 'defense'
+            });
             menu.remove();
         });
 
         menu.find('.roll-attack-ctx').click(ev => {
             ev.stopPropagation();
             const el = $(ev.currentTarget);
-            this._performContextRoll(actor, el.data('label'), parseInt(el.data('nh')));
+            this._performContextRoll(actor, el.data('label'), parseInt(el.data('nh')), {
+                quick: ev.ctrlKey,
+                rollType: 'attack'
+            });
             menu.remove();
         });
 
@@ -905,15 +929,17 @@ activateListeners(html) {
 /**
      * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
      */
-    _performContextRoll(actor, label, targetValue) {
+     _performContextRoll(actor, label, targetValue, options = {}) {
+        const { quick = false, rollType = 'skill' } = options;
         
-        let totalMod = 0;
+        let selectedModsTotal = 0;
+        let actorModsTotal = 0;
         let lowestCap = Infinity; // Começa infinito (sem teto)
 
         // 1. Processa Modificadores da TELA (Selecionados agora)
         this.selectedModifiers.forEach(mod => {
             if (mod?.type === "effect") return;
-            totalMod += (parseInt(mod.value) || 0);
+            selectedModsTotal += (parseInt(mod.value) || 0);
             
             // Verifica se tem teto e se é menor que o atual
             if (mod.cap !== undefined && mod.cap !== null && mod.cap !== "") {
@@ -925,7 +951,7 @@ activateListeners(html) {
         // 2. Processa Modificadores do ATOR (Flags já aplicadas)
         const actorFlags = actor.getFlag("gum", "gm_modifiers") || [];
         actorFlags.forEach(mod => {
-            totalMod += (parseInt(mod.value) || 0);
+            selectedModsTotal += (parseInt(mod.value) || 0);
             
             // Verifica teto nas flags
             if (mod.cap !== undefined && mod.cap !== null && mod.cap !== "") {
@@ -935,6 +961,7 @@ activateListeners(html) {
         });
 
         // 3. Calcula NH Efetivo Preliminar
+        const totalMod = selectedModsTotal + actorModsTotal;
         let effectiveLevel = targetValue + totalMod;
 
         // 4. Aplica a Regra do Teto (Cap)
@@ -945,7 +972,28 @@ activateListeners(html) {
             // Por enquanto, o sistema de rolagem mostra o valor final.
         }
         
-        // 5. Rola
+        if (!quick) {
+            const promptRollData = {
+                label,
+                value: targetValue,
+                originalValue: targetValue,
+                modifier: selectedModsTotal,
+                modifierLabel: "Escudo do Mestre",
+                type: rollType
+            };
+
+            if (rollType === 'defense') {
+                const normalized = String(label || '').toLowerCase();
+                if (normalized.includes('esquiva')) promptRollData.defenseType = 'dodge';
+                else if (normalized.includes('apar')) promptRollData.defenseType = 'parry';
+                else if (normalized.includes('bloq')) promptRollData.defenseType = 'block';
+            }
+
+            new GurpsRollPrompt(actor, promptRollData).render(true);
+            return;
+        }
+
+        // 5. Rola direto (Ctrl+Click)
         performGURPSRoll(actor, {
             label: label + " (EM)",
             value: effectiveLevel,      // NH Final (com Teto aplicado)
