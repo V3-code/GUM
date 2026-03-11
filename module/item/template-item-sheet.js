@@ -329,9 +329,6 @@ export class TemplateItemSheet extends ItemSheet {
 
         const content = `
         <div class="template-attr-dialog">
-            <div class="form-group">
-                <label><input type="checkbox" id="link-secondary"> Vincular atributos secundários aos primários</label>
-            </div>
 
             <div class="template-attr-grid-header">
                 <span>Atributo</span>
@@ -342,7 +339,11 @@ export class TemplateItemSheet extends ItemSheet {
             <div class="template-attr-grid">
                 ${this._renderAttributeFieldRows()}
             </div>
-
+            <hr>
+            <div class="form-group" style="margin-top:10px; justify-self: center;">
+                <label style="display:inline-flex;text-wrap-mode: nowrap;align-items: center;"><input style="width:14px; height:14px" type="checkbox" id="link-secondary"> Recalcular Atr. Secundários antes de alterá-los.</label>
+            </div>
+            <hr>
             <div class="form-group" style="margin-top:10px;">
                 <label>Custo Total</label>
                 <input type="number" id="template-attr-total-cost" value="0" readonly>

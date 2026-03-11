@@ -5152,6 +5152,7 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
   }
 
   const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
+  const secondaryRecalcApplied = shouldRecalculateSecondary && hasPrimaryAttributeChange;
   records.push({
     applicationId,
     templateId: templateItem.id,
@@ -5161,6 +5162,7 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
     appliedBy: game.user?.id,
     createdItemIds: createdItems.map(item => item.id),
     attributeChanges,
+    secondaryRecalcApplied,
     pointsLeftover: Number(pointsLeftoverTotal) || 0,
     totalEntries: plan.length
   });
@@ -5230,6 +5232,8 @@ _buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases =
   updateData["system.attributes.tastesmell.value"] = per;
   updateData["system.attributes.basic_speed.value"] = basicSpeedBase + (Number(attributeDeltas.basic_speed) || 0);
   updateData["system.attributes.basic_move.value"] = basicMoveBase + (Number(attributeDeltas.basic_move) || 0);
+  updateData["system.attributes.hp.max"] += (Number(attributeDeltas.hp) || 0);
+  updateData["system.attributes.fp.max"] += (Number(attributeDeltas.fp) || 0);
   updateData["system.attributes.thrust_damage"] = damage.thrust;
   updateData["system.attributes.swing_damage"] = damage.swing;
 
@@ -5343,6 +5347,38 @@ async _onRemoveCharacterModel(ev) {
   if (pointsLeftover) {
     const currentUnspent = Number(this.actor.system?.points?.unspent) || 0;
     attributeReverts["system.points.unspent"] = Math.max(0, currentUnspent - pointsLeftover);
+  }
+
+   const shouldRecalculateSecondary = Boolean(record.secondaryRecalcApplied);
+  if (shouldRecalculateSecondary) {
+    const currentAttrs = this.actor.system?.attributes || {};
+    const getCurrentValue = (key) => Number(currentAttrs?.[key]?.value) || 0;
+    const getRevertedValue = (key) => {
+      const path = `system.attributes.${key}.value`;
+      if (path in attributeReverts) return Number(attributeReverts[path]) || 0;
+      return getCurrentValue(key);
+    };
+
+    const st = getRevertedValue("st");
+    const dx = getRevertedValue("dx");
+    const ht = getRevertedValue("ht");
+    const per = getRevertedValue("per");
+
+    const basicSpeed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
+    const basicMove = Math.floor(basicSpeed);
+    const damage = this._getBasicDamageFromST(st);
+
+    attributeReverts["system.attributes.hp.max"] = st;
+    attributeReverts["system.attributes.fp.max"] = ht;
+    attributeReverts["system.attributes.lifting_st.value"] = st;
+    attributeReverts["system.attributes.vision.value"] = per;
+    attributeReverts["system.attributes.hearing.value"] = per;
+    attributeReverts["system.attributes.tastesmell.value"] = per;
+    attributeReverts["system.attributes.touch.value"] = per;
+    attributeReverts["system.attributes.basic_speed.value"] = basicSpeed;
+    attributeReverts["system.attributes.basic_move.value"] = basicMove;
+    attributeReverts["system.attributes.thrust_damage"] = damage.thrust;
+    attributeReverts["system.attributes.swing_damage"] = damage.swing;
   }
 
   record.removedAt = new Date().toISOString();
