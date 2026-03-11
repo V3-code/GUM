@@ -349,10 +349,17 @@
 }
 
 .gum.sheet.actor .character-model-toolbar {
-  margin-top: 0.35rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+.gum.sheet.actor .character-model-panel {
+  margin-top: 0.75rem;
+}
+.gum.sheet.actor .character-model-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--gum-text-medio);
 }
 .gum.sheet.actor .add-character-model-btn {
   align-self: flex-start;

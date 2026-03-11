@@ -12,23 +12,6 @@
           {{! Classes já alinhadas com o CSS novo }}
           <input name="name" class="char-name-input" type="text" value="{{actor.name}}" placeholder="Nome do Personagem"/>
           <input name="system.details.concept" class="char-concept-input" type="text" value="{{actor.system.details.concept}}" placeholder="Conceito, Título ou Arquétipo"/>
-          <div class="character-model-toolbar">
-            <button type="button" class="add-character-model-btn">
-              <i class="fas fa-puzzle-piece"></i> Adicionar Modelo
-            </button>
-            {{#if appliedModels.length}}
-            <div class="character-model-applied-list">
-              {{#each appliedModels as |model|}}
-              <span class="character-model-pill" title="Aplicado em {{model.appliedAtLabel}}">
-                <i class="fas fa-check-circle"></i> {{model.templateName}}
-                <button type="button" class="remove-character-model-btn" data-application-id="{{model.applicationId}}" title="Remover modelo">
-                  <i class="fas fa-times"></i>
-                </button>
-              </span>
-              {{/each}}
-            </div>
-            {{/if}}
-          </div>
         </div>
         <div class="header-points">
           <div class="points-cluster">
@@ -1964,11 +1947,36 @@
                 <span class="detail-label">Alinhamento:</span>
                 <span class="detail-value">{{actor.system.details.alignment}}</span>
               </div>
-              <div class="item-row detail-item full-width">
+ <div class="item-row detail-item full-width">
                 <span class="detail-label">Crença / Fé:</span>
                 <span class="detail-value">{{actor.system.details.belief}}</span>
               </div>
               
+            </div>
+          </div>
+
+          <div class="skill-block character-model-panel">
+            <div class="block-header">
+              <h4>Modelos</h4>
+            </div>
+            <div class="character-model-toolbar">
+              <button type="button" class="add-character-model-btn">
+                <i class="fas fa-puzzle-piece"></i> Adicionar Modelo
+              </button>
+              {{#if appliedModels.length}}
+              <div class="character-model-applied-list">
+                {{#each appliedModels as |model|}}
+                <span class="character-model-pill" title="Aplicado em {{model.appliedAtLabel}}">
+                  <i class="fas fa-check-circle"></i> {{model.templateName}}
+                  <button type="button" class="remove-character-model-btn" data-application-id="{{model.applicationId}}" title="Remover modelo">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </span>
+                {{/each}}
+              </div>
+              {{else}}
+              <p class="character-model-empty">Nenhum modelo aplicado.</p>
+              {{/if}}
             </div>
           </div>
         </div>

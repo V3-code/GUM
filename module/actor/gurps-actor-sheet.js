@@ -4973,15 +4973,8 @@ async _promptTemplateSelectionBlock(block) {
   const contents = Array.isArray(block.contents) ? block.contents : [];
   const maxChoices = Math.max(1, Number(block.choiceCount) || 1);
 
-  const rows = contents.map(entry => {
-    const label = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
-    const cost = Number(entry.cost) || 0;
-    return `
-      <label class="filter-check" style="display:flex;justify-content:space-between;gap:8px;">
-        <span><input type="checkbox" name="entry" value="${entry.id}"> ${label}</span>
-        <small>${cost} pts</small>
-      </label>`;
-  }).join("");
+  const entryViews = await Promise.all(contents.map(entry => this._buildTemplateEntryViewData(entry)));
+  const rows = entryViews.map(view => this._renderTemplateChoiceRow(view)).join("");
 
   const content = `
     <div class="template-apply-block-dialog">
@@ -5043,21 +5036,16 @@ async _promptTemplatePointsBlock(block) {
   const contents = Array.isArray(block.contents) ? block.contents : [];
   const available = Math.max(0, Number(block.pointsAvailable) || 0);
 
-  const rows = contents.map(entry => {
-    const label = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
-    const cost = Number(entry.cost) || 0;
-    return `
-      <label class="filter-check" style="display:flex;justify-content:space-between;gap:8px;">
-        <span><input type="checkbox" name="entry" value="${entry.id}" data-cost="${cost}"> ${label}</span>
-        <small>${cost} pts</small>
-      </label>`;
-  }).join("");
+  const entryViews = await Promise.all(contents.map(entry => this._buildTemplateEntryViewData(entry)));
+  const rows = entryViews.map(view => this._renderTemplateChoiceRow(view, { includeCostDataAttr: true })).join("");
 
   const content = `
     <div class="template-apply-block-dialog">
-      <p><strong>${foundry.utils.escapeHTML(block.title || "Bloco de pontos")}</strong></p>
-      <p>Pontos disponíveis: <strong>${available}</strong></p>
-      <p>Saldo: <strong id="template-points-left">${available}</strong></p>
+      <div class="template-apply-block-header">${foundry.utils.escapeHTML(block.title || "Bloco de pontos")}</div>
+      <div class="template-apply-block-header-2">
+        <div class="template-apply-block-header-2-content">Saldo: <strong id="template-points-left">${available}</strong></div>
+        <div class="template-apply-block-header-2-content">Pontos disponíveis: <strong>${available}</strong></div>
+      </div>
       <div class="template-apply-options">${rows}</div>
     </div>`;
 
@@ -5067,6 +5055,8 @@ async _promptTemplatePointsBlock(block) {
 
     new Dialog({
       title: "Aplicar Modelo • Bloco por Pontos",
+      width: 420,
+      height: "auto",
       content,
       buttons: {
         apply: {
@@ -5366,4 +5356,139 @@ async _onRemoveCharacterModel(ev) {
   ui.notifications.info(`Modelo "${record.templateName || "Modelo"}" removido com sucesso.`);
 }
 
+
+_renderTemplateChoiceRow(view, { includeCostDataAttr = false } = {}) {
+  const costAttr = includeCostDataAttr ? ` data-cost="${view.cost}"` : "";
+  const details = view.details.length
+    ? `<div class="template-choice-details">${view.details.map(detail => `<span class="template-choice-chip">${detail}</span>`).join("")}</div>`
+    : "";
+
+  return `
+    <label class="template-choice-row">
+      <span class="template-choice-input"><input type="checkbox" name="entry" value="${view.id}"${costAttr}></span>
+      <span class="template-choice-content">
+        <span class="template-choice-title-row">
+          <span class="template-choice-title">${view.title}</span>
+          <span class="template-choice-cost">${view.cost} pts</span>
+        </span>
+        ${details}
+      </span>
+    </label>`;
+}
+
+async _buildTemplateEntryViewData(entry) {
+  const cost = Number(entry.cost) || 0;
+  const title = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
+
+  if (entry.kind === "attribute") {
+    return {
+      id: entry.id,
+      title,
+      cost,
+      details: this._getTemplateAttributeDetailChips(entry)
+    };
+  }
+
+  const details = [];
+  if (entry.itemType) details.push(this._getTemplateEntryTypeLabel(entry.itemType));
+
+  const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
+  if (sourceItem) {
+    details.push(...this._getTemplateSourceItemDetails(sourceItem));
+  } else {
+    if (entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+      details.push(`Nível ${foundry.utils.escapeHTML(String(entry.level))}`);
+    }
+    if (entry.quantity !== undefined && entry.quantity !== null && Number(entry.quantity) > 1) {
+      details.push(`Qtd ${Number(entry.quantity)}`);
+    }
+  }
+
+  return {
+    id: entry.id,
+    title,
+    cost,
+    details: details.filter(Boolean).map(detail => foundry.utils.escapeHTML(String(detail)))
+  };
+}
+
+_getTemplateAttributeDetailChips(entry) {
+  const attributes = entry.attributes || {};
+  const labels = {
+    st: "ST",
+    dx: "DX",
+    iq: "IQ",
+    ht: "HT",
+    will: "Vont",
+    per: "Per",
+    hp: "PV",
+    fp: "PF",
+    basic_speed: "Velocidade",
+    move: "Deslocamento"
+  };
+
+  const details = Object.entries(attributes)
+    .map(([key, value]) => ({ key, value: Number(value) || 0 }))
+    .filter(attr => attr.value !== 0)
+    .map(attr => {
+      const sign = attr.value > 0 ? "+" : "";
+      return `${labels[attr.key] || attr.key} ${sign}${attr.value}`;
+    });
+
+  if (entry.linkSecondary) details.push("Recalcula secundários");
+  if (!details.length) details.push("Sem alterações");
+
+  return details.map(detail => foundry.utils.escapeHTML(detail));
+}
+
+_getTemplateSourceItemDetails(item) {
+  const details = [];
+  const system = item.system || {};
+
+  if (item.type === "skill") {
+    if (system.base_attribute) details.push(`Base ${String(system.base_attribute).toUpperCase()}`);
+    if (system.difficulty) details.push(`Dificuldade ${system.difficulty}`);
+    if (system.skill_level !== null && system.skill_level !== undefined && system.skill_level !== "") {
+      details.push(`NH ${system.skill_level}`);
+    }
+  }
+
+  if (item.type === "spell") {
+    if (system.spell_class) details.push(system.spell_class);
+    if (system.mana_cost !== undefined && system.mana_cost !== null && system.mana_cost !== "") {
+      details.push(`Mana ${system.mana_cost}`);
+    }
+  }
+
+  if (item.type === "power") {
+    if (system.activation_cost !== undefined && system.activation_cost !== null && system.activation_cost !== "") {
+      details.push(`Ativação ${system.activation_cost}`);
+    }
+    if (system.duration) details.push(`Duração ${system.duration}`);
+  }
+
+  if (["advantage", "disadvantage"].includes(item.type) && system.points !== undefined && system.points !== null && system.points !== "") {
+    details.push(`Base ${system.points} pts`);
+  }
+
+  if (item.type === "equipment") {
+    if (system.tech_level) details.push(`TL ${system.tech_level}`);
+    if (system.legality_class) details.push(`LC ${system.legality_class}`);
+  }
+
+  return details;
+}
+
+_getTemplateEntryTypeLabel(type) {
+  const labels = {
+    skill: "Perícia",
+    spell: "Magia",
+    power: "Poder",
+    advantage: "Vantagem",
+    disadvantage: "Desvantagem",
+    equipment: "Equipamento",
+    attribute: "Atributo"
+  };
+  return labels[type] || type;
+}
 }

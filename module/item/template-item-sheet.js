@@ -445,6 +445,13 @@ export class TemplateItemSheet extends ItemSheet {
         for (const [key, value] of Object.entries(attributes)) {
             const increment = Number(value) || 0;
             const costPerLevel = Number(costs[key] ?? this._getAttributeCostPerLevel(key)) || 0;
+
+            if (key === "basic_speed") {
+                const quarterSteps = increment / 0.25;
+                total += quarterSteps * costPerLevel;
+                continue;
+            }
+
             total += increment * costPerLevel;
         }
 

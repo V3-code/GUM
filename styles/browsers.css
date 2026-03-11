@@ -442,3 +442,96 @@
     border-radius: 10px;
     background: rgba(255,255,255,0.02);
 } 
+/* ================================================================== */
+/* 9. DIÁLOGO DE APLICAÇÃO DE MODELOS                                 */
+/* ================================================================== */
+
+.gum.template-apply-dialog .template-apply-block-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gum.template-apply-dialog .template-apply-block-header {
+    font-family: 'Modesto Condensed';
+    text-align: center;
+    font-size: 18px;
+    text-transform: uppercase;
+    border-bottom: 1px solid;
+}
+
+.gum.template-apply-dialog .template-apply-block-header-2 {
+    display: flex;
+    gap: 20px;
+}
+
+.gum.template-apply-dialog .template-apply-block-header-2-content {
+
+}
+
+.gum.template-apply-dialog .template-apply-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.gum.template-apply-dialog .template-choice-row {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.18);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.gum.template-apply-dialog .template-choice-row:hover {
+    border-color: rgba(197, 160, 91, 0.55);
+    background: rgba(197, 160, 91, 0.08);
+}
+
+.gum.template-apply-dialog .template-choice-input {
+    margin-top: 2px;
+}
+
+.gum.template-apply-dialog .template-choice-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.gum.template-apply-dialog .template-choice-title {
+    font-weight: 700;
+    color: var(--gum-text-claro);
+}
+
+.gum.template-apply-dialog .template-choice-cost {
+    font-size: 0.9em;
+    color: var(--gum-accent-gold);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gum.template-apply-dialog .template-choice-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.gum.template-apply-dialog .template-choice-chip {
+    font-size: 0.8em;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--gum-text-label);
+}
+
