@@ -1,12 +1,12 @@
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
- * um arquivo de Biblioteca GCS (.skl, .spl, .eqp) para um compêndio.
+  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adm, .eqm) para um compêndio.
  */
 export async function importFromJson() {
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json, .gcs, .skl, .spl, .eqp';
+    input.accept = '.json, .gcs, .skl, .spl, .eqp, .adm, .eqm';
 
     // 2. Adiciona um "listener"
     input.onchange = async (e) => {
@@ -30,7 +30,7 @@ export async function importFromJson() {
         if (Array.isArray(data)) {
             itemsToImport = data; // Formato JSON Simples
         } else if (data.rows && Array.isArray(data.rows)) {
-            itemsToImport = data.rows; // Formato de Biblioteca GCS
+            itemsToImport = flattenGCSRows(data.rows); // Formato de Biblioteca GCS (com children)
         } else {
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
         }
@@ -111,7 +111,8 @@ async function importToCompendium(pack, gcsItems) {
         "powers": "power",
         "equipment": "equipment",
         "armor": "armor",
-        "modifiers": "modifier"
+        "modifiers": "modifier",
+        "eqp_modifiers": "eqp_modifier"
     };
 
     let itemType = packNameToType[packName];
@@ -154,6 +155,10 @@ async function importToCompendium(pack, gcsItems) {
             foundryItemData = parseGCSLibraryEquipment(gcsItemData);
         } else if (itemType === "spell") {
             foundryItemData = parseGCSLibrarySpell(gcsItemData);
+        } else if (itemType === "modifier") {
+            foundryItemData = parseGCSLibraryModifier(gcsItemData);
+        } else if (itemType === "eqp_modifier") {
+            foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
         }
 
         if (foundryItemData) {
@@ -217,6 +222,55 @@ export async function importFromGCS() {
         }
     };
     input.click();
+}
+
+/**
+ * Achata bibliotecas GCS com rows/children em uma lista simples.
+ * Mantém apenas linhas que parecem ser itens importáveis e ignora
+ * nós puramente organizacionais.
+ */
+function flattenGCSRows(rows, collector = []) {
+    for (const row of rows || []) {
+        const copy = foundry.utils.deepClone(row);
+        const children = Array.isArray(copy.children) ? copy.children : [];
+        delete copy.children;
+
+        if (isImportableGCSRow(copy, children.length > 0)) {
+            collector.push(copy);
+        }
+
+        if (children.length > 0) {
+            flattenGCSRows(children, collector);
+        }
+    }
+    return collector;
+}
+
+function isImportableGCSRow(row, hadChildren = false) {
+    if (!row || !row.name) return false;
+
+    // Se for só um contêiner organizacional com filhos e sem conteúdo real, ignora
+    const hasRealContent =
+        row.description ||
+        row.reference ||
+        row.notes ||
+        row.local_notes ||
+        row.features ||
+        row.cost !== undefined ||
+        row.cost_adj !== undefined ||
+        row.value !== undefined ||
+        row.base_value !== undefined ||
+        row.base_points !== undefined ||
+        row.points !== undefined ||
+        row.points_per_level !== undefined ||
+        row.difficulty ||
+        row.spell_class ||
+        row.weapons ||
+        row.levels !== undefined;
+
+    if (!hasRealContent && hadChildren) return false;
+
+    return true;
 }
 
 // =============================================================
@@ -394,6 +448,70 @@ function parseGCSLibrarySpell(gcsSpell) {
     return {
         name: gcsSpell.name,
         type: "spell",
+        system: template
+    };
+}
+
+function parseGCSLibraryModifier(gcsMod) {
+    let template = foundry.utils.deepClone(game.system.template.Item.modifier);
+
+    // Custo base do modificador no GCS vem normalmente como string: "10%", "-20%" etc.
+    // Vamos preservar como string porque o item modifier do GUM já trabalha bem com esse formato.
+    template.cost = gcsMod.cost_adj || "0%";
+
+    // Alguns modificadores possuem níveis. Se não houver, deixamos vazio.
+    template.level = gcsMod.levels || "";
+
+    // Referência de livro/página
+    template.ref = gcsMod.reference || "";
+
+    // O GCS às vezes traz notas locais pedindo preenchimento manual ou explicação do efeito.
+    // Vamos usar applied_effect como campo principal curto
+    template.applied_effect = gcsMod.local_notes || "";
+
+    // Se quiser manter também uma descrição mais completa:
+    template.description = gcsMod.local_notes || "";
+
+    return {
+        name: gcsMod.name || "Modificador",
+        type: "modifier",
+        system: template
+    };
+}
+
+function parseGCSLibraryEquipmentModifier(gcsMod) {
+    let template = foundry.utils.deepClone(game.system.template.Item.eqp_modifier);
+
+    const rawCost = gcsMod.cost || "";
+    const rawCostType = gcsMod.cost_type || "";
+    const rawRef = gcsMod.reference || "";
+    const rawNotes = gcsMod.local_notes || gcsMod.notes || "";
+
+    // Fase 1: NÃO converter automaticamente multiplicadores (x2, x17, x0.4) em CF.
+    // Só preenche CF quando o custo vier em formato aditivo simples.
+    const rawCostStr = String(rawCost).trim();
+    if (/^[+-]?\d+(\.\d+)?$/.test(rawCostStr)) {
+        template.cost_factor = Number(rawCostStr);
+    } else {
+        template.cost_factor = 0;
+    }
+
+    template.ref = rawRef;
+
+    const featureLines = [];
+    if (rawCostStr) {
+        featureLines.push(`Custo GCS: ${rawCostStr}${rawCostType ? ` (${rawCostType})` : ""}`);
+    }
+    if (rawNotes) {
+        featureLines.push(rawNotes);
+    }
+
+    template.features = featureLines.join("\n");
+    template.tags = [rawCostType].filter(Boolean).join(", ");
+
+    return {
+        name: gcsMod.name || "Modificador de Equipamento",
+        type: "eqp_modifier",
         system: template
     };
 }
