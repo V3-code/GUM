@@ -618,6 +618,7 @@
       "templates": [
         "base"
       ],
+      "cost_adjustment": "0 CF",
       "cost_factor": 0,
       "weight_mod": "x1",
       "tech_level_mod": "",

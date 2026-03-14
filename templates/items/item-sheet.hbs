@@ -401,9 +401,9 @@
             {{!-- Seção 1: Mecânica (Custo, Peso, TL) --}}
             <div class="form-section"><h4 class="section-title">Mecânica</h4>
                 <div class="form-grid-4">
-                    <div class="form-group" title="Fator de Custo (ex: +1, +4.5)">
-                        <label>Fator Custo (CF)</label>
-                        <input type="number" step="0.1" name="system.cost_factor" value="{{system.cost_factor}}" placeholder="+0"/>
+                    <div class="form-group" title="Use +5/-5 (soma), -10% (percentual), x3 (multiplicação) ou -0.2 CF (fator de custo)">
+                        <label>Ajuste de Custo</label>
+                        <input type="text" name="system.cost_adjustment" value="{{system.cost_adjustment}}" placeholder="Ex: -10%, +50, x3, -0.2 CF"/>
                     </div>
                     <div class="form-group" title="Modificador de Peso (ex: x0.75, x1.5)">
                         <label>Mod. Peso</label>
@@ -2051,13 +2051,13 @@
             {{!-- CF --}}
             <div class="eqpmod-cell eqpmod-stat is-center">
               <div class="eqpmod-label">CF</div>
-              <div class="eqpmod-value">{{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}}</div>
+              <div class="eqpmod-value">{{mod.costDisplay}}</div>
             </div>
 
             {{!-- Peso --}}
             <div class="eqpmod-cell eqpmod-stat is-center">
               <div class="eqpmod-label">Peso</div>
-              <div class="eqpmod-value">{{mod.weight_mod}}</div>
+              <div class="eqpmod-value">{{mod.weightDisplay}}</div>
             </div>
 
             {{!-- Ações --}}

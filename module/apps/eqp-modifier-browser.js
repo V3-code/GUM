@@ -89,7 +89,7 @@ export class EqpModifierBrowser extends FormApplication {
         img: item.img,
         folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
         displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
-        formattedCF: (item.system.cost_factor > 0 ? '+' : '') + Number(item.system.cost_factor || 0),
+        formattedCF: this._getCostDisplay(item.system),
         formattedWeight: item.system.weight_mod || "x1"
     }));
 
@@ -249,7 +249,7 @@ el.style.display = isVisible ? "grid" : "none";
       const system = modifier?.system || {};
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
       const tags = [
-        createTag("CF", this._formatValue(system.cost_factor)),
+        createTag("Custo", this._getCostDisplay(system)),
         createTag("Peso", system.weight_mod),
         createTag("TL", system.tech_level_mod),
         createTag("Categorias", Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", "))
@@ -289,6 +289,15 @@ el.style.display = isVisible ? "grid" : "none";
       return (num > 0 ? "+" : "") + num;
   }
 
+  _getCostDisplay(system = {}) {
+      if (system.cost_adjustment && `${system.cost_adjustment}`.trim() !== "") {
+          return `${system.cost_adjustment}`.trim();
+      }
+
+      const num = Number(system.cost_factor || 0);
+      return `${num >= 0 ? "+" : ""}${num} CF`;
+  }
+
   async _updateObject(event, formData) {
     const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador selecionado.");
@@ -301,6 +310,7 @@ el.style.display = isVisible ? "grid" : "none";
         newModifiersData[`system.eqp_modifiers.${newKey}`] = {
           id: newKey,
           name: sourceModifier.name,
+          cost_adjustment: sourceModifier.system.cost_adjustment,
           cost_factor: sourceModifier.system.cost_factor,
           weight_mod: sourceModifier.system.weight_mod,
           tech_level_mod: sourceModifier.system.tech_level_mod,

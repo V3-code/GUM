@@ -487,13 +487,18 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     const rawRef = gcsMod.reference || "";
     const rawNotes = gcsMod.local_notes || gcsMod.notes || "";
 
-    // Fase 1: NÃO converter automaticamente multiplicadores (x2, x17, x0.4) em CF.
-    // Só preenche CF quando o custo vier em formato aditivo simples.
+    // Interpretação simples e explícita de custo para já mapear para expressão utilizável.
     const rawCostStr = String(rawCost).trim();
     if (/^[+-]?\d+(\.\d+)?$/.test(rawCostStr)) {
         template.cost_factor = Number(rawCostStr);
+        template.cost_adjustment = `${Number(rawCostStr) >= 0 ? "+" : ""}${Number(rawCostStr)} CF`;
+    } else if (/^[+-]?\d+(\.\d+)?\s*%$/.test(rawCostStr)) {
+        template.cost_adjustment = rawCostStr;
+    } else if (/^[x*]\s*\d+(\.\d+)?$/i.test(rawCostStr)) {
+        template.cost_adjustment = rawCostStr.replace("*", "x");
     } else {
         template.cost_factor = 0;
+        template.cost_adjustment = rawCostStr || "0 CF";
     }
 
     template.ref = rawRef;

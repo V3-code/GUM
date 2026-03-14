@@ -40,6 +40,48 @@ const ROLL_CONTEXT_OPTIONS = [
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    //
 // ================================================================== //
 export class GurpsItemSheet extends ItemSheet {
+    _parseAdjustmentExpression(rawValue, { allowCF = false } = {}) {
+        const source = (rawValue ?? "").toString().trim();
+        if (!source) return { mode: "none", value: 0, label: "" };
+
+        const normalized = source.replace(",", ".").trim();
+
+        const cfMatch = allowCF ? normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*cf$/i) : null;
+        if (cfMatch) {
+            return { mode: "cf", value: Number(cfMatch[1]), label: `${Number(cfMatch[1]) >= 0 ? "+" : ""}${Number(cfMatch[1])} CF` };
+        }
+
+        const percentMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*%$/);
+        if (percentMatch) {
+            return { mode: "percent", value: Number(percentMatch[1]), label: `${Number(percentMatch[1]) >= 0 ? "+" : ""}${Number(percentMatch[1])}%` };
+        }
+
+        const multMatch = normalized.match(/^[x*]\s*(\d+(?:\.\d+)?)$/i);
+        if (multMatch) {
+            return { mode: "multiply", value: Number(multMatch[1]), label: `x${Number(multMatch[1])}` };
+        }
+
+        const sumMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)$/);
+        if (sumMatch) {
+            return { mode: "add", value: Number(sumMatch[1]), label: `${Number(sumMatch[1]) >= 0 ? "+" : ""}${Number(sumMatch[1])}` };
+        }
+
+        return { mode: "invalid", value: 0, label: source };
+    }
+
+    _normalizeCostExpression(mod = {}) {
+        const costAdjustment = mod.cost_adjustment;
+        if (costAdjustment !== undefined && `${costAdjustment}`.trim() !== "") {
+            return `${costAdjustment}`.trim();
+        }
+
+        const cf = Number(mod.cost_factor);
+        if (!Number.isNaN(cf) && cf !== 0) {
+            return `${cf >= 0 ? "+" : ""}${cf} CF`;
+        }
+
+        return "0 CF";
+    }
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -262,27 +304,57 @@ _promptMultipleReferences(parsedList) {
             let baseCost = Number(this.item.system.cost) || 0;
             let baseWeight = Number(this.item.system.weight) || 0;
             let totalCF = 0;
+            let costMultiplier = 1;
+            let costFlat = 0;
             let weightMultiplier = 1;
+            let weightFlat = 0;
 
             for (const mod of modifiersArray) {
-                totalCF += Number(mod.cost_factor) || 0;
-                if (mod.weight_mod) {
-                    const wModStr = mod.weight_mod.toString().trim().toLowerCase();
-                    if (wModStr.startsWith('x')) {
-                        const mult = parseFloat(wModStr.substring(1));
-                        if (!isNaN(mult)) weightMultiplier *= mult;
-                    }
+                const parsedCost = this._parseAdjustmentExpression(this._normalizeCostExpression(mod), { allowCF: true });
+                switch (parsedCost.mode) {
+                    case "cf":
+                        totalCF += parsedCost.value;
+                        break;
+                    case "percent":
+                        costMultiplier *= (1 + (parsedCost.value / 100));
+                        break;
+                    case "multiply":
+                        costMultiplier *= parsedCost.value;
+                        break;
+                    case "add":
+                        costFlat += parsedCost.value;
+                        break;
+                    default:
+                        break;
                 }
+
+                const parsedWeight = this._parseAdjustmentExpression(mod.weight_mod);
+                switch (parsedWeight.mode) {
+                    case "percent":
+                        weightMultiplier *= (1 + (parsedWeight.value / 100));
+                        break;
+                    case "multiply":
+                        weightMultiplier *= parsedWeight.value;
+                        break;
+                    case "add":
+                        weightFlat += parsedWeight.value;
+                        break;
+                    default:
+                        break;
+                }
+
+                mod.costDisplay = parsedCost.label || this._normalizeCostExpression(mod);
+                mod.weightDisplay = parsedWeight.label || (mod.weight_mod || "x1");
             }
 
             const finalCostMultiplier = Math.max(0, 1 + totalCF);
-            context.calculatedFinalCost = baseCost * finalCostMultiplier;
-            context.calculatedFinalWeight = baseWeight * weightMultiplier;
+            context.calculatedFinalCost = Math.max(0, ((baseCost * finalCostMultiplier) * costMultiplier) + costFlat);
+            context.calculatedFinalWeight = Math.max(0, (baseWeight * weightMultiplier) + weightFlat);
             
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
  context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-            context.hasCostChange = finalCostMultiplier !== 1;
-            context.hasWeightChange = weightMultiplier !== 1;
+            context.hasCostChange = finalCostMultiplier !== 1 || costMultiplier !== 1 || costFlat !== 0;
+            context.hasWeightChange = weightMultiplier !== 1 || weightFlat !== 0;
         }
 
         if (this.item.type === "equipment") {
@@ -1599,7 +1671,8 @@ new Dialog({
             name: modData.name || "Modificador de Equipamento",
             type: "eqp_modifier",
             img: modData.img || "icons/svg/mystery-man.svg",
-            system: {
+                system: {
+                cost_adjustment: modData.cost_adjustment ?? `${modData.cost_factor ?? 0} CF`,
                 cost_factor: modData.cost_factor ?? 0,
                 weight_mod: modData.weight_mod ?? "x1",
                 tech_level_mod: modData.tech_level_mod ?? "",

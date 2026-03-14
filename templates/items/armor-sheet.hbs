@@ -275,15 +275,15 @@
                             <div class="mod-info">
                                 <div class="mod-name">{{mod.name}}</div>
                                 <div class="mod-effect">
-                                    CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}} • Peso {{mod.weight_mod}}
+                                    Custo {{mod.costDisplay}} • Peso {{mod.weightDisplay}}
                                 </div>
                                 {{#if mod.features}}
                                     <div class="mod-notes">{{mod.features}}</div>
                                 {{/if}}
                             </div>
                             <div class="mod-meta">
-                                <span class="mod-cost-badge">CF {{#if (gt mod.cost_factor 0)}}+{{/if}}{{mod.cost_factor}}</span>
-                                <span class="mod-cost-badge">Peso {{mod.weight_mod}}</span>
+                                <span class="mod-cost-badge">Custo {{mod.costDisplay}}</span>
+                                <span class="mod-cost-badge">Peso {{mod.weightDisplay}}</span>
                                 <div class="modifier-controls">
                                     <a class="view-eqp-modifier" title="Ver Detalhes"><i class="fas fa-eye"></i></a>
                                     <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
