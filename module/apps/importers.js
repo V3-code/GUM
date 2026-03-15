@@ -171,6 +171,7 @@ async function importToCompendium(pack, gcsItems) {
             if(!isGenericJson) {
                 foundryItemData.type = itemType;
             }
+            applyAutoPointsBaselineOnImport(foundryItemData);
             itemsToCreate.push(foundryItemData);
         }
     }
@@ -374,13 +375,62 @@ function parseGCSLibrarySkill(gcsSkill) {
     
     mapGCSDefaultsToPredefined(template, gcsSkill.defaults);
 
-    template.auto_points = false; 
-
-    return {
-        name: skillName, 
+ return applyAutoPointsBaselineOnImport({
+        name: skillName,
         type: "skill",
         system: template
+    });
+}
+
+function calculateAutoSkillPointsForImport(rawDifficulty, relativeLevel = 0) {
+    const rl = parseInt(relativeLevel, 10) || 0;
+    const normalized = ({
+        "E": "F", "A": "M", "H": "D", "VH": "MD"
+    })[rawDifficulty] || rawDifficulty || "M";
+
+    const tables = {
+        "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
+        "M": { "-1": 1, 0: 2, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20 },
+        "D": { "-2": 1, "-1": 2, 0: 4, 1: 8, 2: 12, 3: 16, 4: 20, 5: 24 },
+        "MD": { "-3": 1, "-2": 2, "-1": 4, 0: 8, 1: 12, 2: 16, 3: 20, 4: 24, 5: 28 },
+        "TecM": {},
+        "TecD": {}
     };
+
+    if (normalized === "TecM") return Math.max(0, rl);
+    if (normalized === "TecD") return Math.max(0, rl * 2);
+
+    const table = tables[normalized] || tables["M"];
+    const keys = Object.keys(table).map(k => parseInt(k, 10));
+    const minKey = Math.min(...keys);
+    const maxKey = Math.max(...keys);
+
+    if (rl < minKey) return 0;
+    if (rl in table) return table[rl];
+
+    const base = table[maxKey];
+    return base + (rl - maxKey) * 4;
+}
+
+function applyAutoPointsBaselineOnImport(itemData) {
+    if (!itemData?.system) return itemData;
+
+    const type = itemData.type;
+    if (!["skill", "spell", "power"].includes(type)) return itemData;
+
+    const difficulty = itemData.system.difficulty || "M";
+    itemData.system.auto_points = true;
+    itemData.system.cost_mode = itemData.system.cost_mode || "standard";
+    itemData.system.skill_level = 0;
+
+    const baselinePoints = calculateAutoSkillPointsForImport(difficulty, 0);
+    if (type === "power") {
+        itemData.system.points_skill = baselinePoints;
+    } else {
+        itemData.system.points = baselinePoints;
+    }
+
+    return itemData;
 }
 
 
@@ -475,8 +525,6 @@ function parseGCSLibrarySpell(gcsSpell) {
         }
     }
 
-    template.auto_points = false; 
-
     if (gcsSpell.weapons?.length > 0) {
         const gcsWeapon = gcsSpell.weapons[0]; 
         const defaultSkill = gcsWeapon.defaults?.find(d => d.type === "skill")?.name || gcsWeapon.defaults?.[0]?.type || "DX";
@@ -520,11 +568,11 @@ function parseGCSLibrarySpell(gcsSpell) {
         template.damage.type = gcsDamageType;
     }
 
-    return {
+    return applyAutoPointsBaselineOnImport({
         name: gcsSpell.name,
         type: "spell",
         system: template
-    };
+    });
 }
 
 function parseGCSLibraryModifier(gcsMod) {
@@ -884,13 +932,6 @@ async function parseGCSCharacter(gcsData) {
         // Usa o tradutor de biblioteca
         const item = parseGCSLibrarySkill(gcsSkill);
         if (item) {
-            // Lógica específica do Personagem: traduz RSL para Nível Relativo
-            if (gcsSkill.calc?.rsl) {
-                const rsl = gcsSkill.calc.rsl.match(/[+-]\d+$/); 
-                if (rsl) {
-                    item.system.skill_level = parseInt(rsl[0]);
-                }
-            }
             itemsToCreate.push(item);
         }
     }
@@ -929,13 +970,6 @@ async function parseGCSCharacter(gcsData) {
     for (const gcsSpell of gcsData.spells || []) {
         const item = parseGCSLibrarySpell(gcsSpell); // Usa o tradutor de biblioteca
         if (item) {
-            // Lógica específica do Personagem: traduz RSL para Nível Relativo
-            if (gcsSpell.calc?.rsl) {
-                const rsl = gcsSpell.calc.rsl.match(/[+-]\d+$/); 
-                if (rsl) {
-                    item.system.skill_level = parseInt(rsl[0]);
-                }
-            }
             itemsToCreate.push(item);
         }
     }

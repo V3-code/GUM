@@ -782,15 +782,13 @@
                 <label>Atributo Base</label>
                 <div class="form-fields">
                     <select name="system.base_attribute_select">
-                        {{#select skillBaseAttributeSelect}}
-                        <option value="st">ST</option>
-                        <option value="dx">DX</option>
-                        <option value="iq">IQ</option>
-                        <option value="ht">HT</option>
-                        <option value="per">Per</option>
-                        <option value="will">Vont</option>
-                        <option value="skill">Perícia</option>
-                        {{/select}}
+                        <option value="st" {{#if (eq skillBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
+                        <option value="dx" {{#if (eq skillBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
+                        <option value="iq" {{#if (eq skillBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
+                        <option value="ht" {{#if (eq skillBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
+                        <option value="per" {{#if (eq skillBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
+                        <option value="will" {{#if (eq skillBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
+                        <option value="skill" {{#if (eq skillBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
                     </select>
                 </div>
                 <div class="form-fields skill-base-attribute-custom" {{#unless (eq skillBaseAttributeSelect "skill")}}style="display:none;"{{/unless}}>
