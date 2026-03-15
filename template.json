@@ -480,7 +480,7 @@
       "characteristics": "",
       "modifiers": {}
     },
-    "skill": {
+ "skill": {
       "templates": [
         "base"
       ],
@@ -489,6 +489,38 @@
       "base_attribute": "DX",
       "skill_level": 0,
       "other_mods": 0,
+      "predefined": {
+        "slot1": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        },
+        "slot2": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        },
+        "slot3": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        },
+        "slot4": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        },
+        "slot5": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        },
+        "slot6": {
+          "name": "",
+          "specialization": "",
+          "modifier": 0
+        }
+      },
       "block_id": "block1",
       "difficulty": "M",
       "auto_points": true

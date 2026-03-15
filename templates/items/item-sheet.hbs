@@ -358,6 +358,11 @@
         <a class="item" data-tab="modifiers">Modificadores</a>
         {{/if}}
 
+        {{!-- Aba Pré-definido para Perícias --}}
+        {{#if (eq item.type "skill")}}
+        <a class="item" data-tab="predefined">Pré-definido</a>
+        {{/if}}
+
         {{!-- Aba Mods para Equipamentos e Armaduras --}}
         {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
         <a class="item" data-tab="eqp_modifiers">Mods</a>
@@ -1931,7 +1936,85 @@
      <div class="tab" data-tab="effects">
          {{!-- Aqui nós chamamos nosso bloco reutilizável --}}
          {{> effectsTab}}
+   </div>
+
+     {{!-- ===================================================================== --}}
+     {{!--              ABA PRÉ-DEFINIDO (somente para Perícias)                 --}}
+     {{!-- ===================================================================== --}}
+     {{#if (eq item.type "skill")}}
+     <div class="tab" data-tab="predefined">
+        <div class="form-section">
+            <h4 class="section-title">Pré-definidos</h4>
+            <p class="section-hint">Tabela fixa com até 6 combinações de nome, especialização e modificador.</p>
+
+            <div class="predefined-editor-section">
+                <ol class="predefined-list">
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot1.name" value="{{system.predefined.slot1.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot1.specialization" value="{{system.predefined.slot1.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot1.modifier" value="{{system.predefined.slot1.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot2.name" value="{{system.predefined.slot2.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot2.specialization" value="{{system.predefined.slot2.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot2.modifier" value="{{system.predefined.slot2.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot3.name" value="{{system.predefined.slot3.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot3.specialization" value="{{system.predefined.slot3.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot3.modifier" value="{{system.predefined.slot3.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot4.name" value="{{system.predefined.slot4.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot4.specialization" value="{{system.predefined.slot4.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot4.modifier" value="{{system.predefined.slot4.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot5.name" value="{{system.predefined.slot5.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot5.specialization" value="{{system.predefined.slot5.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot5.modifier" value="{{system.predefined.slot5.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="predefined-item">
+                        <div class="predefined-display-card">
+                            <div class="predefined-line">
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot6.name" value="{{system.predefined.slot6.name}}" placeholder="Nome"/></div>
+                                <div class="predefined-cell"><input type="text" name="system.predefined.slot6.specialization" value="{{system.predefined.slot6.specialization}}" placeholder="Especialização"/></div>
+                                <div class="predefined-cell predefined-cell-modifier"><input type="number" name="system.predefined.slot6.modifier" value="{{system.predefined.slot6.modifier}}" placeholder="0"/></div>
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
      </div>
+     {{/if}}
+
 
 {{!-- ===================================================================== --}}
 {{!--    ABA ESPECIAL: MODIFICADORES (MESMO LAYOUT DO EQP_MODIFIERS)         --}}

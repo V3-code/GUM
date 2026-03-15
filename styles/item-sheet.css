@@ -411,7 +411,7 @@
   color: var(--item-text-muted);
   font-style: italic;
   font-weight: 400;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
 }
 .gum.sheet.item .skill-section-header {
   display: flex;
@@ -1115,6 +1115,70 @@
 
 .gum.sheet.item .attack-item .attack-controls a:hover {
   color: var(--item-accent);
+}
+
+/* ------------------------------------------------------------------- */
+/* PRÉ-DEFINIDOS (PERÍCIAS)                                            */
+/* ------------------------------------------------------------------- */
+
+.gum.sheet.item .predefined-editor-section {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.gum.sheet.item .predefined-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gum.sheet.item .predefined-item .predefined-display-card {
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
+              var(--item-panel-texture) repeat;
+  border-left: 3.6px solid var(--item-accent);
+  border-radius: 4px;
+}
+
+.gum.sheet.item .predefined-item .predefined-line {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.8fr) minmax(140px, 1.4fr) 120px;
+  gap: 0;
+  align-items: stretch;
+}
+
+.gum.sheet.item .predefined-item .predefined-cell {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 42px;
+}
+
+.gum.sheet.item .predefined-item .predefined-cell + .predefined-cell {
+  border-left: 1px solid rgba(201, 161, 94, 0.16);
+}
+
+.gum.sheet.item .predefined-header-row .predefined-cell {
+  min-height: 32px;
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--item-text-muted);
+}
+
+.gum.sheet.item .predefined-item .predefined-cell input {
+  width: 100%;
+}
+
+.gum.sheet.item .predefined-item .predefined-cell-modifier input {
+  text-align: center;
 }
 
 /* Hover leve (sem ficar “branco”) */
