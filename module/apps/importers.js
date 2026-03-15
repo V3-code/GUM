@@ -25,12 +25,16 @@ export async function importFromJson() {
             return ui.notifications.error("O arquivo está corrompido ou não é um JSON válido.");
         }
 
+        const extension = (file.name?.split('.')?.pop() || '').toLowerCase();
+
         // 5. Determina o que importar
         let itemsToImport = [];
         if (Array.isArray(data)) {
             itemsToImport = data; // Formato JSON Simples
         } else if (data.rows && Array.isArray(data.rows)) {
             itemsToImport = flattenGCSRows(data.rows); // Formato de Biblioteca GCS (com children)
+        } else if ((extension === 'skl' || extension === 'spl' || extension === 'eqp' || extension === 'adm' || extension === 'eqm') && Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
+            itemsToImport = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
         } else {
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
         }
@@ -356,24 +360,95 @@ function parseGCSLibrarySkill(gcsSkill) {
 
     template.points = gcsSkill.points || 1; 
     template.ref = gcsSkill.reference || "";
-    template.group = gcsSkill.specialization || ""; 
+    template.group = gcsSkill.specialization || gcsSkill.tags?.[0] || template.group || "";
     template.description = gcsSkill.notes || "";
     template.difficulty_manual = gcsSkill.difficulty || "";
 
     if (gcsSkill.difficulty) {
         const parts = gcsSkill.difficulty.toLowerCase().split('/');
         if (parts.length === 2) {
-            template.base_attribute = parts[0]; 
-            template.difficulty = parts[1].replace('h', 'D').replace('e', 'F').replace('a', 'M').replace('vh', 'MD').toUpperCase();
+            template.base_attribute = parts[0].trim();
+            template.difficulty = normalizeGCSDifficulty(parts[1]);
         }
     }
     
+    mapGCSDefaultsToPredefined(template, gcsSkill.defaults);
+
     template.auto_points = false; 
 
     return {
         name: skillName, 
         type: "skill",
         system: template
+    };
+}
+
+
+function normalizeGCSDifficulty(rawDifficulty) {
+    const difficulty = String(rawDifficulty || "").trim().toLowerCase();
+    const difficultyMap = {
+        "e": "E",
+        "a": "A",
+        "h": "H",
+        "vh": "VH"
+    };
+
+    return difficultyMap[difficulty] || "A";
+}
+
+function mapGCSDefaultsToPredefined(template, defaults) {
+    if (!Array.isArray(defaults) || defaults.length === 0 || !template?.predefined) return;
+
+    const predefinedSlots = ["slot1", "slot2", "slot3", "slot4", "slot5", "slot6"];
+    let slotIndex = 0;
+
+    for (const gcsDefault of defaults) {
+        if (slotIndex >= predefinedSlots.length) break;
+
+        const slotKey = predefinedSlots[slotIndex];
+        const normalizedDefault = normalizeGCSDefault(gcsDefault);
+        if (!normalizedDefault) continue;
+
+        template.predefined[slotKey] = normalizedDefault;
+        slotIndex += 1;
+    }
+}
+
+function normalizeGCSDefault(gcsDefault) {
+    if (!gcsDefault || !gcsDefault.type) return null;
+
+    const defaultType = String(gcsDefault.type).toLowerCase();
+    const modifier = Number(gcsDefault.modifier) || 0;
+
+    if (defaultType === "skill") {
+        return {
+            name: gcsDefault.name || "",
+            specialization: gcsDefault.specialization || "",
+            modifier
+        };
+    }
+
+    const gcsAttributeMap = {
+        "st": "ST",
+        "dx": "DX",
+        "iq": "IQ",
+        "ht": "HT",
+        "per": "Per",
+        "will": "Vont"
+    };
+
+    if (gcsAttributeMap[defaultType]) {
+        return {
+            name: gcsAttributeMap[defaultType],
+            specialization: "",
+            modifier
+        };
+    }
+
+    return {
+        name: String(gcsDefault.name || gcsDefault.type || "").toUpperCase(),
+        specialization: gcsDefault.specialization || "",
+        modifier
     };
 }
 
@@ -395,8 +470,8 @@ function parseGCSLibrarySpell(gcsSpell) {
     if (gcsSpell.difficulty) {
         const parts = gcsSpell.difficulty.toLowerCase().split('/');
         if (parts.length === 2) {
-            template.base_attribute = parts[0]; 
-            template.difficulty = parts[1].replace('h', 'D').replace('e', 'F').replace('a', 'M').replace('vh', 'MD').toUpperCase();
+            template.base_attribute = parts[0].trim();
+            template.difficulty = normalizeGCSDifficulty(parts[1]);
         }
     }
 
