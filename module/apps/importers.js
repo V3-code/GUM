@@ -310,6 +310,40 @@ const GCS_DAMAGE_TYPE_MAP = {
 // =============================================================
 // FUNÇÕES "TRADUTORAS" DE BIBLIOTECA
 // =============================================================
+let LEGACY_SYSTEM_TEMPLATE_CACHE;
+
+function getLegacySystemTemplateRoot() {
+    if (LEGACY_SYSTEM_TEMPLATE_CACHE !== undefined) return LEGACY_SYSTEM_TEMPLATE_CACHE;
+    LEGACY_SYSTEM_TEMPLATE_CACHE = game.system.template ?? null;
+    return LEGACY_SYSTEM_TEMPLATE_CACHE;
+}
+
+function isUsableTemplate(candidate, entryType) {
+    if (!candidate || Array.isArray(candidate) || typeof candidate !== "object") return false;
+
+    // Em perícias, precisamos de `predefined` para mapear defaults vindos do GCS.
+    if (entryType === "skill" && !candidate.predefined) return false;
+
+    return true;
+}
+
+function getSystemTemplate(documentType, entryType) {
+    const docTypeEntry = game.system.documentTypes?.[documentType]?.[entryType];
+    const fromDocumentTypes = docTypeEntry?.template ?? docTypeEntry;
+    if (isUsableTemplate(fromDocumentTypes, entryType)) {
+        return foundry.utils.deepClone(fromDocumentTypes);
+    }
+
+    const legacyRoot = getLegacySystemTemplateRoot();
+    const legacyTemplate = legacyRoot?.[documentType]?.[entryType];
+    if (isUsableTemplate(legacyTemplate, entryType)) {
+        return foundry.utils.deepClone(legacyTemplate);
+    }
+
+    console.warn(`GUM | Template não encontrado para ${documentType}.${entryType}. Usando objeto vazio.`);
+    return {};
+}
+
 
 function parseGCSLibraryTrait(gcsTrait) {
     const points = gcsTrait.base_points || gcsTrait.points_per_level || 0;
@@ -317,11 +351,11 @@ function parseGCSLibraryTrait(gcsTrait) {
 
     if (points >= 0) {
         type = "advantage";
-        template = foundry.utils.deepClone(game.system.template.Item.advantage);
+        template = getSystemTemplate("Item", "advantage");
         template.block_id = "block2";
     } else {
         type = "disadvantage";
-        template = foundry.utils.deepClone(game.system.template.Item.disadvantage);
+        template = getSystemTemplate("Item", "disadvantage");
         template.block_id = "block3";
     }
 
@@ -353,7 +387,7 @@ function parseGCSLibraryTrait(gcsTrait) {
 }
 
 function parseGCSLibrarySkill(gcsSkill) {
-    let template = foundry.utils.deepClone(game.system.template.Item.skill);
+    let template = getSystemTemplate("Item", "skill");
     
     const skillName = gcsSkill.specialization 
         ? `${gcsSkill.name} (${gcsSkill.specialization})` 
@@ -503,7 +537,7 @@ function normalizeGCSDefault(gcsDefault) {
 }
 
 function parseGCSLibrarySpell(gcsSpell) {
-    let template = foundry.utils.deepClone(game.system.template.Item.spell);
+    let template = getSystemTemplate("Item", "spell");
 
     template.points = gcsSpell.points || 1;
     template.ref = gcsSpell.reference || "";
@@ -576,7 +610,7 @@ function parseGCSLibrarySpell(gcsSpell) {
 }
 
 function parseGCSLibraryModifier(gcsMod) {
-    let template = foundry.utils.deepClone(game.system.template.Item.modifier);
+    let template = getSystemTemplate("Item", "modifier");
 
     // Custo base do modificador no GCS vem normalmente como string: "10%", "-20%" etc.
     // Vamos preservar como string porque o item modifier do GUM já trabalha bem com esse formato.
@@ -603,7 +637,7 @@ function parseGCSLibraryModifier(gcsMod) {
 }
 
 function parseGCSLibraryEquipmentModifier(gcsMod) {
-    let template = foundry.utils.deepClone(game.system.template.Item.eqp_modifier);
+    let template = getSystemTemplate("Item", "eqp_modifier");
 
     const rawCost = gcsMod.cost || "";
     const rawCostType = gcsMod.cost_type || "";
@@ -652,7 +686,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
     
     if (isArmor) {
         type = "armor";
-        template = foundry.utils.deepClone(game.system.template.Item.armor);
+        template = getSystemTemplate("Item", "armor");
         
         for (const feature of gcsEquip.features || []) {
             if (feature.type === "dr_bonus") {
@@ -681,7 +715,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
     }
     else {
         type = "equipment";
-        template = foundry.utils.deepClone(game.system.template.Item.equipment); 
+        template = getSystemTemplate("Item", "equipment"); 
     }
 
     template.quantity = gcsEquip.quantity || 1;
@@ -754,7 +788,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.block = gcsWeapon.calc?.block || gcsWeapon.block || "0";
                 
                 template.melee_attacks[newAttackId] = {
-                    ...foundry.utils.deepClone(game.system.template.Item.attack_melee),
+                     ...getSystemTemplate("Item", "attack_melee"),
                     ...attackData
                 };
             }
@@ -765,7 +799,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.shots = gcsWeapon.shots || "1(3i)";
                 attackData.rcl = gcsWeapon.recoil || "1";
                 template.ranged_attacks[newAttackId] = {
-                    ...foundry.utils.deepClone(game.system.template.Item.attack_ranged),
+                    ...getSystemTemplate("Item", "attack_ranged"),
                     ...attackData
                 };
             }
@@ -785,7 +819,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
 async function parseGCSCharacter(gcsData) {
     ui.notifications.info("Lendo dados do GCS... Mapeando atributos.");
     
-    const systemData = foundry.utils.deepClone(game.system.template.Actor.character);
+    const systemData = getSystemTemplate("Actor", "character");
 
     // --- 1. Mapeamento do Perfil Básico ---
     const actorName = gcsData.profile?.name || "Personagem Importado";
