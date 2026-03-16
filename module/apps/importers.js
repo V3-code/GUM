@@ -412,10 +412,70 @@ function parseGCSLibraryTrait(gcsTrait) {
         }
     }
     
-    return {
+  return {
         name: gcsTrait.name,
         type: type, 
         system: template 
+    };
+}
+
+function parseAttributeTemplateEntryFromGCSTrait(gcsTrait) {
+    if (!gcsTrait?.name) return null;
+
+    const name = String(gcsTrait.name).trim();
+    if (!name) return null;
+
+    const lowered = name.toLowerCase();
+    let sign = 0;
+    if (/^(increase|increased|increasing)\b/.test(lowered)) sign = 1;
+    if (/^(decrease|decreased|decreasing)\b/.test(lowered)) sign = -1;
+    if (!sign) return null;
+
+    const keyMap = [
+        { pattern: /basic\s*speed/, key: "basic_speed" },
+        { pattern: /basic\s*move|\bmove\b/, key: "move" },
+        { pattern: /hit\s*points|\bhp\b/, key: "hp" },
+        { pattern: /fatigue\s*points|\bfp\b/, key: "fp" },
+        { pattern: /perception|\bper\b/, key: "per" },
+        { pattern: /\bwill\b/, key: "will" },
+        { pattern: /strength|\bst\b/, key: "st" },
+        { pattern: /dexterity|\bdx\b/, key: "dx" },
+        { pattern: /intelligence|\biq\b/, key: "iq" },
+        { pattern: /health|\bht\b/, key: "ht" }
+    ];
+
+    const attrMatch = keyMap.find(entry => entry.pattern.test(lowered));
+    if (!attrMatch) return null;
+
+    const levelsNumber = Number(gcsTrait.levels);
+    const trailingRaw = name.match(/(-?\d+(?:[\.,]\d+)?)\s*$/)?.[1] || "";
+    const trailingNumber = Number(String(trailingRaw).replace(",", "."));
+    const absoluteAmount = Number.isFinite(levelsNumber)
+        ? Math.abs(levelsNumber)
+        : (Number.isFinite(trailingNumber) ? Math.abs(trailingNumber) : 1);
+
+    const attributes = {
+        st: 0,
+        dx: 0,
+        iq: 0,
+        ht: 0,
+        will: 0,
+        per: 0,
+        hp: 0,
+        fp: 0,
+        basic_speed: 0,
+        move: 0
+    };
+    attributes[attrMatch.key] = (absoluteAmount || 1) * sign;
+
+    return {
+        id: foundry.utils.randomID(),
+        kind: "attribute",
+        label: name,
+        attributes,
+        costs: {},
+        linkSecondary: ["st", "dx", "iq", "ht"].includes(attrMatch.key),
+        cost: Number(gcsTrait.calc?.points ?? gcsTrait.base_points ?? gcsTrait.points_per_level ?? 0) || 0
     };
 }
 
@@ -475,9 +535,50 @@ function calculateAutoSkillPointsForImport(rawDifficulty, relativeLevel = 0) {
     if (rl < minKey) return 0;
     if (rl in table) return table[rl];
 
-    const base = table[maxKey];
+   const base = table[maxKey];
     return base + (rl - maxKey) * 4;
 }
+
+function calculateRelativeLevelFromImportPoints(rawDifficulty, points = 0) {
+    const pts = Number(points) || 0;
+    if (pts <= 0) return 0;
+
+    const normalized = ({
+        "E": "F", "A": "M", "H": "D", "VH": "MD"
+    })[rawDifficulty] || rawDifficulty || "M";
+
+    if (normalized === "TecM") return Math.floor(pts);
+    if (normalized === "TecD") return Math.floor(pts / 2);
+
+    const tables = {
+        "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
+        "M": { "-1": 1, 0: 2, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20 },
+        "D": { "-2": 1, "-1": 2, 0: 4, 1: 8, 2: 12, 3: 16, 4: 20, 5: 24 },
+        "MD": { "-3": 1, "-2": 2, "-1": 4, 0: 8, 1: 12, 2: 16, 3: 20, 4: 24, 5: 28 }
+    };
+
+    const table = tables[normalized] || tables["M"];
+    let bestLevel = 0;
+    let bestCost = 0;
+
+    for (const [levelRaw, costRaw] of Object.entries(table)) {
+        const level = Number(levelRaw);
+        const cost = Number(costRaw) || 0;
+        if (cost <= pts && cost >= bestCost) {
+            bestCost = cost;
+            bestLevel = level;
+        }
+    }
+
+    const maxLevel = Math.max(...Object.keys(table).map(Number));
+    const maxCost = Number(table[maxLevel]) || bestCost;
+    if (pts > maxCost) {
+        return maxLevel + Math.floor((pts - maxCost) / 4);
+    }
+
+    return bestLevel;
+}
+
 
 function applyAutoPointsBaselineOnImport(itemData) {
     if (!itemData?.system) return itemData;
@@ -1049,8 +1150,20 @@ async function buildHybridActorItemFromGCS(gcsNode, parserFn) {
 }
 
 async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defaultCost = 0 } = {}) {
+    if (itemType === "advantage") {
+        const attributeEntry = parseAttributeTemplateEntryFromGCSTrait(gcsNode);
+        if (attributeEntry) return attributeEntry;
+    }
+
     const parsedItem = parserFn(gcsNode);
     if (!parsedItem) return null;
+
+    const resolvedCost = Number(gcsNode.calc?.points ?? parsedItem.system?.points ?? defaultCost) || 0;
+    let resolvedLevel = gcsNode.levels ?? "";
+    if ((resolvedLevel === "" || resolvedLevel === null || resolvedLevel === undefined)
+        && ["skill", "spell", "power"].includes(parsedItem.type)) {
+        resolvedLevel = calculateRelativeLevelFromImportPoints(parsedItem.system?.difficulty || "M", resolvedCost);
+    }
 
     const entry = {
         id: foundry.utils.randomID(),
@@ -1059,8 +1172,8 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
         name: parsedItem.name || gcsNode.name || "Entrada",
         img: parsedItem.img || "icons/svg/item-bag.svg",
         quantity: Number(gcsNode.quantity) || 1,
-        level: gcsNode.levels ?? "",
-        cost: Number(gcsNode.calc?.points ?? parsedItem.system?.points ?? defaultCost) || 0
+        level: resolvedLevel,
+        cost: resolvedCost
     };
 
     const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
@@ -1082,50 +1195,99 @@ function toTemplateBlockType(templatePickerType) {
     return "guaranteed";
 }
 
-async function collectTemplateBlocksRecursive(container, parserFn, itemType, blocks, path = []) {
-    if (!container) return;
+function buildTemplateBlockBase({ type, title, picker = null }) {
+    const block = {
+        id: foundry.utils.randomID(),
+        type,
+        title,
+        choiceCount: 1,
+        pointsAvailable: 0,
+        contents: []
+    };
+
+    if (type === "selection") {
+        block.choiceCount = Math.max(1, Number(picker?.qualifier?.qualifier) || 1);
+    }
+    if (type === "points") {
+        block.pointsAvailable = Number(picker?.qualifier?.qualifier) || 0;
+    }
+
+    return block;
+}
+
+async function buildTemplateOptionEntryFromNode(node, parserFn, itemType, path = []) {
+    if (!node) return null;
+
+    const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+    if (!hasChildren) {
+        return buildTemplateEntryFromGCSNode(node, parserFn, itemType, {
+            defaultCost: Number(node.base_points || node.points_per_level || node.points || 0)
+        });
+    }
+
+    const subBlocks = await buildTemplateBlocksRecursive(node, parserFn, itemType, path);
+    return {
+        id: foundry.utils.randomID(),
+        kind: "group",
+        name: node.name || "Grupo",
+        img: "icons/svg/upgrade.svg",
+        quantity: 1,
+        level: "",
+        cost: Number(node.calc?.points ?? node.base_points ?? node.points ?? 0) || 0,
+        localNotes: node.local_notes || "",
+        subBlocks
+    };
+}
+
+async function buildTemplateBlocksRecursive(container, parserFn, itemType, path = []) {
+    if (!container) return [];
 
     const nodeName = String(container.name || "Bloco").trim() || "Bloco";
     const currentPath = [...path, nodeName];
+    const title = currentPath.join(" › ");
     const children = Array.isArray(container.children) ? container.children : [];
-    const childContainers = children.filter(child => Array.isArray(child?.children) && child.children.length > 0);
-    const leaves = children.filter(child => !Array.isArray(child?.children) || child.children.length === 0);
+    const hasPicker = Boolean(container.template_picker);
+    const blocks = [];
 
-    const blockType = toTemplateBlockType(container.template_picker?.type);
-    const shouldCreateBlock = leaves.length > 0 || Boolean(container.template_picker);
-    if (shouldCreateBlock) {
-        const block = {
-            id: foundry.utils.randomID(),
-            type: blockType,
-            title: currentPath.join(" › "),
-            choiceCount: 1,
-            pointsAvailable: 0,
-            contents: []
-        };
+    if (hasPicker) {
+        const blockType = toTemplateBlockType(container.template_picker?.type);
+        const block = buildTemplateBlockBase({ type: blockType, title, picker: container.template_picker });
 
-        if (blockType === "selection") {
-            block.choiceCount = Math.max(1, Number(container.template_picker?.qualifier?.qualifier) || 1);
-        }
-        if (blockType === "points") {
-            block.pointsAvailable = Number(container.template_picker?.qualifier?.qualifier) || 0;
-        }
-
-        for (const leaf of leaves) {
-            const entry = await buildTemplateEntryFromGCSNode(leaf, parserFn, itemType, {
-                defaultCost: Number(leaf.base_points || leaf.points_per_level || leaf.points || 0)
-            });
+        for (const child of children) {
+            const entry = await buildTemplateOptionEntryFromNode(child, parserFn, itemType, currentPath);
             if (entry) block.contents.push(entry);
         }
 
         if (block.contents.length || blockType !== "guaranteed") {
             blocks.push(block);
         }
+        return blocks;
     }
 
-    for (const childContainer of childContainers) {
-        await collectTemplateBlocksRecursive(childContainer, parserFn, itemType, blocks, currentPath);
+    const leaves = children.filter(child => !Array.isArray(child?.children) || child.children.length === 0);
+    if (leaves.length) {
+        const guaranteedBlock = buildTemplateBlockBase({ type: "guaranteed", title });
+        for (const leaf of leaves) {
+            const entry = await buildTemplateEntryFromGCSNode(leaf, parserFn, itemType, {
+                defaultCost: Number(leaf.base_points || leaf.points_per_level || leaf.points || 0)
+            });
+            if (entry) guaranteedBlock.contents.push(entry);
+        }
+
+        if (guaranteedBlock.contents.length) {
+            blocks.push(guaranteedBlock);
+        }
     }
+
+    const childContainers = children.filter(child => Array.isArray(child?.children) && child.children.length > 0);
+    for (const childContainer of childContainers) {
+        const childBlocks = await buildTemplateBlocksRecursive(childContainer, parserFn, itemType, currentPath);
+        blocks.push(...childBlocks);
+    }
+
+    return blocks;
 }
+
 
 async function parseGCSTemplate(gcsData, fileName = "") {
     const templateSystem = getSystemTemplate("Item", "template");
@@ -1133,12 +1295,14 @@ async function parseGCSTemplate(gcsData, fileName = "") {
 
     const traitRoots = Array.isArray(gcsData.traits) ? gcsData.traits : [];
     for (const root of traitRoots) {
-        await collectTemplateBlocksRecursive(root, parseGCSLibraryTrait, "advantage", blocks, []);
+        const rootBlocks = await buildTemplateBlocksRecursive(root, parseGCSLibraryTrait, "advantage", []);
+        blocks.push(...rootBlocks);
     }
 
     const skillRoots = Array.isArray(gcsData.skills) ? gcsData.skills : [];
     for (const root of skillRoots) {
-        await collectTemplateBlocksRecursive(root, parseGCSLibrarySkill, "skill", blocks, []);
+        const rootBlocks = await buildTemplateBlocksRecursive(root, parseGCSLibrarySkill, "skill", []);
+        blocks.push(...rootBlocks);
     }
 
     if (!blocks.length) return null;

@@ -48,6 +48,17 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     _prepareEntry(entry) {
+        if (entry.kind === "group") {
+            return {
+                ...entry,
+                rowName: entry.name || "Subgrupo",
+                rowQty: "-",
+                rowLevel: "-",
+                rowCost: entry.cost ?? 0,
+                rowSubtitle: this._buildGroupSubtitle(entry)
+            };
+        }
+
         if (entry.kind === "attribute") {
             return {
                 ...entry,
@@ -86,6 +97,14 @@ export class TemplateItemSheet extends ItemSheet {
         if (entry.cost !== undefined && entry.cost !== null) parts.push(`${entry.cost} pts`);
         if (entry.level !== undefined && entry.level !== null && entry.level !== "") parts.push(`Nível ${entry.level}`);
         if (entry.quantity !== undefined && entry.quantity !== null && entry.quantity !== "" && entry.quantity !== 1) parts.push(`Qtd ${entry.quantity}`);
+        return parts.join(" • ");
+    }
+
+    _buildGroupSubtitle(entry) {
+        const parts = ["Subgrupo"];
+        if (entry.localNotes) parts.push(String(entry.localNotes));
+        const subBlocks = Array.isArray(entry.subBlocks) ? entry.subBlocks : [];
+        parts.push(`${subBlocks.length} sub-bloco(s)`);
         return parts.join(" • ");
     }
 
@@ -219,6 +238,7 @@ export class TemplateItemSheet extends ItemSheet {
         html.on("change", ".block-field", this._onBlockFieldChange.bind(this));
 
         html.on("click", ".add-block-attribute", this._onAddAttribute.bind(this));
+        html.on("click", ".add-block-group", this._onAddGroup.bind(this));
         html.on("click", ".delete-block-entry", this._onDeleteEntry.bind(this));
         html.on("click", ".edit-block-entry", this._onEditEntry.bind(this));
 
@@ -437,8 +457,95 @@ export class TemplateItemSheet extends ItemSheet {
                     dlgHtml.find(".template-attr-grid input[type='number']").on("input", recalc);
                     recalc();
                 }
-            }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
+   }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
+
+    async _onAddGroup(event) {
+        event.preventDefault();
+        const blockId = event.currentTarget.dataset.blockId;
+
+        const content = `
+        <div class="template-group-dialog">
+            <div class="form-group">
+                <label>Nome do Subgrupo</label>
+                <input type="text" id="group-name" value="" placeholder="Ex.: Weapon and Shield">
+            </div>
+            <div class="form-group">
+                <label>Notas locais</label>
+                <input type="text" id="group-notes" value="" placeholder="Ex.: Escolha uma arma e pegue Escudo">
+            </div>
+            <div class="form-group">
+                <label>Custo exibido</label>
+                <input type="number" id="group-cost" value="0">
+            </div>
+            <div class="form-group">
+                <label>Sub-blocos (JSON)</label>
+                <textarea id="group-sub-blocks" rows="12" style="width:100%; font-family: monospace;">[]</textarea>
+                <p class="notes">Use um array de blocos no formato do template (type/title/choiceCount/pointsAvailable/contents).</p>
+            </div>
+        </div>`;
+
+        new Dialog({
+            title: "Adicionar Subgrupo",
+            content,
+            buttons: {
+                save: {
+                    label: "Salvar",
+                    callback: async (dlgHtml) => {
+                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || "Subgrupo";
+                        const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
+                        const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
+                        const subBlocksRaw = String(dlgHtml.find("#group-sub-blocks").val() || "[]");
+
+                        let parsedSubBlocks;
+                        try {
+                            parsedSubBlocks = JSON.parse(subBlocksRaw);
+                        } catch (_err) {
+                            ui.notifications.error("JSON inválido nos sub-blocos do subgrupo.");
+                            return false;
+                        }
+
+                        const subBlocks = this._normalizeGroupSubBlocks(parsedSubBlocks);
+                        const entry = {
+                            id: foundry.utils.randomID(),
+                            kind: "group",
+                            name,
+                            quantity: 1,
+                            level: "",
+                            cost,
+                            localNotes,
+                            subBlocks
+                        };
+
+                        await this._appendEntryToBlock(blockId, entry);
+                    }
+                },
+                cancel: { label: "Cancelar" }
+            },
+            default: "save"
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
+    }
+
+    _normalizeGroupSubBlocks(rawBlocks) {
+        if (!Array.isArray(rawBlocks)) return [];
+
+        return rawBlocks
+            .map(block => {
+                if (!block || typeof block !== "object") return null;
+
+                const type = ["guaranteed", "selection", "points"].includes(block.type) ? block.type : "guaranteed";
+                return {
+                    id: block.id || foundry.utils.randomID(),
+                    type,
+                    title: String(block.title || "").trim(),
+                    choiceCount: Math.max(1, Number(block.choiceCount) || 1),
+                    pointsAvailable: Number(block.pointsAvailable) || 0,
+                    contents: Array.isArray(block.contents) ? block.contents : []
+                };
+            })
+            .filter(Boolean);
+    }
+
 
     _calculateAttributeCost(attributes, costs = {}) {
         let total = 0;
@@ -493,11 +600,70 @@ export class TemplateItemSheet extends ItemSheet {
         const entry = (block.contents || []).find(e => e.id === entryId);
         if (!entry) return;
 
-        if (entry.kind === "attribute") {
+  if (entry.kind === "attribute") {
             return this._editAttributeEntry(blockId, entryId, entry);
         }
 
+        if (entry.kind === "group") {
+            return this._editGroupEntry(blockId, entryId, entry);
+        }
+
         return this._editItemEntry(blockId, entryId, entry);
+    }
+
+    async _editGroupEntry(blockId, entryId, entry) {
+        const subBlocksText = JSON.stringify(Array.isArray(entry.subBlocks) ? entry.subBlocks : [], null, 2);
+        const content = `
+        <div class="template-group-dialog">
+            <div class="form-group">
+                <label>Nome do Subgrupo</label>
+                <input type="text" id="group-name" value="${foundry.utils.escapeHTML(entry.name || "")}">
+            </div>
+            <div class="form-group">
+                <label>Notas locais</label>
+                <input type="text" id="group-notes" value="${foundry.utils.escapeHTML(entry.localNotes || "")}">
+            </div>
+            <div class="form-group">
+                <label>Custo exibido</label>
+                <input type="number" id="group-cost" value="${Number(entry.cost) || 0}">
+            </div>
+            <div class="form-group">
+                <label>Sub-blocos (JSON)</label>
+                <textarea id="group-sub-blocks" rows="12" style="width:100%; font-family: monospace;">${foundry.utils.escapeHTML(subBlocksText)}</textarea>
+            </div>
+        </div>`;
+
+        new Dialog({
+            title: "Editar Subgrupo",
+            content,
+            buttons: {
+                save: {
+                    label: "Salvar",
+                    callback: async (dlgHtml) => {
+                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || "Subgrupo";
+                        const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
+                        const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
+                        const subBlocksRaw = String(dlgHtml.find("#group-sub-blocks").val() || "[]");
+
+                        let parsedSubBlocks;
+                        try {
+                            parsedSubBlocks = JSON.parse(subBlocksRaw);
+                        } catch (_err) {
+                            ui.notifications.error("JSON inválido nos sub-blocos do subgrupo.");
+                            return false;
+                        }
+
+                        entry.name = name;
+                        entry.localNotes = localNotes;
+                        entry.cost = cost;
+                        entry.subBlocks = this._normalizeGroupSubBlocks(parsedSubBlocks);
+                        await this._replaceEntry(blockId, entryId, entry);
+                    }
+                },
+                cancel: { label: "Cancelar" }
+            },
+            default: "save"
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
     }
 
     async _editAttributeEntry(blockId, entryId, entry) {

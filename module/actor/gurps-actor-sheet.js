@@ -4930,33 +4930,99 @@ async _runTemplateApplicationFlow(templateItem) {
   let pointsLeftoverTotal = 0;
 
   for (const block of blocks) {
-    const contents = Array.isArray(block.contents) ? block.contents : [];
-    if (!contents.length) continue;
-
-    if (block.type === "guaranteed") {
-      plan.push(...contents.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
-      continue;
-    }
-
-    if (block.type === "selection") {
-      const selected = await this._promptTemplateSelectionBlock(block);
-      if (selected === null) return;
-      plan.push(...selected.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
-      continue;
-    }
-
-    if (block.type === "points") {
-      const result = await this._promptTemplatePointsBlock(block);
-      if (result === null) return;
-      plan.push(...result.selected.map(entry => ({ ...entry, blockId: block.id, blockType: block.type })));
-      pointsLeftoverTotal += result.leftover;
-    }
+    const processed = await this._processTemplateBlockForPlan(block, plan);
+    if (processed === null) return;
+    pointsLeftoverTotal += Number(processed.leftover) || 0;
   }
+
+  const confirmed = await this._promptTemplatePointsTransferSummary(pointsLeftoverTotal);
+  if (!confirmed) return;
 
   const applied = await this._applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal });
   if (!applied) return;
 
-  ui.notifications.info(`Modelo "${templateItem.name}" aplicado com sucesso.`);
+ui.notifications.info(`Modelo "${templateItem.name}" aplicado com sucesso.`);
+}
+
+async _processTemplateBlockForPlan(block, plan) {
+  const contents = Array.isArray(block.contents) ? block.contents : [];
+  if (!contents.length) return { leftover: 0 };
+
+  if (block.type === "guaranteed") {
+    let totalLeftover = 0;
+    for (const entry of contents) {
+      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
+      if (processed === null) return null;
+      totalLeftover += Number(processed.leftover) || 0;
+    }
+    return { leftover: totalLeftover };
+  }
+
+  if (block.type === "selection") {
+    const selected = await this._promptTemplateSelectionBlock(block);
+    if (selected === null) return null;
+
+    let totalLeftover = 0;
+    for (const entry of selected) {
+      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
+      if (processed === null) return null;
+      totalLeftover += Number(processed.leftover) || 0;
+    }
+    return { leftover: totalLeftover };
+  }
+
+  if (block.type === "points") {
+    const result = await this._promptTemplatePointsBlock(block);
+    if (result === null) return null;
+
+    let totalLeftover = Number(result.leftover) || 0;
+    for (const entry of result.selected) {
+      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
+      if (processed === null) return null;
+      totalLeftover += Number(processed.leftover) || 0;
+    }
+
+    return { leftover: totalLeftover };
+  }
+
+  return { leftover: 0 };
+}
+
+async _appendTemplateEntryPlan(entry, plan, block) {
+  if (!entry) return { leftover: 0 };
+
+  const normalized = { ...entry, blockId: block.id, blockType: block.type };
+  if (normalized.kind !== "group") {
+    plan.push(normalized);
+  }
+
+  const nestedBlocks = Array.isArray(entry.subBlocks) ? entry.subBlocks : [];
+  let totalLeftover = 0;
+  for (const nestedBlock of nestedBlocks) {
+    const processed = await this._processTemplateBlockForPlan(nestedBlock, plan);
+    if (processed === null) return null;
+    totalLeftover += Number(processed.leftover) || 0;
+  }
+
+  return { leftover: totalLeftover };
+}
+
+async _promptTemplatePointsTransferSummary(pointsLeftoverTotal) {
+  const value = Number(pointsLeftoverTotal) || 0;
+  const signal = value > 0 ? "+" : "";
+
+  return Dialog.confirm({
+    title: "Aplicar Modelo • Ajuste de Pontos Livres",
+    content: `
+      <div class="template-apply-block-dialog">
+        <p>Total de pontos restantes da seleção: <strong>${signal}${value}</strong></p>
+        <p>Esse valor será transferido para <strong>Pontos Livres</strong> da ficha (positivo ou negativo).</p>
+      </div>
+    `,
+    yes: () => true,
+    no: () => false,
+    defaultYes: true
+  });
 }
 
 _findAppliedModelRecord(templateItem) {
@@ -5146,7 +5212,7 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
   const updateData = this._buildTemplateAttributeUpdateData(attributeDeltas, {
     recalculateSecondaryBases: shouldRecalculateSecondary && hasPrimaryAttributeChange
   });
-  if (Number(pointsLeftoverTotal) > 0) {
+  if (Number(pointsLeftoverTotal) !== 0) {
     updateData["system.points.unspent"] = (Number(this.actor.system.points?.unspent) || 0) + Number(pointsLeftoverTotal);
   }
 
@@ -5272,13 +5338,15 @@ async _resolveTemplateEntrySourceItem(entry) {
 
 _buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
   const data = sourceItem.toObject();
+  const pointsField = sourceItem.type === "power" ? "points_skill" : "points";
 
   if (["skill", "spell", "power", "advantage", "disadvantage"].includes(sourceItem.type)) {
-    data.system.points = Number(entry.cost ?? data.system?.points ?? 0);
+    data.system[pointsField] = Number(entry.cost ?? data.system?.[pointsField] ?? 0);
   }
 
-  if (["skill", "spell", "power"].includes(sourceItem.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-    data.system.skill_level = Number(entry.level) || 0;
+  if (["skill", "spell", "power"].includes(sourceItem.type)) {
+    const resolvedLevel = this._resolveTemplateEntryRelativeLevel(entry, data.system, sourceItem.type);
+    if (resolvedLevel !== null) data.system.skill_level = resolvedLevel;
   }
 
   if (["advantage", "disadvantage"].includes(sourceItem.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
@@ -5437,7 +5505,10 @@ async _buildTemplateEntryViewData(entry) {
   }
 
   const details = [];
+  if (entry.kind === "group") details.push("Pacote");
   if (entry.itemType) details.push(this._getTemplateEntryTypeLabel(entry.itemType));
+  if (entry.localNotes) details.push(String(entry.localNotes));
+  if (Array.isArray(entry.subBlocks) && entry.subBlocks.length) details.push(`Sub-blocos ${entry.subBlocks.length}`);
 
   const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
   if (sourceItem) {
@@ -5542,6 +5613,7 @@ _getTemplateEntryTypeLabel(type) {
 _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
   const data = foundry.utils.deepClone(entry.inlineItem || {});
   if (!data?.type) return null;
+  const pointsField = data.type === "power" ? "points_skill" : "points";
 
   data.flags = data.flags || {};
   data.flags.gum = data.flags.gum || {};
@@ -5564,11 +5636,12 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
 
   if (["skill", "spell", "power", "advantage", "disadvantage"].includes(data.type)) {
     data.system = data.system || {};
-    data.system.points = Number(entry.cost ?? data.system.points ?? 0);
+    data.system[pointsField] = Number(entry.cost ?? data.system[pointsField] ?? 0);
   }
 
-  if (["skill", "spell", "power"].includes(data.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-    data.system.skill_level = Number(entry.level) || 0;
+  if (["skill", "spell", "power"].includes(data.type)) {
+    const resolvedLevel = this._resolveTemplateEntryRelativeLevel(entry, data.system, data.type);
+    if (resolvedLevel !== null) data.system.skill_level = resolvedLevel;
   }
 
   if (["advantage", "disadvantage"].includes(data.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
@@ -5582,6 +5655,57 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
   }
 
   return data;
+}
+
+_resolveTemplateEntryRelativeLevel(entry, system = {}, itemType = "skill") {
+  if (entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+    return Number(entry.level) || 0;
+  }
+
+  const pointsField = itemType === "power" ? "points_skill" : "points";
+  const points = Number(entry.cost ?? system?.[pointsField] ?? 0) || 0;
+  const difficulty = system?.difficulty || "M";
+  return this._calculateRelativeLevelFromPoints(difficulty, points);
+}
+
+_calculateRelativeLevelFromPoints(rawDifficulty, points = 0) {
+  const pts = Number(points) || 0;
+  if (pts <= 0) return 0;
+
+  const normalized = ({
+    "E": "F", "A": "M", "H": "D", "VH": "MD"
+  })[rawDifficulty] || rawDifficulty || "M";
+
+  if (normalized === "TecM") return Math.floor(pts);
+  if (normalized === "TecD") return Math.floor(pts / 2);
+
+  const tables = {
+    "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
+    "M": { "-1": 1, 0: 2, 1: 4, 2: 8, 3: 12, 4: 16, 5: 20 },
+    "D": { "-2": 1, "-1": 2, 0: 4, 1: 8, 2: 12, 3: 16, 4: 20, 5: 24 },
+    "MD": { "-3": 1, "-2": 2, "-1": 4, 0: 8, 1: 12, 2: 16, 3: 20, 4: 24, 5: 28 }
+  };
+
+  const table = tables[normalized] || tables["M"];
+  let bestLevel = 0;
+  let bestCost = 0;
+
+  for (const [levelRaw, costRaw] of Object.entries(table)) {
+    const level = Number(levelRaw);
+    const cost = Number(costRaw) || 0;
+    if (cost <= pts && cost >= bestCost) {
+      bestCost = cost;
+      bestLevel = level;
+    }
+  }
+
+  const maxLevel = Math.max(...Object.keys(table).map(Number));
+  const maxCost = Number(table[maxLevel]) || bestCost;
+  if (pts > maxCost) {
+    return maxLevel + Math.floor((pts - maxCost) / 4);
+  }
+
+  return bestLevel;
 }
 
 }
