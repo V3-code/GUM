@@ -1158,7 +1158,15 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
     const parsedItem = parserFn(gcsNode);
     if (!parsedItem) return null;
 
-    const resolvedCost = Number(gcsNode.calc?.points ?? parsedItem.system?.points ?? defaultCost) || 0;
+    const resolvedCost = Number(
+        gcsNode.calc?.points
+        ?? gcsNode.base_points
+        ?? gcsNode.points_per_level
+        ?? gcsNode.points
+        ?? defaultCost
+        ?? parsedItem.system?.points
+        ?? 0
+    ) || 0;
     let resolvedLevel = gcsNode.levels ?? "";
     if ((resolvedLevel === "" || resolvedLevel === null || resolvedLevel === undefined)
         && ["skill", "spell", "power"].includes(parsedItem.type)) {

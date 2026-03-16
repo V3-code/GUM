@@ -366,7 +366,7 @@
   align-items: center;
   gap: 0.35rem;
   border: 1px solid rgba(197, 160, 91, 0.4);
-  border-radius: 999px;
+  border-radius: 4px;
   background: transparent;
   color: var(--gum-accent-gold);
   font-size: 0.74rem;
@@ -747,7 +747,7 @@
     display: inline-block;
     padding: 3px 7px;
     border: 1px solid #e6ddcd;
-    border-radius: 999px;
+    border-radius: 4px;
     background: rgba(0, 0, 0, 0.04);
     font-family: "Roboto Condensed", "Segoe UI", sans-serif;
     color: #2f2b28;
@@ -1963,10 +1963,10 @@
     flex-grow: 1; /* Ocupa todo o espaço restante */
     display: flex;
     flex-direction: column;
-    background: var(--gum-bg-cabecalho);
+    background: var(--gum-bg-body);
     border-radius: 4px;
     padding: 0.35rem;
-    min-height: 300px; /* Garante um tamanho bom para escrever */
+
 }
 
 .gum.sheet.actor .biography-story .biography-story-header {
@@ -1997,6 +1997,7 @@
     margin-bottom: 0.5px; /* Menos espaço entre parágrafos */
     text-indent: 10px; /* Recuo levemente menor */
     margin-top: 0;
+    font-size: smaller;
 }
 
 /* Imagens na história */
@@ -2106,7 +2107,7 @@
     max-height: 300px;
     height: 300px;
     overflow: auto;
-    background: var(--gum-bg-cabecalho);
+    background: var(--gum-bg-body);
     color: var(--gum-text-claro);
 }
 
