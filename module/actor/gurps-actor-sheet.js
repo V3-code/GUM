@@ -5034,7 +5034,11 @@ async _promptTemplateSelectionBlock(block) {
 
 async _promptTemplatePointsBlock(block) {
   const contents = Array.isArray(block.contents) ? block.contents : [];
-  const available = Math.max(0, Number(block.pointsAvailable) || 0);
+  const available = Number(block.pointsAvailable) || 0;
+  const isSpentValid = (spent) => {
+    if (available >= 0) return spent >= 0 && spent <= available;
+    return spent <= 0 && spent >= available;
+  };
 
   const entryViews = await Promise.all(contents.map(entry => this._buildTemplateEntryViewData(entry)));
   const rows = entryViews.map(view => this._renderTemplateChoiceRow(view, { includeCostDataAttr: true })).join("");
@@ -5044,7 +5048,7 @@ async _promptTemplatePointsBlock(block) {
       <div class="template-apply-block-header">${foundry.utils.escapeHTML(block.title || "Bloco de pontos")}</div>
       <div class="template-apply-block-header-2">
         <div class="template-apply-block-header-2-content">Saldo: <strong id="template-points-left">${available}</strong></div>
-        <div class="template-apply-block-header-2-content">Pontos disponíveis: <strong>${available}</strong></div>
+        <div class="template-apply-block-header-2-content">Orçamento: <strong>${available}</strong></div>
       </div>
       <div class="template-apply-options">${rows}</div>
     </div>`;
@@ -5065,8 +5069,8 @@ async _promptTemplatePointsBlock(block) {
             const selectedInputs = html.find('input[name="entry"]:checked');
             const selectedIds = selectedInputs.map((_, el) => el.value).get();
             const spent = selectedInputs.map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
-            if (spent > available) {
-              ui.notifications.warn("A seleção excede os pontos disponíveis para este bloco.");
+            if (!isSpentValid(spent)) {
+              ui.notifications.warn("A seleção não atende o orçamento de pontos deste bloco.");
               return false;
             }
             finish({
@@ -5086,7 +5090,7 @@ async _promptTemplatePointsBlock(block) {
 
         const recalc = () => {
           const spent = inputs.filter(":checked").map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
-          leftEl.text(Math.max(available - spent, 0));
+          leftEl.text(available - spent);
 
           inputs.each((_, el) => {
             if (el.checked) {
@@ -5095,10 +5099,11 @@ async _promptTemplatePointsBlock(block) {
             }
 
             const nextCost = Number(el.dataset.cost) || 0;
-            el.disabled = (spent + nextCost) > available;
+            const nextSpent = spent + nextCost;
+            el.disabled = !isSpentValid(nextSpent);
           });
 
-          if (applyBtn.length) applyBtn.prop("disabled", spent > available);
+          if (applyBtn.length) applyBtn.prop("disabled", !isSpentValid(spent));
         };
 
         inputs.on("change", recalc);
@@ -5124,9 +5129,15 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
     }
 
     const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
-    if (!sourceItem) continue;
+    let createdData = null;
 
-    const createdData = this._buildActorItemFromTemplateEntry(sourceItem, entry, templateItem);
+    if (sourceItem) {
+      createdData = this._buildActorItemFromTemplateEntry(sourceItem, entry, templateItem);
+    } else if (entry.inlineItem) {
+      createdData = this._buildActorItemFromInlineTemplateEntry(entry, templateItem);
+    }
+
+    if (!createdData) continue;
     itemCreates.push(createdData);
   }
 
@@ -5527,4 +5538,50 @@ _getTemplateEntryTypeLabel(type) {
   };
   return labels[type] || type;
 }
+
+_buildActorItemFromInlineTemplateEntry(entry, templateItem) {
+  const data = foundry.utils.deepClone(entry.inlineItem || {});
+  if (!data?.type) return null;
+
+  data.flags = data.flags || {};
+  data.flags.gum = data.flags.gum || {};
+  data.flags.gum.templateApplied = {
+    templateId: templateItem.id,
+    templateUuid: templateItem.uuid,
+    templateName: templateItem.name,
+    templateEntryId: entry.id
+  };
+
+  data.flags.gum.hybridImport = {
+    mode: "template-inline",
+    sourceUuid: null,
+    sourceId: null,
+    importedAt: new Date().toISOString()
+  };
+
+  data.name = entry.name || data.name;
+  data.img = entry.img || data.img;
+
+  if (["skill", "spell", "power", "advantage", "disadvantage"].includes(data.type)) {
+    data.system = data.system || {};
+    data.system.points = Number(entry.cost ?? data.system.points ?? 0);
+  }
+
+  if (["skill", "spell", "power"].includes(data.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+    data.system.skill_level = Number(entry.level) || 0;
+  }
+
+  if (["advantage", "disadvantage"].includes(data.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
+    data.system.level = entry.level;
+  }
+
+  if (data.type === "equipment") {
+    data.system = data.system || {};
+    data.system.quantity = Number(entry.quantity ?? data.system.quantity ?? 1) || 1;
+    data.system.cost = Number(entry.cost ?? data.system.cost ?? 0) || 0;
+  }
+
+  return data;
+}
+
 }

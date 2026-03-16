@@ -230,6 +230,39 @@ export async function importFromGCS() {
 }
 
 /**
+ * Importa um arquivo de template GCS (.gct/.gcs) e cria um Item de tipo "template"
+ * com blocos no formato esperado pelo GUM.
+ */
+export async function importTemplateFromGCS() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.gct,.gcs,.json';
+
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return ui.notifications.info("Importação cancelada.");
+
+        try {
+            const fileContent = await file.text();
+            const gcsData = JSON.parse(fileContent);
+            const templateItemData = await parseGCSTemplate(gcsData, file.name);
+            if (!templateItemData) {
+                return ui.notifications.error("Não foi possível interpretar este arquivo como template GCS.");
+            }
+
+            const created = await Item.create(templateItemData);
+            ui.notifications.info(`Template "${created.name}" importado com sucesso!`);
+            created.sheet?.render(true);
+        } catch (err) {
+            console.error("GUM | Erro ao importar template GCS:", err);
+            ui.notifications.error("Falha ao importar template GCS. Verifique o console (F12).");
+        }
+    };
+
+    input.click();
+}
+
+/**
  * Achata bibliotecas GCS com rows/children em uma lista simples.
  * Mantém apenas linhas que parecem ser itens importáveis e ignora
  * nós puramente organizacionais.
@@ -813,6 +846,320 @@ function parseGCSLibraryEquipment(gcsEquip) {
     };
 }
 
+const HYBRID_IMPORTABLE_ITEM_TYPES = new Set(["skill", "spell", "power", "advantage", "disadvantage", "equipment", "armor"]);
+let HYBRID_ITEM_INDEX_CACHE = null;
+
+function normalizeHybridText(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function splitNameAndSpecialization(rawName) {
+    const original = String(rawName || "").trim();
+    const match = original.match(/^(.*)\(([^)]+)\)\s*$/);
+    if (!match) {
+        return {
+            full: original,
+            base: original,
+            specialization: ""
+        };
+    }
+
+    return {
+        full: original,
+        base: (match[1] || "").trim(),
+        specialization: (match[2] || "").trim()
+    };
+}
+
+function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "") {
+    const parts = splitNameAndSpecialization(item.name);
+    return {
+        sourceType,
+        packCollection,
+        id: item.id,
+        uuid: item.uuid,
+        type: item.type,
+        name: item.name,
+        nameNorm: normalizeHybridText(parts.full),
+        baseNameNorm: normalizeHybridText(parts.base),
+        specializationNorm: normalizeHybridText(item.system?.group || parts.specialization),
+        refNorm: normalizeHybridText(item.system?.ref)
+    };
+}
+
+async function buildHybridItemIndex() {
+    if (HYBRID_ITEM_INDEX_CACHE) return HYBRID_ITEM_INDEX_CACHE;
+
+    const entries = [];
+    for (const item of game.items.contents) {
+        if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(item.type)) continue;
+        entries.push(buildIndexEntryFromItemDocument(item, "world"));
+    }
+
+    for (const pack of game.packs.filter(p => p.documentName === "Item")) {
+        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.group"] }).catch(() => null);
+        if (!index?.contents?.length) continue;
+
+        for (const row of index.contents) {
+            if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(row.type)) continue;
+            const parts = splitNameAndSpecialization(row.name);
+            entries.push({
+                sourceType: "compendium",
+                packCollection: pack.collection,
+                id: row._id,
+                uuid: `Compendium.${pack.collection}.${row._id}`,
+                type: row.type,
+                name: row.name,
+                nameNorm: normalizeHybridText(parts.full),
+                baseNameNorm: normalizeHybridText(parts.base),
+                specializationNorm: normalizeHybridText(row.system?.group || parts.specialization),
+                refNorm: normalizeHybridText(row.system?.ref)
+            });
+        }
+    }
+
+    HYBRID_ITEM_INDEX_CACHE = entries;
+    return HYBRID_ITEM_INDEX_CACHE;
+}
+
+async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
+    if (!parsedItem || !HYBRID_IMPORTABLE_ITEM_TYPES.has(parsedItem.type)) {
+        return { item: null, matchedBy: null };
+    }
+
+    const index = await buildHybridItemIndex();
+    const parsedParts = splitNameAndSpecialization(parsedItem.name);
+    const gcsParts = splitNameAndSpecialization(gcsNode?.name || parsedItem.name);
+
+    const wantedType = parsedItem.type;
+    const wantedRef = normalizeHybridText(gcsNode?.reference || parsedItem.system?.ref);
+    const wantedFullName = normalizeHybridText(parsedParts.full || gcsParts.full);
+    const wantedBaseName = normalizeHybridText(parsedParts.base || gcsParts.base);
+    const wantedSpec = normalizeHybridText(gcsNode?.specialization || parsedItem.system?.group || parsedParts.specialization || gcsParts.specialization);
+
+    const candidates = index.filter(entry => entry.type === wantedType);
+
+    const unique = (rows) => {
+        if (!rows?.length) return null;
+        if (rows.length === 1) return rows[0];
+        return null;
+    };
+
+    let hit = null;
+    let matchedBy = null;
+
+    if (wantedRef) {
+        hit = unique(candidates.filter(entry => entry.refNorm && entry.refNorm === wantedRef));
+        if (hit) matchedBy = "reference";
+    }
+
+    if (!hit && wantedFullName && wantedSpec) {
+        hit = unique(candidates.filter(entry => entry.nameNorm === wantedFullName && entry.specializationNorm === wantedSpec));
+        if (hit) matchedBy = "name+specialization";
+    }
+
+    if (!hit && wantedBaseName && wantedSpec) {
+        hit = unique(candidates.filter(entry => entry.baseNameNorm === wantedBaseName && entry.specializationNorm === wantedSpec));
+        if (hit) matchedBy = "base+specialization";
+    }
+
+    if (!hit && wantedFullName) {
+        hit = unique(candidates.filter(entry => entry.nameNorm === wantedFullName));
+        if (hit) matchedBy = "name";
+    }
+
+    if (!hit && wantedBaseName) {
+        hit = unique(candidates.filter(entry => entry.baseNameNorm === wantedBaseName));
+        if (hit) matchedBy = "base";
+    }
+
+    if (!hit) return { item: null, matchedBy: null };
+
+    if (hit.sourceType === "world") {
+        return { item: game.items.get(hit.id) || null, matchedBy };
+    }
+
+    const pack = game.packs.get(hit.packCollection);
+    if (!pack) return { item: null, matchedBy: null };
+    const item = await pack.getDocument(hit.id).catch(() => null);
+    return { item, matchedBy };
+}
+
+function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode = "character" } = {}) {
+    const base = sourceItem.toObject();
+    const mergedSystem = foundry.utils.mergeObject(base.system || {}, parsedItem.system || {}, {
+        inplace: false,
+        overwrite: true
+    });
+
+    const merged = {
+        ...base,
+        name: parsedItem.name || base.name,
+        type: parsedItem.type || base.type,
+        img: parsedItem.img || base.img,
+        system: mergedSystem,
+        flags: foundry.utils.mergeObject(base.flags || {}, {
+            gum: {
+                hybridImport: {
+                    mode,
+                    sourceUuid: sourceItem.uuid,
+                    sourceId: sourceItem.id,
+                    gcsId: gcsNode?.id || null,
+                    importedAt: new Date().toISOString()
+                }
+            }
+        }, { inplace: false, overwrite: true })
+    };
+
+    return applyAutoPointsBaselineOnImport(merged);
+}
+
+async function buildHybridActorItemFromGCS(gcsNode, parserFn) {
+    if (!gcsNode || typeof parserFn !== "function") return null;
+
+    const parsedItem = parserFn(gcsNode);
+    if (!parsedItem) return null;
+
+    const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
+    if (!sourceItem) {
+        const fallback = foundry.utils.deepClone(parsedItem);
+        fallback.flags = foundry.utils.mergeObject(fallback.flags || {}, {
+            gum: {
+                hybridImport: {
+                    mode: "character",
+                    sourceUuid: null,
+                    sourceId: null,
+                    matchedBy: null,
+                    gcsId: gcsNode?.id || null,
+                    importedAt: new Date().toISOString()
+                }
+            }
+        }, { inplace: false, overwrite: true });
+        return applyAutoPointsBaselineOnImport(fallback);
+    }
+
+    const merged = mergeHybridImportedData(sourceItem, parsedItem, { gcsNode, mode: "character" });
+    merged.flags.gum.hybridImport.matchedBy = matchedBy;
+    return merged;
+}
+
+async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defaultCost = 0 } = {}) {
+    const parsedItem = parserFn(gcsNode);
+    if (!parsedItem) return null;
+
+    const entry = {
+        id: foundry.utils.randomID(),
+        kind: "item",
+        itemType: parsedItem.type || itemType,
+        name: parsedItem.name || gcsNode.name || "Entrada",
+        img: parsedItem.img || "icons/svg/item-bag.svg",
+        quantity: Number(gcsNode.quantity) || 1,
+        level: gcsNode.levels ?? "",
+        cost: Number(gcsNode.calc?.points ?? parsedItem.system?.points ?? defaultCost) || 0
+    };
+
+    const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
+    if (sourceItem) {
+        entry.uuid = sourceItem.uuid;
+        entry.sourceId = sourceItem.id;
+        entry.hybrid = { mode: "linked", matchedBy };
+        return entry;
+    }
+
+    entry.inlineItem = foundry.utils.deepClone(parsedItem);
+    entry.hybrid = { mode: "inline", matchedBy: null };
+    return entry;
+}
+
+function toTemplateBlockType(templatePickerType) {
+    if (templatePickerType === "count") return "selection";
+    if (templatePickerType === "points") return "points";
+    return "guaranteed";
+}
+
+async function collectTemplateBlocksRecursive(container, parserFn, itemType, blocks, path = []) {
+    if (!container) return;
+
+    const nodeName = String(container.name || "Bloco").trim() || "Bloco";
+    const currentPath = [...path, nodeName];
+    const children = Array.isArray(container.children) ? container.children : [];
+    const childContainers = children.filter(child => Array.isArray(child?.children) && child.children.length > 0);
+    const leaves = children.filter(child => !Array.isArray(child?.children) || child.children.length === 0);
+
+    const blockType = toTemplateBlockType(container.template_picker?.type);
+    const shouldCreateBlock = leaves.length > 0 || Boolean(container.template_picker);
+    if (shouldCreateBlock) {
+        const block = {
+            id: foundry.utils.randomID(),
+            type: blockType,
+            title: currentPath.join(" › "),
+            choiceCount: 1,
+            pointsAvailable: 0,
+            contents: []
+        };
+
+        if (blockType === "selection") {
+            block.choiceCount = Math.max(1, Number(container.template_picker?.qualifier?.qualifier) || 1);
+        }
+        if (blockType === "points") {
+            block.pointsAvailable = Number(container.template_picker?.qualifier?.qualifier) || 0;
+        }
+
+        for (const leaf of leaves) {
+            const entry = await buildTemplateEntryFromGCSNode(leaf, parserFn, itemType, {
+                defaultCost: Number(leaf.base_points || leaf.points_per_level || leaf.points || 0)
+            });
+            if (entry) block.contents.push(entry);
+        }
+
+        if (block.contents.length || blockType !== "guaranteed") {
+            blocks.push(block);
+        }
+    }
+
+    for (const childContainer of childContainers) {
+        await collectTemplateBlocksRecursive(childContainer, parserFn, itemType, blocks, currentPath);
+    }
+}
+
+async function parseGCSTemplate(gcsData, fileName = "") {
+    const templateSystem = getSystemTemplate("Item", "template");
+    const blocks = [];
+
+    const traitRoots = Array.isArray(gcsData.traits) ? gcsData.traits : [];
+    for (const root of traitRoots) {
+        await collectTemplateBlocksRecursive(root, parseGCSLibraryTrait, "advantage", blocks, []);
+    }
+
+    const skillRoots = Array.isArray(gcsData.skills) ? gcsData.skills : [];
+    for (const root of skillRoots) {
+        await collectTemplateBlocksRecursive(root, parseGCSLibrarySkill, "skill", blocks, []);
+    }
+
+    if (!blocks.length) return null;
+
+    const baseName = traitRoots[0]?.name || skillRoots[0]?.name || gcsData.profile?.name || String(fileName || "Template GCS").replace(/\.[^.]+$/, "");
+    templateSystem.blocks = blocks;
+
+    return {
+        name: baseName || "Template GCS",
+        type: "template",
+        system: templateSystem,
+        flags: {
+            gum: {
+                importedFrom: "gcs-template",
+                sourceVersion: gcsData.version || null,
+                importedAt: new Date().toISOString()
+            }
+        }
+    };
+}
+
 /**
  * A função "Tradutora" (Mapper) principal para um Personagem GCS.
  */
@@ -952,9 +1299,8 @@ async function parseGCSCharacter(gcsData) {
     }
     for (const gcsTrait of allTraits) {
         if (gcsTrait.name === "Natural Attacks") continue;
-        
-        // Usa o tradutor de biblioteca, pois o formato é idêntico
-        const item = parseGCSLibraryTrait(gcsTrait);
+
+        const item = await buildHybridActorItemFromGCS(gcsTrait, parseGCSLibraryTrait);
         if(item) itemsToCreate.push(item);
     }
 
@@ -963,8 +1309,7 @@ async function parseGCSCharacter(gcsData) {
     // =============================================================
     ui.notifications.info("Mapeando Perícias...");
     for (const gcsSkill of gcsData.skills || []) {
-        // Usa o tradutor de biblioteca
-        const item = parseGCSLibrarySkill(gcsSkill);
+        const item = await buildHybridActorItemFromGCS(gcsSkill, parseGCSLibrarySkill);
         if (item) {
             itemsToCreate.push(item);
         }
@@ -977,7 +1322,7 @@ async function parseGCSCharacter(gcsData) {
 
     // --- Loop 1: Equipamentos "Carregados" (equipment) ---
     for (const gcsEquip of gcsData.equipment || []) {
-        const item = parseGCSLibraryEquipment(gcsEquip); // Usa o tradutor de biblioteca
+        const item = await buildHybridActorItemFromGCS(gcsEquip, parseGCSLibraryEquipment);
         if (item) {
             if (gcsEquip.equipped === true) {
                 item.system.location = "equipped"; // Em Uso
@@ -990,7 +1335,7 @@ async function parseGCSCharacter(gcsData) {
     
     // --- Loop 2: Equipamentos "Outros" (other_equipment) ---
     for (const gcsEquip of gcsData.other_equipment || []) {
-        const item = parseGCSLibraryEquipment(gcsEquip); // Usa o tradutor de biblioteca
+         const item = await buildHybridActorItemFromGCS(gcsEquip, parseGCSLibraryEquipment);
         if (item) {
             item.system.location = "stored"; // Armazenado
             itemsToCreate.push(item);
@@ -1002,7 +1347,7 @@ async function parseGCSCharacter(gcsData) {
     // =============================================================
     ui.notifications.info("Mapeando Magias...");
     for (const gcsSpell of gcsData.spells || []) {
-        const item = parseGCSLibrarySpell(gcsSpell); // Usa o tradutor de biblioteca
+        const item = await buildHybridActorItemFromGCS(gcsSpell, parseGCSLibrarySpell);
         if (item) {
             itemsToCreate.push(item);
         }

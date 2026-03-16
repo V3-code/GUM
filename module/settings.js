@@ -52,7 +52,7 @@ async function syncCompendiumRules() {
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
-import { importFromJson, importFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
+import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
@@ -135,6 +135,21 @@ export const registerSystemSettings = function() {
             if (value) {
                 importFromGCS(); // Chama a função do importers.js
                 game.settings.set("gum", "importGCSButton", false); // Reseta o botão
+            }
+        }
+    });
+
+    game.settings.register("gum", "importGCSTemplateButton", {
+        name: "Importar Template do GCS",
+        hint: "Importa um arquivo .gct/.gcs de template do GCS e cria um Item do tipo Modelo com blocos para aplicação na ficha.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: (value) => {
+            if (value) {
+                importTemplateFromGCS();
+                game.settings.set("gum", "importGCSTemplateButton", false);
             }
         }
     });
