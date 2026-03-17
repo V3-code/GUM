@@ -1401,7 +1401,10 @@ async function parseGCSCharacter(gcsData) {
     ensureObjectPath(systemData, "details");
     ensureObjectPath(systemData, "points");
     ensureObjectPath(systemData, "attributes");
-    for (const attrKey of ["st", "dx", "iq", "ht", "lifting_st", "per", "vont", "hp", "fp"]) {
+    for (const attrKey of [
+        "st", "dx", "iq", "ht", "lifting_st", "per", "vont", "hp", "fp",
+        "vision", "hearing", "tastesmell", "touch", "basic_speed", "basic_move", "dodge", "enhanced_move"
+    ]) {
         ensureObjectPath(systemData, `attributes.${attrKey}`);
     }
 
@@ -1499,20 +1502,84 @@ async function parseGCSCharacter(gcsData) {
         systemData.attributes.hp.max = hp.calc.value;
         systemData.attributes.hp.value = hp.calc.current;
     }
-    const fp = getGCSAttr("fp");
+  const fp = getGCSAttr("fp");
     if (fp) {
         systemData.attributes.fp.max = fp.calc.value;
         systemData.attributes.fp.value = fp.calc.current;
     }
+
+    // --- 2.1. Mapeamento de Atributos Secundários ---
+    const getNumericCandidate = (...values) => {
+        for (const value of values) {
+            if (value === null || value === undefined || value === "") continue;
+            const numeric = Number(value);
+            if (Number.isFinite(numeric)) return numeric;
+        }
+        return null;
+    };
+
+    const getSecondaryFromAttributes = (...ids) => {
+        for (const id of ids) {
+            const attr = getGCSAttr(id);
+            if (!attr) continue;
+            const value = getNumericCandidate(attr.calc?.value, attr.value, attr.calc?.current);
+            if (value !== null) return value;
+        }
+        return null;
+    };
+
+    const secondaryAttributeMap = {
+        basic_speed: ["basic_speed", "speed"],
+        basic_move: ["basic_move", "move"],
+        enhanced_move: ["enhanced_move"],
+        dodge: ["dodge"],
+        vision: ["vision"],
+        hearing: ["hearing"],
+        tastesmell: ["taste_smell", "tastesmell"],
+        touch: ["touch"]
+    };
+
+    for (const [targetKey, gcsIds] of Object.entries(secondaryAttributeMap)) {
+        const mappedValue = getSecondaryFromAttributes(...gcsIds);
+        if (mappedValue !== null) {
+            systemData.attributes[targetKey].value = mappedValue;
+        }
+    }
     
-    if (gcsData.calc) {
+  if (gcsData.calc) {
         const formatDamageString = (dmg) => {
             if (!dmg) return "";
             return dmg.replace(/d(?!b|p|\d)/g, "d6");
         };
+        const calcBasicSpeed = getNumericCandidate(gcsData.calc.basic_speed, gcsData.calc.speed);
+        const calcBasicMove = getNumericCandidate(gcsData.calc.basic_move, gcsData.calc.move);
+        const calcDodge = getNumericCandidate(gcsData.calc.dodge);
+
+        if (calcBasicSpeed !== null) {
+            systemData.attributes.basic_speed.value = calcBasicSpeed;
+        }
+        if (calcBasicMove !== null) {
+            systemData.attributes.basic_move.value = calcBasicMove;
+        }
+        if (calcDodge !== null) {
+            systemData.attributes.dodge.value = calcDodge;
+        }
+
         systemData.attributes.thrust_damage = formatDamageString(gcsData.calc.thrust) || "1d6-2";
         systemData.attributes.swing_damage = formatDamageString(gcsData.calc.swing) || "1d6";
     }
+
+    // No GURPS os sentidos partem de PER; se vierem ausentes no GCS, preserva uma base coerente.
+    const perBase = Number(systemData.attributes.per?.value);
+    if (Number.isFinite(perBase)) {
+        for (const senseKey of ["vision", "hearing", "tastesmell", "touch"]) {
+            const currentValue = Number(systemData.attributes[senseKey]?.value);
+            if (!Number.isFinite(currentValue)) {
+                systemData.attributes[senseKey].value = perBase;
+            }
+        }
+    }
+
 
     // --- 3. Mapeamento de Itens (VANTAGENS, PERÍCIAS, EQUIPAMENTOS) ---
     const itemsToCreate = [];
