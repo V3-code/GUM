@@ -486,7 +486,9 @@ function parseGCSLibrarySkill(gcsSkill) {
         ? `${gcsSkill.name} (${gcsSkill.specialization})` 
         : gcsSkill.name;
 
-    template.points = gcsSkill.points || 1; 
+    const resolvedRelativeLevel = extractGCSRelativeLevel(gcsSkill);
+    template.points = Number(gcsSkill.points) || 0;
+    template.skill_level = resolvedRelativeLevel;
     template.ref = gcsSkill.reference || "";
     template.group = gcsSkill.specialization || gcsSkill.tags?.[0] || template.group || "";
     template.description = gcsSkill.notes || "";
@@ -502,11 +504,48 @@ function parseGCSLibrarySkill(gcsSkill) {
     
     mapGCSDefaultsToPredefined(template, gcsSkill.defaults);
 
- return applyAutoPointsBaselineOnImport({
+return applyAutoPointsBaselineOnImport({
         name: skillName,
         type: "skill",
         system: template
     });
+}
+
+function extractGCSRelativeLevel(gcsNode) {
+    const directCandidates = [
+        gcsNode?.relative_level,
+        gcsNode?.levels,
+        gcsNode?.calc?.relative_level,
+        gcsNode?.calc?.rsl,
+        gcsNode?.calc?.relative
+    ];
+
+    for (const candidate of directCandidates) {
+        if (typeof candidate === "number" && Number.isFinite(candidate)) {
+            return candidate;
+        }
+
+        if (typeof candidate === "string") {
+            const raw = candidate.trim();
+            if (!raw) continue;
+
+            if (/^[+-]?\d+$/.test(raw)) {
+                return Number(raw);
+            }
+
+            const withAttribute = raw.match(/(?:st|dx|iq|ht|per|will|vont)\s*([+-]\d+)/i);
+            if (withAttribute?.[1]) {
+                return Number(withAttribute[1]);
+            }
+
+            const trailingSigned = raw.match(/([+-]\d+)\s*$/);
+            if (trailingSigned?.[1]) {
+                return Number(trailingSigned[1]);
+            }
+        }
+    }
+
+    return 0;
 }
 
 function calculateAutoSkillPointsForImport(rawDifficulty, relativeLevel = 0) {
@@ -587,15 +626,19 @@ function applyAutoPointsBaselineOnImport(itemData) {
     if (!["skill", "spell", "power"].includes(type)) return itemData;
 
     const difficulty = itemData.system.difficulty || "M";
+    const parsedRelativeLevel = Number(itemData.system.skill_level);
+    const relativeLevel = Number.isFinite(parsedRelativeLevel) ? parsedRelativeLevel : 0;
+    const pointsField = (type === "power") ? "points_skill" : "points";
+    const parsedPoints = Number(itemData.system[pointsField]);
+    const hasImportedPoints = Number.isFinite(parsedPoints) && parsedPoints > 0;
+
     itemData.system.auto_points = true;
     itemData.system.cost_mode = itemData.system.cost_mode || "standard";
-    itemData.system.skill_level = 0;
+    itemData.system.skill_level = relativeLevel;
 
-    const baselinePoints = calculateAutoSkillPointsForImport(difficulty, 0);
-    if (type === "power") {
-        itemData.system.points_skill = baselinePoints;
-    } else {
-        itemData.system.points = baselinePoints;
+    if (!hasImportedPoints) {
+        const baselinePoints = calculateAutoSkillPointsForImport(difficulty, relativeLevel);
+        itemData.system[pointsField] = baselinePoints;
     }
 
     return itemData;
@@ -1167,7 +1210,7 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
         ?? parsedItem.system?.points
         ?? 0
     ) || 0;
-    let resolvedLevel = gcsNode.levels ?? "";
+    let resolvedLevel = extractGCSRelativeLevel(gcsNode);
     if ((resolvedLevel === "" || resolvedLevel === null || resolvedLevel === undefined)
         && ["skill", "spell", "power"].includes(parsedItem.type)) {
         resolvedLevel = calculateRelativeLevelFromImportPoints(parsedItem.system?.difficulty || "M", resolvedCost);
@@ -1339,6 +1382,28 @@ async function parseGCSCharacter(gcsData) {
     ui.notifications.info("Lendo dados do GCS... Mapeando atributos.");
     
     const systemData = getSystemTemplate("Actor", "character");
+    const ensureObjectPath = (root, path, fallback = {}) => {
+        if (!root || typeof root !== "object") return fallback;
+
+        const segments = path.split(".");
+        let current = root;
+        for (let i = 0; i < segments.length; i++) {
+            const key = segments[i];
+            if (!current[key] || typeof current[key] !== "object" || Array.isArray(current[key])) {
+                current[key] = {};
+            }
+            current = current[key];
+        }
+        return current;
+    };
+
+    // Alguns templates podem vir incompletos dependendo da versão do sistema.
+    ensureObjectPath(systemData, "details");
+    ensureObjectPath(systemData, "points");
+    ensureObjectPath(systemData, "attributes");
+    for (const attrKey of ["st", "dx", "iq", "ht", "lifting_st", "per", "vont", "hp", "fp"]) {
+        ensureObjectPath(systemData, `attributes.${attrKey}`);
+    }
 
     // --- 1. Mapeamento do Perfil Básico ---
     const actorName = gcsData.profile?.name || "Personagem Importado";
