@@ -126,7 +126,48 @@ async getData() {
      */
     _prepareActorData(actor) {
         const attr = actor.system.attributes;
-        const activeGMMods = actor.getFlag("gum", "gm_modifiers") || [];
+        const activeGMModsRaw = actor.getFlag("gum", "gm_modifiers") || [];
+        const activeGMMods = [];
+        const groupedMods = new Map();
+
+        const formatModifierValue = (value) => {
+            const numericValue = Number(value) || 0;
+            return `${numericValue > 0 ? "+" : ""}${numericValue}`;
+        };
+
+        for (const mod of activeGMModsRaw) {
+            const groupId = mod?.applicationGroupId || null;
+
+            if (!groupId) {
+                const numericValue = Number(mod?.value) || 0;
+                activeGMMods.push({
+                    ...mod,
+                    displayName: mod?.name || "Modificador",
+                    displayValue: numericValue,
+                    displayValueText: formatModifierValue(numericValue),
+                    removalGroupId: null
+                });
+                continue;
+            }
+
+            if (!groupedMods.has(groupId)) {
+                groupedMods.set(groupId, {
+                    displayName: mod?.sourceItemName || mod?.name || "Modificador",
+                    displayValue: 0,
+                    displayValues: [],
+                    displayValueText: "",
+                    removalGroupId: groupId
+                });
+            }
+
+            const grouped = groupedMods.get(groupId);
+            const numericValue = Number(mod?.value) || 0;
+            grouped.displayValue += numericValue;
+            grouped.displayValues.push(formatModifierValue(numericValue));
+            grouped.displayValueText = grouped.displayValues.join(" | ");
+        }
+
+        activeGMMods.push(...groupedMods.values());
         const activeGMEffects = Array.from(actor.effects || [])
             .filter(effect => {
                 if (effect.disabled) return false;
@@ -230,6 +271,7 @@ activateListeners(html) {
             
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
             const index = tag.data('index');
+            const groupId = tag.data('group-id');
             
             // Busca o card pai para pegar os IDs
             const card = tag.closest('.monitor-card');
@@ -250,10 +292,16 @@ activateListeners(html) {
             if (actor) {
                 // Remove o item do array de flags
                 const mods = actor.getFlag("gum", "gm_modifiers") || [];
-                mods.splice(index, 1);
+                const updatedMods = groupId
+                    ? mods.filter(mod => mod?.applicationGroupId !== groupId)
+                    : (() => {
+                        const clone = [...mods];
+                        clone.splice(index, 1);
+                        return clone;
+                    })();
                 
                 // Salva de volta
-                await actor.setFlag("gum", "gm_modifiers", mods);
+                await actor.setFlag("gum", "gm_modifiers", updatedMods);
                 
                 // O Hook 'updateActor' no main.js vai cuidar de renderizar a tela
             } else {
@@ -1060,6 +1108,7 @@ async _applySelectionToActor(actor, tokenId) {
                     : null;
 
                 if (entryList) {
+                    const applicationGroupId = foundry.utils.randomID();
                     entryList.forEach((entry) => {
                         currentMods.push({
                             name: entry?.label ? `${sourceItem.name} — ${entry.label}` : sourceItem.name,
@@ -1068,7 +1117,9 @@ async _applySelectionToActor(actor, tokenId) {
                             contexts: (entry?.contexts || "all").toString().trim() || "all",
                             id: foundry.utils.randomID(),
                             source: "GM Screen",
-                            sourceUuid: key
+                            sourceUuid: key,
+                            sourceItemName: sourceItem.name,
+                            applicationGroupId
                         });
                         countMods++;
                     });

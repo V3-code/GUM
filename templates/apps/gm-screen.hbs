@@ -222,8 +222,8 @@
     <div class="active-mods-zone">
         {{#if actor.activeGMMods.length}}
             {{#each actor.activeGMMods}}
-            <span class="active-mod-tag" data-index="{{@index}}">
-                {{this.name}} <strong>{{#if (gt this.value 0)}}+{{/if}}{{this.value}}</strong>
+            <span class="active-mod-tag" data-index="{{@index}}" {{#if this.removalGroupId}}data-group-id="{{this.removalGroupId}}"{{/if}}>
+                {{this.displayName}} <strong>{{this.displayValueText}}</strong>
                 <i class="fas fa-times remove-mod"></i>
             </span>
             {{/each}}
