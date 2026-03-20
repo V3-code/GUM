@@ -933,8 +933,7 @@ activateListeners(html) {
         const { quick = false, rollType = 'skill' } = options;
         
         let selectedModsTotal = 0;
-        let actorModsTotal = 0;
-        let lowestCap = Infinity; // Começa infinito (sem teto)
+        let lowestCap = Infinity; // Começa infinito (sem teto))
 
         // 1. Processa Modificadores da TELA (Selecionados agora)
         this.selectedModifiers.forEach(mod => {
@@ -948,37 +947,14 @@ activateListeners(html) {
             }
         });
 
-        // 2. Processa Modificadores do ATOR (Flags já aplicadas)
-        const actorFlags = actor.getFlag("gum", "gm_modifiers") || [];
-        actorFlags.forEach(mod => {
-            selectedModsTotal += (parseInt(mod.value) || 0);
-            
-            // Verifica teto nas flags
-            if (mod.cap !== undefined && mod.cap !== null && mod.cap !== "") {
-                const capVal = parseInt(mod.cap);
-                if (!isNaN(capVal) && capVal < lowestCap) lowestCap = capVal;
-            }
-        });
-
-        // 3. Calcula NH Efetivo Preliminar
-        const totalMod = selectedModsTotal + actorModsTotal;
-        let effectiveLevel = targetValue + totalMod;
-
-        // 4. Aplica a Regra do Teto (Cap)
-        // Se houver um teto definido e o NH for maior que ele, reduz para o teto.
-        if (lowestCap !== Infinity && effectiveLevel > lowestCap) {
-            effectiveLevel = lowestCap;
-            // Opcional: Avisar no chat que o teto foi aplicado?
-            // Por enquanto, o sistema de rolagem mostra o valor final.
-        }
-        
-        if (!quick) {
+              if (!quick) {
             const promptRollData = {
                 label,
                 value: targetValue,
                 originalValue: targetValue,
-                modifier: selectedModsTotal,
-                modifierLabel: "Escudo do Mestre",
+                modifier: 0,
+                fixedModifier: selectedModsTotal,
+                fixedModifierLabel: "Escudo do Mestre",
                 type: rollType
             };
 
@@ -993,13 +969,15 @@ activateListeners(html) {
             return;
         }
 
-        // 5. Rola direto (Ctrl+Click)
+ // 2. Rola direto (Ctrl+Click)
         performGURPSRoll(actor, {
             label: label + " (EM)",
-            value: effectiveLevel,      // NH Final (com Teto aplicado)
+            value: targetValue,
             originalValue: targetValue, // NH Base
-            modifier: totalMod,         // Soma dos modificadores (para exibir no detalhe)
+            modifier: selectedModsTotal,
             img: actor.img || "icons/svg/d20.svg"
+        }, {
+            effectiveCap: lowestCap
         });
     }
     /**
@@ -1067,23 +1045,47 @@ async _applySelectionToActor(actor, tokenId) {
         const effectUuids = [];
         const configuredUuids = this._getConfiguredItemUuids();
 
-        this.selectedModifiers.forEach((mod, key) => {
-            if (key !== "manual" && !configuredUuids.has(key)) return;
+      for (const [key, mod] of this.selectedModifiers.entries()) {
+            if (key !== "manual" && !configuredUuids.has(key)) continue;
 
             if (mod?.type === "effect") {
                 if (mod.uuid) effectUuids.push(mod.uuid);
-                return;
+                continue;
+            }
+
+            if (key !== "manual") {
+                const sourceItem = await fromUuid(key).catch(() => null);
+                const entryList = Array.isArray(sourceItem?.system?.modifier_entries) && sourceItem.system.modifier_entries.length
+                    ? sourceItem.system.modifier_entries
+                    : null;
+
+                if (entryList) {
+                    entryList.forEach((entry) => {
+                        currentMods.push({
+                            name: entry?.label ? `${sourceItem.name} — ${entry.label}` : sourceItem.name,
+                            value: parseInt(entry?.value) || 0,
+                            cap: entry?.nh_cap ?? entry?.cap ?? mod.cap,
+                            contexts: (entry?.contexts || "all").toString().trim() || "all",
+                            id: foundry.utils.randomID(),
+                            source: "GM Screen",
+                            sourceUuid: key
+                        });
+                        countMods++;
+                    });
+                    continue;
+                }
             }
 
             currentMods.push({
                 name: mod.name,
                 value: mod.value,
                 cap: mod.cap, // ✅ AGORA SALVAMOS O TETO NA FLAG DO ATOR
+                contexts: mod.contexts || "all",
                 id: foundry.utils.randomID(),
                 source: "GM Screen"
             });
             countMods++;
-        });
+        }
 
         if (countMods > 0) {
             await actor.setFlag("gum", "gm_modifiers", currentMods);

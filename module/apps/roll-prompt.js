@@ -54,6 +54,9 @@ export class GurpsRollPrompt extends FormApplication {
         const gmMods = this.actor.getFlag("gum", "gm_modifiers") || [];
         
         gmMods.forEach(mod => {
+            const context = mod?.contexts ?? mod?.context ?? "all";
+            if (!this._matchesEffectContext(context, this.context)) return;
+
             this.selectedModifiers.push({
                 id: mod.id || foundry.utils.randomID(),
                 label: mod.name,

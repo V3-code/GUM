@@ -668,6 +668,9 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
         
         globalMods.forEach(m => {
+            const modContext = m?.contexts ?? m?.context ?? "all";
+            if (!_matchesRollContext(modContext, rollContext)) return;
+
             // Soma o valor
             globalModValue += (parseInt(m.value) || 0);
             
