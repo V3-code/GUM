@@ -218,7 +218,7 @@ activateListeners(html) {
         // ===========================================================
         html.find('.monitor-card').click(async ev => {
             // Ignora cliques em botões internos (remover, link, etc)
-            if ($(ev.target).closest('.remove-mod, .actor-identity, .active-mod-tag').length) return;
+            if ($(ev.target).closest('.remove-mod, .remove-effect, .actor-identity, .active-mod-tag').length) return;
             
             // Se nada selecionado, não faz nada
             if (this.selectedModifiers.size === 0) return;
@@ -305,8 +305,45 @@ activateListeners(html) {
                 
                 // O Hook 'updateActor' no main.js vai cuidar de renderizar a tela
             } else {
-                ui.notifications.warn("Não foi possível encontrar o ator para remover o modificador.");
+ ui.notifications.warn("Não foi possível encontrar o ator para remover o modificador.");
             }
+        });
+
+        // ===========================================================
+        // 2.1 REMOÇÃO DE EFEITO DO ESCUDO DO MESTRE (CLIQUE NO X DA TAG)
+        // ===========================================================
+        html.find('.remove-effect').click(async ev => {
+            ev.stopPropagation();
+
+            const tag = $(ev.currentTarget).closest('.active-mod-tag');
+            const effectId = tag.data('effect-id');
+
+            const card = tag.closest('.monitor-card');
+            const actorId = card.data('actor-id');
+            const tokenId = card.data('token-id');
+
+            let actor;
+
+            if (tokenId) {
+                const token = canvas.tokens.get(tokenId);
+                if (token) actor = token.actor;
+            }
+            if (!actor && actorId) {
+                actor = game.actors.get(actorId);
+            }
+
+            if (!actor || !effectId) {
+                return ui.notifications.warn("Não foi possível encontrar o efeito para remoção.");
+            }
+
+            const effect = actor.effects.get(effectId);
+            const source = foundry.utils.getProperty(effect, "flags.gum.source");
+
+            if (!effect || source !== "GM Screen") {
+                return ui.notifications.warn("Apenas efeitos aplicados pelo Escudo do Mestre podem ser removidos aqui.");
+            }
+
+            await actor.deleteEmbeddedDocuments("ActiveEffect", [effectId]);
         });
 
         // ===========================================================

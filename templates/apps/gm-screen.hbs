@@ -231,8 +231,9 @@
 
         {{#if actor.activeGMEffects.length}}
             {{#each actor.activeGMEffects}}
-            <span class="active-mod-tag">
+            <span class="active-mod-tag" data-effect-id="{{this.id}}">
                 <i class="fas fa-sparkles"></i> {{this.name}}
+                <i class="fas fa-times remove-effect"></i>
             </span>
             {{/each}}
         {{/if}}

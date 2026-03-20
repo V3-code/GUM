@@ -590,7 +590,7 @@
     display: flex; justify-content: center; gap: 1.5rem; padding: 0.5rem 0;
 }
 .gum.sheet.actor .attribute-box {
-    background: var(--gum-bg-sidebar); border: 1px solid var(--gum-accent-gold);
+    background: var(--gum-bg-sidebar); border: 1px solid var(--gum-border-gold);
     width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center;
     border-radius: 5px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); position: relative;
 }
@@ -1285,15 +1285,11 @@
 /* =================================================================== */
 
 .encumbrance-inline {
-  padding: 6px 10px;
-  margin-bottom: 10px;
-
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15)),
-    var(--item-panel-texture);
-
-  border: 1px solid var(--gum-border-gold);
-  border-radius: 4px;
+    padding: 4px 0px;
+    margin-bottom: 10px;
+    background: transparent;
+    border-bottom: 2px solid var(--gum-border-gold);
+    border-radius: 4px;
 }
 
 /* ---------- Linhas ---------- */
@@ -1308,7 +1304,6 @@
 }
 
 .encumbrance-row-bottom {
-  margin-top: 6px;
   grid-template-columns: auto auto auto;
   justify-content: center;
   gap: 8px;
@@ -2144,6 +2139,7 @@ background-color: var(--gum-accent-gold);
     height: 100%;
     overflow-y: auto;
     padding-right: 5px;
+    margin-top: 45px;
 }
 
 /* --- BLOCOS COLAPSÁVEIS (<details>) --- */
@@ -2284,7 +2280,7 @@ background-color: var(--gum-accent-gold);
 
 /* Tags internas */
 .gum.sheet.actor .effect-pill-enhanced .pill-details {
-    display: flex; gap: 6px; align-items: center; margin-top: 2px;
+    display: flex; gap: 6px; align-items: center; margin-top: 2px; flex-wrap: wrap;
 }
 .gum.sheet.actor .pill-tag {
     font-size: 0.75em; padding: 1px 5px; border-radius: 3px; font-weight: 600;
@@ -3930,7 +3926,7 @@ background-color: var(--gum-accent-gold);
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 12px; /* Adiciona o padding aqui, dentro do conteúdo */
+    padding: 6px; /* Adiciona o padding aqui, dentro do conteúdo */
     margin: 0;
     list-style: none;
 }
@@ -4025,8 +4021,8 @@ background-color: var(--gum-accent-gold);
     padding-left: 4px;
     border-left: 1px solid rgba(0,0,0,0.1);
 }
-.gum.sheet.actor .characteristic-card:hover .item-controls { display: flex; }
-.gum.sheet.actor .characteristic-card .item-controls a { color: var(--gum-text-medio); font-size: 0.85em; padding: 2px; }
+.gum.sheet.actor .characteristic-card:hover .item-controls { display: flex; flex-direction: column; }
+.gum.sheet.actor .characteristic-card .item-controls a { color: var(--gum-text-medio); font-size: 0.65em; padding: 2px; }
 .gum.sheet.actor .characteristic-card .item-controls a:hover { color: var(--gum-accent-gold); }
 .gum.sheet.actor .characteristic-card .item-controls a.item-delete:hover { color: var(--gum-accent-red); }
 
@@ -4037,8 +4033,8 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .characteristics-main-content {
     display: grid;
-    grid-template-columns: 0.5fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
     align-items: start;
 }
 
@@ -4187,7 +4183,7 @@ background-color: var(--gum-accent-gold);
 /* Botões */
 .gum.sheet.actor .modifiers-toolbar .right { display: flex; gap: 5px; }
 .gum.sheet.actor .modifiers-toolbar button {
-    background: transparent; border: 1px solid var(--gum-border-light);
+    background: transparent; border: none;
     color: var(--gum-text-medio); width: 28px; height: 28px; border-radius: 4px;
     cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
 }
