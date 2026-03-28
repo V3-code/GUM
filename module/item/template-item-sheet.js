@@ -1,3 +1,5 @@
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+
 export class TemplateItemSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -22,6 +24,10 @@ export class TemplateItemSheet extends ItemSheet {
     async getData(options = {}) {
         const context = await super.getData(options);
         context.system = this.item.system ?? {};
+        context.enrichedDescription = await TextEditorImpl.enrichHTML(context.system.description || "", { async: true });
+        context.enrichedChatDescription = await TextEditorImpl.enrichHTML(context.system.chat_description || "", { async: true });
+        context.owner = context.owner ?? this.item.isOwner;
+        context.editable = this.options.editable ?? this.isEditable;
         context.blocks = this._prepareBlocks(context.system.blocks ?? []);
         return context;
     }
@@ -232,6 +238,10 @@ export class TemplateItemSheet extends ItemSheet {
         super.activateListeners(html);
         if (!this.isEditable) return;
 
+        html.on("click", ".toggle-editor", this._toggleEditor.bind(this));
+        html.on("click", ".save-description", this._saveDescription.bind(this));
+        html.on("click", ".cancel-description", this._cancelDescription.bind(this));
+
         html.on("click", ".add-template-block", this._onAddBlock.bind(this));
         html.on("click", ".edit-template-block", this._onEditBlock.bind(this));
         html.on("click", ".delete-template-block", this._onDeleteBlock.bind(this));
@@ -243,8 +253,71 @@ export class TemplateItemSheet extends ItemSheet {
         html.on("click", ".edit-block-entry", this._onEditEntry.bind(this));
 
         html.on("dragover", ".template-dropzone", ev => ev.preventDefault());
-        html.on("drop", ".template-dropzone", this._onDrop.bind(this));
+ html.on("drop", ".template-dropzone", this._onDrop.bind(this));
 
+    }
+
+    _toggleEditor(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest(".description-section");
+        container.find(".description-view").toggle();
+        container.find(".description-editor").toggle();
+        if (field) {
+            const editor = container.find(`.editor[data-edit="${field}"]`);
+            if (editor.length) editor.trigger("focus");
+        }
+    }
+
+    async _saveDescription(event) {
+        event.preventDefault();
+        const field = event.currentTarget.dataset.field;
+        const container = $(event.currentTarget).closest(".description-section");
+        const content = await this._getEditorContent(field, container);
+        if (!field || content === null || content === undefined) return;
+
+        await this.item.update({ [field]: content });
+        const enriched = await TextEditorImpl.enrichHTML(content, { async: true });
+        container.find(".description-view").html(enriched);
+        container.find(".description-view").show();
+        container.find(".description-editor").hide();
+    }
+
+    _cancelDescription(event) {
+        event.preventDefault();
+        const container = $(event.currentTarget).closest(".description-section");
+        container.find(".description-view").show();
+        container.find(".description-editor").hide();
+    }
+
+    _getEditorInstance(field) {
+        const editor = this.editors?.[field];
+        if (!editor) return null;
+        return editor.editor ?? editor.instance ?? editor;
+    }
+
+    async _getEditorContent(field, container) {
+        if (!field) return null;
+        const instance = this._getEditorInstance(field);
+        if (instance?.getHTML) {
+            const html = instance.getHTML();
+            return html?.then ? await html : html;
+        }
+        if (instance?.getContent) {
+            const content = instance.getContent();
+            return content?.then ? await content : content;
+        }
+        if (instance?.view?.dom?.innerHTML) return instance.view.dom.innerHTML;
+        if (TextEditorImpl?.getContent) {
+            const element = container.find(`[name="${field}"]`).get(0)
+                ?? container.find(`.editor[data-edit="${field}"]`).get(0);
+            if (element) return TextEditorImpl.getContent(element);
+        }
+        const namedInput = container.find(`[name="${field}"]`);
+        if (namedInput.length) return namedInput.val();
+        const editorElement = container.find(`.editor[data-edit="${field}"]`);
+        if (editorElement.length) return editorElement.val() ?? editorElement.html();
+        return "";
     }
 
     async _onAddBlock(event) {

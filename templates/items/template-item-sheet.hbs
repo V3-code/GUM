@@ -19,31 +19,67 @@
     </nav>
 
     <section class="sheet-body-content">
-      <div class="tab" data-tab="description">
+      <div class="tab" data-group="primary" data-tab="description">
         <div class="description-tab">
           <div class="description-grid">
-            <div class="form-section description-section">
-              <div class="description-header">
-                <div>
-                  <h4 class="section-title">Descrição Resumida (Chat)</h4>
+            <div class="form-section description-section itemdesc-block">
+              <details class="itemdesc-panel" open>
+                <summary class="itemdesc-block-header">
+                  <h4 class="itemdesc-block-title">Descrição Resumida (Chat)</h4>
+                  {{#if editable}}
+                  <span class="itemdesc-header-actions">
+                    <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                  </span>
+                  {{/if}}
+                </summary>
+                <div class="itemdesc-content">
+                  <div class="description-view itemdesc-inner">{{{enrichedChatDescription}}}</div>
+
+                  <div class="description-editor itemdesc-inner" style="display:none;">
+                    {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+                    <div class="description-actions">
+                      <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+              </details>
             </div>
 
-            <div class="form-section description-section">
-              <div class="description-header">
-                <div>
-                  <h4 class="section-title">Descrição Completa</h4>
+            <div class="form-section description-section itemdesc-block">
+              <details class="itemdesc-panel" open>
+                <summary class="itemdesc-block-header">
+                  <h4 class="itemdesc-block-title">Descrição Completa</h4>
+                  {{#if editable}}
+                  <span class="itemdesc-header-actions">
+                    <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                  </span>
+                  {{/if}}
+                </summary>
+                <div class="itemdesc-content">
+                  <div class="description-view itemdesc-inner">{{{enrichedDescription}}}</div>
+
+                  <div class="description-editor itemdesc-inner" style="display:none;">
+                    {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+                    <div class="description-actions">
+                      <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+              </details>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="tab template-structure-tab" data-tab="structure">
+      <div class="tab template-structure-tab" data-group="primary" data-tab="structure">
         <div class="template-blocks-header">
           <h3 class="template-blocks-title">Blocos</h3>
           <button type="button" class="add-template-block template-blocks-add" title="Adicionar bloco">
