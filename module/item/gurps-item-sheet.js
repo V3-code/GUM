@@ -587,6 +587,8 @@ if (this.item?.type === "gm_modifier") {
 
         // Editor de Descrição
         html.find(".toggle-editor").on("click", ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
             const section = $(ev.currentTarget).closest(".description-section");
             const field = $(ev.currentTarget).data("field");
             const editorWrapper = section.find(".description-editor");

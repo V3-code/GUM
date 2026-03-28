@@ -615,12 +615,17 @@
   background: radial-gradient(120% 120% at 20% 30%, rgba(185,137,60,0.08), transparent 50%), rgba(0,0,0,0.02);
   border: 1px solid var(--item-border);
   border-radius: 8px;
-  padding: 12px;
-  color: var(--item-text);
+  padding: 5px;
+  color: var(--gum-text-medio);
   line-height: 1.5;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 14px rgba(0,0,0,0.08);
   min-height: 140px;
   position: relative;
+      text-transform: uppercase;
+    font-family: 'Roboto Condensed';
+    font-size: smaller;
+    font-weight: 700;
+    letter-spacing: 0.05em;
 }
 .gum.sheet.item .description-tab {
   display: flex;
@@ -673,6 +678,77 @@
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 10px;
 }
+.gum.sheet.item .itemdesc-block {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.gum.sheet.item .itemdesc-panel {
+  margin: 0;
+}
+.gum.sheet.item .itemdesc-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--item-bg-panel-2);
+  border-radius: 6px 6px 0 0;
+  padding: 10px 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  list-style: none;
+}
+.gum.sheet.item .itemdesc-block-header::-webkit-details-marker {
+  display: none;
+}
+.gum.sheet.item .itemdesc-block-title {
+  margin: 0;
+  font-family: var(--item-font-condensed);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--item-text);
+}
+.gum.sheet.item .itemdesc-header-actions {
+  display: inline-flex;
+  align-items: center;
+}
+.gum.sheet.item .itemdesc-edit-button {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--item-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  line-height: 1;
+  opacity: 0.72;
+  transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+.gum.sheet.item .itemdesc-edit-button:hover {
+  color: var(--item-accent);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.gum.sheet.item .itemdesc-content {
+  margin-top: 0;
+}
+.gum.sheet.item .itemdesc-inner {
+  background: var(--gum-bg-body);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid var(--item-panel-texture-contrast);
+  border-top: none;
+  /*padding: 10px;*/
+}
+.gum.sheet.item .description-view.itemdesc-inner {
+  background: var(--item-bg-panel-contrast);
+  box-shadow: none;
+}
 .gum.sheet.item .description-header {
   display: flex;
   justify-content: space-between;
@@ -700,6 +776,9 @@
   background: var(--item-accent);
   color: #fff;
   border-color: var(--item-accent);
+}
+.gum.sheet.item .itemdesc-panel:not([open]) .itemdesc-content {
+  display: none;
 }
 
 /* ------------------------------------------------------------------- */
@@ -1846,12 +1925,12 @@
     transition: background 0.2s, border-color 0.2s, transform 0.1s;
     display: inline-flex;
 }
-.gum.sheet.item button:hover {
+/*.gum.sheet.item button:hover {
   background: var(--item-accent);
   color: #fff;
   border-color: var(--item-accent);
   transform: translateY(-1px);
-}
+}*/
 .gum.sheet.item .action-btn-small { padding: 3px 7px; font-size: 0.8rem; }
 
 /* ------------------------------------------------------------------- */
@@ -2272,17 +2351,34 @@
   width: 100% !important;
 }
 .gum.sheet.item .description-editor .tox { min-height: 320px; }
-.gum.sheet.item .description-editor .editor,
+.gum.sheet.item .description-editor {
+  overflow: visible;
+}
+.gum.sheet.item .description-editor .editor {
+  min-height: 320px;
+  max-height: 320px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gum.sheet.item .description-editor .editor .editor-menu {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
 .gum.sheet.item .description-editor .editor-content,
 .gum.sheet.item .description-editor .ProseMirror {
-  min-height: 300px;
-  max-height: 300px;
-  height: 300px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
+  box-sizing: border-box;
+  padding: 5px 6px 8px;
 }
-.gum.sheet.item .description-editor.expanded .editor,
-.gum.sheet.item .description-editor.expanded .editor-content,
-.gum.sheet.item .description-editor.expanded .ProseMirror {
+.gum.sheet.item .description-editor .description-actions {
+  margin-top: 10px;
+}
+.gum.sheet.item .description-editor.expanded .editor {
   min-height: 600px !important;
   max-height: 600px !important;
   height: 600px !important;
