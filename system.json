@@ -154,14 +154,6 @@
       "private": false
     },
     {
-      "name": "armor",
-      "label": "[GUM] Armaduras",
-      "system": "gum",
-      "path": "./packs/armor",
-      "type": "Item",
-      "private": false
-    },
-    {
       "name": "macros",
       "label": "[GUM] Macros",
       "system": "gum",

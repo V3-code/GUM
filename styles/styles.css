@@ -1805,6 +1805,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
+    margin-top: 25px;
 }
 
 .gum.sheet.actor .social-block,
@@ -2139,7 +2140,7 @@ background-color: var(--gum-accent-gold);
     height: 100%;
     overflow-y: auto;
     padding-right: 5px;
-    margin-top: 45px;
+    margin-top: 40px;
 }
 
 /* --- BLOCOS COLAPSÁVEIS (<details>) --- */
@@ -4036,6 +4037,7 @@ background-color: var(--gum-accent-gold);
     grid-template-columns: 1fr 1fr;
     gap: 4px;
     align-items: start;
+    margin-top: 20px;
 }
 
 .gum.sheet.actor .characteristics-left-column,
