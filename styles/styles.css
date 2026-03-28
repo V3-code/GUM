@@ -754,6 +754,7 @@
     font-weight: 700;
     letter-spacing: 0.01em;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-size: smaller;
 }
 
 .gurps-roll-card .card-main-flex {
@@ -838,6 +839,42 @@
     border-top: 1px solid #e6ddcd;
 }
 
+.gurps-roll-card .roll-chat-actions {
+    margin-top: 4px;
+}
+
+.gurps-roll-card .chat-roll-damage-button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #b89d74;
+    background: #e4e4e4;
+    color: #3f3225;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 2px 4px rgba(32, 20, 8, 0.2);
+    transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.gurps-roll-card .chat-roll-damage-button:hover {
+    filter: brightness(0.98);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 3px 6px rgba(32, 20, 8, 0.25);
+}
+
+.gurps-roll-card .chat-roll-damage-button:active {
+    transform: translateY(1px);
+}
+
 .gurps-roll-card .result-block {
     display: flex;
     justify-content: space-between;
@@ -848,7 +885,7 @@
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 4px rgba(32, 20, 8, 0.2);
 }
 
 .gurps-roll-card .result-block.success,

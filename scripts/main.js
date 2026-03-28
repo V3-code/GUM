@@ -748,6 +748,11 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const modBreakdown = `M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue}`;
     const targetPill = isCapped ? `Alvo ${effectiveLevel} (Cap ${lowestCap})` : `Alvo ${effectiveLevel}`;
 
+    const damageActionData = _buildDamageActionData(actor, sourceItem, rollData);
+    const damageActionAttr = damageActionData
+        ? encodeURIComponent(JSON.stringify(damageActionData))
+        : "";
+
     const content = `
         <div class="gurps-roll-card premium">
             <header class="card-header">
@@ -783,6 +788,13 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                     <span class="result-label">${resultLabel}</span>
                     <span class="result-margin">Margem ${margin}</span>
                 </div>
+                ${damageActionData ? `
+                    <div class="roll-chat-actions">
+                        <button type="button" class="chat-roll-damage-button" data-damage-action="${damageActionAttr}">
+                            <i class="fas fa-burst"></i> Rolar Dano
+                        </button>
+                    </div>
+                ` : ""}
             </footer>
         </div>
     `;
@@ -815,7 +827,264 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         } catch (err) {
             console.error("GUM | Falha ao aplicar efeitos de ativação:", err);
         }
+  }
+}
+
+function _buildDamageActionData(actor, sourceItem, rollData) {
+    if (!actor || !sourceItem) return null;
+
+    const attackId = rollData.attackId || null;
+    if (attackId) {
+        const attack =
+            sourceItem.system?.melee_attacks?.[attackId] ||
+            sourceItem.system?.ranged_attacks?.[attackId];
+        if (attack?.damage_formula) {
+            return {
+                actorId: actor.id,
+                itemId: sourceItem.id,
+                attackId,
+                sourceLabel: `${sourceItem.name} (${attack.mode ?? attackId})`
+            };
+        }
     }
+
+    if (sourceItem.system?.damage?.formula) {
+        return {
+            actorId: actor.id,
+            itemId: sourceItem.id,
+            attackId: null,
+            sourceLabel: sourceItem.name
+        };
+    }
+
+    return null;
+}
+
+async function _rollDamageFromChatAction(payload) {
+    if (!payload?.actorId || !payload?.itemId) {
+        return ui.notifications.warn("Não foi possível identificar os dados da rolagem de dano.");
+    }
+
+    const actor = game.actors.get(payload.actorId);
+    if (!actor) {
+        return ui.notifications.warn("Ator da rolagem de dano não foi encontrado.");
+    }
+
+    const item = actor.items.get(payload.itemId);
+    if (!item) {
+        return ui.notifications.warn("Item da rolagem de dano não foi encontrado.");
+    }
+
+    let normalizedAttack = null;
+    const attackId = payload.attackId || null;
+
+    if (attackId && (item.system?.melee_attacks || item.system?.ranged_attacks)) {
+        const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
+        if (attack?.damage_formula) {
+            normalizedAttack = {
+                name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
+                formula: attack.damage_formula,
+                type: attack.damage_type,
+                armor_divisor: attack.armor_divisor,
+                follow_up_damage: attack.follow_up_damage,
+                fragmentation_damage: attack.fragmentation_damage,
+                onDamageEffects: attack.onDamageEffects || {},
+                generalConditions: item.system.generalConditions || {}
+            };
+        }
+    } else if (item.system?.damage?.formula) {
+        const dmg = item.system.damage;
+        normalizedAttack = {
+            name: payload.sourceLabel || item.name,
+            formula: dmg.formula,
+            type: dmg.type,
+            armor_divisor: dmg.armor_divisor,
+            follow_up_damage: dmg.follow_up_damage,
+            fragmentation_damage: dmg.fragmentation_damage,
+            onDamageEffects: item.system.onDamageEffects || {},
+            generalConditions: item.system.generalConditions || {}
+        };
+    }
+
+    if (!normalizedAttack?.formula) {
+        return ui.notifications.warn("Nenhuma fórmula de dano válida foi encontrada para esta rolagem.");
+    }
+
+    const mergeEffects = (...sources) => {
+        const merged = [];
+        for (const source of sources) {
+            if (!source) continue;
+            if (Array.isArray(source)) {
+                source.forEach((data, index) => {
+                    if (!data) return;
+                    merged.push({ id: data.id ?? `effect-${merged.length + index}`, ...data });
+                });
+            } else {
+                for (const [id, data] of Object.entries(source)) {
+                    if (!data) continue;
+                    merged.push({ id, ...data });
+                }
+            }
+        }
+        return merged;
+    };
+
+    const combinedOnDamageEffects = mergeEffects(
+        normalizedAttack.generalConditions,
+        item.system?.onDamageEffects,
+        normalizedAttack.onDamageEffects
+    );
+
+    const resolveBaseDamage = (rollActor, formula) => {
+        let f = String(formula || "0").toLowerCase();
+
+        const thrust = String(rollActor.system.attributes.thrust_damage || "0").toLowerCase();
+        const swing = String(rollActor.system.attributes.swing_damage || "0").toLowerCase();
+        const thrustAltRaw = String(rollActor.system.attributes.thrust_damage_alt || "").trim();
+        const swingAltRaw = String(rollActor.system.attributes.swing_damage_alt || "").trim();
+        const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
+        const swingAlt = (swingAltRaw || swing).toLowerCase();
+
+        f = f.replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`);
+        f = f.replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`);
+        f = f.replace(/\b(gdpg)\b/gi, `(${thrustAlt})`);
+        f = f.replace(/\b(gebg)\b/gi, `(${swingAlt})`);
+        f = f.replace(/\b(gdp|thrust)\b/gi, `(${thrust})`);
+        f = f.replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
+
+        return f;
+    };
+
+    const extractMathFormula = (formula) => {
+        const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
+        return match ? match[1].trim() : "0";
+    };
+
+    const rolls = [];
+    const mainFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.formula));
+    const mainRoll = new Roll(mainFormula);
+    await mainRoll.evaluate();
+    rolls.push(mainRoll);
+
+    let followUpRoll = null;
+    let followUpFormula = null;
+    if (normalizedAttack.follow_up_damage?.formula) {
+        followUpFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.follow_up_damage.formula));
+        followUpRoll = new Roll(followUpFormula);
+        await followUpRoll.evaluate();
+        rolls.push(followUpRoll);
+    }
+
+    let fragRoll = null;
+    let fragFormula = null;
+    if (normalizedAttack.fragmentation_damage?.formula) {
+        fragFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.fragmentation_damage.formula));
+        fragRoll = new Roll(fragFormula);
+        await fragRoll.evaluate();
+        rolls.push(fragRoll);
+    }
+
+    const damagePackage = {
+        attackerId: actor.id,
+        sourceName: normalizedAttack.name,
+        main: {
+            total: mainRoll.total,
+            type: normalizedAttack.type || "",
+            armorDivisor: normalizedAttack.armor_divisor || 1
+        },
+        onDamageEffects: combinedOnDamageEffects,
+        generalConditions: normalizedAttack.generalConditions
+    };
+
+    if (followUpRoll) {
+        damagePackage.followUp = {
+            total: followUpRoll.total,
+            type: normalizedAttack.follow_up_damage.type || "",
+            armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
+        };
+    }
+
+    if (fragRoll) {
+        damagePackage.fragmentation = {
+            total: fragRoll.total,
+            type: normalizedAttack.fragmentation_damage.type || "",
+            armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
+        };
+    }
+
+    const mainDiceHtml = mainRoll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
+    const formulaSegments = [];
+    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}`.trim());
+    if (followUpRoll) {
+        formulaSegments.push(`${followUpFormula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor !== 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ""} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
+    }
+    if (fragRoll) {
+        formulaSegments.push(`${fragFormula}${normalizedAttack.fragmentation_damage.armor_divisor && normalizedAttack.fragmentation_damage.armor_divisor !== 1 ? `(${normalizedAttack.fragmentation_damage.armor_divisor})` : ""} ${normalizedAttack.fragmentation_damage.type || ""}`.trim());
+    }
+
+    const content = `
+      <div class="gurps-damage-card">
+        <header class="card-header">
+          <h3>${normalizedAttack.name}</h3>
+        </header>
+        <div class="card-formula-container">
+          <span class="formula-pill">${formulaSegments.join(" • ")}</span>
+        </div>
+        <div class="card-content">
+          <div class="card-main-flex">
+            <div class="roll-column">
+              <span class="column-label">Dados</span>
+              <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
+            </div>
+            <div class="column-separator"></div>
+            <div class="target-column">
+              <span class="column-label">Dano Total</span>
+              <div class="damage-total">
+                <span class="damage-value">${mainRoll.total}</span>
+                <span class="damage-type">${normalizedAttack.type || ""}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${(followUpRoll || fragRoll) ? `
+          <footer class="card-footer">
+            ${followUpRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">Acompanhamento</div>
+                <div class="extra-damage-roll">
+                  <div class="extra-total">
+                    <span class="damage-value">${followUpRoll.total}</span>
+                    <span class="damage-type">${normalizedAttack.follow_up_damage.type || ""}</span>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+            ${fragRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">Fragmentação</div>
+                <div class="extra-damage-roll">
+                  <div class="extra-total">
+                    <span class="damage-value">${fragRoll.total}</span>
+                    <span class="damage-type">${normalizedAttack.fragmentation_damage.type || ""}</span>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+          </footer>
+        ` : ""}
+        <footer class="card-actions">
+          <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
+            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+          </button>
+        </footer>
+      </div>
+    `;
+
+    await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content,
+        rolls
+    });
 }
 
 function _determineRollContext(actor, rollData) {
@@ -1842,11 +2111,29 @@ $('body').on('click', '.chat-message .chat-show-details', async (ev) => {
                 resizable: true
             }
         }).render(true);
-    });
+ });
+
+$('body').on('click', '.chat-roll-damage-button', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const button = ev.currentTarget;
+    const rawPayload = button?.dataset?.damageAction;
+    if (!rawPayload) return ui.notifications.warn("Dados da rolagem de dano ausentes.");
+
+    try {
+        const payload = JSON.parse(decodeURIComponent(rawPayload));
+        await _rollDamageFromChatAction(payload);
+    } catch (error) {
+        console.error("GUM | Falha ao executar rolagem de dano via chat:", error);
+        ui.notifications.error("Falha ao executar rolagem de dano.");
+    }
+});
 
 // ==========================================================
 // LISTENER FINAL E ÚNICO PARA O BOTÃO DE RESISTÊNCIA
 // ==========================================================
+
 
 $('body').on('click', '.resistance-roll-button', async ev => {
     ev.preventDefault();

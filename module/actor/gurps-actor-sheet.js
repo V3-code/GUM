@@ -1184,7 +1184,9 @@ _getSubmitData(updateData) {
     
 _getRollDataFromElement(element) {
     const dataset = element.dataset;
-        const itemId = dataset.itemId || $(element).closest('.item').data('itemId') || "";
+    const $element = $(element);
+    const itemId = dataset.itemId || $element.closest('.item').data('itemId') || "";
+    const attackId = dataset.attackId || $element.closest('[data-attack-id]').data('attackId') || null;
     const rawRollValue = dataset.rollValue;
 
     let value = parseInt(rawRollValue, 10);
@@ -1209,7 +1211,8 @@ _getRollDataFromElement(element) {
         attackType: dataset.attackType || null,
         isRanged: dataset.isRanged === "true",
         attributeKey,
-        defenseType: dataset.defenseType || null
+        defenseType: dataset.defenseType || null,
+        attackId
     };
 }
 
