@@ -43,6 +43,43 @@ const isCombatDuration = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
     return duration.inCombat === true && !isEffectDurationPermanent(duration);
 };
+
+function _getCurrentUserRollMode() {
+    return game.settings?.get("core", "rollMode") ?? CONST.DICE_ROLL_MODES.PUBLIC;
+}
+
+function _applyCurrentRollPrivacy(chatData, { force = false } = {}) {
+    if (!chatData || typeof chatData !== "object") return chatData;
+
+    const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
+    if (hasExplicitPrivacy && !force) return chatData;
+
+    const rollMode = _getCurrentUserRollMode();
+    if (typeof ChatMessage.applyRollMode === "function") {
+        return ChatMessage.applyRollMode({ ...chatData }, rollMode);
+    }
+
+    const nextData = { ...chatData, rollMode };
+    delete nextData.whisper;
+    delete nextData.blind;
+
+    switch (rollMode) {
+        case CONST.DICE_ROLL_MODES.PRIVATE:
+            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
+            break;
+        case CONST.DICE_ROLL_MODES.BLIND:
+            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
+            nextData.blind = true;
+            break;
+        case CONST.DICE_ROLL_MODES.SELF:
+            nextData.whisper = [game.user.id];
+            break;
+        default:
+            break;
+    }
+
+    return nextData;
+}
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
 // ================================================================== //
@@ -802,13 +839,14 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
 
 
-    ChatMessage.create({
+    const chatData = _applyCurrentRollPrivacy({
         user: game.user.id,
         speaker: ChatMessage.getSpeaker({ actor: actor }),
         content: content,
         rolls: [roll],
         sound: CONFIG.sounds.dice
     });
+    ChatMessage.create(chatData);
 
     if (rollData.type === "defense") {
         await processConditions(actor, {
@@ -1080,11 +1118,12 @@ async function _rollDamageFromChatAction(payload) {
       </div>
     `;
 
-    await ChatMessage.create({
+    const chatData = _applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor }),
         content,
         rolls
     });
+    await ChatMessage.create(chatData);
 }
 
 function _determineRollContext(actor, rollData) {
@@ -1282,10 +1321,11 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     `;
 
 
-    ChatMessage.create({
+    const chatData = _applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
         content
     });
+    ChatMessage.create(chatData);
 }
 
 
@@ -2734,7 +2774,7 @@ async function processConditions(actor, eventData = null) {
                              const chatData = { speaker: ChatMessage.getSpeaker({ actor: actor }), content: content };
                              if (effectItem.system.whisperMode === 'gm') chatData.whisper = ChatMessage.getWhisperRecipients("GM");
                              else if (effectItem.system.whisperMode === 'blind') chatData.blind = true;
-                             ChatMessage.create(chatData);
+                             ChatMessage.create(_applyCurrentRollPrivacy(chatData));
                         }
                         // Define Flag (se for do tipo flag)
  else if (effectItem.system.type === "flag" && effectItem.system.key) {
