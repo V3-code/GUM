@@ -98,7 +98,7 @@
       "private": false
     },
     {
-      "name": "Regras",
+      "name": "regras",
       "label": "[GUM] Condições Passivas",
       "system": "gum",
       "path": "./packs/regras",
@@ -178,7 +178,7 @@
       "private": false
     }
   ],
-  "license": "CC BY-NC-ND 4.0",
+  "license": "https://raw.githubusercontent.com/V3-code/GUM/master/LICENSE.md",
   "url": "https://github.com/V3-code/GUM",
   "manifest": "https://raw.githubusercontent.com/V3-code/GUM/master/system.json",
   "download": "https://github.com/V3-code/GUM/releases/latest/download/gum.zip",

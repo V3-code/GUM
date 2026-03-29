@@ -4293,7 +4293,7 @@ background-color: var(--gum-accent-gold);
 /* Adiciona a seta via CSS (FontAwesome) antes do ícone */
 .gum.sheet.actor .ctx-title::before {
     content: '\f054'; /* Chevron Right */
-    font-family: "Font Awesome 6 Free"; /* Ajuste conforme versão do Foundry (5 ou 6) */
+    font-family: var(--font-awesome, "Font Awesome 6 Free"); /* Usa a família configurada pelo Foundry com fallback */
     font-weight: 900;
     font-size: 0.8em;
     color: var(--gum-text-medio);
@@ -4341,13 +4341,13 @@ background-color: var(--gum-accent-gold);
     list-style: none;
     display: flex; align-items: center; gap: 5px;
 }
-.gum.sheet.actor .subgroup-summary:hover { color: var(--gum-text-escuro); }
+.gum.sheet.actor .subgroup-summary:hover { color: var(--gum-text-claro); }
 .gum.sheet.actor .subgroup-summary::-webkit-details-marker { display: none; }
 
 /* Seta do Subgrupo */
 .gum.sheet.actor .subgroup-summary::before {
     content: '\f0da'; /* Caret Right */
-    font-family: "Font Awesome 6 Free";
+    font-family: var(--font-awesome, "Font Awesome 6 Free");
     color: var(--gum-text-subtitulo);
     transition: transform 0.2s;
 }
