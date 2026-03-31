@@ -403,11 +403,10 @@ async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = n
             continue;
         }
 
-        const existing = game.folders.find(folder =>
-            folder.pack === pack.collection &&
+        const existing = (pack.folders ?? []).find(folder =>
             folder.type === "Item" &&
             folder.name === segment &&
-            (folder.folder?.id || folder.folder || null) === parentId
+            ((folder.folder?.id ?? folder.folder ?? null) === parentId)
         );
 
         if (existing) {
@@ -416,12 +415,16 @@ async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = n
             continue;
         }
 
-        const created = await Folder.create({
-            name: segment,
-            type: "Item",
-            pack: pack.collection,
-            folder: parentId
-        });
+        const created = await Folder.create(
+            {
+                name: segment,
+                type: "Item",
+                folder: parentId
+            },
+            {
+                pack: pack.collection
+            }
+        );
 
         parentId = created?.id || null;
         folderCache.set(partialKey, parentId);
