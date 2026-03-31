@@ -651,7 +651,7 @@ async getData(options) {
                     itemId: item.id,
                     // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
                     final_nh: finalNh,
-                    skill_name: attack.skill_name || "N/A",
+                    skill_name: attack.resolved_skill_name || attack.skill_name || "N/A",
                     parry: normalizedParry ?? "",
                     block: normalizedBlock ?? "",
                     final_parry: normalizedParry,
@@ -674,7 +674,7 @@ async getData(options) {
                     itemId: item.id,
                     // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
                     final_nh: attack.final_nh || 10,
-                    skill_name: attack.skill_name || "N/A"
+                    skill_name: attack.resolved_skill_name || attack.skill_name || "N/A"
                 };
             });
 

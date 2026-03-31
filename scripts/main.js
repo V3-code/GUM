@@ -457,21 +457,93 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         combat.dr_locations = totalDr; 
         combat.dr_from_armor = drFromArmor;
         
-        // --- ETAPA 8: CÁLCULO DE NH ---
-        const getNHBaseValue = (baseAttrStr, skillList) => {
-            const baseAttr = (baseAttrStr || "dx").toLowerCase().trim();
-            let attrVal = 10;
-            const attribute = attributes[baseAttr];
-            const fixedNumber = Number(baseAttr);
-            const refSkill = skillList.find(s => s.name?.toLowerCase() === baseAttr); 
-            if (attribute?.final !== undefined) {
-                attrVal = attribute.final;
-            } else if (!isNaN(fixedNumber) && baseAttr !== "") {
-                attrVal = fixedNumber;
-            } else if (refSkill) {
-                attrVal = refSkill.system.final_nh || 10; 
+          // --- ETAPA 8: CÁLCULO DE NH ---
+        const parseReferenceModifier = (referenceText) => {
+            const raw = String(referenceText ?? "").trim();
+            const modifierMatch = raw.match(/^(.*?)([+-]\d+)\s*$/);
+            if (!modifierMatch) {
+                return { reference: raw, modifier: 0 };
             }
-            return attrVal;
+
+            const parsedModifier = Number(modifierMatch[2]);
+            if (!Number.isFinite(parsedModifier)) {
+                return { reference: raw, modifier: 0 };
+            }
+
+            const baseReference = modifierMatch[1].trim();
+            if (!baseReference) {
+                return { reference: raw, modifier: 0 };
+            }
+
+            return { reference: baseReference, modifier: parsedModifier };
+        };
+
+        const applyModifierToResolved = (resolvedValue, modifier) => {
+            const safeModifier = Number(modifier) || 0;
+            if (!safeModifier) return resolvedValue;
+            const signedModifier = safeModifier > 0 ? `+${safeModifier}` : String(safeModifier);
+            return {
+                value: resolvedValue.value + safeModifier,
+                label: `${resolvedValue.label}${signedModifier}`
+            };
+        };
+
+        const resolveRollReference = (rawReference, skillList) => {
+            const originalLabel = String(rawReference ?? "").trim();
+            const { reference, modifier } = parseReferenceModifier(originalLabel);
+            const normalizedRef = reference.toLowerCase();
+            const fixedNumber = Number(normalizedRef);
+            const refSkill = skillList.find(s => s.name?.toLowerCase().trim() === normalizedRef);
+            const attribute = attributes[normalizedRef];
+
+            if (attribute?.final !== undefined) {
+                return applyModifierToResolved({
+                    value: Number(attribute.final) || 10,
+                    label: reference || normalizedRef.toUpperCase()
+                }, modifier);
+            }
+
+            if (!isNaN(fixedNumber) && normalizedRef !== "") {
+                return applyModifierToResolved({ value: fixedNumber, label: reference || String(fixedNumber) }, modifier);
+            }
+
+            if (refSkill) {
+                return applyModifierToResolved({
+                    value: Number(refSkill.system.final_nh) || 10,
+                    label: refSkill.name || reference || "N/A"
+                }, modifier);
+            }
+
+            return applyModifierToResolved({ value: 10, label: reference || "DX" }, modifier);
+        };
+
+        const evaluateRollReference = (rawReference, skillList) => {
+            const source = String(rawReference ?? "").trim();
+            if (!source) return resolveRollReference("dx", skillList);
+
+            const matchExpression = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
+            const fallbackReferences = source.split(",").map(ref => ref.trim()).filter(Boolean);
+
+            let mode = "single";
+            let references = fallbackReferences;
+
+            if (matchExpression) {
+                mode = /^(menor|min)$/i.test(matchExpression[1]) ? "min" : "max";
+                references = matchExpression[2].split(",").map(ref => ref.trim()).filter(Boolean);
+            } else if (fallbackReferences.length > 1) {
+                mode = "max";
+            }
+
+            const resolvedEntries = references.map(ref => resolveRollReference(ref, skillList));
+            if (!resolvedEntries.length) return resolveRollReference("dx", skillList);
+
+            let selected = resolvedEntries[0];
+            if (mode === "max") {
+                selected = resolvedEntries.reduce((best, current) => current.value > best.value ? current : best, resolvedEntries[0]);
+            } else if (mode === "min") {
+                selected = resolvedEntries.reduce((best, current) => current.value < best.value ? current : best, resolvedEntries[0]);
+            }
+            return selected;
         };
 
         const skills = this.items.filter(i => i.type === 'skill');
@@ -481,29 +553,33 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         for (let pass = 0; pass < 2; pass++) { 
             for (const i of skills) {
                 try {
-                    const attrVal = getNHBaseValue(i.system.base_attribute, skills);
+                    const attrVal = evaluateRollReference(i.system.base_attribute, skills).value;
                     i.system.final_nh = attrVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
                 } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
             }
         }
         
         for (const i of spellsAndPowers) {
-            try {
-                const conjurationBaseVal = getNHBaseValue(i.system.base_attribute, skills);
+     try {
+                const conjurationBaseVal = evaluateRollReference(i.system.base_attribute, skills).value;
                 i.system.final_nh = conjurationBaseVal + (i.system.skill_level || 0) + (i.system.other_mods || 0);
                 if (i.system.attack_roll?.skill_name) {
-                    const attackBaseVal = getNHBaseValue(i.system.attack_roll.skill_name, skills);
+                    const resolvedAttackBase = evaluateRollReference(i.system.attack_roll.skill_name, skills);
+                    const attackBaseVal = resolvedAttackBase.value;
                     i.system.attack_nh = attackBaseVal + (i.system.attack_roll.skill_level_mod || 0);
+                    i.system.attack_roll.resolved_skill_name = resolvedAttackBase.label;
                 }
             } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
         }
         
         for (const i of equipment) {
             try {
-                if (i.system.melee_attacks) {
+   if (i.system.melee_attacks) {
                     for (let attack of Object.values(i.system.melee_attacks)) {
-                        const attackBaseVal = getNHBaseValue(attack.skill_name, skills);
+                        const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
+                        const attackBaseVal = resolvedAttackBase.value;
                         attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        attack.resolved_skill_name = resolvedAttackBase.label;
                         
                         // Aparar (Parry) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
                         if (attack.parry !== "0" && attack.parry !== "No") {
@@ -528,8 +604,10 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 }
                 if (i.system.ranged_attacks) {
                     for (let attack of Object.values(i.system.ranged_attacks)) {
-                        const attackBaseVal = getNHBaseValue(attack.skill_name, skills);
+                        const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
+                        const attackBaseVal = resolvedAttackBase.value;
                         attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        attack.resolved_skill_name = resolvedAttackBase.label;
                     }
                 }
             } catch (e) { console.error(`GUM | Erro ao calcular NH de ataque para ${i.name}:`, e); }
