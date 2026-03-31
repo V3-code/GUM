@@ -28,18 +28,31 @@ export async function importFromJson() {
         const extension = (file.name?.split('.')?.pop() || '').toLowerCase();
 
         // 5. Determina o que importar
-        let itemsToImport = [];
+let importEntries = [];
         if (Array.isArray(data)) {
-            itemsToImport = data; // Formato JSON Simples
+            const looksLikeGCSRows = data.some(entry =>
+                entry && typeof entry === "object" && (
+                    Array.isArray(entry.children) ||
+                    Array.isArray(entry.modifiers) ||
+                    entry.base_points !== undefined ||
+                    entry.points_per_level !== undefined ||
+                    entry.reference !== undefined
+                )
+            );
+
+            importEntries = looksLikeGCSRows
+                ? collectGCSImportEntries(data)
+                : data.map(item => ({ itemData: item, folderPath: [] })); // Formato JSON Simples
         } else if (data.rows && Array.isArray(data.rows)) {
-            itemsToImport = flattenGCSRows(data.rows); // Formato de Biblioteca GCS (com children)
-        } else if ((extension === 'skl' || extension === 'spl' || extension === 'eqp' || extension === 'adq' || extension === 'adm' || extension === 'eqm') && Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
-            itemsToImport = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
+            importEntries = collectGCSImportEntries(data.rows); // Formato de Biblioteca GCS (com children)
+        } else if (Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
+            const roots = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
+            importEntries = collectGCSImportEntries(roots);
         } else {
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
         }
 
-        if (itemsToImport.length === 0) {
+        if (importEntries.length === 0) {
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
@@ -57,7 +70,7 @@ export async function importFromJson() {
             title: "Selecionar Destino da Importação",
             content: `
                 <div style="padding: 10px 0;">
-                    <p>Encontrados <strong>${itemsToImport.length}</strong> itens no arquivo JSON.</p>
+                    <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo JSON.</p>
                     <p>Por favor, escolha o compêndio de destino:</p>
                     <div class="form-group" style="margin-top: 10px;">
                         <label style="font-weight: bold;">Compêndio:</label>
@@ -80,7 +93,7 @@ export async function importFromJson() {
                             return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
                         }
                         
-                        await importToCompendium(pack, itemsToImport);
+                       await importToCompendium(pack, importEntries);
                     }
                 },
                 cancel: {
@@ -100,11 +113,12 @@ export async function importFromJson() {
  * Função auxiliar que TRADUZ e importa os dados para um compêndio.
  * (VERSÃO 3 - CORRIGIDA)
  */
-async function importToCompendium(pack, gcsItems) {
-    if (!pack || !gcsItems) return;
+async function importToCompendium(pack, importEntries) {
+    if (!pack || !importEntries) return;
     
-    ui.notifications.info(`Traduzindo ${gcsItems.length} itens do GCS/JSON...`);
+    ui.notifications.info(`Traduzindo ${importEntries.length} itens do GCS/JSON...`);
     const itemsToCreate = [];
+    let packWasLocked = pack.locked;
     
     const packName = pack.metadata.name; 
     const packNameToType = {
@@ -124,7 +138,7 @@ async function importToCompendium(pack, gcsItems) {
     
     if (!itemType) {
         console.warn(`GUM | O compêndio "${pack.title}" não tem um tradutor GCS mapeado. Os dados JSON serão importados "como estão".`);
-        const firstItemType = gcsItems[0]?.type;
+        const firstItemType = importEntries[0]?.itemData?.type;
         if (!firstItemType) {
             return ui.notifications.error("O JSON não tem um 'type' e o compêndio não é padrão. Importação cancelada.");
         }
@@ -135,7 +149,7 @@ async function importToCompendium(pack, gcsItems) {
     // ✅ INÍCIO DA CORREÇÃO: Detecta o formato do arquivo
     // Verifica o primeiro item. Se ele tiver a chave "system",
     // asumimos que o arquivo inteiro já está no formato do Foundry.
-    const isFoundryFormat = gcsItems[0]?.system && gcsItems[0]?.type;
+    const isFoundryFormat = importEntries[0]?.itemData?.system && importEntries[0]?.itemData?.type;
     
     if (isFoundryFormat) {
          console.log("GUM | Detectado JSON pré-formatado. Importando diretamente.");
@@ -143,50 +157,56 @@ async function importToCompendium(pack, gcsItems) {
     }
     // ✅ FIM DA CORREÇÃO
 
-    for (const gcsItemData of gcsItems) {
-        let foundryItemData = null;
+     try {
+        // Pastas de compêndio também respeitam lock; precisamos liberar antes de criar a árvore.
+        await pack.configure({ locked: false });
 
-        // Se for genérico (ou pré-formatado), não traduza
-        if (isGenericJson) {
-            foundryItemData = gcsItemData;
-        } 
-        // Caso contrário, traduza
-        else if (itemType === "skill") {
-            foundryItemData = parseGCSLibrarySkill(gcsItemData);
-        } else if (itemType === "advantage" || itemType === "disadvantage") {
-            foundryItemData = parseGCSLibraryTrait(gcsItemData);
-        } else if (itemType === "equipment" || itemType === "armor") {
-            foundryItemData = parseGCSLibraryEquipment(gcsItemData);
-        } else if (itemType === "spell") {
-            foundryItemData = parseGCSLibrarySpell(gcsItemData);
-        } else if (itemType === "modifier") {
-            foundryItemData = parseGCSLibraryModifier(gcsItemData);
-        } else if (itemType === "eqp_modifier") {
-            foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
-        }
+        const folderCache = new Map();
+        for (const entry of importEntries) {
+            const gcsItemData = entry?.itemData;
+            const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
+            if (!gcsItemData) continue;
+            let foundryItemData = null;
 
-        if (foundryItemData) {
-            // Garante que o tipo do item seja o tipo esperado pelo compêndio
-            // (Se for genérico, o tipo já deve estar correto no JSON)
-            if(!isGenericJson) {
-                foundryItemData.type = itemType;
+            // Se for genérico (ou pré-formatado), não traduza
+            if (isGenericJson) {
+                foundryItemData = gcsItemData;
+            } 
+            // Caso contrário, traduza
+            else if (itemType === "skill") {
+                foundryItemData = parseGCSLibrarySkill(gcsItemData);
+            } else if (itemType === "advantage" || itemType === "disadvantage") {
+                foundryItemData = parseGCSLibraryTrait(gcsItemData);
+            } else if (itemType === "equipment" || itemType === "armor") {
+                foundryItemData = parseGCSLibraryEquipment(gcsItemData);
+            } else if (itemType === "spell") {
+                foundryItemData = parseGCSLibrarySpell(gcsItemData);
+            } else if (itemType === "modifier") {
+                foundryItemData = parseGCSLibraryModifier(gcsItemData);
+            } else if (itemType === "eqp_modifier") {
+                foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
             }
-            applyAutoPointsBaselineOnImport(foundryItemData);
-            itemsToCreate.push(foundryItemData);
-        }
-    }
-    
-    if (itemsToCreate.length === 0) {
-        return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
-    }
 
-    try {
-        await pack.configure({locked: false});
+            if (foundryItemData) {
+                // Garante que o tipo do item seja o tipo esperado pelo compêndio
+                // (Se for genérico, o tipo já deve estar correto no JSON)
+                if(!isGenericJson) {
+                    foundryItemData.type = itemType;
+                }
+                const folderId = await ensureCompendiumFolderPath(pack, folderPath, folderCache);
+                if (folderId) foundryItemData.folder = folderId;
+                applyAutoPointsBaselineOnImport(foundryItemData);
+                itemsToCreate.push(foundryItemData);
+            }
+        }
+
+        if (itemsToCreate.length === 0) {
+            return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
+        }
         ui.notifications.info(`Iniciando importação de ${itemsToCreate.length} itens traduzidos para "${pack.title}".`);
         
         await Item.createDocuments(itemsToCreate, { pack: pack.collection });
-        
-        await pack.configure({locked: true});
+
         ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados a "${pack.title}".`);
     } catch (err) {
         if (err.name === "DataModelValidationError") {
@@ -196,6 +216,8 @@ async function importToCompendium(pack, gcsItems) {
             console.error(`GUM | Falha ao importar para ${pack.collection}:`, err);
             ui.notifications.error(`Falha ao importar para ${pack.title}.`);
         }
+    } finally {
+        await pack.configure({ locked: packWasLocked });
     }
 }
 
@@ -267,21 +289,71 @@ export async function importTemplateFromGCS() {
  * Mantém apenas linhas que parecem ser itens importáveis e ignora
  * nós puramente organizacionais.
  */
-function flattenGCSRows(rows, collector = []) {
+function collectGCSImportEntries(rows, collector = [], folderPath = []) {
     for (const row of rows || []) {
         const copy = foundry.utils.deepClone(row);
         const children = Array.isArray(copy.children) ? copy.children : [];
-        delete copy.children;
+        const containerName = String(copy.name || "").trim();
+        const isContainer = children.length > 0;
 
-        if (isImportableGCSRow(copy, children.length > 0)) {
-            collector.push(copy);
+        if (isContainer) {
+            const nextPath = containerName ? [...folderPath, containerName] : folderPath;
+            collectGCSImportEntries(children, collector, nextPath);
+            continue;
         }
 
-        if (children.length > 0) {
-            flattenGCSRows(children, collector);
+        if (!isImportableGCSRow(copy, false)) continue;
+
+        const expandedRows = expandChoiceModifiersAsIndividualRows(copy);
+        for (const expanded of expandedRows) {
+            collector.push({
+                itemData: expanded,
+                folderPath: [...folderPath]
+            });
         }
     }
     return collector;
+}
+
+function parseCostAdjustmentValue(rawValue) {
+    if (rawValue === null || rawValue === undefined) return 0;
+    if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
+    const normalized = String(rawValue).replace(/[^\d.+-]/g, "").trim();
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function expandChoiceModifiersAsIndividualRows(row) {
+    const modifiers = Array.isArray(row?.modifiers) ? row.modifiers : [];
+    if (!modifiers.length) return [row];
+
+    const basePoints = Number(row.calc?.points ?? row.base_points ?? row.points_per_level ?? row.points ?? 0) || 0;
+    const hasEnabledModifier = modifiers.some(mod => !mod?.disabled);
+    const hasAnyCostOption = modifiers.some(mod => parseCostAdjustmentValue(mod?.cost_adj ?? mod?.cost ?? 0) !== 0);
+
+    if (basePoints !== 0 || hasEnabledModifier || !hasAnyCostOption) return [row];
+
+    return modifiers.map(mod => {
+        const optionName = String(mod?.name || "").trim();
+        const optionPoints = parseCostAdjustmentValue(mod?.cost_adj ?? mod?.cost ?? 0);
+        const clone = foundry.utils.deepClone(row);
+        clone.name = optionName ? `${row.name} (${optionName})` : row.name;
+        clone.base_points = optionPoints;
+        clone.points = optionPoints;
+        clone.calc = {
+            ...(clone.calc || {}),
+            points: optionPoints
+        };
+        clone.modifiers = [];
+        if (mod?.local_notes || mod?.notes) {
+            const notes = [clone.local_notes || clone.notes || "", mod.local_notes || mod.notes || ""]
+                .map(text => String(text || "").trim())
+                .filter(Boolean)
+                .join("\n");
+            if (notes) clone.local_notes = notes;
+        }
+        return clone;
+    });
 }
 
 function isImportableGCSRow(row, hadChildren = false) {
@@ -308,8 +380,57 @@ function isImportableGCSRow(row, hadChildren = false) {
 
     if (!hasRealContent && hadChildren) return false;
 
-    return true;
+  return true;
 }
+
+async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = new Map()) {
+    if (!pack || !Array.isArray(folderPath) || folderPath.length === 0) return null;
+
+    const sanitizedPath = folderPath.map(part => String(part || "").trim()).filter(Boolean);
+    if (!sanitizedPath.length) return null;
+
+    const cacheKey = sanitizedPath.join(" / ");
+    if (folderCache.has(cacheKey)) return folderCache.get(cacheKey);
+
+    let parentId = null;
+    let currentPath = [];
+
+    for (const segment of sanitizedPath) {
+        currentPath.push(segment);
+        const partialKey = currentPath.join(" / ");
+        if (folderCache.has(partialKey)) {
+            parentId = folderCache.get(partialKey);
+            continue;
+        }
+
+        const existing = game.folders.find(folder =>
+            folder.pack === pack.collection &&
+            folder.type === "Item" &&
+            folder.name === segment &&
+            (folder.folder?.id || folder.folder || null) === parentId
+        );
+
+        if (existing) {
+            parentId = existing.id;
+            folderCache.set(partialKey, existing.id);
+            continue;
+        }
+
+        const created = await Folder.create({
+            name: segment,
+            type: "Item",
+            pack: pack.collection,
+            folder: parentId
+        });
+
+        parentId = created?.id || null;
+        folderCache.set(partialKey, parentId);
+    }
+
+    folderCache.set(cacheKey, parentId);
+    return parentId;
+}
+
 
 // =============================================================
 // DICIONÁRIO DE TRADUÇÃO DE DANOS
