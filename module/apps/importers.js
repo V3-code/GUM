@@ -1,12 +1,12 @@
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
-  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adm, .eqm) para um compêndio.
+ * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
  */
 export async function importFromJson() {
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json, .gcs, .skl, .spl, .eqp, .adm, .eqm';
+    input.accept = '.json, .gcs, .skl, .spl, .eqp, .adq, .adm, .eqm';
 
     // 2. Adiciona um "listener"
     input.onchange = async (e) => {
@@ -33,7 +33,7 @@ export async function importFromJson() {
             itemsToImport = data; // Formato JSON Simples
         } else if (data.rows && Array.isArray(data.rows)) {
             itemsToImport = flattenGCSRows(data.rows); // Formato de Biblioteca GCS (com children)
-        } else if ((extension === 'skl' || extension === 'spl' || extension === 'eqp' || extension === 'adm' || extension === 'eqm') && Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
+        } else if ((extension === 'skl' || extension === 'spl' || extension === 'eqp' || extension === 'adq' || extension === 'adm' || extension === 'eqm') && Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
             itemsToImport = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
         } else {
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
@@ -379,7 +379,7 @@ function getSystemTemplate(documentType, entryType) {
 
 
 function parseGCSLibraryTrait(gcsTrait) {
-    const points = gcsTrait.base_points || gcsTrait.points_per_level || 0;
+    const points = Number(gcsTrait.calc?.points ?? gcsTrait.base_points ?? gcsTrait.points_per_level ?? gcsTrait.points ?? 0) || 0;
     let type, template;
 
     if (points >= 0) {
@@ -395,7 +395,7 @@ function parseGCSLibraryTrait(gcsTrait) {
     template.points = points;
     template.ref = gcsTrait.reference || "";
     template.level = gcsTrait.levels || "";
-    template.description = gcsTrait.notes || ""; 
+    template.description = gcsTrait.notes || gcsTrait.local_notes || ""; 
 
     if (gcsTrait.modifiers) {
         template.modifiers = {}; 
@@ -405,9 +405,9 @@ function parseGCSLibraryTrait(gcsTrait) {
             template.modifiers[newModId] = {
                 id: newModId,
                 name: gcsMod.name,
-                cost: (gcsMod.cost || 0).toString(), 
+                cost: (gcsMod.cost_adj ?? gcsMod.cost ?? 0).toString(), 
                 ref: gcsMod.reference || "",
-                description: gcsMod.notes || ""
+                description: gcsMod.local_notes || gcsMod.notes ||  ""
             };
         }
     }

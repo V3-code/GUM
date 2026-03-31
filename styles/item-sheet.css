@@ -619,13 +619,30 @@
   color: var(--gum-text-medio);
   line-height: 1.5;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 14px rgba(0,0,0,0.08);
-  min-height: 140px;
   position: relative;
-      text-transform: uppercase;
-    font-family: 'Roboto Condensed';
-    font-size: smaller;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+  text-transform: none;
+  font-family: var(--item-font-base);
+  font-size: var(--item-font-size-base);
+  font-weight: 400;
+  letter-spacing: normal;
+}
+.gum.sheet.item .description-view p,
+.gum.sheet.item .description-view ul,
+.gum.sheet.item .description-view ol {
+  margin: 0 0 0.55em;
+}
+.gum.sheet.item .description-view p:last-child,
+.gum.sheet.item .description-view ul:last-child,
+.gum.sheet.item .description-view ol:last-child {
+  margin-bottom: 0;
+}
+.gum.sheet.item .description-view strong,
+.gum.sheet.item .description-view b {
+  font-weight: 700;
+}
+.gum.sheet.item .description-view em,
+.gum.sheet.item .description-view i {
+  font-style: italic;
 }
 .gum.sheet.item .description-tab {
   display: flex;
