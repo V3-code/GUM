@@ -1401,7 +1401,8 @@ Hooks.once('init', async function() {
         const itemsToCreate = [];
 
         // 1. REGRAS / CONDIÇÕES PASSIVAS
-        const rulesPack = game.packs.get("gum.Regras"); 
+        const rulesPack = game.packs.get("gum.regras")
+            || game.packs.find(p => p.metadata.label === "[GUM] Condições Passivas");
         if (rulesPack) {
             const rules = await rulesPack.getDocuments();
             rules.forEach(item => {
@@ -1410,6 +1411,9 @@ Hooks.once('init', async function() {
                 data._stats = { compendiumSource: item.uuid }; 
                 itemsToCreate.push(data);
             });
+            console.log(`GUM | Preparadas ${rules.length} condições passivas para cópia.`);
+        } else {
+            console.warn("GUM | Compêndio de Condições Passivas não encontrado.");
         }
 
         // 2. MODIFICADORES BÁSICOS (A Correção que você pediu)

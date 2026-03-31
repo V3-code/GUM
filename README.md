@@ -12,11 +12,11 @@ Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidad
 
 O GUM oferece uma base completa para campanhas no estilo GURPS dentro do Foundry VTT, com:
 
-- ficha de personagem dedicada;
-- compêndios prontos para uso;
-- ferramentas para mestre (modificadores, condições, efeitos e tela de apoio);
-- importação e exportação de dados;
-- automações de regras e gerenciamento de estados.
+1. ficha de personagem dedicada;
+2. compêndios prontos para uso;
+3. ferramentas para mestre (modificadores, condições, efeitos e tela de apoio);
+4. importação e exportação de dados do GCS;
+5. automações de regras e gerenciamento de estados.
 
 ## Recursos disponíveis para usuários
 
@@ -85,17 +85,22 @@ Disponível nas configurações do sistema:
 
 ### Opção A — URL de manifesto (recomendada)
 
-No Foundry VTT:
+Como o GURPS GUM ainda não está na lista oficial de sistemas do Foundry, a instalação deve ser feita manualmente via Manifest URL.
 
-1. Acesse **Game Systems**;
-2. Clique em **Install System**;
-3. Use a URL abaixo:
+Passo a passo:
 
-```txt
-https://raw.githubusercontent.com/V3-code/GUM/master/system.json
-```
+1. Abra o Foundry VTT
+2. Vá até a aba "Game Systems"
+3. Clique em "Install System"
+4. No campo "Manifest URL", cole o link abaixo:
 
-4. Confirme a instalação.
+ https://raw.githubusercontent.com/V3-code/GUM/master/system.json
+
+5. Clique em "Install"
+
+Pronto! O sistema será instalado automaticamente.
+
+Sempre que uma nova versão for publicada, o Foundry detectará automaticamente e permitirá atualizar o sistema.
 
 ### Opção B — instalação manual
 
