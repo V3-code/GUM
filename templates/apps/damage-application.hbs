@@ -179,8 +179,20 @@
     <option value="homogeneo">Homogêneo</option>
     <option value="difuso">Difuso (máx. 1 lesão)</option>
   </select>
+  
+  <div class="injury-reduction-section">
+    <label class="custom-checkbox">
+      <input type="checkbox" name="damage_reduction_enabled"/>
+      <span title="Aplica após subtrair RD e aplicar modificadores de ferimento.">Redução de Dano</span>
+        <label class="custom-reduction-input">
+      <input type="number" name="damage_reduction_value" min="2" max="4" step="1" value="2"/>
+    </label>
+    </label>
+  </div>
 </label>
 </div>
+
+
 
   </div>
 </div>

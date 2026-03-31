@@ -467,6 +467,7 @@
     color: #a0a0a0;
     flex-shrink: 0;
     margin-right: 10px;
+    margin-bottom: 5px;
 }
 .damage-application-dialog .custom-select select {
     width: 100%;
@@ -475,6 +476,30 @@
 .damage-application-dialog .custom-select select option {
     color: #111;
   background-color: #f8f8f8;
+}
+
+.damage-application-dialog .injury-reduction-section {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.damage-application-dialog .custom-reduction-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 24px;
+}
+
+.damage-application-dialog .custom-reduction-input span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.damage-application-dialog .custom-reduction-input input {
+  width: 64px;
 }
 
 /* ============================================= */

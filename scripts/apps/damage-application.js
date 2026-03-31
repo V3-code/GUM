@@ -403,6 +403,9 @@ async _updateDamageCalculation(form) {
 
     const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
     const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
+    const damageReductionEnabled = form.querySelector('[name="damage_reduction_enabled"]')?.checked;
+    const rawDamageReductionValue = parseInt(form.querySelector('[name="damage_reduction_value"]')?.value);
+    const damageReductionValue = [2, 3, 4].includes(rawDamageReductionValue) ? rawDamageReductionValue : 2;
     if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
     if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
     const effects = [];
@@ -444,6 +447,11 @@ async _updateDamageCalculation(form) {
     if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
     let finalInjury = Math.floor(penetratingDamage * woundingMod);
     if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
+    if (damageReductionEnabled) {
+        const preReductionInjury = finalInjury;
+        finalInjury = Math.floor(finalInjury / damageReductionValue);
+        effects.push(`🛡️ Redução de Dano: ${preReductionInjury} ➜ ${finalInjury} (÷${damageReductionValue}, após RD + mod. ferimento)`);
+    }
     if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
@@ -469,7 +477,8 @@ async _updateDamageCalculation(form) {
     if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${selectedLocationLabel})`;
     if (field("armor_divisor")) field("armor_divisor").textContent = armorDivisor;
     if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
-    if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod} (${modName})`;
+    const reductionSuffix = damageReductionEnabled ? ` ÷ ${damageReductionValue}` : "";
+    if (field("wounding_mod")) field("wounding_mod").textContent = `x${woundingMod}(${modName})${reductionSuffix}`;
     if (field("final_injury")) field("final_injury").textContent = finalInjury;
     const effectsList = form.querySelector(".effects-list");
     if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
@@ -503,6 +512,7 @@ async _updateDamageCalculation(form) {
     if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
     if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`; }
     if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
+    if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
     
