@@ -56,6 +56,16 @@ const shouldShowTokenIconForSystem = (effectSystem = {}, duration = {}) => {
     return !isEffectDurationPermanent(duration);
 };
 
+const resolveTokenIconImageForSystem = (effectItem, effectSystem = {}, duration = {}) => {
+    if (!shouldShowTokenIconForSystem(effectSystem, duration)) return null;
+    const statusId = effectSystem.type === "status" ? effectSystem.statusId : effectSystem.attachedStatusId;
+    if (statusId) {
+        const statusEffect = CONFIG.statusEffects.find((effect) => effect.id === statusId);
+        return statusEffect?.icon ?? statusEffect?.img ?? effectItem?.img ?? null;
+    }
+    return effectItem?.img ?? null;
+};
+
 async function migrateEffectTokenIconPolicy() {
     if (!game.user?.isGM) return;
 
@@ -1600,15 +1610,6 @@ Hooks.on("createItem", async (item, options, userId) => {
                 const effectItem = await fromUuid(effectUuid);
                 if (effectItem) {
                     const effectSystem = effectItem.system;
-                    let effectImage = null; // ✅ Padrão: Sem imagem
-                    
-                    // ✅ NOVO: Só define uma imagem se houver um status associado
-                    if (effectSystem.attachedStatusId) {
-                        const statusEffect = CONFIG.statusEffects.find(e => e.id === effectSystem.attachedStatusId);
-                        if (statusEffect) {
-                            effectImage = statusEffect.icon; // Usa o ícone do status
-                        }
-                    }
 
                     const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                     const startMode = gumDuration.startMode || "apply";
@@ -1622,7 +1623,7 @@ Hooks.on("createItem", async (item, options, userId) => {
 
                     const activeEffectData = {
                         name: effectItem.name,
-                        img: effectImage, // ✅ 'img' agora é o ícone do status ou null
+                        img: resolveTokenIconImageForSystem(effectItem, effectSystem, gumDuration),
                         origin: item.uuid,
                         changes: [],
                         statuses: [],
@@ -1769,11 +1770,6 @@ Hooks.on("createItem", async (item, options, userId) => {
                     if (effectItem) {
                         // --- Início da lógica de criação do ActiveEffect (copiada do createItem) ---
                         const effectSystem = effectItem.system;
-                        let effectImage = null; 
-                        if (effectSystem.attachedStatusId) {
-                            const statusEffect = CONFIG.statusEffects.find(e => e.id === effectSystem.attachedStatusId);
-                            if (statusEffect) { effectImage = statusEffect.icon; }
-                        }
 
                         const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                         const startMode = gumDuration.startMode || "apply";
@@ -1787,7 +1783,7 @@ Hooks.on("createItem", async (item, options, userId) => {
 
                         const activeEffectData = {
                             name: effectItem.name,
-                            img: effectImage, 
+                            img: resolveTokenIconImageForSystem(effectItem, effectSystem, gumDuration), 
                             origin: item.uuid,
                             changes: [],
                             statuses: [],
@@ -2936,7 +2932,7 @@ async function processConditions(actor, eventData = null) {
 
                                 const effectData = {
                                     name: effectItem.name,
-                                    img: effectItem.img,
+                                    img: resolveTokenIconImageForSystem(effectItem, effectSystem, gumDuration),
                                     origin: condition.uuid,
                                     changes: [],
                                     statuses: [],

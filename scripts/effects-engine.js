@@ -71,6 +71,16 @@ const shouldShowTokenIcon = (effectSystem = {}, duration = {}) => {
     return !isEffectDurationPermanent(duration);
 };
 
+const resolveTokenIconImage = (effectItem, effectSystem = {}, duration = {}) => {
+    if (!shouldShowTokenIcon(effectSystem, duration)) return null;
+    const statusId = effectSystem.type === "status" ? effectSystem.statusId : effectSystem.attachedStatusId;
+    if (statusId) {
+        const statusEffect = CONFIG.statusEffects.find((effect) => effect.id === statusId);
+        return statusEffect?.icon ?? statusEffect?.img ?? effectItem?.img ?? null;
+    }
+    return effectItem?.img ?? null;
+};
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
@@ -114,7 +124,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                 const activeEffectData = {
                     name: effectItem.name,
-                    img: effectItem.img, // Sempre a imagem do Item Efeito
+                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
                     statuses: [], // Lista nativa VAZIA
@@ -216,7 +226,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                 const activeEffectData = {
                     name: effectItem.name,
-                    img: effectItem.img,
+                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
                     statuses: [],
@@ -302,8 +312,6 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             for (const targetToken of targets) {
                 const targetActor = targetToken.actor;
                 const statusId = effectSystem.statusId;
-                const statusEffect = CONFIG.statusEffects.find(effect => effect.id === statusId);
-                const statusIcon = statusEffect?.icon ?? statusEffect?.img ?? effectItem.img;
                 const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
                 const showTokenIcon = shouldShowTokenIcon(effectSystem, gumDuration);
                 const coreStatusId = showTokenIcon
@@ -312,7 +320,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                 const activeEffectData = {
                     name: effectItem.name,
-                    img: statusIcon,
+                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
                     statuses: [],
