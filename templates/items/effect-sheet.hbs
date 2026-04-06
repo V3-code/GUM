@@ -15,13 +15,14 @@
     </header>
 
     <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item active" data-tab="configuracao">Configuração</a>
-        <a class="item" data-tab="description">Descrição</a>
+        <a class="item active" data-tab="description">Descrição</a>
+        <a class="item" data-tab="configuracao">Configuração</a>
+        <a class="item" data-tab="efeitos-ativos">Efeitos Ativos</a>
     </nav>
 
     <main class="sheet-body">
         <div class="sheet-body-content effect-sheet-body">
-            <div class="tab active" data-tab="configuracao" data-group="primary">
+            <div class="tab" data-tab="efeitos-ativos" data-group="primary">
 
 
                     {{!-- SEÇÃO DE SELEÇÃO DO EFEITO --}}
@@ -253,120 +254,22 @@
                         {{/if}}
                    </section>
 
-                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
-                    <section class="effect-card effect-section">
-                        {{!-- HEADER (estilo “ataques”) --}}
-                        <div class="effect-section-header">
-                            <h4 class="effect-section-title">Barreira de Resistência</h4>
-
-                            <label class="effect-section-toggle" title="Ativar registro de barreira">
-                            <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
-                            <span></span>
-                            </label>
-                        </div>
-
-                        {{!-- BODY --}}
-                        <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
-                            <div class="effect-row-grid effect-resistance-grid">
-                            <div class="effect-field">
-                                <div class="effect-label">Aplicar efeito em</div>
-                                <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
-                                <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
-                                </select>
-                            </div>
-
-                            <div class="effect-field">
-                                <div class="effect-label">Atributo</div>
-                                <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
-
-                            <div class="effect-field">
-                                <div class="effect-label">Modificador</div>
-                                <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
-
-                            <div class="effect-field">
-                                <div class="effect-label">Margem Min</div>
-                                <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
-                            </div>
-
-                            <label class="custom-checkbox block effect-inline-checkbox">
-                            <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
-                            </label>
-                        </div>
-                    </section>
-
-                    {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
-                    {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
-                    <section class="effect-card effect-section">
-                        <div class="effect-section-header">
-                            <h4 class="effect-section-title">Duração do Efeito</h4>
-
-                            {{!-- DROPDOWN de modo (visual) --}}
-                            <div class="effect-section-select">
-                                <select class="duration-mode-select" name="system.duration._uiMode">
-                                    <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
-                                    <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {{!-- Mantemos os campos reais do sistema (pode deixar oculto via CSS) --}}
-                        <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
-                        <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
-
-                        <div class="effect-section-body">
-                            {{#if system.duration.isPermanent}}
-                            <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
-                            {{/if}}
-                            {{!-- Só aparece quando NÃO for permanente --}}
-                            {{#unless system.duration.isPermanent}}
-                        
-                            {{!-- Temporária/Combate: mostra o seu bloco atual (com leve reorganização em grid) --}}
-                            {{#if system.duration.inCombat}}
-                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Início da contagem</div>
-                                    <select class="effect-dropmenu-text" name="system.duration.startMode">
-                                    <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
-                                    <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
-                                    </select>
-                                </div>
-
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Rodadas (seg)</div>
-                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
-                                </div>
-
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Fim da contagem</div>
-                                    <select name="system.duration.endMode">
-                                    <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
-                                    <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
-                                    </select>
-                                </div>
-
-                                </div>
-
-                            {{/if}}
-
-                            {{/unless}}
-
-                        </div>
-                    </section>
-                    {{/if}}
-                </div>
+                                   </div>
 
                 {{! ========================================================= }}
                 {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
                 {{! ========================================================= }}
-                <div class="tab" data-tab="description" data-group="primary">
+                <div class="tab active" data-tab="description" data-group="primary">
                     <div class="description-tab">
                         <div class="description-grid">
+                        <div class="form-group" style="flex-direction: row; text-align:center;">
+                            <label title="Livro e Página de Referência">
+                                <a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF
+                            </label>
+                            <div class="input-row">
+                                <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: BA23, MA45"/>
+                            </div>
+                        </div>
   <div class="form-section description-section itemdesc-block">
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
@@ -420,8 +323,105 @@
                                 </div>
                             </details>
                         </div>
-                        </div>
+  </div>
                     </div>
+              </div>
+              <div class="tab" data-tab="configuracao" data-group="primary">
+                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
+                    <section class="effect-card effect-section">
+                        <div class="effect-section-header">
+                            <h4 class="effect-section-title">Barreira de Resistência</h4>
+
+                            <label class="effect-section-toggle" title="Ativar registro de barreira">
+                            <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                            <span></span>
+                            </label>
+                        </div>
+
+                        <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
+                            <div class="effect-row-grid effect-resistance-grid">
+                            <div class="effect-field">
+                                <div class="effect-label">Aplicar efeito em</div>
+                                <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
+                                <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
+                                </select>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Atributo</div>
+                                <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Modificador</div>
+                                <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Margem Min</div>
+                                <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            </div>
+                            </div>
+
+                            <label class="custom-checkbox block effect-inline-checkbox">
+                            <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
+                    {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
+                    <section class="effect-card effect-section">
+                        <div class="effect-section-header">
+                            <h4 class="effect-section-title">Duração do Efeito</h4>
+                            <div class="effect-section-select">
+                                <select class="duration-mode-select" name="system.duration._uiMode">
+                                    <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
+                                    <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
+                        <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+
+                        <div class="effect-section-body">
+                            {{#if system.duration.isPermanent}}
+                            <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
+                            {{/if}}
+                            {{#unless system.duration.isPermanent}}
+                            {{#if system.duration.inCombat}}
+                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Início da contagem</div>
+                                    <select class="effect-dropmenu-text" name="system.duration.startMode">
+                                    <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
+                                    <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
+                                    </select>
+                                </div>
+
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Rodadas (seg)</div>
+                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
+                                </div>
+
+                                <div class="effect-field effect-field-row">
+                                    <div class="effect-label">Fim da contagem</div>
+                                    <select name="system.duration.endMode">
+                                    <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
+                                    <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
+                                    </select>
+                                </div>
+
+                                </div>
+                            {{/if}}
+                            {{/unless}}
+                        </div>
+                    </section>
+                    {{/if}}
               </div>
            </div>
         </div>
