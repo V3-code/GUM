@@ -44,6 +44,48 @@ const isCombatDuration = (duration = {}) => {
     return duration.inCombat === true && !isEffectDurationPermanent(duration);
 };
 
+const normalizeTokenIconPolicy = (value) => {
+    if (value === "always" || value === "never" || value === "auto") return value;
+    return "auto";
+};
+
+const shouldShowTokenIconForSystem = (effectSystem = {}, duration = {}) => {
+    const policy = normalizeTokenIconPolicy(effectSystem.tokenIconPolicy);
+    if (policy === "always") return true;
+    if (policy === "never") return false;
+    return !isEffectDurationPermanent(duration);
+};
+
+async function migrateEffectTokenIconPolicy() {
+    if (!game.user?.isGM) return;
+
+    const migrationFlag = "effectTokenIconPolicyMigration";
+    const alreadyMigrated = game.settings?.get?.("gum", migrationFlag);
+    if (alreadyMigrated) return;
+
+    const updateQueue = [];
+    const collectMissingPolicyUpdates = (items) => {
+        for (const item of items || []) {
+            if (item?.type !== "effect") continue;
+            const currentPolicy = normalizeTokenIconPolicy(item.system?.tokenIconPolicy);
+            if (item.system?.tokenIconPolicy === currentPolicy) continue;
+            updateQueue.push(item.update({ "system.tokenIconPolicy": currentPolicy }, { renderSheet: false }));
+        }
+    };
+
+    collectMissingPolicyUpdates(game.items?.contents || []);
+    for (const actor of game.actors?.contents || []) {
+        collectMissingPolicyUpdates(actor.items?.contents || []);
+    }
+
+    if (updateQueue.length > 0) {
+        await Promise.allSettled(updateQueue);
+        console.log(`GUM | Migração de tokenIconPolicy concluída em ${updateQueue.length} item(ns) de efeito.`);
+    }
+
+    await game.settings.set("gum", migrationFlag, true);
+}
+
 function _getCurrentUserRollMode() {
     return game.settings?.get("core", "rollMode") ?? CONST.DICE_ROLL_MODES.PUBLIC;
 }
@@ -1660,7 +1702,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                         foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
                     }
 
-                    if (effectSystem.attachedStatusId) {
+                    if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                         activeEffectData.statuses.push(effectSystem.attachedStatusId);
                     }
 
@@ -1811,7 +1853,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
                         }
 
-                        if (effectSystem.attachedStatusId) {
+                        if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                             activeEffectData.statuses.push(effectSystem.attachedStatusId);
                         }
 
@@ -2000,6 +2042,8 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
 // ================================================================== //
 Hooks.once('ready', async function() {
     console.log("GUM | Fase 'ready': Aplicando configurações.");
+
+    await migrateEffectTokenIconPolicy();
 
     if (game.user?.isGM) {
         const ensureCompendiumFolder = async ({ name, color, parent = null }) => {
@@ -2973,10 +3017,10 @@ async function processConditions(actor, eventData = null) {
                                 }
 
                                 const statuses = new Set();
-                                if (effectSystem.type === "status" && effectSystem.statusId) {
+                                if (effectSystem.type === "status" && effectSystem.statusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                                     statuses.add(effectSystem.statusId);
                                 }
-                                if (effectSystem.attachedStatusId) {
+                                if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                                     statuses.add(effectSystem.attachedStatusId);
                                 }
                                 effectData.statuses = Array.from(statuses);

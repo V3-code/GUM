@@ -59,6 +59,18 @@ const normalizeEffectDurationFlags = (duration = {}) => {
     return normalized;
 };
 
+const normalizeTokenIconPolicy = (policy) => {
+    if (policy === "always" || policy === "never" || policy === "auto") return policy;
+    return "auto";
+};
+
+const shouldShowTokenIcon = (effectSystem = {}, duration = {}) => {
+    const policy = normalizeTokenIconPolicy(effectSystem.tokenIconPolicy);
+    if (policy === "always") return true;
+    if (policy === "never") return false;
+    return !isEffectDurationPermanent(duration);
+};
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
@@ -174,7 +186,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
                 }
 
-if (effectSystem.attachedStatusId) {
+                if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
                     activeEffectData.statuses.push(effectSystem.attachedStatusId);
                     // Não usamos mais flags.gum.statusId nem toggleStatusEffect aqui
                 }
@@ -270,8 +282,8 @@ if (effectSystem.attachedStatusId) {
                 const coreStatusId = effectItem.name.slugify({ strict: true });
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
-                if (effectSystem.attachedStatusId) {
-                    activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
+                    activeEffectData.statuses.push(effectSystem.attachedStatusId);;
                 }
 
                 await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
@@ -299,7 +311,7 @@ if (effectSystem.attachedStatusId) {
                     img: statusIcon,
                     origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
                     changes: [],
-                    statuses: [statusId],
+                    statuses: [],
                     flags: {
                         core: { statusId },
                         gum: {
@@ -343,8 +355,12 @@ if (effectSystem.attachedStatusId) {
                     activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                 }
 
+                if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+                    activeEffectData.statuses.push(statusId);
+                }
+
                 await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                targetActor.sheet.render(false); 
+                targetActor.sheet.render(false);  
             }
             break;
         }

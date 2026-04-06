@@ -59,6 +59,14 @@ import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumT
 
 export const registerSystemSettings = function() {
 
+    game.settings.register("gum", "effectTokenIconPolicyMigration", {
+        name: "Migração interna: Política de ícone de efeito no token",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
 // --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
     game.settings.register("gum", "gmScreenConfig", {
         name: "Layout do Escudo",

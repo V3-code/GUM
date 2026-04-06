@@ -792,6 +792,7 @@
         "startMode": "apply",
         "endMode": "turnEnd"
       },
+      "tokenIconPolicy": "auto",
       "statusId": "dead"
     }
   }

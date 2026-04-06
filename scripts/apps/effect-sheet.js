@@ -53,6 +53,12 @@ export class EffectSheet extends ItemSheet {
     async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
+        context.system.tokenIconPolicy = context.system.tokenIconPolicy || "auto";
+        context.tokenIconPolicyOptions = [
+            { id: "auto", label: "Automático (temporário mostra / permanente oculta)" },
+            { id: "always", label: "Sempre mostrar no token" },
+            { id: "never", label: "Nunca mostrar no token" }
+        ];
         context.statusEffects = CONFIG.statusEffects
             .map(s => ({ id: s.id, label: s.name }))
             .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));

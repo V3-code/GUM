@@ -326,6 +326,22 @@
   </div>
                     </div>
               </div>
+
+                {{!-- ABA CONFIGURAÇÃO --}}
+
+                <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin: 5px;">
+                    <div class="effect-field effect-field-row">
+                        <div class="effect-label">Ícone no Token</div>
+                            <select name="system.tokenIconPolicy">
+                                {{#each tokenIconPolicyOptions as |policy|}}
+                                    <option value="{{policy.id}}" {{#if (eq ../system.tokenIconPolicy policy.id)}}selected{{/if}}>
+                                        {{policy.label}}
+                                    </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+
               <div class="tab" data-tab="configuracao" data-group="primary">
                     {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
                     <section class="effect-card effect-section">
@@ -371,6 +387,7 @@
                         </div>
                     </section>
 
+
                     {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
                     {{#if (or (eq system.type 'attribute') (eq system.type 'status') (eq system.type 'flag') (eq system.type 'roll_modifier'))}}
                     <section class="effect-card effect-section">
@@ -383,6 +400,8 @@
                                 </select>
                             </div>
                         </div>
+
+
 
                         <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
                         <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
