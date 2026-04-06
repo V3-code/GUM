@@ -124,8 +124,12 @@ const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 
                 attributes[attr].override = null;
             }
         });
-        const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(this.effects?.values?.() || []);
+const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(this.effects?.values?.() || []);
         for (const effect of activeEffects) {
+            const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+            const isPendingCombat = gumDuration.pendingCombat === true;
+            const isPendingStart = gumDuration.pendingStart === true;
+            if (effect?.disabled || effect?.isSuppressed || isPendingCombat || isPendingStart) continue;
             for (const change of effect?.changes || []) {
                 const normalizedPath = normalizeEffectPath(change.key);
                 if (!normalizedPath?.startsWith("system.attributes.")) continue;
