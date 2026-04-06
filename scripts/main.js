@@ -1673,7 +1673,9 @@ Hooks.on("createItem", async (item, options, userId) => {
                     }
                     // --- FIM DO CÓDIGO DE DURAÇÃO ---
 
-                    const coreStatusId = effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true });
+                    const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration))
+                    ? effectSystem.attachedStatusId
+                    : effectItem.name.slugify({ strict: true });
                     foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
                     if (effectSystem.type === 'attribute') {
@@ -1824,7 +1826,9 @@ Hooks.on("createItem", async (item, options, userId) => {
                             activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                         }
 
-                        const coreStatusId = effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true });
+                        const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration))
+                            ? effectSystem.attachedStatusId
+                            : effectItem.name.slugify({ strict: true });
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
                         if (effectSystem.type === 'attribute') {
@@ -2947,9 +2951,12 @@ async function processConditions(actor, eventData = null) {
                                     disabled: pendingCombat || shouldDelayStart
                                 };
 
-                                const coreStatusId = effectSystem.type === "status" && effectSystem.statusId
+                                const attachedCoreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration))
+                                    ? effectSystem.attachedStatusId
+                                    : null;
+                                const coreStatusId = (effectSystem.type === "status" && effectSystem.statusId && shouldShowTokenIconForSystem(effectSystem, gumDuration))
                                     ? effectSystem.statusId
-                                    : (effectSystem.attachedStatusId || effectItem.name.slugify({ strict: true }));
+                                    : (attachedCoreStatusId || effectItem.name.slugify({ strict: true }));
                                 foundry.utils.setProperty(effectData, "flags.core.statusId", coreStatusId);
 
                                 if (!isEffectDurationPermanent(gumDuration)) {

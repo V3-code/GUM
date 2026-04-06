@@ -305,6 +305,10 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 const statusEffect = CONFIG.statusEffects.find(effect => effect.id === statusId);
                 const statusIcon = statusEffect?.icon ?? statusEffect?.img ?? effectItem.img;
                 const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
+                const showTokenIcon = shouldShowTokenIcon(effectSystem, gumDuration);
+                const coreStatusId = showTokenIcon
+                    ? statusId
+                    : effectItem.name.slugify({ strict: true });
 
                 const activeEffectData = {
                     name: effectItem.name,
@@ -313,7 +317,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     changes: [],
                     statuses: [],
                     flags: {
-                        core: { statusId },
+                        core: { statusId: coreStatusId },
                         gum: {
                             effectUuid: effectItem.uuid,
                             source: context.source || null,
@@ -355,12 +359,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     activeEffectData.duration.startTime = game.time?.worldTime ?? null;
                 }
 
-                if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+                if (showTokenIcon) {
                     activeEffectData.statuses.push(statusId);
                 }
 
                 await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                targetActor.sheet.render(false);  
+                targetActor.sheet.render(false); 
             }
             break;
         }

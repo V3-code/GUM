@@ -323,26 +323,27 @@
                                 </div>
                             </details>
                         </div>
-  </div>
+                        </div>
                     </div>
               </div>
 
                 {{!-- ABA CONFIGURAÇÃO --}}
 
-                <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin: 5px;">
-                    <div class="effect-field effect-field-row">
-                        <div class="effect-label">Ícone no Token</div>
-                            <select name="system.tokenIconPolicy">
-                                {{#each tokenIconPolicyOptions as |policy|}}
-                                    <option value="{{policy.id}}" {{#if (eq ../system.tokenIconPolicy policy.id)}}selected{{/if}}>
-                                        {{policy.label}}
-                                    </option>
-                                {{/each}}
-                            </select>
+              <div class="tab" data-tab="configuracao" data-group="primary">
+
+                    <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin: 5px;">
+                        <div class="effect-field effect-field-row">
+                            <div class="effect-label">Ícone no Token</div>
+                                <select name="system.tokenIconPolicy">
+                                    {{#each tokenIconPolicyOptions as |policy|}}
+                                        <option value="{{policy.id}}" {{#if (eq ../system.tokenIconPolicy policy.id)}}selected{{/if}}>
+                                            {{policy.label}}
+                                        </option>
+                                    {{/each}}
+                                </select>
                         </div>
                     </div>
 
-              <div class="tab" data-tab="configuracao" data-group="primary">
                     {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
                     <section class="effect-card effect-section">
                         <div class="effect-section-header">
