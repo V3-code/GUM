@@ -45,7 +45,12 @@ const isCombatDuration = (duration = {}) => {
 };
 
 const normalizeTokenIconPolicy = (value) => {
-    if (value === "always" || value === "never" || value === "auto") return value;
+    const normalized = (value ?? "").toString().trim().toLowerCase();
+
+    if (["always", "always_show", "show", "on", "true", "1", "sempre"].includes(normalized)) return "always";
+    if (["never", "never_show", "hide", "off", "false", "0", "nunca"].includes(normalized)) return "never";
+    if (["auto", "automatic", "automático", "automatico", "default", "padrão", "padrao"].includes(normalized)) return "auto";
+
     return "auto";
 };
 
@@ -1708,6 +1713,9 @@ Hooks.on("createItem", async (item, options, userId) => {
                     if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                         activeEffectData.statuses.push(effectSystem.attachedStatusId);
                     }
+                    if (shouldShowTokenIconForSystem(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
+                        activeEffectData.statuses.push(coreStatusId);
+                    }
 
                     try {
                         await actor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
@@ -1855,6 +1863,9 @@ Hooks.on("createItem", async (item, options, userId) => {
 
                         if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                             activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                        }
+                        if (shouldShowTokenIconForSystem(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
+                            activeEffectData.statuses.push(coreStatusId);
                         }
 
                         try {
@@ -3025,6 +3036,9 @@ async function processConditions(actor, eventData = null) {
                                 }
                                 if (effectSystem.attachedStatusId && shouldShowTokenIconForSystem(effectSystem, gumDuration)) {
                                     statuses.add(effectSystem.attachedStatusId);
+                                }
+                                if (shouldShowTokenIconForSystem(effectSystem, gumDuration) && statuses.size === 0) {
+                                    statuses.add(coreStatusId);
                                 }
                                 effectData.statuses = Array.from(statuses);
 

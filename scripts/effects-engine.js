@@ -59,8 +59,13 @@ const normalizeEffectDurationFlags = (duration = {}) => {
     return normalized;
 };
 
-const normalizeTokenIconPolicy = (policy) => {
-    if (policy === "always" || policy === "never" || policy === "auto") return policy;
+const normalizeTokenIconPolicy = (value) => {
+    const normalized = (value ?? "").toString().trim().toLowerCase();
+
+    if (["always", "always_show", "show", "on", "true", "1", "sempre"].includes(normalized)) return "always";
+    if (["never", "never_show", "hide", "off", "false", "0", "nunca"].includes(normalized)) return "never";
+    if (["auto", "automatic", "automático", "automatico", "default", "padrão", "padrao"].includes(normalized)) return "auto";
+
     return "auto";
 };
 
@@ -179,7 +184,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                 // Flag core.statusId (Importante para duração, usa slug do nome como fallback)
                 
-                const coreStatusId = effectItem.name.slugify({strict: true});
+                const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration))
+                    ? effectSystem.attachedStatusId
+                    : effectItem.name.slugify({ strict: true });
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
                 // Lógica Mecânica
@@ -199,6 +206,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
                     activeEffectData.statuses.push(effectSystem.attachedStatusId);
                     // Não usamos mais flags.gum.statusId nem toggleStatusEffect aqui
+                }
+                if (shouldShowTokenIcon(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
+                    activeEffectData.statuses.push(coreStatusId);
                 }
 
  await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
@@ -289,11 +299,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     }
                 }
 
-                const coreStatusId = effectItem.name.slugify({ strict: true });
+                const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration))
+                    ? effectSystem.attachedStatusId
+                    : effectItem.name.slugify({ strict: true });
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
 
                 if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
                     activeEffectData.statuses.push(effectSystem.attachedStatusId);;
+                }
+                if (shouldShowTokenIcon(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
+                    activeEffectData.statuses.push(coreStatusId);
                 }
 
                 await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
