@@ -2307,7 +2307,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .effect-pill-enhanced .pill-name {
-    font-family: var(--gum-font-primary);
+    font-family: var(--gum-font-condensed);
     font-weight: 700;
     font-size: 0.95em;
     color: var(--gum-text-escuro);
@@ -2325,7 +2325,7 @@ background-color: var(--gum-accent-gold);
     white-space: nowrap; display: flex; align-items: center; gap: 3px;
 }
 .gum.sheet.actor .pill-tag.duration { background: rgba(197, 160, 91, 0.15); color: #8a6d3b; }
-.gum.sheet.actor .pill-tag.source { background: rgba(0,0,0,0.05); color: #666; max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+.gum.sheet.actor .pill-tag.source { background: rgba(0,0,0,0.05); color: #666; overflow: hidden; text-overflow: ellipsis; }
 .gum.sheet.actor .pill-tag.status.on { color: var(--gum-accent-green); background: rgba(56, 156, 104, 0.1); }
 .gum.sheet.actor .pill-tag.status.off { color: var(--gum-text-medio); background: rgba(0,0,0,0.05); text-decoration: line-through; }
 

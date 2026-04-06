@@ -53,7 +53,9 @@ export class EffectSheet extends ItemSheet {
     async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
-        context.statusEffects = CONFIG.statusEffects.map(s => ({ id: s.id, label: s.name }));
+        context.statusEffects = CONFIG.statusEffects
+            .map(s => ({ id: s.id, label: s.name }))
+            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
         context.macros = game.macros.map(m => m.name);
         const flagValue = context.system.flag_value;
             context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');

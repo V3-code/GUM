@@ -170,11 +170,11 @@
 
 .gum.sheet.item .sheet-header input[name="name"],
 .gum.sheet.item .sheet-header textarea[name="name"] {
-  font-family: var(--item-font-serif);
-  font-size: 1.2rem;
+  font-family: 'Modesto Condensed';
+  font-size: 1.6rem;
   font-weight: 700;
   background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(201, 161, 94, 0.25);
+  border: none;
   color: var(--item-text);
   border-radius: 6px;
   padding: 6px 10px;
@@ -3468,6 +3468,21 @@
   border-radius: 8px;
   font-size: 0.65rem;
   padding: 4px 8px;
+}
+
+.gum-item-sheet.effect-sheet .effect-field select,
+.gum-item-sheet.effect-sheet .effect-section-select select {
+  background: #17181f;
+  color: var(--item-input-text);
+  border-color: #3a3d49;
+}
+
+.gum-item-sheet.effect-sheet .effect-field select option,
+.gum-item-sheet.effect-sheet .effect-section-select select option,
+.gum-item-sheet.effect-sheet .effect-field select optgroup,
+.gum-item-sheet.effect-sheet .effect-section-select select optgroup {
+  background: #17181f;
+  color: var(--item-input-text);
 }
 
 /* checkbox de linha (texto compacto) */
