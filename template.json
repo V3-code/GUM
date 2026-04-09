@@ -751,9 +751,37 @@
       ],
       "code": ""
     },
-    "effect": {
+ "effect": {
       "templates": [
         "base"
+      ],
+      "schemaVersion": 2,
+      "actions": [
+        {
+          "label": "",
+          "type": "attribute",
+          "path": "system.attributes.st.passive",
+          "operation": "ADD",
+          "value": "1",
+          "key": "",
+          "flag_value": "",
+          "chat_text": "",
+          "has_roll": false,
+          "roll_label": "Rolar Teste",
+          "roll_attribute": "ht",
+          "roll_modifier": "0",
+          "roll_modifier_value": "0",
+          "roll_modifier_cap": "",
+          "roll_modifier_context": "all",
+          "roll_modifier_entries": [],
+          "whisperMode": "public",
+          "category": "hp",
+          "name": "",
+          "chat_notice": true,
+          "confirm_prompt": false,
+          "variable_value": false,
+          "statusId": "dead"
+        }
       ],
       "type": "attribute",
       "path": "system.attributes.st.passive",

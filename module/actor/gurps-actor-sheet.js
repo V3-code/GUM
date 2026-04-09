@@ -191,13 +191,16 @@ async getData(options) {
                 if (effectUuid) {
                     originalEffectItem = await fromUuid(effectUuid).catch(() => null);
                     if (originalEffectItem) {
-                        effectData.name = originalEffectItem.name; 
-                        effectData.img = originalEffectItem.img;
-                        if (originalEffectItem.system?.type === "status" && originalEffectItem.system?.statusId) {
-                            const statusEffect = CONFIG.statusEffects.find(status => status.id === originalEffectItem.system.statusId);
-                            effectData.appliedStatusLabel = statusEffect?.name || originalEffectItem.system.statusId;
-                        }
+                        effectData.name = effectData.name || originalEffectItem.name;
+                        effectData.img = effectData.img || originalEffectItem.img;
                     }
+                }
+
+                const appliedStatuses = Array.isArray(effectData.statuses) ? effectData.statuses : [];
+                const mainStatusId = appliedStatuses.find((statusId) => CONFIG.statusEffects.some(status => status.id === statusId));
+                if (mainStatusId) {
+                    const statusEffect = CONFIG.statusEffects.find(status => status.id === mainStatusId);
+                    effectData.appliedStatusLabel = statusEffect?.name || mainStatusId;
                 }
                 
                 if (effect.origin) {

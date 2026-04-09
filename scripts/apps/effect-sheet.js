@@ -30,8 +30,61 @@ const ROLL_MODIFIER_CONTEXT_OPTIONS = [
     { id: "check_per", label: "Atributo Específico: Per" },
     { id: "skill_per", label: "Perícias baseadas em Per" },
     { id: "check_vont", label: "Atributo Específico: Vont" },
-    { id: "skill_vont", label: "Perícias baseadas em Vont" }
+      { id: "skill_vont", label: "Perícias baseadas em Vont" }
 ];
+
+const DEFAULT_EFFECT_ACTION = {
+    label: "",
+    type: "attribute",
+    path: "system.attributes.st.passive",
+    operation: "ADD",
+    value: "1",
+    key: "",
+    flag_value: "",
+    chat_text: "",
+    has_roll: false,
+    roll_label: "Rolar Teste",
+    roll_attribute: "ht",
+    roll_modifier: "0",
+    roll_modifier_value: "0",
+    roll_modifier_cap: "",
+    roll_modifier_context: "all",
+    roll_modifier_entries: [],
+    whisperMode: "public",
+    category: "hp",
+    name: "",
+    chat_notice: true,
+    confirm_prompt: false,
+    variable_value: false,
+    statusId: "dead"
+};
+
+const normalizeAction = (action = {}) => {
+    const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    const rawEntries = Array.isArray(next.roll_modifier_entries) ? next.roll_modifier_entries : [];
+    next.roll_modifier_entries = rawEntries.length
+        ? rawEntries.map((entry) => ({
+            label: (entry?.label || "").toString().trim(),
+            value: Number(entry?.value) || 0,
+            cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
+            contexts: (entry?.contexts || "all").toString().trim() || "all"
+        }))
+        : [{
+            label: "",
+            value: Number(next.roll_modifier_value) || 0,
+            cap: (next.roll_modifier_cap ?? "").toString().trim(),
+            contexts: (next.roll_modifier_context || "all").toString().trim() || "all"
+        }];
+    next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
+    next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
+    next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
+    return next;
+};
+
+const getEffectActionsFromSystem = (system = {}) => {
+    if (Array.isArray(system.actions)) return system.actions.map(normalizeAction);
+    return [normalizeAction(system)];
+};
 
 export class EffectSheet extends ItemSheet {
     
@@ -63,9 +116,6 @@ export class EffectSheet extends ItemSheet {
             .map(s => ({ id: s.id, label: s.name }))
             .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
         context.macros = game.macros.map(m => m.name);
-        const flagValue = context.system.flag_value;
-            context.flagValueIsBoolean = (flagValue === 'true' || flagValue === 'false');
-            context.flagValueSelection = context.flagValueIsBoolean ? flagValue : 'custom';
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description || "", { async: true });
         context.owner = context.owner ?? this.item.isOwner;
@@ -82,30 +132,26 @@ export class EffectSheet extends ItemSheet {
             } else {
                 context.system.duration._uiMode = context.system.duration._uiMode || "permanent";
             }
-        }
+ }
         context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
-
-        const rawEntries = Array.isArray(context.system.roll_modifier_entries) ? context.system.roll_modifier_entries : [];
-        context.rollModifierEntries = rawEntries.length
-            ? rawEntries.map((entry, index) => ({
-                index,
+        const actions = getEffectActionsFromSystem(context.system);
+        context.effectActions = actions.map((action, index) => ({
+            ...action,
+            index,
+            displayIndex: index + 1,
+            rollModifierEntries: (action.roll_modifier_entries || []).map((entry, entryIndex) => ({
+                index: entryIndex,
                 label: entry?.label || "",
                 value: entry?.value ?? 0,
-                cap: entry?.cap ?? entry?.nh_cap ?? "",
+                cap: entry?.cap ?? "",
                 contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all")
             }))
-            : [{
-                index: 0,
-                label: "",
-                value: context.system.roll_modifier_value ?? 0,
-                cap: context.system.roll_modifier_cap ?? "",
-                contexts: Array.isArray(context.system.roll_modifier_context)
-                    ? context.system.roll_modifier_context.join(",")
-                    : (context.system.roll_modifier_context || "all")
-            }];
+        }));
+        context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
 
         return context;
     }
+
 
 
     /**
@@ -178,14 +224,6 @@ activateListeners(html) {
         });
     });
 
-    // Listener para o seletor de valor da flag (funciona independentemente)
-    html.find('input[name="system.flag_value_selector"]').on('change', (event) => {
-        const selectorValue = event.currentTarget.value;
-        if (selectorValue === 'true' || selectorValue === 'false') {
-            this.item.update({ 'system.flag_value': selectorValue });
-        }
-    });
-    
  // ✅ OUVINTE DO BOTÃO DE EDITAR AGORA É ATIVADO SEMPRE ✅
     html.find('.edit-text-btn').on('click', this._onEditText.bind(this));
 
@@ -194,32 +232,21 @@ activateListeners(html) {
     html.find('.save-description').on('click', this._saveDescription.bind(this));
     html.find('.cancel-description').on('click', this._cancelDescription.bind(this));
 
-    // ✅ LÓGICA DA MACRO AGORA ESTÁ DENTRO DE UMA VERIFICAÇÃO SEGURA ✅
-    const macroInput = html.find('input[name="system.value"]')[0];
-    // Só executa este bloco SE o campo da macro existir na ficha
-    if (macroInput) {
-        
-        // A função de validação agora vive dentro do 'if'
-        const validateMacro = () => {
-            const icon = html.find('.validation-icon')[0];
-            if (!icon) return; // Segurança extra para o ícone
-            const macroName = macroInput.value;
-            const macroExists = game.macros.some(m => m.name === macroName);
+        html.on("click", ".add-effect-action", async (ev) => {
+        ev.preventDefault();
+        const actions = getEffectActionsFromSystem(this.item.system);
+        actions.push(normalizeAction({}));
+        await this.item.update({ "system.actions": actions });
+    });
 
-            if (macroName === "") {
-                icon.innerHTML = "";
-            } else if (macroExists) {
-                icon.innerHTML = '<i class="fas fa-check"></i>';
-                icon.style.color = "var(--c-accent-green, #389c68)";
-            } else {
-                icon.innerHTML = '<i class="fas fa-times"></i>';
-                icon.style.color = "var(--c-accent-red, #a53541)";
-            }
-        };
-
-  macroInput.addEventListener('keyup', validateMacro);
-        validateMacro(); // Valida ao abrir a ficha
-    }
+    html.on("click", ".remove-effect-action", async (ev) => {
+        ev.preventDefault();
+        const index = Number(ev.currentTarget.dataset.index);
+        const actions = getEffectActionsFromSystem(this.item.system);
+        if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
+        actions.splice(index, 1);
+        await this.item.update({ "system.actions": actions });
+    });
 
     const contextIds = new Set(ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => opt.id));
     const normalizeCsv = (value) => {
@@ -277,21 +304,30 @@ activateListeners(html) {
     });
     });
 
-    html.on("click", ".add-roll-mod-entry", async (ev) => {
+ html.on("click", ".add-roll-mod-entry", async (ev) => {
         ev.preventDefault();
-        const entries = Array.isArray(this.item.system.roll_modifier_entries) ? foundry.utils.deepClone(this.item.system.roll_modifier_entries) : [];
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const actions = getEffectActionsFromSystem(this.item.system);
+        if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
+        const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
         entries.push({ label: "", value: 0, cap: "", contexts: "all" });
-        await this.item.update({ "system.roll_modifier_entries": entries });
+        actions[actionIndex].roll_modifier_entries = entries;
+        await this.item.update({ "system.actions": actions });
     });
 
     html.on("click", ".remove-roll-mod-entry", async (ev) => {
         ev.preventDefault();
-        const index = Number(ev.currentTarget.dataset.index);
-        const entries = Array.isArray(this.item.system.roll_modifier_entries) ? foundry.utils.deepClone(this.item.system.roll_modifier_entries) : [];
-        if (Number.isNaN(index) || index < 0 || index >= entries.length) return;
-        entries.splice(index, 1);
-        await this.item.update({ "system.roll_modifier_entries": entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all" }] });
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const entryIndex = Number(ev.currentTarget.dataset.entryIndex);
+        const actions = getEffectActionsFromSystem(this.item.system);
+        if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
+        const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
+        if (Number.isNaN(entryIndex) || entryIndex < 0 || entryIndex >= entries.length) return;
+        entries.splice(entryIndex, 1);
+        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all" }];
+        await this.item.update({ "system.actions": actions });
     });
+
 
 }
 
@@ -387,37 +423,83 @@ activateListeners(html) {
     }
 
     async _updateObject(event, formData) {
-        const entriesByIndex = new Map();
+        const actionEntries = new Map();
+        const rollEntries = new Map();
+
         for (const [key, value] of Object.entries(formData)) {
-            const match = key.match(/^system\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts)$/);
-            if (!match) continue;
-            const index = Number(match[1]);
-            const field = match[2];
-            if (!entriesByIndex.has(index)) entriesByIndex.set(index, { label: "", value: 0, cap: "", contexts: "all" });
-            entriesByIndex.get(index)[field] = value;
-            delete formData[key];
-        }
-
-        if (entriesByIndex.size) {
-            const entries = Array.from(entriesByIndex.entries())
-                .sort((a, b) => a[0] - b[0])
-                .map(([, entry]) => ({
-                    label: (entry.label || "").toString().trim(),
-                    value: Number(entry.value) || 0,
-                    cap: (entry.cap ?? "").toString().trim(),
-                    contexts: (entry.contexts || "all").toString().trim() || "all"
-                }));
-
-            formData["system.roll_modifier_entries"] = entries;
-            if (entries.length) {
-                formData["system.roll_modifier_value"] = entries[0].value;
-                formData["system.roll_modifier_cap"] = entries[0].cap;
-                formData["system.roll_modifier_context"] = entries[0].contexts;
+            const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts)$/);
+            if (rollEntryMatch) {
+                const actionIndex = Number(rollEntryMatch[1]);
+                const entryIndex = Number(rollEntryMatch[2]);
+                const field = rollEntryMatch[3];
+                if (!rollEntries.has(actionIndex)) rollEntries.set(actionIndex, new Map());
+                const entryMap = rollEntries.get(actionIndex);
+                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all" });
+                entryMap.get(entryIndex)[field] = value;
+                delete formData[key];
+                continue;
+            }
+            if (actionMatch) {
+                const actionIndex = Number(actionMatch[1]);
+                const field = actionMatch[2];
+                if (!actionEntries.has(actionIndex)) actionEntries.set(actionIndex, {});
+                actionEntries.get(actionIndex)[field] = value;
+                delete formData[key];
             }
         }
 
- return super._updateObject(event, formData);
+        if (actionEntries.size || rollEntries.size) {
+            const allIndexes = [...new Set([...actionEntries.keys(), ...rollEntries.keys()])].sort((a, b) => a - b);
+            const actions = allIndexes.map((index) => {
+                const actionData = actionEntries.get(index) || {};
+                const entryMap = rollEntries.get(index);
+                if (entryMap) {
+                    actionData.roll_modifier_entries = Array.from(entryMap.entries())
+                        .sort((a, b) => a[0] - b[0])
+                        .map(([, entry]) => ({
+                            label: (entry.label || "").toString().trim(),
+                            value: Number(entry.value) || 0,
+                            cap: (entry.cap ?? "").toString().trim(),
+                            contexts: (entry.contexts || "all").toString().trim() || "all"
+                        }));
+                }
+                return normalizeAction(actionData);
+            });
+
+            const normalizedActions = actions.length ? actions : [normalizeAction({})];
+            const firstAction = normalizedActions[0];
+            formData["system.actions"] = normalizedActions;
+            formData["system.schemaVersion"] = 2;
+
+            // Espelha a primeira ação para campos raiz por compatibilidade interna.
+            formData["system.type"] = firstAction.type;
+            formData["system.path"] = firstAction.path;
+            formData["system.operation"] = firstAction.operation;
+            formData["system.value"] = firstAction.value;
+            formData["system.key"] = firstAction.key;
+            formData["system.flag_value"] = firstAction.flag_value;
+            formData["system.chat_text"] = firstAction.chat_text;
+            formData["system.has_roll"] = Boolean(firstAction.has_roll);
+            formData["system.roll_label"] = firstAction.roll_label;
+            formData["system.roll_attribute"] = firstAction.roll_attribute;
+            formData["system.roll_modifier"] = firstAction.roll_modifier;
+            formData["system.roll_modifier_value"] = firstAction.roll_modifier_value;
+            formData["system.roll_modifier_cap"] = firstAction.roll_modifier_cap;
+            formData["system.roll_modifier_context"] = firstAction.roll_modifier_context;
+            formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
+            formData["system.whisperMode"] = firstAction.whisperMode;
+            formData["system.category"] = firstAction.category;
+            formData["system.name"] = firstAction.name;
+            formData["system.chat_notice"] = Boolean(firstAction.chat_notice);
+            formData["system.confirm_prompt"] = Boolean(firstAction.confirm_prompt);
+            formData["system.variable_value"] = Boolean(firstAction.variable_value);
+            formData["system.statusId"] = firstAction.statusId;
+        }
+
+        return super._updateObject(event, formData);
     }
+
 
     async _onOpenReferenceLink(event) {
         event.preventDefault();

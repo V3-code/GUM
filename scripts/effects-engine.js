@@ -78,18 +78,113 @@ const shouldShowTokenIcon = (effectSystem = {}, duration = {}) => {
 
 const resolveTokenIconImage = (effectItem, effectSystem = {}, duration = {}) => {
     if (!shouldShowTokenIcon(effectSystem, duration)) return null;
-    const statusId = effectSystem.type === "status" ? effectSystem.statusId : effectSystem.attachedStatusId;
-    if (statusId) {
-        const statusEffect = CONFIG.statusEffects.find((effect) => effect.id === statusId);
-        return statusEffect?.icon ?? statusEffect?.img ?? effectItem?.img ?? null;
-    }
     return effectItem?.img ?? null;
+};
+
+const DEFAULT_EFFECT_ACTION = {
+    label: "",
+    type: "attribute",
+    path: "system.attributes.st.passive",
+    operation: "ADD",
+    value: "1",
+    key: "",
+    flag_value: "",
+    chat_text: "",
+    has_roll: false,
+    roll_label: "Rolar Teste",
+    roll_attribute: "ht",
+    roll_modifier: "0",
+    roll_modifier_value: "0",
+    roll_modifier_cap: "",
+    roll_modifier_context: "all",
+    roll_modifier_entries: [],
+    whisperMode: "public",
+    category: "hp",
+    name: "",
+    chat_notice: true,
+    confirm_prompt: false,
+    variable_value: false,
+    statusId: "dead"
+};
+
+// Regra explícita de prioridade do ícone carrier.
+// Menor número = maior prioridade.
+const CARRIER_ACTION_PRIORITY = {
+    attribute: 1,
+    roll_modifier: 2,
+    flag: 3,
+    status: 4
+};
+
+const normalizeEffectAction = (action = {}) => {
+    const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    if (!Array.isArray(next.roll_modifier_entries) || next.roll_modifier_entries.length === 0) {
+        next.roll_modifier_entries = [{
+            label: "",
+            value: Number(next.roll_modifier_value) || 0,
+            cap: next.roll_modifier_cap ?? "",
+            contexts: next.roll_modifier_context ?? "all"
+        }];
+    }
+    next.roll_modifier_entries = next.roll_modifier_entries.map((entry) => ({
+        label: (entry?.label || "").toString().trim(),
+        value: Number(entry?.value) || 0,
+        cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
+        contexts: (entry?.contexts || "all").toString().trim() || "all"
+    }));
+    next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
+    next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
+    next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
+    return next;
+};
+
+const buildFallbackActionLabel = (action = {}) => {
+    switch (action.type) {
+        case "attribute":
+            return "Modificador de Atributo";
+        case "roll_modifier":
+            return "Modificador de Rolagem";
+        case "status":
+            return `Status: ${action.statusId || "indefinido"}`;
+        case "resource_change":
+            return "Alteração de Recurso";
+        case "flag":
+            return "Flag";
+        case "macro":
+            return "Macro";
+        case "chat":
+            return "Mensagem de Chat";
+        default:
+            return "Ação";
+    }
+};
+
+export const getEffectActions = (effectSystem = {}) => {
+    if (Array.isArray(effectSystem?.actions)) return effectSystem.actions.map(normalizeEffectAction);
+    return [normalizeEffectAction(effectSystem)];
+};
+
+const selectCarrierActionIndex = (actions = []) => {
+    const persistent = actions
+        .map((action, index) => ({ action, index }))
+        .filter(({ action }) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
+    if (!persistent.length) return null;
+
+    persistent.sort((a, b) => {
+        const pa = CARRIER_ACTION_PRIORITY[a.action.type] ?? 9999;
+        const pb = CARRIER_ACTION_PRIORITY[b.action.type] ?? 9999;
+        if (pa !== pb) return pa - pb;
+        return a.index - b.index;
+    });
+    return persistent[0].index;
 };
 
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const actions = getEffectActions(effectSystem);
+    if (!actions.length) return;
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId }
         : {};
@@ -103,438 +198,251 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 console.warn(`GUM | Não foi possível avaliar o valor do efeito "${effectItem.name}":`, error);
                 return value;
             }
-        }
+    }
         return value;
     };
-    
-    switch (effectSystem.type) {
+    const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "status"]);
+    const instantTypes = new Set(["resource_change", "macro", "chat"]);
 
-        // =======================================================
-        // CASOS QUE CRIAM ACTIVE EFFECT (Attribute e Flag - Simplificados)
-        // NÃO controlam mais o ícone de status diretamente.
-        // =======================================================
-        case 'attribute':
-        case 'flag': {
-            for (const targetToken of targets) {
-                const targetActor = targetToken.actor;
-                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
-                const startMode = gumDuration.startMode || "apply";
-                const endMode = gumDuration.endMode || "turnEnd";
-                const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
-                const pendingCombat = gumDuration.inCombat && !game.combat;
-                gumDuration.startMode = startMode;
-                gumDuration.endMode = endMode;
-                if (shouldDelayStart) gumDuration.pendingStart = true;
-                if (pendingCombat) gumDuration.pendingCombat = true;
+    const buildCommonActiveEffectData = (targetActor, actionIndex = 0) => {
+        const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
+        const startMode = gumDuration.startMode || "apply";
+        const endMode = gumDuration.endMode || "turnEnd";
+        const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
+        const pendingCombat = gumDuration.inCombat && !game.combat;
+        gumDuration.startMode = startMode;
+        gumDuration.endMode = endMode;
+        if (shouldDelayStart) gumDuration.pendingStart = true;
+        if (pendingCombat) gumDuration.pendingCombat = true;
 
-                const activeEffectData = {
-                    name: effectItem.name,
-                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
-                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
-                    changes: [],
-                    statuses: [], // Lista nativa VAZIA
-                    flags: {
-                        gum: {
-                            effectUuid: effectItem.uuid,
-                            source: context.source || null,
-                            duration: gumDuration,
-                            ...conditionFlags
-                        }
-                    },
-                    disabled: pendingCombat || shouldDelayStart
-                };
-
-
-               // =============================================================
-                // ✅ LÓGICA DE DURAÇÃO FINAL (Sincronizada com createItem)
-                // =============================================================
-                if (!isEffectDurationPermanent(gumDuration)){
-                    activeEffectData.duration = {};
-                    const value = parseInt(gumDuration.value) || 1; 
-                    const unit = gumDuration.unit;
-
-                    if (unit === 'turns') {
-                        activeEffectData.duration.turns = value;
-                    } else if (unit === 'seconds') {
-                        if (gumDuration.inCombat && game.combat) {
-                            activeEffectData.duration.turns = value; // 1s = 1 turno em combate
-                        } else {
-                            activeEffectData.duration.seconds = value;
-                        }
-                    } else if (unit === 'rounds') {
-                        activeEffectData.duration.rounds = value;
-                    } else if (unit === 'minutes') {
-                        activeEffectData.duration.seconds = value * 60;
-                    } else if (unit === 'hours') {
-                        activeEffectData.duration.seconds = value * 60 * 60;
-                    } else if (unit === 'days') {
-                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
-                    }
-                    
-                    if (gumDuration.inCombat && game.combat) {
-                        activeEffectData.duration.combat = game.combat.id;
-                    }
-                    // Marca o ponto de início para que a expiração funcione corretamente
-                    if (!pendingCombat && !shouldDelayStart) {
-                        activeEffectData.duration.startRound = game.combat?.round ?? null;
-                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
-                    }
+        const activeEffectData = {
+            name: effectItem.name,
+            img: null,
+            origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
+            changes: [],
+            statuses: [],
+            flags: {
+                gum: {
+                    effectUuid: effectItem.uuid,
+                    source: context.source || null,
+                    originItemId: context.originItemId ?? null,
+                    duration: gumDuration,
+                    ...conditionFlags
                 }
+            },
+            disabled: pendingCombat || shouldDelayStart
+        };
 
-                // Flag core.statusId (Importante para duração, usa slug do nome como fallback)
-                
-                const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration))
-                    ? effectSystem.attachedStatusId
-                    : effectItem.name.slugify({ strict: true });
-                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
+        if (!isEffectDurationPermanent(gumDuration)) {
+            activeEffectData.duration = {};
+            const value = parseInt(gumDuration.value) || 1;
+            const unit = gumDuration.unit;
+            if (unit === "turns") activeEffectData.duration.turns = value;
+            else if (unit === "seconds") activeEffectData.duration[gumDuration.inCombat && game.combat ? "turns" : "seconds"] = value;
+            else if (unit === "rounds") activeEffectData.duration.rounds = value;
+            else if (unit === "minutes") activeEffectData.duration.seconds = value * 60;
+            else if (unit === "hours") activeEffectData.duration.seconds = value * 60 * 60;
+            else if (unit === "days") activeEffectData.duration.seconds = value * 60 * 60 * 24;
 
-                // Lógica Mecânica
-  if (effectSystem.type === 'attribute') {
-                    const computedValue = evaluateEffectValue(effectSystem.value, targetActor);
-                    const change = {
-                        key: effectSystem.path,
-                        mode: effectSystem.operation === 'OVERRIDE' ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
-                        value: computedValue
-                    };
-                    activeEffectData.changes.push(change);
-                } else if (effectSystem.type === 'flag') {
-                    let valueToSet = effectSystem.flag_value === "true" ? true : effectSystem.flag_value === "false" ? false : effectSystem.flag_value;
-                    foundry.utils.setProperty(activeEffectData.flags, `gum.${effectSystem.key}`, valueToSet);
-                }
-
-                if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
-                    activeEffectData.statuses.push(effectSystem.attachedStatusId);
-                    // Não usamos mais flags.gum.statusId nem toggleStatusEffect aqui
-                }
-                if (shouldShowTokenIcon(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
-                    activeEffectData.statuses.push(coreStatusId);
-                }
-
- await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                // Renderiza a ficha para mostrar a pílula
-                targetActor.sheet.render(false); 
+            if (gumDuration.inCombat && game.combat) activeEffectData.duration.combat = game.combat.id;
+            if (!pendingCombat && !shouldDelayStart) {
+                activeEffectData.duration.startRound = game.combat?.round ?? null;
+                activeEffectData.duration.startTurn = game.combat?.turn ?? null;
+                activeEffectData.duration.startTime = game.time?.worldTime ?? null;
             }
-            break;
         }
 
-        // =======================================================
-        // CASO ROLL_MODIFIER (ActiveEffect para modificadores de rolagem)
-        // =======================================================
-        case 'roll_modifier': {
-            for (const targetToken of targets) {
-                const targetActor = targetToken.actor;
-                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
-                const startMode = gumDuration.startMode || "apply";
-                const endMode = gumDuration.endMode || "turnEnd";
-                const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
-                const pendingCombat = gumDuration.inCombat && !game.combat;
-                gumDuration.startMode = startMode;
-                gumDuration.endMode = endMode;
-                if (shouldDelayStart) gumDuration.pendingStart = true;
-                if (pendingCombat) gumDuration.pendingCombat = true;
+        const fallbackCoreStatusId = `${effectItem.name.slugify({ strict: true })}-a${actionIndex + 1}`;
+        return { activeEffectData, targetActor, gumDuration, fallbackCoreStatusId };
+    };
 
-                const activeEffectData = {
-                    name: effectItem.name,
-                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
-                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
-                    changes: [],
-                    statuses: [],
-                    flags: {
-                        gum: {
-                            effectUuid: effectItem.uuid,
-                            source: context.source || null,
-                            duration: gumDuration,
-                            rollModifier: (() => {
-                                const entries = Array.isArray(effectSystem.roll_modifier_entries) && effectSystem.roll_modifier_entries.length
-                                    ? effectSystem.roll_modifier_entries
-                                    : [{
-                                        value: effectSystem.roll_modifier_value ?? effectSystem.value ?? 0,
-                                        cap: effectSystem.roll_modifier_cap ?? "",
-                                        contexts: effectSystem.roll_modifier_context ?? "all"
-                                    }];
-                                return {
-                                    entries,
-                                    value: entries[0]?.value ?? 0,
-                                    cap: entries[0]?.cap ?? "",
-                                    context: entries[0]?.contexts ?? "all"
-                                };
-                            })(),
-                            ...conditionFlags
+    const baseIconCarrierIndex = selectCarrierActionIndex(actions);
+
+    for (const [actionIndex, action] of actions.entries()) {
+        if (!persistentTypes.has(action.type) && !instantTypes.has(action.type)) {
+            console.warn(`[GUM] Tipo de ação de efeito "${action.type}" não reconhecido.`);
+            continue;
+        }
+
+        try {
+            if (persistentTypes.has(action.type)) {
+                if (context.skipPersistentEffects) continue;
+                for (const targetToken of targets) {
+                    const targetActor = targetToken.actor;
+                    const { activeEffectData, gumDuration, fallbackCoreStatusId } = buildCommonActiveEffectData(targetActor, actionIndex);
+                    activeEffectData.name = (action.label || "").trim() || buildFallbackActionLabel(action) || effectItem.name;
+                    activeEffectData.flags.gum.actionIndex = actionIndex;
+                    activeEffectData.flags.gum.actionType = action.type;
+                    activeEffectData.flags.gum.actionLabel = (action.label || "").trim();
+                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === actionIndex;
+                    if (isIconCarrier) {
+                        activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
+                    }
+
+                    if (action.type === "attribute") {
+                        if (!action.path) throw new Error("Ação de atributo sem caminho.");
+                        const computedValue = evaluateEffectValue(action.value, targetActor);
+                        activeEffectData.changes.push({
+                            key: action.path,
+                            mode: action.operation === "OVERRIDE" ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
+                            value: computedValue
+                        });
+                    }
+
+                    if (action.type === "flag") {
+                        if (!action.key) throw new Error("Ação de flag sem chave.");
+                        const valueToSet = action.flag_value === "true" ? true : action.flag_value === "false" ? false : action.flag_value;
+                        foundry.utils.setProperty(activeEffectData.flags, `gum.${action.key}`, valueToSet);
+                    }
+
+                    if (action.type === "roll_modifier") {
+                        const entries = Array.isArray(action.roll_modifier_entries) && action.roll_modifier_entries.length
+                            ? action.roll_modifier_entries
+                            : [{ value: action.roll_modifier_value ?? 0, cap: action.roll_modifier_cap ?? "", contexts: action.roll_modifier_context ?? "all" }];
+                        activeEffectData.flags.gum.rollModifier = {
+                            entries,
+                            value: entries[0]?.value ?? 0,
+                            cap: entries[0]?.cap ?? "",
+                            context: entries[0]?.contexts ?? "all"
+                        };
+                    }
+
+                    if (isIconCarrier) {
+                        activeEffectData.statuses.push(fallbackCoreStatusId);
+                        foundry.utils.setProperty(activeEffectData, "flags.core.statusId", fallbackCoreStatusId);
+                    }
+                    if (action.type === "status" && action.statusId) {
+                        const statusEffect = (CONFIG.statusEffects || []).find((status) => status.id === action.statusId);
+                        if (!activeEffectData.img) {
+                            activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
                         }
-                    },
-                    disabled: pendingCombat || shouldDelayStart
-                };
+                        activeEffectData.statuses.push(action.statusId);
+                        foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
+                    }
+                    if (effectSystem.attachedStatusId && isIconCarrier) {
+                        activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                    }
+                    activeEffectData.statuses = [...new Set(activeEffectData.statuses.filter(Boolean))];
 
-                if (!isEffectDurationPermanent(gumDuration)){
-                    activeEffectData.duration = {};
-                    const value = parseInt(gumDuration.value) || 1;
-                    const unit = gumDuration.unit;
+                    await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                    targetActor.sheet.render(false);
+                }
+                continue;
+            }
 
-                    if (unit === 'turns') {
-                        activeEffectData.duration.turns = value;
-                    } else if (unit === 'seconds') {
-                        if (gumDuration.inCombat && game.combat) {
-                            activeEffectData.duration.turns = value;
-                        } else {
-                            activeEffectData.duration.seconds = value;
+            if (action.type === "resource_change") {
+                let valueToChange = action.value;
+
+                if (action.confirm_prompt) {
+                    const confirmed = await Dialog.confirm({
+                        title: "Confirmar Ação",
+                        content: `<p>Deseja aplicar o efeito "${effectItem.name}"?</p>`,
+                        yes: () => true,
+                        no: () => false,
+                        defaultYes: true
+                    });
+                    if (!confirmed) continue;
+                }
+                if (action.variable_value) {
+                    const newAmount = await new Promise(resolve => {
+                        new Dialog({
+                            title: "Definir Valor",
+                            content: `<p>Qual o valor para "${effectItem.name}"?</p><input type="text" name="amount" value="${valueToChange}"/>`,
+                            buttons: { apply: { label: "Aplicar", callback: (html) => resolve(html.find('input[name=\"amount\"]').val()) } },
+                            default: "apply",
+                            close: () => resolve(null)
+                        }).render(true);
+                    });
+                    if (newAmount === null) continue;
+                    valueToChange = newAmount;
+                }
+
+                const roll = new Roll(String(valueToChange));
+                await roll.evaluate();
+                const finalValue = roll.total;
+
+                for (const targetToken of targets) {
+                    const targetActor = targetToken.actor;
+                    let updatePath = "";
+                    let updateObject = null;
+
+                    switch (action.category) {
+                        case "hp": updatePath = "system.attributes.hp.value"; break;
+                        case "fp": updatePath = "system.attributes.fp.value"; break;
+                        case "energy_reserve": {
+                            const reserveKey = Object.keys(targetActor.system.spell_reserves || {}).find(k => targetActor.system.spell_reserves[k].name === action.name) || Object.keys(targetActor.system.power_reserves || {}).find(k => targetActor.system.power_reserves[k].name === action.name);
+                            if (reserveKey) updatePath = targetActor.system.spell_reserves[reserveKey] ? `system.spell_reserves.${reserveKey}.current` : `system.power_reserves.${reserveKey}.current`;
+                            break;
                         }
-                    } else if (unit === 'rounds') {
-                        activeEffectData.duration.rounds = value;
-                    } else if (unit === 'minutes') {
-                        activeEffectData.duration.seconds = value * 60;
-                    } else if (unit === 'hours') {
-                        activeEffectData.duration.seconds = value * 60 * 60;
-                    } else if (unit === 'days') {
-                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
-                    }
-
-                    if (gumDuration.inCombat && game.combat) {
-                        activeEffectData.duration.combat = game.combat.id;
-                    }
-                    if (!pendingCombat && !shouldDelayStart) {
-                        activeEffectData.duration.startRound = game.combat?.round ?? null;
-                        activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                        activeEffectData.duration.startTime = game.time?.worldTime ?? null;
-                    }
-                }
-
-                const coreStatusId = (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration))
-                    ? effectSystem.attachedStatusId
-                    : effectItem.name.slugify({ strict: true });
-                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", coreStatusId);
-
-                if (effectSystem.attachedStatusId && shouldShowTokenIcon(effectSystem, gumDuration)) {
-                    activeEffectData.statuses.push(effectSystem.attachedStatusId);;
-                }
-                if (shouldShowTokenIcon(effectSystem, gumDuration) && activeEffectData.statuses.length === 0) {
-                    activeEffectData.statuses.push(coreStatusId);
-                }
-
-                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                targetActor.sheet.render(false);
-            }
-            break;
-        }
-
-       // =======================================================
-        // CASO STATUS (RESTAURADO - Usa toggleStatusEffect)
-        // Controla apenas o ícone visual no token.
-        // =======================================================
-       case 'status': {
-            if (!effectSystem.statusId) break; // Precisa de um ID de status
-            
-            for (const targetToken of targets) {
-                const targetActor = targetToken.actor;
-                const statusId = effectSystem.statusId;
-                const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
-                const showTokenIcon = shouldShowTokenIcon(effectSystem, gumDuration);
-                const coreStatusId = showTokenIcon
-                    ? statusId
-                    : effectItem.name.slugify({ strict: true });
-
-                const activeEffectData = {
-                    name: effectItem.name,
-                    img: resolveTokenIconImage(effectItem, effectSystem, gumDuration),
-                    origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
-                    changes: [],
-                    statuses: [],
-                    flags: {
-                        core: { statusId: coreStatusId },
-                        gum: {
-                            effectUuid: effectItem.uuid,
-                            source: context.source || null,
-                            duration: gumDuration,
-                            ...conditionFlags
+                        case "combat_tracker": {
+                            const trackerKey = Object.keys(targetActor.system.combat.combat_meters || {}).find(k => targetActor.system.combat.combat_meters[k].name === action.name);
+                            if (trackerKey) updatePath = `system.combat.combat_meters.${trackerKey}.current`;
+                            break;
                         }
-                    }
-                };
-
-                // Duração (mesma lógica dos outros tipos)
-                if (!isEffectDurationPermanent(gumDuration)){
-                    activeEffectData.duration = {};
-                    const value = parseInt(gumDuration.value) || 1; 
-                    const unit = gumDuration.unit;
-
-                    if (unit === 'turns') {
-                        activeEffectData.duration.turns = value;
-                    } else if (unit === 'seconds') {
-                        if (gumDuration.inCombat && game.combat) {
-                            activeEffectData.duration.turns = value; // 1s = 1 turno em combate
-                        } else {
-                            activeEffectData.duration.seconds = value;
+                        case "item_quantity": {
+                            const itemToUpdate = targetActor.items.find(i => i.name === action.name);
+                            if (itemToUpdate) {
+                                const newQuantity = (itemToUpdate.system.quantity || 0) + finalValue;
+                                updateObject = itemToUpdate.update({ "system.quantity": newQuantity });
+                            }
+                            break;
                         }
-                    } else if (unit === 'rounds') {
-                        activeEffectData.duration.rounds = value;
-                    } else if (unit === 'minutes') {
-                        activeEffectData.duration.seconds = value * 60;
-                    } else if (unit === 'hours') {
-                        activeEffectData.duration.seconds = value * 60 * 60;
-                    } else if (unit === 'days') {
-                        activeEffectData.duration.seconds = value * 60 * 60 * 24;
+                        default:
+                            break;
                     }
-                    
-                    if (gumDuration.inCombat && game.combat) {
-                        activeEffectData.duration.combat = game.combat.id;
+
+                    if (updateObject) await updateObject;
+                    else if (updatePath) {
+                        const currentValue = foundry.utils.getProperty(targetActor, updatePath) || 0;
+                        await targetActor.update({ [updatePath]: currentValue + finalValue });
                     }
-                    activeEffectData.duration.startRound = game.combat?.round ?? null;
-                    activeEffectData.duration.startTurn = game.combat?.turn ?? null;
-                    activeEffectData.duration.startTime = game.time?.worldTime ?? null;
-                }
-
-                if (showTokenIcon) {
-                    activeEffectData.statuses.push(statusId);
-                }
-
-                await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                targetActor.sheet.render(false); 
-            }
-            break;
-        }
-        // =======================================================
-        // CASO RESOURCE_CHANGE (Inalterado)
-        // =======================================================
-        case 'resource_change': {
-            let valueToChange = effectSystem.value;
-
-            if (effectSystem.confirm_prompt) {
-                const confirmed = await Dialog.confirm({
-                    title: "Confirmar Ação",
-                    content: `<p>Deseja aplicar o efeito "${effectItem.name}"?</p>`,
-                    yes: () => true,
-                    no: () => false,
-                    defaultYes: true
-                });
-                if (!confirmed) return;
-            }
-            if (effectSystem.variable_value) {
-                const newAmount = await new Promise(resolve => {
-                    new Dialog({
-                        title: "Definir Valor",
-                        content: `<p>Qual o valor para "${effectItem.name}"?</p><input type="text" name="amount" value="${valueToChange}"/>`,
-                        buttons: { apply: { label: "Aplicar", callback: (html) => resolve(html.find('input[name="amount"]').val()) } },
-                        default: "apply",
-                        close: () => resolve(null)
-                    }).render(true);
-                });
-                if (newAmount === null) return;
-                valueToChange = newAmount;
-            }
-
-            const roll = new Roll(String(valueToChange));
-            await roll.evaluate();
-            const finalValue = roll.total;
-            
-            for (const targetToken of targets) {
-                const targetActor = targetToken.actor;
-                let updatePath = "";
-                let updateObject = null;
-                
-                switch (effectSystem.category) {
-                    case 'hp': updatePath = 'system.attributes.hp.value'; break;
-                    case 'fp': updatePath = 'system.attributes.fp.value'; break;
-                    case 'energy_reserve': { const reserveKey = Object.keys(targetActor.system.spell_reserves || {}).find(k => targetActor.system.spell_reserves[k].name === effectSystem.name) || Object.keys(targetActor.system.power_reserves || {}).find(k => targetActor.system.power_reserves[k].name === effectSystem.name);
-                        if (reserveKey) {
-                            updatePath = targetActor.system.spell_reserves[reserveKey] ? `system.spell_reserves.${reserveKey}.current` : `system.power_reserves.${reserveKey}.current`;
-                        } break; }
-                    case 'combat_tracker': { const trackerKey = Object.keys(targetActor.system.combat.combat_meters || {}).find(k => targetActor.system.combat.combat_meters[k].name === effectSystem.name);
-                         if (trackerKey) updatePath = `system.combat.combat_meters.${trackerKey}.current`; break; }
-                    case 'item_quantity': { const itemToUpdate = targetActor.items.find(i => i.name === effectSystem.name);
-                        if (itemToUpdate) {
-                            const newQuantity = (itemToUpdate.system.quantity || 0) + finalValue;
-                            updateObject = itemToUpdate.update({'system.quantity': newQuantity});
-                        } break; }
-                }
-                
-                if (updateObject) await updateObject;
-                else if (updatePath) {
-                    const currentValue = foundry.utils.getProperty(targetActor, updatePath) || 0;
-                    await targetActor.update({ [updatePath]: currentValue + finalValue });
-                }
-                if (effectSystem.chat_notice) {  ChatMessage.create({
-                        speaker: ChatMessage.getSpeaker({actor: targetActor}),
-                        content: `<strong>${effectItem.name}:</strong> ${finalValue >= 0 ? '+' : ''}${finalValue} aplicado em ${effectSystem.name || effectSystem.category}.`
-                    }); }
-            }
-            break;
-        }
-
-        // =======================================================
-        // CASOS MACRO e CHAT (Inalterados)
-        // =======================================================
-        case 'macro': {
-             if (!effectSystem.value) break;
-            const macro = game.macros.getName(effectSystem.value);
-            if (macro) {
-                // Passa informações úteis para a macro, como o ator de origem e os alvos.
-                macro.execute({ 
-                    actor: context.actor, 
-                    origin: context.origin,
-                    targets: targets 
-                });
-            } else {
-                ui.notifications.warn(`[GUM] Macro "${effectSystem.value}" não encontrada.`);
-            }
-            break;
-        }
-         case 'chat': {
-            if (!effectSystem.chat_text) break;
-            // A lógica aqui é uma adaptação da que você já tinha em `processConditions`
-            for (const target of targets) {
-                const targetActor = target.actor;
-                const chatBody = effectSystem.chat_text.replace(/{actor.name}/g, targetActor.name);
-                let rollButtonHtml = "";
-                
-                // Adiciona o botão de rolagem, se configurado
-                if (effectSystem.has_roll) {
-                    let finalTarget = 0;
-                    if (effectSystem.roll_attribute === 'fixed') {
-                        finalTarget = Number(effectSystem.roll_fixed_value) || 10;
-                    } else if (effectSystem.roll_attribute) {
-                       const resolvedBase = resolveRollBaseValue(targetActor, effectSystem.roll_attribute);
-                        const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
-                        finalTarget = finalAttr + (Number(effectSystem.roll_modifier) || 0);
+                    if (action.chat_notice) {
+                        ChatMessage.create({
+                            speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+                            content: `<strong>${effectItem.name}:</strong> ${finalValue >= 0 ? "+" : ""}${finalValue} aplicado em ${action.name || action.category}.`
+                        });
                     }
-                    const label = effectSystem.roll_label || `Rolar Teste`;
-                    rollButtonHtml = `
-                        <div class="gum-effect-chat-actions">
-                            <button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}">
-                                <i class="fas fa-dice-d20"></i>
-                                <span>${label}</span>
-                                <strong>vs ${finalTarget}</strong>
-                            </button>
-                        </div>`;
                 }
-
-                const content = `
-                    <div class="gurps-effect-chat-card">
-                        <div class="gum-effect-chat-header">
-                            <i class="fas fa-comment-dots"></i>
-                            <span>Mensagem de Efeito</span>
-                            <span class="gum-effect-chat-target">${targetActor.name}</span>
-                        </div>
-                        <div class="gum-effect-chat-body">${chatBody}</div>
-                        ${rollButtonHtml}
-                    </div>`;
-                
-                const chatData = { 
-                    speaker: ChatMessage.getSpeaker({ actor: targetActor }), 
-                    content: content 
-                };
-                
-                // Define quem recebe a mensagem
-                if (effectSystem.whisperMode === 'gm') {
-                    chatData.whisper = ChatMessage.getWhisperRecipients("GM");
-                } else if (effectSystem.whisperMode === 'blind') {
-                    chatData.blind = true;
-                }
-                
-                ChatMessage.create(chatData);
+                continue;
             }
-            break;
+
+            if (action.type === "macro") {
+                if (!action.value) continue;
+                const macro = game.macros.getName(action.value);
+                if (macro) macro.execute({ actor: context.actor, origin: context.origin, targets });
+                else ui.notifications.warn(`[GUM] Macro "${action.value}" não encontrada.`);
+                continue;
+            }
+
+            if (action.type === "chat") {
+                if (!action.chat_text) continue;
+                for (const target of targets) {
+                    const targetActor = target.actor;
+                    const chatBody = action.chat_text.replace(/{actor.name}/g, targetActor.name);
+                    let rollButtonHtml = "";
+                    if (action.has_roll) {
+                        let finalTarget = 0;
+                        if (action.roll_attribute === "fixed") {
+                            finalTarget = Number(action.roll_fixed_value) || 10;
+                        } else if (action.roll_attribute) {
+                            const resolvedBase = resolveRollBaseValue(targetActor, action.roll_attribute);
+                            const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
+                            finalTarget = finalAttr + (Number(action.roll_modifier) || 0);
+                        }
+                        const label = action.roll_label || "Rolar Teste";
+                        rollButtonHtml = `<div class="gum-effect-chat-actions"><button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}"><i class="fas fa-dice-d20"></i><span>${label}</span><strong>vs ${finalTarget}</strong></button></div>`;
+                    }
+
+                    const content = `<div class="gurps-effect-chat-card"><div class="gum-effect-chat-header"><i class="fas fa-comment-dots"></i><span>Mensagem de Efeito</span><span class="gum-effect-chat-target">${targetActor.name}</span></div><div class="gum-effect-chat-body">${chatBody}</div>${rollButtonHtml}</div>`;
+                    const chatData = { speaker: ChatMessage.getSpeaker({ actor: targetActor }), content };
+                    if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                    else if (action.whisperMode === "blind") chatData.blind = true;
+                    ChatMessage.create(chatData);
+                }
+            }
+        } catch (error) {
+            console.error(`GUM | Falha ao aplicar ação "${action.type}" do efeito "${effectItem.name}":`, error);
+            ui.notifications.warn(`Efeito "${effectItem.name}": uma ação "${action.type}" falhou e foi ignorada.`);
         }
-        
-        default:
-            console.warn(`[GUM] Tipo de efeito "${effectSystem.type}" não reconhecido.`);
     }
 }

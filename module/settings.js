@@ -59,8 +59,16 @@ import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumT
 
 export const registerSystemSettings = function() {
 
-    game.settings.register("gum", "effectTokenIconPolicyMigration", {
+ game.settings.register("gum", "effectTokenIconPolicyMigration", {
         name: "Migração interna: Política de ícone de efeito no token",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "effectActionsSchemaMigrationV2", {
+        name: "Migração interna: Schema de ações do item efeito (v2)",
         scope: "world",
         config: false,
         type: Boolean,

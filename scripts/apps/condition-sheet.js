@@ -43,10 +43,12 @@ export class ConditionSheet extends ItemSheet {
             if (link.uuid) {
                 const effectItem = await fromUuid(link.uuid);
                 if (effectItem) {
+                    const actions = Array.isArray(effectItem.system?.actions) ? effectItem.system.actions : [];
+                    const effectType = actions.length > 1 ? "múltiplas ações" : (actions[0]?.type || effectItem.system.type || "indefinido");
                     preparedEffects.push({
                         name: effectItem.name,
                         img: effectItem.img,
-                        type: effectItem.system.type || "indefinido",
+                        type: effectType,
                         chat_description: effectItem.system.chat_description,
                         summary: this._getEffectSummary(effectItem), // Gera o resumo␊
                         index: index, // O índice original para a função de deletar␊
