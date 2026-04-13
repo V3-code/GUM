@@ -60,7 +60,7 @@ export class GurpsRollPrompt extends FormApplication {
             this.selectedModifiers.push({
                 id: mod.id || foundry.utils.randomID(),
                 label: mod.name,
-                value: parseInt(mod.value) || 0,
+                value: this._evaluateModifierValue(mod.value),
                 // ✅ CORREÇÃO: Lê o cap da flag, se existir
                 nh_cap: (mod.cap !== undefined && mod.cap !== "") ? parseInt(mod.cap) : null,
                 isGM: true // Marca para estilizar diferente se quiser (ex: cadeado)
@@ -83,16 +83,170 @@ export class GurpsRollPrompt extends FormApplication {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
 
-                this.selectedModifiers.push({
+                 this.selectedModifiers.push({
                     id: `${effect.id}::${index}`,
                     label: entry?.label ? `${effect.name} — ${entry.label}` : effect.name,
-                    value: parseInt(entry?.value) || 0,
+                    value: this._evaluateModifierValue(entry?.value),
                     nh_cap: (entry?.cap !== undefined && entry?.cap !== "") ? parseInt(entry.cap) : null,
                     isGM: true,
                     isEffect: true
                 });
             });
         });
+    }
+
+    _splitCommaSeparatedArgs(rawValue) {
+        const source = String(rawValue ?? "");
+        const args = [];
+        let current = "";
+        let depth = 0;
+        for (const ch of source) {
+            if (ch === "," && depth === 0) {
+                if (current.trim()) args.push(current.trim());
+                current = "";
+                continue;
+            }
+            if (ch === "(") depth += 1;
+            else if (ch === ")" && depth > 0) depth -= 1;
+            current += ch;
+        }
+        if (current.trim()) args.push(current.trim());
+        return args;
+    }
+
+    _toNumberOrZero(value) {
+        if (value === null || value === undefined || value === "") return 0;
+        const direct = Number(value);
+        if (Number.isFinite(direct)) return direct;
+        const match = String(value).match(/[+-]?\d+(\.\d+)?/);
+        return match ? Number(match[0]) || 0 : 0;
+    }
+
+    _resolveRollItemAttackContext() {
+        const itemId = this.rollData?.itemId;
+        if (!itemId) return { item: null, attack: null };
+        const item = this.actor.items.get(itemId) || null;
+        if (!item) return { item: null, attack: null };
+
+        const attackId = this.rollData?.attackId;
+        if (!attackId) return { item, attack: null };
+        const attack =
+            item.system?.ranged_attacks?.[attackId]
+            ?? item.system?.melee_attacks?.[attackId]
+            ?? null;
+
+        return { item, attack };
+    }
+
+    _resolveModifierReference(rawReference) {
+        const referenceRaw = String(rawReference ?? "").trim();
+        if (!referenceRaw) return 0;
+
+        const modifierMatch = referenceRaw.match(/^(.*?)([+-]\d+)\s*$/);
+        let reference = referenceRaw;
+        let modifier = 0;
+        if (modifierMatch) {
+            const parsedModifier = Number(modifierMatch[2]);
+            if (Number.isFinite(parsedModifier) && modifierMatch[1]?.trim()) {
+                reference = modifierMatch[1].trim();
+                modifier = parsedModifier;
+            }
+        }
+
+        const normalizedRef = reference.toLowerCase();
+        if (/^[+-]?\d+(\.\d+)?$/.test(normalizedRef)) {
+            return (Number(normalizedRef) || 0) + modifier;
+        }
+
+        const { item, attack } = this._resolveRollItemAttackContext();
+        if (normalizedRef.startsWith("item.")) {
+            const itemPath = normalizedRef.slice("item.".length);
+            const itemValue = foundry.utils.getProperty(item?.system ?? {}, itemPath);
+            return this._toNumberOrZero(itemValue) + modifier;
+        }
+        if (normalizedRef.startsWith("attack.") || normalizedRef.startsWith("ataque.")) {
+            const attackPath = normalizedRef.split(".").slice(1).join(".");
+            const attackValue = foundry.utils.getProperty(attack ?? {}, attackPath);
+            return this._toNumberOrZero(attackValue) + modifier;
+        }
+
+        const parameterAliases = {
+            holdout: item?.system?.holdout,
+            ocultamento: item?.system?.holdout,
+            precision: attack?.accuracy,
+            precisao: attack?.accuracy,
+            "precisão": attack?.accuracy,
+            prec: attack?.accuracy,
+            accuracy: attack?.accuracy,
+            magnitude: attack?.mag,
+            mag: attack?.mag
+        };
+        if (normalizedRef in parameterAliases) {
+            return this._toNumberOrZero(parameterAliases[normalizedRef]) + modifier;
+        }
+
+        const baseAttr = this._resolveBaseValue(normalizedRef, { fallbackValue: null });
+        if (baseAttr !== null && baseAttr !== undefined) {
+            return (Number(baseAttr) || 0) + modifier;
+        }
+
+        const skill = this.actor.items.find((item) =>
+            item.type === "skill" && item.name?.toLowerCase().trim() === normalizedRef
+        );
+        if (skill) {
+            return (Number(skill.system?.final_nh) || 0) + modifier;
+        }
+
+        return modifier;
+    }
+
+    _evaluateModifierValue(rawValue) {
+        if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
+        if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
+
+        const source = String(rawValue).trim();
+        if (!source) return 0;
+        if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+        const evaluateArithmetic = (expression) => {
+            const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
+            const reserved = new Set(["maior", "menor", "max", "min", "math"]);
+            const prepared = expression.replace(tokenRegex, (token) => {
+                if (reserved.has(token.toLowerCase())) return token;
+                return `get(\"${token}\")`;
+            });
+            try {
+                return Function(
+                    "get",
+                    "maior",
+                    "menor",
+                    "max",
+                    "min",
+                    `"use strict"; return (${prepared});`
+                )(
+                    (token) => this._resolveModifierReference(token),
+                    (...args) => Math.max(...args),
+                    (...args) => Math.min(...args),
+                    (...args) => Math.max(...args),
+                    (...args) => Math.min(...args)
+                );
+            } catch (_) {
+                return null;
+            }
+        };
+
+        const expressionMatch = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
+        if (expressionMatch) {
+            const mode = /^(menor|min)$/i.test(expressionMatch[1]) ? "min" : "max";
+            const values = this._splitCommaSeparatedArgs(expressionMatch[2]).map((ref) => this._resolveModifierReference(ref));
+            if (!values.length) return 0;
+            return mode === "min" ? Math.min(...values) : Math.max(...values);
+        }
+
+        const arithmeticResult = evaluateArithmetic(source);
+        if (Number.isFinite(arithmeticResult)) return arithmeticResult;
+
+        return this._resolveModifierReference(source);
     }
 
     _normalizeContexts(rawContexts) {

@@ -59,19 +59,31 @@ const DEFAULT_EFFECT_ACTION = {
     statusId: "dead"
 };
 
+const normalizeRollModifierEntryValue = (value) => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    const raw = String(value).trim();
+    if (!raw) return 0;
+    if (/^[+-]?\d+(\.\d+)?$/.test(raw)) {
+        const asNumber = Number(raw);
+        return Number.isFinite(asNumber) ? asNumber : 0;
+    }
+    return raw;
+};
+
 const normalizeAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     const rawEntries = Array.isArray(next.roll_modifier_entries) ? next.roll_modifier_entries : [];
     next.roll_modifier_entries = rawEntries.length
         ? rawEntries.map((entry) => ({
             label: (entry?.label || "").toString().trim(),
-            value: Number(entry?.value) || 0,
+            value: normalizeRollModifierEntryValue(entry?.value),
             cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
             contexts: (entry?.contexts || "all").toString().trim() || "all"
         }))
         : [{
             label: "",
-            value: Number(next.roll_modifier_value) || 0,
+            value: normalizeRollModifierEntryValue(next.roll_modifier_value),
             cap: (next.roll_modifier_cap ?? "").toString().trim(),
             contexts: (next.roll_modifier_context || "all").toString().trim() || "all"
         }];
@@ -460,7 +472,7 @@ activateListeners(html) {
                         .sort((a, b) => a[0] - b[0])
                         .map(([, entry]) => ({
                             label: (entry.label || "").toString().trim(),
-                            value: Number(entry.value) || 0,
+                            value: normalizeRollModifierEntryValue(entry.value),
                             cap: (entry.cap ?? "").toString().trim(),
                             contexts: (entry.contexts || "all").toString().trim() || "all"
                         }));

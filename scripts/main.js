@@ -907,7 +907,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             if (!_matchesRollContext(modContext, rollContext)) return;
 
             // Soma o valor
-            globalModValue += (parseInt(m.value) || 0);
+            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
             
             // Verifica o Teto (Cap)
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
@@ -921,7 +921,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
         const effectMods = _collectEffectRollModifiers(actor, rollContext);
         effectMods.forEach(m => {
-            globalModValue += (parseInt(m.value) || 0);
+            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -1385,8 +1385,161 @@ function _matchesRollContext(modContext, rollContext) {
     }
     if (modContext === 'attack') return rollContext.startsWith('attack');
     if (modContext === 'defense') return rollContext.startsWith('defense');
-    if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
+ if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
     return modContext === rollContext;
+}
+
+function _splitModifierArgs(rawValue) {
+    const source = String(rawValue ?? "");
+    const args = [];
+    let current = "";
+    let depth = 0;
+    for (const ch of source) {
+        if (ch === "," && depth === 0) {
+            if (current.trim()) args.push(current.trim());
+            current = "";
+            continue;
+        }
+        if (ch === "(") depth += 1;
+        else if (ch === ")" && depth > 0) depth -= 1;
+        current += ch;
+    }
+    if (current.trim()) args.push(current.trim());
+    return args;
+}
+
+function _toModifierNumberOrZero(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    const direct = Number(value);
+    if (Number.isFinite(direct)) return direct;
+    const match = String(value).match(/[+-]?\d+(\.\d+)?/);
+    return match ? Number(match[0]) || 0 : 0;
+}
+
+function _resolveRollItemAttackContext(actor, rollData = {}) {
+    const itemId = rollData?.itemId;
+    if (!itemId) return { item: null, attack: null };
+    const item = actor?.items?.get(itemId) || null;
+    if (!item) return { item: null, attack: null };
+
+    const attackId = rollData?.attackId;
+    if (!attackId) return { item, attack: null };
+    const attack =
+        item.system?.ranged_attacks?.[attackId]
+        ?? item.system?.melee_attacks?.[attackId]
+        ?? null;
+    return { item, attack };
+}
+
+function _resolveModifierReferenceValue(actor, rawReference, rollData = {}) {
+    const referenceRaw = String(rawReference ?? "").trim();
+    if (!referenceRaw) return 0;
+
+    const modifierMatch = referenceRaw.match(/^(.*?)([+-]\d+)\s*$/);
+    let reference = referenceRaw;
+    let modifier = 0;
+    if (modifierMatch) {
+        const parsedModifier = Number(modifierMatch[2]);
+        if (Number.isFinite(parsedModifier) && modifierMatch[1]?.trim()) {
+            reference = modifierMatch[1].trim();
+            modifier = parsedModifier;
+        }
+    }
+
+    const normalizedRef = reference.toLowerCase();
+    if (/^[+-]?\d+(\.\d+)?$/.test(normalizedRef)) {
+        return (Number(normalizedRef) || 0) + modifier;
+    }
+
+    const { item, attack } = _resolveRollItemAttackContext(actor, rollData);
+    if (normalizedRef.startsWith("item.")) {
+        const itemPath = normalizedRef.slice("item.".length);
+        const itemValue = foundry.utils.getProperty(item?.system ?? {}, itemPath);
+        return _toModifierNumberOrZero(itemValue) + modifier;
+    }
+    if (normalizedRef.startsWith("attack.") || normalizedRef.startsWith("ataque.")) {
+        const attackPath = normalizedRef.split(".").slice(1).join(".");
+        const attackValue = foundry.utils.getProperty(attack ?? {}, attackPath);
+        return _toModifierNumberOrZero(attackValue) + modifier;
+    }
+
+    const parameterAliases = {
+        holdout: item?.system?.holdout,
+        ocultamento: item?.system?.holdout,
+        precision: attack?.accuracy,
+        precisao: attack?.accuracy,
+        "precisão": attack?.accuracy,
+        prec: attack?.accuracy,
+        accuracy: attack?.accuracy,
+        magnitude: attack?.mag,
+        mag: attack?.mag
+    };
+    if (normalizedRef in parameterAliases) {
+        return _toModifierNumberOrZero(parameterAliases[normalizedRef]) + modifier;
+    }
+
+    const attrValue = resolveRollBaseValue(actor, normalizedRef);
+    if (attrValue !== null && attrValue !== undefined && !Number.isNaN(Number(attrValue))) {
+        return (Number(attrValue) || 0) + modifier;
+    }
+
+    const skill = actor?.items?.find((item) =>
+        item.type === "skill" && item.name?.toLowerCase().trim() === normalizedRef
+    );
+    if (skill) {
+        return (Number(skill.system?.final_nh) || 0) + modifier;
+    }
+
+    return modifier;
+}
+
+function _evaluateModifierValue(actor, rawValue, rollData = {}) {
+    if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
+    if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
+
+    const source = String(rawValue).trim();
+    if (!source) return 0;
+    if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    const evaluateArithmetic = (expression) => {
+        const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
+        const reserved = new Set(["maior", "menor", "max", "min", "math"]);
+        const prepared = expression.replace(tokenRegex, (token) => {
+            if (reserved.has(token.toLowerCase())) return token;
+            return `get(\"${token}\")`;
+        });
+        try {
+            return Function(
+                "get",
+                "maior",
+                "menor",
+                "max",
+                "min",
+                `"use strict"; return (${prepared});`
+            )(
+                (token) => _resolveModifierReferenceValue(actor, token, rollData),
+                (...args) => Math.max(...args),
+                (...args) => Math.min(...args),
+                (...args) => Math.max(...args),
+                (...args) => Math.min(...args)
+            );
+        } catch (_) {
+            return null;
+        }
+    };
+
+    const expressionMatch = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
+    if (expressionMatch) {
+        const mode = /^(menor|min)$/i.test(expressionMatch[1]) ? "min" : "max";
+        const values = _splitModifierArgs(expressionMatch[2]).map((entry) => _resolveModifierReferenceValue(actor, entry, rollData));
+        if (!values.length) return 0;
+        return mode === "min" ? Math.min(...values) : Math.max(...values);
+    }
+
+    const arithmeticResult = evaluateArithmetic(source);
+    if (Number.isFinite(arithmeticResult)) return arithmeticResult;
+
+    return _resolveModifierReferenceValue(actor, source, rollData);
 }
 
 function _collectEffectRollModifiers(actor, rollContext) {
