@@ -158,7 +158,7 @@ function _getCurrentUserRollMode() {
     return game.settings?.get("core", "rollMode") ?? CONST.DICE_ROLL_MODES.PUBLIC;
 }
 
-function _applyCurrentRollPrivacy(chatData, { force = false } = {}) {
+export function applyCurrentRollPrivacy(chatData, { force = false } = {}) {
     if (!chatData || typeof chatData !== "object") return chatData;
 
     const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
@@ -1037,7 +1037,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
 
 
-    const chatData = _applyCurrentRollPrivacy({
+    const chatData = applyCurrentRollPrivacy({
         user: game.user.id,
         speaker: ChatMessage.getSpeaker({ actor: actor }),
         content: content,
@@ -1316,7 +1316,7 @@ async function _rollDamageFromChatAction(payload) {
       </div>
     `;
 
-    const chatData = _applyCurrentRollPrivacy({
+    const chatData = applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor }),
         content,
         rolls
@@ -1673,7 +1673,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     `;
 
 
-    const chatData = _applyCurrentRollPrivacy({
+    const chatData = applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
         content
     });

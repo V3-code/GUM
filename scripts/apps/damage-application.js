@@ -1,4 +1,4 @@
-import { applyContingentCondition } from "../main.js";
+import { applyContingentCondition, applyCurrentRollPrivacy } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
 import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
 
@@ -630,7 +630,8 @@ async _updateDamageCalculation(form) {
         const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
         const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
         await this.updateEffectCard(effectId, { isSuccess: success, shouldApply, resultText }, effect.item.system);
-        ChatMessage.create({ content: resultText, whisper: ChatMessage.getWhisperRecipients("GM") });
+        const chatData = applyCurrentRollPrivacy({ content: resultText });
+        ChatMessage.create(chatData);
     }
     
       async _applyShockEffect(injury) {
@@ -823,7 +824,7 @@ if (shouldPublish) {
                         <strong>${this.attackerActor.name}</strong>
                     </div>
                     <div class="arrow-line">
-                        <i class="fas fa-arrow-down"></i>
+                        <i class="fas fa-arrow-right"></i>
                     </div>
                     <div class="actor-line">
                         <img src="${this.targetActor.img}" class="actor-token-icon">
@@ -857,10 +858,11 @@ if (shouldPublish) {
     `;
 
 
-    ChatMessage.create({
+    const summaryChatData = applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
         content: messageContent
     });
+    ChatMessage.create(summaryChatData);
 }
 
             for (const effect of pendingResistanceQueue) {
@@ -986,7 +988,8 @@ if (shouldPublish) {
             </div>
         `;
 
-        ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: target }), content });
+        const resistanceChatData = applyCurrentRollPrivacy({ speaker: ChatMessage.getSpeaker({ actor: target }), content });
+        ChatMessage.create(resistanceChatData);
     }
     
     _getAdjustedWoundingModifiers(locationKey) {

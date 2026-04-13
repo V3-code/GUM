@@ -81,6 +81,18 @@ Disponível nas configurações do sistema:
 3. Acione a sincronização de regras quando atualizar compêndios de condições passivas.
 4. Utilize exportação JSON como rotina de backup e migração.
 
+## Sintaxe de modificadores de rolagem (efeitos)
+
+O campo **Valor** em ações de **Modificador de Rolagem** aceita expressões.
+
+Resumo rápido:
+
+- número fixo: `-2`, `+1`;
+- referências de atributo/perícia: `dx`, `per`, `Furtividade`;
+- parâmetros do item/ataque atual: `item.holdout`, `attack.accuracy`, `attack.mag`;
+- funções: `maior(a,b)` / `menor(a,b)` (sinônimos: `max` / `min`);
+- operações aritméticas: `+`, `-`, `*`, `/`, incluindo unário (`-mag`).
+
 ## Instalação
 
 ### Opção A — URL de manifesto (recomendada)
