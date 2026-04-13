@@ -23,22 +23,24 @@
     <main class="sheet-body">
         <div class="sheet-body-content effect-sheet-body">
            <div class="tab" data-tab="efeitos-ativos" data-group="primary">
-                <section class="effect-card effect-section">
-                    <div class="effect-section-header">
+  <section class="effect-card effect-section">
+                    <div class="effect-section-header effect-actions-header">
                         <h4 class="effect-section-title">Ações do Efeito</h4>
-                        <button type="button" class="add-effect-action"><i class="fas fa-plus"></i> Adicionar Ação</button>
+                        <button type="button" class="add-effect-action effect-actions-add-button"><i class="fas fa-plus"></i> Adicionar Ação</button>
                     </div>
-                    <p class="hint">Todas as ações abaixo compartilham a mesma barreira de resistência e duração.</p>
-
                     {{#if effectActions.length}}
                     <div class="conditional-fields modern">
                         {{#each effectActions as |action|}}
-                        <div class="conditional-card">
-                            <div class="effect-section-header">
-                                <h5 class="effect-section-title">Ação {{action.displayIndex}}{{#if action.label}} — {{action.label}}{{/if}}</h5>
-                                <button type="button" class="remove-effect-action modifier-entry-inline-action danger" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
-                            </div>
+                        <div class="conditional-card effect-action-card">
+                            <details class="effect-action-details" open>
+                                <summary class="effect-action-summary">
+                                    <h5 class="effect-section-title">Ação {{action.displayIndex}}{{#if action.label}} — {{action.label}}{{/if}}</h5>
+                                    <div class="effect-action-summary-controls">
+                                        <button type="button" class="remove-effect-action modifier-entry-inline-action danger js-summary-action" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
 
+                                    </div>
+                                </summary>
+                                <div class="effect-action-body">
                             <div class="effect-row-grid effect-duration-grid is-two-col-rows">
                                 <div class="effect-field effect-field-row">
                                     <label class="effect-label">Rótulo (ficha do personagem)</label>
@@ -183,7 +185,7 @@
                             {{/if}}
 
                             {{#if (eq action.type 'flag')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+ <div class="effect-row-grid effect-duration-grid is-two-col-rows">
                                 <div class="effect-field effect-field-row">
                                     <label class="effect-label">Chave</label>
                                     <input type="text" name="system.actions.{{action.index}}.key" value="{{action.key}}"/>
@@ -194,6 +196,8 @@
                                 </div>
                             </div>
                             {{/if}}
+                                </div>
+                            </details>
                         </div>
                         {{/each}}
                     </div>

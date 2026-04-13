@@ -241,6 +241,7 @@ activateListeners(html) {
 
     html.on("click", ".remove-effect-action", async (ev) => {
         ev.preventDefault();
+        ev.stopPropagation();
         const index = Number(ev.currentTarget.dataset.index);
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
