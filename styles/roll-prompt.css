@@ -12,10 +12,18 @@
 
 .gum-roll-prompt.two-column-layout {
     display: grid;
-    grid-template-columns: 1.8fr 1fr; 
+    grid-template-columns: 1.8fr 1fr;
     height: auto;
-    min-height: 600px; 
-    align-items: stretch; 
+    min-height: 600px;
+    align-items: stretch;
+}
+
+.gum-roll-prompt.two-column-layout.modifiers-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.gum-roll-prompt.two-column-layout.modifiers-collapsed .prompt-menu-column {
+    display: none;
 }
 
 /* --- COLUNA ESQUERDA: MENU DE OPÇÕES --- */
@@ -191,11 +199,28 @@
     box-shadow: -5px 0 15px rgba(0,0,0,0.3);
     z-index: 2;
     height: auto;
+    min-width: 0;
 }
-.command-header { 
-    display: flex; align-items: center; gap: 10px; 
-    padding-bottom: 10px; 
-    border-bottom: 1px solid var(--gum-border-light); 
+.command-header {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--gum-border-light);
+}
+
+.menu-toggle-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--gum-accent-gold);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.menu-toggle-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: var(--gum-accent-gold);
 }
 
 .roll-icon-small { 

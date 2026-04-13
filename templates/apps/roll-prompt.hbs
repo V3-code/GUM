@@ -1,4 +1,4 @@
-<form class="gum-roll-prompt two-column-layout" autocomplete="off">
+<form class="gum-roll-prompt two-column-layout {{#if menuCollapsed}}modifiers-collapsed{{/if}}" autocomplete="off">
 
     {{!-- COLUNA DA ESQUERDA: MENU DE OPÇÕES (SCROLL) --}}
     <div class="prompt-menu-column">
@@ -43,6 +43,9 @@
 
         {{!-- 1. CABEÇALHO (Compacto) --}}
         <div class="command-header">
+            <button type="button" class="menu-toggle-btn" title="Mostrar/Ocultar modificadores" aria-expanded="{{#if menuCollapsed}}false{{else}}true{{/if}}">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="roll-icon-small">
                 {{#if img}}<img src="{{img}}">{{else}}<i class="fas fa-dice-d20"></i>{{/if}}
             </div>

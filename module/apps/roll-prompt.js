@@ -2,6 +2,8 @@ import { performGURPSRoll } from "../../scripts/main.js";
 import { GUM_DEFAULTS } from "../gum-defaults.js";
 
 export class GurpsRollPrompt extends FormApplication {
+    static COLLAPSED_WIDTH = 380;
+    static EXPANDED_WIDTH = 780;
     
  constructor(actor, rollData, options = {}) {
         super(options);
@@ -20,6 +22,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.baseDelta = 0;
         this.baseModifierParts = [];
         this.baseAttributeSourceLabel = "Perícia";
+        this.isMenuCollapsed = true;
 
         this.context = this._determineContext();
 
@@ -39,7 +42,7 @@ export class GurpsRollPrompt extends FormApplication {
             title: "Configurar Rolagem",
             id: "gurps-roll-prompt",
             template: "systems/gum/templates/apps/roll-prompt.hbs",
-            width: 780, 
+            width: GurpsRollPrompt.EXPANDED_WIDTH,
             height: "auto",
             classes: ["gum", "roll-prompt", "theme-dark"],
             closeOnSubmit: true,
@@ -624,6 +627,7 @@ return 'default';
         context.baseAttributeSecondary = context.baseAttributeOptions.filter(option => option.type !== "attribute");
         const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
         context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
+        context.menuCollapsed = this.isMenuCollapsed;
         
         context.blocks = await this._fetchAndOrganizeModifiers();
         return context;
@@ -632,6 +636,7 @@ return 'default';
     activateListeners(html) {
         super.activateListeners(html);
         const inputManual = html.find('input[name="manualMod"]');
+        this._applyMenuState(html);
 
         html.find('.step-btn').click(ev => {
             ev.preventDefault();
@@ -747,9 +752,23 @@ return 'default';
 
             this._updateTotals(html);
         });
-        
+
+        html.find('.menu-toggle-btn').click(ev => {
+            ev.preventDefault();
+            this.isMenuCollapsed = !this.isMenuCollapsed;
+            this._applyMenuState(html);
+        });
+
         // Inicializa
         this._updateTotals(html);
+    }
+
+    _applyMenuState(html) {
+        html.toggleClass('modifiers-collapsed', this.isMenuCollapsed);
+        const toggleBtn = html.find('.menu-toggle-btn');
+        toggleBtn.attr('aria-expanded', String(!this.isMenuCollapsed));
+        const width = this.isMenuCollapsed ? GurpsRollPrompt.COLLAPSED_WIDTH : GurpsRollPrompt.EXPANDED_WIDTH;
+        this.setPosition({ width });
     }
 
 _updateTotals(html) {
