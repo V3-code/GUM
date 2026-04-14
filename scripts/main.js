@@ -2557,11 +2557,14 @@ $('body').on('click', '.resistance-roll-button', async ev => {
             </div>
         `;
 
-        // Atualiza a mensagem original no chat
-        const originalMessage = game.messages.get($(button).closest('.message').data('messageId'));
-        if (originalMessage) {
-            await originalMessage.update({ content: flavor, rolls: [roll] });
-        }
+        // Publica o resultado em uma nova mensagem para evitar conflitos com hooks
+        // de renderizacao que dependem do HTML original da solicitacao de resistencia.
+        const resultChatData = applyCurrentRollPrivacy({
+            speaker: ChatMessage.getSpeaker({ actor: resistingActor }),
+            content: flavor,
+            rolls: [roll]
+        });
+        await ChatMessage.create(resultChatData);
     };
 
     if (ev.shiftKey) {
