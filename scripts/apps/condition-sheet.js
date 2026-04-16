@@ -30,6 +30,22 @@ export class ConditionSheet extends ItemSheet {
    async getData(options) {
         const context = await super.getData(options);
         context.system = this.item.system;
+        context.system.bindingMode = context.system.bindingMode || "conditional";
+        context.system.statusBinding = context.system.statusBinding || {};
+        context.system.statusBinding.statusId = context.system.statusBinding.statusId || "";
+        context.system.statusBinding.stackMode = context.system.statusBinding.stackMode || "refresh";
+        if (context.system.statusBinding.stackLimit === undefined || context.system.statusBinding.stackLimit === null) {
+            context.system.statusBinding.stackLimit = 1;
+        }
+        if (context.system.statusBinding.removeOnStatusOff === undefined) {
+            context.system.statusBinding.removeOnStatusOff = true;
+        }
+        if (context.system.statusBinding.enabled === undefined) {
+            context.system.statusBinding.enabled = true;
+        }
+        context.statusEffects = (CONFIG.statusEffects || [])
+            .map((status) => ({ id: status.id, label: status.name }))
+            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.owner = this.item.isOwner;
@@ -89,6 +105,20 @@ export class ConditionSheet extends ItemSheet {
     activateListeners(html) {
         super.activateListeners(html);
         if (!this.isEditable) return;
+
+        html.find('select[name="system.bindingMode"]').on('change', async (ev) => {
+            const nextMode = ev.currentTarget.value;
+            if (nextMode === "conditional") {
+                await this.item.update({
+                    "system.statusBinding.statusId": "",
+                    "system.statusBinding.enabled": false
+                });
+            } else if (nextMode === "status-link") {
+                await this.item.update({
+                    "system.statusBinding.enabled": true
+                });
+            }
+        });
 
         // --- ABA DE EFEITOS ---
 

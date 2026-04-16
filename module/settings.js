@@ -119,6 +119,15 @@ export const registerSystemSettings = function() {
         default: true
     });
 
+    game.settings.register("gum", "statusBindingsCompendium", {
+        name: "Compêndio de Vínculos de Status",
+        hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "gum.status_bindings"
+    });
+
     // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
         name: "Sincronizar Regras do Compêndio",

@@ -95,7 +95,56 @@
                         </div>
                         <span class="section-tag">JavaScript</span>
                     </div>
-                    <p class="hint">Regra para aplicar os efeitos. Deixe em branco para ser incondicional.</p>
+
+                    <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin-bottom: 8px;">
+                        <div class="effect-field effect-field-row">
+                            <label class="effect-label">Modo da condição</label>
+                            <select name="system.bindingMode">
+                                <option value="conditional" {{#if (eq system.bindingMode "conditional")}}selected{{/if}}>When (expressão)</option>
+                                <option value="status-link" {{#if (eq system.bindingMode "status-link")}}selected{{/if}}>Vínculo de Status</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{#if (eq system.bindingMode "status-link")}}
+                    <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin-bottom: 8px;">
+                        <div class="effect-field effect-field-row">
+                            <label class="effect-label">Status vinculado</label>
+                            <select name="system.statusBinding.statusId">
+                                <option value="">— Selecionar —</option>
+                                {{#each statusEffects as |status|}}
+                                <option value="{{status.id}}" {{#if (eq ../system.statusBinding.statusId status.id)}}selected{{/if}}>{{status.label}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="effect-field effect-field-row">
+                            <label class="effect-label">Empilhamento</label>
+                            <select name="system.statusBinding.stackMode">
+                                <option value="refresh" {{#if (eq system.statusBinding.stackMode "refresh")}}selected{{/if}}>Atualizar duração</option>
+                                <option value="replace" {{#if (eq system.statusBinding.stackMode "replace")}}selected{{/if}}>Substituir</option>
+                                <option value="stack" {{#if (eq system.statusBinding.stackMode "stack")}}selected{{/if}}>Empilhar</option>
+                            </select>
+                        </div>
+                        <div class="effect-field effect-field-row">
+                            <label class="effect-label">Limite de stacks</label>
+                            <input type="number" min="1" step="1" name="system.statusBinding.stackLimit" value="{{system.statusBinding.stackLimit}}"/>
+                        </div>
+                    </div>
+                    <div class="checkbox-options" style="margin-bottom: 10px;">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.statusBinding.enabled" {{checked system.statusBinding.enabled}}/>
+                            <span>Habilitado para vínculo por status</span>
+                        </label>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" name="system.statusBinding.removeOnStatusOff" {{checked system.statusBinding.removeOnStatusOff}}/>
+                            <span>Remover efeitos quando status sair</span>
+                        </label>
+                    </div>
+                    {{else}}
+                    <p class="hint">Modo <strong>When</strong> ativo: vínculo de status definido como <strong>sem vínculo</strong>.</p>
+                    {{/if}}
+
+                    {{#if (eq system.bindingMode "conditional")}}
                     <div class="condition-input-area">
                         <textarea name="system.when" rows="6" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
                         <div class="button-group">
@@ -109,6 +158,9 @@
                             </a>
                         </div>
                     </div>
+                    {{else}}
+                    <p class="hint">No modo <strong>Vínculo de Status</strong>, o campo <code>when</code> fica oculto para evitar conflitos.</p>
+                    {{/if}}
                 </section>
             </div>
 

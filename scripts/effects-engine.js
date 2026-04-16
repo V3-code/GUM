@@ -238,6 +238,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     effectUuid: effectItem.uuid,
                     source: context.source || null,
                     originItemId: context.originItemId ?? null,
+                    statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
+                    statusBindingStatusId: context.statusBindingStatusId ?? null,
                     duration: gumDuration,
                     ...conditionFlags
                 }
@@ -319,19 +321,17 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         };
                     }
 
-                    if (isIconCarrier) {
+                    if (isIconCarrier && action.type !== "status") {
                         activeEffectData.statuses.push(fallbackCoreStatusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", fallbackCoreStatusId);
                     }
                     if (action.type === "status" && action.statusId) {
                         const statusEffect = (CONFIG.statusEffects || []).find((status) => status.id === action.statusId);
-                        if (!activeEffectData.img) {
-                            activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
-                        }
+                        activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
                         activeEffectData.statuses.push(action.statusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
                     }
-                    if (effectSystem.attachedStatusId && isIconCarrier) {
+                    if (effectSystem.attachedStatusId && isIconCarrier && action.type !== "status") {
                         activeEffectData.statuses.push(effectSystem.attachedStatusId);
                     }
                     activeEffectData.statuses = [...new Set(activeEffectData.statuses.filter(Boolean))];

@@ -306,6 +306,7 @@ const add_sub_modifiers = {};
         const conditions = this.items.filter(i => i.type === "condition"); 
         
         for (const condition of conditions) {
+            if (condition.system?.bindingMode === "status-link") continue;
             if (condition.getFlag("gum", "manual_override")) continue;
             let isConditionActive = false;
             try {
@@ -1755,9 +1756,10 @@ Hooks.once('init', async function() {
         // 1. REGRAS / CONDIÇÕES PASSIVAS
         const rulesPack = game.packs.get("gum.regras")
             || game.packs.find(p => p.metadata.label === "[GUM] Condições Passivas");
-        if (rulesPack) {
+  if (rulesPack) {
             const rules = await rulesPack.getDocuments();
             rules.forEach(item => {
+                if (item.type === "condition" && item.system?.bindingMode === "status-link") return;
                 const data = item.toObject();
                 // Vincula ao compêndio para futuras atualizações
                 data._stats = { compendiumSource: item.uuid }; 
@@ -1797,10 +1799,14 @@ Hooks.once('init', async function() {
     });
 
     // Gatilho principal para quando os dados do ator mudam (HP, etc.)
-    Hooks.on("updateActor", (actor, data, options, userId) => {
-        if (game.user.id === userId) {
-            processConditions(actor, options.gumEventData);
+    Hooks.on("updateActor", async (actor, data, options = {}, userId) => {
+        if (game.user.id !== userId) return;
+        try {
+            await processConditions(actor, options.gumEventData);
+            await processStatusBindings(actor);
             actor.getActiveTokens().forEach(token => token.drawEffects());
+        } catch (error) {
+            console.error("GUM | Falha no hook updateActor durante processamento de condições/status binding.", error);
         }
     });
 
@@ -1844,6 +1850,7 @@ Hooks.on("createItem", async (item, options, userId) => {
             
             // Força a reavaliação e redesenho UMA VEZ no final, após todos os efeitos
             await processConditions(actor);
+            await processStatusBindings(actor);
             actor.sheet.render(false);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
@@ -1858,6 +1865,7 @@ Hooks.on("createItem", async (item, options, userId) => {
         // --- LÓGICA EXISTENTE PARA 'condition' ---
         if (item.type === "condition") {
             await processConditions(actor);
+            await processStatusBindings(actor);
             // O redesenho será feito no final, não precisamos mais dele aqui.
         }
 
@@ -1911,6 +1919,7 @@ Hooks.on("createItem", async (item, options, userId) => {
         // --- Chamada final de atualização ---
         // Sempre reavalia e redesenha após QUALQUER atualização de item no ator
         await processConditions(actor);
+        await processStatusBindings(actor);
         actor.sheet.render(false);
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
@@ -1953,6 +1962,7 @@ Hooks.on("createItem", async (item, options, userId) => {
         // Sempre chama processConditions e redesenha após deletar QUALQUER item,
         // garantindo que o estado do ator seja reavaliado.
         await processConditions(actor);
+        await processStatusBindings(actor);
         actor.sheet.render(false);
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
@@ -2809,6 +2819,150 @@ const resolveRollBaseValue = (actor, rollAttribute) => {
  * @param {Actor} actor O ator a ser processado.
  */
 let evaluatingActors = new Set(); 
+const processingStatusBindingActors = new Set();
+const STATUS_BINDINGS_CACHE_TTL_MS = 15_000;
+const statusBindingsCache = {
+    packId: null,
+    docs: [],
+    loadedAt: 0
+};
+
+const getConfiguredStatusBindingsPack = () => {
+    const configuredId = (game.settings.get("gum", "statusBindingsCompendium") || "").trim();
+    if (configuredId && game.packs.has(configuredId)) return game.packs.get(configuredId);
+    if (game.packs.has("gum.conditions")) return game.packs.get("gum.conditions");
+    return null;
+};
+
+const normalizeStatusBindingMode = (value) => {
+    const normalized = `${value ?? ""}`.trim().toLowerCase();
+    if (["replace", "stack", "refresh"].includes(normalized)) return normalized;
+    return "refresh";
+};
+
+const buildFallbackTokenForActor = (fallbackActor) => ({
+    actor: fallbackActor,
+    id: null,
+    name: fallbackActor?.name || "Alvo",
+    document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
+});
+
+const getEffectStatusIds = (effect, validStatusSet) => {
+    const collected = new Set();
+    const statusArray = Array.from(effect?.statuses ?? []);
+    for (const statusId of statusArray) {
+        if (validStatusSet.has(statusId)) collected.add(statusId);
+    }
+    const coreStatusId = foundry.utils.getProperty(effect, "flags.core.statusId");
+    if (validStatusSet.has(coreStatusId)) collected.add(coreStatusId);
+    return [...collected];
+};
+
+const getActorActiveNativeStatusSet = (actor) => {
+    const validStatusSet = new Set((CONFIG.statusEffects || []).map((status) => status.id));
+    const activeStatuses = new Set();
+    for (const effect of actor?.effects || []) {
+        const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+        const isPendingCombat = gumDuration.pendingCombat === true;
+        const isPendingStart = gumDuration.pendingStart === true;
+        if (effect?.disabled || effect?.isSuppressed || isPendingCombat || isPendingStart) continue;
+        const effectStatuses = getEffectStatusIds(effect, validStatusSet);
+        for (const statusId of effectStatuses) activeStatuses.add(statusId);
+    }
+    return activeStatuses;
+};
+
+const loadStatusBindingRules = async () => {
+    const now = Date.now();
+    const pack = getConfiguredStatusBindingsPack();
+    if (!pack) return [];
+    if (statusBindingsCache.packId === pack.collection
+        && (now - statusBindingsCache.loadedAt) < STATUS_BINDINGS_CACHE_TTL_MS) {
+        return statusBindingsCache.docs;
+    }
+
+    const docs = await pack.getDocuments();
+    const statusRules = docs.filter((doc) => doc?.type === "condition"
+        && doc.system?.bindingMode === "status-link");
+    statusBindingsCache.packId = pack.collection;
+    statusBindingsCache.docs = statusRules;
+    statusBindingsCache.loadedAt = now;
+    return statusRules;
+};
+
+async function processStatusBindings(actor) {
+    if (!actor || processingStatusBindingActors.has(actor.id)) return;
+    processingStatusBindingActors.add(actor.id);
+    try {
+        const activeStatuses = getActorActiveNativeStatusSet(actor);
+        const statusRules = await loadStatusBindingRules();
+        const effectsToDelete = [];
+        for (const rule of statusRules) {
+            const binding = rule.system?.statusBinding || {};
+            const isEnabled = binding.enabled !== false;
+            const statusId = `${binding.statusId || ""}`.trim();
+            if (!isEnabled || !statusId) continue;
+            const shouldBeActive = activeStatuses.has(statusId);
+            const removeOnStatusOff = binding.removeOnStatusOff !== false;
+            const stackMode = normalizeStatusBindingMode(binding.stackMode);
+            const stackLimit = Math.max(1, Number(binding.stackLimit) || 1);
+            const effectLinks = Array.isArray(rule.system?.effects) ? rule.system.effects : [];
+
+            const existingRuleEffects = actor.effects.filter((effect) =>
+                foundry.utils.getProperty(effect, "flags.gum.source") === "statusBinding"
+                && foundry.utils.getProperty(effect, "flags.gum.statusBindingRuleUuid") === rule.uuid
+                && foundry.utils.getProperty(effect, "flags.gum.statusBindingStatusId") === statusId
+            );
+
+            if (!shouldBeActive) {
+                if (removeOnStatusOff && existingRuleEffects.length) {
+                    effectsToDelete.push(...existingRuleEffects.map((effect) => effect.id));
+                }
+                continue;
+            }
+
+            for (const link of effectLinks) {
+                const effectUuid = link?.uuid;
+                if (!effectUuid) continue;
+                const siblings = existingRuleEffects
+                    .filter((effect) => foundry.utils.getProperty(effect, "flags.gum.effectUuid") === effectUuid)
+                    .sort((a, b) => a.id.localeCompare(b.id));
+
+                if (stackMode === "replace" && siblings.length) {
+                    effectsToDelete.push(...siblings.map((effect) => effect.id));
+                } else if (stackMode === "refresh" && siblings.length) {
+                    const updates = siblings.map((effect) => ({
+                        _id: effect.id,
+                        duration: foundry.utils.duplicate(effect.duration || {})
+                    }));
+                    await actor.updateEmbeddedDocuments("ActiveEffect", updates);
+                    continue;
+                } else if (stackMode === "stack" && siblings.length >= stackLimit) {
+                    continue;
+                }
+
+                const effectItem = await fromUuid(effectUuid).catch(() => null);
+                if (!effectItem?.system) continue;
+                const targets = actor.getActiveTokens();
+                const finalTargets = targets.length ? targets : [buildFallbackTokenForActor(actor)];
+                await applySingleEffect(effectItem, finalTargets, {
+                    actor,
+                    origin: rule,
+                    source: "statusBinding",
+                    statusBindingRuleUuid: rule.uuid,
+                    statusBindingStatusId: statusId
+                });
+            }
+        }
+
+        const uniqueIds = [...new Set(effectsToDelete)];
+        if (uniqueIds.length) {
+            await actor.deleteEmbeddedDocuments("ActiveEffect", uniqueIds);
+        }
+    } finally {
+        processingStatusBindingActors.delete(actor.id);
+    }
+}
 
 async function processConditions(actor, eventData = null) {
     // FOCO ÚNICO: Avaliar ITENS de Condição e executar ações únicas (macro, chat, flag)
@@ -2861,6 +3015,7 @@ async function processConditions(actor, eventData = null) {
 
         // --- Loop para avaliar Condições e disparar ações únicas ---
         for (const condition of conditions) {
+             if (condition.system?.bindingMode === "status-link") continue;
              const wasActive = condition.getFlag("gum", "wasActive") || false;
              const isManuallyDisabled = condition.getFlag("gum", "manual_override") || false;
              let isConditionActiveNow = false;
@@ -3522,7 +3677,9 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
             const updateData = { _id: sibling.id };
 
             const carrierDuration = foundry.utils.getProperty(carrier, "flags.gum.duration") || {};
+            const siblingActionType = foundry.utils.getProperty(sibling, "flags.gum.actionType");
             const shouldDisplayCarrier = sibling.id === carrier.id
+                && siblingActionType !== "status"
                 && effectItem?.img
                 && shouldShowTokenIconForSystem(effectItem.system || {}, carrierDuration);
 
@@ -3559,6 +3716,7 @@ const refreshFromDeletedActiveEffect = async (effect) => {
     if (!actor) return;
     const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
     if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
+    await processStatusBindings(actor);
 
     if (actor.hasPlayerOwner || game.combat) {
         refreshGMScreen();
@@ -3569,19 +3727,23 @@ Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
 Hooks.on("updateActiveEffect", async (effect, changes) => {
     const actor = effect?.parent;
     if (!actor) return;
-    const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-    if (!effectUuid) return;
-
     const disabledChanged = Object.prototype.hasOwnProperty.call(changes || {}, "disabled");
     const statusesChanged = Object.prototype.hasOwnProperty.call(changes || {}, "statuses")
         || Object.prototype.hasOwnProperty.call(changes?.flags?.core || {}, "statusId");
     if (!disabledChanged && !statusesChanged) return;
 
-    await rebalanceEffectCarrier(actor, effectUuid);
+    const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+    if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
+    await processStatusBindings(actor);
 });
 
 
 Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
+Hooks.on("createActiveEffect", async (effect) => {
+    const actor = effect?.parent;
+    if (!actor) return;
+    await processStatusBindings(actor);
+});
 
 // 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa

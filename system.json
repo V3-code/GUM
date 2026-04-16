@@ -89,11 +89,19 @@
       "type": "Item",
       "private": false
     },
-    {
+ {
       "name": "conditions",
       "label": "[GUM] Condições",
       "system": "gum",
       "path": "./packs/conditions",
+      "type": "Item",
+      "private": false
+    },
+    {
+      "name": "status_bindings",
+      "label": "[GUM] Vínculos de Status",
+      "system": "gum",
+      "path": "./packs/status_bindings",
       "type": "Item",
       "private": false
     },

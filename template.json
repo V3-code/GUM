@@ -630,6 +630,14 @@
       "templates": [
         "base"
       ],
+      "bindingMode": "conditional",
+      "statusBinding": {
+        "statusId": "",
+        "stackMode": "refresh",
+        "stackLimit": 1,
+        "removeOnStatusOff": true,
+        "enabled": true
+      },
       "when": "",
       "effects": [],
       "flags": {
