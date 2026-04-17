@@ -247,18 +247,21 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             disabled: pendingCombat || shouldDelayStart
         };
 
-        if (!isEffectDurationPermanent(gumDuration)) {
+ if (!isEffectDurationPermanent(gumDuration)) {
             activeEffectData.duration = {};
             const value = parseInt(gumDuration.value) || 1;
             const unit = gumDuration.unit;
-            if (unit === "turns") activeEffectData.duration.turns = value;
-            else if (unit === "seconds") activeEffectData.duration[gumDuration.inCombat && game.combat ? "turns" : "seconds"] = value;
-            else if (unit === "rounds") activeEffectData.duration.rounds = value;
-            else if (unit === "minutes") activeEffectData.duration.seconds = value * 60;
-            else if (unit === "hours") activeEffectData.duration.seconds = value * 60 * 60;
-            else if (unit === "days") activeEffectData.duration.seconds = value * 60 * 60 * 24;
+            const usesCombatDuration = gumDuration.inCombat && game.combat;
+            if (!usesCombatDuration) {
+                if (unit === "turns") activeEffectData.duration.turns = value;
+                else if (unit === "seconds") activeEffectData.duration.seconds = value;
+                else if (unit === "rounds") activeEffectData.duration.rounds = value;
+                else if (unit === "minutes") activeEffectData.duration.seconds = value * 60;
+                else if (unit === "hours") activeEffectData.duration.seconds = value * 60 * 60;
+                else if (unit === "days") activeEffectData.duration.seconds = value * 60 * 60 * 24;
+            }
 
-            if (gumDuration.inCombat && game.combat) activeEffectData.duration.combat = game.combat.id;
+            if (usesCombatDuration) activeEffectData.duration.combat = game.combat.id;
             if (!pendingCombat && !shouldDelayStart) {
                 activeEffectData.duration.startRound = game.combat?.round ?? null;
                 activeEffectData.duration.startTurn = game.combat?.turn ?? null;

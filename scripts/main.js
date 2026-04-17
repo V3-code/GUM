@@ -3095,10 +3095,26 @@ async function processConditions(actor, eventData = null) {
                             }
                         }
                         if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
-                            const effectsToRemove = actor.effects.filter((effect) =>
-                                effect?.flags?.gum?.conditionId === condition.id
-                                && effect?.flags?.gum?.effectUuid === effectItem.uuid
-                            );
+                            const effectsToRemove = actor.effects.filter((effect) => {
+                                const sameConditionSource = effect?.flags?.gum?.conditionId === condition.id
+                                    && effect?.flags?.gum?.effectUuid === effectItem.uuid;
+                                if (!sameConditionSource) return false;
+
+                                const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+                                const finiteGumDuration = !isEffectDurationPermanent(gumDuration)
+                                    && (
+                                        (Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0)
+                                        || effect.duration?.rounds
+                                        || effect.duration?.turns
+                                        || effect.duration?.seconds
+                                    );
+
+                                // Efeitos temporários devem expirar pela própria duração, não
+                                // por desligamento da condição (evita remoção precoce em fluxos
+                                // acionados por evento, ex.: dano + resistência).
+                                if (finiteGumDuration) return false;
+                                return true;
+                            });
                             if (effectsToRemove.length) {
                                 await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToRemove.map(effect => effect.id));
                             }
@@ -3139,12 +3155,14 @@ async function manageActiveEffectDurations(actor) {
 
         if (effect.disabled || isPendingCombat || isPendingStart) continue;
 
-        // Em combate, "rounds" representa ciclos completos do alvo.
+        // Em combate, "rounds" e "turns" representam ciclos completos do alvo.
         // O incremento do contador acontece no início do turno do alvo; aqui,
         // no fim do turno, apenas verificamos expiração para endMode=turnEnd.
-        if (duration.rounds && isCombatDuration(gumDuration)) {
+        const hasCombatValue = Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0;
+        if ((duration.rounds || duration.turns || hasCombatValue) && isCombatDuration(gumDuration)) {
             const elapsedTargetTurns = Number(gumDuration.elapsedTargetTurns) || 0;
-            if (endMode === "turnEnd" && elapsedTargetTurns >= Math.max(duration.rounds, 1)) {
+            const targetDuration = Math.max(parseInt(gumDuration.value) || duration.rounds || duration.turns || 0, 1);
+            if (endMode === "turnEnd" && elapsedTargetTurns >= targetDuration) {
                 effectsToDelete.push(effect.id);
             } else if (Object.keys(updateData).length > 1) {
                 effectsToUpdate.push(updateData);
@@ -3161,11 +3179,6 @@ async function manageActiveEffectDurations(actor) {
             const unit = gumDuration.unit || "rounds";
 
             if (isCombatDuration(gumDuration)) {
-                if (unit === "turns") {
-                    updateData["duration.turns"] = fallbackValue;
-                } else {
-                    updateData["duration.rounds"] = fallbackValue;
-                }
                 updateData["duration.combat"] = game.combat.id;
             } else {
                 if (unit === "seconds") {
@@ -3297,13 +3310,15 @@ async function handleCombatTurnStart(combatant) {
             setEffectStartData(effect, updateData, game.combat);
         }
 
-        if (duration.rounds && isCombatDuration(gumDuration)) {
+        const hasCombatValue = Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0;
+        if ((duration.rounds || duration.turns || hasCombatValue) && isCombatDuration(gumDuration)) {
             const elapsedTargetTurns = Number(gumDuration.elapsedTargetTurns) || 0;
             const nextElapsed = elapsedTargetTurns + 1;
+            const targetDuration = Math.max(parseInt(gumDuration.value) || duration.rounds || duration.turns || 0, 1);
 
             updateData["flags.gum.duration.elapsedTargetTurns"] = nextElapsed;
 
-            if (endMode === "turnStart" && nextElapsed >= Math.max(duration.rounds, 1)) {
+            if (endMode === "turnStart" && nextElapsed >= targetDuration) {
                 effectsToDelete.push(effect.id);
             } else {
                 effectsToUpdate.push(updateData);
