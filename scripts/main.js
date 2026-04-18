@@ -2999,23 +2999,18 @@ async function processConditions(actor, eventData = null) {
             }
             return normalized;
         };
-        const evaluateEffectValue = (value) => {
-            if (typeof value === "string") {
-                const trimmed = value.trim();
-                if (trimmed === "") return 0;
-                try {
-                    return new Function("actor", "game", `return (${trimmed});`)(actor, game);
-                } catch (error) {
-                    console.warn("GUM | Erro ao avaliar valor de efeito em condição:", error);
-                    return value;
-                }
-            }
-            return value;
+        const isEventDrivenCondition = (condition) => {
+            const when = condition?.system?.when;
+            if (typeof when !== "string") return false;
+            // Condições que dependem de "eventData" devem ser tratadas como gatilhos pulsados:
+            // ativam no evento e não entram em ciclo ligar/desligar persistente.
+            return /(^|[^.\w])eventData([.\[]|$)/.test(when);
         };
 
         // --- Loop para avaliar Condições e disparar ações únicas ---
         for (const condition of conditions) {
              if (condition.system?.bindingMode === "status-link") continue;
+             const isEventDriven = isEventDrivenCondition(condition);
              const wasActive = condition.getFlag("gum", "wasActive") || false;
              const isManuallyDisabled = condition.getFlag("gum", "manual_override") || false;
              let isConditionActiveNow = false;
@@ -3027,8 +3022,12 @@ async function processConditions(actor, eventData = null) {
              }
 
              const isEffectivelyActiveNow = isConditionActiveNow && !isManuallyDisabled;
-             const stateChanged = isEffectivelyActiveNow !== wasActive;
              const isPulseEvent = Boolean(eventData?.pulse);
+             // Condições dirigidas por evento (ex.: dano > metade do PV via eventData)
+             // não devem alternar estado persistente entre avaliações fora do evento.
+             const stateChanged = isEventDriven
+                 ? false
+                 : isEffectivelyActiveNow !== wasActive;
              const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow) || (isPulseEvent && isEffectivelyActiveNow);
 
              if (stateChanged) {
@@ -3082,7 +3081,7 @@ async function processConditions(actor, eventData = null) {
                      }
                  }
 
-                 if (stateChanged && !isEffectivelyActiveNow) { // Condição acabou de DESLIGAR
+                 if (!isEventDriven && stateChanged && !isEffectivelyActiveNow) { // Condição acabou de DESLIGAR
                      for (const link of effectLinks) {
                         if(!link.uuid) continue;
                         const effectItem = await fromUuid(link.uuid);
