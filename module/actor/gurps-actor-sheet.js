@@ -240,17 +240,17 @@ async getData(options) {
                     effectData.durationString = "Inicia no próximo turno";
                     isPermanent = false;
                 }
-                else if (d.seconds) {
+                else if (!isMarkedPermanent && d.seconds) {
                     effectData.durationString = `${d.seconds} seg.`;
                     isPermanent = false;
                 } 
-                else if (d.rounds) {
+                else if (!isMarkedPermanent && d.rounds) {
                     // Calcula rodadas restantes
                     const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
                     effectData.durationString = `${remaining} rodada(s)`;
                     isPermanent = false;
                 } 
-                else if (d.turns) {
+                else if (!isMarkedPermanent && d.turns) {
                     // Calcula turnos restantes
                     const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
                     effectData.durationString = `${remaining} turno(s)`;
@@ -259,9 +259,23 @@ async getData(options) {
                 else if (!isMarkedPermanent && countsInCombatOnly) {
                     // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
                     // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
-                    const fallbackValue = originalDuration.value ?? 1;
+                    const fallbackValue = parseInt(originalDuration.value ?? gumDuration.value) || 1;
                     const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
-                    effectData.durationString = `${fallbackValue} ${unit}`;
+                    const elapsedTargetTurns = Math.max(0, Number(gumDuration.elapsedTargetTurns) || 0);
+                    const endMode = originalDuration.endMode || gumDuration.endMode || "turnEnd";
+
+                    let remaining = fallbackValue;
+                    if (game.combat) {
+                        if (endMode === "turnStart") {
+                            remaining = Math.max(fallbackValue - elapsedTargetTurns, 0);
+                        } else {
+                            // Em "turnEnd", o turno corrente ainda conta até o seu fim.
+                            const consumedTurns = Math.max(elapsedTargetTurns - 1, 0);
+                            remaining = Math.max(fallbackValue - consumedTurns, 0);
+                        }
+                    }
+
+                    effectData.durationString = `${remaining} ${unit}`;
                     isPermanent = false;
                 }
                 else {

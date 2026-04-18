@@ -3174,7 +3174,13 @@ async function manageActiveEffectDurations(actor) {
 
         // Se o efeito foi marcado como "apenas em combate" no item original e ainda não
         // possui valores de duração aplicados pelo Foundry, convertemos agora.
-        if (!duration.rounds && !duration.turns && !duration.seconds && gumDuration.value) {
+        if (
+            !isEffectDurationPermanent(gumDuration)
+            && !duration.rounds
+            && !duration.turns
+            && !duration.seconds
+            && gumDuration.value
+        ) {
             const fallbackValue = parseInt(gumDuration.value) || 1;
             const unit = gumDuration.unit || "rounds";
 
@@ -3295,10 +3301,14 @@ async function handleCombatTurnStart(combatant) {
 
         const updateData = { _id: effect.id };
 
-  if (isPendingStart) {
+        if (isPendingStart) {
             setEffectStartData(effect, updateData, game.combat);
             updateData["flags.gum.duration.pendingStart"] = false;
-            updateData["flags.gum.duration.elapsedTargetTurns"] = 0;
+            // O efeito acabou de começar no início deste turno do alvo.
+            // Para durações em combate baseadas em "turnos do alvo", este turno já conta.
+            const hasCombatValue = Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0;
+            const isTargetTurnTracked = (duration.rounds || duration.turns || hasCombatValue) && isCombatDuration(gumDuration);
+            updateData["flags.gum.duration.elapsedTargetTurns"] = isTargetTurnTracked ? 1 : 0;
             updateData["disabled"] = false;
             effectsToUpdate.push(updateData);
             continue;
