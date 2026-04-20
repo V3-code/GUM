@@ -33,6 +33,11 @@ const ROLL_MODIFIER_CONTEXT_OPTIONS = [
       { id: "skill_vont", label: "Perícias baseadas em Vont" }
 ];
 
+const ROLL_MODIFIER_APPLICATION_OPTIONS = [
+    { id: "self", label: "No próprio portador do efeito" },
+    { id: "vs_targeter", label: "Em quem marcar este ator como alvo" }
+];
+
 const DEFAULT_EFFECT_ACTION = {
     label: "",
     type: "attribute",
@@ -49,6 +54,7 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_value: "0",
     roll_modifier_cap: "",
     roll_modifier_context: "all",
+    roll_modifier_application_side: "self",
     roll_modifier_entries: [],
     whisperMode: "public",
     category: "hp",
@@ -79,17 +85,20 @@ const normalizeAction = (action = {}) => {
             label: (entry?.label || "").toString().trim(),
             value: normalizeRollModifierEntryValue(entry?.value),
             cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
-            contexts: (entry?.contexts || "all").toString().trim() || "all"
+            contexts: (entry?.contexts || "all").toString().trim() || "all",
+            application_side: (entry?.application_side || "self").toString().trim() || "self"
         }))
         : [{
             label: "",
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
             cap: (next.roll_modifier_cap ?? "").toString().trim(),
-            contexts: (next.roll_modifier_context || "all").toString().trim() || "all"
+            contexts: (next.roll_modifier_context || "all").toString().trim() || "all",
+            application_side: (next.roll_modifier_application_side || "self").toString().trim() || "self"
         }];
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
+    next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
     return next;
 };
 
@@ -146,6 +155,7 @@ export class EffectSheet extends ItemSheet {
             }
  }
         context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
+        context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS;
         const actions = getEffectActionsFromSystem(context.system);
         context.effectActions = actions.map((action, index) => ({
             ...action,
@@ -156,7 +166,8 @@ export class EffectSheet extends ItemSheet {
                 label: entry?.label || "",
                 value: entry?.value ?? 0,
                 cap: entry?.cap ?? "",
-                contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all")
+                contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all"),
+                application_side: entry?.application_side || "self"
             }))
         }));
         context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
@@ -323,7 +334,7 @@ activateListeners(html) {
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
-        entries.push({ label: "", value: 0, cap: "", contexts: "all" });
+        entries.push({ label: "", value: 0, cap: "", contexts: "all", application_side: "self" });
         actions[actionIndex].roll_modifier_entries = entries;
         await this.item.update({ "system.actions": actions });
     });
@@ -337,7 +348,7 @@ activateListeners(html) {
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
         if (Number.isNaN(entryIndex) || entryIndex < 0 || entryIndex >= entries.length) return;
         entries.splice(entryIndex, 1);
-        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all" }];
+        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all", application_side: "self" }];
         await this.item.update({ "system.actions": actions });
     });
 
@@ -441,14 +452,14 @@ activateListeners(html) {
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
-            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts)$/);
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side)$/);
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
                 const entryIndex = Number(rollEntryMatch[2]);
                 const field = rollEntryMatch[3];
                 if (!rollEntries.has(actionIndex)) rollEntries.set(actionIndex, new Map());
                 const entryMap = rollEntries.get(actionIndex);
-                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all" });
+                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all", application_side: "self" });
                 entryMap.get(entryIndex)[field] = value;
                 delete formData[key];
                 continue;
@@ -474,7 +485,8 @@ activateListeners(html) {
                             label: (entry.label || "").toString().trim(),
                             value: normalizeRollModifierEntryValue(entry.value),
                             cap: (entry.cap ?? "").toString().trim(),
-                            contexts: (entry.contexts || "all").toString().trim() || "all"
+                            contexts: (entry.contexts || "all").toString().trim() || "all",
+                            application_side: (entry.application_side || "self").toString().trim() || "self"
                         }));
                 }
                 return normalizeAction(actionData);
@@ -500,6 +512,7 @@ activateListeners(html) {
             formData["system.roll_modifier_value"] = firstAction.roll_modifier_value;
             formData["system.roll_modifier_cap"] = firstAction.roll_modifier_cap;
             formData["system.roll_modifier_context"] = firstAction.roll_modifier_context;
+            formData["system.roll_modifier_application_side"] = firstAction.roll_modifier_application_side;
             formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
             formData["system.whisperMode"] = firstAction.whisperMode;
             formData["system.category"] = firstAction.category;

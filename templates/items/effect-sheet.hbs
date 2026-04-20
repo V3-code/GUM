@@ -148,6 +148,14 @@
                                             <label class="effect-label">Contextos (csv)</label>
                                             <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}"/>
                                         </div>
+                                        <div class="effect-field modifier-entry-field">
+                                            <label class="effect-label">Aplicação</label>
+                                            <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side">
+                                                {{#each ../../rollModifierApplicationOptions as |opt|}}
+                                                <option value="{{opt.id}}" {{#if (eq opt.id entry.application_side)}}selected{{/if}}>{{opt.label}}</option>
+                                                {{/each}}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 {{/each}}

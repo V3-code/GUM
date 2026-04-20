@@ -25,11 +25,13 @@ export class GurpsRollPrompt extends FormApplication {
         this.isMenuCollapsed = true;
 
         this.context = this._determineContext();
+        this.counterEffectsNotice = null;
 
 
         // 1. Carrega modificadores globais (Escudo)
         this._loadGMModifiers();
         this._loadEffectModifiers();
+        this._loadTargetCounterModifiers();
         
         console.log("GUM | Roll Prompt Iniciado");
         console.log(" -> Dados recebidos:", rollData);
@@ -85,6 +87,8 @@ export class GurpsRollPrompt extends FormApplication {
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
+                const applicationSide = this._resolveModifierApplicationSide(entry, data);
+                if (applicationSide !== "self") return;
 
                  this.selectedModifiers.push({
                     id: `${effect.id}::${index}`,
@@ -96,6 +100,102 @@ export class GurpsRollPrompt extends FormApplication {
                 });
             });
         });
+    }
+
+    _resolveModifierApplicationSide(entry = {}, fallback = {}) {
+        const side = entry?.application_side ?? entry?.applicationSide ?? fallback?.applicationSide ?? "self";
+        return `${side}`.trim() || "self";
+    }
+
+    _isCounterEffectContextSupported() {
+        const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
+        if (supported.includes(this.context)) return true;
+        return this.context.startsWith("skill_");
+    }
+
+    _buildCounterGroupKey({ entry, effect, entryIndex = 0 }) {
+        const byLabel = (entry?.label || "").toString().trim();
+        if (byLabel) return byLabel.slugify({ strict: true }) || `entry-${entryIndex}`;
+        const byEffect = (effect?.name || "").toString().trim();
+        if (byEffect) return byEffect.slugify({ strict: true }) || `entry-${entryIndex}`;
+        return `effect-${effect?.id || "unknown"}-${entryIndex}`;
+    }
+
+    _isWorseForRoller(candidateValue, currentValue) {
+        return Number(candidateValue) < Number(currentValue);
+    }
+
+    _collectCounterCandidatesForTarget(targetActor) {
+        const entries = [];
+        if (!targetActor) return entries;
+        const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
+        for (const effect of activeEffects) {
+            const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+            if (!data) continue;
+            const configuredEntries = Array.isArray(data.entries) && data.entries.length
+                ? data.entries
+                : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+
+            configuredEntries.forEach((entry, entryIndex) => {
+                const context = entry?.contexts ?? entry?.context ?? "all";
+                if (!this._matchesEffectContext(context, this.context)) return;
+                if (this._resolveModifierApplicationSide(entry, data) !== "vs_targeter") return;
+
+                entries.push({
+                    effect,
+                    entry,
+                    entryIndex,
+                    targetActor
+                });
+            });
+        }
+        return entries;
+    }
+
+    _loadTargetCounterModifiers() {
+        this.counterEffectsNotice = null;
+        if (!this._isCounterEffectContextSupported()) return;
+
+        const targetTokens = Array.from(game.user.targets || []).filter((token) => token?.actor);
+        if (!targetTokens.length) return;
+
+        if (targetTokens.length > 1) {
+            const hasAnyApplicable = targetTokens.some((token) => this._collectCounterCandidatesForTarget(token.actor).length > 0);
+            if (hasAnyApplicable) {
+                this.counterEffectsNotice = "Contra-efeitos ignorados (múltiplos alvos).";
+            }
+            return;
+        }
+
+        const [targetToken] = targetTokens;
+        const candidates = this._collectCounterCandidatesForTarget(targetToken.actor);
+        if (!candidates.length) return;
+
+        const grouped = new Map();
+        for (const candidate of candidates) {
+            const value = this._evaluateModifierValue(candidate.entry?.value);
+            const key = this._buildCounterGroupKey(candidate);
+            const current = grouped.get(key);
+            const capRaw = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
+            const cap = capRaw !== "" && capRaw !== null && capRaw !== undefined ? parseInt(capRaw) : null;
+            const labelBase = candidate.entry?.label ? `${candidate.effect.name} — ${candidate.entry.label}` : candidate.effect.name;
+            const payload = {
+                id: `counter::${targetToken.id}::${key}`,
+                label: `Alvo: ${labelBase}`,
+                value,
+                nh_cap: Number.isNaN(cap) ? null : cap,
+                isGM: true,
+                isEffect: true,
+                isCounterEffect: true,
+                counterSource: `${targetToken.actor.name} • ${candidate.effect.name}`
+            };
+
+            if (!current || this._isWorseForRoller(payload.value, current.value)) {
+                grouped.set(key, payload);
+            }
+        }
+
+        grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
     }
 
     _splitCommaSeparatedArgs(rawValue) {
@@ -825,14 +925,19 @@ _updateTotals(html) {
             stackContainer.append(`<span class="mod-tag locked gm-locked">${fixedModifierLabel} <strong>${fixedModifier > 0 ? '+' : ''}${fixedModifier}</strong></span>`);
         }
         
-       if (this.selectedModifiers.length === 0 && manual === 0 && fixedModifier === 0 && !baseChanged) {
+        if (this.selectedModifiers.length === 0 && manual === 0 && fixedModifier === 0 && !baseChanged) {
              stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">Nenhum modificador.</span>`);
+        }
+
+        if (this.counterEffectsNotice) {
+            stackContainer.append(`<span class="mod-tag locked" title="Regra de alvo único para contra-efeitos.">${this.counterEffectsNotice}</span>`);
         }
 
         this.selectedModifiers.forEach(m => {
             let capBadge = m.nh_cap ? `<span class="stack-cap" style="font-size:0.8em; opacity:0.7; margin-right:3px;">[↓${m.nh_cap}]</span>` : '';
             const tagClass = m.isGM ? 'gm-locked' : (m.isEffect ? 'gm-locked' : '');
-            const tag = $(`<span class="mod-tag ${tagClass}">${capBadge}${m.label} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
+            const title = m.isCounterEffect && m.counterSource ? ` title="Origem: ${m.counterSource}"` : '';
+            const tag = $(`<span class="mod-tag ${tagClass}"${title}>${capBadge}${m.label} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
             tag.click(() => {
                 const idx = this.selectedModifiers.findIndex(x => x.id === m.id);
                 if (idx >= 0) this.selectedModifiers.splice(idx, 1);

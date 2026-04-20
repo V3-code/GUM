@@ -930,6 +930,17 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                 }
             }
         });
+
+        const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, rollData);
+        counterEffectMods.forEach(m => {
+            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
+                const capVal = parseInt(m.cap);
+                if (!isNaN(capVal) && capVal < lowestCap) {
+                    lowestCap = capVal;
+                }
+            }
+        });
     }
 
     // --- 3. CÁLCULO FINAL (EVITA DUPLICAÇÃO) ---
@@ -1549,15 +1560,101 @@ function _collectEffectRollModifiers(actor, rollContext) {
     for (const effect of activeEffects) {
         const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
         if (!data) continue;
-        if (!_matchesRollContext(data.context, rollContext)) continue;
-        mods.push({
-            id: effect.id,
-            value: data.value,
-            cap: data.cap
+        const entries = Array.isArray(data.entries) && data.entries.length
+            ? data.entries
+            : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+
+        entries.forEach((entry, index) => {
+            const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (!_matchesRollContext(context, rollContext)) return;
+            const applicationSide = _resolveRollModifierApplicationSide(entry, data);
+            if (applicationSide !== "self") return;
+            mods.push({
+                id: `${effect.id}::${index}`,
+                value: entry?.value ?? data.value,
+                cap: entry?.cap ?? entry?.nh_cap ?? data.cap
+            });
         });
     }
     return mods;
 }
+
+function _resolveRollModifierApplicationSide(entry = {}, fallback = {}) {
+    const side = entry?.application_side ?? entry?.applicationSide ?? fallback?.applicationSide ?? "self";
+    return `${side}`.trim() || "self";
+}
+
+function _isCounterContextSupported(rollContext) {
+    const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
+    if (supported.includes(rollContext)) return true;
+    return rollContext.startsWith("skill_");
+}
+
+function _buildCounterGroupKey(entry = {}, effect = {}, entryIndex = 0) {
+    const label = (entry?.label || "").toString().trim();
+    if (label) return label.slugify({ strict: true }) || `entry-${entryIndex}`;
+    const effectName = (effect?.name || "").toString().trim();
+    if (effectName) return effectName.slugify({ strict: true }) || `entry-${entryIndex}`;
+    return `effect-${effect?.id || "unknown"}-${entryIndex}`;
+}
+
+function _resolveCounterTargetsForRoll(rollData = {}) {
+    const byRollData = rollData?.targetTokenId ? canvas.tokens?.get(rollData.targetTokenId) : null;
+    if (byRollData?.actor) return [byRollData];
+    return Array.from(game.user.targets || []).filter((token) => token?.actor);
+}
+
+function _collectCounterCandidatesFromTarget(targetActor, rollContext) {
+    const candidates = [];
+    if (!targetActor) return candidates;
+    const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
+
+    for (const effect of activeEffects) {
+        const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+        if (!data) continue;
+
+        const entries = Array.isArray(data.entries) && data.entries.length
+            ? data.entries
+            : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+
+        entries.forEach((entry, entryIndex) => {
+            const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (!_matchesRollContext(context, rollContext)) return;
+            if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") return;
+            candidates.push({ effect, entry, entryIndex });
+        });
+    }
+
+    return candidates;
+}
+
+function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
+    if (!actor || !_isCounterContextSupported(rollContext)) return [];
+
+    const targets = _resolveCounterTargetsForRoll(rollData);
+    if (targets.length !== 1) return [];
+
+    const [targetToken] = targets;
+    const candidates = _collectCounterCandidatesFromTarget(targetToken.actor, rollContext);
+    if (!candidates.length) return [];
+
+    const grouped = new Map();
+    for (const candidate of candidates) {
+        const key = _buildCounterGroupKey(candidate.entry, candidate.effect, candidate.entryIndex);
+        const value = candidate.entry?.value ?? 0;
+        const cap = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
+        const current = grouped.get(key);
+        if (!current || Number(value) < Number(current.value)) {
+            grouped.set(key, {
+                id: `counter::${targetToken.id}::${key}`,
+                value,
+                cap
+            });
+        }
+    }
+    return Array.from(grouped.values());
+}
+
 
 /**
  * O "Despachante" de Efeitos de Ativação.

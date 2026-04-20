@@ -128,6 +128,12 @@ const normalizeRollModifierEntryValue = (value) => {
     return raw;
 };
 
+const normalizeRollModifierApplicationSide = (value) => {
+    const raw = (value ?? "self").toString().trim().toLowerCase();
+    if (["vs_targeter", "vs_target", "target", "against_targeter"].includes(raw)) return "vs_targeter";
+    return "self";
+};
+
 const normalizeEffectAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     if (!Array.isArray(next.roll_modifier_entries) || next.roll_modifier_entries.length === 0) {
@@ -135,18 +141,21 @@ const normalizeEffectAction = (action = {}) => {
             label: "",
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
             cap: next.roll_modifier_cap ?? "",
-            contexts: next.roll_modifier_context ?? "all"
+            contexts: next.roll_modifier_context ?? "all",
+            application_side: normalizeRollModifierApplicationSide(next.roll_modifier_application_side)
         }];
     }
     next.roll_modifier_entries = next.roll_modifier_entries.map((entry) => ({
         label: (entry?.label || "").toString().trim(),
         value: normalizeRollModifierEntryValue(entry?.value),
         cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
-        contexts: (entry?.contexts || "all").toString().trim() || "all"
+        contexts: (entry?.contexts || "all").toString().trim() || "all",
+        application_side: normalizeRollModifierApplicationSide(entry?.application_side ?? entry?.applicationSide ?? next.roll_modifier_application_side)
     }));
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
+    next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
     return next;
 };
 
@@ -313,14 +322,20 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     }
 
                     if (action.type === "roll_modifier") {
-                        const entries = Array.isArray(action.roll_modifier_entries) && action.roll_modifier_entries.length
+                    const entries = Array.isArray(action.roll_modifier_entries) && action.roll_modifier_entries.length
                             ? action.roll_modifier_entries
-                            : [{ value: action.roll_modifier_value ?? 0, cap: action.roll_modifier_cap ?? "", contexts: action.roll_modifier_context ?? "all" }];
+                            : [{
+                                value: action.roll_modifier_value ?? 0,
+                                cap: action.roll_modifier_cap ?? "",
+                                contexts: action.roll_modifier_context ?? "all",
+                                application_side: action.roll_modifier_application_side ?? "self"
+                            }];
                         activeEffectData.flags.gum.rollModifier = {
                             entries,
                             value: entries[0]?.value ?? 0,
                             cap: entries[0]?.cap ?? "",
-                            context: entries[0]?.contexts ?? "all"
+                            context: entries[0]?.contexts ?? "all",
+                            applicationSide: entries[0]?.application_side ?? "self"
                         };
                     }
 
