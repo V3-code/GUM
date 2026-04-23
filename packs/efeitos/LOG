@@ -1,0 +1,14 @@
+2026/04/23-17:00:47.296 3b1c Recovering log #677
+2026/04/23-17:00:47.296 3b1c Level-0 table #679: started
+2026/04/23-17:00:47.297 3b1c Level-0 table #679: 17293 bytes OK
+2026/04/23-17:00:47.304 3b1c Delete type=0 #677
+2026/04/23-17:00:47.304 3b1c Delete type=3 #675
+2026/04/23-17:00:47.305 39bc Compacting 4@0 + 1@1 files
+2026/04/23-17:00:47.315 39bc Generated table #681@0: 70 keys, 49692 bytes
+2026/04/23-17:00:47.317 39bc Compacted 4@0 + 1@1 files => 49692 bytes
+2026/04/23-17:00:47.317 39bc compacted to: files[ 0 1 0 0 0 0 0 ]
+2026/04/23-17:00:47.317 39bc Delete type=2 #660
+2026/04/23-17:00:47.317 39bc Delete type=2 #668
+2026/04/23-17:00:47.317 39bc Delete type=2 #671
+2026/04/23-17:00:47.317 39bc Delete type=2 #676
+2026/04/23-17:00:47.317 39bc Delete type=2 #679

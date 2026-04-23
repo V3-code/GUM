@@ -1,4 +1,4 @@
-import { applyContingentCondition, applyCurrentRollPrivacy } from "../main.js";
+import { applyContingentCondition, applyCurrentRollPrivacy, evaluateNumericFormula } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
 import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
 
@@ -619,7 +619,10 @@ async _updateDamageCalculation(form) {
         const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
-        let totalModifier = parseInt(rollData.modifier) || 0;
+        let totalModifier = evaluateNumericFormula(rollData.modifier, {
+            actor: target,
+            eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
+        }) || 0;
         if (rollData.dynamicModifier) {
             try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
         }
@@ -928,13 +931,21 @@ if (shouldPublish) {
 
     async _promptResistanceRoll(effect) {
         if (!effect?.item) return;
-        const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
         const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
         const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
-        const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
-        const modifierClass = rollData.modifier > 0 ? 'positive' : rollData.modifier < 0 ? 'negative' : 'neutral';
+        const rawModifier = (rollData.modifier ?? "").toString().trim();
+        const resolvedModifier = evaluateNumericFormula(rawModifier, {
+            actor: target,
+            eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
+        });
+        const resolvedModifierSigned = resolvedModifier > 0 ? `+${resolvedModifier}` : `${resolvedModifier}`;
+        const isExpressionModifier = rawModifier && !/^[+-]?\d+(\.\d+)?$/.test(rawModifier);
+        const modifierValue = rawModifier
+            ? (isExpressionModifier ? `${rawModifier} (${resolvedModifierSigned})` : resolvedModifierSigned)
+            : '0';
+        const modifierClass = resolvedModifier > 0 ? 'positive' : resolvedModifier < 0 ? 'negative' : 'neutral';
 
         const chatPayload = {
             mode: "damage",

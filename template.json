@@ -639,6 +639,7 @@
         "enabled": true
       },
       "when": "",
+      "triggerOnTurnStartWhileActive": false,
       "effects": [],
       "flags": {
         "gum": {

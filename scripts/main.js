@@ -1717,8 +1717,14 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     }
     const applyOnText = rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha';
     const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
-    const modifierValue = rollData.modifier ? `${rollData.modifier >= 0 ? '+' : ''}${rollData.modifier}` : '0';
-    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${modifierValue === '0' ? '' : modifierValue}`;
+    const rawModifier = (rollData.modifier ?? "").toString().trim();
+    const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
+    const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
+    const isExpressionModifier = rawModifier && !/^[+-]?\d+(\.\d+)?$/.test(rawModifier);
+    const modifierValue = rawModifier
+        ? (isExpressionModifier ? `${rawModifier} (${previewModifierSigned})` : previewModifierSigned)
+        : "0";
+    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier ? ` ${isExpressionModifier ? `(${rawModifier})` : previewModifierSigned}` : ''}`;
 
  const chatPayload = {
         mode: options.mode || "activation",
@@ -2100,7 +2106,7 @@ Hooks.on("createItem", async (item, options, userId) => {
             const currentCombatant = combat.combatant;
             if (currentCombatant?.actor) {
                 await handleCombatTurnStart(currentCombatant);
-                await processConditions(currentCombatant.actor); 
+                await processConditions(currentCombatant.actor, { reason: "turnStart", combatId: combat.id }); 
                 currentCombatant.token?.object?.drawEffects(); 
             }
         }
@@ -2360,6 +2366,33 @@ $('body').on('click', '.chat-message .rollable', async (ev) => {
 
         const rollValue = Number(element.dataset.rollValue);
         const rollLabel = element.dataset.label || "Teste";
+        const isEffectChatRollButton = element.classList.contains("gum-chat-roll-button");
+
+        if (isEffectChatRollButton) {
+            if (ev.shiftKey) {
+                performGURPSRoll(actor, { label: rollLabel, value: rollValue, modifier: 0 });
+                return;
+            }
+
+            const promptData = {
+                label: rollLabel,
+                type: "attribute",
+                value: rollValue,
+                modifier: 0,
+                img: actor.img
+            };
+
+            new GurpsRollPrompt(actor, promptData, {
+                onRoll: async (_actor, promptPayload) => {
+                    await performGURPSRoll(actor, {
+                        label: rollLabel,
+                        value: rollValue,
+                        modifier: promptPayload.modifier || 0
+                    });
+                }
+            }).render(true);
+            return;
+        }
 
         // A lógica de Shift+Click para modificadores
         if (ev.shiftKey) {
@@ -2499,7 +2532,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
             ? resolvedBaseValue
             : 10;
 
-        const effectModifier = parseInt(rollConfig.modifier) || 0;
+        const effectModifier = evaluateNumericFormula(rollConfig.modifier, { actor, eventData: rollData }) || 0;
         const totalModifier = includesEffectModifier ? extraModifier : effectModifier + extraModifier;
         return {
             finalTarget: baseAttributeValue + totalModifier,
@@ -2908,6 +2941,23 @@ const resolveRollBaseValue = (actor, rollAttribute) => {
     return null;
 };
 
+export const evaluateNumericFormula = (rawValue, { actor = null, eventData = null } = {}) => {
+    if (rawValue === null || rawValue === undefined) return 0;
+    if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
+    const source = String(rawValue).trim();
+    if (!source) return 0;
+    if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    try {
+        const evaluated = Function("actor", "game", "eventData", `return (${source});`)(actor, game, eventData);
+        const numeric = Number(evaluated);
+        return Number.isFinite(numeric) ? numeric : 0;
+    } catch (error) {
+        console.warn("GUM | Falha ao avaliar expressão numérica:", { source, error });
+        return 0;
+    }
+};
+
 /**
  * Função unificada que avalia todas as condições de um ator.
  * - Sincroniza ícones de status no token usando a API moderna (v12+).
@@ -3120,12 +3170,20 @@ async function processConditions(actor, eventData = null) {
 
              const isEffectivelyActiveNow = isConditionActiveNow && !isManuallyDisabled;
              const isPulseEvent = Boolean(eventData?.pulse);
+             const isTurnStartEvent = eventData?.reason === "turnStart";
+             const shouldRepeatOnTurnStart = condition.system?.triggerOnTurnStartWhileActive === true;
+             const isCurrentCombatantTurn = Boolean(
+                game.combat?.started
+                && game.combat?.combatant?.actorId === actor.id
+             );
              // Condições dirigidas por evento (ex.: dano > metade do PV via eventData)
              // não devem alternar estado persistente entre avaliações fora do evento.
              const stateChanged = isEventDriven
                  ? false
                  : isEffectivelyActiveNow !== wasActive;
-             const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow) || (isPulseEvent && isEffectivelyActiveNow);
+             const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow)
+                || (isPulseEvent && isEffectivelyActiveNow)
+                || (isTurnStartEvent && shouldRepeatOnTurnStart && isCurrentCombatantTurn && isEffectivelyActiveNow);
 
              if (stateChanged) {
                  // Salva o novo estado

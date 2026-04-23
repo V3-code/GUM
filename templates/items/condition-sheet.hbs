@@ -142,11 +142,6 @@
                     </div>
                     {{else}}
                     <p class="hint">Modo <strong>When</strong> ativo: vínculo de status definido como <strong>sem vínculo</strong>.</p>
-                    {{/if}}
-
-                    {{#if (eq system.bindingMode "conditional")}}
-                    <div class="condition-input-area">
-                        <textarea name="system.when" rows="6" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
                         <div class="button-group">
                             <a class="button saved-triggers-btn" title="Buscar Gatilho Salvo">
                                 <i class="fas fa-bookmark"></i>
@@ -156,6 +151,17 @@
                                 <i class="fas fa-magic"></i>
                                 Assistente de Construção
                             </a>
+                        </div>
+                    {{/if}}
+
+                    {{#if (eq system.bindingMode "conditional")}}
+                    <div class="condition-input-area">
+                        <textarea name="system.when" rows="6" placeholder="ex: actor.system.attributes.hp.value <= 10">{{system.when}}</textarea>
+                        <div class="checkbox-options" style="margin: 8px 0 2px;">
+                            <label class="custom-checkbox">
+                                <input type="checkbox" name="system.triggerOnTurnStartWhileActive" {{checked system.triggerOnTurnStartWhileActive}}/>
+                                <span>Reexecutar efeitos no início do turno do ator (enquanto ativa)</span>
+                            </label>
                         </div>
                     </div>
                     {{else}}

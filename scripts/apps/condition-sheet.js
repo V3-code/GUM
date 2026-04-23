@@ -31,6 +31,9 @@ export class ConditionSheet extends ItemSheet {
         const context = await super.getData(options);
         context.system = this.item.system;
         context.system.bindingMode = context.system.bindingMode || "conditional";
+        if (context.system.triggerOnTurnStartWhileActive === undefined) {
+            context.system.triggerOnTurnStartWhileActive = false;
+        }
         context.system.statusBinding = context.system.statusBinding || {};
         context.system.statusBinding.statusId = context.system.statusBinding.statusId || "";
         context.system.statusBinding.stackMode = context.system.statusBinding.stackMode || "refresh";

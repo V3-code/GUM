@@ -43,6 +43,24 @@ const resolveRollBaseValue = (actor, rollAttribute) => {
     return null;
 };
 
+const evaluateNumericModifier = (rawValue, { actor = null, gameRef = game } = {}) => {
+    if (rawValue === null || rawValue === undefined) return 0;
+    if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
+    const source = String(rawValue).trim();
+    if (!source) return 0;
+    if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    try {
+        const evaluated = Function("actor", "game", `return (${source});`)(actor, gameRef);
+        const numeric = Number(evaluated);
+        return Number.isFinite(numeric) ? numeric : 0;
+    } catch (error) {
+        console.warn("GUM | Falha ao avaliar modificador numérico de chat:", error);
+        return 0;
+    }
+};
+
+
 const isEffectDurationPermanent = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
     if (duration._uiMode === "permanent") return true;
@@ -457,7 +475,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         } else if (action.roll_attribute) {
                             const resolvedBase = resolveRollBaseValue(targetActor, action.roll_attribute);
                             const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
-                            finalTarget = finalAttr + (Number(action.roll_modifier) || 0);
+                            const resolvedModifier = evaluateNumericModifier(action.roll_modifier, { actor: targetActor });
+                            finalTarget = finalAttr + resolvedModifier;
                         }
                         const label = action.roll_label || "Rolar Teste";
                         rollButtonHtml = `<div class="gum-effect-chat-actions"><button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}"><i class="fas fa-dice-d20"></i><span>${label}</span><strong>vs ${finalTarget}</strong></button></div>`;

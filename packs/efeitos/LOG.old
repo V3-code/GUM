@@ -1,3 +1,5 @@
-2026/04/21-16:29:09.116 4ff4 Recovering log #672
-2026/04/21-16:29:09.121 4ff4 Delete type=0 #672
-2026/04/21-16:29:09.121 4ff4 Delete type=3 #670
+2026/04/23-11:36:34.584 ee8 Recovering log #674
+2026/04/23-11:36:34.584 ee8 Level-0 table #676: started
+2026/04/23-11:36:34.586 ee8 Level-0 table #676: 10250 bytes OK
+2026/04/23-11:36:34.591 ee8 Delete type=0 #674
+2026/04/23-11:36:34.591 ee8 Delete type=3 #673
