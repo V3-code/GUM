@@ -119,13 +119,36 @@ export const registerSystemSettings = function() {
         default: true
     });
 
-    game.settings.register("gum", "statusBindingsCompendium", {
+ game.settings.register("gum", "statusBindingsCompendium", {
         name: "Compêndio de Vínculos de Status",
         hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
         scope: "world",
         config: true,
         type: String,
         default: "gum.status_bindings"
+    });
+
+    game.settings.register("gum", "autoDistanceModifierEnabled", {
+        name: "Aplicar modificador automático por distância",
+        hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "autoDistanceModifierTable", {
+        name: "Tabela automática de distância",
+        hint: "Define qual tabela usar para o cálculo automático de distância.",
+        scope: "world",
+        config: true,
+        type: String,
+        choices: {
+            standard: "Padrão (GURPS)",
+            monster_hunters: "Resumida (Monster Hunters)",
+            hybrid: "Híbrida (MH + Padrão)"
+        },
+        default: "standard"
     });
 
     // --- "BOTÃO" DE ATUALIZAÇÃO ---

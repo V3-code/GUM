@@ -32,6 +32,7 @@ export class GurpsRollPrompt extends FormApplication {
         this._loadGMModifiers();
         this._loadEffectModifiers();
         this._loadTargetCounterModifiers();
+        this._loadAutoDistanceModifier();
         
         console.log("GUM | Roll Prompt Iniciado");
         console.log(" -> Dados recebidos:", rollData);
@@ -178,7 +179,7 @@ export class GurpsRollPrompt extends FormApplication {
             const current = grouped.get(key);
             const capRaw = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
             const cap = capRaw !== "" && capRaw !== null && capRaw !== undefined ? parseInt(capRaw) : null;
-            const labelBase = candidate.entry?.label ? `${candidate.effect.name} — ${candidate.entry.label}` : candidate.effect.name;
+            const labelBase = this._buildCounterModifierLabel(candidate);
             const payload = {
                 id: `counter::${targetToken.id}::${key}`,
                 label: `Alvo: ${labelBase}`,
@@ -195,7 +196,173 @@ export class GurpsRollPrompt extends FormApplication {
             }
         }
 
-        grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
+   grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
+    }
+
+    _buildCounterModifierLabel(candidate) {
+        const entryLabel = `${candidate?.entry?.label ?? ""}`.trim();
+        if (entryLabel) return this._capitalizeCounterLabel(entryLabel);
+
+        const effectName = `${candidate?.effect?.name ?? ""}`.trim();
+        if (!effectName) return "Efeito";
+
+        const cleaned = effectName.replace(/^Modificador de Rolagem\s*[-—:]\s*/i, "").trim();
+        return this._capitalizeCounterLabel(cleaned || effectName);
+    }
+
+    _capitalizeCounterLabel(label) {
+        if (!label) return label;
+        return label.charAt(0).toUpperCase() + label.slice(1);
+    }
+
+    _isAutoDistanceContextSupported() {
+        const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
+        if (supported.includes(this.context)) return true;
+        return this.context.startsWith("skill_");
+    }
+
+    _resolveAttackerToken() {
+        const controlled = Array.from(canvas.tokens?.controlled || []).find((token) => token?.actor?.id === this.actor?.id);
+        if (controlled) return controlled;
+        const activeTokens = this.actor?.getActiveTokens?.(true) || [];
+        return activeTokens[0] || null;
+    }
+
+    _resolveSingleTargetToken() {
+        const targets = Array.from(game.user.targets || []).filter((token) => token?.actor);
+        if (targets.length !== 1) return null;
+        return targets[0];
+    }
+
+    _measureDistanceInSceneUnits(fromToken, toToken) {
+        if (!fromToken?.center || !toToken?.center) return null;
+        const origin = fromToken.center;
+        const destination = toToken.center;
+
+        if (canvas.grid?.measureDistance) {
+            const measured = canvas.grid.measureDistance(origin, destination, { gridSpaces: true });
+            if (Number.isFinite(measured)) return measured;
+        }
+
+        if (canvas.grid?.measurePath) {
+            const path = canvas.grid.measurePath([origin, destination]);
+            const measured = path?.distance ?? path?.cost;
+            if (Number.isFinite(measured)) return measured;
+        }
+
+        return null;
+    }
+
+    _getStandardRangeBands() {
+        return [
+            { max: 0.005, mod: 0 },
+            { max: 0.008, mod: 0 },
+            { max: 0.012, mod: 0 },
+            { max: 0.017, mod: 0 },
+            { max: 0.025, mod: 0 },
+            { max: 0.038, mod: 0 },
+            { max: 0.05, mod: 0 },
+            { max: 0.075, mod: 0 },
+            { max: 0.125, mod: 0 },
+            { max: 0.2, mod: 0 },
+            { max: 0.3, mod: 0 },
+            { max: 0.45, mod: 0 },
+            { max: 0.6, mod: 0 },
+            { max: 1, mod: 0 },
+            { max: 1.5, mod: 0 },
+            { max: 2, mod: 0 },
+            { max: 3, mod: -1 },
+            { max: 5, mod: -2 },
+            { max: 7, mod: -3 },
+            { max: 10, mod: -4 },
+            { max: 15, mod: -5 },
+            { max: 20, mod: -6 },
+            { max: 30, mod: -7 },
+            { max: 50, mod: -8 },
+            { max: 70, mod: -9 },
+            { max: 100, mod: -10 },
+            { max: 150, mod: -11 },
+            { max: 200, mod: -12 },
+            { max: 300, mod: -13 },
+            { max: 500, mod: -14 },
+            { max: 700, mod: -15 },
+            { max: 1000, mod: -16 },
+            { max: 1500, mod: -17 },
+            { max: 2000, mod: -18 },
+            { max: 3000, mod: -19 },
+            { max: 5000, mod: -20 },
+            { max: 7000, mod: -21 },
+            { max: 10000, mod: -22 },
+            { max: 15000, mod: -23 },
+            { max: 20000, mod: -24 },
+            { max: 30000, mod: -25 },
+            { max: 50000, mod: -26 },
+            { max: 70000, mod: -27 },
+            { max: 100000, mod: -28 },
+            { max: 150000, mod: -29 },
+            { max: 200000, mod: -30 }
+        ];
+    }
+
+    _getDistanceModifierFromBand(distanceMeters, tableKey) {
+        const mhBands = [
+            { max: 5, mod: 0 },
+            { max: 20, mod: -3 },
+            { max: 100, mod: -7 },
+            { max: 500, mod: -11 },
+            { max: Infinity, mod: -15 }
+        ];
+        const hybridBands = [
+            { max: 5, mod: 0 },
+            { max: 10, mod: -3 },
+            { max: 15, mod: -5 }
+        ];
+        const standardBands = this._getStandardRangeBands();
+
+        let selectedBands = standardBands;
+        if (tableKey === "monster_hunters") selectedBands = mhBands;
+        else if (tableKey === "hybrid") selectedBands = [...hybridBands, ...standardBands.filter((band) => band.max > 15)];
+
+        const distance = Math.max(0, Number(distanceMeters) || 0);
+        const foundBand = selectedBands.find((band) => distance <= band.max);
+        if (foundBand) return foundBand.mod;
+
+        if (tableKey === "monster_hunters") return -15;
+
+        const overflow = Math.max(0, distance - 200000);
+        const extraSteps = Math.ceil(overflow / 50000);
+        return -30 - extraSteps;
+    }
+
+    _formatDistanceLabel(distanceMeters) {
+        const roundedMeters = Math.max(0, Math.ceil(Number(distanceMeters) || 0));
+        return `Distância (${roundedMeters}m)`;
+    }
+
+    _loadAutoDistanceModifier() {
+        const isEnabled = game.settings.get("gum", "autoDistanceModifierEnabled");
+        if (!isEnabled) return;
+        if (!this._isAutoDistanceContextSupported()) return;
+
+        const attackerToken = this._resolveAttackerToken();
+        const targetToken = this._resolveSingleTargetToken();
+        if (!attackerToken || !targetToken) return;
+
+        const distanceInSceneUnits = this._measureDistanceInSceneUnits(attackerToken, targetToken);
+        if (!Number.isFinite(distanceInSceneUnits)) return;
+
+        const distanceMeters = Math.max(0, Number(distanceInSceneUnits) || 0);
+        const selectedTable = game.settings.get("gum", "autoDistanceModifierTable") || "standard";
+        const modifier = this._getDistanceModifierFromBand(distanceMeters, selectedTable);
+        if (!Number.isFinite(modifier)) return;
+
+        this.selectedModifiers.push({
+            id: "auto_distance",
+            label: this._formatDistanceLabel(distanceMeters),
+            value: modifier,
+            isGM: true,
+            isAutoDistance: true
+        });
     }
 
     _splitCommaSeparatedArgs(rawValue) {
