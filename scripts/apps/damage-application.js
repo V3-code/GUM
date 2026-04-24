@@ -941,11 +941,12 @@ if (shouldPublish) {
             eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
         });
         const resolvedModifierSigned = resolvedModifier > 0 ? `+${resolvedModifier}` : `${resolvedModifier}`;
-        const isExpressionModifier = rawModifier && !/^[+-]?\d+(\.\d+)?$/.test(rawModifier);
-        const modifierValue = rawModifier
-            ? (isExpressionModifier ? `${rawModifier} (${resolvedModifierSigned})` : resolvedModifierSigned)
-            : '0';
+        const modifierValue = rawModifier && resolvedModifier !== 0 ? resolvedModifierSigned : '0';
         const modifierClass = resolvedModifier > 0 ? 'positive' : resolvedModifier < 0 ? 'negative' : 'neutral';
+        const resistanceChatText = (rollData.chatText || '').toString().trim();
+        const resistanceChatTextHtml = resistanceChatText
+            ? `<div class="info-row resistance-note-row"><span class="label">Nota</span><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
+            : '';
 
         const chatPayload = {
             mode: "damage",
@@ -989,6 +990,7 @@ if (shouldPublish) {
                             <span class="label">Margem mín.</span>
                             <span class="value">${marginValue}</span>
                         </div>
+                        ${resistanceChatTextHtml}
                     </div>
                     <div class="card-actions">
                         <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatPayload)}'>

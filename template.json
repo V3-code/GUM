@@ -814,6 +814,7 @@
         "modifier": "0",
         "applyOn": "failure",
         "margin": "",
+        "chatText": "",
         "skipPromptCard": false
       },
       "category": "pf",

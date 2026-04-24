@@ -1721,10 +1721,11 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
     const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
     const isExpressionModifier = rawModifier && !/^[+-]?\d+(\.\d+)?$/.test(rawModifier);
-    const modifierValue = rawModifier
-        ? (isExpressionModifier ? `${rawModifier} (${previewModifierSigned})` : previewModifierSigned)
-        : "0";
-    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier ? ` ${isExpressionModifier ? `(${rawModifier})` : previewModifierSigned}` : ''}`;
+    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier && previewModifier !== 0 ? ` ${previewModifierSigned}` : ''}`;
+    const resistanceChatText = (rollData.chatText || "").toString().trim();
+    const resistanceChatTextHtml = resistanceChatText
+        ? `<div class="info-row resistance-note-row"><span class="label">Nota</span><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
+        : "";
 
  const chatPayload = {
         mode: options.mode || "activation",
@@ -1766,6 +1767,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                         <div class="test-main">Teste de ${testLabel}</div>
                         <div class="test-sub">${applyOnText} | Margem mín: ${marginValue}</div>
                     </div>
+                    ${resistanceChatTextHtml}
                     <div class="pill-row action-row">
                         <button type="button" class="resistance-roll-button full-width" data-roll-data='${JSON.stringify(chatPayload)}'>
                             <i class="fas fa-dice-d6"></i> Rolar Resistência

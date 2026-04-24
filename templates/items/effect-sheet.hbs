@@ -326,29 +326,34 @@
                         </div>
 
                         <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
+                            <div class="effect-field effect-field-full" style="margin-bottom: 10px;">
+                                <div class="effect-label">Texto no card de resistência</div>
+                                <textarea name="system.resistanceRoll.chatText" rows="2" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>{{system.resistanceRoll.chatText}}</textarea>
+                            </div>
+                            
                             <div class="effect-row-grid effect-resistance-grid">
-                            <div class="effect-field">
-                                <div class="effect-label">Aplicar efeito em</div>
-                                <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
-                                <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
-                                </select>
-                            </div>
+                                <div class="effect-field">
+                                    <div class="effect-label">Aplicar efeito em</div>
+                                    <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                    <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
+                                    <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
+                                    </select>
+                                </div>
 
-                            <div class="effect-field">
-                                <div class="effect-label">Atributo</div>
-                                <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
+                                <div class="effect-field">
+                                    <div class="effect-label">Atributo</div>
+                                    <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                                </div>
 
-                            <div class="effect-field">
-                                <div class="effect-label">Modificador</div>
-                                <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
+                                <div class="effect-field">
+                                    <div class="effect-label">Modificador</div>
+                                    <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                                </div>
 
-                            <div class="effect-field">
-                                <div class="effect-label">Margem Min</div>
-                                <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            </div>
+                                <div class="effect-field">
+                                    <div class="effect-label">Margem Min</div>
+                                    <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                                </div>
                             </div>
 
                             <label class="custom-checkbox block effect-inline-checkbox">

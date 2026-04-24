@@ -1073,6 +1073,23 @@
     gap: 6px;
 }
 
+.resistance-roll-card .info-row.resistance-note-row {
+    display: block;
+}
+
+.resistance-roll-card .info-row.resistance-note-row .label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.resistance-roll-card .resistance-note-text {
+    display: block;
+    text-align: justify;
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: normal;
+}
+
 .resistance-roll-card .resistance-info.resistance-info-compact {
     gap: 6px;
     padding: 8px 10px;
