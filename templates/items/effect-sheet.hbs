@@ -345,16 +345,18 @@
                                     <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
                                 </div>
 
-                                <div class="effect-field">
-                                    <div class="effect-label">Modificador</div>
-                                    <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                                </div>
+
 
                                 <div class="effect-field">
                                     <div class="effect-label">Margem Min</div>
                                     <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
                                 </div>
                             </div>
+
+                                <div class="effect-field" style="margin-bottom: 15px;">
+                                    <div class="effect-label">Modificador</div>
+                                    <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                                </div>
 
                             <label class="custom-checkbox block effect-inline-checkbox">
                             <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
