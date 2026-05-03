@@ -1802,6 +1802,31 @@ new Dialog({
             delete formData["system.base_attribute_select"];
             delete formData["system.base_attribute_custom"];
  }
+
+        if (this.item?.type === "equipment" && this.item?.actor) {
+            const wasContainer = this.item.system?.is_container === true;
+            const willBeContainer = formData["system.is_container"] === true || formData["system.is_container"] === "true" || formData["system.is_container"] === "on";
+            if (wasContainer && !willBeContainer) {
+                const children = this.item.actor.items.filter(i => (i.system?.parent_container_id || "") === this.item.id);
+                if (children.length) {
+                    const shouldEmpty = await Dialog.confirm({
+                        title: "Esvaziar container?",
+                        content: `<p>Este item possui ${children.length} item(ns) dentro. Deseja esvaziar automaticamente antes de remover status de container?</p>`,
+                        yes: () => true,
+                        no: () => false,
+                        defaultYes: true
+                    });
+                    if (!shouldEmpty) {
+                        ui.notifications.warn("Operação cancelada. Esvazie o container para desmarcar essa opção.");
+                        return;
+                    }
+                    await this.item.actor.updateEmbeddedDocuments("Item", children.map(child => ({
+                        _id: child.id,
+                        "system.parent_container_id": ""
+                    })));
+                }
+            }
+        }
         this._saveUIState();
         return super._updateObject(event, formData);
     }

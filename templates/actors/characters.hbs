@@ -1391,45 +1391,74 @@
 <details class="gum-details equipment-column gum-unified-section" data-section="equip_equipped" {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
-        <h4 class="header-title">Em Uso (Mãos/Corpo)</h4>
+        <h4 class="header-title">Em Uso</h4>
     </summary>
     
     <div class="list-content">
         <ol class="item-list flex-wrap-container">
-            {{#each equipmentInUse}}
+            {{#each equipmentInUseLoose}}
               <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
-                  {{!-- Coluna 1: Ícone --}}
                   <img src="{{this.img}}" class="item-icon" title="{{this.name}}"/>
-
-                  {{!-- Coluna 2: Informações e Controles --}}
                   <div class="card-info">
                       <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
-                      
-                      {{!-- Linha de Tags --}}
                       <div class="card-details equipment-stats">
                           <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                           <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
                           {{#if this.system.dr}}<span class="equip-stat-tag shield-tag">RD {{this.system.dr}}</span>{{/if}}
                       </div>
-
-                      {{!-- NOVA POSIÇÃO: Linha de Botões Horizontal --}}
                       <div class="item-controls">
-                        <a class="item-control active" title="Em Uso">
-                            <i class="fas fa-tshirt" style="color: #389c68;"></i> 
-                        </a>
-                          <a class="item-control item-toggle-equip {{#if this.system.equipped}}active{{/if}}" title="Equipar/Desequipar">
-                              <i class="fas fa-backpack"></i>
-                          </a>
-                          <a class="item-control item-toggle-stored {{#if this.system.stored}}active{{/if}}" title="Guardar/Sacar">
-                              <i class="fas fa-box"></i>
-                          </a>
-                          <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                          <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                        <a class="item-control active" title="Em Uso"><i class="fas fa-tshirt" style="color: #389c68;"></i></a>
+                        <a class="item-control item-toggle-equip {{#if this.system.equipped}}active{{/if}}" title="Equipar/Desequipar"><i class="fas fa-backpack"></i></a>
+                        <a class="item-control item-toggle-stored {{#if this.system.stored}}active{{/if}}" title="Guardar/Sacar"><i class="fas fa-box"></i></a>
+                        {{#unless this.system.is_container}}<a class="item-control item-move-to-container" title="Mover para Container"><i class="fas fa-boxes"></i></a>{{/unless}}
+                        <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                        <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                       </div>
                   </div>
               </li>
             {{/each}}
         </ol>
+
+        {{#each equipmentInUseContainerSections}}
+        <div class="container-section">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+                <div class="container-section-header-main">
+                    <a class="item-quick-view container-title">{{this.container.name}}</a>
+                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
+                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}}background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                </div>
+                <div class="item-controls">
+                    <a class="item-control active" title="Em Uso"><i class="fas fa-tshirt" style="color:#389c68;"></i></a>
+                    <a class="item-control item-toggle-equip" title="Mover para Mochila"><i class="fas fa-backpack"></i></a>
+                    <a class="item-control item-toggle-stored" title="Guardar no Baú"><i class="fas fa-box-open" style="opacity:0.3;"></i></a>
+                    <a class="item-control item-toggle-container-children" title="Colapsar/Expandir Conteúdo"><i class="fas fa-diagram-project"></i></a>
+                    <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                </div>
+            </div>
+            <ol class="item-list flex-wrap-container container-children-list">
+                {{#unless this.container.system.is_container_collapsed}}
+                {{#each this.children}}
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon"/>
+                    <div class="card-info">
+                        <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                        <div class="card-details equipment-stats">
+                            <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                            <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                        </div>
+                        <div class="item-controls">
+                            <a class="item-control item-remove-from-container" title="Remover do Container"><i class="fas fa-sign-out-alt"></i></a>
+                            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>
+                </li>
+                {{/each}}
+                {{/unless}}
+            </ol>
+        </div>
+        {{/each}}
     </div>
 </details>
 
@@ -1437,33 +1466,27 @@
 <details class="gum-details equipment-column gum-unified-section" data-section="equip_carried" {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
-        <h4 class="header-title">Carregado (Mochila)</h4>
+        <h4 class="header-title">Carregando</h4>
     </summary>
 
     <div class="list-content">
         <ol class="item-list flex-wrap-container">
-            {{#each equipmentCarried}}
+            {{#each equipmentCarriedLoose}}
             <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
                 <img src="{{this.img}}" class="item-icon"/>
                 <div class="card-info">
-                    <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                    <span class="item-name">
+                        <a class="item-quick-view">{{this.name}}</a>
+                    </span>
                     <div class="card-details equipment-stats">
                         <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                         <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
                     </div>
-
-                    {{!-- CONTROLES LADO A LADO --}}
                     <div class="item-controls">
-                        <a class="item-control item-toggle-equip" title="Equipar / Vestir">
-                            <i class="fas fa-tshirt" style="opacity: 0.3;"></i>
-                        </a>
-                        {{!-- Ícone de mochila ativo indicando que está aqui --}}
-                        <a class="item-control active" title="Na Mochila">
-                            <i class="fas fa-backpack" style="color: #54a0ff;"></i> 
-                        </a>
-                        <a class="item-control item-toggle-stored" title="Guardar no Baú">
-                            <i class="fas fa-box-open" style="opacity: 0.3;"></i>
-                        </a>
+                        <a class="item-control item-toggle-equip" title="Equipar / Vestir"><i class="fas fa-tshirt" style="opacity: 0.3;"></i></a>
+                        <a class="item-control active" title="Na Mochila"><i class="fas fa-backpack" style="color: #54a0ff;"></i></a>
+                        <a class="item-control item-toggle-stored" title="Guardar no Baú"><i class="fas fa-box-open" style="opacity: 0.3;"></i></a>
+                        <a class="item-control item-move-to-container" title="Mover para Container"><i class="fas fa-boxes"></i></a>
                         <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
                         <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                     </div>
@@ -1471,6 +1494,47 @@
             </li>
             {{/each}}
         </ol>
+
+        {{#each equipmentCarriedContainerSections}}
+        <div class="container-section">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+                <div class="container-section-header-main">
+                    <a class="item-quick-view container-title">{{this.container.name}}</a>
+                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
+                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}}background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                </div>
+                <div class="item-controls">
+                    <a class="item-control item-toggle-equip" title="Equipar / Vestir"><i class="fas fa-tshirt" style="opacity:0.3;"></i></a>
+                    <a class="item-control active" title="Na Mochila"><i class="fas fa-backpack" style="color:#54a0ff;"></i></a>
+                    <a class="item-control item-toggle-stored" title="Guardar no Baú"><i class="fas fa-box-open" style="opacity:0.3;"></i></a>
+                    <a class="item-control item-toggle-container-children" title="Colapsar/Expandir Conteúdo"><i class="fas fa-diagram-project"></i></a>
+                    <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                </div>
+            </div>
+            <ol class="item-list flex-wrap-container container-children-list">
+                {{#unless this.container.system.is_container_collapsed}}
+                {{#each this.children}}
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon"/>
+                    <div class="card-info">
+                        <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                        <div class="card-details equipment-stats">
+                            <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                            <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                        </div>
+                        <div class="item-controls">
+                            <a class="item-control item-remove-from-container" title="Remover do Container"><i class="fas fa-sign-out-alt"></i></a>
+                            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>
+                </li>
+                {{/each}}
+                {{/unless}}
+            </ol>
+        </div>
+        {{/each}}
     </div>
 </details>
 
@@ -1478,12 +1542,12 @@
 <details class="gum-details equipment-column gum-unified-section" data-section="equip_stored" {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
-        <h4 class="header-title">Armazenado (Banco/Casa)</h4>
+        <h4 class="header-title">Armazenado</h4>
     </summary>
 
     <div class="list-content">
         <ol class="item-list flex-wrap-container">
-            {{#each equipmentStored}}
+            {{#each equipmentStoredLoose}}
             <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
                 <img src="{{this.img}}" class="item-icon"/>
                 <div class="card-info">
@@ -1492,18 +1556,11 @@
                         <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                         <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
                     </div>
-
-                    {{!-- CONTROLES LADO A LADO --}}
                     <div class="item-controls">
-                        <a class="item-control item-toggle-equip" title="Equipar direto do Baú">
-                             <i class="fas fa-tshirt" style="opacity: 0.3;"></i>
-                        </a>
-                        <a class="item-control item-toggle-stored" title="Mover para Mochila">
-                            <i class="fas fa-backpack" style="opacity: 0.3;"></i>
-                        </a>
-                        <a class="item-control item-toggle-stored active" title="No Baú (Sacar para Mochila)">
-                            <i class="fas fa-box" style="color: #ee5253;"></i>
-                        </a>
+                        <a class="item-control item-toggle-equip" title="Equipar direto do Baú"><i class="fas fa-tshirt" style="opacity: 0.3;"></i></a>
+                        <a class="item-control item-toggle-stored" title="Mover para Mochila"><i class="fas fa-backpack" style="opacity: 0.3;"></i></a>
+                        <a class="item-control item-toggle-stored active" title="No Baú (Sacar para Mochila)"><i class="fas fa-box" style="color: #ee5253;"></i></a>
+                        {{#unless this.system.is_container}}<a class="item-control item-move-to-container" title="Mover para Container"><i class="fas fa-boxes"></i></a>{{/unless}}
                         <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
                         <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                     </div>
@@ -1511,9 +1568,49 @@
             </li>
             {{/each}}
         </ol>
+
+        {{#each equipmentStoredContainerSections}}
+        <div class="container-section">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+                <div class="container-section-header-main">
+                    <a class="item-quick-view container-title">{{this.container.name}}</a>
+                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
+                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}} background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                </div>
+                <div class="item-controls">
+                    <a class="item-control item-toggle-equip" title="Equipar direto do Baú"><i class="fas fa-tshirt" style="opacity:0.3;"></i></a>
+                    <a class="item-control item-toggle-stored" title="Mover para Mochila"><i class="fas fa-backpack" style="opacity:0.3;"></i></a>
+                    <a class="item-control item-toggle-stored active" title="No Baú"><i class="fas fa-box" style="color:#ee5253;"></i></a>
+                    <a class="item-control item-toggle-container-children" title="Colapsar/Expandir Conteúdo"><i class="fas fa-diagram-project"></i></a>
+                    <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                </div>
+            </div>
+            <ol class="item-list flex-wrap-container container-children-list">
+                {{#unless this.container.system.is_container_collapsed}}
+                {{#each this.children}}
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                    <img src="{{this.img}}" class="item-icon"/>
+                    <div class="card-info">
+                        <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
+                        <div class="card-details equipment-stats">
+                            <span class="equip-stat-tag">x{{this.system.quantity}}</span>
+                            <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                        </div>
+                        <div class="item-controls">
+                            <a class="item-control item-remove-from-container" title="Remover do Container"><i class="fas fa-sign-out-alt"></i></a>
+                            <a class="item-control item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>
+                </li>
+                {{/each}}
+                {{/unless}}
+            </ol>
+        </div>
+        {{/each}}
     </div>
 </details>
-
     </div>
 </div>
 

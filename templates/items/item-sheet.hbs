@@ -86,11 +86,41 @@
             </div>
         </div>
         {{!-- Campos de Texto Livre --}}
-        <div class="form-grid-2" style="margin-top: 10px;">
+<div class="form-grid-2" style="margin-top: 10px;">
              <div class="form-group"><label>Qualidade</label><input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/></div>
              <div class="form-group"><label>Material</label><input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/></div>
         </div>
     </div>
+
+    {{#if (eq item.type "equipment")}}
+    <div class="form-section">
+        <h4 class="section-title">Peso & Capacidades</h4>
+        <div class="form-grid-3">
+            <div class="form-group">
+                <label>É Container?</label>
+                <input type="checkbox" name="system.is_container" {{checked system.is_container}} />
+            </div>
+            <div class="form-group input-narrow">
+                <label>Cap. Peso (kg)</label>
+                <input type="number" step="0.01" min="0" name="system.container.max_weight" value="{{system.container.max_weight}}" />
+            </div>
+        </div>
+        <div class="form-grid-3">
+            <div class="form-group input-narrow">
+                <label>Largura (cm)</label>
+                <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.width" value="{{system.container.dimensions_cm.width}}" />
+            </div>
+            <div class="form-group input-narrow">
+                <label>Altura (cm)</label>
+                <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.height" value="{{system.container.dimensions_cm.height}}" />
+            </div>
+            <div class="form-group input-narrow">
+                <label>Profundidade (cm)</label>
+                <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.depth" value="{{system.container.dimensions_cm.depth}}" />
+            </div>
+        </div>
+    </div>
+    {{/if}}
 {{/inline}}
 
 {{!-- ======================================================== --}}

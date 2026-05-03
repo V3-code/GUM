@@ -391,6 +391,16 @@
         "cost": 0,
         "weight": 0,
         "location": "carried",
+        "is_container": false,
+        "container": {
+          "max_weight": 0,
+          "dimensions_cm": {
+            "width": 0,
+            "height": 0,
+            "depth": 0
+          }
+        },
+        "parent_container_id": "",
         "tech_level": "3",
         "tech_sm": 0,
         "legality_class": "4",

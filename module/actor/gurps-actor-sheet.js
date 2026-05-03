@@ -14,7 +14,7 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
 //  4. CLASSE DA FICHA DO ATOR (GurpsActorSheet) - EDITOR ATUALIZADO
 // ================================================================== //
 
-   export class GurpsActorSheet extends ActorSheet {
+    export class GurpsActorSheet extends ActorSheet {
       static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
           classes: ["gum", "sheet", "actor", "character"],
@@ -24,6 +24,16 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
           tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "combat" }]
         });
       }
+
+_getContainerDescendants(containerId, acc = []) {
+    if (!containerId) return acc;
+    const direct = this.actor.items.filter(i => (i.system?.parent_container_id || "") === containerId);
+    for (const child of direct) {
+        acc.push(child);
+        if (child.system?.is_container) this._getContainerDescendants(child.id, acc);
+    }
+    return acc;
+}
 
 async getData(options) {
         const context = await super.getData(options);
@@ -603,6 +613,28 @@ async getData(options) {
         // ================================================================== //
         const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
         const allEquipment = context.actor.items.filter(i => equipmentTypes.includes(i.type));
+        const collapsedContainers = this.actor.getFlag("gum", "collapsed_containers") || {};
+
+        const getItemOwnWeight = (item) => {
+            const s = item.system || {};
+            const q = Number(s.quantity || 1);
+            const w = (s.effectiveWeight !== undefined) ? Number(s.effectiveWeight || 0) : Number(s.weight || 0);
+            return q * w;
+        };
+        const getContainerContentsWeight = (containerId, stack = new Set()) => {
+            if (!containerId || stack.has(containerId)) return 0;
+            stack.add(containerId);
+            let total = 0;
+            for (const child of allEquipment) {
+                if ((child.system?.parent_container_id || "") !== containerId) continue;
+                total += getItemOwnWeight(child);
+                if (child.system?.is_container) {
+                    total += getContainerContentsWeight(child.id, stack);
+                }
+            }
+            stack.delete(containerId);
+            return total;
+        };
 
         allEquipment.forEach(item => {
             const s = item.system;
@@ -614,6 +646,22 @@ async getData(options) {
             
             s.total_weight = (q * w).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             s.total_cost = (q * c).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+            if (s.is_container) {
+                const currentWeight = getContainerContentsWeight(item.id);
+                const maxWeight = Number(s.container?.max_weight || 0);
+                const overweight = Math.max(0, currentWeight - maxWeight);
+                s.container_current_weight = currentWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                s.container_overweight = overweight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                s.container_is_overweight = maxWeight > 0 && overweight > 0;
+                s.is_container_collapsed = collapsedContainers[item.id] === true;
+            }
+
+            if (s.parent_container_id) {
+                const parent = allEquipment.find(eq => eq.id === s.parent_container_id);
+                s.parent_container_name = parent?.name || "Container";
+                s.parent_container_collapsed = collapsedContainers[s.parent_container_id] === true;
+            }
         });
 
         // ✅ FILTROS PARA O HTML (HBS) - Incluindo todos os tipos de equipamentos
@@ -626,6 +674,57 @@ async getData(options) {
         context.equipmentInUse.sort(getSortFunction(sortingPrefs.equipped || 'manual'));
         context.equipmentCarried.sort(getSortFunction(sortingPrefs.carried || 'manual'));
         context.equipmentStored.sort(getSortFunction(sortingPrefs.stored || 'manual'));
+
+        const attachChildren = (list) => {
+            const topLevel = list.filter(i => !i.system?.parent_container_id);
+            const byParent = new Map();
+            for (const item of list) {
+                const pid = item.system?.parent_container_id;
+                if (!pid) continue;
+                if (!byParent.has(pid)) byParent.set(pid, []);
+                byParent.get(pid).push(item);
+            }
+            for (const parent of topLevel) {
+                const children = byParent.get(parent.id) || [];
+                parent.system.container_children = children;
+            }
+            return topLevel;
+        };
+
+        context.equipmentInUse = attachChildren(context.equipmentInUse);
+        context.equipmentCarried = attachChildren(context.equipmentCarried);
+        context.equipmentStored = attachChildren(context.equipmentStored);
+
+        const flattenForCombat = (items) => {
+            const result = [];
+            const visit = (item) => {
+                result.push(item);
+                const children = item.system?.container_children || [];
+                for (const child of children) visit(child);
+            };
+            for (const item of items) visit(item);
+            return result;
+        };
+
+        const buildContainerSections = (list) => {
+            const looseItems = list.filter(i => !i.system?.is_container);
+            const containers = list.filter(i => i.system?.is_container).map(container => ({
+                container,
+                children: container.system?.container_children || []
+            }));
+            return { looseItems, containers };
+        };
+
+        const carriedLayout = buildContainerSections(context.equipmentCarried);
+        context.equipmentCarriedLoose = carriedLayout.looseItems;
+        context.equipmentCarriedContainerSections = carriedLayout.containers;
+        const equippedLayout = buildContainerSections(context.equipmentInUse);
+        context.equipmentInUseLoose = equippedLayout.looseItems;
+        context.equipmentInUseContainerSections = equippedLayout.containers;
+        const storedLayout = buildContainerSections(context.equipmentStored);
+        context.equipmentStoredLoose = storedLayout.looseItems;
+        context.equipmentStoredContainerSections = storedLayout.containers;
+        context.equipmentInUseForCombat = flattenForCombat(context.equipmentInUse);
 
         // ================================================================== //
         //     FASE 3.1: PREPARAÇÃO DOS GRUPOS DE ATAQUE (REATORADO)          //
@@ -645,7 +744,7 @@ async getData(options) {
             return trimmed;
         };
 
-        const equipmentAttackGroups = (context.equipmentInUse || []).map(item => {
+        const equipmentAttackGroups = (context.equipmentInUseForCombat || []).map(item => {
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
             // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
@@ -1736,6 +1835,19 @@ html.on('click', '.dr-group-toggle', (ev) => {
         // Feedback visual opcional
         if (newState) ui.notifications.info(`${item.name} equipado.`);
         else ui.notifications.info(`${item.name} movido para a mochila.`);
+
+        if (item.system?.is_container) {
+            const descendants = this._getContainerDescendants(item.id);
+            const childLocation = newState ? "equipped" : "carried";
+            if (descendants.length) {
+                await this.actor.updateEmbeddedDocuments("Item", descendants.map(child => ({
+                    _id: child.id,
+                    "system.location": childLocation,
+                    "system.equipped": newState,
+                    "system.stored": false
+                })));
+            }
+        }
     });
 
     // -------------------------------------------------------------
@@ -1767,9 +1879,89 @@ html.on('click', '.dr-group-toggle', (ev) => {
             "system.location": newState ? "stored" : "carried"
         });
 
-        if (newState) ui.notifications.info(`${item.name} guardado no baú.`);
+ if (newState) ui.notifications.info(`${item.name} guardado no baú.`);
         else ui.notifications.info(`${item.name} sacado para a mochila.`);
+
+        if (item.system?.is_container) {
+            const descendants = this._getContainerDescendants(item.id);
+            const childLocation = newState ? "stored" : "carried";
+            if (descendants.length) {
+                await this.actor.updateEmbeddedDocuments("Item", descendants.map(child => ({
+                    _id: child.id,
+                    "system.location": childLocation,
+                    "system.equipped": false,
+                    "system.stored": newState
+                })));
+            }
+        }
     });
+
+    html.find('.item-move-to-container').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const li = $(ev.currentTarget).closest(".item");
+        const itemId = li.data("itemId");
+        const item = this.actor.items.get(itemId);
+        if (!item) return;
+
+        const containers = this.actor.items.filter(i =>
+            i.id !== item.id &&
+            i.type === "equipment" &&
+            i.system?.is_container === true
+        );
+
+        if (!containers.length) {
+            ui.notifications.warn("Nenhum container disponível no personagem.");
+            return;
+        }
+
+        const options = containers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+        const content = `
+            <div class="form-group">
+                <label>Selecione o container</label>
+                <select id="gum-container-target">${options}</select>
+            </div>
+        `;
+
+        Dialog.confirm({
+            title: `Mover "${item.name}" para container`,
+            content,
+            yes: async (dlgHtml) => {
+                const selected = dlgHtml.find("#gum-container-target").val();
+                if (!selected) return;
+                await item.update({ "system.parent_container_id": selected });
+                const containerItem = this.actor.items.get(selected);
+                ui.notifications.info(`${item.name} movido para ${containerItem?.name || "container"}.`);
+            }
+        });
+    });
+
+    html.find('.item-remove-from-container').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest(".item");
+        const itemId = li.data("itemId");
+        const item = this.actor.items.get(itemId);
+        if (!item) return;
+        await item.update({ "system.parent_container_id": "" });
+        ui.notifications.info(`${item.name} removido do container.`);
+    });
+
+    html.find('.item-toggle-container-children').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const li = $(ev.currentTarget).closest(".item");
+        const itemId = li.data("itemId");
+        if (!itemId) return;
+        const current = this.actor.getFlag("gum", "collapsed_containers") || {};
+        const nextState = !current[itemId];
+        await this.actor.setFlag("gum", "collapsed_containers", {
+            ...current,
+            [itemId]: nextState
+        });
+    });
+
 
     // -------------------------------------------------------------
     // 4. DELETAR ITEM (COM CONFIRMAÇÃO)
