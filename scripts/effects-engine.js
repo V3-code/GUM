@@ -160,7 +160,11 @@ const normalizeEffectAction = (action = {}) => {
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
             cap: next.roll_modifier_cap ?? "",
             contexts: next.roll_modifier_context ?? "all",
-            application_side: normalizeRollModifierApplicationSide(next.roll_modifier_application_side)
+            application_side: normalizeRollModifierApplicationSide(next.roll_modifier_application_side),
+            target_kind: (next.roll_modifier_target_kind || "any").toString().trim() || "any",
+            target_mode: (next.roll_modifier_target_mode || "all").toString().trim() || "all",
+            target_values: (next.roll_modifier_target_values || "").toString().trim(),
+            nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     }
     next.roll_modifier_entries = next.roll_modifier_entries.map((entry) => ({
@@ -168,7 +172,11 @@ const normalizeEffectAction = (action = {}) => {
         value: normalizeRollModifierEntryValue(entry?.value),
         cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
         contexts: (entry?.contexts || "all").toString().trim() || "all",
-        application_side: normalizeRollModifierApplicationSide(entry?.application_side ?? entry?.applicationSide ?? next.roll_modifier_application_side)
+        application_side: normalizeRollModifierApplicationSide(entry?.application_side ?? entry?.applicationSide ?? next.roll_modifier_application_side),
+        target_kind: (entry?.target_kind || "any").toString().trim() || "any",
+        target_mode: (entry?.target_mode || "all").toString().trim() || "all",
+        target_values: (entry?.target_values || "").toString().trim(),
+        nh_display_mode: (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
     }));
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
@@ -346,7 +354,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 value: action.roll_modifier_value ?? 0,
                                 cap: action.roll_modifier_cap ?? "",
                                 contexts: action.roll_modifier_context ?? "all",
-                                application_side: action.roll_modifier_application_side ?? "self"
+                                application_side: action.roll_modifier_application_side ?? "self",
+                                target_kind: action.roll_modifier_target_kind ?? "any",
+                                target_mode: action.roll_modifier_target_mode ?? "all",
+                                target_values: action.roll_modifier_target_values ?? "",
+                                nh_display_mode: action.roll_modifier_nh_display_mode ?? "roll_only"
                             }];
                         activeEffectData.flags.gum.rollModifier = {
                             entries,

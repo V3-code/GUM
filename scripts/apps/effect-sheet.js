@@ -86,14 +86,22 @@ const normalizeAction = (action = {}) => {
             value: normalizeRollModifierEntryValue(entry?.value),
             cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
             contexts: (entry?.contexts || "all").toString().trim() || "all",
-            application_side: (entry?.application_side || "self").toString().trim() || "self"
+            application_side: (entry?.application_side || "self").toString().trim() || "self",
+            target_kind: (entry?.target_kind || "any").toString().trim() || "any",
+            target_mode: (entry?.target_mode || "all").toString().trim() || "all",
+            target_values: (entry?.target_values || "").toString().trim(),
+            nh_display_mode: (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }))
         : [{
             label: "",
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
             cap: (next.roll_modifier_cap ?? "").toString().trim(),
             contexts: (next.roll_modifier_context || "all").toString().trim() || "all",
-            application_side: (next.roll_modifier_application_side || "self").toString().trim() || "self"
+            application_side: (next.roll_modifier_application_side || "self").toString().trim() || "self",
+            target_kind: (next.roll_modifier_target_kind || "any").toString().trim() || "any",
+            target_mode: (next.roll_modifier_target_mode || "all").toString().trim() || "all",
+            target_values: (next.roll_modifier_target_values || "").toString().trim(),
+            nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
@@ -167,7 +175,11 @@ export class EffectSheet extends ItemSheet {
                 value: entry?.value ?? 0,
                 cap: entry?.cap ?? "",
                 contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all"),
-                application_side: entry?.application_side || "self"
+                application_side: entry?.application_side || "self",
+                target_kind: entry?.target_kind || "any",
+                target_mode: entry?.target_mode || "all",
+                target_values: entry?.target_values || "",
+                nh_display_mode: entry?.nh_display_mode || "roll_only"
             }))
         }));
         context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
@@ -334,7 +346,7 @@ activateListeners(html) {
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
-        entries.push({ label: "", value: 0, cap: "", contexts: "all", application_side: "self" });
+        entries.push({ label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" });
         actions[actionIndex].roll_modifier_entries = entries;
         await this.item.update({ "system.actions": actions });
     });
@@ -348,7 +360,7 @@ activateListeners(html) {
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
         if (Number.isNaN(entryIndex) || entryIndex < 0 || entryIndex >= entries.length) return;
         entries.splice(entryIndex, 1);
-        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all", application_side: "self" }];
+        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" }];
         await this.item.update({ "system.actions": actions });
     });
 
@@ -452,14 +464,14 @@ activateListeners(html) {
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
-            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side)$/);
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side|target_kind|target_mode|target_values|nh_display_mode)$/);
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
                 const entryIndex = Number(rollEntryMatch[2]);
                 const field = rollEntryMatch[3];
                 if (!rollEntries.has(actionIndex)) rollEntries.set(actionIndex, new Map());
                 const entryMap = rollEntries.get(actionIndex);
-                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all", application_side: "self" });
+                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" });
                 entryMap.get(entryIndex)[field] = value;
                 delete formData[key];
                 continue;
@@ -486,7 +498,11 @@ activateListeners(html) {
                             value: normalizeRollModifierEntryValue(entry.value),
                             cap: (entry.cap ?? "").toString().trim(),
                             contexts: (entry.contexts || "all").toString().trim() || "all",
-                            application_side: (entry.application_side || "self").toString().trim() || "self"
+                            application_side: (entry.application_side || "self").toString().trim() || "self",
+                            target_kind: (entry.target_kind || "any").toString().trim() || "any",
+                            target_mode: (entry.target_mode || "all").toString().trim() || "all",
+                            target_values: (entry.target_values || "").toString().trim(),
+                            nh_display_mode: (entry.nh_display_mode || "roll_only").toString().trim() || "roll_only"
                         }));
                 }
                 return normalizeAction(actionData);

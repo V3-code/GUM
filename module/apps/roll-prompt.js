@@ -88,6 +88,8 @@ export class GurpsRollPrompt extends FormApplication {
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
+                if (!this._matchesTargetFilter(entry)) return;
+                if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
                 const applicationSide = this._resolveModifierApplicationSide(entry, data);
                 if (applicationSide !== "self") return;
 
@@ -140,6 +142,8 @@ export class GurpsRollPrompt extends FormApplication {
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
+                if (!this._matchesTargetFilter(entry)) return;
+                if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
                 if (this._resolveModifierApplicationSide(entry, data) !== "vs_targeter") return;
 
                 entries.push({
@@ -537,7 +541,22 @@ export class GurpsRollPrompt extends FormApplication {
         if (modContext === "attack") return rollContext.startsWith("attack");
         if (modContext === "defense") return rollContext.startsWith("defense");
         if (modContext === "skill") return rollContext.startsWith("skill_") || rollContext === "skill";
-        return modContext === rollContext;
+               return modContext === rollContext;
+    }
+
+    _matchesTargetFilter(entry = {}) {
+        const targets = String(entry?.target_values ?? "")
+            .split(",")
+            .map((name) => name.trim().toLowerCase())
+            .filter(Boolean);
+        if (!targets.length) return true;
+        const itemId = this.rollData.itemId;
+        const item = itemId ? this.actor.items.get(itemId) : null;
+        if (!item) return false;
+        const itemName = (item.name || "").trim().toLowerCase();
+        if (!itemName) return false;
+        // Se houver nomes preenchidos, aplica como lista de nomes exatos.
+        return targets.includes(itemName);
     }
     
     _determineContext() {
@@ -622,10 +641,14 @@ return 'default';
             return [];
         }
         const relativeLevel = Number(sourceItem.system?.skill_level) || 0;
-        const otherMods = Number(sourceItem.system?.other_mods) || 0;
+        const nhMods = Number(sourceItem.system?.nh_mod) || 0;
+        const passiveMods = Number(sourceItem.system?.nh_passive) || 0;
+        const tempMods = Number(sourceItem.system?.nh_temp) || 0;
         const parts = [];
         if (relativeLevel !== 0) parts.push(relativeLevel);
-        if (otherMods !== 0) parts.push(otherMods);
+        if (nhMods !== 0) parts.push(nhMods);
+        if (passiveMods !== 0) parts.push(passiveMods);
+        if (tempMods !== 0) parts.push(tempMods);
         return parts;
     }
 

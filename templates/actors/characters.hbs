@@ -857,11 +857,11 @@
                             </div>
                                 
                                 {{!-- REQ 2: Tag de Modificadores Inatos (Só aparece se != 0) --}}
-                                {{#if (ne this.system.other_mods 0)}}
+                                {{#if (ne this.system.nh_mod 0)}}
                                     <span class="path-node mod" title="Modificadores Inatos/Outros">
                                         <i class="fas fa-adjust"></i>
                                         <span class="path-val">
-                                            {{#if (gte this.system.other_mods 0)}}+{{/if}}{{this.system.other_mods}}
+                                            {{#if (gte this.system.nh_mod 0)}}+{{/if}}{{this.system.nh_mod}}
                                         </span>
                                     </span>
                                 {{/if}}
@@ -894,12 +894,12 @@
                         <div class="st-nh-box">
                             <span>NH</span>
                             <a class="rollable" 
-                               data-roll-value="{{this.system.final_nh}}" 
+                               data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" 
                                data-label="Teste de {{this.name}}" 
                                data-type="skill"
                                data-item-id="{{this._id}}"
                                data-attribute-key="{{this.system.base_attribute}}">
-                               {{this.system.final_nh}}
+                               {{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}
                             </a>
                         </div>
 
@@ -1778,10 +1778,10 @@
                           <div class="st-meta">
                             {{#unless this.isTrunk}}<span>[{{this.system.difficulty}}]</span>{{/unless}}
                           </div>
-                          {{#if (ne this.system.other_mods 0)}}
+                          {{#if (ne this.system.nh_mod 0)}}
                           <span class="path-node mod" title="Modificadores Inatos/Outros">
                             <i class="fas fa-adjust"></i>
-                            <span class="path-val">{{#if (gte this.system.other_mods 0)}}+{{/if}}{{this.system.other_mods}}</span>
+                            <span class="path-val">{{#if (gte this.system.nh_mod 0)}}+{{/if}}{{this.system.nh_mod}}</span>
                           </span>
                           {{/if}}
                           <span class="path-node self" title="Base: {{this.system.base_attribute}}">
@@ -1792,7 +1792,7 @@
                       </div>
                       <div class="st-nh-box">
                         <span>NH</span>
-                        <a class="rollable" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.system.base_attribute}}">{{this.system.final_nh}}</a>
+                        <a class="rollable" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.system.base_attribute}}">{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</a>
                       </div>
                       <div class="st-controls">
                         <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>

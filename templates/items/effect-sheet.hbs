@@ -157,6 +157,21 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="modifier-entry-bottomline">
+                                        <div class="effect-field modifier-entry-field">
+                                            <label class="effect-label">Habilidade(s) alvo (CSV)</label>
+                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.target_values" value="{{entry.target_values}}" placeholder="Ex: Furtividade,Acrobacia"/>
+                                        </div>
+                                    </div>
+                                    <div class="modifier-entry-bottomline">
+                                        <div class="effect-field modifier-entry-field">
+                                            <label class="effect-label">Exibição NH</label>
+                                            <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.nh_display_mode">
+                                                <option value="roll_only" {{#if (eq entry.nh_display_mode "roll_only")}}selected{{/if}}>Apenas rolagem</option>
+                                                <option value="include_in_nh" {{#if (eq entry.nh_display_mode "include_in_nh")}}selected{{/if}}>Incluir no NH</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                                 {{/each}}
                                 <button type="button" class="add-roll-mod-entry" data-action-index="{{action.index}}"><i class="fas fa-plus"></i> Adicionar entrada</button>

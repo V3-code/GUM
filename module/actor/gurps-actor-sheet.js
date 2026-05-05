@@ -313,7 +313,9 @@ async getData(options) {
 
         // --- 2. Prepara a lista para "Condições Passivas" (Regras de Cenário) ---
         // Esta parte do seu código original já estava perfeita.
-         context.installedConditions = this.actor.items.filter(item => item.type === "condition");
+         context.installedConditions = this.actor.items
+            .filter(item => item.type === "condition")
+            .sort((a, b) => (a.name || "").localeCompare((b.name || ""), "pt-BR", { sensitivity: "base" }));
         
         // --- FIM DA NOVA LÓGICA DE CONDIÇÕES ---
         
@@ -412,8 +414,9 @@ async getData(options) {
                     child.inheritancePath = pathTrace; 
 
                     // 3. Cálculo Matemático (Soma ao NH Final para rolagem)
-                    if (child.system.final_nh) {
-                        child.system.final_nh += inheritedLevel;
+                    const baseFinalNh = Number(child.system.final_nh);
+                    if (Number.isFinite(baseFinalNh)) {
+                        child.system.final_nh = baseFinalNh + inheritedLevel;
                     }
 
                     // 4. Preparar dados para os filhos deste filho (Netos)
