@@ -361,7 +361,7 @@ async getData(options) {
             // -------------------------------------------------------
             // MODO 1: AGRUPAMENTO SIMPLES (Padrão / Legado)
             // -------------------------------------------------------
-            skills.forEach(skill => {
+                       skills.forEach(skill => {
                 // Normaliza o nome do grupo
                 let groupName = (skill.system.group || "Geral").trim();
                 if (!groupName) groupName = "Geral";
@@ -371,6 +371,9 @@ async getData(options) {
                 // No modo grupo, limpamos a indentação para ficar tudo alinhado
                 skill.indentClass = ""; 
                 skill.isTrunk = false; 
+                // Garante que o modo padrão use sempre o NH base calculado pelo sistema,
+                // evitando carregar valor derivado do modo árvore entre renders.
+                delete skill.tree_final_nh;
                 
                 skillsByGroup[groupName].push(skill);
             });
@@ -390,6 +393,14 @@ async getData(options) {
             // depth: Profundidade visual
             // inheritedLevel: Soma matemática acumulada
             // pathTrace: Array com o histórico [{name: "Espada", val: 2, type: "trunk"}, ...]
+            const getTreeCascadeContribution = (skill) => {
+                const relativeLevel = Number(skill.system?.skill_level) || 0;
+                const nhMod = Number(skill.system?.nh_mod) || 0;
+                const nhPassive = Number(skill.system?.nh_passive) || 0;
+                const nhTemp = Number(skill.system?.nh_temp) || 0;
+                return relativeLevel + nhMod + nhPassive + nhTemp;
+            };
+
             const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = []) => {
                 let childrenList = [];
                 
@@ -414,19 +425,25 @@ async getData(options) {
                     child.inheritancePath = pathTrace; 
 
                     // 3. Cálculo Matemático (Soma ao NH Final para rolagem)
+                    // IMPORTANTE: não mutar `system.final_nh` aqui.
+                    // Esse valor base é recalculado pelo fluxo padrão e pode
+                    // ser reutilizado em múltiplos renders. Mutá-lo neste ponto
+                    // gera acúmulo visual (ex.: +1 virando +2 no primeiro redraw).
                     const baseFinalNh = Number(child.system.final_nh);
                     if (Number.isFinite(baseFinalNh)) {
-                        child.system.final_nh = baseFinalNh + inheritedLevel;
+                        child.tree_final_nh = baseFinalNh + inheritedLevel;
+                    } else {
+                        child.tree_final_nh = child.system.final_nh;
                     }
 
                     // 4. Preparar dados para os filhos deste filho (Netos)
-                    const myRelativeLevel = Number(child.system.skill_level) || 0;
-                    const nextInheritedLevel = inheritedLevel + myRelativeLevel;
+                    const myCascadeContribution = getTreeCascadeContribution(child);
+                    const nextInheritedLevel = inheritedLevel + myCascadeContribution;
                     
                     // Adiciona a si mesmo ao histórico dos descendentes
                     const myNodeInfo = {
                         name: child.name,
-                        value: myRelativeLevel,
+                        value: myCascadeContribution,
                         type: child.system.hierarchy_type // trunk, branch, etc.
                     };
                     const nextPathTrace = [...pathTrace, myNodeInfo];
@@ -451,7 +468,7 @@ async getData(options) {
                 skillsByGroup[groupName].push(trunk);
 
                 // Pega o nível do Tronco para iniciar a cascata
-                const trunkLevel = Number(trunk.system.skill_level) || 0;
+                const trunkLevel = getTreeCascadeContribution(trunk);
                 
                 // Cria o histórico inicial (O Tronco é o primeiro ancestral)
                 const trunkNodeInfo = {

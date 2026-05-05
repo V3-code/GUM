@@ -1,5 +1,5 @@
-2026/05/04-13:17:30.475 22fc Recovering log #695
-2026/05/04-13:17:30.475 22fc Level-0 table #697: started
-2026/05/04-13:17:30.477 22fc Level-0 table #697: 9043 bytes OK
-2026/05/04-13:17:30.482 22fc Delete type=0 #695
-2026/05/04-13:17:30.482 22fc Delete type=3 #694
+2026/05/04-16:19:01.918 3cac Recovering log #698
+2026/05/04-16:19:01.918 3cac Level-0 table #700: started
+2026/05/04-16:19:01.949 3cac Level-0 table #700: 315 bytes OK
+2026/05/04-16:19:01.953 3cac Delete type=0 #698
+2026/05/04-16:19:01.953 3cac Delete type=3 #696
