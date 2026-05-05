@@ -393,7 +393,32 @@ async getData(options) {
             // depth: Profundidade visual
             // inheritedLevel: Soma matemática acumulada
             // pathTrace: Array com o histórico [{name: "Espada", val: 2, type: "trunk"}, ...]
+   const parseReferenceModifier = (referenceText) => {
+                const raw = String(referenceText ?? "").trim();
+                const modifierMatch = raw.match(/^(.*?)([+-]\d+)\s*$/);
+                if (!modifierMatch) return { reference: raw, modifier: 0 };
+                const parsedModifier = Number(modifierMatch[2]);
+                if (!Number.isFinite(parsedModifier) || !modifierMatch[1]?.trim()) return { reference: raw, modifier: 0 };
+                return { reference: modifierMatch[1].trim(), modifier: parsedModifier };
+            };
+
+            const resolveSkillBaseValue = (rawReference) => {
+                const source = String(rawReference ?? "").trim();
+                if (!source) return 10;
+                const { reference, modifier } = parseReferenceModifier(source);
+                const normalizedRef = reference.toLowerCase().trim();
+                const attrFinal = Number(this.actor.system?.attributes?.[normalizedRef]?.final);
+                if (Number.isFinite(attrFinal)) return attrFinal + modifier;
+                if (/^[+-]?\d+(\.\d+)?$/.test(normalizedRef)) return (Number(normalizedRef) || 0) + modifier;
+                const refSkill = skills.find(s => s.name?.toLowerCase().trim() === normalizedRef);
+                if (refSkill) return (Number(refSkill.system?.final_nh) || 10) + modifier;
+                return 10 + modifier;
+            };
+
             const getTreeCascadeContribution = (skill) => {
+                const finalNh = Number(skill.system?.final_nh);
+                const baseNh = resolveSkillBaseValue(skill.system?.base_attribute);
+                if (Number.isFinite(finalNh) && Number.isFinite(baseNh)) return finalNh - baseNh;
                 const relativeLevel = Number(skill.system?.skill_level) || 0;
                 const nhMod = Number(skill.system?.nh_mod) || 0;
                 const nhPassive = Number(skill.system?.nh_passive) || 0;

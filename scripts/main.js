@@ -720,7 +720,8 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             return bonus;
         };
         
-        for (let pass = 0; pass < 2; pass++) { 
+        const skillResolutionPasses = Math.max(2, skills.length);
+        for (let pass = 0; pass < skillResolutionPasses; pass++) { 
             for (const i of skills) {
                 try {
                     const attrVal = evaluateRollReference(i.system.base_attribute, skills).value;
