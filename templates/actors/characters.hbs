@@ -844,7 +844,14 @@
                         <div class="st-item-name">
                             
                             {{!-- Nome (Visualização Rápida) --}}
-                            <h4 class="item-quick-view" title="Clique para ver detalhes">{{this.name}}</h4>
+                            <h4 class="item-quick-view" title="Clique para ver detalhes">
+                                {{this.name}}
+                                {{#if this.effectNhTagVisible}}
+                                    <span class="skill-effect-tag {{this.effectNhTagClass}}" title="Mod. direto de NH (nh_passive + nh_temp + efeitos include_in_nh)">
+                                        {{#if (gte this.effectNhTagValue 0)}}+{{/if}}{{this.effectNhTagValue}}
+                                    </span>
+                                {{/if}}
+                            </h4>
                             
                             {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
                             <div class="st-inheritance-path">
@@ -1773,7 +1780,14 @@
                     <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" data-item-id="{{this._id}}" data-item-type="skill" draggable="true">
                       <div class="st-item-icon item-quick-view" style="background-image: url('{{this.img}}');" title="Visualizar Perícia"></div>
                       <div class="st-item-name">
-                        <h4 class="item-quick-view" title="Clique para ver detalhes">{{this.name}}</h4>
+                        <h4 class="item-quick-view" title="Clique para ver detalhes">
+                          {{this.name}}
+                          {{#if this.effectNhTagVisible}}
+                          <span class="skill-effect-tag {{this.effectNhTagClass}}" title="Mod. direto de NH (nh_passive + nh_temp + efeitos include_in_nh)">
+                            {{#if (gte this.effectNhTagValue 0)}}+{{/if}}{{this.effectNhTagValue}}
+                          </span>
+                          {{/if}}
+                        </h4>
                         <div class="st-inheritance-path">
                           <div class="st-meta">
                             {{#unless this.isTrunk}}<span>[{{this.system.difficulty}}]</span>{{/unless}}

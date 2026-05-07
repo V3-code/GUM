@@ -2612,6 +2612,27 @@ background-color: var(--gum-accent-gold);
     color: #fff2d8;
 }
 
+.gum.sheet.actor .skill-effect-tag {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 700;
+    vertical-align: middle;
+    color: #fff;
+}
+
+.gum.sheet.actor .skill-effect-tag.is-positive {
+    background: #2f9e44;
+}
+
+.gum.sheet.actor .skill-effect-tag.is-negative {
+    background: #c92a2a;
+}
+
 /* Breadcrumbs (Caminho) */
 .gum.sheet.actor .st-inheritance-path {
     display: flex;

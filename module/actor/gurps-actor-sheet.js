@@ -353,6 +353,58 @@ async getData(options) {
 
         // 2. Separar apenas os itens do tipo 'skill'
         let skills = itemsByType.skill || [];
+        const actorActiveEffects = Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? []);
+
+        const matchesEntryTargetForItem = (entry = {}, item = null) => {
+            const targets = String(entry?.target_values ?? "")
+                .split(",")
+                .map((name) => name.trim().toLowerCase())
+                .filter(Boolean);
+            if (!targets.length) return true;
+            const itemName = (item?.name || "").trim().toLowerCase();
+            if (!itemName) return false;
+            return targets.includes(itemName);
+        };
+
+        const matchesEntryContextForItem = (entry = {}, item) => {
+            const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+            if (!context || context === "all") return true;
+            const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+            const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
+            return contexts.some((ctx) => {
+                if (ctx === "skill") return item.type === "skill";
+                if (ctx.startsWith("skill_")) return item.type === "skill" && baseAttr === ctx.replace("skill_", "");
+                return false;
+            });
+        };
+
+        const collectIncludeInNhEffectBonus = (skill) => {
+            let total = 0;
+            for (const effect of actorActiveEffects) {
+                const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+                if (!data) continue;
+                const entries = Array.isArray(data.entries) && data.entries.length
+                    ? data.entries
+                    : [{ value: data.value, nh_display_mode: data.nh_display_mode ?? "roll_only", target_values: data.target_values ?? "", contexts: data.context ?? "all" }];
+                for (const entry of entries) {
+                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") continue;
+                    if (!matchesEntryTargetForItem(entry, skill)) continue;
+                    if (!matchesEntryContextForItem(entry, skill)) continue;
+                    const value = Number(entry?.value);
+                    if (Number.isFinite(value)) total += value;
+                }
+            }
+            return total;
+        };
+
+        skills.forEach((skill) => {
+            const directNhDelta = (Number(skill.system?.nh_passive) || 0)
+                + (Number(skill.system?.nh_temp) || 0)
+                + collectIncludeInNhEffectBonus(skill);
+            skill.effectNhTagVisible = directNhDelta !== 0;
+            skill.effectNhTagValue = directNhDelta;
+            skill.effectNhTagClass = directNhDelta >= 0 ? "is-positive" : "is-negative";
+        });
 
         // Objeto final que vai para o HTML
         let skillsByGroup = {};
@@ -393,37 +445,12 @@ async getData(options) {
             // depth: Profundidade visual
             // inheritedLevel: Soma matemática acumulada
             // pathTrace: Array com o histórico [{name: "Espada", val: 2, type: "trunk"}, ...]
-   const parseReferenceModifier = (referenceText) => {
-                const raw = String(referenceText ?? "").trim();
-                const modifierMatch = raw.match(/^(.*?)([+-]\d+)\s*$/);
-                if (!modifierMatch) return { reference: raw, modifier: 0 };
-                const parsedModifier = Number(modifierMatch[2]);
-                if (!Number.isFinite(parsedModifier) || !modifierMatch[1]?.trim()) return { reference: raw, modifier: 0 };
-                return { reference: modifierMatch[1].trim(), modifier: parsedModifier };
-            };
-
-            const resolveSkillBaseValue = (rawReference) => {
-                const source = String(rawReference ?? "").trim();
-                if (!source) return 10;
-                const { reference, modifier } = parseReferenceModifier(source);
-                const normalizedRef = reference.toLowerCase().trim();
-                const attrFinal = Number(this.actor.system?.attributes?.[normalizedRef]?.final);
-                if (Number.isFinite(attrFinal)) return attrFinal + modifier;
-                if (/^[+-]?\d+(\.\d+)?$/.test(normalizedRef)) return (Number(normalizedRef) || 0) + modifier;
-                const refSkill = skills.find(s => s.name?.toLowerCase().trim() === normalizedRef);
-                if (refSkill) return (Number(refSkill.system?.final_nh) || 10) + modifier;
-                return 10 + modifier;
-            };
-
             const getTreeCascadeContribution = (skill) => {
-                const finalNh = Number(skill.system?.final_nh);
-                const baseNh = resolveSkillBaseValue(skill.system?.base_attribute);
-                if (Number.isFinite(finalNh) && Number.isFinite(baseNh)) return finalNh - baseNh;
                 const relativeLevel = Number(skill.system?.skill_level) || 0;
-                const nhMod = Number(skill.system?.nh_mod) || 0;
                 const nhPassive = Number(skill.system?.nh_passive) || 0;
                 const nhTemp = Number(skill.system?.nh_temp) || 0;
-                return relativeLevel + nhMod + nhPassive + nhTemp;
+                const includeInNhEffectBonus = collectIncludeInNhEffectBonus(skill);
+                return relativeLevel + nhPassive + nhTemp + includeInNhEffectBonus;
             };
 
             const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = []) => {
@@ -455,8 +482,9 @@ async getData(options) {
                     // ser reutilizado em múltiplos renders. Mutá-lo neste ponto
                     // gera acúmulo visual (ex.: +1 virando +2 no primeiro redraw).
                     const baseFinalNh = Number(child.system.final_nh);
+                    const ownTreeDefaultMod = Number(child.system?.tree_default_mod) || 0;
                     if (Number.isFinite(baseFinalNh)) {
-                        child.tree_final_nh = baseFinalNh + inheritedLevel;
+                        child.tree_final_nh = baseFinalNh + ownTreeDefaultMod + inheritedLevel;
                     } else {
                         child.tree_final_nh = child.system.final_nh;
                     }
@@ -490,6 +518,12 @@ async getData(options) {
                 trunk.indentClass = "";
                 trunk.isTrunk = true;
                 trunk.inheritancePath = []; // Tronco não herda de ninguém
+                {
+                    const trunkBaseFinalNh = Number(trunk.system.final_nh);
+                    const trunkTreeDefaultMod = Number(trunk.system?.tree_default_mod) || 0;
+                    if (Number.isFinite(trunkBaseFinalNh)) trunk.tree_final_nh = trunkBaseFinalNh + trunkTreeDefaultMod;
+                    else trunk.tree_final_nh = trunk.system.final_nh;
+                }
                 skillsByGroup[groupName].push(trunk);
 
                 // Pega o nível do Tronco para iniciar a cascata
@@ -521,6 +555,10 @@ async getData(options) {
                     skill.indentClass = "";
                     skill.isTrunk = false;
                     skill.inheritancePath = []; // Órfão não tem herança
+                    const orphanBaseFinalNh = Number(skill.system.final_nh);
+                    const orphanTreeDefaultMod = Number(skill.system?.tree_default_mod) || 0;
+                    if (Number.isFinite(orphanBaseFinalNh)) skill.tree_final_nh = orphanBaseFinalNh + orphanTreeDefaultMod;
+                    else skill.tree_final_nh = skill.system.final_nh;
                     
                     skillsByGroup[g].push(skill);
                 });
