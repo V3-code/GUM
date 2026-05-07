@@ -45,7 +45,13 @@ let importEntries = [];
                 : data.map(item => ({ itemData: item, folderPath: [] })); // Formato JSON Simples
         } else if (data.rows && Array.isArray(data.rows)) {
             importEntries = collectGCSImportEntries(data.rows); // Formato de Biblioteca GCS (com children)
-        } else if (Array.isArray(data.skills || data.spells || data.equipment || data.traits || data.modifiers)) {
+        } else if (
+            Array.isArray(data.skills) ||
+            Array.isArray(data.spells) ||
+            Array.isArray(data.equipment) ||
+            Array.isArray(data.traits) ||
+            Array.isArray(data.modifiers)
+        ) {
             const roots = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
             importEntries = collectGCSImportEntries(roots);
         } else {
@@ -293,7 +299,7 @@ function collectGCSImportEntries(rows, collector = [], folderPath = []) {
     for (const row of rows || []) {
         const copy = foundry.utils.deepClone(row);
         const children = Array.isArray(copy.children) ? copy.children : [];
-        const containerName = String(copy.name || "").trim();
+        const containerName = getGCSRowLabel(copy);
         const isContainer = children.length > 0;
 
         if (isContainer) {
@@ -337,7 +343,8 @@ function expandChoiceModifiersAsIndividualRows(row) {
         const optionName = String(mod?.name || "").trim();
         const optionPoints = parseCostAdjustmentValue(mod?.cost_adj ?? mod?.cost ?? 0);
         const clone = foundry.utils.deepClone(row);
-        clone.name = optionName ? `${row.name} (${optionName})` : row.name;
+        const rowLabel = getGCSRowLabel(row);
+        clone.name = optionName ? `${rowLabel} (${optionName})` : rowLabel;
         clone.base_points = optionPoints;
         clone.points = optionPoints;
         clone.calc = {
@@ -357,9 +364,9 @@ function expandChoiceModifiersAsIndividualRows(row) {
 }
 
 function isImportableGCSRow(row, hadChildren = false) {
-    if (!row || !row.name) return false;
+    const rowLabel = getGCSRowLabel(row);
+    if (!row || !rowLabel) return false;
 
-    // Se for só um contêiner organizacional com filhos e sem conteúdo real, ignora
     const hasRealContent =
         row.description ||
         row.reference ||
@@ -376,11 +383,18 @@ function isImportableGCSRow(row, hadChildren = false) {
         row.difficulty ||
         row.spell_class ||
         row.weapons ||
-        row.levels !== undefined;
+        row.levels !== undefined ||
+        row.base_weight !== undefined ||
+        row.weight !== undefined ||
+        row.quantity !== undefined;
 
     if (!hasRealContent && hadChildren) return false;
 
-  return true;
+    return Boolean(hasRealContent);
+}
+
+function getGCSRowLabel(row) {
+    return String(row?.name || row?.description || "").trim();
 }
 
 async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = new Map()) {

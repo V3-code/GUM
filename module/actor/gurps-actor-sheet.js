@@ -2058,11 +2058,21 @@ html.on('click', '.dr-group-toggle', (ev) => {
     const item = this.actor.items.get(itemId);
     if (!item) return;
 
+    const descendants = item.system?.is_container ? this._getContainerDescendants(item.id) : [];
+    const totalToDelete = 1 + descendants.length;
+    const confirmText = descendants.length
+      ? `<p>Tem certeza que deseja excluir este item permanentemente?</p><p><strong>${descendants.length}</strong> item(ns) dentro deste container também será(ão) excluído(s).</p>`
+      : `<p>Tem certeza que deseja excluir este item permanentemente?</p>`;
+
     // Cria a janela de diálogo para confirmação
     Dialog.confirm({
         title: `Excluir ${item.name}?`,
-        content: `<p>Tem certeza que deseja excluir este item permanentemente?</p>`,
-        yes: () => item.delete(),
+        content: confirmText,
+        yes: async () => {
+            const idsToDelete = [item.id, ...descendants.map(child => child.id)];
+            await this.actor.deleteEmbeddedDocuments("Item", idsToDelete);
+            ui.notifications.info(`${totalToDelete} item(ns) removido(s) da ficha.`);
+        },
         no: () => {}, // Não faz nada se cancelar
         defaultYes: false
     });
