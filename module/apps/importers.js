@@ -1002,6 +1002,10 @@ function parseGCSLibraryEquipment(gcsEquip) {
     if (isArmor) {
         type = "armor";
         template = getSystemTemplate("Item", "armor");
+
+        if (!template.dr_locations || typeof template.dr_locations !== "object") {
+        template.dr_locations = {};
+    }
         
         for (const feature of gcsEquip.features || []) {
             if (feature.type === "dr_bonus") {
@@ -1103,7 +1107,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.block = gcsWeapon.calc?.block || gcsWeapon.block || "0";
                 
                 template.melee_attacks[newAttackId] = {
-                     ...getSystemTemplate("Item", "attack_melee"),
+                    ...(getSystemTemplate("Item", "attack_melee") || {}),
                     ...attackData
                 };
             }
@@ -1114,7 +1118,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.shots = gcsWeapon.shots || "1(3i)";
                 attackData.rcl = gcsWeapon.recoil || "1";
                 template.ranged_attacks[newAttackId] = {
-                    ...getSystemTemplate("Item", "attack_ranged"),
+                    ...(getSystemTemplate("Item", "attack_ranged") || {}),
                     ...attackData
                 };
             }

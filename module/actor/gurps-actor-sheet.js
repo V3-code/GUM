@@ -2010,15 +2010,42 @@ html.on('click', '.dr-group-toggle', (ev) => {
         Dialog.confirm({
             title: `Mover "${item.name}" para container`,
             content,
-            yes: async (dlgHtml) => {
+  yes: async (dlgHtml) => {
                 const selected = dlgHtml.find("#gum-container-target").val();
                 if (!selected) return;
-                await item.update({ "system.parent_container_id": selected });
                 const containerItem = this.actor.items.get(selected);
+                if (!containerItem) return;
+
+                const targetLocation = containerItem.system?.stored
+                    ? "stored"
+                    : containerItem.system?.equipped
+                        ? "equipped"
+                        : "carried";
+
+                await item.update({
+                    "system.parent_container_id": selected,
+                    "system.location": targetLocation,
+                    "system.equipped": targetLocation === "equipped",
+                    "system.stored": targetLocation === "stored"
+                });
+
+                if (item.system?.is_container) {
+                    const descendants = this._getContainerDescendants(item.id);
+                    if (descendants.length) {
+                        await this.actor.updateEmbeddedDocuments("Item", descendants.map(child => ({
+                            _id: child.id,
+                            "system.location": targetLocation,
+                            "system.equipped": targetLocation === "equipped",
+                            "system.stored": targetLocation === "stored"
+                        })));
+                    }
+                }
+
                 ui.notifications.info(`${item.name} movido para ${containerItem?.name || "container"}.`);
             }
         });
     });
+
 
     html.find('.item-remove-from-container').click(async ev => {
         ev.preventDefault();
