@@ -37,6 +37,18 @@ _getContainerDescendants(containerId, acc = []) {
 
 async getData(options) {
         const context = await super.getData(options);
+        const getDisplayedCharacteristicPoints = (item) => {
+            const basePoints = Number(item?.system?.points) || 0;
+            const modifiers = Object.values(item?.system?.modifiers || {});
+            const totalModPercent = modifiers.reduce((sum, mod) => sum + (parseInt(mod?.cost, 10) || 0), 0);
+            const cappedModPercent = Math.max(-80, totalModPercent);
+            const multiplier = 1 + (cappedModPercent / 100);
+            let finalPoints = Math.round(basePoints * multiplier);
+
+            if (basePoints > 0 && finalPoints < 1) finalPoints = 1;
+            if (basePoints < 0 && finalPoints > -1) finalPoints = -1;
+            return finalPoints;
+        };
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -53,6 +65,9 @@ async getData(options) {
         // Agrupa todos os itens por tipo
         const itemsByType = context.actor.items.reduce((acc, item) => {
           const type = item.type;
+          if (type === "advantage" || type === "disadvantage") {
+            item.displayPoints = getDisplayedCharacteristicPoints(item);
+          }
           if (!acc[type]) acc[type] = [];
           acc[type].push(item);
           return acc;
