@@ -20,6 +20,7 @@ import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
+import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
@@ -1157,7 +1158,9 @@ function _buildDamageActionData(actor, sourceItem, rollData) {
         if (attack?.damage_formula) {
             return {
                 actorId: actor.id,
+                actorUuid: actor.uuid,
                 itemId: sourceItem.id,
+                itemUuid: sourceItem.uuid,
                 attackId,
                 sourceLabel: `${sourceItem.name} (${attack.mode ?? attackId})`
             };
@@ -1167,7 +1170,9 @@ function _buildDamageActionData(actor, sourceItem, rollData) {
     if (sourceItem.system?.damage?.formula) {
         return {
             actorId: actor.id,
+            actorUuid: actor.uuid,
             itemId: sourceItem.id,
+            itemUuid: sourceItem.uuid,
             attackId: null,
             sourceLabel: sourceItem.name
         };
@@ -1181,12 +1186,18 @@ async function _rollDamageFromChatAction(payload) {
         return ui.notifications.warn("Não foi possível identificar os dados da rolagem de dano.");
     }
 
-    const actor = game.actors.get(payload.actorId);
+    let actor = game.actors.get(payload.actorId);
+    if (!actor && payload.actorUuid) {
+        actor = await fromUuid(payload.actorUuid);
+    }
     if (!actor) {
         return ui.notifications.warn("Ator da rolagem de dano não foi encontrado.");
     }
 
-    const item = actor.items.get(payload.itemId);
+    let item = actor.items.get(payload.itemId);
+    if (!item && payload.itemUuid) {
+        item = await fromUuid(payload.itemUuid);
+    }
     if (!item) {
         return ui.notifications.warn("Item da rolagem de dano não foi encontrado.");
     }
@@ -1202,8 +1213,8 @@ async function _rollDamageFromChatAction(payload) {
                 formula: attack.damage_formula,
                 type: attack.damage_type,
                 armor_divisor: attack.armor_divisor,
-                follow_up_damage: attack.follow_up_damage,
-                fragmentation_damage: attack.fragmentation_damage,
+                follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
+                fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
                 onDamageEffects: attack.onDamageEffects || {},
                 generalConditions: item.system.generalConditions || {}
             };
@@ -1215,8 +1226,8 @@ async function _rollDamageFromChatAction(payload) {
             formula: dmg.formula,
             type: dmg.type,
             armor_divisor: dmg.armor_divisor,
-            follow_up_damage: dmg.follow_up_damage,
-            fragmentation_damage: dmg.fragmentation_damage,
+            follow_up_damage: foundry.utils.duplicate(dmg.follow_up_damage || {}),
+            fragmentation_damage: foundry.utils.duplicate(dmg.fragmentation_damage || {}),
             onDamageEffects: item.system.onDamageEffects || {},
             generalConditions: item.system.generalConditions || {}
         };
@@ -1275,6 +1286,59 @@ async function _rollDamageFromChatAction(payload) {
         const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
         return match ? match[1].trim() : "0";
     };
+
+    const summarySegments = [];
+    const mainDisplayFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.formula));
+    summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}`.trim());
+    if (normalizedAttack.follow_up_damage?.formula) {
+        const fuDisplay = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.follow_up_damage.formula));
+        summarySegments.push(`FU: ${fuDisplay} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
+    }
+    if (normalizedAttack.fragmentation_damage?.formula) {
+        const frDisplay = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.fragmentation_damage.formula));
+        summarySegments.push(`FR: ${frDisplay} ${normalizedAttack.fragmentation_damage.type || ""}`.trim());
+    }
+
+    const promptResult = await GurpsDamageRollPrompt.prompt({
+        sourceName: normalizedAttack.name,
+        main: {
+            formula: normalizedAttack.formula,
+            displayFormula: mainDisplayFormula,
+            summaryFormula: summarySegments.join(" • "),
+            type: normalizedAttack.type || ""
+        },
+        followUp: {
+            formula: normalizedAttack.follow_up_damage?.formula || "",
+            type: normalizedAttack.follow_up_damage?.type || ""
+        },
+        fragmentation: {
+            formula: normalizedAttack.fragmentation_damage?.formula || "",
+            type: normalizedAttack.fragmentation_damage?.type || ""
+        }
+    });
+
+    if (!promptResult) return;
+
+    const appendAdditional = (baseFormula, additional) => {
+        const base = String(baseFormula || "").trim();
+        const add = String(additional || "").trim();
+        if (!add) return base;
+        return `${base}${add}`;
+    };
+
+    normalizedAttack.formula = appendAdditional(normalizedAttack.formula, promptResult.mainAdditional);
+
+    if (promptResult.followUpAdditional) {
+        normalizedAttack.follow_up_damage = normalizedAttack.follow_up_damage || { formula: "", type: "", armor_divisor: 1 };
+        normalizedAttack.follow_up_damage.formula = appendAdditional(normalizedAttack.follow_up_damage.formula || "0", promptResult.followUpAdditional);
+        if (!normalizedAttack.follow_up_damage.type && promptResult.followUpType) normalizedAttack.follow_up_damage.type = promptResult.followUpType;
+    }
+
+    if (promptResult.fragmentationAdditional) {
+        normalizedAttack.fragmentation_damage = normalizedAttack.fragmentation_damage || { formula: "", type: "", armor_divisor: 1 };
+        normalizedAttack.fragmentation_damage.formula = appendAdditional(normalizedAttack.fragmentation_damage.formula || "0", promptResult.fragmentationAdditional);
+        if (!normalizedAttack.fragmentation_damage.type && promptResult.fragmentationType) normalizedAttack.fragmentation_damage.type = promptResult.fragmentationType;
+    }
 
     const rolls = [];
     const mainFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.formula));

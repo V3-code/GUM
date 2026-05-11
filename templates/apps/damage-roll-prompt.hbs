@@ -1,0 +1,56 @@
+<form class="gum-damage-roll-prompt premium" autocomplete="off">
+  <header class="damage-prompt-header">
+    <div class="header-kicker">Configuração de Dano</div>
+    <h2>Rolagem de Dano</h2>
+    <h3>{{sourceName}}</h3>
+  </header>
+
+  <section class="damage-visual-box">
+    <div class="damage-die-frame">
+      <div class="damage-visual-die">{{main.displayFormula}}</div>
+      <span class="die-caption">Base</span>
+    </div>
+    <div class="damage-visual-info">
+      <div class="damage-main-formula">{{main.displayFormula}}</div>
+      <div class="damage-main-type">{{main.type}}</div>
+    </div>
+  </section>
+  {{#if main.summaryFormula}}
+    <div class="damage-summary-line">{{main.summaryFormula}}</div>
+  {{/if}}
+
+  <section class="damage-modifier-section">
+    <h4>Modificadores de Dano Situacionais</h4>
+
+    <div class="damage-row">
+      <label>Dano Padrão</label>
+      <input type="text" name="mainAdditional" data-formula-input="true" placeholder="Ex: 2d6+3" />
+      <input type="text" value="{{main.type}}" disabled />
+    </div>
+
+    <div class="damage-row">
+      <label>Dano de Fragmentação</label>
+      <input type="text" name="fragmentationAdditional" data-formula-input="true" placeholder="Ex: 1d6+1" />
+      {{#if fragmentationTypeLocked}}
+        <input type="text" value="{{fragmentation.type}}" disabled />
+      {{else}}
+        <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
+      {{/if}}
+    </div>
+
+    <div class="damage-row">
+      <label>Dano de Acompanhamento</label>
+      <input type="text" name="followUpAdditional" data-formula-input="true" placeholder="Ex: 1d6" />
+      {{#if followUpTypeLocked}}
+        <input type="text" value="{{followUp.type}}" disabled />
+      {{else}}
+        <input type="text" name="followUpType" data-type-input="true" placeholder="Tipo..." />
+      {{/if}}
+    </div>
+  </section>
+
+  <footer class="damage-prompt-actions">
+    <button type="submit"><i class="fas fa-dice"></i> Rolar Dano</button>
+    <button type="button" data-action="cancel">Cancelar</button>
+  </footer>
+</form>

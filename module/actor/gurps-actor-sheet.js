@@ -1,6 +1,7 @@
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
+import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 
@@ -37,18 +38,6 @@ _getContainerDescendants(containerId, acc = []) {
 
 async getData(options) {
         const context = await super.getData(options);
-        const getDisplayedCharacteristicPoints = (item) => {
-            const basePoints = Number(item?.system?.points) || 0;
-            const modifiers = Object.values(item?.system?.modifiers || {});
-            const totalModPercent = modifiers.reduce((sum, mod) => sum + (parseInt(mod?.cost, 10) || 0), 0);
-            const cappedModPercent = Math.max(-80, totalModPercent);
-            const multiplier = 1 + (cappedModPercent / 100);
-            let finalPoints = Math.round(basePoints * multiplier);
-
-            if (basePoints > 0 && finalPoints < 1) finalPoints = 1;
-            if (basePoints < 0 && finalPoints > -1) finalPoints = -1;
-            return finalPoints;
-        };
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -65,9 +54,6 @@ async getData(options) {
         // Agrupa todos os itens por tipo
         const itemsByType = context.actor.items.reduce((acc, item) => {
           const type = item.type;
-          if (type === "advantage" || type === "disadvantage") {
-            item.displayPoints = getDisplayedCharacteristicPoints(item);
-          }
           if (!acc[type]) acc[type] = [];
           acc[type].push(item);
           return acc;
@@ -2398,8 +2384,8 @@ html.on("click", ".rollable-damage", async (ev) => {
       formula: attack.damage_formula,
       type: attack.damage_type,
       armor_divisor: attack.armor_divisor,
-      follow_up_damage: attack.follow_up_damage,
-      fragmentation_damage: attack.fragmentation_damage,
+      follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
+      fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
       onDamageEffects: attack.onDamageEffects || {},
       generalConditions: item.system.generalConditions || {}
     };
@@ -2413,8 +2399,8 @@ html.on("click", ".rollable-damage", async (ev) => {
       formula: dmg.formula,
       type: dmg.type,
       armor_divisor: dmg.armor_divisor,
-      follow_up_damage: dmg.follow_up_damage,
-      fragmentation_damage: dmg.fragmentation_damage,
+      follow_up_damage: foundry.utils.duplicate(dmg.follow_up_damage || {}),
+      fragmentation_damage: foundry.utils.duplicate(dmg.fragmentation_damage || {}),
       onDamageEffects: item.system.onDamageEffects || {},
       generalConditions: item.system.generalConditions || {}
     };
@@ -2477,6 +2463,59 @@ html.on("click", ".rollable-damage", async (ev) => {
     const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
     return match ? match[1].trim() : "0";
   };
+
+  const summarySegments = [];
+  const mainDisplayFormula = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.formula));
+  summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}`.trim());
+  if (normalizedAttack.follow_up_damage?.formula) {
+    const fuDisplay = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula));
+    summarySegments.push(`FU: ${fuDisplay} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
+  }
+  if (normalizedAttack.fragmentation_damage?.formula) {
+    const frDisplay = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula));
+    summarySegments.push(`FR: ${frDisplay} ${normalizedAttack.fragmentation_damage.type || ""}`.trim());
+  }
+
+  const promptResult = await GurpsDamageRollPrompt.prompt({
+    sourceName: normalizedAttack.name,
+    main: {
+      formula: normalizedAttack.formula,
+      displayFormula: mainDisplayFormula,
+      summaryFormula: summarySegments.join(" • "),
+      type: normalizedAttack.type || ""
+    },
+    followUp: {
+      formula: normalizedAttack.follow_up_damage?.formula || "",
+      type: normalizedAttack.follow_up_damage?.type || ""
+    },
+    fragmentation: {
+      formula: normalizedAttack.fragmentation_damage?.formula || "",
+      type: normalizedAttack.fragmentation_damage?.type || ""
+    }
+  });
+
+  if (!promptResult) return;
+
+  const appendAdditional = (baseFormula, additional) => {
+    const base = String(baseFormula || "").trim();
+    const add = String(additional || "").trim();
+    if (!add) return base;
+    return `${base}${add}`;
+  };
+
+  normalizedAttack.formula = appendAdditional(normalizedAttack.formula, promptResult.mainAdditional);
+
+  if (promptResult.followUpAdditional) {
+    normalizedAttack.follow_up_damage = normalizedAttack.follow_up_damage || { formula: "", type: "", armor_divisor: 1 };
+    normalizedAttack.follow_up_damage.formula = appendAdditional(normalizedAttack.follow_up_damage.formula || "0", promptResult.followUpAdditional);
+    if (!normalizedAttack.follow_up_damage.type && promptResult.followUpType) normalizedAttack.follow_up_damage.type = promptResult.followUpType;
+  }
+
+  if (promptResult.fragmentationAdditional) {
+    normalizedAttack.fragmentation_damage = normalizedAttack.fragmentation_damage || { formula: "", type: "", armor_divisor: 1 };
+    normalizedAttack.fragmentation_damage.formula = appendAdditional(normalizedAttack.fragmentation_damage.formula || "0", promptResult.fragmentationAdditional);
+    if (!normalizedAttack.fragmentation_damage.type && promptResult.fragmentationType) normalizedAttack.fragmentation_damage.type = promptResult.fragmentationType;
+  }
 
   // --------------------------------------------------
   // 4) Função principal de rolagem
