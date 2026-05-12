@@ -3,6 +3,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
         super(options);
         this.damageData = options.damageData || {};
         this.onRoll = options.onRoll;
+        this._cleanFormula = (formula) => String(formula || "").replace(/[(){}\[\]]/g, "").replace(/\s+/g, "").trim();
     }
 
     static get defaultOptions() {
@@ -33,11 +34,36 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const followUp = this.damageData.followUp || {};
         const fragmentation = this.damageData.fragmentation || {};
 
+        const visualCards = [
+            {
+                key: "main",
+                label: "Dano Padrão",
+                type: main.type,
+                formula: this._simplifyFormula(this._cleanFormula(main.displayFormula)),
+                tone: "standard"
+            },
+            {
+                key: "fragmentation",
+                label: "Dano de Fragmentação",
+                type: fragmentation.type,
+                formula: this._simplifyFormula(this._cleanFormula(fragmentation.displayFormula || fragmentation.formula)),
+                tone: "fragmentation"
+            },
+            {
+                key: "followUp",
+                label: "Dano de Acompanhamento",
+                type: followUp.type,
+                formula: this._simplifyFormula(this._cleanFormula(followUp.displayFormula || followUp.formula)),
+                tone: "followup"
+            }
+        ].filter((card) => card.formula);
+
         return {
             sourceName: this.damageData.sourceName || "Rolagem de Dano",
             main,
             followUp,
             fragmentation,
+            visualCards,
             mainTypeLocked: !!main.type,
             followUpTypeLocked: !!followUp.type,
             fragmentationTypeLocked: !!fragmentation.type
@@ -46,10 +72,111 @@ export class GurpsDamageRollPrompt extends FormApplication {
 
     activateListeners(html) {
         super.activateListeners(html);
-        html.find("input[data-formula-input='true']").on("input", () => this._validateForm(html));
-        html.find("[data-type-input='true']").on("input change", () => this._validateForm(html));
+        html.find("input[data-formula-input='true']").on("input", () => {
+            this._validateForm(html);
+            this._refreshVisualCards(html);
+        });
+        html.find("[data-type-input='true']").on("input change", () => {
+            this._validateForm(html);
+            this._refreshVisualCards(html);
+        });
         html.find("button[data-action='cancel']").on("click", (ev) => { ev.preventDefault(); this.close(); });
         this._validateForm(html);
+        this._refreshVisualCards(html);
+    }
+
+    _composeCardFormula(baseFormula, additionalFormula) {
+        const base = this._cleanFormula(baseFormula);
+        const addRaw = String(additionalFormula || "").trim();
+        if (!addRaw) return this._simplifyFormula(base);
+        const add = this._cleanFormula(addRaw);
+        const normalizedAdd = /^[+\-]/.test(add) ? add : `+${add}`;
+        return this._simplifyFormula(`${base}${normalizedAdd}`);
+    }
+
+    _simplifyFormula(formula) {
+        const expr = this._cleanFormula(formula);
+        if (!expr) return "";
+
+        const tokenPattern = /([+\-]?)(\d*d\d+|\d+)/gi;
+        const diceTerms = new Map();
+        let constant = 0;
+        let matchCount = 0;
+        let consumed = "";
+
+        let match;
+        while ((match = tokenPattern.exec(expr)) !== null) {
+            const sign = match[1] === "-" ? -1 : 1;
+            const token = match[2].toLowerCase();
+            matchCount += 1;
+            consumed += `${match[1]}${match[2]}`;
+
+            if (token.includes("d")) {
+                const [countRaw, sidesRaw] = token.split("d");
+                const count = Number(countRaw || "1");
+                const sides = Number(sidesRaw || "0");
+                if (!Number.isFinite(count) || !Number.isFinite(sides) || sides <= 0) return expr;
+                const key = `d${sides}`;
+                diceTerms.set(key, (diceTerms.get(key) || 0) + (sign * count));
+            } else {
+                const value = Number(token);
+                if (!Number.isFinite(value)) return expr;
+                constant += sign * value;
+            }
+        }
+
+        if (!matchCount || consumed !== expr) return expr;
+
+        const parts = [];
+        const sortedDice = Array.from(diceTerms.entries())
+            .filter(([, count]) => count !== 0)
+            .sort((a, b) => Number(a[0].slice(1)) - Number(b[0].slice(1)));
+
+        for (const [dieKey, count] of sortedDice) {
+            const absCount = Math.abs(count);
+            const dieTerm = `${absCount}${dieKey}`;
+            parts.push(count < 0 ? `-${dieTerm}` : (parts.length ? `+${dieTerm}` : dieTerm));
+        }
+
+        if (constant !== 0 || parts.length === 0) {
+            parts.push(constant < 0 ? `${constant}` : (parts.length ? `+${constant}` : `${constant}`));
+        }
+
+        return parts.join("");
+    }
+
+    _buildLiveVisualCards(html) {
+        const mainAdd = String(html.find("input[name='mainAdditional']").val() || "").trim();
+        const fragAdd = String(html.find("input[name='fragmentationAdditional']").val() || "").trim();
+        const fuAdd = String(html.find("input[name='followUpAdditional']").val() || "").trim();
+
+        const mainType = this.damageData.main?.type || "";
+        const fragType = this.damageData.fragmentation?.type || String(html.find("input[name='fragmentationType']").val() || "").trim();
+        const fuType = this.damageData.followUp?.type || String(html.find("input[name='followUpType']").val() || "").trim();
+
+        const mainFormula = this._composeCardFormula(this.damageData.main?.displayFormula || this.damageData.main?.formula, mainAdd);
+        const fragFormula = this._composeCardFormula(this.damageData.fragmentation?.displayFormula || this.damageData.fragmentation?.formula, fragAdd);
+        const fuFormula = this._composeCardFormula(this.damageData.followUp?.displayFormula || this.damageData.followUp?.formula, fuAdd);
+
+        return [
+            { key: "main", label: "Dano Padrão", tone: "standard", formula: mainFormula, type: mainType },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: fragFormula, type: fragType },
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: fuFormula, type: fuType }
+        ].filter((card) => card.formula);
+    }
+
+    _refreshVisualCards(html) {
+        const cards = this._buildLiveVisualCards(html);
+        const box = html.find(".damage-visual-box");
+        if (!box.length) return;
+        const esc = (value) => foundry.utils.escapeHTML(String(value || ""));
+        const markup = cards.map((card) => `
+            <div class="damage-visual-card tone-${card.tone}">
+              <div class="damage-card-formula">${esc(card.formula)}</div>
+              <div class="damage-card-meta">${card.type ? `${esc(card.type)}` : ""}</div>
+            </div>
+        `).join("");
+        box.html(markup);
     }
 
     async _updateObject(_event, formData) {

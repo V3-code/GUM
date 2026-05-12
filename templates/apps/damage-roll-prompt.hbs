@@ -1,24 +1,17 @@
 <form class="gum-damage-roll-prompt premium" autocomplete="off">
   <header class="damage-prompt-header">
-    <div class="header-kicker">Configuração de Dano</div>
-    <h2>Rolagem de Dano</h2>
-    <h3>{{sourceName}}</h3>
+    <div class="header-kicker">Rolagem de Dano</div>
+    <h2>{{sourceName}}</h2>
   </header>
 
   <section class="damage-visual-box">
-    <div class="damage-die-frame">
-      <div class="damage-visual-die">{{main.displayFormula}}</div>
-      <span class="die-caption">Base</span>
-    </div>
-    <div class="damage-visual-info">
-      <div class="damage-main-formula">{{main.displayFormula}}</div>
-      <div class="damage-main-type">{{main.type}}</div>
-    </div>
+    {{#each visualCards as |card|}}
+      <div class="damage-visual-card tone-{{card.tone}}">
+        <div class="damage-card-formula">{{card.formula}}</div>
+        <div class="damage-card-meta">{{#if card.type}}{{card.type}}{{/if}}</div>
+      </div>
+    {{/each}}
   </section>
-  {{#if main.summaryFormula}}
-    <div class="damage-summary-line">{{main.summaryFormula}}</div>
-  {{/if}}
-
   <section class="damage-modifier-section">
     <h4>Modificadores de Dano Situacionais</h4>
 

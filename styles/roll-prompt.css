@@ -425,24 +425,56 @@
   text-transform: uppercase;
   color: var(--gum-text-medio);
 }
-.gum-damage-roll-prompt .damage-prompt-header h2 { margin: 2px 0 0; font-family: var(--gum-font-secondary); color: var(--gum-text-claro); font-size: 18px; }
+.gum-damage-roll-prompt .damage-prompt-header h2 {     margin: 2px 0 0;
+    font-family: var(--gum-font-secondary);
+    color: var(--gum-text-claro);
+    font-size: 18px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--gum-accent-bronze); }
 .gum-damage-roll-prompt .damage-prompt-header h3 { margin: 2px 0 0; color: var(--gum-accent-gold); font-size: 14px; }
 .gum-damage-roll-prompt .damage-visual-box {
-  display:flex; align-items:center; justify-content:flex-start; gap:14px;
-  padding:10px; border:1px solid var(--gum-border-gold); border-radius:10px;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  gap:10px;
+  padding:10px;
+  border-radius:10px;
   background: rgba(255,255,255,.03);
 }
-.gum-damage-roll-prompt .damage-die-frame { display:flex; flex-direction:column; align-items:center; gap:4px; }
-.gum-damage-roll-prompt .damage-visual-die {
-  min-width:82px; text-align:center; padding:10px 8px; border-radius:8px;
-  background: linear-gradient(180deg, #5a616e, #3f4655);
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 8px 16px rgba(0,0,0,0.35);
-  font-weight:700; font-size: 16px; color: #f4f5f7;
+.gum-damage-roll-prompt .damage-visual-card {
+  min-width: 110px;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.28), 0 7px 15px rgba(0,0,0,0.32);
 }
-.gum-damage-roll-prompt .die-caption { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--gum-text-medio); }
-.gum-damage-roll-prompt .damage-main-formula { font-size: 16px; font-weight: 700; color: #fff; }
-.gum-damage-roll-prompt .damage-main-type { font-size: 12px; color: var(--gum-accent-gold); text-transform: uppercase; }
+.gum-damage-roll-prompt .damage-visual-card.tone-standard {
+  background: linear-gradient(180deg, #405a7a, #2e425b);
+}
+.gum-damage-roll-prompt .damage-visual-card.tone-fragmentation {
+  background: linear-gradient(180deg, #7b6834, #5d4e26);
+}
+.gum-damage-roll-prompt .damage-visual-card.tone-followup {
+  background: linear-gradient(180deg, #74343b, #57262c);
+}
+.gum-damage-roll-prompt .damage-card-formula {
+  font-size: 14px;
+  font-weight: 650;
+  color: #f4f6ff;
+  letter-spacing: 0.3px;
+}
+.gum-damage-roll-prompt .damage-card-meta {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(245, 246, 250, 0.9);
+}
 .gum-damage-roll-prompt .damage-summary-line {
   margin-top: -6px;
   margin-bottom: 2px;
@@ -453,7 +485,7 @@
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
 }
-.gum-damage-roll-prompt .damage-modifier-section h4 { margin: 0 0 8px; color: var(--gum-accent-gold); text-transform: uppercase; font-size: 12px; letter-spacing: 1.2px; }
+.gum-damage-roll-prompt .damage-modifier-section h4 { margin: 0 0 8px; color: var(--gum-accent-gold); text-transform: uppercase; font-size: 12px; letter-spacing: 1.2px; text-align: center; }
 .gum-damage-roll-prompt .damage-row {
   display:grid; grid-template-columns: 1.4fr 1fr .8fr; gap:8px; align-items:center;
   margin-bottom:6px; padding: 6px; border-radius: 8px;

@@ -2486,10 +2486,12 @@ html.on("click", ".rollable-damage", async (ev) => {
     },
     followUp: {
       formula: normalizedAttack.follow_up_damage?.formula || "",
+      displayFormula: normalizedAttack.follow_up_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula)) : "",
       type: normalizedAttack.follow_up_damage?.type || ""
     },
     fragmentation: {
       formula: normalizedAttack.fragmentation_damage?.formula || "",
+      displayFormula: normalizedAttack.fragmentation_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula)) : "",
       type: normalizedAttack.fragmentation_damage?.type || ""
     }
   });
