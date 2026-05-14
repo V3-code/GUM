@@ -543,31 +543,8 @@
             <h4 class="section-title">Organização</h4>
             <div class="effect-row-grid effect-duration-grid is-two-col-rows">
                 <div class="effect-field effect-field-row-auto">
-                <label class="effect-label">Bloco na Janela de Rolagem</label>
-                <select name="system.ui_category">
-                    {{selectOptions (object 
-                        location="Pontos de Impacto" 
-                        maneuver="Manobras" 
-                        
-                        attack_opt="Opções de Ataque" 
-                        defense_opt="Opções de Defesa" 
-                        
-                        posture="Cobertura e Postura"
-                        range="Distância e Velocidade"
-                        terrain_light="Terreno e Iluminação"
-                        state_affliction="Estado e Atribulações"
-                        task_difficulty="Dificuldade da Tarefa"
-                        
-                        ritual="Operação Mágica"
-                        power_operation="Operação de Poderes"
-                        time="Modo de Execução"
-                        effort="Esforço Adicional"
-                        
-                        situation="Cenário"
-                        equipment="Equipamento"
-                        other="Customizado"
-                    ) selected=system.ui_category}}
-                </select>
+                    <label class="effect-label">Grupo na Ficha e no Roll Prompt</label>
+                    <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Magia, Condições"/>
                 </div>
             </div>
         </div>

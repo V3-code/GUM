@@ -60,121 +60,32 @@ async getData(options) {
         }, {});
         context.itemsByType = itemsByType;
 // ---------------------------------------------------------
-        // PREPARAÇÃO DA ABA DE MODIFICADORES (ORGANIZAÇÃO POR TIPO)
+        // PREPARAÇÃO DA ABA DE MODIFICADORES (AGRUPAMENTO LIVRE POR NOME)
         // ---------------------------------------------------------
         const myMods = itemsByType.gm_modifier || [];
-        
-        const categoryLabels = {
-            location: "Pontos de Impacto",
-            maneuver: "Manobras",
-            attack_opt: "Opções de Ataque",
-            defense_opt: "Opções de Defesa",
-            posture: "Cobertura e Postura",
-            range: "Distância e Velocidade",
-            terrain_light: "Terreno e Iluminação",
-            state_affliction: "Estado e Atribulações",
-            task_difficulty: "Dificuldade da Tarefa",
-            ritual: "Operação Mágica",
-            power_operation: "Operação de Poderes",
-            time: "Modo de Execução",
-            effort: "Esforço Adicional",
-            situation: "Cenário",
-            equipment: "Equipamento",
-            other: "Customizado"
+        const groupsMap = new Map();
+
+        const getGroup = (groupName) => {
+            const normalized = (groupName || "").toString().trim() || "Geral";
+            const key = normalized.slugify({ strict: true }) || "geral";
+            if (!groupsMap.has(key)) {
+                groupsMap.set(key, { key, label: normalized, items: [] });
+            }
+            return groupsMap.get(key);
         };
 
-        const getSubgroup = (contextObj, catKey) => {
-            if (!contextObj.subgroups[catKey]) {
-                contextObj.subgroups[catKey] = {
-                    key: catKey,
-                    label: categoryLabels[catKey] || "Outros",
-                    items: []
-                };
-            }
-            return contextObj.subgroups[catKey];
-        };
-
-// 1. Inicializa os contextos (AGORA COM SKILL/ATTR)
-        context.modifiersBySection = {
-            melee:   { label: "ATAQUE CORPO A CORPO", icon: "fas fa-swords", subgroups: {} },
-            ranged:  { label: "ATAQUE À DISTÂNCIA",   icon: "fas fa-bullseye", subgroups: {} },
-            defense: { label: "DEFESA ATIVA",         icon: "fas fa-shield-alt", subgroups: {} },
-            magic:   { label: "MAGIA",                icon: "fas fa-magic", subgroups: {} }, 
-            power:   { label: "PODERES",              icon: "fas fa-bolt", subgroups: {} },
-            skill:   { label: "ATRIBUTOS & PERÍCIAS", icon: "fas fa-person-digging", subgroups: {} },
-            general: { label: "GERAL / SITUAÇÃO",     icon: "fas fa-globe", subgroups: {} }
-        };
-
-        // 2. Distribuição Estrita
-        myMods.forEach(mod => {
-            const targets = mod.system.target_type || {};
-            const cat = mod.system.ui_category || "other";
-            let placed = false;
-
-            // Combat (Melee)
-            if (targets.combat_attack_melee || targets.combat_all) { 
-                getSubgroup(context.modifiersBySection.melee, cat).items.push(mod);
-                placed = true; 
-            }
-            // Combat (Ranged)
-            if (targets.combat_attack_ranged || targets.combat_all) { 
-                getSubgroup(context.modifiersBySection.ranged, cat).items.push(mod);
-                placed = true; 
-            }
-            // Defense
-            if (targets.combat_defense_all || targets.combat_defense_dodge || targets.combat_defense_parry || targets.combat_all) {
-                getSubgroup(context.modifiersBySection.defense, cat).items.push(mod);
-                placed = true;
-            }
-            // Magic
-            if (targets.combat_attack_spell || targets.spell_iq || targets.spell_all) {
-                getSubgroup(context.modifiersBySection.magic, cat).items.push(mod);
-                placed = true;
-            }
-            // Power
-            if (targets.combat_attack_power || targets.power_iq || targets.power_ht || targets.power_will) {
-                getSubgroup(context.modifiersBySection.power, cat).items.push(mod);
-                placed = true;
-            }
-// ✅ LÓGICA DE ATRIBUTOS E PERÍCIAS (CORRIGIDA)
-            // Verifica se afeta qualquer atributo ou perícia específica
-            if (
-                // Genéricos
-                targets.skill_all || targets.attr_all || 
-                
-                // ST
-                targets.attr_st_all || targets.check_st || targets.skill_st || 
-                // DX
-                targets.attr_dx_all || targets.check_dx || targets.skill_dx || 
-                // IQ
-                targets.attr_iq_all || targets.check_iq || targets.skill_iq || 
-                // HT
-                targets.attr_ht_all || targets.check_ht || targets.skill_ht || 
-                // Vontade (Will)
-                targets.attr_will_all || targets.check_will || targets.skill_will || targets.check_fright ||
-                // Percepção
-                targets.attr_per_all || targets.check_per || targets.skill_per ||
-                // Sentidos
-                targets.sense_vision || targets.sense_hearing || targets.sense_tastesmell || targets.sense_touch
-            ) {
-                getSubgroup(context.modifiersBySection.skill, cat).items.push(mod);
-                placed = true;
-            }
-
-            // Geral / Fallback
-            if (targets.global || (!placed && (targets.reaction))) {
-                 getSubgroup(context.modifiersBySection.general, cat).items.push(mod);
-            }
+        myMods.forEach((mod) => {
+            const groupName = mod.system.group || "Geral";
+            getGroup(groupName).items.push(mod);
         });
 
-        // Ordenação
-        for (const section of Object.values(context.modifiersBySection)) {
-            section.subgroupsArray = Object.values(section.subgroups).sort((a, b) => a.label.localeCompare(b.label));
-            section.subgroupsArray.forEach(sub => {
-                sub.items.sort((a, b) => a.name.localeCompare(b.name));
-            });
-        }
-        
+        context.modifierGroups = Array.from(groupsMap.values())
+            .map((group) => {
+                group.items.sort((a, b) => a.name.localeCompare(b.name));
+                return group;
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+
        // ================================================================== //
         // ✅ LÓGICA "CASTELO SÓLIDO" ATUALIZADA PARA A ABA DE CONDIÇÕES (INÍCIO)
         // ================================================================== //

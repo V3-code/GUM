@@ -1,5 +1,4 @@
 import { performGURPSRoll } from "../../scripts/main.js";
-import { GUM_DEFAULTS } from "../gum-defaults.js";
 
 export class GurpsRollPrompt extends FormApplication {
     static COLLAPSED_WIDTH = 380;
@@ -533,15 +532,32 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
     _matchesEffectContext(modContext, rollContext) {
-        if (!modContext || modContext === "all") return true;
-        if (Array.isArray(modContext)) return modContext.includes(rollContext);
-        if (typeof modContext === "string" && modContext.includes(",")) {
-            return modContext.split(",").map(c => c.trim()).includes(rollContext);
+        if (!modContext) return true;
+
+        if (Array.isArray(modContext)) {
+            if (!modContext.length) return true;
+            return modContext.some((ctx) => this._matchesEffectContext(ctx, rollContext));
         }
-        if (modContext === "attack") return rollContext.startsWith("attack");
-        if (modContext === "defense") return rollContext.startsWith("defense");
-        if (modContext === "skill") return rollContext.startsWith("skill_") || rollContext === "skill";
-               return modContext === rollContext;
+
+        if (typeof modContext === "string" && modContext.includes(",")) {
+            const contextList = modContext
+                .split(",")
+                .map((c) => c.trim())
+                .filter(Boolean);
+            if (!contextList.length) return true;
+            return contextList.some((ctx) => this._matchesEffectContext(ctx, rollContext));
+        }
+
+        const normalized = `${modContext}`.trim();
+        if (!normalized || normalized === "all") return true;
+
+        if (normalized === "attack") return rollContext.startsWith("attack");
+        if (normalized === "defense") return rollContext.startsWith("defense");
+        if (normalized === "skill") {
+            return rollContext === "skill" || rollContext.startsWith("skill_") || rollContext.startsWith("check_") || rollContext.startsWith("sense_");
+        }
+
+        return normalized === rollContext;
     }
 
     _matchesTargetFilter(entry = {}) {
@@ -784,21 +800,29 @@ return 'default';
 
     async _fetchAndOrganizeModifiers() {
         const contextKey = this.context;
-        const layoutConfig = GUM_DEFAULTS.layouts[contextKey] || GUM_DEFAULTS.layouts['default'];
-        
-        const blocksMap = {};
-        layoutConfig.forEach(block => {
-            blocksMap[block.id] = { ...block, items: [] };
-        });
+        const blocksMap = new Map();
+
+        const ensureBlock = (groupName) => {
+            const label = (groupName || "").toString().trim() || "Geral";
+            const key = label.slugify({ strict: true }) || "geral";
+            if (!blocksMap.has(key)) {
+                blocksMap.set(key, {
+                    id: key,
+                    title: label,
+                    color: "#6e6e6e",
+                    items: []
+                });
+            }
+            return blocksMap.get(key);
+        };
 
         const allModifierItems = [];
-
         const useDefaults = this.actor.getFlag("gum", "useDefaultModifiers");
 
         if (useDefaults) {
             let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
             if (pack) {
-                const packIndex = await pack.getDocuments(); 
+                const packIndex = await pack.getDocuments();
                 allModifierItems.push(...packIndex);
             }
         }
@@ -812,13 +836,10 @@ return 'default';
         }
 
         for (const item of uniqueItemsMap.values()) {
+            const block = ensureBlock(item.system.group);
             const entryList = Array.isArray(item.system.modifier_entries) && item.system.modifier_entries.length
                 ? item.system.modifier_entries
                 : null;
-
-            let uiCat = item.system.ui_category || "other";
-            if (!blocksMap[uiCat]) uiCat = "other";
-            if (!blocksMap[uiCat]) continue;
 
             if (entryList) {
                 entryList.forEach((entry, index) => {
@@ -826,7 +847,7 @@ return 'default';
                     if (contexts.length && !this._matchesEffectContext(contexts, contextKey)) return;
 
                     const entryId = `${item.id}::${index}`;
-                    blocksMap[uiCat].items.push({
+                    block.items.push({
                         id: entryId,
                         label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
                         value: parseInt(entry?.value) || 0,
@@ -842,7 +863,7 @@ return 'default';
 
             if (!this._isValidForContext(item, contextKey)) continue;
 
-            blocksMap[uiCat].items.push({
+            block.items.push({
                 id: item.id,
                 label: item.name,
                 value: item.system.modifier,
@@ -850,15 +871,19 @@ return 'default';
                 nh_cap: item.system.nh_cap,
                 duration: item.system.duration,
                 active: this.selectedModifiers.some(m => m.id === item.id),
-                isNative: false 
+                isNative: false
             });
         }
 
-        for (const blockKey in blocksMap) {
-            blocksMap[blockKey].items.sort((a, b) => a.label.localeCompare(b.label));
-        }
+        const blocks = Array.from(blocksMap.values())
+            .map((block) => {
+                block.items.sort((a, b) => a.label.localeCompare(b.label));
+                return block;
+            })
+            .filter((block) => block.items.length > 0)
+            .sort((a, b) => a.title.localeCompare(b.title));
 
-        return layoutConfig.map(block => blocksMap[block.id]).filter(b => b.items.length > 0);
+        return blocks;
     }
 
     _getNativeCategory(modId) {
