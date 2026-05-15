@@ -22,6 +22,8 @@ export class GurpsRollPrompt extends FormApplication {
         this.baseModifierParts = [];
         this.baseAttributeSourceLabel = "Perícia";
         this.isMenuCollapsed = true;
+        this.defenseMode = "normal";
+        this.defenseTiming = "before";
 
         this.context = this._determineContext();
         this.counterEffectsNotice = null;
@@ -735,7 +737,7 @@ return 'default';
             { key: "ht", label: "HT", type: "attribute" },
             { key: "per", label: "Per", type: "attribute" },
             { key: "vont", label: "Vont", type: "attribute" },
-            { key: "skill", label: "Perícia", type: "skill" },
+            { key: "skill", label: "Habilidade", type: "skill" },
             { key: "fixed_8", label: "8", type: "fixed", value: 8 },
             { key: "fixed_12", label: "12", type: "fixed", value: 12 },
             { key: "fixed_16", label: "16", type: "fixed", value: 16 }
@@ -1068,10 +1070,30 @@ return 'default';
             this._updateTotals(html);
         });
 
-        html.find('.menu-toggle-btn').click(ev => {
+  html.find('.menu-toggle-btn').click(ev => {
             ev.preventDefault();
             this.isMenuCollapsed = !this.isMenuCollapsed;
             this._applyMenuState(html);
+        });
+
+        html.find('.defense-mode-btn').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            this.defenseMode = `${btn.data('defense-mode') || 'normal'}`;
+            html.find('.defense-mode-btn').removeClass('active');
+            btn.addClass('active');
+            const showTiming = this.defenseMode !== "normal";
+            html.find('.defense-timing-panel').toggle(showTiming);
+            this._updateTotals(html);
+        });
+
+        html.find('.defense-timing-btn').click(ev => {
+            ev.preventDefault();
+            const btn = $(ev.currentTarget);
+            this.defenseTiming = `${btn.data('defense-timing') || 'before'}`;
+            html.find('.defense-timing-btn').removeClass('active');
+            btn.addClass('active');
+            this._updateTotals(html);
         });
 
         // Inicializa
@@ -1105,9 +1127,19 @@ _updateTotals(html) {
         });
         
         const totalMod = fixedModifier + manual + selected;
+        const defenseActive = this.defenseMode !== "normal";
         
         // 2. Calcula o valor matemático (sem corte)
-        const mathValue = base + totalMod;
+        let mathValue = base + totalMod;
+        if (defenseActive) {
+            if (this.defenseTiming === "before") {
+                const convertedBefore = this._convertToDefenseValue(base + totalMod);
+                mathValue = convertedBefore;
+            } else {
+                const convertedAfter = this._convertToDefenseValue(base);
+                mathValue = convertedAfter + totalMod;
+            }
+        }
         let final = mathValue;
         let capText = "";
         let isCapped = false;
@@ -1169,11 +1201,18 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
         html.find('.base-value-box .value').text(base);
         const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
         html.find('.base-attr-label').text(this._buildBaseDetailLabel(currentOption));
-        html.find('.base-summary').text(`Base ${base}`);
+        if (!defenseActive) {
+            html.find('.base-summary').text(`Base ${base}`);
+        } else {
+            const modeLabel = this.defenseMode === "defense_standard" ? "Defesa Padrão" : "Defesa Simples";
+            const timingLabel = this.defenseTiming === "before" ? "antes" : "depois";
+            html.find('.base-summary').text(`${modeLabel} (${timingLabel}) de Base ${base}`);
+        }
         
         // Atualiza Valor Final
         const finalEl = html.find('.final-val');
         finalEl.text(final);
+        html.find('.calc-label').text(defenseActive ? 'DEFESA FINAL' : 'NH FINAL');
         
         // Atualiza Aviso de Teto
         const capEl = html.find('.cap-warning');
@@ -1213,6 +1252,12 @@ async _updateObject(event, formData) {
         });
 
         const totalMod = fixedModifier + manualMod + buttonsMod;
+        const defenseActive = this.defenseMode !== "normal";
+        let computedValue = baseValue + totalMod;
+        if (defenseActive) {
+            if (this.defenseTiming === "before") computedValue = this._convertToDefenseValue(baseValue + totalMod);
+            else computedValue = this._convertToDefenseValue(baseValue) + totalMod;
+        }
         
         // Calcula qual é o teto mais baixo (ou Infinity se não tiver nenhum)
         let lowestCap = Infinity;
@@ -1226,9 +1271,11 @@ async _updateObject(event, formData) {
 const rollPayload = {
             ...this.rollData,
             // Enviamos o valor matemático puro, o performGURPSRoll aplica o corte visualmente
-            value: baseValue + totalMod,
+            value: computedValue,
             originalValue: baseValue,
-            modifier: totalMod
+            modifier: totalMod,
+            defenseMode: this.defenseMode,
+            defenseTiming: this.defenseTiming
         };
         const rollOptions = {
             ignoreGlobals: true, // Já processamos os globais aqui no prompt
@@ -1241,5 +1288,12 @@ const rollPayload = {
         }
 
         performGURPSRoll(this.actor, rollPayload, rollOptions);
-    } 
-}
+    }
+
+    _convertToDefenseValue(value) {
+        const baseHalf = Math.floor((parseInt(value) || 0) / 2);
+        if (this.defenseMode === "defense_standard") return baseHalf + 3;
+        if (this.defenseMode === "defense_simple") return baseHalf;
+        return parseInt(value) || 0;
+    }
+} 

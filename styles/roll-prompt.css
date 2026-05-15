@@ -506,3 +506,55 @@
   background: linear-gradient(180deg, #5a6478, #40495d);
   border-color: rgba(197,160,91,0.5);
 }
+
+.defense-mode-panel {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.defense-mode-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.defense-mode-options--timing {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.defense-mode-btn,
+.defense-timing-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #555;
+    color: #bbb;
+    padding: 5px 8px;
+    font-size: 0.72em;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.defense-mode-btn:hover,
+.defense-timing-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+}
+
+.defense-mode-btn.active,
+.defense-timing-btn.active {
+    background: var(--gum-accent-gold);
+    color: #000;
+    border-color: var(--gum-accent-gold);
+    font-weight: 700;
+}
+
+.section-label--sub {
+    font-size: 0.65em;
+    opacity: 0.85;
+}

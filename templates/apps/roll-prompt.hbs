@@ -109,7 +109,24 @@
             </div>
         </div>
 
-        {{!-- 4. PILHA DE ATIVOS (Stack) --}}
+        {{!-- 4. MODO DE ROLAGEM DEFENSIVA --}}
+        <div class="defense-mode-panel">
+            <label class="section-label">Modo de Rolagem</label>
+            <div class="defense-mode-options">
+                <button type="button" class="defense-mode-btn active" data-defense-mode="normal">Normal</button>
+                <button type="button" class="defense-mode-btn" data-defense-mode="defense_standard">Defesa Padrão</button>
+                <button type="button" class="defense-mode-btn" data-defense-mode="defense_simple">Defesa Simples</button>
+            </div>
+            <div class="defense-timing-panel" style="display:none;">
+                <label class="section-label section-label--sub">Aplicação dos Modificadores</label>
+                <div class="defense-mode-options defense-mode-options--timing">
+                    <button type="button" class="defense-timing-btn active" data-defense-timing="before">Antes da conversão</button>
+                    <button type="button" class="defense-timing-btn" data-defense-timing="after">Depois da conversão</button>
+                </div>
+            </div>
+        </div>
+
+        {{!-- 5. PILHA DE ATIVOS (Stack) --}}
         <div class="active-mods-container">
             <label class="section-label">Ativos</label>
             <div class="active-mods-list">
