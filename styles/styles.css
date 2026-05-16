@@ -4403,7 +4403,7 @@ background-color: var(--gum-accent-gold);
 
 /* --- MINI CARD DE MODIFICADOR --- */
 .gum.sheet.actor .mod-mini-card {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     background: #fff;
     border: 1px solid var(--gum-border-light);
     border-radius: 3px;
@@ -4419,15 +4419,15 @@ background-color: var(--gum-accent-gold);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.gum.sheet.actor .mod-info { display: flex; align-items: center; gap: 6px; overflow: hidden; }
-.gum.sheet.actor .mod-info img { width: 20px; height: 20px; border-radius: 3px; background: #f0f0f0; flex-shrink: 0; }
-.gum.sheet.actor .mod-name { font-size: 0.85em; font-weight: 600; color: var(--gum-text-escuro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gum.sheet.actor .mod-info { display: flex; align-items: flex-start; gap: 6px; min-width: 0; flex: 1; }
+.gum.sheet.actor .mod-info img { width: 20px; height: 20px; border-radius: 3px; background: #f0f0f0; flex-shrink: 0; margin-top: 1px; }
+.gum.sheet.actor .mod-name { font-size: 0.85em; font-weight: 600; color: var(--gum-text-escuro); white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
 
 /* Valor */
 .gum.sheet.actor .mod-val {
     font-family: var(--gum-font-condensed); font-weight: 700; font-size: 0.9em;
     color: var(--gum-accent-green); background: rgba(56, 156, 104, 0.1);
-    padding: 0 5px; border-radius: 3px; margin-left: 5px; white-space: nowrap;
+    padding: 0 5px; border-radius: 3px; margin-left: 5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; text-align: right;
 }
 .gum.sheet.actor .mod-val.neg { color: var(--gum-accent-red); background: rgba(165, 53, 65, 0.1); }
 

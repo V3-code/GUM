@@ -470,6 +470,7 @@ _promptMultipleReferences(parsedList) {
 
  activateListeners(html) {
         super.activateListeners(html);
+        this._bindHeaderNameAutosize(html);
 
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));
         if (!this.isEditable) return;
@@ -1729,14 +1730,36 @@ new Dialog({
         this._openDetailsState = openDetails;
     }
 
-    async _render(force, options) {
+ async _render(force, options) {
         await super._render(force, options);
+        this._refreshHeaderNameAutosize();
         if (this._openDetailsState) {
             this._openDetailsState.forEach(id => {
                 const el = this.form.querySelector(`#${id}`) || this.form.querySelectorAll('details')[parseInt(id.split('-')[1])];
                 if (el) el.open = true;
             });
         }
+    }
+
+    _bindHeaderNameAutosize(html) {
+        const nameField = html.find('.sheet-header textarea[name="name"]');
+        if (!nameField.length) return;
+
+        const resize = (el) => {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = `${el.scrollHeight}px`;
+        };
+
+        nameField.each((_, el) => resize(el));
+        nameField.on('input.gumNameAutosize', (ev) => resize(ev.currentTarget));
+    }
+
+    _refreshHeaderNameAutosize() {
+        const nameField = this.form?.querySelector('.sheet-header textarea[name="name"]');
+        if (!nameField) return;
+        nameField.style.height = 'auto';
+        nameField.style.height = `${nameField.scrollHeight}px`;
     }
     
  _getSubmitData(updateData) {
