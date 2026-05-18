@@ -148,9 +148,7 @@
                                             <label class="effect-label">Contextos (csv)</label>
                                             <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}"/>
                                         </div>
-                                        <hr/>
-                                        <p style="font-size:xx-small;">Utilize essas opções para aplicar modificador em habilidades específicas</p>
-                                        <div class="effect-field modifier-entry-field">
+                                        <div class="effect-field modifier-entry-field" style="margin-top: 5px;">
                                             <label class="effect-label">Aplicação</label>
                                             <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side">
                                                 {{#each ../../rollModifierApplicationOptions as |opt|}}
@@ -158,6 +156,8 @@
                                                 {{/each}}
                                             </select>
                                         </div>
+                                        <hr/>
+                                        <p style="color: #a9a6a0; font-size: smaller;">Utilize essas opções abaixo se quiser aplicar o modificador em habilidades específicas.</p>  
                                     </div>
                                     <div class="modifier-entry-bottomline">
                                         <div class="effect-field modifier-entry-field">

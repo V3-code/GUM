@@ -112,9 +112,8 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
     _isCounterEffectContextSupported() {
-        const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
-        if (supported.includes(this.context)) return true;
-        return this.context.startsWith("skill_");
+        const context = `${this.context ?? ""}`.trim();
+        return context.length > 0;
     }
 
     _buildCounterGroupKey({ entry, effect, entryIndex = 0 }) {
@@ -399,12 +398,20 @@ export class GurpsRollPrompt extends FormApplication {
 
     _resolveRollItemAttackContext() {
         const itemId = this.rollData?.itemId;
-        if (!itemId) return { item: null, attack: null };
-        const item = this.actor.items.get(itemId) || null;
+        const itemName = String(this.rollData?.itemName || "").trim().toLowerCase();
+        const item = itemId
+            ? (this.actor.items.get(itemId) || null)
+            : (itemName ? this.actor.items.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null : null);
         if (!item) return { item: null, attack: null };
 
         const attackId = this.rollData?.attackId;
-        if (!attackId) return { item, attack: null };
+        if (!attackId) {
+            const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
+            const meleeAttacks = Object.values(item.system?.melee_attacks || {});
+            const allAttacks = [...rangedAttacks, ...meleeAttacks].filter(Boolean);
+            if (allAttacks.length === 1) return { item, attack: allAttacks[0] };
+            return { item, attack: null };
+        }
         const attack =
             item.system?.ranged_attacks?.[attackId]
             ?? item.system?.melee_attacks?.[attackId]
@@ -453,8 +460,8 @@ export class GurpsRollPrompt extends FormApplication {
             "precisão": attack?.accuracy,
             prec: attack?.accuracy,
             accuracy: attack?.accuracy,
-            magnitude: attack?.mag,
-            mag: attack?.mag
+            magnitude: attack?.mag ?? this.rollData?.magnitude ?? this.rollData?.mag,
+            mag: attack?.mag ?? this.rollData?.mag ?? this.rollData?.magnitude
         };
         if (normalizedRef in parameterAliases) {
             return this._toNumberOrZero(parameterAliases[normalizedRef]) + modifier;
@@ -513,7 +520,11 @@ export class GurpsRollPrompt extends FormApplication {
         const expressionMatch = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
         if (expressionMatch) {
             const mode = /^(menor|min)$/i.test(expressionMatch[1]) ? "min" : "max";
-            const values = this._splitCommaSeparatedArgs(expressionMatch[2]).map((ref) => this._resolveModifierReference(ref));
+            const values = this._splitCommaSeparatedArgs(expressionMatch[2]).map((entry) => {
+                const arithmeticEntry = evaluateArithmetic(entry);
+                if (Number.isFinite(arithmeticEntry)) return arithmeticEntry;
+                return this._resolveModifierReference(entry);
+            });
             if (!values.length) return 0;
             return mode === "min" ? Math.min(...values) : Math.max(...values);
         }

@@ -1562,12 +1562,20 @@ function _toModifierNumberOrZero(value) {
 
 function _resolveRollItemAttackContext(actor, rollData = {}) {
     const itemId = rollData?.itemId;
-    if (!itemId) return { item: null, attack: null };
-    const item = actor?.items?.get(itemId) || null;
+    const itemName = String(rollData?.itemName || "").trim().toLowerCase();
+    const item = itemId
+        ? (actor?.items?.get(itemId) || null)
+        : (itemName ? actor?.items?.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null : null);
     if (!item) return { item: null, attack: null };
 
     const attackId = rollData?.attackId;
-    if (!attackId) return { item, attack: null };
+    if (!attackId) {
+        const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
+        const meleeAttacks = Object.values(item.system?.melee_attacks || {});
+        const allAttacks = [...rangedAttacks, ...meleeAttacks].filter(Boolean);
+        if (allAttacks.length === 1) return { item, attack: allAttacks[0] };
+        return { item, attack: null };
+    }
     const attack =
         item.system?.ranged_attacks?.[attackId]
         ?? item.system?.melee_attacks?.[attackId]
@@ -1615,8 +1623,8 @@ function _resolveModifierReferenceValue(actor, rawReference, rollData = {}) {
         "precisão": attack?.accuracy,
         prec: attack?.accuracy,
         accuracy: attack?.accuracy,
-        magnitude: attack?.mag,
-        mag: attack?.mag
+        magnitude: attack?.mag ?? rollData?.magnitude ?? rollData?.mag,
+        mag: attack?.mag ?? rollData?.mag ?? rollData?.magnitude
     };
     if (normalizedRef in parameterAliases) {
         return _toModifierNumberOrZero(parameterAliases[normalizedRef]) + modifier;
@@ -1675,7 +1683,11 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     const expressionMatch = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
     if (expressionMatch) {
         const mode = /^(menor|min)$/i.test(expressionMatch[1]) ? "min" : "max";
-        const values = _splitModifierArgs(expressionMatch[2]).map((entry) => _resolveModifierReferenceValue(actor, entry, rollData));
+        const values = _splitModifierArgs(expressionMatch[2]).map((entry) => {
+            const arithmeticEntry = evaluateArithmetic(entry);
+            if (Number.isFinite(arithmeticEntry)) return arithmeticEntry;
+            return _resolveModifierReferenceValue(actor, entry, rollData);
+        });
         if (!values.length) return 0;
         return mode === "min" ? Math.min(...values) : Math.max(...values);
     }
@@ -1731,9 +1743,8 @@ function _resolveRollModifierApplicationSide(entry = {}, fallback = {}) {
 }
 
 function _isCounterContextSupported(rollContext) {
-    const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
-    if (supported.includes(rollContext)) return true;
-    return rollContext.startsWith("skill_");
+    const context = `${rollContext ?? ""}`.trim();
+    return context.length > 0;
 }
 
 function _buildCounterGroupKey(entry = {}, effect = {}, entryIndex = 0) {
