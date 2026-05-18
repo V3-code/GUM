@@ -24,6 +24,14 @@ export class GumGMScreen extends Application {
             actorId: null,
             at: 0
         };
+
+        this.gmTabs = [
+            { id: "tab-1", name: "Aba 1" },
+            { id: "tab-2", name: "Aba 2" },
+            { id: "tab-3", name: "Aba 3" },
+            { id: "tab-4", name: "Aba 4" },
+            { id: "tab-5", name: "Aba 5" }
+        ];
     }
 
     static get defaultOptions() {
@@ -93,7 +101,9 @@ async getData() {
 
              // 3. DASHBOARD (Direita) - Configuração
         const config = await this._normalizeConfig();
-        const groups = config.groups || [];
+        const activeMainTab = config.activeTabId || this.gmTabs[0].id;
+        const activeTab = (config.tabs || []).find(tab => tab.id === activeMainTab) || config.tabs?.[0];
+        const groups = activeTab?.groups || [];
         for (const group of groups) {
             group.enrichedItems = [];
             for (const itemUuid of group.items || []) {
@@ -114,6 +124,8 @@ async getData() {
             combatants: combatData,
             hasCombat: !!(combat && combat.combatants.size > 0), 
             groups,
+            mainTabs: config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] })),
+            activeMainTab,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
             quickRollCollapsed: this.sidebarState.quickRollCollapsed,
@@ -197,6 +209,13 @@ async getData() {
     }
 activateListeners(html) {
         super.activateListeners(html);
+
+        html.find('.main-tab-btn').click(async ev => {
+            ev.preventDefault();
+            const tabId = $(ev.currentTarget).data('tab-id');
+            if (!tabId) return;
+            await this._setActiveMainTab(tabId);
+        });
         
         // Atualiza display do rolador assim que abre
         this._updateQRDisplay(html);
@@ -1329,6 +1348,9 @@ async _applySelectionToActor(actor, tokenId) {
  }
     
     _extractGroupsFromConfig(config) {
+        if (Array.isArray(config?.tabs)) {
+            return config.tabs.flatMap(tab => tab.groups || []);
+        }
         if (Array.isArray(config?.groups)) return config.groups;
         if (Array.isArray(config?.columns)) {
             return config.columns.flatMap(col => col.groups || []);
@@ -1336,9 +1358,48 @@ async _applySelectionToActor(actor, tokenId) {
         return [];
     }
 
+    _createDefaultTabs() {
+        return this.gmTabs.map(tab => ({ id: tab.id, name: tab.name, groups: [] }));
+    }
+
     async _normalizeConfig() {
         const config = game.settings.get("gum", "gmScreenConfig") || {};
-        if (Array.isArray(config.groups)) return config;
+
+        if (Array.isArray(config.tabs)) {
+            const tabsMap = new Map((config.tabs || []).map(tab => [tab.id, tab]));
+            const normalizedTabs = this.gmTabs.map(baseTab => {
+                const existing = tabsMap.get(baseTab.id) || {};
+                return {
+                    id: baseTab.id,
+                    name: existing.name || baseTab.name,
+                    groups: this._extractGroupsFromConfig(existing).map(group => ({
+                        id: group.id || foundry.utils.randomID(),
+                        name: group.name || "Grupo",
+                        items: Array.isArray(group.items) ? group.items : [],
+                        collapsed: group.collapsed === true
+                    }))
+                };
+            });
+            const activeTabId = normalizedTabs.some(tab => tab.id === config.activeTabId) ? config.activeTabId : normalizedTabs[0].id;
+            const normalized = { tabs: normalizedTabs, activeTabId };
+            if (JSON.stringify(normalized) !== JSON.stringify(config)) {
+                await game.settings.set("gum", "gmScreenConfig", normalized);
+            }
+            return normalized;
+        }
+
+        if (Array.isArray(config.groups)) {
+            const tabs = this._createDefaultTabs();
+            tabs[0].groups = config.groups.map(group => ({
+                id: group.id || foundry.utils.randomID(),
+                name: group.name || "Grupo",
+                items: Array.isArray(group.items) ? group.items : [],
+                collapsed: group.collapsed === true
+            }));
+            const migrated = { tabs, activeTabId: tabs[0].id };
+            await game.settings.set("gum", "gmScreenConfig", migrated);
+            return migrated;
+        }
 
         const groups = this._extractGroupsFromConfig(config).map(group => ({
             id: group.id || foundry.utils.randomID(),
@@ -1347,44 +1408,65 @@ async _applySelectionToActor(actor, tokenId) {
             collapsed: group.collapsed === true
         }));
 
-        const normalized = { groups };
+        const tabs = this._createDefaultTabs();
+        tabs[0].groups = groups;
+        const normalized = { tabs, activeTabId: tabs[0].id };
         await game.settings.set("gum", "gmScreenConfig", normalized);
         return normalized;
     }
 
     // Métodos de Persistência
     async _saveConfig(newConfig) { await game.settings.set("gum", "gmScreenConfig", newConfig); this.render(false); }
+    async _setActiveMainTab(tabId) {
+        const config = await this._normalizeConfig();
+        if (!(config.tabs || []).some(tab => tab.id === tabId)) return;
+        config.activeTabId = tabId;
+        await this._saveConfig(config);
+    }
+
+    _getActiveConfigTab(config) {
+        const activeId = config.activeTabId || this.gmTabs[0].id;
+        return (config.tabs || []).find(tab => tab.id === activeId) || config.tabs?.[0] || null;
+    }
+
     async _addGroup(name) {
         const config = await this._normalizeConfig();
-        config.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false });
+        const activeTab = this._getActiveConfigTab(config);
+        if (!activeTab) return;
+        activeTab.groups = activeTab.groups || [];
+        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false });
         await this._saveConfig(config);
     }
     async _toggleGroupCollapse(groupId) {
         const config = await this._normalizeConfig();
-        const group = (config.groups || []).find(g => g.id === groupId);
+        const activeTab = this._getActiveConfigTab(config);
+        const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (!group) return;
         group.collapsed = !group.collapsed;
         await this._saveConfig(config);
     }
     async _removeGroup(groupId) {
         const config = await this._normalizeConfig();
-        const group = (config.groups || []).find(g => g.id === groupId);
+        const activeTab = this._getActiveConfigTab(config);
+        const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             (group.items || []).forEach(uuid => this.selectedModifiers.delete(uuid));
-            config.groups = (config.groups || []).filter(g => g.id !== groupId);
+            activeTab.groups = (activeTab.groups || []).filter(g => g.id !== groupId);
             await this._saveConfig(config);
         }
     }
     async _renameGroup(groupId, newName) {
         const config = await this._normalizeConfig();
-        const group = (config.groups || []).find(g => g.id === groupId);
+        const activeTab = this._getActiveConfigTab(config);
+        const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (!group) return;
         group.name = newName;
         await this._saveConfig(config);
     }
     async _addItemsToGroup(groupId, items) {
         const config = await this._normalizeConfig();
-        const group = (config.groups || []).find(g => g.id === groupId);
+        const activeTab = this._getActiveConfigTab(config);
+        const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             items.forEach(item => {
                 if (!group.items.includes(item.uuid)) group.items.push(item.uuid);
@@ -1394,7 +1476,8 @@ async _applySelectionToActor(actor, tokenId) {
     }
     async _removeItemFromGroup(groupId, itemUuid) {
         const config = await this._normalizeConfig();
-        const group = (config.groups || []).find(g => g.id === groupId);
+        const activeTab = this._getActiveConfigTab(config);
+        const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             group.items = group.items.filter(u => u !== itemUuid);
             this.selectedModifiers.delete(itemUuid);
@@ -1485,7 +1568,9 @@ async _applySelectionToActor(actor, tokenId) {
                                 items: Array.isArray(group.items) ? group.items : [],
                                 collapsed: group.collapsed === true
                             }));
-                            await game.settings.set("gum", "gmScreenConfig", { groups });
+                            const tabs = this._createDefaultTabs();
+                            tabs[0].groups = groups;
+                            await game.settings.set("gum", "gmScreenConfig", { tabs, activeTabId: tabs[0].id });
                             this.render(true);
                             ui.notifications.info("Layout do Escudo importado com sucesso!");
                         } catch (err) {

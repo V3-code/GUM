@@ -118,6 +118,13 @@
         {{!-- Barra de Ferramentas da Paleta --}}
         <div class="manual-mod-section">
             <div class="palette-actions">
+                <div class="main-tab-selector">
+                    {{#each mainTabs}}
+                        <button class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{this.name}}">
+                            {{this.name}}
+                        </button>
+                    {{/each}}
+                </div>
                 <div class="search-wrapper">
                     <i class="fas fa-search"></i>
                     <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">

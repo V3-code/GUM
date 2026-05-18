@@ -243,6 +243,34 @@
     flex-direction: column;
     gap: 6px;
 }
+
+.gum.gm-screen .main-tab-selector {
+    display: flex;
+    gap: 4px;
+    margin-right: 4px;
+}
+
+.gum.gm-screen .main-tab-btn {
+    border: 1px solid rgba(197, 160, 91, 0.25);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--gum-text-medio);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.gum.gm-screen .main-tab-btn:hover {
+    color: #fff;
+    border-color: rgba(197, 160, 91, 0.5);
+}
+
+.gum.gm-screen .main-tab-btn.active {
+    color: #111;
+    background: var(--gum-accent-gold);
+    border-color: var(--gum-accent-gold);
+}
 .gum.gm-screen .manual-mod-toolbar {
     background: var(--gum-bg-dark); padding: 6px; border-radius: 4px;
     display: flex; flex-direction: column; gap: 6px; transition: all 0.3s ease;
@@ -396,7 +424,7 @@
 /* Busca */
 .gum.gm-screen .palette-actions {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) auto auto;
+    grid-template-columns: auto minmax(180px, 1fr) auto auto;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
@@ -832,7 +860,12 @@
 
 @media (max-width: 1200px) {
   .gum.gm-screen .palette-actions {
-      grid-template-columns: minmax(180px, 1fr) auto;
+      grid-template-columns: 1fr auto;
+  }
+
+  .gum.gm-screen .main-tab-selector {
+      grid-column: 1 / -1;
+      flex-wrap: wrap;
   }
 
   .gum.gm-screen .add-group-btn {
