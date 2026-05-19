@@ -15,8 +15,8 @@ export class GMModifierBrowser extends FormApplication {
       // Reutilizamos a classe CSS existente para manter o estilo
       classes: ["gum", "gm-modifier-browser", "theme-dark"], 
       template: "systems/gum/templates/apps/gm-modifier-browser.hbs",
-      width: 720, 
-      height: 600, 
+      width: 750, 
+      height: 750, 
       resizable: true
     });
   }

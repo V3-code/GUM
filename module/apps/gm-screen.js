@@ -3,6 +3,7 @@ import { EffectBrowser } from "./effect-browser.js";
 import { performGURPSRoll } from "../../scripts/main.js";
 import { applySingleEffect } from "../../scripts/effects-engine.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
+import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 
 export class GumGMScreen extends Application {
     
@@ -808,7 +809,7 @@ activateListeners(html) {
             return trimmed;
         };
 
-        const processAttack = (item, atk) => {
+      const processAttack = (item, atk, attackId) => {
             if (!atk || !atk.mode) return;
             if (!attackGroups[item.id]) attackGroups[item.id] = { name: item.name, modes: [] };
             
@@ -829,13 +830,16 @@ activateListeners(html) {
                 type: atk.damage_type || "",
                 parry: parry,
                 block: block,
-                fullLabel: `${item.name} (${atk.mode})`
+                fullLabel: `${item.name} (${atk.mode})`,
+                itemId: item.id,
+                itemUuid: item.uuid,
+                attackId
             });
         };
 
         itemsArray.forEach(item => {
-            if (item.system.melee_attacks) Object.values(item.system.melee_attacks).forEach(atk => processAttack(item, atk));
-            if (item.system.ranged_attacks) Object.values(item.system.ranged_attacks).forEach(atk => processAttack(item, atk));
+            if (item.system.melee_attacks) Object.entries(item.system.melee_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId));
+            if (item.system.ranged_attacks) Object.entries(item.system.ranged_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId));
         });
 
         if (Object.keys(attackGroups).length > 0) {
@@ -848,11 +852,11 @@ activateListeners(html) {
                         ${group.modes.map(mode => `
                             <div class="gum-ctx-item" style="cursor:default;">
                                 <div class="gum-ctx-attack-row">
-                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${mode.fullLabel}" data-nh="${mode.nh}">
+                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${mode.fullLabel}" data-nh="${mode.nh}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}">
                                         <span>${mode.label}</span> <span class="gum-ctx-val skill">${mode.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
-                                        ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="Dano: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
+                                        ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-display-damage="${mode.damageDisplay}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="Dano: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
                                         ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="Aparar" data-val="${mode.parry}" title="Aparar"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
                                         ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="Bloqueio" data-val="${mode.block}" title="Bloqueio"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
                                     </div>
@@ -965,7 +969,7 @@ activateListeners(html) {
                                         <span>${entry.name}</span> <span class="gum-ctx-val skill">${entry.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
-                                        ${entry.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${entry.damage.resolved}" data-type="${entry.damage.type}" data-label="${entry.name}" title="Dano: ${entry.damage.raw}"><i class="fas fa-bolt"></i> ${entry.damage.raw}</div>` : ''}
+                                        ${entry.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${entry.damage.resolved}" data-display-damage="${entry.damage.raw}" data-type="${entry.damage.type}" data-label="${entry.name}" title="Dano: ${entry.damage.raw}"><i class="fas fa-bolt"></i> ${entry.damage.raw}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1007,7 +1011,10 @@ activateListeners(html) {
             const el = $(ev.currentTarget);
             this._performContextRoll(actor, el.data('label'), parseInt(el.data('nh')), {
                 quick: ev.ctrlKey,
-                rollType: 'attack'
+                rollType: 'attack',
+                itemId: el.data('itemId') || null,
+                itemUuid: el.data('itemUuid') || null,
+                attackId: el.data('attackId') || null
             });
             menu.remove();
         });
@@ -1015,15 +1022,39 @@ activateListeners(html) {
         menu.find('.roll-damage-ctx').click(async ev => {
             ev.stopPropagation();
             const el = $(ev.currentTarget);
-            const dmgFormula = el.data('damage');
-            const dmgType = el.data('type');
-            const label = el.data('label');
-            
-            const roll = new Roll(dmgFormula);
+            const resolvedFormula = String(el.data('damage') || '').trim();
+            const displayFormula = String(el.data('displayDamage') || resolvedFormula).trim();
+            const dmgType = String(el.data('type') || '').trim();
+            const label = String(el.data('label') || actor.name).trim();
+
+            const resolvedDisplayFormula = String(resolvedFormula).match(/^([0-9dDkK+\-/*\s()]+)/i)?.[1]?.trim() || displayFormula || "0";
+            const promptResult = await GurpsDamageRollPrompt.prompt({
+                sourceName: label,
+                main: {
+                    formula: resolvedFormula,
+                    displayFormula: resolvedDisplayFormula,
+                    summaryFormula: `${resolvedDisplayFormula} ${dmgType}`.trim(),
+                    type: dmgType
+                }
+            });
+            if (!promptResult) {
+                menu.remove();
+                return;
+            }
+
+            const mainAdditional = String(promptResult.mainAdditional || "").trim();
+            const finalFormula = `${resolvedFormula}${mainAdditional}`.trim();
+            if (!finalFormula) {
+                ui.notifications.warn("Fórmula de dano inválida.");
+                menu.remove();
+                return;
+            }
+
+            const roll = new Roll(finalFormula);
             await roll.evaluate();
-            
+
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
-            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>Dano: ${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${dmgFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
+            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${finalFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
 
             ChatMessage.create({ user: game.user.id, speaker: { alias: actor.name }, content: content, rolls: [roll] });
             menu.remove();
@@ -1034,7 +1065,7 @@ activateListeners(html) {
      * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
      */
      _performContextRoll(actor, label, targetValue, options = {}) {
-        const { quick = false, rollType = 'skill' } = options;
+        const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null } = options;
         
         let selectedModsTotal = 0;
         let lowestCap = Infinity; // Começa infinito (sem teto))
@@ -1059,7 +1090,10 @@ activateListeners(html) {
                 modifier: 0,
                 fixedModifier: selectedModsTotal,
                 fixedModifierLabel: "Escudo do Mestre",
-                type: rollType
+                type: rollType,
+                itemId,
+                itemUuid,
+                attackId
             };
 
             if (rollType === 'defense') {
@@ -1079,6 +1113,10 @@ activateListeners(html) {
             value: targetValue,
             originalValue: targetValue, // NH Base
             modifier: selectedModsTotal,
+            type: rollType,
+            itemId,
+            itemUuid,
+            attackId,
             img: actor.img || "icons/svg/d20.svg"
         }, {
             effectiveCap: lowestCap

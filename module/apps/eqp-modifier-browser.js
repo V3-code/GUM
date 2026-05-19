@@ -26,7 +26,7 @@ export class EqpModifierBrowser extends FormApplication {
       classes: ["gum", "eqp-modifier-browser", "theme-dark"], 
       template: "systems/gum/templates/apps/eqp-modifier-browser.hbs",
       width: 750, 
-      height: 600, 
+      height: 750, 
       resizable: true,
       scrollY: [".browser-results"]
     });

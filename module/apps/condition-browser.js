@@ -14,7 +14,7 @@ constructor(targetItem, options = {}) {
       title: "Navegador de Condições",
       classes: ["gum", "condition-browser", "theme-dark"],
       template: "systems/gum/templates/apps/condition-browser.hbs",
-      width: 700, height: 500, resizable: true
+      width: 750, height: 750, resizable: true
     });
   }
 

@@ -15,7 +15,7 @@ export class TriggerBrowser extends FormApplication {
       title: "Navegador de Gatilhos",
       classes: ["gum", "trigger-browser", "theme-dark"],
       template: "systems/gum/templates/apps/trigger-browser.hbs",
-      width: 700, height: 500, resizable: true
+      width: 750, height: 750, resizable: true
     });
   }
 
