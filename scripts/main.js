@@ -1831,7 +1831,8 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
         if (effectItem) {
             let finalTargets = [];
             if (effectData.recipient === 'self') {
-                finalTargets = actor.getActiveTokens();
+                const activeTokens = actor.getActiveTokens();
+                finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
             } else {
                 finalTargets = Array.from(game.user.targets);
             }
@@ -1842,7 +1843,8 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
                  if (effectData.recipient === 'target') {
                     ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
                  }
-                 finalTargets = actor.getActiveTokens();
+                 const activeTokens = actor.getActiveTokens();
+                 finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
             }
             // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
             const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
@@ -2091,7 +2093,8 @@ Hooks.on("createItem", async (item, options, userId) => {
             const passiveEffectLinks = Object.values(item.system.passiveEffects);
             console.log(`[GUM] Item "${item.name}" adicionado a ${actor.name}. Aplicando ${passiveEffectLinks.length} efeito(s) passivo(s)...`);
 
-            const targets = actor.getActiveTokens().length ? actor.getActiveTokens() : [buildFallbackToken(actor)];
+            const activeTokens = actor.getActiveTokens();
+            const targets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
             for (const linkData of passiveEffectLinks) {
                 const effectUuid = linkData.effectUuid || linkData.uuid;
                 if (!effectUuid) continue;
@@ -2157,7 +2160,8 @@ Hooks.on("createItem", async (item, options, userId) => {
                      const passiveEffectLinks = Object.values(item.system.passiveEffects || {});
             if (passiveEffectLinks.length > 0) {
                 console.log(`[GUM] ...Recriando ${passiveEffectLinks.length} efeito(s) passivo(s) atualizado(s).`);
-                const targets = actor.getActiveTokens().length ? actor.getActiveTokens() : [buildFallbackToken(actor)];
+                const activeTokens = actor.getActiveTokens();
+                const targets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
                 for (const linkData of passiveEffectLinks) {
                     const effectUuid = linkData.effectUuid || linkData.uuid;
                     if (!effectUuid) continue;

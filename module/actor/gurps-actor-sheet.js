@@ -20,8 +20,8 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
         return foundry.utils.mergeObject(super.defaultOptions, {
           classes: ["gum", "sheet", "actor", "character"],
           template: "systems/gum/templates/actors/characters.hbs",
-          width: 900,
-          height: 800,
+          width: 940,
+          height: 820,
           tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "combat" }]
         });
       }
