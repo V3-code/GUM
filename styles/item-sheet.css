@@ -3016,6 +3016,14 @@
     34px;
 }
 
+.gum.sheet.item .effects-line.effects-line-use-event {
+  grid-template-columns:
+    minmax(180px, 1.6fr)
+    120px
+    120px
+    34px;
+}
+
 /* Células com divisores verticais */
 .gum.sheet.item .effects-cell {
   padding: 6px 10px;

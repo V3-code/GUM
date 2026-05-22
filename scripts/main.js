@@ -1144,7 +1144,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         } catch (err) {
             console.error("GUM | Falha ao aplicar efeitos de ativação:", err);
         }
-  }
+    }
+
+    if (sourceItem?.system?.useEventEffects) {
+        try {
+            await applyUseEventEffects(sourceItem, actor, "activate", extraOptions);
+        } catch (err) {
+            console.error("GUM | Falha ao aplicar Evento de Uso (activate):", err);
+        }
+    }
 }
 
 function _buildDamageActionData(actor, sourceItem, rollData) {
@@ -1861,6 +1869,57 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
 }
 
 /**
+ * Aplica os efeitos do grupo "Evento de Uso" para um gatilho específico.
+ * trigger: "consume" | "activate"
+ */
+async function applyUseEventEffects(item, actor, trigger, options = {}) {
+    if (!item || !actor) return;
+    const normalizedTrigger = `${trigger || ""}`.trim().toLowerCase();
+    if (!normalizedTrigger) return;
+
+    const useEventEffects = item.system?.useEventEffects || {};
+    const effectsList = Object.values(useEventEffects).filter((effectData) => {
+        const entryTrigger = `${effectData?.useEventTrigger || "consume"}`.trim().toLowerCase();
+        return entryTrigger === normalizedTrigger;
+    });
+    if (!effectsList.length) return;
+
+    for (const effectData of effectsList) {
+        const effectItem = await fromUuid(effectData.effectUuid).catch(() => null);
+        if (!effectItem) continue;
+
+        let finalTargets = [];
+        if (effectData.recipient === "self") {
+            const activeTokens = actor.getActiveTokens();
+            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+        } else {
+            finalTargets = Array.from(game.user.targets || []);
+        }
+
+        if (finalTargets.length === 0) {
+            if (effectData.recipient === "target") {
+                ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
+            }
+            const activeTokens = actor.getActiveTokens();
+            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+        }
+
+        const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
+        const suppressResistanceCard = effectItem.system?.resistanceRoll?.skipPromptCard || options.suppressResistanceCard;
+        if (requiresResistance && !suppressResistanceCard) {
+            for (const targetToken of finalTargets) {
+                await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, {
+                    ...options,
+                    mode: options.mode || "use-event"
+                });
+            }
+        } else {
+            await applySingleEffect(effectItem, finalTargets, { actor, origin: item });
+        }
+    }
+}
+
+/**
  * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
  * O teste usa os dados de barreira configurados no item efeito.
  */
@@ -1956,6 +2015,7 @@ Hooks.once('init', async function() {
     game.gum = {};
     game.gum.importFromGCS = importFromGCS;
     game.gum.rollFromHotbar = rollFromHotbar;
+    game.gum.applyUseEventEffects = applyUseEventEffects;
 
     CONFIG.statusEffects = GUM.statusEffects;
     CONFIG.Actor.documentClass = GurpsActor;

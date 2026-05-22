@@ -613,29 +613,34 @@ async _updateDamageCalculation(form) {
         this.element.find('button[data-action="proposeTests"]').prop('disabled', true).text('Testes Propostos');
     }
     
-    async _onNpcResistanceRoll(effectId) {
-        const effect = (this.availableOnDamageEffects || []).find(e => e.id === effectId);
-        if (!effect?.requiresResistance || !effect.item) return;
-        const rollData = effect.item.system?.resistanceRoll || {};
-        const target = this.targetActor;
-        let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
-        let totalModifier = evaluateNumericFormula(rollData.modifier, {
-            actor: target,
-            eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
-        }) || 0;
-        if (rollData.dynamicModifier) {
-            try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
-        }
-        const finalTarget = baseAttributeValue + totalModifier;
-        const roll = new Roll("3d6");
-        await roll.evaluate();
-        const success = roll.total <= finalTarget;
-        const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
-        const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
-        await this.updateEffectCard(effectId, { isSuccess: success, shouldApply, resultText }, effect.item.system);
-        const chatData = applyCurrentRollPrivacy({ content: resultText });
-        ChatMessage.create(chatData);
+async _onNpcResistanceRoll(effectId) {
+    const effect = (this.availableOnDamageEffects || []).find(e => e.id === effectId);
+    if (!effect?.requiresResistance || !effect.item) return;
+    const rollData = effect.item.system?.resistanceRoll || {};
+    const target = this.targetActor;
+    let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
+    let totalModifier = evaluateNumericFormula(rollData.modifier, {
+        actor: target,
+        eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
+    }) || 0;
+    if (rollData.dynamicModifier) {
+        try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
     }
+    const finalTarget = baseAttributeValue + totalModifier;
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    const success = roll.total <= finalTarget;
+    const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
+    const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
+    await this.updateEffectCard(
+        effectId,
+        { isSuccess: success, shouldApply, resultText },
+        effect.item.system,
+        { autoApply: false }
+    );
+    const chatData = applyCurrentRollPrivacy({ content: resultText });
+    ChatMessage.create(chatData);
+}
     
       async _applyShockEffect(injury) {
         if (!this.targetActor || !game.combat) return 0;
@@ -891,8 +896,9 @@ if (shouldPublish) {
         return [];
     }
 
-    async updateEffectCard(effectId, rollResult, effectSystem) {
+    async updateEffectCard(effectId, rollResult, effectSystem, options = {}) {
         if (!effectId) return;
+        const autoApply = options.autoApply !== false;
         const state = this.effectState[effectId] || (this.effectState[effectId] = { checked: true });
         const applyOn = effectSystem?.resistanceRoll?.applyOn || 'failure';
         let shouldApply = rollResult.shouldApply;
@@ -909,7 +915,7 @@ if (shouldPublish) {
             }
         }
 
-        if (shouldApply) {
+        if (autoApply && shouldApply) {
             await this._applyEffectFromResistance(effectId);
         }
 
@@ -931,6 +937,7 @@ if (shouldPublish) {
 
     async _promptResistanceRoll(effect) {
         if (!effect?.item) return;
+        const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
         const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';

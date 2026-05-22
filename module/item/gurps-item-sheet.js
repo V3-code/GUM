@@ -421,7 +421,8 @@ _promptMultipleReferences(parsedList) {
             },
             onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects),
             general: await _prepareLinkedItems(this.item.system.generalConditions),
-            passive: await _prepareLinkedItems(this.item.system.passiveEffects)
+            passive: await _prepareLinkedItems(this.item.system.passiveEffects),
+            useEvent: await _prepareLinkedItems(this.item.system.useEventEffects)
         };
 
         // =======================================================
@@ -746,7 +747,11 @@ html.find('.delete-modifier').click(async ev => {
                     const updates = {};
                     for (const effect of selectedEffects) {
                         const newId = foundry.utils.randomID();
-                        updates[`system.${targetList}.${newId}`] = { id: newId, effectUuid: effect.uuid, recipient: 'target', name: effect.name, img: effect.img };
+                        const effectEntry = { id: newId, effectUuid: effect.uuid, recipient: 'target', name: effect.name, img: effect.img };
+                        if (targetList === "useEventEffects") {
+                            effectEntry.useEventTrigger = "consume";
+                        }
+                        updates[`system.${targetList}.${newId}`] = effectEntry;
                     }
                     this.item.update(updates);
                 }

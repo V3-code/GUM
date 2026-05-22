@@ -1889,7 +1889,37 @@ html.on('click', '.dr-group-toggle', (ev) => {
                 })));
             }
         }
+ });
+
+    html.find('.item-consume-use').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const li = $(ev.currentTarget).closest(".item");
+        const itemId = li.data("itemId");
+        const item = this.actor.items.get(itemId);
+        if (!item) return;
+
+        const currentQty = Number(item.system?.quantity ?? 0);
+        if (currentQty <= 0) {
+            ui.notifications.warn(`"${item.name}" não possui quantidade suficiente para consumir.`);
+            return;
+        }
+
+        const updates = { "system.quantity": Math.max(0, currentQty - 1) };
+        await item.update(updates);
+
+        try {
+            if (game?.gum?.applyUseEventEffects) {
+                await game.gum.applyUseEventEffects(item, this.actor, "consume");
+            }
+        } catch (err) {
+            console.error("GUM | Falha ao aplicar Evento de Uso (consume):", err);
+        }
+
+        ui.notifications.info(`${item.name} consumido. Quantidade restante: ${Math.max(0, currentQty - 1)}.`);
     });
+
 
     html.find('.item-move-to-container').click(async ev => {
         ev.preventDefault();
