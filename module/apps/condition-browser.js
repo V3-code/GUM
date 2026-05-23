@@ -148,7 +148,6 @@ const pack = game.packs.get("gum.conditions");
       const effectsList = Array.isArray(system.effects) ? system.effects : Object.values(system.effects || {});
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
       const tags = [
-        createTag("Gatilho", system.when),
         createTag("Efeitos", effectsList.length ? effectsList.length : null)
       ].join("");
 

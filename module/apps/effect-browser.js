@@ -1,6 +1,45 @@
 // GUM/module/apps/effect-browser.js
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
+
+const EFFECT_TYPE_LABELS = {
+    attribute: "Atributo",
+    flag: "Flag",
+    roll_modifier: "Modificador de Rolagem",
+    status: "Status"
+};
+
+const getEffectTypeLabel = (type) => EFFECT_TYPE_LABELS[type] || type || "-";
+
+const getPrimaryRollModifierValue = (system = {}) => {
+    const first = Array.isArray(system.roll_modifier_entries) && system.roll_modifier_entries.length ? system.roll_modifier_entries[0] : null;
+    const value = first?.value ?? system.roll_modifier_value ?? system.roll_modifier ?? null;
+    if (value === null || value === undefined || value === "") return null;
+    if (typeof value === "number") return value > 0 ? `+${value}` : `${value}`;
+    const raw = `${value}`.trim();
+    if (!raw) return null;
+    if (/^[+-]?\d+(\.\d+)?$/.test(raw)) {
+        const asNumber = Number(raw);
+        return asNumber > 0 ? `+${asNumber}` : `${asNumber}`;
+    }
+    return raw;
+};
+
+const parseReferenceCodes = (rawRef) => {
+    const text = (rawRef ?? "").toString().trim().toUpperCase();
+    if (!text) return [];
+    return text
+        .split(/[,;]+|\s+/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map((part) => {
+            const match = part.replace(/\s+/g, "").match(/^([A-Z]+)(\d+)$/);
+            if (!match) return null;
+            return { code: match[1], page: Number(match[2]) };
+        })
+        .filter(Boolean);
+};
+
 export class EffectBrowser extends FormApplication {
 constructor(targetItem, options = {}) {
     super({}, options); // Usamos um objeto vazio como base
@@ -149,30 +188,36 @@ _onFilterResults(event) {
         }
         return "";
       };
+      const createRefTag = (value) => {
+        const ref = (value ?? "").toString().trim();
+        if (!ref) return "";
+        return `<div class="property-tag"><label>REF</label><span><a href="#" class="quick-open-reference" data-ref="${foundry.utils.escapeHTML(ref)}">${foundry.utils.escapeHTML(ref)}</a></span></div>`;
+      };
 
-      const rollModifierTags = system.type === "roll_modifier"
-        ? [
-            createTag("Modificador", system.roll_modifier_value),
-            createTag("Teto", system.roll_modifier_cap),
-            createTag("Contexto", system.roll_modifier_context)
-          ].join("")
-        : "";
-
+      const effectRef = system.ref ?? system.reference;
       const tags = [
-        createTag("Tipo", system.type ? system.type.toUpperCase() : null),
-        createTag("Caminho", system.path),
-        createTag("Operação", system.operation || system.statusId || system.value),
-        rollModifierTags
+        createTag("Tipo", getEffectTypeLabel(system.type)),
+        createTag("Modificador", getPrimaryRollModifierValue(system)),
+        createRefTag(effectRef)
       ].join("");
 
-      const description = await TextEditor.enrichHTML(system.description || system.notes || "<i>Sem descrição.</i>", { async: true });
+      const quickDescriptionSource = (system.chat_description ?? "").toString().trim()
+        ? system.chat_description
+        : (system.description || system.notes || "<i>Sem descrição.</i>");
+      const description = await TextEditor.enrichHTML(quickDescriptionSource, { async: true });
 
       const content = `
         <div class="gurps-dialog-canvas">
-            <div class="gurps-item-preview-card">
+            <div class="gurps-item-preview-card" data-item-id="${effect?.id ?? ""}">
                 <header class="preview-header">
-                    <h3>${effect?.name || "Efeito"}</h3>
-                    <div class="header-controls"><span class="preview-item-type">Efeito</span></div>
+                    <img src="${effect?.img || "icons/svg/mystery-man.svg"}" class="header-icon"/>
+                    <div class="header-text">
+                        <h3>${effect?.name || "Efeito"}</h3>
+                        <span class="preview-item-type">Efeito</span>
+                    </div>
+                    <div class="header-controls">
+                        <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
+                    </div>
                 </header>
                 <div class="preview-content">
                     <div class="preview-properties">${tags}</div>
@@ -186,9 +231,45 @@ _onFilterResults(event) {
       new Dialog({
         title: `Detalhes: ${effect?.name || "Efeito"}`,
         content,
-        buttons: { close: { label: "Fechar" } },
-        default: "close",
-        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
+        buttons: {},
+        default: "",
+        render: (dlgHtml) => {
+          dlgHtml.on("click", ".quick-open-reference", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const rawRef = (event.currentTarget?.dataset?.ref ?? "").toString().trim();
+            const parsed = parseReferenceCodes(rawRef);
+            if (!parsed.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+            const target = parsed[0];
+            const journals = game.journal ? Array.from(game.journal) : [];
+            for (const journal of journals) {
+              const pages = journal?.pages ? Array.from(journal.pages) : [];
+              const pdfPage = pages.find((p) => p?.type === "pdf" && ((p.getFlag("gum", "pdfCode") ?? "").toString().trim().toUpperCase() === target.code));
+              if (!pdfPage) continue;
+              const pageOffset = Number(pdfPage.getFlag("gum", "pageOffset") ?? 0);
+              const targetPage = Math.max(1, target.page + pageOffset);
+              await journal.sheet.render(true, { pageId: pdfPage.id, mode: "view" });
+              Hooks.once("renderJournalSheet", () => {
+                const frames = Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
+                for (const frame of frames) {
+                  const src = frame.getAttribute("src") || "";
+                  if (!src.includes("#")) continue;
+                  const [base, hash = ""] = src.split("#");
+                  const params = new URLSearchParams(hash);
+                  params.set("page", String(targetPage));
+                  frame.setAttribute("src", `${base}#${params.toString()}`);
+                }
+              });
+              return;
+            }
+            ui.notifications.warn(`Nenhum PDF com código "${target.code}" foi encontrado nos periódicos.`);
+          });
+        }
+      }, {
+        classes: ["gurps-item-preview-dialog"],
+        width: 480,
+        height: "auto",
+        resizable: true
       }).render(true);
   }
 
