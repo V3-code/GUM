@@ -371,6 +371,10 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             const effectId = $(ev.currentTarget).closest('.effect-card').data('effectId');
             this._onNpcResistanceRoll(effectId);
         });
+        html.on('click', '.publish-resistance-result', ev => {
+            const effectId = $(ev.currentTarget).closest('.effect-card').data('effectId');
+            this._publishResistanceResult(effectId);
+        });
 
         html.find('button[data-action="proposeTests"]').on('click', () => this._onProposeTests(form));
         html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
@@ -547,8 +551,8 @@ async _updateDamageCalculation(form) {
         const resistanceClass = requiresResistance ? "eff-type" : "eff-type muted";
         const resistanceStatus = effectState.resistanceResult
             ? effectState.resistanceResult.shouldApply
-                ? "Aplicável"
-                : "Bloqueado"
+                ? "(Aplicável)"
+                : "(Bloqueado)"
             : statusText;
 
         if (isChecked && requiresResistance && !effectState.resistanceResult) {
@@ -569,6 +573,9 @@ async _updateDamageCalculation(form) {
         const resistanceResultText = effectState.resistanceResult?.resultText
             ? `<div class="eff-status">${effectState.resistanceResult.resultText}</div>`
             : "";
+        const canPublishResistanceResult = requiresResistance && !!effectState.resistanceResult?.resultText;
+        const publishedClass = effectState.resistanceResult?.publishedToChat ? "published" : "";
+        const publishTitle = effectState.resistanceResult?.publishedToChat ? "Resultado já publicado no chat" : "Publicar resultado do teste no chat";
 
         potentialEffectsHTML += `
             <div class="effect-card ${meetsRequirements ? '' : 'disabled'}" data-effect-id="${effect.id}">
@@ -580,9 +587,9 @@ async _updateDamageCalculation(form) {
                     ${resistanceRollText} ${chanceText ? `• ${chanceText}` : ''}
                 </div>
                 ${reqTexts.length ? `<div class="eff-meta">${reqTexts.join(" • ")}</div>` : ''}
-                <div class="eff-meta">${resistanceStatus}</div>
-                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="Rolar para o alvo"><i class="fas fa-dice-d20"></i></a>` : ''}
-                ${resistanceResultText}
+                | ${resistanceResultText} <div class="eff-meta">${resistanceStatus}</div>
+                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="Rolar para o alvo"><i class="fas fa-dice-d20"></i></a>` : ''} 
+                ${canPublishResistanceResult ? `<a class="publish-resistance-result ${publishedClass}" data-effect-id="${effect.id}" title="${publishTitle}"><i class="fas fa-bullhorn"></i></a>` : ''}
             </div>
         `;
     }
@@ -626,21 +633,64 @@ async _onNpcResistanceRoll(effectId) {
     if (rollData.dynamicModifier) {
         try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
     }
-    const finalTarget = baseAttributeValue + totalModifier;
-    const roll = new Roll("3d6");
-    await roll.evaluate();
-    const success = roll.total <= finalTarget;
-    const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
-    const resultText = `<strong>Rolagem de NPC (${(rollData.attribute || "HT").toUpperCase()}):</strong> ${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
-    await this.updateEffectCard(
-        effectId,
-        { isSuccess: success, shouldApply, resultText },
-        effect.item.system,
-        { autoApply: false }
-    );
-    const chatData = applyCurrentRollPrivacy({ content: resultText });
-    ChatMessage.create(chatData);
-}
+        const finalTarget = baseAttributeValue + totalModifier;
+        const roll = new Roll("3d6");
+        await roll.evaluate();
+        const success = roll.total <= finalTarget;
+        const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
+        const simpleResultText = `${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
+        const attributeLabel = (rollData.attribute || "HT").toUpperCase();
+        const resultClass = success ? "success" : "failure";
+        const resultLabel = success ? "Sucesso" : "Falha";
+        const marginValue = Math.abs(finalTarget - roll.total);
+        const chatResultText = `
+            <div class="gurps-roll-card premium roll-result">
+                <header class="card-header">
+                    <h3>Teste de Resistência</h3>
+                    <small>${target?.name || "Alvo"}</small>
+                </header>
+                <div class="card-formula-container">
+                    <span class="formula-pill">${attributeLabel}</span>
+                </div>
+                <div class="card-content">
+                    <div class="card-main-flex">
+                        <div class="roll-column">
+                            <span class="column-label">Dados</span>
+                            <div class="roll-total">${roll.total}</div>
+                        </div>
+                        <div class="column-separator"></div>
+                        <div class="target-column">
+                            <span class="column-label">Alvo</span>
+                            <div class="target-value">${finalTarget}</div>
+                            <div class="target-note">Final</div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <div class="result-block ${resultClass}">
+                        <span class="result-label">${resultLabel}</span>
+                        <span class="result-margin">Margem ${marginValue}</span>
+                    </div>
+                </footer>
+            </div>
+        `;
+        await this.updateEffectCard(
+            effectId,
+            { isSuccess: success, shouldApply, resultText: simpleResultText, chatResultText },
+            effect.item.system,
+            { autoApply: false }
+        );
+    }
+    
+    _publishResistanceResult(effectId) {
+        const state = this.effectState?.[effectId];
+        const resultText = state?.resistanceResult?.chatResultText || state?.resistanceResult?.resultText;
+        if (!resultText) return;
+        const chatData = applyCurrentRollPrivacy({ content: resultText });
+        ChatMessage.create(chatData);
+        state.resistanceResult.publishedToChat = true;
+        if (this.form) this._updateDamageCalculation(this.form);
+    }
     
       async _applyShockEffect(injury) {
         if (!this.targetActor || !game.combat) return 0;

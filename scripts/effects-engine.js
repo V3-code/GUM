@@ -1,4 +1,3 @@
-
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
  * Lida com tipos de efeitos separados:
@@ -235,18 +234,30 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId }
         : {};
-    const evaluateEffectValue = (value, actor) => {
-        if (typeof value === "string") {
-            const trimmed = value.trim();
-            if (trimmed === "") return 0;
+    const evaluateEffectValue = async (value, actor) => {
+        if (typeof value !== "string") {
+            return { value, roll: null, formula: null };
+        }
+
+        const trimmed = value.trim();
+        if (trimmed === "") {
+            return { value: 0, roll: null, formula: null };
+        }
+
+        // ✅ Suporte a notação de dados com sinal, ex: 1d6, -1d6, 2d4+1.
+        try {
+            const roll = new Roll(trimmed, actor?.getRollData?.() || {});
+            await roll.evaluate();
+            return { value: roll.total, roll, formula: trimmed };
+        } catch (rollError) {
+            // Fallback para expressões JS legadas.
             try {
-                return new Function("actor", "game", `return (${trimmed});`)(actor, game);
+                return { value: new Function("actor", "game", `return (${trimmed});`)(actor, game), roll: null, formula: null };
             } catch (error) {
                 console.warn(`GUM | Não foi possível avaliar o valor do efeito "${effectItem.name}":`, error);
-                return value;
+                return { value, roll: null, formula: null };
             }
-    }
-        return value;
+        }
     };
     const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "status"]);
     const instantTypes = new Set(["resource_change", "macro", "chat"]);
@@ -333,12 +344,18 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                     if (action.type === "attribute") {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
-                        const computedValue = evaluateEffectValue(action.value, targetActor);
+                        const { value: computedValue, roll, formula } = await evaluateEffectValue(action.value, targetActor);
                         activeEffectData.changes.push({
                             key: action.path,
                             mode: action.operation === "OVERRIDE" ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
                             value: computedValue
                         });
+                        if (roll) {
+                            await roll.toMessage({
+                                speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+                                flavor: `${effectItem.name} • ${action.label || "Modificador de Atributo"} (${formula})`
+                            });
+                        }
                     }
 
                     if (action.type === "flag") {
