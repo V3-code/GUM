@@ -1944,7 +1944,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier && previewModifier !== 0 ? ` ${previewModifierSigned}` : ''}`;
     const resistanceChatText = (rollData.chatText || "").toString().trim();
     const resistanceChatTextHtml = resistanceChatText
-        ? `<div class="info-row resistance-note-row"><span class="label">Nota</span><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
+        ? `<div class="info-row resistance-note-row"><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
         : "";
 
  const chatPayload = {
@@ -1973,21 +1973,22 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
             <div class="card-content">
                 <div class="resistance-info resistance-info-compact">
                     <div class="info-row">
+                        <span class="label">Origem</span>
+                        <span class="value">${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</span>
+                    </div>
+                    <div class="info-row">
                         <span class="label">Alvo</span>
                         <span class="value with-img">
                              <img src="${targetToken.actor?.img || targetToken.document?.texture?.src || "icons/svg/mystery-man.svg"}" class="actor-token-icon">
                             ${targetToken.name || targetToken.actor?.name || "Alvo"}
                         </span>
                     </div>
-                    <div class="info-row">
-                        <span class="label">Origem</span>
-                        <span class="value">${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</span>
-                    </div>
+                    ${resistanceChatTextHtml}
                     <div class="resistance-test-block">
                         <div class="test-main">Teste de ${testLabel}</div>
                         <div class="test-sub">${applyOnText} | Margem mín: ${marginValue}</div>
                     </div>
-                    ${resistanceChatTextHtml}
+
                     <div class="pill-row action-row">
                         <button type="button" class="resistance-roll-button full-width" data-roll-data='${JSON.stringify(chatPayload)}'>
                             <i class="fas fa-dice-d6"></i> Rolar Resistência

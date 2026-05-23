@@ -3013,11 +3013,15 @@
 .gum.sheet.item .effects-line.effects-line-passive {
   grid-template-columns:
     minmax(220px, 1fr)
+    34px;
+}
+.gum.sheet.item .effects-line.effects-line-passive-use {
+    grid-template-columns:
+    minmax(220px, 1fr)
     1fr
     1fr
     0.3fr;
 }
-
 .gum.sheet.item .effects-line.effects-line-use-event {
   grid-template-columns:
     minmax(180px, 1.6fr)
