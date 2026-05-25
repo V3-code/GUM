@@ -105,20 +105,21 @@ async getData() {
         const activeMainTab = config.activeTabId || this.gmTabs[0].id;
         const activeTab = (config.tabs || []).find(tab => tab.id === activeMainTab) || config.tabs?.[0];
         const groups = activeTab?.groups || [];
-        for (const group of groups) {
-            group.enrichedItems = [];
-            for (const itemUuid of group.items || []) {
+        await Promise.all(groups.map(async (group) => {
+            const enrichedItems = await Promise.all((group.items || []).map(async (itemUuid) => {
                 try {
                     const item = await fromUuid(itemUuid);
-                    if (item) {
-                        const itemData = item.toObject();
-                        itemData.uuid = itemUuid;
-                        itemData.isSelected = this.selectedModifiers.has(itemUuid);
-                        group.enrichedItems.push(itemData);
-                    }
-                } catch (e) {}
-            }
-        }
+                    if (!item) return null;
+                    const itemData = item.toObject();
+                    itemData.uuid = itemUuid;
+                    itemData.isSelected = this.selectedModifiers.has(itemUuid);
+                    return itemData;
+                } catch (e) {
+                    return null;
+                }
+            }));
+            group.enrichedItems = enrichedItems.filter(item => item !== null);
+        }));
 
         return {
             actors: monitorData,

@@ -1,11 +1,12 @@
+const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
 export class TemplateItemSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "theme-dark", "template-item-sheet"],
-            width: 520,
-            height: 480,
+            width: 620,
+            height: 580,
             template: "systems/gum/templates/items/template-item-sheet.hbs",
             tabs: [{
                 navSelector: ".sheet-tabs",
