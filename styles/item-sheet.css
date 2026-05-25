@@ -702,15 +702,16 @@
 }
 .gum.sheet.item .itemdesc-panel {
   margin: 0;
+  position: relative;
 }
 .gum.sheet.item .itemdesc-block-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   background: var(--item-bg-panel-2);
   border-radius: 6px 6px 0 0;
-  padding: 10px 12px;
+  padding: 10px 36px 10px 12px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   list-style: none;
@@ -727,8 +728,12 @@
   color: var(--item-text);
 }
 .gum.sheet.item .itemdesc-header-actions {
+  position: absolute;
+  top: 10px;
+  right: 12px;
   display: inline-flex;
   align-items: center;
+  z-index: 1;
 }
 .gum.sheet.item .itemdesc-edit-button {
   width: auto;
@@ -2383,6 +2388,32 @@
   position: sticky;
   top: 0;
   z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  padding: 6px;
+  background: var(--item-bg-panel);
+  border-bottom: 1px solid var(--item-border);
+}
+.gum.sheet.item .description-editor .editor .editor-menu .pm-dropdown,
+.gum.sheet.item .description-editor .editor .editor-menu button,
+.gum.sheet.item .description-editor .editor .editor-menu .menu-button {
+  min-height: 26px;
+  line-height: 1.2;
+  border-radius: 4px;
+}
+.gum.sheet.item .description-editor .editor .editor-menu .pm-dropdown,
+.gum.sheet.item .description-editor .editor .editor-menu button {
+  border: 1px solid var(--item-border-light);
+  background: var(--item-bg-panel-2);
+  color: var(--item-text);
+  padding: 2px 8px;
+}
+.gum.sheet.item .description-editor .editor .editor-menu button:hover,
+.gum.sheet.item .description-editor .editor .editor-menu .menu-button:hover {
+  background: rgba(201, 161, 94, 0.18);
+  border-color: var(--item-accent);
 }
 .gum.sheet.item .description-editor .editor-content,
 .gum.sheet.item .description-editor .ProseMirror {
@@ -3385,15 +3416,16 @@
 
 .gum-item-sheet.effect-sheet .effect-action-details {
   display: block;
+  position: relative;
 }
 
 .gum-item-sheet.effect-sheet .effect-action-summary {
   list-style: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
-  padding: 11px 12px;
+  padding: 11px 44px 11px 12px;
   background: rgba(201, 161, 94, 0.32);
   cursor: pointer;
 }
@@ -3409,9 +3441,13 @@
 }
 
 .gum-item-sheet.effect-sheet .effect-action-summary-controls {
+  position: absolute;
+  top: 9px;
+  right: 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  z-index: 1;
 }
 
 .gum-item-sheet.effect-sheet .effect-action-chevron {

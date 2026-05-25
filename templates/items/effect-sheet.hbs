@@ -35,11 +35,10 @@
                             <details class="effect-action-details" open>
                                 <summary class="effect-action-summary">
                                     <h5 class="effect-section-title">Ação {{action.displayIndex}}{{#if action.label}} — {{action.label}}{{/if}}</h5>
-                                    <div class="effect-action-summary-controls">
-                                        <button type="button" class="remove-effect-action modifier-entry-inline-action danger js-summary-action" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
-
-                                    </div>
                                 </summary>
+                                <div class="effect-action-summary-controls">
+                                    <button type="button" class="remove-effect-action modifier-entry-inline-action danger js-summary-action" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
+                                </div>
                                 <div class="effect-action-body">
                             <div class="effect-row-grid effect-duration-grid is-two-col-rows">
                                 <div class="effect-field effect-field-row">
@@ -261,14 +260,14 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">Descrição Resumida (Chat)</h4>
-                                    {{#if editable}}
-                                    <span class="itemdesc-header-actions">
+                                </summary>
+                                {{#if editable}}
+                                <span class="itemdesc-header-actions">
                                         <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description">
                                             <i class="fas fa-pen"></i>
                                         </button>
-                                    </span>
-                                    {{/if}}
-                                </summary>
+                                </span>
+                                {{/if}}
                                 <div class="itemdesc-content">
                                     <div class="description-view itemdesc-inner">{{{enrichedChatDescription}}}</div>
 
@@ -288,14 +287,14 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">Descrição Completa</h4>
-                                    {{#if editable}}
-                                    <span class="itemdesc-header-actions">
+                                </summary>
+                                {{#if editable}}
+                                <span class="itemdesc-header-actions">
                                         <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description">
                                             <i class="fas fa-pen"></i>
                                         </button>
-                                    </span>
-                                    {{/if}}
-                                </summary>
+                                </span>
+                                {{/if}}
                                 <div class="itemdesc-content">
                                     <div class="description-view itemdesc-inner">{{{enrichedDescription}}}</div>
 
