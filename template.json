@@ -361,7 +361,6 @@
       "disadvantage",
       "skill",
       "equipment",
-      "armor",
       "spell",
       "power",
       "modifier",
@@ -548,15 +547,6 @@
       "ranged_attacks": {},
       "defense_bonus": 0,
       "equip_time": 1,
-      "dr_locations": {}
-    },
-    "armor": {
-      "templates": [
-        "base",
-        "equipment_base"
-      ],
-      "defense_bonus": 0,
-      "equip_time": 10,
       "dr_locations": {}
     },
     "spell": {

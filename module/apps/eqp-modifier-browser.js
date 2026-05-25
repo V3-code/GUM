@@ -49,11 +49,9 @@ export class EqpModifierBrowser extends FormApplication {
 
       let specificFilterFound = false;
 
-      if (item.type === 'armor') {
-          filters.armor = true;
-          specificFilterFound = true;
-      } 
-      else if (item.type === 'equipment') {
+      if (item.type === 'equipment') {
+          const hasProtection = Object.keys(item.system.dr_locations || {}).length > 0;
+          if (hasProtection) { filters.armor = true; specificFilterFound = true; }
           if (item.system.defense_bonus > 0) { filters.shield = true; specificFilterFound = true; }
           if (Object.keys(item.system.melee_attacks || {}).length > 0) { filters.melee = true; specificFilterFound = true; }
           if (Object.keys(item.system.ranged_attacks || {}).length > 0) { filters.ranged = true; specificFilterFound = true; }

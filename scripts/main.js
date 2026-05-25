@@ -5,7 +5,6 @@
 import { ModifierBrowser } from "../module/apps/modifier-browser.js";
 import { ConditionBrowser } from "../module/apps/condition-browser.js";
 import { EffectBrowser } from "../module/apps/effect-browser.js";
-import { GurpsArmorSheet } from "../module/item/gurps-armor-sheet.js";
 import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
@@ -269,7 +268,7 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
 
         // --- ETAPA 1: PRÉ-PROCESSAMENTO DE ITENS (MODIFICADORES DE EQUIPAMENTO) ---
         for (const item of this.items) {
-            if (['equipment', 'armor'].includes(item.type)) {
+            if (item.type === 'equipment') {
                 const baseWeight = Number(item.system.weight) || 0;
                 const baseCost = Number(item.system.cost) || 0;
                 
@@ -398,7 +397,7 @@ const add_sub_modifiers = {};
         let totalWeight = 0;
         const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
         for (let i of this.items) { 
-            if ((['equipment', 'armor'].includes(i.type) || i.system.hasOwnProperty('weight'))) {
+            if ((i.type === 'equipment' || i.system.hasOwnProperty('weight'))) {
                 const weight = i.system.effectiveWeight !== undefined ? i.system.effectiveWeight : (i.system.weight || 0);
                 const quantity = i.system.quantity || 1;
                 const loc = i.system.location;
@@ -533,7 +532,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const drFromArmor = {};
 
         for (let i of this.items) { 
-            const hasArmorDR = (i.type === 'armor' || i.type === 'equipment')
+            const hasArmorDR = (i.type === 'equipment')
                 && i.system.location === 'equipped'
                 && i.system.dr_locations;
             if (hasArmorDR) {
@@ -555,7 +554,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         }
 
         for (let i of this.items) { 
-            const hasArmorDR = (i.type === 'armor' || i.type === 'equipment')
+            const hasArmorDR = (i.type === 'equipment')
                 && i.system.location === 'equipped'
                 && i.system.dr_locations;
             if (hasArmorDR) {
@@ -670,7 +669,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
 
         const skills = this.items.filter(i => i.type === 'skill');
         const spellsAndPowers = this.items.filter(i => ['spell', 'power'].includes(i.type));
-        const equipment = this.items.filter(i => ['melee_weapon', 'ranged_weapon', 'equipment', 'armor'].includes(i.type));
+        const equipment = this.items.filter(i => ['melee_weapon', 'ranged_weapon', 'equipment'].includes(i.type));
         const actorActiveEffects = Array.from(this.appliedEffects ?? this.effects ?? []);
 
         const matchesEntryTargetForItem = (entry = {}, item = null) => {
@@ -2055,7 +2054,6 @@ Hooks.once('init', async function() {
     types: ["trigger"], 
     makeDefault: true 
     });
-    ItemsCollection.registerSheet("gum", GurpsArmorSheet, { types: ["armor"], makeDefault: true, label: "Ficha de Armadura" });
         ItemsCollection.registerSheet("gum", TemplateItemSheet, {
         types: ["template"],
         makeDefault: true,

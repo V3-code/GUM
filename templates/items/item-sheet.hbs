@@ -402,7 +402,7 @@
     </div>
     <div class="header-subline">
       <span class="item-type-tag">{{lookup (object 
-        armor="Armadura" melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
+        melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
         equipment="Equipamento" skill="Perícia" spell="Magia" 
         advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip." gm_modifier="GM MOD") item.type}}</span>
     </div>
@@ -429,7 +429,7 @@
         {{/if}}
         
         {{!-- Bloco 3: Aba "Efeitos" (lógica original) --}}
-        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "armor") (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="effects">Efeitos</a>
         {{/if}}
         
@@ -444,7 +444,7 @@
         {{/if}}
 
         {{!-- Aba Mods para Equipamentos e Armaduras --}}
-        {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
+        {{#if (eq item.type "equipment")}}
         <a class="item" data-tab="eqp_modifiers">Mods</a>
         {{/if}}
   </nav>
@@ -471,13 +471,6 @@
             {{> itemDetailsGeneral}}
         {{/if}}
         
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM ARMADURA 				 --}}
-        {{!-- ===================================================================== --}}
-        {{#if (eq item.type "armor")}}
-            {{> itemDetailsGeneral}}
-        {{/if}}
-
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (LAYOUT v2)	 --}}
         {{!-- ===================================================================== --}}
@@ -2167,7 +2160,7 @@
     {{!--           ABA ESPECIAL: MODIFICADORES DE EQUIPAMENTO                  --}}
     {{!-- ===================================================================== --}}
     <div class="tab" data-tab="eqp_modifiers">
-        {{#if (or (eq item.type "equipment") (eq item.type "armor"))}}
+        {{#if (eq item.type "equipment")}}
             
 <div class="modifiers-tab">
   <div class="eqpmod-block">

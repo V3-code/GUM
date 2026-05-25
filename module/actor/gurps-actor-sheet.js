@@ -137,8 +137,7 @@ async getData(options) {
                             case 'advantage':
                             case 'disadvantage': fonteIcon = 'fas fa-star'; break;
                             case 'equipment':
-                            case 'armor': fonteIcon = 'fas fa-shield-alt'; break;
-                            default: fonteIcon = 'fas fa-archive';
+                                                        default: fonteIcon = 'fas fa-archive';
                         }
                     }
                 }
@@ -606,7 +605,7 @@ async getData(options) {
 // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (VERSÃO FINAL)          //
         // ================================================================== //
-        const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'armor'];
+        const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon'];
         const allEquipment = context.actor.items.filter(i => equipmentTypes.includes(i.type));
         const collapsedContainers = this.actor.getFlag("gum", "collapsed_containers") || {};
 
@@ -3325,7 +3324,6 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         equipment: "Equipamento",
         melee_weapon: "Arma C. a C.",
         ranged_weapon: "Arma à Dist.",
-        armor: "Armadura",
         advantage: "Vantagem",
         disadvantage: "Desvantagem",
         skill: "Perícia",
@@ -3381,11 +3379,6 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         mechanicalTagsHtml += createTag('Tiros', s.shots);
         mechanicalTagsHtml += createTag('RCO', s.rcl);
         mechanicalTagsHtml += createTag('ST', s.min_strength);
-        break;
-
-      case 'armor':
-        mechanicalTagsHtml += createTag('RD', s.dr);
-        mechanicalTagsHtml += createTag('Local', `<span style="text-transform:capitalize">${s.worn_location || 'N/A'}</span>`);
         break;
 
       case 'skill':
@@ -3452,7 +3445,7 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
     }
 
     // Adiciona Peso e Custo para itens físicos (se existirem)
-    if (['equipment', 'melee_weapon', 'ranged_weapon', 'armor'].includes(item.type)) {
+    if (['equipment', 'melee_weapon', 'ranged_weapon'].includes(item.type)) {
        mechanicalTagsHtml += createTag('Qtd', `x${s.quantity || 1}`);
        mechanicalTagsHtml += createTag('Peso', s.total_weight ? `${s.total_weight} kg` : null);
        mechanicalTagsHtml += createTag('Custo', s.total_cost ? `$${s.total_cost}` : null);

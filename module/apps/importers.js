@@ -134,7 +134,6 @@ async function importToCompendium(pack, importEntries) {
         "spells": "spell",
         "powers": "power",
         "equipment": "equipment",
-        "armor": "armor",
         "modifiers": "modifier",
         "eqp_modifiers": "eqp_modifier"
     };
@@ -183,7 +182,7 @@ async function importToCompendium(pack, importEntries) {
                 foundryItemData = parseGCSLibrarySkill(gcsItemData);
             } else if (itemType === "advantage" || itemType === "disadvantage") {
                 foundryItemData = parseGCSLibraryTrait(gcsItemData);
-            } else if (itemType === "equipment" || itemType === "armor") {
+            } else if (itemType === "equipment") {
                 foundryItemData = parseGCSLibraryEquipment(gcsItemData);
             } else if (itemType === "spell") {
                 foundryItemData = parseGCSLibrarySpell(gcsItemData);
@@ -1000,8 +999,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
     const isArmor = gcsEquip.features?.some(f => f.type === "dr_bonus");
     
     if (isArmor) {
-        type = "armor";
-        template = getSystemTemplate("Item", "armor");
+        type = "equipment";
+        template = getSystemTemplate("Item", "equipment");
 
         if (!template.dr_locations || typeof template.dr_locations !== "object") {
         template.dr_locations = {};
@@ -1132,7 +1131,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
     };
 }
 
-const HYBRID_IMPORTABLE_ITEM_TYPES = new Set(["skill", "spell", "power", "advantage", "disadvantage", "equipment", "armor"]);
+const HYBRID_IMPORTABLE_ITEM_TYPES = new Set(["skill", "spell", "power", "advantage", "disadvantage", "equipment"]);
 let HYBRID_ITEM_INDEX_CACHE = null;
 
 function normalizeHybridText(value) {
