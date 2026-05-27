@@ -2660,6 +2660,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     element.dataset.label ||
     element.getAttribute("data-label") ||
     "Dano Básico";
+  const basicDamageType = "indef.";
 
   const resolveBaseDamage = (f) => {
     const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
@@ -2683,10 +2684,25 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     return match ? match[1].trim() : "0";
   };
 
-  const performBasicRoll = async (modifier = 0) => {
-    const resolved = resolveBaseDamage(formula);
-    const cleaned = extractMathFormula(resolved);
-    const finalFormula = cleaned + (modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : "");
+  const resolved = resolveBaseDamage(formula);
+  const cleaned = extractMathFormula(resolved);
+  const promptResult = await GurpsDamageRollPrompt.prompt({
+    sourceName: label,
+    main: {
+      formula,
+      displayFormula: cleaned,
+      summaryFormula: cleaned,
+      type: basicDamageType
+    },
+    followUp: { formula: "", displayFormula: "", type: "" },
+    fragmentation: { formula: "", displayFormula: "", type: "" }
+  });
+
+  if (!promptResult) return;
+
+  const finalFormula = `${cleaned}${promptResult.mainAdditional || ""}`;
+
+  const performBasicRoll = async () => {
 
     const roll = new Roll(finalFormula);
     await roll.evaluate();
@@ -2694,7 +2710,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     const damagePackage = {
       attackerId: actor.id,
       sourceName: label,
-      main: { total: roll.total, type: "", armorDivisor: 1 },
+      main: { total: roll.total, type: basicDamageType, armorDivisor: 1 },
       onDamageEffects: {},
       generalConditions: {}
     };
@@ -2746,23 +2762,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     });
   };
 
-  if (ev.shiftKey) {
-    new Dialog({
-      title: "Modificador de Dano",
-      content: `<p>Informe o modificador:</p><input type="number" name="modifier" value="0"/>`,
-      buttons: {
-        roll: {
-          label: "Rolar",
-          callback: (html) => {
-            const mod = parseInt(html.find('[name="modifier"]').val()) || 0;
-            performBasicRoll(mod);
-          }
-        }
-      }
-    }).render(true);
-  } else {
-    performBasicRoll(0);
-  }
+  performBasicRoll();
 });
 
 
