@@ -364,7 +364,7 @@ async getData(options) {
                 return relativeLevel + nhPassive + nhTemp + includeInNhEffectBonus;
             };
 
-            const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = []) => {
+            const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = [], ancestorIds = new Set()) => {
                 let childrenList = [];
                 
                 // Filtra quem é filho deste pai
@@ -376,6 +376,9 @@ async getData(options) {
                            normalize(p.twig_parent) === pName ||
                            normalize(p.parent_skill) === pName;
                 });
+
+                // Evita ciclos (ex.: perícia apontando para si mesma ou loop entre pais/filhos)
+                directChildren = directChildren.filter(s => !ancestorIds.has(s.id));
 
                 directChildren.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -411,11 +414,13 @@ async getData(options) {
                         type: child.system.hierarchy_type // trunk, branch, etc.
                     };
                     const nextPathTrace = [...pathTrace, myNodeInfo];
+                    const nextAncestorIds = new Set(ancestorIds);
+                    nextAncestorIds.add(child.id);
 
                     childrenList.push(child);
                     
                     // Recursão
-                    childrenList = childrenList.concat(processChildren(child.name, depth + 1, nextInheritedLevel, nextPathTrace));
+                    childrenList = childrenList.concat(processChildren(child.name, depth + 1, nextInheritedLevel, nextPathTrace, nextAncestorIds));
                 });
 
                 return childrenList;
@@ -448,7 +453,7 @@ async getData(options) {
                 };
 
                 // Busca descendentes
-                let descendants = processChildren(trunk.name, 1, trunkLevel, [trunkNodeInfo]);
+                let descendants = processChildren(trunk.name, 1, trunkLevel, [trunkNodeInfo], new Set([trunk.id]));
                 skillsByGroup[groupName] = skillsByGroup[groupName].concat(descendants);
             });
 
