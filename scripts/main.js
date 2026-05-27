@@ -160,6 +160,20 @@ function _getCurrentUserRollMode() {
     return game.settings?.get("core", settingKey) ?? CONST.DICE_ROLL_MODES.PUBLIC;
 }
 
+function getDefaultSkillRollFormula() {
+    const fallback = "3d6";
+    const rawFormula = game.settings?.get?.("gum", "defaultSkillRollFormula");
+    const formula = (rawFormula ?? "").toString().trim() || fallback;
+
+    try {
+        new Roll(formula);
+        return formula;
+    } catch (_err) {
+        console.warn(`GUM | Fórmula inválida em defaultSkillRollFormula (${formula}). Usando ${fallback}.`);
+        return fallback;
+    }
+}
+
 export function applyCurrentRollPrivacy(chatData, { force = false } = {}) {
     if (!chatData || typeof chatData !== "object") return chatData;
 
@@ -1037,7 +1051,8 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const isCapped = effectiveLevel < mathLevel;
 
     // --- 4. ROLAGEM ---
-    const roll = new Roll("3d6");
+    const rollFormula = getDefaultSkillRollFormula();
+    const roll = new Roll(rollFormula);
     await roll.evaluate();
     const total = roll.total;
 

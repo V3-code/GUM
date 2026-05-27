@@ -128,6 +128,17 @@ export const registerSystemSettings = function() {
         default: "gum.status_bindings"
     });
 
+
+
+    game.settings.register("gum", "defaultSkillRollFormula", {
+        name: "Dados padrão para rolagem de habilidades",
+        hint: "Fórmula de dados usada em testes de habilidade/ativação (ex.: 3d6, 2d10, 1d20).",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "3d6"
+    });
+
     game.settings.register("gum", "autoDistanceModifierEnabled", {
         name: "Aplicar modificador automático por distância",
         hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",

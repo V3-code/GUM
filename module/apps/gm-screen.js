@@ -621,7 +621,16 @@ activateListeners(html) {
             const activeModsTotal = this._getTotalActiveModifier(); 
             const isPrivate = html.find('.qr-toggle-mode').hasClass('active');
             
-            const roll = new Roll("3d6");
+            const fallbackFormula = "3d6";
+            const configuredFormula = (game.settings.get("gum", "defaultSkillRollFormula") || fallbackFormula).toString().trim() || fallbackFormula;
+            let rollFormula = configuredFormula;
+            let roll;
+            try {
+                roll = new Roll(rollFormula);
+            } catch (_err) {
+                rollFormula = fallbackFormula;
+                roll = new Roll(rollFormula);
+            }
             await roll.evaluate();
             const total = roll.total;
             const effectiveLevel = nhBase + activeModsTotal;
