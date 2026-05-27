@@ -2083,6 +2083,18 @@ Hooks.once('init', async function() {
     
         console.log(`GUM | Populando novo ator: ${actor.name}`);
         const itemsToCreate = [];
+        const normalizeItemForV13 = (data, compendiumSource) => {
+            if (!data || typeof data !== "object") return data;
+            if (data.flags && Object.prototype.hasOwnProperty.call(data.flags, "exportSource")) {
+                delete data.flags.exportSource;
+                if (Object.keys(data.flags).length === 0) delete data.flags;
+            }
+            data._stats = {
+                ...(data._stats || {}),
+                compendiumSource
+            };
+            return data;
+        };
 
         // 1. REGRAS / CONDIÇÕES PASSIVAS
         const rulesPack = game.packs.get("gum.regras")
@@ -2091,9 +2103,7 @@ Hooks.once('init', async function() {
             const rules = await rulesPack.getDocuments();
             rules.forEach(item => {
                 if (item.type === "condition" && item.system?.bindingMode === "status-link") return;
-                const data = item.toObject();
-                // Vincula ao compêndio para futuras atualizações
-                data._stats = { compendiumSource: item.uuid }; 
+                const data = normalizeItemForV13(item.toObject(), item.uuid);
                 itemsToCreate.push(data);
             });
             console.log(`GUM | Preparadas ${rules.length} condições passivas para cópia.`);
@@ -2108,9 +2118,7 @@ Hooks.once('init', async function() {
         if (modsPack) {
             const mods = await modsPack.getDocuments();
             mods.forEach(item => {
-                const data = item.toObject();
-                // Vincula ao compêndio
-                data._stats = { compendiumSource: item.uuid };
+                const data = normalizeItemForV13(item.toObject(), item.uuid);
                 itemsToCreate.push(data);
             });
             console.log(`GUM | Preparados ${mods.length} modificadores básicos para cópia.`);
