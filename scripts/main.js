@@ -155,16 +155,22 @@ async function migrateEffectActionsSchema() {
 }
 
 function _getCurrentUserRollMode() {
-    return game.settings?.get("core", "rollMode") ?? CONST.DICE_ROLL_MODES.PUBLIC;
+    const hasMessageModeSetting = game.settings?.settings?.has("core.messageMode");
+    const settingKey = hasMessageModeSetting ? "messageMode" : "rollMode";
+    return game.settings?.get("core", settingKey) ?? CONST.DICE_ROLL_MODES.PUBLIC;
 }
 
 export function applyCurrentRollPrivacy(chatData, { force = false } = {}) {
     if (!chatData || typeof chatData !== "object") return chatData;
 
-    const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
+const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
     if (hasExplicitPrivacy && !force) return chatData;
 
     const rollMode = _getCurrentUserRollMode();
+    if (typeof ChatMessage.applyMode === "function") {
+        return ChatMessage.applyMode({ ...chatData }, rollMode);
+    }
+
     if (typeof ChatMessage.applyRollMode === "function") {
         return ChatMessage.applyRollMode({ ...chatData }, rollMode);
     }
