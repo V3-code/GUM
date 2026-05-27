@@ -3975,7 +3975,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
         title: "Escudo do Mestre (GUM)",
         icon: "fas fa-book-open",
         visible: true,
-        onClick: () => {
+        onChange: () => {
             // Lógica Singleton
             if (game.gum.gmScreen) {
                 game.gum.gmScreen.render(true);

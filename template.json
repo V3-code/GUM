@@ -255,20 +255,20 @@
         "social": ""
       },
       "casting_ability": {
-        "name": "Habilidade de Conjuração",
+        "name": "",
         "points": 0,
-        "level": 10,
-        "source": "Fonte Mágica",
-        "description": "Descreva aqui a habilidade de conjuração."
+        "level": 0,
+        "source": "",
+        "description": ""
       },
       "casting_abilities": {},
       "power_source": {
-        "name": "Fonte de Poder",
-        "level": 10,
+        "name": "",
+        "level": 0,
         "points": 0,
-        "source": "Psiônico",
+        "source": "",
         "focus": "",
-        "description": "Descreva aqui a fonte de poder.",
+        "description": "",
         "power_talent_name": "",
         "power_talent_level": 0,
         "power_talent_points": 0,
@@ -490,7 +490,7 @@
       "characteristics": "",
       "modifiers": {}
     },
- "skill": {
+    "skill": {
       "templates": [
         "base"
       ],
@@ -770,38 +770,12 @@
       ],
       "code": ""
     },
- "effect": {
+    "effect": {
       "templates": [
         "base"
       ],
       "schemaVersion": 2,
-      "actions": [
-        {
-          "label": "",
-          "type": "attribute",
-          "path": "system.attributes.st.passive",
-          "operation": "ADD",
-          "value": "1",
-          "key": "",
-          "flag_value": "",
-          "chat_text": "",
-          "has_roll": false,
-          "roll_label": "Rolar Teste",
-          "roll_attribute": "ht",
-          "roll_modifier": "0",
-          "roll_modifier_value": "0",
-          "roll_modifier_cap": "",
-          "roll_modifier_context": "all",
-          "roll_modifier_entries": [],
-          "whisperMode": "public",
-          "category": "hp",
-          "name": "",
-          "chat_notice": true,
-          "confirm_prompt": false,
-          "variable_value": false,
-          "statusId": "dead"
-        }
-      ],
+      "actions": [],
       "type": "attribute",
       "path": "system.attributes.st.passive",
       "operation": "ADD",
