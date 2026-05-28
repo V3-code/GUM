@@ -4,6 +4,7 @@ import { performGURPSRoll } from "../../scripts/main.js";
 import { applySingleEffect } from "../../scripts/effects-engine.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
+import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 
 export class GumGMScreen extends Application {
     
@@ -1037,6 +1038,11 @@ activateListeners(html) {
             const dmgType = String(el.data('type') || '').trim();
             const label = String(el.data('label') || actor.name).trim();
 
+            const maybeNormalizeDamageFormula = (f) => {
+                if (!game.settings.get("gum", "normalizeGurpsDamageDice")) return f;
+                return normalizeGurpsDamageExpression(f)?.formula || f;
+            };
+
             const resolvedDisplayFormula = String(resolvedFormula).match(/^([0-9dDkK+\-/*\s()]+)/i)?.[1]?.trim() || displayFormula || "0";
             const promptResult = await GurpsDamageRollPrompt.prompt({
                 sourceName: label,
@@ -1053,7 +1059,7 @@ activateListeners(html) {
             }
 
             const mainAdditional = String(promptResult.mainAdditional || "").trim();
-            const finalFormula = `${resolvedFormula}${mainAdditional}`.trim();
+            const finalFormula = maybeNormalizeDamageFormula(`${resolvedFormula}${mainAdditional}`.trim());
             if (!finalFormula) {
                 ui.notifications.warn("Fórmula de dano inválida.");
                 menu.remove();

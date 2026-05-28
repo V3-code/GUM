@@ -148,6 +148,15 @@ export const registerSystemSettings = function() {
         default: false
     });
 
+    game.settings.register("gum", "normalizeGurpsDamageDice", {
+        name: "Normalizar dano (GURPS: Modifying Dice + Adds)",
+        hint: "Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
     game.settings.register("gum", "autoDistanceModifierTable", {
         name: "Tabela automática de distância",
         hint: "Define qual tabela usar para o cálculo automático de distância.",

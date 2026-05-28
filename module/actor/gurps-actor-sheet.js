@@ -2,6 +2,7 @@ import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
+import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 
@@ -2409,6 +2410,11 @@ html.on("click", ".rollable-damage", async (ev) => {
     return match ? match[1].trim() : "0";
   };
 
+  const maybeNormalizeDamageFormula = (f) => {
+    if (!game.settings.get("gum", "normalizeGurpsDamageDice")) return f;
+    return normalizeGurpsDamageExpression(f)?.formula || f;
+  };
+
   const summarySegments = [];
   const mainDisplayFormula = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.formula));
   summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}`.trim());
@@ -2473,7 +2479,8 @@ html.on("click", ".rollable-damage", async (ev) => {
     // ---- DANO PRINCIPAL ----
     let base = resolveBaseDamage(this.actor, normalizedAttack.formula);
     const cleaned = extractMathFormula(base);
-    const mainFormula = cleaned + (modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : "");
+    const mainFormulaRaw = cleaned + (modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : "");
+    const mainFormula = maybeNormalizeDamageFormula(mainFormulaRaw);
 
     const mainRoll = new Roll(mainFormula);
     await mainRoll.evaluate();
@@ -2484,7 +2491,7 @@ html.on("click", ".rollable-damage", async (ev) => {
     let fuClean = null;
     if (normalizedAttack.follow_up_damage?.formula) {
       const fu = resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula);
-      fuClean = extractMathFormula(fu);
+      fuClean = maybeNormalizeDamageFormula(extractMathFormula(fu));
       followUpRoll = new Roll(fuClean);
       await followUpRoll.evaluate();
       rolls.push(followUpRoll);
@@ -2495,7 +2502,7 @@ html.on("click", ".rollable-damage", async (ev) => {
     let frClean = null;
     if (normalizedAttack.fragmentation_damage?.formula) {
       const fr = resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula);
-      frClean = extractMathFormula(fr);
+      frClean = maybeNormalizeDamageFormula(extractMathFormula(fr));
       fragRoll = new Roll(frClean);
       await fragRoll.evaluate();
       rolls.push(fragRoll);
@@ -2684,6 +2691,11 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     return match ? match[1].trim() : "0";
   };
 
+  const maybeNormalizeDamageFormula = (f) => {
+    if (!game.settings.get("gum", "normalizeGurpsDamageDice")) return f;
+    return normalizeGurpsDamageExpression(f)?.formula || f;
+  };
+
   const resolved = resolveBaseDamage(formula);
   const cleaned = extractMathFormula(resolved);
   const promptResult = await GurpsDamageRollPrompt.prompt({
@@ -2700,7 +2712,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
 
   if (!promptResult) return;
 
-  const finalFormula = `${cleaned}${promptResult.mainAdditional || ""}`;
+  const finalFormula = maybeNormalizeDamageFormula(`${cleaned}${promptResult.mainAdditional || ""}`);
 
   const performBasicRoll = async () => {
 

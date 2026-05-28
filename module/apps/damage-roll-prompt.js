@@ -1,3 +1,4 @@
+import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 export class GurpsDamageRollPrompt extends FormApplication {
     constructor(options = {}) {
         super(options);
@@ -91,7 +92,8 @@ export class GurpsDamageRollPrompt extends FormApplication {
         if (!addRaw) return this._simplifyFormula(base);
         const add = this._cleanFormula(addRaw);
         const normalizedAdd = /^[+\-]/.test(add) ? add : `+${add}`;
-        return this._simplifyFormula(`${base}${normalizedAdd}`);
+        const composed = this._simplifyFormula(`${base}${normalizedAdd}`);
+        return this._applyOptionalDiceNormalization(composed);
     }
 
     _simplifyFormula(formula) {
@@ -145,6 +147,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
         return parts.join("");
     }
 
+
+    _applyOptionalDiceNormalization(formula) {
+        const expr = this._cleanFormula(formula);
+        if (!expr) return "";
+        const enabled = game.settings.get("gum", "normalizeGurpsDamageDice");
+        if (!enabled) return expr;
+        const normalized = normalizeGurpsDamageExpression(expr);
+        return normalized?.formula || expr;
+    }
     _buildLiveVisualCards(html) {
         const mainAdd = String(html.find("input[name='mainAdditional']").val() || "").trim();
         const fragAdd = String(html.find("input[name='fragmentationAdditional']").val() || "").trim();
@@ -159,9 +170,9 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const fuFormula = this._composeCardFormula(this.damageData.followUp?.displayFormula || this.damageData.followUp?.formula, fuAdd);
 
         return [
-            { key: "main", label: "Dano Padrão", tone: "standard", formula: mainFormula, type: mainType },
-            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: fragFormula, type: fragType },
-            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: fuFormula, type: fuType }
+            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType },
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType }
         ].filter((card) => card.formula);
     }
 
