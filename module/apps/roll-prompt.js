@@ -981,8 +981,12 @@ return 'default';
             if (context === 'attack_melee') validKeys.push('combat_attack_melee');
             if (context === 'attack_ranged') validKeys.push('combat_attack_ranged');
         }
-        else if (context === 'defense') {
-            validKeys.push('combat_all', 'combat_defense_all', 'combat_defense_dodge', 'combat_defense_parry', 'combat_defense_block');
+        else if (context.startsWith('defense')) {
+            validKeys.push('combat_all', 'combat_defense_all');
+            if (context === 'defense_dodge') validKeys.push('combat_defense_dodge');
+            if (context === 'defense_parry') validKeys.push('combat_defense_parry');
+            if (context === 'defense_block') validKeys.push('combat_defense_block');
+            if (context === 'defense') validKeys.push('combat_defense_dodge', 'combat_defense_parry', 'combat_defense_block');
         }
         else if (context === 'spell') {
             validKeys.push('combat_attack_spell', 'attr_iq_all', 'spell_iq', 'combat_all');

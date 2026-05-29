@@ -706,6 +706,10 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             return _matchesNhDisplayContextForAttack(entry, attackType);
         };
 
+        const matchesEntryContextForDefense = (entry = {}, defenseType) => {
+            return _matchesNhDisplayContextForDefense(entry, defenseType);
+        };
+
         const collectNhBonusesForItem = (item) => {
             const bonus = { passive: 0, temp: 0 };
             for (const effect of actorActiveEffects) {
@@ -748,7 +752,39 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         itemId: item.id,
                         type: item.type,
                         itemName: item.name,
-                        attackId: attack?.id ?? null
+ attackId: attack?.id ?? null,
+                        attackType
+                    });
+                    if (!Number.isFinite(value) || value === 0) return;
+                    if (isPermanent) bonus.passive += value;
+                    else bonus.temp += value;
+                });
+            }
+            return bonus;
+        };
+
+        const collectNhBonusesForDefense = (item, attack, attackType, defenseType) => {
+            const bonus = { passive: 0, temp: 0 };
+            for (const effect of actorActiveEffects) {
+                const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+                if (!data) continue;
+                const entries = Array.isArray(data.entries) && data.entries.length
+                    ? data.entries
+                    : [{ value: data.value, nh_display_mode: data.nh_display_mode ?? "roll_only", context: data.context ?? "all" }];
+                const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+                const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
+                entries.forEach((entry) => {
+                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") return;
+                    if (!matchesEntryTargetForItem(entry, item)) return;
+                    if (!_matchesRollModifierAttackFilter(entry, attack)) return;
+                    if (!matchesEntryContextForDefense(entry, defenseType)) return;
+                    const value = _evaluateModifierValue(this, entry?.value, {
+                        itemId: item.id,
+                        type: "defense",
+                        itemName: item.name,
+                        attackId: attack?.id ?? null,
+                        attackType,
+                        defenseType
                     });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
@@ -806,29 +842,27 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
                         const attackBaseVal = resolvedAttackBase.value;
+                        const attackSkillNh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "melee");
-                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0) + attackNhBonuses.passive + attackNhBonuses.temp;
+                        attack.final_nh = attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
-                        
-                        // Aparar (Parry) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
-                        if (attack.parry !== "0" && attack.parry !== "No") {
-                             const parryBase = Math.floor(attack.final_nh / 2) + 3;
-                             const parryMod = Number(attack.parry) || 0;
-                             let finalParry = 0;
-                             if (parryMod > 5) finalParry = parryMod; 
-                             else finalParry = parryBase + parryMod;
-                             attack.final_parry = finalParry;
-                        }
-                        
-                        // Bloqueio (Block) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
-                        if (attack.block !== "0" && attack.block !== "No") {
-                             const blockBase = Math.floor(attack.final_nh / 2) + 3;
-                             const blockMod = Number(attack.block) || 0;
-                             let finalBlock = 0;
-                             if (blockMod > 5) finalBlock = blockMod; 
-                             else finalBlock = blockBase + blockMod;
-                             attack.final_block = finalBlock;
-                        }
+
+                        const calculateFinalDefense = (rawDefense, defenseType, useDefault = false) => {
+                            if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
+                            const defenseBase = Math.floor(attackSkillNh / 2) + 3;
+                            const defenseMod = useDefault ? 0 : Number(rawDefense) || 0;
+                            const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
+                            const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
+                            return baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp;
+                        };
+
+                        // Aparar (Parry) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
+                        const finalParry = calculateFinalDefense(attack.parry, "parry", attack.parry_default === true);
+                        if (finalParry !== null) attack.final_parry = finalParry;
+
+                        // Bloqueio (Block) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
+                        const finalBlock = calculateFinalDefense(attack.block, "block", attack.block_default === true);
+                        if (finalBlock !== null) attack.final_block = finalBlock;
                     }
                 }
                 if (i.system.ranged_attacks) {
@@ -836,8 +870,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
                         const attackBaseVal = resolvedAttackBase.value;
+                        const attackSkillNh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "ranged");
-                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0) + attackNhBonuses.passive + attackNhBonuses.temp;
+                        attack.final_nh = attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
                     }
                 }
@@ -1834,6 +1869,20 @@ function _matchesNhDisplayContextForAttack(entry = {}, attackType = "") {
         return false;
     });
 }
+
+function _matchesNhDisplayContextForDefense(entry = {}, defenseType = "") {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    const normalizedDefenseType = `${defenseType ?? ""}`.trim().toLowerCase();
+    return contexts.some((ctx) => {
+        if (ctx === "defense") return true;
+        if (ctx === "defense_parry") return normalizedDefenseType === "parry";
+        if (ctx === "defense_block") return normalizedDefenseType === "block";
+        return false;
+    });
+}
+
 
 function _matchesRollTargetFilter(actor, rollData = {}, entry = {}) {
     const item = _getRollSourceItem(actor, rollData);
@@ -3352,6 +3401,10 @@ const buildFallbackTokenForActor = (fallbackActor) => ({
     document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
 });
 
+const setCoreStatusIdDeletion = (updateData) => {
+    updateData["flags.core.statusId"] = foundry.data.operators.ForcedDeletion;
+};
+
 const getEffectStatusIds = (effect, validStatusSet) => {
     const collected = new Set();
     const statusArray = Array.from(effect?.statuses ?? []);
@@ -4232,7 +4285,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
                         || null)
                     : null;
                 if (nativeStatuses[0]) updateData["flags.core.statusId"] = nativeStatuses[0];
-                else updateData["flags.core.-=statusId"] = null;
+                else setCoreStatusIdDeletion(updateData);
             }
 
             updateData.statuses = [...new Set(nextStatuses)];

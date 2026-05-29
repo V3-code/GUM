@@ -762,8 +762,10 @@ async getData(options) {
             const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
                 const finalNh = attack.final_nh || 10;
                 const defaultDefense = calculateDefaultDefense(finalNh);
-                const parryValue = attack.parry_default && defaultDefense !== null ? defaultDefense : attack.parry;
-                const blockValue = attack.block_default && defaultDefense !== null ? defaultDefense : attack.block;
+                const fallbackParry = attack.parry_default && defaultDefense !== null ? defaultDefense : attack.parry;
+                const fallbackBlock = attack.block_default && defaultDefense !== null ? defaultDefense : attack.block;
+                const parryValue = attack.final_parry ?? fallbackParry;
+                const blockValue = attack.final_block ?? fallbackBlock;
                 const normalizedParry = normalizeDefenseValue(parryValue);
                 const normalizedBlock = normalizeDefenseValue(blockValue);
                 return {
