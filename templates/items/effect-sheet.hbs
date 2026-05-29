@@ -166,6 +166,18 @@
                                     </div>
                                     <div class="modifier-entry-bottomline">
                                         <div class="effect-field modifier-entry-field">
+                                            <label class="effect-label">Item/grupo de origem (ID, UUID ou nome; CSV)</label>
+                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_item_ids" value="{{entry.source_item_ids}}" placeholder="Ex: Alabarda, abc123 ou Item.xxxxx"/>
+                                        </div>
+                                    </div>
+                                    <div class="modifier-entry-bottomline">
+                                        <div class="effect-field modifier-entry-field">
+                                            <label class="effect-label">Modo(s) de ataque (ID ou nome; CSV)</label>
+                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_attack_ids" value="{{entry.source_attack_ids}}" placeholder="Ex: Corte, Estocada ou atkA"/>
+                                        </div>
+                                    </div>
+                                    <div class="modifier-entry-bottomline">
+                                        <div class="effect-field modifier-entry-field">
                                             <label class="effect-label">Exibição NH</label>
                                             <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.nh_display_mode">
                                                 <option value="roll_only" {{#if (eq entry.nh_display_mode "roll_only")}}selected{{/if}}>Apenas rolagem</option>

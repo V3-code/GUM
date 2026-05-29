@@ -130,6 +130,8 @@ async function migrateEffectActionsSchema() {
             "system.roll_modifier_value": firstAction.roll_modifier_value ?? 0,
             "system.roll_modifier_cap": firstAction.roll_modifier_cap ?? "",
             "system.roll_modifier_context": firstAction.roll_modifier_context ?? "all",
+            "system.roll_modifier_source_item_ids": firstAction.roll_modifier_source_item_ids ?? "",
+            "system.roll_modifier_source_attack_ids": firstAction.roll_modifier_source_attack_ids ?? "",
             "system.roll_modifier_entries": firstAction.roll_modifier_entries ?? [],
             "system.whisperMode": firstAction.whisperMode ?? "public",
             "system.category": firstAction.category ?? "hp",
@@ -693,28 +695,15 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const actorActiveEffects = Array.from(this.appliedEffects ?? this.effects ?? []);
 
         const matchesEntryTargetForItem = (entry = {}, item = null) => {
-            const targets = String(entry?.target_values ?? "")
-                .split(",")
-                .map((name) => name.trim().toLowerCase())
-                .filter(Boolean);
-            if (!targets.length) return true;
-            const itemName = (item?.name || "").trim().toLowerCase();
-            if (!itemName) return false;
-            return targets.includes(itemName);
+           return _matchesRollModifierItemFilter(entry, item);
         };
 
         const matchesEntryContextForItem = (entry = {}, item) => {
-            const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
-            if (!context || context === "all") return true;
-            const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
-            const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
-            return contexts.some((ctx) => {
-                if (ctx === "skill") return item.type === "skill";
-                if (ctx === "spell") return item.type === "spell";
-                if (ctx === "power") return item.type === "power";
-                if (ctx.startsWith("skill_")) return item.type === "skill" && baseAttr === ctx.replace("skill_", "");
-                return false;
-            });
+            return _matchesNhDisplayContextForItem(entry, item);
+        };
+
+        const matchesEntryContextForAttack = (entry = {}, attackType) => {
+            return _matchesNhDisplayContextForAttack(entry, attackType);
         };
 
         const collectNhBonusesForItem = (item) => {
@@ -732,6 +721,35 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!matchesEntryContextForItem(entry, item)) return;
                     const value = _evaluateModifierValue(this, entry?.value, { itemId: item.id, type: item.type, itemName: item.name });
+                    if (!Number.isFinite(value) || value === 0) return;
+                    if (isPermanent) bonus.passive += value;
+                    else bonus.temp += value;
+                });
+            }
+            return bonus;
+        };
+
+        const collectNhBonusesForAttack = (item, attack, attackType) => {
+            const bonus = { passive: 0, temp: 0 };
+            for (const effect of actorActiveEffects) {
+                const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+                if (!data) continue;
+                const entries = Array.isArray(data.entries) && data.entries.length
+                    ? data.entries
+                    : [{ value: data.value, nh_display_mode: data.nh_display_mode ?? "roll_only", context: data.context ?? "all" }];
+                const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+                const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
+                entries.forEach((entry) => {
+                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") return;
+                    if (!matchesEntryTargetForItem(entry, item)) return;
+                    if (!_matchesRollModifierAttackFilter(entry, attack)) return;
+                    if (!matchesEntryContextForAttack(entry, attackType)) return;
+                    const value = _evaluateModifierValue(this, entry?.value, {
+                        itemId: item.id,
+                        type: item.type,
+                        itemName: item.name,
+                        attackId: attack?.id ?? null
+                    });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -784,10 +802,12 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         for (const i of equipment) {
             try {
    if (i.system.melee_attacks) {
-                    for (let attack of Object.values(i.system.melee_attacks)) {
+                    for (const [attackId, attack] of Object.entries(i.system.melee_attacks)) {
+                        attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
                         const attackBaseVal = resolvedAttackBase.value;
-                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        const attackNhBonuses = collectNhBonusesForAttack(i, attack, "melee");
+                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0) + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
                         
                         // Aparar (Parry) - ✅ CORREÇÃO: Removido '+ combat.defense_bonus'
@@ -812,10 +832,12 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     }
                 }
                 if (i.system.ranged_attacks) {
-                    for (let attack of Object.values(i.system.ranged_attacks)) {
+                    for (const [attackId, attack] of Object.entries(i.system.ranged_attacks)) {
+                        attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
                         const attackBaseVal = resolvedAttackBase.value;
-                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        const attackNhBonuses = collectNhBonusesForAttack(i, attack, "ranged");
+                        attack.final_nh = attackBaseVal + (Number(attack.skill_level_mod) || 0) + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
                     }
                 }
@@ -1726,16 +1748,99 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     return _resolveModifierReferenceValue(actor, source, rollData);
 }
 
-function _matchesRollTargetFilter(actor, rollData = {}, entry = {}) {
-    const targets = String(entry?.target_values ?? "")
+function _normalizeRollModifierFilterTokens(rawValue, { lower = false } = {}) {
+    return String(rawValue ?? "")
         .split(",")
-        .map((name) => name.trim().toLowerCase())
-        .filter(Boolean);
-    if (!targets.length) return true;
-    const item = rollData?.itemId ? actor?.items?.get(rollData.itemId) : null;
-    const itemName = (item?.name || "").trim().toLowerCase();
-    if (!itemName) return false;
-    return targets.includes(itemName);
+ .map((value) => value.trim())
+        .filter(Boolean)
+        .map((value) => lower ? value.toLowerCase() : value);
+}
+
+function _getRollSourceItem(actor, rollData = {}) {
+    const itemId = String(rollData?.itemId ?? "").trim();
+    const itemName = String(rollData?.itemName ?? "").trim().toLowerCase();
+    if (itemId) return actor?.items?.get(itemId) || null;
+    if (!itemName) return null;
+    return actor?.items?.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null;
+}
+
+function _getRollSourceAttack(item = null, rollData = {}) {
+    if (!item) return null;
+    const attackId = String(rollData?.attackId ?? "").trim();
+    if (attackId) {
+        return item.system?.melee_attacks?.[attackId] ?? item.system?.ranged_attacks?.[attackId] ?? null;
+    }
+
+    const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
+    const meleeAttacks = Object.values(item.system?.melee_attacks || {});
+    const allAttacks = [...meleeAttacks, ...rangedAttacks].filter(Boolean);
+    return allAttacks.length === 1 ? allAttacks[0] : null;
+}
+
+function _matchesRollModifierItemFilter(entry = {}, item = null) {
+    const sourceItemFilters = _normalizeRollModifierFilterTokens(entry?.source_item_ids, { lower: true });
+    if (sourceItemFilters.length) {
+        if (!item) return false;
+        const sourceCandidates = [item.id, item.uuid, item.name]
+            .map((value) => String(value ?? "").trim().toLowerCase())
+            .filter(Boolean);
+        if (!sourceItemFilters.some((filter) => sourceCandidates.includes(filter))) return false;
+    }
+
+    const legacyNameFilters = _normalizeRollModifierFilterTokens(entry?.target_values, { lower: true });
+    if (!legacyNameFilters.length) return true;
+    if (!item) return false;
+
+    const itemName = String(item?.name ?? "").trim().toLowerCase();
+    return itemName ? legacyNameFilters.includes(itemName) : false;
+}
+
+function _matchesRollModifierAttackFilter(entry = {}, attack = null, rollData = {}) {
+    const attackFilters = _normalizeRollModifierFilterTokens(entry?.source_attack_ids, { lower: true });
+    if (!attackFilters.length) return true;
+
+    const attackCandidates = [
+        rollData?.attackId,
+        attack?.id,
+        attack?.mode,
+        attack?.name
+    ].map((value) => String(value ?? "").trim().toLowerCase()).filter(Boolean);
+
+    return attackCandidates.length > 0 && attackFilters.some((filter) => attackCandidates.includes(filter));
+}
+
+function _matchesNhDisplayContextForItem(entry = {}, item = null) {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
+    return contexts.some((ctx) => {
+        if (ctx === "skill") return item?.type === "skill";
+        if (ctx === "spell") return item?.type === "spell";
+        if (ctx === "power") return item?.type === "power";
+        if (ctx.startsWith("skill_")) return item?.type === "skill" && baseAttr === ctx.replace("skill_", "");
+        return false;
+    });
+}
+
+function _matchesNhDisplayContextForAttack(entry = {}, attackType = "") {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    return contexts.some((ctx) => {
+        if (ctx === "attack") return true;
+        if (ctx === "attack_melee") return attackType === "melee";
+        if (ctx === "attack_ranged") return attackType === "ranged";
+        return false;
+    });
+}
+
+function _matchesRollTargetFilter(actor, rollData = {}, entry = {}) {
+    const item = _getRollSourceItem(actor, rollData);
+    const attack = _getRollSourceAttack(item, rollData);
+    if (!_matchesRollModifierItemFilter(entry, item)) return false;
+    if (!_matchesRollModifierAttackFilter(entry, attack, rollData)) return false;
+    return true;
 }
 
 function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {

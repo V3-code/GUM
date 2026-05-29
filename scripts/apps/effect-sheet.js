@@ -90,6 +90,8 @@ const normalizeAction = (action = {}) => {
             target_kind: (entry?.target_kind || "any").toString().trim() || "any",
             target_mode: (entry?.target_mode || "all").toString().trim() || "all",
             target_values: (entry?.target_values || "").toString().trim(),
+            source_item_ids: (entry?.source_item_ids || "").toString().trim(),
+            source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
             nh_display_mode: (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }))
         : [{
@@ -101,6 +103,8 @@ const normalizeAction = (action = {}) => {
             target_kind: (next.roll_modifier_target_kind || "any").toString().trim() || "any",
             target_mode: (next.roll_modifier_target_mode || "all").toString().trim() || "all",
             target_values: (next.roll_modifier_target_values || "").toString().trim(),
+            source_item_ids: (next.roll_modifier_source_item_ids || "").toString().trim(),
+            source_attack_ids: (next.roll_modifier_source_attack_ids || "").toString().trim(),
             nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
@@ -179,6 +183,8 @@ export class EffectSheet extends ItemSheet {
                 target_kind: entry?.target_kind || "any",
                 target_mode: entry?.target_mode || "all",
                 target_values: entry?.target_values || "",
+                source_item_ids: entry?.source_item_ids || "",
+                source_attack_ids: entry?.source_attack_ids || "",
                 nh_display_mode: entry?.nh_display_mode || "roll_only"
             }))
         }));
@@ -346,7 +352,19 @@ activateListeners(html) {
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
-        entries.push({ label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" });
+        entries.push({
+            label: "",
+            value: 0,
+            cap: "",
+            contexts: "all",
+            application_side: "self",
+            target_kind: "any",
+            target_mode: "all",
+            target_values: "",
+            source_item_ids: "",
+            source_attack_ids: "",
+            nh_display_mode: "roll_only"
+        });
         actions[actionIndex].roll_modifier_entries = entries;
         await this.item.update({ "system.actions": actions });
     });
@@ -360,7 +378,21 @@ activateListeners(html) {
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
         if (Number.isNaN(entryIndex) || entryIndex < 0 || entryIndex >= entries.length) return;
         entries.splice(entryIndex, 1);
-        actions[actionIndex].roll_modifier_entries = entries.length ? entries : [{ label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" }];
+        actions[actionIndex].roll_modifier_entries = entries.length
+            ? entries
+            : [{
+                label: "",
+                value: 0,
+                cap: "",
+                contexts: "all",
+                application_side: "self",
+                target_kind: "any",
+                target_mode: "all",
+                target_values: "",
+                source_item_ids: "",
+                source_attack_ids: "",
+                nh_display_mode: "roll_only"
+            }];
         await this.item.update({ "system.actions": actions });
     });
 
@@ -464,14 +496,28 @@ activateListeners(html) {
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
-            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side|target_kind|target_mode|target_values|nh_display_mode)$/);
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|nh_display_mode)$/);
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
                 const entryIndex = Number(rollEntryMatch[2]);
                 const field = rollEntryMatch[3];
                 if (!rollEntries.has(actionIndex)) rollEntries.set(actionIndex, new Map());
                 const entryMap = rollEntries.get(actionIndex);
-                if (!entryMap.has(entryIndex)) entryMap.set(entryIndex, { label: "", value: 0, cap: "", contexts: "all", application_side: "self", target_kind: "any", target_mode: "all", target_values: "", nh_display_mode: "roll_only" });
+                if (!entryMap.has(entryIndex)) {
+                    entryMap.set(entryIndex, {
+                        label: "",
+                        value: 0,
+                        cap: "",
+                        contexts: "all",
+                        application_side: "self",
+                        target_kind: "any",
+                        target_mode: "all",
+                        target_values: "",
+                        source_item_ids: "",
+                        source_attack_ids: "",
+                        nh_display_mode: "roll_only"
+                    });
+                }
                 entryMap.get(entryIndex)[field] = value;
                 delete formData[key];
                 continue;
@@ -502,6 +548,8 @@ activateListeners(html) {
                             target_kind: (entry.target_kind || "any").toString().trim() || "any",
                             target_mode: (entry.target_mode || "all").toString().trim() || "all",
                             target_values: (entry.target_values || "").toString().trim(),
+                            source_item_ids: (entry.source_item_ids || "").toString().trim(),
+                            source_attack_ids: (entry.source_attack_ids || "").toString().trim(),
                             nh_display_mode: (entry.nh_display_mode || "roll_only").toString().trim() || "roll_only"
                         }));
                 }

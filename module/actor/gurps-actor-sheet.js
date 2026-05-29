@@ -267,11 +267,22 @@ async getData(options) {
         let skills = itemsByType.skill || [];
         const actorActiveEffects = Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? []);
 
+          const normalizeFilterTokens = (rawValue) => String(rawValue ?? "")
+            .split(",")
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+
         const matchesEntryTargetForItem = (entry = {}, item = null) => {
-            const targets = String(entry?.target_values ?? "")
-                .split(",")
-                .map((name) => name.trim().toLowerCase())
-                .filter(Boolean);
+            const sourceItemFilters = normalizeFilterTokens(entry?.source_item_ids);
+            if (sourceItemFilters.length) {
+                if (!item) return false;
+                const sourceCandidates = [item.id, item.uuid, item.name]
+                    .map((value) => String(value ?? "").trim().toLowerCase())
+                    .filter(Boolean);
+                if (!sourceItemFilters.some((filter) => sourceCandidates.includes(filter))) return false;
+            }
+
+            const targets = normalizeFilterTokens(entry?.target_values);
             if (!targets.length) return true;
             const itemName = (item?.name || "").trim().toLowerCase();
             if (!itemName) return false;

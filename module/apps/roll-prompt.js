@@ -573,19 +573,78 @@ export class GurpsRollPrompt extends FormApplication {
         return normalized === rollContext;
     }
 
-    _matchesTargetFilter(entry = {}) {
-        const targets = String(entry?.target_values ?? "")
+    _normalizeFilterTokens(rawValue, { lower = false } = {}) {
+        return String(rawValue ?? "")
             .split(",")
-            .map((name) => name.trim().toLowerCase())
-            .filter(Boolean);
-        if (!targets.length) return true;
-        const itemId = this.rollData.itemId;
-        const item = itemId ? this.actor.items.get(itemId) : null;
+ .map((value) => value.trim())
+            .filter(Boolean)
+            .map((value) => lower ? value.toLowerCase() : value);
+    }
+
+    _getRollSourceItem() {
+        const itemId = String(this.rollData?.itemId ?? "").trim();
+        const itemName = String(this.rollData?.itemName ?? "").trim().toLowerCase();
+        if (itemId) return this.actor.items.get(itemId) || null;
+        if (!itemName) return null;
+        return this.actor.items.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null;
+    }
+
+    _getRollSourceAttack(item = null) {
+        if (!item) return null;
+        const attackId = String(this.rollData?.attackId ?? "").trim();
+        if (attackId) {
+            return item.system?.melee_attacks?.[attackId] ?? item.system?.ranged_attacks?.[attackId] ?? null;
+        }
+
+        const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
+        const meleeAttacks = Object.values(item.system?.melee_attacks || {});
+        const allAttacks = [...meleeAttacks, ...rangedAttacks].filter(Boolean);
+        return allAttacks.length === 1 ? allAttacks[0] : null;
+    }
+
+    _matchesSourceItemFilter(entry = {}, item = null) {
+        const filters = this._normalizeFilterTokens(entry?.source_item_ids, { lower: true });
+        if (!filters.length) return true;
         if (!item) return false;
-        const itemName = (item.name || "").trim().toLowerCase();
-        if (!itemName) return false;
+
+        const candidates = [
+            item.id,
+            item.uuid,
+            item.name
+        ].map((value) => String(value ?? "").trim().toLowerCase()).filter(Boolean);
+
+        return filters.some((filter) => candidates.includes(filter));
+    }
+
+    _matchesSourceAttackFilter(entry = {}, item = null) {
+        const filters = this._normalizeFilterTokens(entry?.source_attack_ids, { lower: true });
+        if (!filters.length) return true;
+
+        const rollAttackId = String(this.rollData?.attackId ?? "").trim();
+        const attack = this._getRollSourceAttack(item);
+        const candidates = [
+            rollAttackId,
+            attack?.id,
+            attack?.mode,
+            attack?.name
+        ].map((value) => String(value ?? "").trim().toLowerCase()).filter(Boolean);
+
+        return candidates.length > 0 && filters.some((filter) => candidates.includes(filter));
+    }
+
+    _matchesTargetFilter(entry = {}) {
+        const item = this._getRollSourceItem();
+        if (!this._matchesSourceItemFilter(entry, item)) return false;
+        if (!this._matchesSourceAttackFilter(entry, item)) return false;
+
+        const targets = this._normalizeFilterTokens(entry?.target_values, { lower: true });
+        if (!targets.length) return true;
+
+        if (!item) return false;
+
+        const itemNames = [item.name].map((name) => String(name ?? "").trim().toLowerCase()).filter(Boolean);
         // Se houver nomes preenchidos, aplica como lista de nomes exatos.
-        return targets.includes(itemName);
+        return targets.some((target) => itemNames.includes(target));
     }
     
     _determineContext() {

@@ -111,7 +111,7 @@ export const registerSystemSettings = function() {
 
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
-        name: "Adicionar Regras Padrão na Criação",
+        name: "Condições Passivas em Personagens",
         hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados.",
         scope: "world",
         config: true,
@@ -119,61 +119,9 @@ export const registerSystemSettings = function() {
         default: true
     });
 
- game.settings.register("gum", "statusBindingsCompendium", {
-        name: "Compêndio de Vínculos de Status",
-        hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
-        scope: "world",
-        config: true,
-        type: String,
-        default: "gum.status_bindings"
-    });
-
-
-
-    game.settings.register("gum", "defaultSkillRollFormula", {
-        name: "Dados padrão para rolagem de habilidades",
-        hint: "Fórmula de dados usada em testes de habilidade/ativação (ex.: 3d6, 2d10, 1d20).",
-        scope: "world",
-        config: true,
-        type: String,
-        default: "3d6"
-    });
-
-    game.settings.register("gum", "autoDistanceModifierEnabled", {
-        name: "Aplicar modificador automático por distância",
-        hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",
-        scope: "world",
-        config: true,
-        type: Boolean,
-        default: false
-    });
-
-    game.settings.register("gum", "normalizeGurpsDamageDice", {
-        name: "Normalizar dano (GURPS: Modifying Dice + Adds)",
-        hint: "Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",
-        scope: "world",
-        config: true,
-        type: Boolean,
-        default: false
-    });
-
-    game.settings.register("gum", "autoDistanceModifierTable", {
-        name: "Tabela automática de distância",
-        hint: "Define qual tabela usar para o cálculo automático de distância.",
-        scope: "world",
-        config: true,
-        type: String,
-        choices: {
-            standard: "Padrão (GURPS)",
-            monster_hunters: "Resumida (Monster Hunters)",
-            hybrid: "Híbrida (MH + Padrão)"
-        },
-        default: "standard"
-    });
-
-    // --- "BOTÃO" DE ATUALIZAÇÃO ---
+        // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
-        name: "Sincronizar Regras do Compêndio",
+        name: "Sincronizar Condições Passivas",
         hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso.",
         scope: "world",
         config: true,
@@ -187,6 +135,60 @@ export const registerSystemSettings = function() {
             }
         }
     });
+
+    game.settings.register("gum", "statusBindingsCompendium", {
+        name: "Compêndio de Vínculos de Status",
+        hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "gum.status_bindings"
+    });
+
+
+
+    game.settings.register("gum", "defaultSkillRollFormula", {
+        name: "Dados de Rolgem padrão",
+        hint: "Defina os dados que serão usados em rolagens de testes habilidades (ex.: 3d6, 2d10, 1d20).",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "3d6"
+    });
+
+    game.settings.register("gum", "autoDistanceModifierEnabled", {
+        name: "Modificador de Distância",
+        hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "autoDistanceModifierTable", {
+        name: "Tabela de distância",
+        hint: "Define qual tabela usar para o cálculo automático de distância se a opção de 'Modificador de Distância' estiver ativada.",
+        scope: "world",
+        config: true,
+        type: String,
+        choices: {
+            standard: "Padrão (GURPS)",
+            monster_hunters: "Resumida (Monster Hunters)",
+            hybrid: "Híbrida (MH + Padrão)"
+        },
+        default: "standard"
+    });
+
+    game.settings.register("gum", "normalizeGurpsDamageDice", {
+        name: "Normalizar dados de dano",
+        hint: "(GURPS: Modifying Dice + Adds) Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+
 
     // =============================================================
     // NOVOS BOTÕES DE IMPORTAÇÃO

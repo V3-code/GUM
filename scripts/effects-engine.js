@@ -114,6 +114,8 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_value: "0",
     roll_modifier_cap: "",
     roll_modifier_context: "all",
+    roll_modifier_source_item_ids: "",
+    roll_modifier_source_attack_ids: "",
     roll_modifier_entries: [],
     whisperMode: "public",
     category: "hp",
@@ -163,6 +165,8 @@ const normalizeEffectAction = (action = {}) => {
             target_kind: (next.roll_modifier_target_kind || "any").toString().trim() || "any",
             target_mode: (next.roll_modifier_target_mode || "all").toString().trim() || "all",
             target_values: (next.roll_modifier_target_values || "").toString().trim(),
+            source_item_ids: (next.roll_modifier_source_item_ids || "").toString().trim(),
+            source_attack_ids: (next.roll_modifier_source_attack_ids || "").toString().trim(),
             nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     }
@@ -175,11 +179,14 @@ const normalizeEffectAction = (action = {}) => {
         target_kind: (entry?.target_kind || "any").toString().trim() || "any",
         target_mode: (entry?.target_mode || "all").toString().trim() || "all",
         target_values: (entry?.target_values || "").toString().trim(),
+        source_item_ids: (entry?.source_item_ids || "").toString().trim(),
+        source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
         nh_display_mode: (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
     }));
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
-    next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
+    next.roll_modifier_source_item_ids = next.roll_modifier_entries[0]?.source_item_ids ?? "";
+    next.roll_modifier_source_attack_ids = next.roll_modifier_entries[0]?.source_attack_ids ?? "";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
     return next;
 };
@@ -375,6 +382,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 target_kind: action.roll_modifier_target_kind ?? "any",
                                 target_mode: action.roll_modifier_target_mode ?? "all",
                                 target_values: action.roll_modifier_target_values ?? "",
+                                source_item_ids: action.roll_modifier_source_item_ids ?? "",
+                                source_attack_ids: action.roll_modifier_source_attack_ids ?? "",
                                 nh_display_mode: action.roll_modifier_nh_display_mode ?? "roll_only"
                             }];
                         activeEffectData.flags.gum.rollModifier = {
