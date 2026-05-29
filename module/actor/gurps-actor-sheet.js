@@ -566,6 +566,32 @@ async getData(options) {
             return a.localeCompare(b);
         });
 
+        const getCharacteristicFinalPoints = (item) => {
+            const basePoints = Number(item.system?.points) || 0;
+            const modifiers = item.system?.modifiers || {};
+            let totalModPercent = 0;
+
+            for (const modifier of Object.values(modifiers)) {
+                totalModPercent += parseInt(modifier.cost, 10) || 0;
+            }
+
+            const cappedModPercent = Math.max(-80, totalModPercent);
+            const finalPoints = Math.round(basePoints * (1 + (cappedModPercent / 100)));
+
+            if (basePoints > 0 && finalPoints < 1) return 1;
+            if (basePoints < 0 && finalPoints > -1) return -1;
+            return finalPoints;
+        };
+
+        const prepareCharacteristicDisplay = (item) => {
+            if (!["advantage", "disadvantage"].includes(item.type)) return item;
+
+            const itemData = item.toObject ? item.toObject(false) : foundry.utils.deepClone(item);
+            itemData.id = item.id ?? itemData._id;
+            itemData.displayPoints = getCharacteristicFinalPoints(item);
+            return itemData;
+        };
+
                 // ================================================================== //
         //    FAVORITOS DA ABA DE COMBATE
         // ================================================================== //
@@ -592,7 +618,7 @@ async getData(options) {
             const groupName = resolveFavoriteGroup(item);
             if (!combatFavoritesByGroup[groupName]) combatFavoritesByGroup[groupName] = [];
 
-            combatFavoritesByGroup[groupName].push(item);
+            combatFavoritesByGroup[groupName].push(prepareCharacteristicDisplay(item));
         }
 
         const combatFavoriteSortFn = getSortFunction('name');
@@ -836,7 +862,8 @@ async getData(options) {
         // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS (Seu código original)
         // ================================================================== //
-           const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ];
+           const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ]
+                .map(prepareCharacteristicDisplay);
             context.characteristicsByBlock = characteristics.reduce((acc, char) => {
             const defaultBlockId = char.type === 'disadvantage' ? 'block3' : 'block2';
             const blockId = char.system.block_id || defaultBlockId;
@@ -3418,14 +3445,13 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
         break;
 
       case 'spell':
-        mechanicalTagsHtml += createTag('Classe', s.spell_class);
-        mechanicalTagsHtml += createTag('Tempo', s.casting_time);
-        mechanicalTagsHtml += createTag('Duração', s.duration);
+        mechanicalTagsHtml += createTag('Class', s.spell_class);
+        mechanicalTagsHtml += createTag('Conju', `${s.casting_time || '0'} / ${s.duration || 0}`);
         mechanicalTagsHtml += createTag('Custo', `${s.mana_cost || '0'} / ${s.mana_maint || '0'}`);
         break;
 
       case 'power':
-        mechanicalTagsHtml += createTag('Custo', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
+        mechanicalTagsHtml += createTag('Ativação', `${s.activation_cost || '0'} / ${s.maint_cost || '0'}`);
         mechanicalTagsHtml += createTag('Duração', s.duration);
         break;
 
@@ -3438,7 +3464,6 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
       case 'equipment':
         mechanicalTagsHtml += createTag('TL', s.tech_level);
         mechanicalTagsHtml += createTag('LC', s.legality_class);
-        mechanicalTagsHtml += createTag('Local', s.location);
         break;
 
       case 'condition':

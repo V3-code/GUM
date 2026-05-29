@@ -3311,6 +3311,28 @@ Handlebars.registerHelper("signedMod", function (value) {
   return n > 0 ? `+${n}` : `${n}`;
 });
 
+Handlebars.registerHelper("characteristicPoints", function (item) {
+  const displayPoints = item?.displayPoints;
+  if (displayPoints !== undefined && displayPoints !== null && displayPoints !== "") return displayPoints;
+
+  const system = item?.system || {};
+  const basePoints = Number(system.points) || 0;
+  const modifiers = system.modifiers || {};
+  let totalModPercent = 0;
+
+  for (const modifier of Object.values(modifiers)) {
+    totalModPercent += parseInt(modifier?.cost, 10) || 0;
+  }
+
+  const cappedModPercent = Math.max(-80, totalModPercent);
+  const finalPoints = Math.round(basePoints * (1 + (cappedModPercent / 100)));
+
+  if (basePoints > 0 && finalPoints < 1) return 1;
+  if (basePoints < 0 && finalPoints > -1) return -1;
+  return finalPoints;
+});
+
+
 const normalizeLookupKey = (value) => value
     ?.toString()
     .trim()

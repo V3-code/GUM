@@ -641,7 +641,7 @@
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
                     <div class="card-details">
-                      <span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span>
+                          <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
                       {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
                     </div>
                   </div>
@@ -662,7 +662,7 @@
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
                     <div class="card-details">
-                      <span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span>
+                          <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
                       {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
                     </div>
                   </div>
@@ -691,7 +691,7 @@
                       <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
-                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span></div>
+                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span></div>
                   </div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
@@ -720,7 +720,7 @@
                       <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}</a></span>
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
-                    <div class="card-details"><span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div>
+                    <div class="card-details"><span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div>
                   </div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
@@ -744,7 +744,7 @@
                       <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}}{{this.system.level}}{{/if}}</a></span>
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
-                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span></div>
+                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span></div>
                   </div>
                   <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
                 </li>
@@ -1746,7 +1746,7 @@
                         </div>
                         <div class="card-details">
                           {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                          <span class="card-points" title="Custo em Pontos">{{this.displayPoints}} pts</span>
+                              <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
                         </div>
                       </div>
                       <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
