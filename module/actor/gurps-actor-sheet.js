@@ -4621,17 +4621,137 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
   });
 }
 
+_getLinkableCharacteristics() {
+  return Array.from(this.actor.items)
+    .filter((item) => ["advantage", "disadvantage"].includes(item.type))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+_prepareCharacteristicLink(id, record, fallbackName) {
+  const itemId = String(record?.item_id || record?.itemId || "").trim();
+  if (!itemId) {
+    return {
+      id,
+      ...record,
+      name: record?.name || fallbackName,
+      level: Number(record?.level) || 0,
+      points: Number(record?.points) || 0,
+      isLegacy: true
+    };
+  }
+
+  const item = this.actor.items.get(itemId);
+  if (!item) {
+    return {
+      id,
+      itemId,
+      name: "Característica não encontrada",
+      kindLabel: "Vínculo interrompido",
+      broken: true
+    };
+  }
+
+  const specialization = String(item.system?.specialization || "").trim();
+  return {
+    id,
+    itemId,
+    name: item.name,
+    specialization,
+    img: item.img,
+    level: Number(item.system?.level) || 0,
+    points: Number(item.system?.points) || 0,
+    notes: String(item.system?.characteristics || "").trim(),
+    kindLabel: item.type === "disadvantage" ? "Desvantagem" : "Vantagem"
+  };
+}
+
+async _promptCharacteristicLink(linkType) {
+  const collection = linkType === "power"
+    ? this.actor.system.power_sources || {}
+    : this.actor.system.casting_abilities || {};
+  const linkedIds = new Set(Object.values(collection).map((entry) => entry?.item_id || entry?.itemId).filter(Boolean));
+  const candidates = this._getLinkableCharacteristics().filter((item) => !linkedIds.has(item.id));
+
+  if (!candidates.length) {
+    ui.notifications.warn("Não há vantagens ou desvantagens disponíveis para vincular.");
+    return null;
+  }
+
+  const escape = (value) => foundry.utils.escapeHTML(String(value ?? ""));
+  const rows = candidates.map((item) => {
+    const kind = item.type === "disadvantage" ? "Desvantagem" : "Vantagem";
+    const specialization = item.system?.specialization ? ` (${escape(item.system.specialization)})` : "";
+    const level = Number(item.system?.level) ? ` · Nv ${Number(item.system.level)}` : "";
+    const points = Number(item.system?.points) || 0;
+    return `
+      <label class="characteristic-link-option" data-search="${escape(`${item.name} ${item.system?.specialization || ""} ${kind}`.toLowerCase())}">
+        <input type="radio" name="item_id" value="${item.id}">
+        <img src="${escape(item.img)}" alt="">
+        <span class="characteristic-link-option__text">
+          <strong>${escape(item.name)}${specialization}</strong>
+          <small>${kind}${level}</small>
+        </span>
+        <span class="characteristic-link-option__points">${points} pts</span>
+      </label>`;
+  }).join("");
+
+  const title = linkType === "power" ? "Vincular Fonte de Poder" : "Vincular Habilidade de Conjuração";
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    new Dialog({
+      title,
+      content: `
+        <form class="characteristic-link-picker" autocomplete="off">
+          <p class="hint">Selecione uma vantagem ou desvantagem desta ficha. O card permanecerá sincronizado com o item original.</p>
+          <div class="characteristic-link-search"><i class="fas fa-search"></i><input type="search" placeholder="Buscar característica..."></div>
+          <div class="characteristic-link-options">${rows}</div>
+          <p class="characteristic-link-no-results" hidden>Nenhuma característica encontrada.</p>
+        </form>`,
+      buttons: {
+        link: {
+          icon: '<i class="fas fa-link"></i>',
+          label: "Vincular",
+          callback: (html) => {
+            const selected = html.find('input[name="item_id"]:checked').val();
+            if (!selected) {
+              ui.notifications.warn("Selecione uma característica para vincular.");
+              return false;
+            }
+            finish(String(selected));
+          }
+        },
+        cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar", callback: () => finish(null) }
+      },
+      default: "link",
+      render: (html) => {
+        html.find('input[type="search"]').on("input", (event) => {
+          const term = String(event.currentTarget.value || "").toLowerCase().trim();
+          let visible = 0;
+          html.find(".characteristic-link-option").each((_, element) => {
+            const matches = !term || String(element.dataset.search || "").includes(term);
+            element.hidden = !matches;
+            if (matches) visible += 1;
+          });
+          html.find(".characteristic-link-no-results").prop("hidden", visible > 0);
+        });
+      },
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-characteristic-link-dialog"], width: 520 }).render(true);
+  });
+}
+
 
 _prepareCastingAbilities() {
   const collection = foundry.utils.duplicate(this.actor.system.casting_abilities || {});
-  const abilities = Object.entries(collection).map(([id, ability]) => ({
-    id,
-    name: ability?.name || "Habilidade de Conjuração",
-    source: ability?.source || "Fonte indefinida",
-    level: Number(ability?.level) || 0,
-    points: Number(ability?.points) || 0,
-    description: ability?.description || ""
-  }));
+  const abilities = Object.entries(collection).map(([id, ability]) =>
+    this._prepareCharacteristicLink(id, ability, "Habilidade de Conjuração")
+  );
 
   if (!abilities.length) {
     const legacy = this.actor.system.casting_ability || {};
@@ -4675,6 +4795,10 @@ _getCastingAbilityById(abilityId) {
 
   const ability = this.actor.system.casting_abilities?.[abilityId];
   if (!ability) return null;
+
+    if (ability.item_id || ability.itemId) {
+    return this._prepareCharacteristicLink(abilityId, ability, "Habilidade de Conjuração");
+  }
 
   return {
     id: abilityId,
@@ -4763,11 +4887,11 @@ const content = `
 
 async _onAddCastingAbility(ev) {
   ev.preventDefault();
-  const abilityData = await this._promptCastingAbilityData({}, { isEdit: false });
-  if (!abilityData) return;
+  const itemId = await this._promptCharacteristicLink("casting");
+  if (!itemId) return;
 
   const abilityId = foundry.utils.randomID();
-  await this.actor.update({ [`system.casting_abilities.${abilityId}`]: abilityData });
+  await this.actor.update({ [`system.casting_abilities.${abilityId}`]: { item_id: itemId } });
 }
 
 async _onEditCastingAbility(ev) {
@@ -4778,6 +4902,14 @@ async _onEditCastingAbility(ev) {
 
   const current = this._getCastingAbilityById(abilityId);
   if (!current) return;
+
+    if (current.itemId) {
+    const item = this.actor.items.get(current.itemId);
+    if (item) return item.sheet.render(true);
+    const replacementId = await this._promptCharacteristicLink("casting");
+    if (replacementId) await this.actor.update({ [`system.casting_abilities.${abilityId}.item_id`]: replacementId });
+    return;
+  }
 
   const updated = await this._promptCastingAbilityData(current, { isEdit: true });
   if (!updated) return;
@@ -4800,8 +4932,10 @@ async _onDeleteCastingAbility(ev) {
   if (!ability) return;
 
   Dialog.confirm({
-    title: `Excluir ${ability.name}?`,
-    content: "<p>Tem certeza que deseja remover esta habilidade de conjuração?</p>",
+    title: `${ability.itemId ? "Desvincular" : "Excluir"} ${ability.name}?`,
+    content: ability.itemId
+      ? "<p>O vínculo será removido, mas a característica continuará na ficha.</p>"
+      : "<p>Tem certeza que deseja remover esta habilidade de conjuração?</p>",
     yes: async () => {
       if (abilityId === "legacy") {
         await this.actor.update({
@@ -4830,6 +4964,10 @@ _onViewCastingAbility(ev) {
   const ability = this._getCastingAbilityById(abilityId);
   if (!ability) return;
 
+    if (ability.itemId) {
+    return this.actor.items.get(ability.itemId)?.sheet?.render(true);
+  }
+
   const description = ability.description || "<em>Sem descrição.</em>";
 
   new Dialog({
@@ -4854,18 +4992,11 @@ _onViewCastingAbility(ev) {
 
 _preparePowerSources() {
   const collection = foundry.utils.duplicate(this.actor.system.power_sources || {});
-  const sources = Object.entries(collection).map(([id, source]) => ({
-    id,
-    name: source?.name || "Fonte de Poder",
-    source: source?.source || "",
-    focus: source?.focus || "",
-    level: Number(source?.level) || 0,
-    points: Number(source?.points) || 0,
-    power_talent_name: source?.power_talent_name || "",
-    power_talent_level: Number(source?.power_talent_level) || Number(source?.power_talent) || 0,
-    power_talent_points: Number(source?.power_talent_points) || 0,
-    description: source?.description || ""
-  }));
+  const sources = Object.entries(collection).map(([id, source]) =>
+    this._prepareCharacteristicLink(id, source, "Fonte de Poder")
+  );
+
+  
 
   if (!sources.length) {
     const legacy = this.actor.system.power_source || {};
@@ -4922,6 +5053,10 @@ _getPowerSourceById(sourceId) {
 
   const source = this.actor.system.power_sources?.[sourceId];
   if (!source) return null;
+
+    if (source.item_id || source.itemId) {
+    return this._prepareCharacteristicLink(sourceId, source, "Fonte de Poder");
+  }
 
   return {
     id: sourceId,
@@ -5088,11 +5223,11 @@ async _onEditRaceName(event) {
 
 async _onAddPowerSource(ev) {
   ev.preventDefault();
-  const sourceData = await this._promptPowerSourceData({}, { isEdit: false });
-  if (!sourceData) return;
+  const itemId = await this._promptCharacteristicLink("power");
+  if (!itemId) return;
 
   const sourceId = foundry.utils.randomID();
-  await this.actor.update({ [`system.power_sources.${sourceId}`]: sourceData });
+  await this.actor.update({ [`system.power_sources.${sourceId}`]: { item_id: itemId } });
 }
 
 async _onEditPowerSource(ev) {
@@ -5103,6 +5238,14 @@ async _onEditPowerSource(ev) {
 
   const current = this._getPowerSourceById(sourceId);
   if (!current) return;
+
+    if (current.itemId) {
+    const item = this.actor.items.get(current.itemId);
+    if (item) return item.sheet.render(true);
+    const replacementId = await this._promptCharacteristicLink("power");
+    if (replacementId) await this.actor.update({ [`system.power_sources.${sourceId}.item_id`]: replacementId });
+    return;
+  }
 
   const updated = await this._promptPowerSourceData(current, { isEdit: true });
   if (!updated) return;
@@ -5125,8 +5268,10 @@ async _onDeletePowerSource(ev) {
   if (!source) return;
 
   Dialog.confirm({
-    title: `Excluir ${source.name}?`,
-    content: "<p>Tem certeza que deseja remover esta fonte de poder?</p>",
+    title: `${source.itemId ? "Desvincular" : "Excluir"} ${source.name}?`,
+    content: source.itemId
+      ? "<p>O vínculo será removido, mas a característica continuará na ficha.</p>"
+      : "<p>Tem certeza que deseja remover esta fonte de poder?</p>",
     yes: async () => {
           if (sourceId === "legacy") {
           await this.actor.update({
@@ -5158,6 +5303,10 @@ _onViewPowerSource(ev) {
 
   const source = this._getPowerSourceById(sourceId);
   if (!source) return;
+
+    if (source.itemId) {
+    return this.actor.items.get(source.itemId)?.sheet?.render(true);
+  }
 
   const description = source.description || "<em>Sem descrição.</em>";
 

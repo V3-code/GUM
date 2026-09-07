@@ -841,16 +841,23 @@
             <a class="add-casting-ability" title="Adicionar Habilidade" aria-label="Adicionar Habilidade"><i class="fas fa-plus"></i></a>
           </div>
         </summary>
- <div class="casting-abilities-list group-content">
+        <div class="casting-abilities-list group-content">
           {{#each castingAbilities}}
-          <div class="casting-ability-card" data-ability-id="{{this.id}}">
+          <div class="casting-ability-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-ability-id="{{this.id}}">
             <div class="casting-ability-main">
+              {{#if this.itemId}}
+              {{#if this.img}}<img class="characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
+              {{/if}}
               <div class="casting-ability-text">
                 <div class="casting-ability-title-row">
-                  <span class="casting-ability-name">{{this.name}}</span>
-                  <span class="casting-ability-level">Nv {{this.level}}</span>
+                  <a class="casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-casting-ability{{else}}view-casting-ability{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
+                  {{#if this.itemId}}<span class="casting-ability-level">{{this.points}} pts</span>{{else}}<span class="casting-ability-level">Nv {{this.level}}</span>{{/if}}
                 </div>
-                <div class="casting-ability-source">{{this.source}}</div>
+                {{#if this.itemId}}
+                <div class="casting-ability-source">{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}</div>
+                {{else}}
+                <div class="casting-ability-source">Registro legado · {{this.source}}</div>
+                {{/if}}
               </div>
               <div class="item-controls casting-ability-controls">
                 <div class="gum-action-menu js-action-menu">
@@ -858,9 +865,9 @@
                     <i class="fas fa-ellipsis-v"></i>
                   </a>
                   <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
-                    <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
-                    <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                    <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                    <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
+                    <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
+                    <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem" title="Remover"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
                   </div>
                 </div>
               </div>
@@ -869,7 +876,7 @@
           {{/each}}
           {{#unless castingAbilities.length}}
           <div class="empty-placeholder compact">
-            <p>Nenhuma habilidade de conjuração adicionada.</p>
+            <p>Nenhuma habilidade vinculada. Use <i class="fas fa-plus"></i> para selecionar uma vantagem ou desvantagem.</p>
           </div>
           {{/unless}}
         </div>
@@ -1043,29 +1050,36 @@
       </div>
 
     <details class="casting-ability-box skill-block casting-abilities-box power-sources-box gum-unified-section" data-group-id="power-sources" {{collapsibleState "power-sources" @root.collapsedData}}>
-        <summary class="block-header casting-ability-header gum-unified-header">
-          <div class="summary-left">
-            <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
-            <i class="fas fa-bolt item-icon" aria-hidden="true"></i>
-            <h4>Fonte de Poder</h4>
-          </div>
-          <div class="summary-right">
-            <span class="group-tag pw">{{powerSources.length}} fonte(s)</span>
-            <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder" aria-label="Adicionar Fonte de Poder"><i class="fas fa-plus"></i></a>
-          </div>
-        </summary>
- <div class="casting-abilities-list group-content">
-          {{#each powerSources}}
-        <div class="casting-ability-card power-source-card" data-power-source-id="{{this.id}}">
+      <summary class="block-header casting-ability-header gum-unified-header">
+        <div class="summary-left">
+          <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
+          <i class="fas fa-bolt item-icon" aria-hidden="true"></i>
+          <h4>Fonte de Poder</h4>
+        </div>
+        <div class="summary-right">
+          <span class="group-tag pw">{{powerSources.length}} fonte(s)</span>
+          <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder" aria-label="Adicionar Fonte de Poder"><i class="fas fa-plus"></i></a>
+        </div>
+      </summary>
+      <div class="casting-abilities-list group-content">
+        {{#each powerSources}}
+        <div class="casting-ability-card power-source-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-power-source-id="{{this.id}}">
           <div class="casting-ability-main">
+            {{#if this.itemId}}
+            {{#if this.img}}<img class="characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
+            {{/if}}
             <div class="casting-ability-text">
               <div class="casting-ability-title-row">
-                <span class="casting-ability-name">{{this.name}}</span>
-                <span class="casting-ability-level">Nv {{this.level}}</span>
+                <a class="casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-power-source{{else}}view-power-source{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
+                {{#if this.itemId}}<span class="casting-ability-level">{{this.points}} pts</span>{{else}}<span class="casting-ability-level">Nv {{this.level}}</span>{{/if}}
               </div>
-              <div class="casting-ability-source">{{this.source}} · {{this.focus}}</div>
+              {{#if this.itemId}}
+              <div class="casting-ability-source">{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}</div>
+              {{else}}
+              <div class="casting-ability-source">Registro legado · {{this.source}} · {{this.focus}}</div>
               <hr class="casting-ability-divider">
               <div class="casting-ability-source talent">{{this.power_talent_name}} · Nv {{this.power_talent_level}}</div>
+              {{/if}}
             </div>
             <div class="item-controls casting-ability-controls">
               <div class="gum-action-menu js-action-menu">
@@ -1073,21 +1087,21 @@
                   <i class="fas fa-ellipsis-v"></i>
                 </a>
                 <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
-                  <a class="item-control view-power-source gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
-                  <a class="item-control edit-power-source gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                  <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                  <a class="item-control view-power-source gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
+                  <a class="item-control edit-power-source gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
+                  <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem" title="Remover"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
                 </div>
               </div>
             </div>
           </div>
         </div>
-          {{/each}}
-          {{#unless powerSources.length}}
-          <div class="empty-placeholder compact">
-            <p>Nenhuma fonte de poder adicionada.</p>
-          </div>
-          {{/unless}}
+        {{/each}}
+        {{#unless powerSources.length}}
+        <div class="empty-placeholder compact">
+          <p>Nenhuma fonte vinculada. Use <i class="fas fa-plus"></i> para selecionar uma vantagem ou desvantagem.</p>
         </div>
+        {{/unless}}
+      </div>
     </details>
 
        {{!-- Grupo fixo de Reservas de Energia (Poderes) --}}

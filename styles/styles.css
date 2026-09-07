@@ -3641,11 +3641,128 @@ background-color: var(--gum-accent-gold);
     font-size: 0.82rem;
 }
 
+.gum.sheet.actor .characteristic-link-card .casting-ability-main {
+    padding: 7px 9px;
+}
+
+.gum.sheet.actor .characteristic-link-card .casting-ability-main::before {
+    content: none;
+}
+
+.gum.sheet.actor .characteristic-link-card__image,
+.gum.sheet.actor .characteristic-link-card__missing {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid rgba(197, 160, 91, 0.3);
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.gum.sheet.actor .characteristic-link-card__missing {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #e9a3a3;
+    background: rgba(120, 24, 24, 0.22);
+}
+
+.gum.sheet.actor .characteristic-link-card .casting-ability-name {
+    cursor: pointer;
+}
+
+.gum.sheet.actor .characteristic-link-card .casting-ability-name:hover {
+    color: #f8d894;
+}
+
+.gum.sheet.actor .characteristic-link-card.is-broken {
+    border-color: rgba(205, 76, 76, 0.65);
+    border-left-color: #cd4c4c;
+}
+
 .gum.sheet.actor .casting-abilities-list .empty-placeholder.compact {
     text-align: center;
     color: var(--gum-text-medio);
     font-size: 0.82rem;
     padding: 12px 6px;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker .hint {
+    margin: 0 0 10px;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 9px;
+    border: 1px solid var(--gum-border-light);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search input {
+    flex: 1;
+    border: 0;
+    box-shadow: none;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 330px;
+    overflow-y: auto;
+    padding-right: 3px;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    border: 1px solid rgba(92, 68, 45, 0.25);
+    border-radius: 5px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option:hover,
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option:has(input:checked) {
+    border-color: var(--gum-accent-gold);
+    background: rgba(197, 160, 91, 0.16);
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option img {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text small {
+    color: var(--gum-text-medio);
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__points {
+    font-family: var(--gum-font-condensed);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-no-results {
+    padding: 18px;
+    text-align: center;
+    color: var(--gum-text-medio);
 }
 
 .gum.sheet.actor .spell-list-v2 {
