@@ -6,23 +6,53 @@ const template = readFileSync(new URL("../templates/actors/characters.hbs", impo
 const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
-test("spell and power reserves share the compact combat-record card model", () => {
-  const spellSection = template.slice(template.indexOf("{{#each spellReserves}}"), template.indexOf("{{/each}}", template.indexOf("{{#each spellReserves}}")));
-  const powerSection = template.slice(template.indexOf("{{#each powerReserves}}"), template.indexOf("{{/each}}", template.indexOf("{{#each powerReserves}}")));
+function templateSection(start, end) {
+  return template.slice(template.indexOf(start), template.indexOf(end, template.indexOf(start)));
+}
+
+test("spell and power support records share a compact two-column grid", () => {
+  const spellSection = templateSection('{{#if spellSupportCount}}', "{{!-- LISTA DE MAGIAS");
+  const powerSection = templateSection('{{#if powerSupportCount}}', "{{!-- LISTA DE PODERES");
+
+  assert.match(spellSection, /support-card-grid--spell/);
+  assert.match(spellSection, /{{#each castingAbilities}}[\s\S]+{{#each spellReserves}}/);
+  assert.match(powerSection, /support-card-grid--power/);
+  assert.match(powerSection, /{{#each powerSources}}[\s\S]+{{#each powerReserves}}/);
 
   for (const section of [spellSection, powerSection]) {
-    assert.match(section, /energy-reserve-card-header[\s\S]+energy-reserve-name/);
+    assert.match(section, /support-link-card/);
+    assert.match(section, /support-reserve-card support-card--category-start/);
     assert.match(section, /adjust-energy-reserve energy-reserve-adjust[^>]+data-adjustment="-1"/);
     assert.match(section, /adjust-energy-reserve energy-reserve-adjust[^>]+data-adjustment="1"/);
-    assert.match(section, /máx\. <strong>{{this\.max}}<\/strong>/);
+     
     assert.match(section, /edit-energy-reserve gum-action-menu__item/);
     assert.match(section, /delete-energy-reserve gum-action-menu__item is-danger/);
-    assert.doesNotMatch(section, /meter-inputs/);
+    assert.doesNotMatch(section, /<details/);
   }
 
-  assert.match(spellSection, /energy-reserve-card--spell[\s\S]+fa-magic/);
-  assert.match(powerSection, /energy-reserve-card--power[\s\S]+fa-bolt/);
-  assert.match(styles, /\.energy-reserves-list \{ display:grid; grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.support-card-grid \{[\s\S]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.support-reserve-card\.is-first-reserve \{ grid-column:1;/);
+  assert.match(styles, /\.support-card-grid\.is-compact-pair \.support-reserve-card\.is-first-reserve \{ grid-column:auto;/);
+});
+
+test("the Add menus expose primary item, link, and reserve actions", () => {
+  const spellToolbar = templateSection('class="spell-search-input"', '{{#if spellSupportCount}}');
+  const powerToolbar = templateSection('class="power-search-input"', '{{#if powerSupportCount}}');
+
+  assert.match(spellToolbar, /create-primary-item" data-type="spell"/);
+  assert.match(spellToolbar, /add-casting-ability/);
+  assert.match(spellToolbar, /add-energy-reserve" data-reserve-type="spell"/);
+  assert.match(powerToolbar, /create-primary-item" data-type="power"/);
+  assert.match(powerToolbar, /add-power-source/);
+  assert.match(powerToolbar, /add-energy-reserve" data-reserve-type="power"/);
+
+  assert.match(actorSheet, /click", "\.create-primary-item", \(ev\) => this\._onCreatePrimaryItem\(ev\)/);
+  assert.match(actorSheet, /createEmbeddedDocuments\("Item", \[\{ name, type \}\]\)/);
+});
+
+test("support compact-pair state is enabled only for one link and one reserve", () => {
+  assert.match(actorSheet, /spellSupportCompactPair = context\.castingAbilities\.length === 1 && context\.spellReserveCount === 1/);
+  assert.match(actorSheet, /powerSupportCompactPair = context\.powerSources\.length === 1 && context\.powerReserveCount === 1/);
 });
 
 test("reserve buttons update current and legacy value within zero and maximum", () => {

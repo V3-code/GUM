@@ -8978,3 +8978,109 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .energy-reserve-card--power .energy-reserve-meta strong { color:rgba(234,208,163,.8); }
 @media (max-width:900px) { .gum.sheet.actor .spell-energy-reserves-content .energy-reserves-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:620px) { .gum.sheet.actor .spell-energy-reserves-content .energy-reserves-list { grid-template-columns:minmax(0,1fr); } }
+
+/* Magias e poderes: fontes, habilidades e reservas em uma única faixa compacta. */
+.gum.sheet.actor .support-add-menu__toggle {
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(197,160,91,.08);
+}
+.gum.sheet.actor .skills-header-buttons .support-add-menu__toggle:hover {
+  background: rgba(197,160,91,.15);
+  color: var(--gum-accent-gold);
+  transform: none;
+}
+.gum.sheet.actor .skills-header-buttons .support-add-menu__toggle:hover i { color:var(--gum-accent-gold); }
+.gum.sheet.actor .support-add-menu__panel { min-width:230px; padding:4px; }
+.gum.sheet.actor .skills-header-buttons .support-add-menu__panel .gum-action-menu__item {
+  align-items:center;
+  gap:9px;
+  padding:7px 8px;
+  border-radius:4px;
+  color:#474149;
+  font-family:var(--gum-font-primary);
+  font-size:11px;
+  font-weight:400;
+  text-transform:none;
+}
+.gum.sheet.actor .skills-header-buttons .support-add-menu__panel .gum-action-menu__item:hover { background:rgba(197,160,91,.11); color:#241f22; transform:none; }
+.gum.sheet.actor .skills-header-buttons .support-add-menu__panel .gum-action-menu__item > i { width:17px; color:#8b7247; font-size:12px; text-align:center; }
+.gum.sheet.actor .support-add-menu__panel .gum-action-menu__item > span { display:flex; min-width:0; flex-direction:column; gap:1px; }
+.gum.sheet.actor .support-add-menu__panel strong { color:#332d31; font-size:11px; line-height:1.2; }
+.gum.sheet.actor .support-add-menu__panel small { color:#857d82; font-size:9px; line-height:1.25; }
+
+.gum.sheet.actor .support-card-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+  width:100%;
+}
+.gum.sheet.actor .support-card {
+  position:relative;
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  min-height:46px;
+  margin:0;
+  padding:5px 6px;
+  border:0;
+  border-radius:4px;
+  background:rgba(255,255,255,.035);
+  box-shadow:inset 2px 0 0 rgba(177,112,225,.42);
+}
+.gum.sheet.actor .support-card-grid--power .support-link-card { box-shadow:inset 2px 0 0 rgba(225,184,117,.42); }
+.gum.sheet.actor .support-card:hover { background:rgba(255,255,255,.06); }
+.gum.sheet.actor .support-card.is-broken { background:rgba(120,24,24,.1); box-shadow:inset 2px 0 0 rgba(205,76,76,.75); }
+.gum.sheet.actor .support-card__image,
+.gum.sheet.actor .support-card__icon {
+  display:grid;
+  width:28px;
+  height:28px;
+  place-items:center;
+  border:0;
+  border-radius:3px;
+  object-fit:cover;
+  color:rgba(202,184,232,.84);
+  background:rgba(143,124,190,.1);
+  font-size:11px;
+}
+.gum.sheet.actor .support-card__icon--power { color:rgba(225,184,117,.84); background:rgba(190,148,91,.1); }
+.gum.sheet.actor .support-card__body { min-width:0; }
+.gum.sheet.actor .support-card__title-row { display:flex; align-items:baseline; gap:6px; min-width:0; }
+.gum.sheet.actor .support-card__name {
+  min-width:0;
+  flex:1;
+  overflow:hidden;
+  color:var(--gum-text-claro);
+  font-family:var(--gum-font-condensed);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.2;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.gum.sheet.actor .support-link-card .support-card__name { cursor:pointer; }
+.gum.sheet.actor .support-link-card .support-card__name:hover { color:#f0d79f; }
+.gum.sheet.actor .support-card__stat { flex:0 0 auto; color:rgba(240,215,159,.78); font-family:var(--gum-font-condensed); font-size:9px; white-space:nowrap; }
+.gum.sheet.actor .support-card__meta { min-width:0; margin-top:2px; overflow:hidden; color:rgba(230,220,225,.5); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.15; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .support-card__kind { color:rgba(230,220,225,.72); font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.gum.sheet.actor .support-card__controls { display:flex; position:static; justify-content:center; }
+.gum.sheet.actor .support-card__controls .gum-action-menu__toggle { width:20px; height:22px; color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .support-card__controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
+.gum.sheet.actor .support-reserve-card {
+  grid-template-columns:28px minmax(0,1fr) auto 20px;
+  box-shadow:inset 2px 0 0 rgba(143,124,190,.38);
+}
+.gum.sheet.actor .support-card-grid--power .support-reserve-card { box-shadow:inset 2px 0 0 rgba(190,148,91,.38); }
+.gum.sheet.actor .support-reserve-card.is-first-reserve { grid-column:1; margin-top:3px; }
+.gum.sheet.actor .support-card-grid.is-compact-pair .support-reserve-card.is-first-reserve { grid-column:auto; margin-top:0; }
+.gum.sheet.actor .support-card__value-controls { display:grid; grid-template-columns:18px minmax(21px,auto) 18px; gap:2px; margin:0; }
+.gum.sheet.actor .support-card__value-controls .energy-reserve-adjust { width:18px; height:20px; font-size:8px; }
+.gum.sheet.actor .support-card__value-controls .energy-reserve-value { min-width:21px; font-size:14px; }
+@media (max-width:700px) {
+  .gum.sheet.actor .support-card-grid { grid-template-columns:minmax(0,1fr); }
+  .gum.sheet.actor .support-card-grid.is-compact-pair .support-reserve-card.is-first-reserve { grid-column:1; margin-top:3px; }
+}

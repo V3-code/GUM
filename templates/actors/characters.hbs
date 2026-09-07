@@ -822,112 +822,71 @@
         </div>
 
         <div class="skills-header-buttons">
-          <a class="item-create" data-type="spell" title="Nova Magia"><i class="fas fa-plus"></i> Nova</a>
+          <div class="gum-action-menu js-action-menu support-add-menu">
+            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="Adicionar à aba Magias" aria-label="Adicionar à aba Magias" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> Adicionar</a>
+            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="Adicionar à aba Magias">
+              <a class="gum-action-menu__item create-primary-item" data-type="spell" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>Nova magia</strong><small>Criar uma magia na ficha</small></span></a>
+              <a class="gum-action-menu__item add-casting-ability" role="menuitem"><i class="fas fa-link"></i><span><strong>Vincular habilidade</strong><small>Usar uma vantagem ou desvantagem</small></span></a>
+              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="spell" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>Criar reserva</strong><small>Adicionar energia para magias</small></span></a>
+            </div>
+          </div>
           <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
 
-            {{!-- Habilidades de conjuração: seção principal da aba. --}}
-      <details class="casting-ability-box skill-block casting-abilities-box gum-unified-section" data-group-id="spell-casting-abilities" {{collapsibleState "spell-casting-abilities" @root.collapsedData}}>
-        <summary class="block-header casting-ability-header gum-unified-header">
-          <div class="summary-left">
-            <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
-            <i class="fas fa-hat-wizard item-icon" aria-hidden="true"></i>
-            <h4>Habilidade de Conjuração</h4>
+      {{#if spellSupportCount}}
+      <section class="support-card-grid support-card-grid--spell{{#if spellSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Conjuração e reservas de magia">
+        {{#each castingAbilities}}
+        <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-ability-id="{{this.id}}">
+          {{#if this.itemId}}
+          {{#if this.img}}<img class="support-card__image characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="support-card__image characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
+          {{else}}<span class="support-card__icon support-card__icon--spell"><i class="fas fa-hat-wizard"></i></span>{{/if}}
+          <div class="support-card__body">
+            <div class="support-card__title-row">
+              <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-casting-ability{{else}}view-casting-ability{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
+            </div>
+            <div class="support-card__meta"><span class="support-card__kind">Conjuração</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
           </div>
-          <div class="summary-right">
-            <span class="group-tag sp_cl">{{castingAbilities.length}} habilidade(s)</span>
-            <a class="add-casting-ability" title="Adicionar Habilidade" aria-label="Adicionar Habilidade"><i class="fas fa-plus"></i></a>
-          </div>
-        </summary>
-        <div class="casting-abilities-list group-content">
-          {{#each castingAbilities}}
-          <div class="casting-ability-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-ability-id="{{this.id}}">
-            <div class="casting-ability-main">
-              {{#if this.itemId}}
-              {{#if this.img}}<img class="characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
-              {{/if}}
-              <div class="casting-ability-text">
-                <div class="casting-ability-title-row">
-                  <a class="casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-casting-ability{{else}}view-casting-ability{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-                  {{#if this.itemId}}<span class="casting-ability-level">{{this.points}} pts</span>{{else}}<span class="casting-ability-level">Nv {{this.level}}</span>{{/if}}
-                </div>
-                {{#if this.itemId}}
-                <div class="casting-ability-source">{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}</div>
-                {{else}}
-                <div class="casting-ability-source">Registro legado · {{this.source}}</div>
-                {{/if}}
-              </div>
-              <div class="item-controls casting-ability-controls">
-                <div class="gum-action-menu js-action-menu">
-                  <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da habilidade" aria-label="Opções da habilidade" role="button" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </a>
-                  <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
-                    <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                    <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                    <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem" title="Remover"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
-                  </div>
-                </div>
+                  <div class="item-controls support-card__controls">
+            <div class="gum-action-menu js-action-menu">
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da habilidade" aria-label="Opções da habilidade" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
+                <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
+                <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
+                <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
               </div>
             </div>
           </div>
-          {{/each}}
-          {{#unless castingAbilities.length}}
-          <div class="empty-placeholder compact">
-            <p>Nenhuma habilidade vinculada. Use <i class="fas fa-plus"></i> para selecionar uma vantagem ou desvantagem.</p>
-          </div>
-          {{/unless}}
-        </div>
-      </details>
+        </article>
+        {{/each}}
 
-       {{!-- Grupo fixo de Reservas de Energia (Magias) --}}
-      <div class="attack-group-list-v2 spell-energy-reserves-list">
-        <details class="attack-group-details gum-unified-section combat-meters-box spell-energy-reserves-group" data-group-id="spell-energy-reserves-group" {{collapsibleState "spell-energy-reserves-group" @root.collapsedData}}>
-          <summary class="group-summary gum-unified-header">
-            <div class="summary-left">
-              <i class="fas fa-chevron-right indicator"></i>
-              <i class="fas fa-battery-three-quarters item-icon"></i>
-              <span class="group-name">Reservas de Energia</span>
-            </div>
-            <div class="summary-right">
-              <span class="group-tag sp_cl">{{spellReserveCount}} reserva(s)</span>
-              <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva" aria-label="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-            </div>
-          </summary>
-          <div class="group-content spell-energy-reserves-content">
-            <div class="meter-list energy-reserves-list">
-              {{#each spellReserves}}
-              <article class="reserve-card energy-reserve-card energy-reserve-card--spell" data-reserve-id="{{@key}}" data-reserve-type="spell" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
-                <header class="energy-reserve-card-header">
-                  <i class="fas fa-magic energy-reserve-icon" aria-hidden="true"></i>
-                  <strong class="energy-reserve-name">{{this.name}}</strong>
-                  <div class="item-controls energy-reserve-controls">
-                    <div class="gum-action-menu js-action-menu">
-                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                        <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
-                      </div>
-                    </div>
-                  </div>
-                </header>
-                <div class="energy-reserve-value-controls">
-                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" title="Diminuir energia em uma unidade" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-                  <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" title="Aumentar energia em uma unidade" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
-                </div>
-                <div class="energy-reserve-meta" aria-hidden="true"><span>máx. <strong>{{this.max}}</strong></span>{{#if this.source}}<span class="energy-reserve-meta-separator">·</span><span>{{this.source}}</span>{{/if}}</div>
-              </article>
-                            {{/each}}
-              {{#unless spellReserveCount}}
-              <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>
-              {{/unless}}
+       {{#each spellReserves}}
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+          <span class="support-card__icon support-card__icon--spell"><i class="fas fa-magic" aria-hidden="true"></i></span>
+          <div class="support-card__body">
+            <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
+            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+          </div>
+          <div class="energy-reserve-value-controls support-card__value-controls">
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <div class="item-controls support-card__controls energy-reserve-controls">
+            <div class="gum-action-menu js-action-menu">
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></a>
+                <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>
+              </div>
             </div>
           </div>
-</details>
-      </div>
+        </article>
+        {{/each}}
+      </section>
+      {{/if}}
 
       {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
       <div class="spell-groups-grid">
@@ -1044,112 +1003,69 @@
         </div>
 
         <div class="skills-header-buttons">
-          <a class="item-create" data-type="power" title="Novo Poder"><i class="fas fa-plus"></i> Novo</a>
+                    <div class="gum-action-menu js-action-menu support-add-menu">
+            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="Adicionar à aba Poderes" aria-label="Adicionar à aba Poderes" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> Adicionar</a>
+            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="Adicionar à aba Poderes">
+              <a class="gum-action-menu__item create-primary-item" data-type="power" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>Novo poder</strong><small>Criar um poder na ficha</small></span></a>
+              <a class="gum-action-menu__item add-power-source" role="menuitem"><i class="fas fa-link"></i><span><strong>Vincular fonte</strong><small>Usar uma vantagem ou desvantagem</small></span></a>
+              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>Criar reserva</strong><small>Adicionar energia para poderes</small></span></a>
+            </div>
+          </div>
           <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
-    <details class="casting-ability-box skill-block casting-abilities-box power-sources-box gum-unified-section" data-group-id="power-sources" {{collapsibleState "power-sources" @root.collapsedData}}>
-      <summary class="block-header casting-ability-header gum-unified-header">
-        <div class="summary-left">
-          <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
-          <i class="fas fa-bolt item-icon" aria-hidden="true"></i>
-          <h4>Fonte de Poder</h4>
-        </div>
-        <div class="summary-right">
-          <span class="group-tag pw">{{powerSources.length}} fonte(s)</span>
-          <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder" aria-label="Adicionar Fonte de Poder"><i class="fas fa-plus"></i></a>
-        </div>
-      </summary>
-      <div class="casting-abilities-list group-content">
+      {{#if powerSupportCount}}
+      <section class="support-card-grid support-card-grid--power{{#if powerSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Fontes e reservas de poder">
         {{#each powerSources}}
-        <div class="casting-ability-card power-source-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-power-source-id="{{this.id}}">
-          <div class="casting-ability-main">
-            {{#if this.itemId}}
-            {{#if this.img}}<img class="characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
-            {{/if}}
-            <div class="casting-ability-text">
-              <div class="casting-ability-title-row">
-                <a class="casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-power-source{{else}}view-power-source{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-                {{#if this.itemId}}<span class="casting-ability-level">{{this.points}} pts</span>{{else}}<span class="casting-ability-level">Nv {{this.level}}</span>{{/if}}
-              </div>
-              {{#if this.itemId}}
-              <div class="casting-ability-source">{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}</div>
-              {{else}}
-              <div class="casting-ability-source">Registro legado · {{this.source}} · {{this.focus}}</div>
-              <hr class="casting-ability-divider">
-              <div class="casting-ability-source talent">{{this.power_talent_name}} · Nv {{this.power_talent_level}}</div>
-              {{/if}}
+        <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-power-source-id="{{this.id}}">
+          {{#if this.itemId}}
+          {{#if this.img}}<img class="support-card__image characteristic-link-card__image" src="{{this.img}}" alt="">{{else}}<span class="support-card__image characteristic-link-card__missing"><i class="fas fa-unlink"></i></span>{{/if}}
+          {{else}}<span class="support-card__icon support-card__icon--power"><i class="fas fa-bolt"></i></span>{{/if}}
+          <div class="support-card__body">
+            <div class="support-card__title-row">
+              <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-power-source{{else}}view-power-source{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
             </div>
-            <div class="item-controls casting-ability-controls">
-              <div class="gum-action-menu js-action-menu">
-                <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da fonte" aria-label="Opções da fonte" role="button" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-ellipsis-v"></i>
-                </a>
-                <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
-                  <a class="item-control view-power-source gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                  <a class="item-control edit-power-source gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                  <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem" title="Remover"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
-                </div>
+            <div class="support-card__meta"><span class="support-card__kind">Fonte</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
+          </div>
+          <div class="item-controls support-card__controls">
+            <div class="gum-action-menu js-action-menu">
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da fonte" aria-label="Opções da fonte" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
+                <a class="item-control view-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
+                <a class="item-control edit-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
+                <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
               </div>
             </div>
           </div>
-        </div>
+        </article>
         {{/each}}
-        {{#unless powerSources.length}}
-        <div class="empty-placeholder compact">
-          <p>Nenhuma fonte vinculada. Use <i class="fas fa-plus"></i> para selecionar uma vantagem ou desvantagem.</p>
-        </div>
-        {{/unless}}
-      </div>
-    </details>
-
-       {{!-- Grupo fixo de Reservas de Energia (Poderes) --}}
-      <div class="attack-group-list-v2 spell-energy-reserves-list">
-        <details class="attack-group-details gum-unified-section combat-meters-box spell-energy-reserves-group" data-group-id="power-energy-reserves-group" {{collapsibleState "power-energy-reserves-group" @root.collapsedData}}>
-          <summary class="group-summary gum-unified-header">
-            <div class="summary-left">
-              <i class="fas fa-chevron-right indicator"></i>
-              <i class="fas fa-battery-three-quarters item-icon"></i>
-              <span class="group-name">Reservas de Energia</span>
-            </div>
-            <div class="summary-right">
-              <span class="group-tag pw">{{powerReserveCount}} reserva(s)</span>
-              <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva" aria-label="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-            </div>
-          </summary>
-          <div class="group-content spell-energy-reserves-content">
-            <div class="meter-list energy-reserves-list">
-              {{#each powerReserves}}
-              <article class="reserve-card energy-reserve-card energy-reserve-card--power" data-reserve-id="{{@key}}" data-reserve-type="power" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
-                <header class="energy-reserve-card-header">
-                  <i class="fas fa-bolt energy-reserve-icon" aria-hidden="true"></i>
-                  <strong class="energy-reserve-name">{{this.name}}</strong>
-                  <div class="item-controls energy-reserve-controls">
-                    <div class="gum-action-menu js-action-menu">
-                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                        <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
-                      </div>
-                    </div>
-                  </div>
-                </header>
-                <div class="energy-reserve-value-controls">
-                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" title="Diminuir energia em uma unidade" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-                  <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" title="Aumentar energia em uma unidade" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
-                </div>
-                <div class="energy-reserve-meta" aria-hidden="true"><span>máx. <strong>{{this.max}}</strong></span>{{#if this.source}}<span class="energy-reserve-meta-separator">·</span><span>{{this.source}}</span>{{/if}}</div>
-              </article>
-                            {{/each}}
-              {{#unless powerReserveCount}}
-              <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>
-              {{/unless}}
+        {{#each powerReserves}}
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+          <span class="support-card__icon support-card__icon--power"><i class="fas fa-bolt" aria-hidden="true"></i></span>
+          <div class="support-card__body">
+            <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
+            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+          </div>
+          <div class="energy-reserve-value-controls support-card__value-controls">
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <div class="item-controls support-card__controls energy-reserve-controls">
+            <div class="gum-action-menu js-action-menu">
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></a>
+                <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>
+              </div>
             </div>
           </div>
-</details>
-      </div>
+        </article>
+        {{/each}}
+      </section>
+      {{/if}}
 
       {{!-- LISTA DE PODERES (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
 

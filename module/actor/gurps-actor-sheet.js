@@ -1062,6 +1062,10 @@ async getData(options) {
                 context.powerReserveCount = Object.keys(context.powerReserves).length;
                 context.castingAbilities = this._prepareCastingAbilities();
                 context.powerSources = this._preparePowerSources();
+                context.spellSupportCount = context.castingAbilities.length + context.spellReserveCount;
+                context.powerSupportCount = context.powerSources.length + context.powerReserveCount;
+                context.spellSupportCompactPair = context.castingAbilities.length === 1 && context.spellReserveCount === 1;
+                context.powerSupportCompactPair = context.powerSources.length === 1 && context.powerReserveCount === 1;
                 context.appliedModels = this._prepareAppliedModels();
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
@@ -1938,6 +1942,7 @@ html.on("click", ".add-power-source", (ev) => this._onAddPowerSource(ev));
 html.on("click", ".edit-power-source", (ev) => this._onEditPowerSource(ev));
 html.on("click", ".view-power-source", (ev) => this._onViewPowerSource(ev));
 html.on("click", ".delete-power-source", (ev) => this._onDeletePowerSource(ev));
+html.on("click", ".create-primary-item", (ev) => this._onCreatePrimaryItem(ev));
 
 // -------------------------------------------------------------
 //  ASPECTOS SOCIAIS
@@ -4236,7 +4241,7 @@ _setupActionMenuListeners(html) {
   $(document).on(`click${namespace}`, (ev) => this._handleDocumentActionMenuClick(ev));
 
   html.on("click", ".js-action-menu-toggle", (ev) => this._onActionMenuToggle(ev));
-  html.on("click", ".js-action-menu-panel .item-control", () => this._closeAllActionMenus());
+  html.on("click", ".js-action-menu-panel .gum-action-menu__item", () => this._closeAllActionMenus());
 }
 
 _handleDocumentActionMenuClick(ev) {
@@ -4485,6 +4490,18 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
   });
 }
 
+async _onCreatePrimaryItem(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const type = String(ev.currentTarget.dataset.type || "");
+  if (!["spell", "power"].includes(type)) return;
+
+  const name = type === "spell" ? "Nova Magia" : "Novo Poder";
+  const [item] = await this.actor.createEmbeddedDocuments("Item", [{ name, type }]);
+  item?.sheet?.render(true);
+}
+
 async _onAddEnergyReserve(ev) {
   ev.preventDefault();
   const reserveType = ev.currentTarget?.dataset?.reserveType === "power" ? "power" : "spell";
@@ -4497,7 +4514,8 @@ async _onAddEnergyReserve(ev) {
 
 async _onEditEnergyReserve(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".reserve-card");
+    ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]");
   const reserveId = card?.dataset?.reserveId;
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   if (!reserveId) return;
@@ -4511,7 +4529,8 @@ async _onEditEnergyReserve(ev) {
 
 async _onDeleteEnergyReserve(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".reserve-card");
+    ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]");
   const reserveId = card?.dataset?.reserveId;
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   if (!reserveId) return;
@@ -4529,7 +4548,8 @@ async _onDeleteEnergyReserve(ev) {
 
 async _onAdjustEnergyReserve(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".reserve-card");
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]");
   const reserveId = card?.dataset?.reserveId;
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   const adjustment = Number(ev.currentTarget.dataset.adjustment) || 0;
@@ -4896,7 +4916,7 @@ async _onAddCastingAbility(ev) {
 
 async _onEditCastingAbility(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".casting-ability-card");
+  const card = ev.currentTarget.closest("[data-ability-id]");
   const abilityId = card?.dataset?.abilityId;
   if (!abilityId) return;
 
@@ -4924,7 +4944,8 @@ async _onEditCastingAbility(ev) {
 
 async _onDeleteCastingAbility(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".casting-ability-card");
+    ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-ability-id]");
   const abilityId = card?.dataset?.abilityId;
   if (!abilityId) return;
 
@@ -4957,15 +4978,18 @@ async _onDeleteCastingAbility(ev) {
 
 _onViewCastingAbility(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".casting-ability-card");
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-ability-id]");
   const abilityId = card?.dataset?.abilityId;
   if (!abilityId) return;
 
   const ability = this._getCastingAbilityById(abilityId);
   if (!ability) return;
 
-    if (ability.itemId) {
-    return this.actor.items.get(ability.itemId)?.sheet?.render(true);
+  if (ability.itemId) {
+    const item = this.actor.items.get(ability.itemId);
+    if (!item) return ui.notifications.warn("A característica vinculada não foi encontrada.");
+    return this._renderItemQuickView(item);
   }
 
   const description = ability.description || "<em>Sem descrição.</em>";
@@ -5232,7 +5256,7 @@ async _onAddPowerSource(ev) {
 
 async _onEditPowerSource(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".power-source-card");
+  const card = ev.currentTarget.closest("[data-power-source-id]");
   const sourceId = card?.dataset?.powerSourceId;
   if (!sourceId) return;
 
@@ -5260,7 +5284,8 @@ async _onEditPowerSource(ev) {
 
 async _onDeletePowerSource(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".power-source-card");
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-power-source-id]");
   const sourceId = card?.dataset?.powerSourceId;
   if (!sourceId) return;
 
@@ -5297,15 +5322,18 @@ async _onDeletePowerSource(ev) {
 
 _onViewPowerSource(ev) {
   ev.preventDefault();
-  const card = ev.currentTarget.closest(".power-source-card");
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest("[data-power-source-id]");
   const sourceId = card?.dataset?.powerSourceId;
   if (!sourceId) return;
 
   const source = this._getPowerSourceById(sourceId);
   if (!source) return;
 
-    if (source.itemId) {
-    return this.actor.items.get(source.itemId)?.sheet?.render(true);
+  if (source.itemId) {
+    const item = this.actor.items.get(source.itemId);
+    if (!item) return ui.notifications.warn("A característica vinculada não foi encontrada.");
+    return this._renderItemQuickView(item)
   }
 
   const description = source.description || "<em>Sem descrição.</em>";
