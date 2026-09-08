@@ -917,3 +917,320 @@
     color: var(--gum-text-claro);
 }
 .gum.gm-screen .active-mod-tag.pending-effect small { color: var(--gum-accent-gold); font-size: 0.82em; }
+
+/* ================================================================== */
+/* TEMA MINIMALISTA                                                   */
+/* Superfícies, em vez de contornos, organizam a hierarquia visual.   */
+/* ================================================================== */
+.gum.gm-screen {
+    --gm-canvas: var(--gum-bg-sidebar);
+    --gm-panel: var(--gum-bg-darkest);
+    --gm-surface: var(--gum-bg-dark);
+    --gm-surface-raised: var(--gum-bg-medium);
+    --gm-surface-hover: color-mix(in srgb, var(--gum-bg-medium) 82%, var(--gum-accent-gold));
+    --gm-muted: var(--gum-text-medio);
+    --gm-radius: 8px;
+    --gm-radius-small: 5px;
+}
+
+.gum.gm-screen .window-content {
+    background: var(--gm-canvas);
+}
+
+.gum.gm-screen .gm-screen-layout {
+    gap: 2px;
+    background: color-mix(in srgb, var(--gum-bg-medium) 55%, transparent);
+}
+
+.gum.gm-screen .monitor-column,
+.gum.gm-screen .controls-column {
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .gum-monitor-tabs {
+    gap: 4px;
+    padding: 8px;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .gum-monitor-tabs .item {
+    padding: 8px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    color: var(--gm-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+}
+
+.gum.gm-screen .gum-monitor-tabs .item:hover {
+    color: var(--gum-text-claro);
+    background: var(--gm-surface);
+}
+
+.gum.gm-screen .gum-monitor-tabs .item.active {
+    color: var(--gum-accent-gold);
+    background: color-mix(in srgb, var(--gum-accent-gold) 12%, var(--gm-surface));
+    border: 0;
+}
+
+.gum.gm-screen .monitor-list {
+    gap: 6px;
+    padding: 4px 8px 10px;
+}
+
+.gum.gm-screen .monitor-card {
+    gap: 8px;
+    padding: 9px;
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+    box-shadow: none;
+}
+
+.gum.gm-screen .monitor-card:hover {
+    border: 0;
+    background: var(--gm-surface-raised);
+    box-shadow: none;
+    transform: none;
+}
+
+.gum.gm-screen .monitor-card.active-turn {
+    border: 0 !important;
+    background: color-mix(in srgb, var(--gum-accent-green) 18%, var(--gm-surface)) !important;
+    box-shadow: inset 3px 0 var(--gum-accent-green) !important;
+}
+
+.gum.gm-screen .actor-identity img {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+}
+
+.gum.gm-screen .mini-bar {
+    height: 6px;
+    border: 0;
+    background: color-mix(in srgb, var(--gm-panel) 80%, black);
+}
+
+.gum.gm-screen .passive-defenses {
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 6px 7px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: color-mix(in srgb, var(--gm-panel) 72%, transparent);
+}
+
+.gum.gm-screen .passive-defenses .sep { display: none; }
+
+.gum.gm-screen .active-mods-zone {
+    min-height: 26px;
+    padding: 4px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: color-mix(in srgb, var(--gm-panel) 54%, transparent);
+}
+
+.gum.gm-screen .active-mod-tag,
+.gum.gm-screen .active-mod-tag.pending-effect {
+    padding: 2px 7px;
+    border: 0;
+    border-radius: 999px;
+}
+
+.gum.gm-screen .sidebar-collapsible-stack {
+    gap: 4px;
+    padding: 8px;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .collapsible-block {
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+}
+
+.gum.gm-screen .collapse-toggle {
+    min-height: 32px;
+    padding: 6px 9px;
+    border-radius: var(--gm-radius);
+}
+
+.gum.gm-screen .collapse-toggle:hover { background: var(--gm-surface-raised); }
+
+.gum.gm-screen .quick-rollers,
+.gum.gm-screen .manual-mod-toolbar {
+    gap: 7px;
+    padding: 7px;
+    border: 0;
+    border-radius: 0 0 var(--gm-radius) var(--gm-radius);
+    background: color-mix(in srgb, var(--gm-panel) 44%, var(--gm-surface));
+    box-shadow: none;
+}
+
+.gum.gm-screen .manual-mod-toolbar.active {
+    background: color-mix(in srgb, var(--gum-accent-gold) 13%, var(--gm-surface));
+    box-shadow: inset 3px 0 var(--gum-accent-gold);
+}
+
+.gum.gm-screen .manual-name,
+.gum.gm-screen .value-controls,
+.gum.gm-screen .quick-rollers input,
+.gum.gm-screen .qr-mod-display {
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .step-btn,
+.gum.gm-screen .activate-manual-btn,
+.gum.gm-screen .preset-btn,
+.gum.gm-screen .qr-btn,
+.gum.gm-screen .qr-toggle-mode,
+.gum.gm-screen .combat-btn {
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: var(--gm-surface-raised);
+}
+
+.gum.gm-screen .preset-btn { color: var(--gm-muted); }
+
+.gum.gm-screen .gm-request-test {
+    min-height: 34px;
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gum-accent-gold);
+    color: var(--gm-panel);
+    font-weight: 700;
+}
+
+.gum.gm-screen .combat-controls {
+    gap: 5px;
+    padding: 0;
+    background: transparent;
+}
+
+.gum.gm-screen .palette-actions {
+    gap: 8px;
+    padding: 10px 14px;
+    border: 0;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .main-tab-selector {
+    gap: 3px;
+    padding: 3px;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+}
+
+.gum.gm-screen .main-tab-btn {
+    min-width: 30px;
+    padding: 5px 9px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: transparent;
+}
+
+.gum.gm-screen .main-tab-btn:hover { border: 0; background: var(--gm-surface-raised); }
+
+.gum.gm-screen .main-tab-btn.active {
+    border: 0;
+    color: var(--gum-text-claro);
+    background: color-mix(in srgb, var(--gum-accent-gold) 28%, var(--gm-surface-raised));
+}
+
+.gum.gm-screen .mod-search {
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+}
+
+.gum.gm-screen .mod-search:focus {
+    border: 0;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gum-accent-gold) 70%, transparent);
+}
+
+.gum.gm-screen .clear-selection-btn,
+.gum.gm-screen .add-group-btn {
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+}
+
+.gum.gm-screen .clear-selection-btn:hover,
+.gum.gm-screen .add-group-btn:hover { border: 0; background: var(--gm-surface-raised); }
+
+.gum.gm-screen .screen-body { padding: 14px; }
+
+.gum.gm-screen .modifiers-dashboard .modular-grid { gap: 10px; }
+
+.gum.gm-screen .modifier-group {
+    border: 0;
+    border-radius: var(--gm-radius);
+    background: var(--gm-surface);
+    box-shadow: none;
+    overflow: visible;
+}
+
+.gum.gm-screen .modifier-group .group-header {
+    min-height: 38px;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: var(--gm-radius) var(--gm-radius) 0 0;
+    background: var(--gm-surface-raised);
+}
+
+.gum.gm-screen .group-title {
+    color: var(--gum-text-claro);
+    font-family: var(--gum-font-primary);
+    font-size: 0.88rem;
+    letter-spacing: 0.03em;
+}
+
+.gum.gm-screen .group-content-area {
+    gap: 4px;
+    padding: 6px;
+}
+
+.gum.gm-screen .palette-mod {
+    padding: 6px 8px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: color-mix(in srgb, var(--gm-panel) 62%, var(--gm-surface));
+    color: var(--gum-text-claro);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gum.gm-screen .palette-mod:hover {
+    border: 0;
+    color: var(--gum-text-claro);
+    background: var(--gm-surface-hover);
+    box-shadow: none;
+    transform: none;
+}
+
+.gum.gm-screen .palette-mod.active {
+    border: 0;
+    color: var(--gm-panel);
+    background: var(--gum-accent-gold);
+    box-shadow: none;
+}
+
+.gum.gm-screen .group-actions-menu {
+    border: 0;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen button:focus-visible,
+.gum.gm-screen a:focus-visible,
+.gum.gm-screen input:focus-visible {
+    outline: 2px solid var(--gum-accent-gold);
+    outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+    .gum.gm-screen .gm-screen-layout { gap: 2px; }
+    .gum.gm-screen .monitor-column { border: 0; }
+}
