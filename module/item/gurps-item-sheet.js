@@ -234,6 +234,11 @@ _promptMultipleReferences(parsedList) {
     default: Object.keys(buttons)[0] 
   }).render(true); 
 } 
+
+    _normalizeAttackMinStrength(value) {
+        const values = Array.isArray(value) ? value : String(value ?? "").split(",");
+        return values.map(entry => String(entry ?? "").trim()).filter(Boolean).at(-1) || "";
+    }
  
     async getData(options) { 
         // Recupera os dados básicos 
@@ -242,7 +247,8 @@ _promptMultipleReferences(parsedList) {
  
         // Garante acesso fácil ao system e flags 
         context.system = itemData.system; 
-        context.flags = itemData.flags; 
+        context.flags = itemData.flags;
+        context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength); 
 
         context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
         context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => {
@@ -669,15 +675,32 @@ _promptMultipleReferences(parsedList) {
         html.find('.spell-difficulty-select').on('change', toggleSpellLinearPoints);
         toggleSpellLinearPoints();
 
-        const toggleSpellAttackFields = () => {
-            const usesAttack = html.find('.spell-uses-attack-toggle').is(':checked');
-                        const grid = html.find('.spell-uses-attack-toggle').closest('.spell-power-attack-grid');
-            grid.find('select[name="system.attack_type"], input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"]')
+        const toggleAttackFields = (toggleSelector) => {
+            const toggle = html.find(toggleSelector);
+            const grid = toggle.closest('.spell-power-attack-grid');
+            const usesAttack = toggle.is(':checked');
+            const attackType = grid.find('.spell-power-attack-type').val() || "ranged";
+
+            grid.find('.spell-power-attack-type, input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"], input[name="system.attack_roll.min_strength"]')
                 .prop('disabled', !usesAttack)
                 .toggleClass('is-disabled', !usesAttack);
+
+                grid.find('.spell-power-attack-type-fields').each((_index, element) => {
+                const fields = $(element);
+                const isActiveType = fields.data('attackFields') === attackType;
+                fields.toggleClass('is-hidden', !isActiveType);
+                fields.find('input, select').prop('disabled', !usesAttack || !isActiveType);
+            });
         };
-        html.find('.spell-uses-attack-toggle').on('change', toggleSpellAttackFields);
-        toggleSpellAttackFields();
+
+        const bindAttackFields = (toggleSelector) => {
+            const toggle = html.find(toggleSelector);
+            const grid = toggle.closest('.spell-power-attack-grid');
+            toggle.on('change', () => toggleAttackFields(toggleSelector));
+            grid.find('.spell-power-attack-type').on('change', () => toggleAttackFields(toggleSelector));
+            toggleAttackFields(toggleSelector);
+        };
+        bindAttackFields('.spell-uses-attack-toggle');
 
         const togglePowerLinearPoints = () => {
             const isLinear = html.find('.power-difficulty-select').val() === "linear";
@@ -688,15 +711,7 @@ _promptMultipleReferences(parsedList) {
         html.find('.power-difficulty-select').on('change', togglePowerLinearPoints);
         togglePowerLinearPoints();
 
-        const togglePowerAttackFields = () => {
-            const usesAttack = html.find('.power-uses-attack-toggle').is(':checked');
-                        const grid = html.find('.power-uses-attack-toggle').closest('.spell-power-attack-grid');
-            grid.find('select[name="system.attack_type"], input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"]')
-                .prop('disabled', !usesAttack)
-                .toggleClass('is-disabled', !usesAttack);
-        };
-        html.find('.power-uses-attack-toggle').on('change', togglePowerAttackFields);
-        togglePowerAttackFields();
+        bindAttackFields('.power-uses-attack-toggle');
 
 
         const updateTreeParentState = (select) => {
@@ -2045,7 +2060,13 @@ const rangedFields = `
         return data; 
     } 
  
- async _updateObject(event, formData) { 
+ async _updateObject(event, formData) {
+        const attackMinStrengthPath = "system.attack_roll.min_strength";
+        if (formData[attackMinStrengthPath] !== undefined) {
+            formData[attackMinStrengthPath] = this._normalizeAttackMinStrength(formData[attackMinStrengthPath]);
+        }
+    
+
         if (this.item?.type === "gm_modifier") { 
             const entriesByIndex = new Map(); 
             for (const [key, value] of Object.entries(formData)) { 

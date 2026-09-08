@@ -4673,7 +4673,7 @@ color:#121114;
 
 .gum.sheet.item .skill-details-dashboard .skill-dashboard-field-card input,
 .gum.sheet.item .skill-details-dashboard .skill-dashboard-field-card select {
-  text-align: left;
+  text-align: center;
 }
 
 .gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control input:focus,
@@ -5640,7 +5640,7 @@ color:#121114;
 
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control input[type="text"],
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control select {
-  text-align: left;
+  text-align: center;
 }
 
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-stacked-control {
@@ -5711,6 +5711,19 @@ color:#121114;
   min-height: 54px;
 }
 
+.gum.sheet.item .spell-power-dashboard .spell-power-result-grid.spell-power-attack-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Let the active type cards participate in the same grid as the common fields. */
+.gum.sheet.item .spell-power-dashboard .spell-power-attack-type-fields {
+  display: contents;
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-attack-type-fields.is-hidden {
+  display: none;
+}
+
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control input:disabled,
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control select:disabled {
   cursor: not-allowed;
@@ -5727,6 +5740,9 @@ color:#121114;
 }
 
 @media (max-width: 520px) {
+    .gum.sheet.item .spell-power-dashboard .spell-power-result-grid.spell-power-attack-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .gum.sheet.item .spell-power-dashboard .skill-dashboard-toggles,
   .gum.sheet.item .spell-power-dashboard .spell-power-core-grid,
   .gum.sheet.item .spell-power-dashboard .spell-power-result-grid,

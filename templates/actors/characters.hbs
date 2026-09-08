@@ -926,7 +926,7 @@
                     <div class="spell-meta-cell spell-pill-stat attack">
                       <span class="spell-meta-label">Atq</span>
                       {{#if this.system.attack_nh}}
-                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
                       {{else}}
                       <span class="spell-meta-value" title="Configure uma perícia de ataque na magia.">—</span>
                       {{/if}}
@@ -1106,7 +1106,7 @@
                     <div class="spell-meta-cell spell-pill-stat attack">
                       <span class="spell-meta-label">Atq</span>
                       {{#if this.system.attack_nh}}
-                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
                       {{else}}
                       <span class="spell-meta-value" title="Configure uma perícia de ataque no poder.">—</span>
                       {{/if}}
@@ -1755,7 +1755,7 @@
                           <div class="spell-meta-cell spell-pill-stat attack">
                             <span class="spell-meta-label">Atq</span>
                             {{#if this.system.attack_nh}}
-                            <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                            <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
                             {{else}}
                             <span class="spell-meta-value" title="Configure uma perícia de ataque.">—</span>
                             {{/if}}

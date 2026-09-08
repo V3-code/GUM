@@ -630,7 +630,16 @@
       "attack_type": "ranged",
       "attack_roll": {
         "skill_name": "",
-        "skill_level_mod": 0
+        "skill_level_mod": 0,
+        "reach": "C",
+        "parry": "",
+        "min_strength": "",
+        "accuracy": "",
+        "range": "",
+        "rof": "1",
+        "shots": "",
+        "bulk": "",
+        "rcl": ""
       },
       "damage": {
         "formula": "",
@@ -689,7 +698,16 @@
       "attack_type": "ranged",
       "attack_roll": {
         "skill_name": "",
-        "skill_level_mod": 0
+        "skill_level_mod": 0,
+        "reach": "C",
+        "parry": "",
+        "min_strength": "",
+        "accuracy": "",
+        "range": "",
+        "rof": "1",
+        "shots": "",
+        "bulk": "",
+        "rcl": ""
       },
       "damage": {
         "formula": "",

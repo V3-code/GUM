@@ -482,6 +482,10 @@ export class GurpsRollPrompt extends FormApplication {
             : (itemName ? this.actor.items.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null : null);
         if (!item) return { item: null, attack: null };
 
+        if (["spell", "power"].includes(item.type) && item.system?.uses_attack) {
+            return { item, attack: item.system.attack_roll || null };
+        }
+
         const attackId = this.rollData?.attackId;
         if (!attackId) {
             const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
@@ -670,6 +674,9 @@ export class GurpsRollPrompt extends FormApplication {
 
     _getRollSourceAttack(item = null) {
         if (!item) return null;
+        if (["spell", "power"].includes(item.type) && item.system?.uses_attack) {
+            return item.system.attack_roll || null;
+        }
         const attackId = String(this.rollData?.attackId ?? "").trim();
         if (attackId) {
             return item.system?.melee_attacks?.[attackId] ?? item.system?.ranged_attacks?.[attackId] ?? null;

@@ -1,6 +1,6 @@
 # Licença – Creative Commons BY-NC-ND 4.0 International
 
-**Autor:** Victor Valim Valentim  
+**Autor:** V3-code
 **Projeto:** GURPS GUM – Sistema não oficial de GURPS para Foundry VTT  
 **Versão:** v1.1.6-beta de Setembro de 2026
 
