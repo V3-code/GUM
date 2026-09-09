@@ -199,7 +199,7 @@
 .gum.gm-screen .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .gum.gm-screen .actor-identity { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; overflow: hidden; }
 .gum.gm-screen .actor-identity img { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #555; object-fit: cover; flex-shrink: 0; }
-.gum.gm-screen .actor-identity .actor-name { font-weight: 700; font-size: 1em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gum.gm-screen .actor-identity .actor-name { font-weight: 700; font-size: 1em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
 /* Barras */
 .gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 112px; flex-shrink: 0; }
@@ -542,7 +542,7 @@
     line-height: 1.2;
     color: var(--gum-accent-gold);
     text-transform: uppercase;
-    white-space: nowrap;
+    white-space: pre-wrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -616,7 +616,7 @@
 
 .gum.gm-screen .mod-left { display: flex; align-items: center; gap: 6px; overflow: hidden; flex-grow: 1; }
 .gum.gm-screen .mod-icon { width: 18px; height: 18px; border-radius: 2px; flex-shrink: 0; opacity: 0.8; }
-.gum.gm-screen .mod-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gum.gm-screen .mod-name { white-space: pre-wrap; overflow: hidden; text-overflow: ellipsis; }
 
 .gum.gm-screen .mod-right { display: flex; align-items: center; gap: 6px; }
 .gum.gm-screen .mod-val {
@@ -1000,11 +1000,45 @@
     box-shadow: inset 3px 0 var(--gum-accent-green) !important;
 }
 
+.gum.gm-screen .actor-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    overflow: visible;
+}
+
+.gum.gm-screen .card-top {
+    width: 100%;
+}
+
 .gum.gm-screen .actor-identity img {
     width: 38px;
     height: 38px;
     border: 0;
     border-radius: var(--gm-radius-small);
+}
+
+.gum.gm-screen .actor-identity .vital-bars {
+    width: 140px;
+    margin-left: auto;
+}
+
+.gum.gm-screen .actor-name-row {
+    min-width: 0;
+    padding: 0 2px;
+}
+
+.gum.gm-screen .actor-identity .actor-name {
+    display: block;
+    width: 100%;
+    color: var(--gum-accent-gold);
+    font-size: 9px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
 
 .gum.gm-screen .mini-bar {

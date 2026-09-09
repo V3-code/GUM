@@ -205,22 +205,24 @@
      data-combatant-id="{{actor.combatantId}}"
      title="Clique para aplicar a seleção. Segure Shift para manter toda a seleção.">
 
-    <div class="card-top">
-        <div class="actor-identity">
-            <img src="{{actor.img}}" />
+    <div class="actor-identity">
+        <div class="card-top">
+            <img src="{{actor.img}}" alt="Retrato de {{actor.name}}" />
+            <div class="vital-bars">
+                <div class="vital-row" title="Pontos de Vida: {{actor.hp.value}} de {{actor.hp.max}}">
+                    <span class="vital-label">PV</span>
+                    <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
+                    <span class="vital-value">{{actor.hp.value}}/{{actor.hp.max}}</span>
+                </div>
+                <div class="vital-row" title="Pontos de Fadiga: {{actor.fp.value}} de {{actor.fp.max}}">
+                    <span class="vital-label">PF</span>
+                    <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
+                    <span class="vital-value">{{actor.fp.value}}/{{actor.fp.max}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="actor-name-row">
             <span class="actor-name">{{actor.name}}</span>
-</div>
-        <div class="vital-bars">
-            <div class="vital-row" title="Pontos de Vida: {{actor.hp.value}} de {{actor.hp.max}}">
-                <span class="vital-label">PV</span>
-                <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
-                <span class="vital-value">{{actor.hp.value}}/{{actor.hp.max}}</span>
-            </div>
-            <div class="vital-row" title="Pontos de Fadiga: {{actor.fp.value}} de {{actor.fp.max}}">
-                <span class="vital-label">PF</span>
-                <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
-                <span class="vital-value">{{actor.fp.value}}/{{actor.fp.max}}</span>
-            </div>
         </div>
     </div>
     

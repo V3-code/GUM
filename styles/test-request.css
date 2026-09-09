@@ -111,7 +111,7 @@
 .gum-test-request .request-card-icon { width: 36px; height: 36px; flex-basis: 36px; border-color: rgba(95,67,26,.45); color: #76531e; background: rgba(126,91,36,.1); }
 .request-card-kicker { display: block; color: #836a43; font-size: .58rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; }
 .gum-test-request h3 { margin: 1px 0 0; border: 0; color: #2d261b; font-size: 1.05rem; line-height: 1.1; }
-.gum-test-request header p { margin: 4px 0 0; color: #665d4f; font-size: .74rem; }
+.gum-test-request header p { margin: 4px 0 0; color: #665d4f; font-size: .74rem; text-align: justify;}
 .request-summary { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px 2px; }
 .request-summary-pill { padding: 3px 6px; border: 1px solid rgba(94,70,33,.18); border-radius: 10px; color: #5c4a2f; background: rgba(255,255,255,.35); font-size: .62rem; font-weight: 700; }
 .request-summary-pill.purpose { color: #465a5e; }.request-summary-pill.modifier { color: #743b32; }
