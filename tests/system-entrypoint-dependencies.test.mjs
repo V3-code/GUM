@@ -9,18 +9,27 @@ const systemRoot = path.resolve(testDir, "..");
 const entrypoint = path.join(systemRoot, "scripts", "main.js");
 
 test("todos os imports locais do entrypoint existem no pacote do sistema", async () => {
-  const source = await fs.readFile(entrypoint, "utf8");
-  const specifiers = [...source.matchAll(/(?:from|import)\s*(?:\(\s*)?[\"']([^\"']+)[\"']/g)]
-    .map((match) => match[1])
-    .filter((specifier) => specifier.startsWith("."));
-
   const missing = [];
-  for (const specifier of specifiers) {
-    const resolved = path.resolve(path.dirname(entrypoint), specifier);
-    try {
-      await fs.access(resolved);
-    } catch {
-      missing.push(specifier);
+  const pending = [entrypoint];
+  const visited = new Set();
+  while (pending.length) {
+    const current = pending.pop();
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    const source = await fs.readFile(current, "utf8");
+    const specifiers = [...source.matchAll(/(?:from|import)\s*(?:\(\s*)?[\"']([^\"']+)[\"']/g)]
+      .map((match) => match[1])
+      .filter((specifier) => specifier.startsWith("."));
+
+    for (const specifier of specifiers) {
+      const resolved = path.resolve(path.dirname(current), specifier);
+      try {
+        await fs.access(resolved);
+        pending.push(resolved);
+      } catch {
+        missing.push(path.relative(systemRoot, resolved));
+      }
     }
   }
 
