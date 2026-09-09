@@ -1,4 +1,4 @@
-import {convertGCSContent, gcsDecimal, GCS_CONVERTER_VERSION, canonicalGCS} from './gcs-item-import-conversion.mjs';
+import {convertGCSContent, gcsDecimal, GCS_CONVERTER_VERSION, gcsImportSignature} from './gcs-item-import-conversion.mjs';
 import {validateTemplateBlocks} from './template-application-plan.mjs';
 export const GCS_IMPORT_LIMITS={bytes:16*1024*1024,files:100,depth:30,nodes:100000,items:10000};
 const families={t:'adq',m:'adm',s:'skl',q:'skl',p:'spl',r:'spl',e:'eqp',f:'eqm'};
@@ -20,7 +20,7 @@ export function validateGCSDraft(draft) {
   const types=['template','advantage','disadvantage','skill','spell','equipment','modifier','eqp_modifier'];
   if(!types.includes(draft.type)||typeof draft.name!=='string'||!draft.system||Object.keys(draft).some(k=>!['name','type','system','flags','effects','img'].includes(k))||draft.effects?.length)throw new Error('Documento de importação não permitido');
   const p=draft.flags?.gum?.gcsImport;
-  if(!p||p.converter!==GCS_CONVERTER_VERSION||p.signature!==canonicalGCS({family:p.family,source:p.source,path:p.path??[]}))throw new Error('Plano de importação inválido');
+  if(!p||p.converter!==GCS_CONVERTER_VERSION||p.signature!==gcsImportSignature(p))throw new Error('Plano de importação inválido');
   if(draft.type==='template')validateTemplateBlocks(draft.system.blocks);
 }
 export function classifyGCSContent(data,filename) {

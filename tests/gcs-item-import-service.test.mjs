@@ -63,3 +63,15 @@ test('invalid later file preserves report of earlier writes and does not abort v
  const result=await new GCSItemImportService(harness()).execute({files:[data.files[0],bad,data.files[0]]},{confirmed:true});
  assert.equal(result.created,2);assert.equal(result.invalid,1);assert.equal(result.skipped,2);assert.equal(result.files.length,3);
 });
+test('corrected meta-trait structure reimports without overwriting old model, ordinary libraries still skip',async()=>{
+ const source={version:5,id:'Bmodel',traits:[{name:'Meta',container_type:'meta_trait',children:[{name:'Child',base_points:1}]}]};
+ const data=await planGCSItemImport([{name:'meta.gct',text:JSON.stringify(source)}]);
+ const p=harness(),service=new GCSItemImportService(p);
+ const old=structuredClone(data.files[0].drafts[0]);delete old.flags.gum.gcsImport.modelStructureRevision;
+ const {canonicalGCS}=await import('../module/utils/gcs-item-import-conversion.mjs');
+ old.flags.gum.gcsImport.signature=canonicalGCS({family:'gct',source,path:[]});old.name='Master edited old model';p.items.push(old);
+ const first=await service.execute(data,{confirmed:true});assert.equal(first.created,1);assert.equal(p.items[0].name,'Master edited old model');
+ assert.equal((await service.execute(data,{confirmed:true})).skipped,1);
+ const ordinary=await plan();await service.execute(ordinary,{confirmed:true});assert.equal((await service.execute(ordinary,{confirmed:true})).skipped,2);
+ assert.equal(ordinary.files[0].drafts[0].flags.gum.gcsImport.modelStructureRevision,undefined);
+});

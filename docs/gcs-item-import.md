@@ -12,6 +12,8 @@ O mesmo botão está disponível dentro de um **compêndio de Itens desbloqueado
 
 Um Meta-Trait na raiz do arquivo vira diretamente um bloco com seu nome e características individuais. Grupos e escolhas internos continuam preservados. A revisão 2 dessa estrutura entra na assinatura apenas dos modelos afetados: reimportar um modelo antigo cria a versão corrigida sem sobrescrever edições; repetir a nova importação pula o modelo já convertido. Bibliotecas e modelos sem essa estrutura mantêm sua identificação anterior.
 
+Um Meta-Trait na raiz do arquivo vira diretamente um bloco com seu nome e características individuais. Grupos e escolhas internos continuam preservados. A revisão 2 dessa estrutura entra na assinatura apenas dos modelos afetados: reimportar um modelo antigo cria a versão corrigida sem sobrescrever edições; repetir a nova importação pula o modelo já convertido. Bibliotecas e modelos sem essa estrutura mantêm sua identificação anterior.
+
 ## Custos e revisão
 
 Características usam o custo calculado armazenado pelo GCS quando disponível. Quando ausente, custos simples são calculados a partir de base, níveis e modificadores habilitados. Casos não representáveis recebem aviso de custo provisório. Níveis e modificadores permanecem descritos/editáveis na descrição e preservados nos dados de origem; não são reaplicados ao custo final como modificadores ativos do GUM. Importar não cria efeitos automáticos de regras ainda não implementadas.

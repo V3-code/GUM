@@ -61,3 +61,24 @@ test('template equipment container keeps the bag itself and its child exactly on
  assert.deepEqual(entries.map(e=>e.name),['Bag','Tool']);assert.equal(entries[0].cost,10);assert.equal(entries[0].quantity,2);assert.equal(entries[0].inlineItem.system.weight,0.90718474);
  assert.equal(seen[0].children,undefined);assert.equal(seen.length,2);
 });
+test('root meta-trait becomes a named block with direct individual items and preserved metadata',()=>{
+ const root={id:'Tmeta',name:'Spirit',container_type:'meta_trait',reference:'B1',local_notes:'Remember this',calc:{points:15},children:[{name:'First',base_points:10},{name:'Second',base_points:5}]};
+ const {drafts}=convertGCSContent({version:5,traits:[root]},'gct','Spirit.gct');
+ const model=drafts[0];assert.equal(model.system.blocks.length,1);
+ const block=model.system.blocks[0];assert.equal(block.title,'Spirit');assert.equal(block.type,'guaranteed');
+ assert.deepEqual(block.contents.map(e=>[e.kind,e.name,e.cost]),[['item','First',10],['item','Second',5]]);
+ assert.match(model.system.description,/Remember this/);assert.match(model.system.description,/B1/);
+ assert.deepEqual(model.flags.gum.gcsImport.source.traits[0],root);
+ assert.equal(model.flags.gum.gcsImport.modelStructureRevision,2);
+});
+test('root promotion preserves mixed order and internal choices without flattening real groups',()=>{
+ const leaf=name=>({name,base_points:1});
+ const choice={name:'Choose',template_picker:{type:'count',qualifier:{compare:'at_most',qualifier:1}},children:[leaf('Option A'),leaf('Option B')]};
+ const meta=(name,children)=>({name,container_type:'meta_trait',children});
+ const {drafts}=convertGCSContent({traits:[leaf('Loose first'),meta('One',[leaf('Guaranteed'),choice]),leaf('Between'),meta('Two',[leaf('Last')])]},'gct','mixed.gct');
+ const blocks=drafts[0].system.blocks;
+ assert.deepEqual(blocks.map(b=>b.title),['Características','One','Características','Two']);
+ assert.equal(blocks[1].contents[1].kind,'group');assert.equal(blocks[1].contents[1].subBlocks[0].type,'selection');
+ assert.deepEqual(blocks[1].contents[1].subBlocks[0].contents.map(e=>e.name),['Option A','Option B']);
+ assert.equal(blocks[3].contents[0].name,'Last');
+});

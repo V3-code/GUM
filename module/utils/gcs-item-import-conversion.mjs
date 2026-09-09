@@ -6,6 +6,10 @@ export function canonicalGCS(value) {
   if (value && typeof value === 'object') return `{${Object.keys(value).sort().map(k=>`${JSON.stringify(k)}:${canonicalGCS(value[k])}`).join(',')}}`;
   return JSON.stringify(value);
 }
+export function gcsImportSignature(provenance) {
+  return canonicalGCS({family:provenance.family,source:provenance.source,path:provenance.path??[],
+    ...(provenance.modelStructureRevision!==undefined?{modelStructureRevision:provenance.modelStructureRevision}:{})});
+}
 // Full canonical source is compared as well as the short key: collisions cannot merge Items.
 export function gcsKey(value) {
   let hash=2166136261; for(const c of canonicalGCS(value)) hash=Math.imul(hash^c.charCodeAt(0),16777619);
@@ -129,12 +133,24 @@ export function convertGCSContent(data,kind,filename,adapters={}) {
     return {id:id(),kind:'item',itemType:inlineItem.type,name:inlineItem.name,quantity:node.quantity??1,level:['skl','spl'].includes(family)?(inlineItem.system.skill_level??''):'',cost:family==='eqp'?(inlineItem.system.cost??0):(inlineItem.system.points??0),inlineItem,hybrid:{mode:'inline',matchedBy:null}};
   }
   if(kind==='gct') {
-    const blocks=[];
-    for(const [key,family]of Object.entries({traits:'adq',skills:'skl',spells:'spl',equipment:'eqp',other_equipment:'eqp'}))if(data[key]?.length)blocks.push(block(data[key],family,labels[family]));
+    const blocks=[],promoted=[];
+    for(const [key,family]of Object.entries({traits:'adq',skills:'skl',spells:'spl',equipment:'eqp',other_equipment:'eqp'})) {
+      let ordinary=[];
+      const flush=()=>{if(ordinary.length){blocks.push(block(ordinary,family,labels[family]));ordinary=[];}};
+      for(const node of data[key]??[]) {
+        // A root meta-trait already names a block. Keep real nested groups and
+        // choices, but do not wrap the block in an identical selectable group.
+        if(family==='adq'&&node.container_type==='meta_trait'&&node.children?.length) {
+          flush();blocks.push(block(node.children,family,String(node.name||'Meta-Trait'),node.template_picker));
+          promoted.push(Object.fromEntries(Object.entries(node).filter(([k])=>k!=='children')));
+        }else ordinary.push(node);
+      }
+      flush();
+    }
     if(!blocks.length)throw new Error('Template sem conteúdo importável');
     const name=String(data.traits?.[0]?.name||filename.replace(/\.[^.]+$/,''));
     if(data.body_type || data.notes || data.settings)warn(`${name}: notas/configuração de template preservadas; conferir manualmente.`);
-    drafts.push({name,type:'template',effects:[],system:{schemaVersion:1,model_category:'generic',blocks,description:`<p>${escapeGCSHTML([sourceNotes(data),data.body_type?readable(data.body_type):'',typeof data.notes==='object'?readable(data.notes):''].filter(Boolean).join('\n')).replace(/\n/g,'<br>')}</p>`},flags:{gum:{gcsImport:{converter:GCS_CONVERTER_VERSION,family:kind,source:structuredClone(data)}}}});
+    drafts.push({name,type:'template',effects:[],system:{schemaVersion:1,model_category:'generic',blocks,description:`<p>${escapeGCSHTML([sourceNotes(data),...promoted.map(node=>`Meta-Trait: ${readable(node)}`),data.body_type?readable(data.body_type):'',typeof data.notes==='object'?readable(data.notes):''].filter(Boolean).join('\n')).replace(/\n/g,'<br>')}</p>`},flags:{gum:{gcsImport:{converter:GCS_CONVERTER_VERSION,family:kind,source:structuredClone(data),...(promoted.length?{modelStructureRevision:2}:{})}}}});
   } else {
     const walk=(nodes,path=[])=>{for(const node of nodes){
       if(kind==='adq'&&node.container_type==='meta_trait'&&node.children?.length) {
@@ -157,7 +173,7 @@ export function convertGCSContent(data,kind,filename,adapters={}) {
     }};walk(data.rows);
   }
   for(const draft of drafts) {
-    const p=draft.flags.gum.gcsImport;p.signature=canonicalGCS({family:p.family,source:p.source,path:p.path??[]});p.key=gcsKey(p.signature);
+    const p=draft.flags.gum.gcsImport;p.signature=gcsImportSignature(p);p.key=gcsKey(p.signature);
     if(draft.type==='template'&&warnings.length)draft.system.description+=`<p>Pendências da importação:</p><ul>${warnings.map(w=>`<li>${escapeGCSHTML(w)}</li>`).join('')}</ul>`;
   }
   return {drafts,warnings};
