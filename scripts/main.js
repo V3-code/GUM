@@ -1,6 +1,7 @@
 import { trackTemplateDocumentHook } from "../module/utils/template-operation-tracker.mjs";
-import { addGCSItemImportButton } from "../module/apps/gcs-item-importer.js";
+import { addGCSItemImportButton, addGCSCompendiumImportButton } from "../module/apps/gcs-item-importer.js";
 Hooks.on('renderItemDirectory', addGCSItemImportButton);
+Hooks.on('renderCompendium', addGCSCompendiumImportButton);
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //

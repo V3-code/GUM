@@ -12,13 +12,17 @@ export class GCSItemImportService {
     const requireGM=()=>{if(!this.p.isGM())throw new Error('Somente o Mestre pode importar itens');};
     requireGM();importing=true;
     try {
+      this.p.validateDestination?.();
       let existing=await this.p.listItems();
       for(const file of plan.files) {
         const report={name:file.name,created:0,skipped:0,failed:0,errors:file.error?[file.error]:[],warnings:file.warnings??[]};result.files.push(report);
         if(file.error){result.invalid++;continue;}
         try{file.drafts.forEach(validateGCSDraft);}catch(error){report.errors.push(error.message);result.invalid++;continue;}
         for(const draft of file.drafts) {
-          requireGM();const p=provenance(draft);
+          try{requireGM();this.p.validateDestination?.();}catch(error){
+            report.errors.push(error.message);result.interrupted=true;return result;
+          }
+          const p=provenance(draft);
           if(existing.some(item=>same(provenance(item),p))){report.skipped++;result.skipped++;continue;}
           if(p.source?.id&&existing.some(item=>provenance(item)?.source?.id===p.source.id&&provenance(item)?.family===p.family))report.warnings=[...report.warnings,`${draft.name}: nova variante da origem; o item anterior será preservado.`];
           try {
