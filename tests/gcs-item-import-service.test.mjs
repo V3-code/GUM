@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import {planGCSItemImport} from '../module/utils/gcs-item-import-plan.mjs';
 import {GCSItemImportService} from '../module/services/gcs-item-import-service.mjs';
 const plan=()=>planGCSItemImport([{name:'test.adq',text:JSON.stringify({version:5,rows:[{id:'t123',name:'One',base_points:1},{id:'t124',name:'Two',base_points:2}]})}]);
+test('single and multiple files create Items at the root without creating or assigning folders',async()=>{
+ for(const multiple of [false,true]) {
+  const p=harness(),data=await plan();
+  if(multiple){const second=await planGCSItemImport([{name:'other.adq',text:JSON.stringify({version:5,rows:[{id:'t999',name:'Three',base_points:3}]})}]);data.files.push(...second.files);}
+  const result=await new GCSItemImportService(p).execute(data,{confirmed:true});
+  assert.equal(result.created,multiple?3:2);assert.equal(p.folders.length,0);
+  for(const item of p.items)assert.equal(Object.hasOwn(item,'folder'),false);
+ }
+});
 function harness(){const items=[],folders=[];return {items,folders,isGM:()=>true,listItems:async()=>items,createFolder:async name=>{folders.push(name);return 'folder';},createItem:async data=>{const item={...structuredClone(data),id:String(items.length)};items.push(item);return item;}};}
 test('cancel has zero writes and repeated import skips even edited existing items',async()=>{
  const p=harness(),s=new GCSItemImportService(p),data=await plan();

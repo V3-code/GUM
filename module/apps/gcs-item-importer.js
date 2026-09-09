@@ -11,7 +11,7 @@ function warningsHTML(warnings) {
   return `<details><summary>${warnings.length} aviso(s) para revisão</summary><ul>${warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>`;
 }
 export function renderGCSImportPreview(plan) {
-  return wrapper(`<p>Os itens serão criados em pastas por arquivo. Nenhum ator será importado. Itens existentes não serão sobrescritos.</p>${plan.files.map(f=>`<section style="margin:1em 0"><strong>${esc(f.name)}</strong>${f.error?`<p role="alert">${esc(f.error)}</p>`:`<p>${f.drafts.length} item(ns): ${esc([...new Set(f.drafts.map(d=>typeLabels[d.type]??d.type))].join(', '))}</p><details><summary>Conferir itens</summary><ul>${f.drafts.map(d=>`<li>${esc(d.name)} (${esc(typeLabels[d.type]??d.type)})${d.system.points!==undefined?` — ${esc(d.system.points)} pontos`:''}</li>`).join('')}</ul></details>${warningsHTML(f.warnings)}`}</section>`).join('')}`);
+  return wrapper(`<p>Os itens serão criados diretamente na aba Itens, sem criar pastas. Nenhum ator será importado. Itens existentes não serão sobrescritos.</p>${plan.files.map(f=>`<section style="margin:1em 0"><strong>${esc(f.name)}</strong>${f.error?`<p role="alert">${esc(f.error)}</p>`:`<p>${f.drafts.length} item(ns): ${esc([...new Set(f.drafts.map(d=>typeLabels[d.type]??d.type))].join(', '))}</p><details><summary>Conferir itens</summary><ul>${f.drafts.map(d=>`<li>${esc(d.name)} (${esc(typeLabels[d.type]??d.type)})${d.system.points!==undefined?` — ${esc(d.system.points)} pontos`:''}</li>`).join('')}</ul></details>${warningsHTML(f.warnings)}`}</section>`).join('')}`);
 }
 function confirmPlan(plan) {
   return new Promise(resolve=>{
@@ -44,10 +44,6 @@ export async function importGCSItems() {
     const service=new GCSItemImportService({
       isGM:()=>Boolean(game.user?.isGM),
       listItems:async()=>[...game.items.contents],
-      createFolder:async name=>{
-        const existing=game.folders.find(f=>f.type==='Item'&&f.name===name&&!f.folder);
-        return (existing??await Folder.create({name,type:'Item',sorting:'a'})).id;
-      },
       createItem:data=>Item.create(data,{renderSheet:false})
     });
     ui.notifications.info('Importando itens GCS…');let progressCount=0;

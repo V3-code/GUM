@@ -17,14 +17,12 @@ export class GCSItemImportService {
         const report={name:file.name,created:0,skipped:0,failed:0,errors:file.error?[file.error]:[],warnings:file.warnings??[]};result.files.push(report);
         if(file.error){result.invalid++;continue;}
         try{file.drafts.forEach(validateGCSDraft);}catch(error){report.errors.push(error.message);result.invalid++;continue;}
-        let folder;
         for(const draft of file.drafts) {
           requireGM();const p=provenance(draft);
           if(existing.some(item=>same(provenance(item),p))){report.skipped++;result.skipped++;continue;}
           if(p.source?.id&&existing.some(item=>provenance(item)?.source?.id===p.source.id&&provenance(item)?.family===p.family))report.warnings=[...report.warnings,`${draft.name}: nova variante da origem; o item anterior será preservado.`];
           try {
-            requireGM();folder??=await this.p.createFolder(file.name.replace(/\.[^.]+$/,'').slice(0,120)||'GCS');
-            requireGM();const item=await this.p.createItem({...structuredClone(draft),folder});
+            requireGM();const item=await this.p.createItem(structuredClone(draft));
             existing=[...existing,item];report.created++;result.created++;
           }catch(error) {
             // A server response may be lost after persistence. Never retry blindly.
