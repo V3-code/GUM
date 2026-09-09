@@ -9,6 +9,18 @@ import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
 
+const normalizeTraitName = (value) => String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const actorHasHighPainThreshold = (actor) => {
+    const traitNames = new Set(["high pain threshold", "limiar alto de dor"]);
+    return Array.from(actor?.items?.contents ?? actor?.items ?? [])
+        .some((item) => traitNames.has(normalizeTraitName(item?.name)));
+};
+
 export default class DamageApplicationWindow extends Application {
     
     constructor(damageData, attackerActor, targetActor, options = {}) {
@@ -466,7 +478,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
             img: this._targetImage()
         };
         const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
-        context.targetIgnoresShock = ignoreShockSources.length > 0;
+        context.targetIgnoresShock = ignoreShockSources.length > 0 || actorHasHighPainThreshold(this.targetActor);
         context.ignoreShockSourceNames = ignoreShockSources
             .map(effect => effect.name)
             .filter(Boolean)
@@ -1035,7 +1047,10 @@ async _onNpcResistanceRoll(effectId) {
     }
     
     async _applyShockEffect(injury) {
-        if (hasActiveEffectFlag(this.targetActor, "ignoreShock", true)) return 0;
+        // GURPS Basic Set B419: High Pain Threshold completely negates
+        // shock penalties. Keep the separate ignoreShock flag for traits or
+        // effects that provide the same exception.
+        if (hasActiveEffectFlag(this.targetActor, "ignoreShock", true) || actorHasHighPainThreshold(this.targetActor)) return 0;
         if (!this.targetActor || !game.combat) return 0;
 
         const injuryAmount = Math.max(0, Math.floor(Number(injury) || 0));
@@ -1161,7 +1176,7 @@ async _onNpcResistanceRoll(effectId) {
             const finalInjury = this.finalInjury || 0;
             const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
             const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
-            const targetIgnoresShock = ignoreShockSources.length > 0;
+            const targetIgnoresShock = ignoreShockSources.length > 0 || actorHasHighPainThreshold(this.targetActor);
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
@@ -1214,7 +1229,11 @@ async _onNpcResistanceRoll(effectId) {
             const preventedEffectNames = [];
             if (targetIgnoresShock && game.combat && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 const sourceNames = ignoreShockSources.map(effect => effect.name).filter(Boolean).join(", ");
-                preventedEffectNames.push(sourceNames ? `Choque ignorado: ${sourceNames}` : "Choque ignorado por efeito ativo");
+                preventedEffectNames.push(sourceNames
+                    ? `Choque ignorado: ${sourceNames}`
+                    : actorHasHighPainThreshold(this.targetActor)
+                        ? "Choque ignorado por Limiar Alto de Dor"
+                        : "Choque ignorado por efeito ativo");
             }
             let shockAppliedValue = 0;
             const pendingResistanceQueue = [];

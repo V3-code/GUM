@@ -75,6 +75,46 @@ export const registerSystemSettings = function() {
         default: false
     });
 
+    game.settings.register("gum", "shockConditionIconsMigrationV1", {
+        name: "Migração interna: Ícones das condições de Choque",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "agonyConditionMigrationV1", {
+        name: "Migração interna: Condição Agonia",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "agonyConditionMigrationV2", {
+        name: "Migração interna: Condição Agonia (V2)",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "agonyConditionMigrationV3", {
+        name: "Migração interna: Condição Agonia (V3)",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "incapacitatingConditionsMigrationV1", {
+        name: "Migração interna: Condições incapacitantes",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
 // --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
     game.settings.register("gum", "gmScreenConfig", {
         name: "Layout do Escudo",
