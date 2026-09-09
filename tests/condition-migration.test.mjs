@@ -110,3 +110,14 @@ test("desbloqueia um compêndio somente durante a migração e restaura o lock a
     assert.deepEqual(transitions, [false, true]);
     assert.equal(pack.locked, true);
 });
+
+test("Agonia aplica a penalidade de HPT também a testes de autocontrole", async () => {
+    const { buildAgonyModifierEntries } = await loadSubject();
+    assert.equal(typeof buildAgonyModifierEntries, "function");
+
+    const entries = buildAgonyModifierEntries();
+    const hptPenalty = entries.find((entry) => entry.value.includes("? -3 : 0"));
+
+    assert.ok(hptPenalty);
+    assert.equal(hptPenalty.contexts.split(",").includes("self_control"), true);
+});

@@ -33,7 +33,7 @@ import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
-import { replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
+import { buildAgonyModifierEntries, replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -275,9 +275,6 @@ async function migrateAgonyCondition() {
         return source?.id === "tWUGFGUUvPk9nMJaJ"
             || normalizeName(item?.name) === "agonia";
     };
-    // O motor de modificadores aceita esta forma curta e segura de consulta de
-    // característica ao recalcular uma rolagem para cada ator afetado.
-    const hptExpression = `hasTrait("High Pain Threshold")`;
     const effectEntry = (label, value, contexts) => ({
         label,
         value,
@@ -332,10 +329,8 @@ async function migrateAgonyCondition() {
                 roll_modifier_value: 0,
                 roll_modifier_cap: "",
                 roll_modifier_context: "defense",
-                roll_modifier_entries: [
-                    effectEntry("Defesas ativas sem Limiar Alto de Dor", `(${hptExpression}) ? 0 : -4`, "defense"),
-                    effectEntry("DX, IQ e perícias com Limiar Alto de Dor", `(${hptExpression}) ? -3 : 0`, "check_dx,skill_dx,check_iq,skill_iq")
-                ],
+                roll_modifier_entries: buildAgonyModifierEntries()
+                    .map((entry) => effectEntry(entry.label, entry.value, entry.contexts)),
                 whisperMode: "public",
                 category: "hp",
                 name: "",

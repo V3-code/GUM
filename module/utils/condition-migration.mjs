@@ -19,6 +19,22 @@ export const getConditionMigrationSourceUuid = (item) => item?.getFlag?.("gum", 
     ?? item?.flags?.gum?.[CONDITION_MIGRATION_SOURCE_FLAG]
     ?? null;
 
+export const buildAgonyModifierEntries = () => {
+    const hptExpression = `hasTrait("High Pain Threshold")`;
+    return [
+        {
+            label: "Defesas ativas sem Limiar Alto de Dor",
+            value: `(${hptExpression}) ? 0 : -4`,
+            contexts: "defense"
+        },
+        {
+            label: "DX, IQ, perícias e autocontrole com Limiar Alto de Dor",
+            value: `(${hptExpression}) ? -3 : 0`,
+            contexts: "check_dx,skill_dx,check_iq,skill_iq,self_control"
+        }
+    ];
+};
+
 export async function withUnlockedPack(pack, operation) {
     const originalLocked = pack?.locked;
     try {
