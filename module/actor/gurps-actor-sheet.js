@@ -1,9 +1,13 @@
+import { runTemplateDocumentOperation } from "../utils/template-operation-tracker.mjs";
 import { performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
+import { buildTemplateApplicationPlan, validateTemplateBlocks, templateRecordActive } from "../utils/template-application-plan.mjs";
+import { TemplateApplicationService } from "../services/template-application-service.mjs";
+import { escapeTemplateText, templateModelView, renderTemplateLifecyclePreview } from "../utils/template-lifecycle-view.mjs";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
@@ -1067,6 +1071,7 @@ async getData(options) {
                 context.spellSupportCompactPair = context.castingAbilities.length === 1 && context.spellReserveCount === 1;
                 context.powerSupportCompactPair = context.powerSources.length === 1 && context.powerReserveCount === 1;
                 context.appliedModels = this._prepareAppliedModels();
+                context.modelsPending = context.appliedModels.some(model => model.pending);
 
                 // Lê o estado dos grupos colapsáveis para serem salvos
                 context.collapsedData = this.actor.getFlag('gum', 'sheetCollapsedState') || {};
@@ -1592,6 +1597,7 @@ html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecon
 html.on('click', '.points-summary-btn', (ev) => this._onOpenPointsSummary(ev));
 html.on("click", ".add-character-model-btn", (ev) => this._onAddCharacterModel(ev));
 html.on("click", ".remove-character-model-btn", (ev) => this._onRemoveCharacterModel(ev));
+html.on("click", ".resume-character-model-btn", (ev) => this._onResumeCharacterModel(ev));
 
 // -------------------------------------------------------------
 //  BIOGRAFIA - Editor de História
@@ -5774,18 +5780,54 @@ async _onDeleteSocialEntry(ev) {
 
 
 _prepareAppliedModels() {
-  const records = Array.isArray(this.actor.system.applied_models) ? this.actor.system.applied_models : [];
-  return records
-    .filter(record => !record.removedAt)
-    .map(record => ({
-      ...record,
-      appliedAtLabel: record.appliedAt ? new Date(record.appliedAt).toLocaleString() : "-"
-    }))
-    .sort((a, b) => (a.appliedAt || "").localeCompare(b.appliedAt || ""));
+  return templateModelView(this.actor.toObject(true).system.applied_models || []).models;
+}
+
+_getTemplateService() {
+  const source = document => document.toObject(true);
+  const run = (kind, scope, action) => runTemplateDocumentOperation({ actorUuid: this.actor.uuid, userId: game.user.id, kind, ...scope }, action);
+  return new TemplateApplicationService({
+    key: this.actor.uuid,
+    read: async () => ({ source: source(this.actor), items: this.actor.items.map(source) }),
+    update: patch => this.actor.update(patch),
+    create: async payload => {
+      const [item] = await run("create", { applicationId: payload.flags.gum.templateApplicationId }, options => this.actor.createEmbeddedDocuments("Item", [payload], options));
+      return source(item);
+    },
+    delete: async id => {
+      if (this.actor.items.has(id)) return run("delete", { itemIds: [id] }, options => this.actor.deleteEmbeddedDocuments("Item", [id], options));
+      // Retry after Item deletion persisted but its awaited cleanup hook failed.
+      const orphanIds = this.actor.effects.filter(effect => effect.flags?.gum?.originItemId === id).map(effect => effect.id);
+      if (orphanIds.length) await this.actor.deleteEmbeddedDocuments("ActiveEffect", orphanIds);
+    },
+    unlink: id => {
+      const changes = { _id: id, "flags.gum.-=templateApplicationId": null,
+        "flags.gum.-=templateApplied": null, "flags.gum.-=templateEntryKey": null };
+      return run("unlink", { itemIds: [id], changes }, options => this.actor.updateEmbeddedDocuments("Item", [changes], options));
+    },
+    now: () => new Date().toISOString()
+  });
+}
+
+_showTemplateOperationResult(result) {
+  for (const warning of result.warnings || []) ui.notifications.warn(escapeTemplateText(warning));
+  if (result.status === "pending") ui.notifications.warn(escapeTemplateText(result.error || "Operação pendente. Use Retomar na biografia."));
+  if (result.status === "rolled-back") ui.notifications.warn("Aplicação desfeita após falha; confira os avisos de recuperação.");
+  this.render(false);
+  return result.status === "active" || result.status === "removed";
+}
+
+async _onResumeCharacterModel(ev) {
+  ev.preventDefault();
+  try {
+    const result = await this._getTemplateService().resume(ev.currentTarget.dataset.applicationId);
+    if (this._showTemplateOperationResult(result)) ui.notifications.info("Operação de modelo concluída.");
+  } catch (error) { ui.notifications.error(escapeTemplateText(error.message || error)); }
 }
 
 async _onAddCharacterModel(ev) {
   ev.preventDefault();
+  if (this._prepareAppliedModels().some(model => model.pending)) return ui.notifications.warn("Há uma operação pendente. Use Retomar.");
   new TemplateBrowser(this.actor, {
     onSelect: async (selectedTemplate) => {
       const templateDoc = selectedTemplate?.uuid ? await fromUuid(selectedTemplate.uuid).catch(() => null) : null;
@@ -5797,10 +5839,12 @@ async _onAddCharacterModel(ev) {
 
 async _runTemplateApplicationFlow(templateItem) {
   if (!templateItem) return;
+  try {
+  if (this._prepareAppliedModels().some(model => model.pending)) throw new Error("Há uma operação pendente. Use Retomar.");
 
   const duplicate = this._findAppliedModelRecord(templateItem);
   if (duplicate) {
-    ui.notifications.warn(`O Modelo "${templateItem.name}" já foi aplicado nesta ficha.`);
+    ui.notifications.warn(`O Modelo "${escapeTemplateText(templateItem.name)}" já foi aplicado nesta ficha.`);
     return;
   }
 
@@ -5810,6 +5854,7 @@ async _runTemplateApplicationFlow(templateItem) {
     return;
   }
 
+  validateTemplateBlocks(blocks);
   const plan = [];
   let pointsLeftoverTotal = 0;
 
@@ -5825,7 +5870,8 @@ async _runTemplateApplicationFlow(templateItem) {
   const applied = await this._applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal });
   if (!applied) return;
 
-ui.notifications.info(`Modelo "${templateItem.name}" aplicado com sucesso.`);
+ui.notifications.info(`Modelo "${escapeTemplateText(templateItem.name)}" aplicado com sucesso.`);
+  } catch (error) { ui.notifications.error(escapeTemplateText(error.message || error)); }
 }
 
 async _processTemplateBlockForPlan(block, plan) {
@@ -5912,7 +5958,7 @@ async _promptTemplatePointsTransferSummary(pointsLeftoverTotal) {
 _findAppliedModelRecord(templateItem) {
   const records = Array.isArray(this.actor.system.applied_models) ? this.actor.system.applied_models : [];
   return records.find(record => {
-    if (record.removedAt) return false;
+    if (!templateRecordActive(record)) return false;
     if (templateItem.uuid && record.templateUuid && record.templateUuid === templateItem.uuid) return true;
     if (templateItem.id && record.templateId && record.templateId === templateItem.id) return true;
     return (record.templateName || "").toLowerCase() === (templateItem.name || "").toLowerCase();
@@ -6064,143 +6110,29 @@ async _promptTemplatePointsBlock(block) {
 }
 
 async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
-  const itemCreates = [];
-  const attributeDeltas = {};
-  const attributeChanges = [];
-  let shouldRecalculateSecondary = false;
-  let hasPrimaryAttributeChange = false;
-
+  const resolved = [];
   for (const entry of plan) {
-    if (entry.kind === "attribute") {
-      const result = this._accumulateAttributeChanges(entry, attributeDeltas, attributeChanges);
-      if (entry.linkSecondary) shouldRecalculateSecondary = true;
-      if (result.primaryChanged) hasPrimaryAttributeChange = true;
-      continue;
-    }
-
-    const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
-    let createdData = null;
-
-    if (sourceItem) {
-      createdData = this._buildActorItemFromTemplateEntry(sourceItem, entry, templateItem);
-    } else if (entry.inlineItem) {
-      createdData = this._buildActorItemFromInlineTemplateEntry(entry, templateItem);
-    }
-
-    if (!createdData) continue;
-    itemCreates.push(createdData);
+    if (entry.kind === "attribute") { resolved.push(entry); continue; }
+    const item = await this._resolveTemplateEntrySourceItem(entry);
+    if (item && item.documentName !== "Item") throw new Error(`${entry.name || entry.id}: referência não é um Item.`);
+    const data = item ? this._buildActorItemFromTemplateEntry(item, entry, templateItem)
+      : entry.inlineItem ? this._buildActorItemFromInlineTemplateEntry(entry, templateItem) : null;
+    resolved.push({ ...entry, resolvedItem: data });
   }
-
-  const createdItems = itemCreates.length ? await this.actor.createEmbeddedDocuments("Item", itemCreates) : [];
-
-  const updateData = this._buildTemplateAttributeUpdateData(attributeDeltas, {
-    recalculateSecondaryBases: shouldRecalculateSecondary && hasPrimaryAttributeChange
+  const source = this.actor.toObject(true);
+  const prepared = buildTemplateApplicationPlan(source, resolved, {
+    applicationId: foundry.utils.randomID(),
+    template: { id: templateItem.id, uuid: templateItem.uuid, name: templateItem.name },
+    damage: st => this._getBasicDamageFromST(st), pointsLeftoverTotal,
+    overrides: Object.fromEntries(Object.entries(this.actor.system.attributes || {}).map(([key, value]) => [key, value?.override]))
   });
-  if (Number(pointsLeftoverTotal) !== 0) {
-    updateData["system.points.unspent"] = (Number(this.actor.system.points?.unspent) || 0) + Number(pointsLeftoverTotal);
-  }
-
-  if (Object.keys(updateData).length) {
-    await this.actor.update(updateData);
-  }
-
-  const applicationId = foundry.utils.randomID();
-  if (createdItems.length) {
-    await this.actor.updateEmbeddedDocuments("Item", createdItems.map(item => ({
-      _id: item.id,
-      "flags.gum.templateApplicationId": applicationId
-    })));
-  }
-
-  const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
-  const secondaryRecalcApplied = shouldRecalculateSecondary && hasPrimaryAttributeChange;
-  records.push({
-    applicationId,
-    templateId: templateItem.id,
-    templateUuid: templateItem.uuid,
-    templateName: templateItem.name,
-    appliedAt: new Date().toISOString(),
-    appliedBy: game.user?.id,
-    createdItemIds: createdItems.map(item => item.id),
-    attributeChanges,
-    secondaryRecalcApplied,
-    pointsLeftover: Number(pointsLeftoverTotal) || 0,
-    totalEntries: plan.length
-  });
-
-  await this.actor.update({ "system.applied_models": records });
-  return true;
-}
-
-_accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
-  const attributes = entry.attributes || {};
-  const map = {
-    st: "st",
-    dx: "dx",
-    iq: "iq",
-    ht: "ht",
-    will: "vont",
-    per: "per",
-    hp: "hp",
-    fp: "fp",
-    basic_speed: "basic_speed",
-    move: "basic_move"
-  };
-
-  for (const [sourceKey, amountRaw] of Object.entries(attributes)) {
-    const amount = Number(amountRaw) || 0;
-    if (!amount) continue;
-
-    const actorKey = map[sourceKey];
-    if (!actorKey) continue;
-    attributeUpdates[actorKey] = (Number(attributeUpdates[actorKey]) || 0) + amount;
-
-    attributeChanges.push({ key: actorKey, amount });
-  }
-
-  const primaryKeys = ["st", "dx", "iq", "ht", "per"];
-  return {
-    primaryChanged: primaryKeys.some(key => (Number(attributeUpdates[key]) || 0) !== 0)
-  };
-}
-
-_buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases = false } = {}) {
-  const updateData = {};
-  const getActorValue = (key) => Number(foundry.utils.getProperty(this.actor.system, `attributes.${key}.value`)) || 0;
-
-  for (const [actorKey, deltaRaw] of Object.entries(attributeDeltas)) {
-    const delta = Number(deltaRaw) || 0;
-    if (!delta) continue;
-    const path = `system.attributes.${actorKey}.value`;
-    updateData[path] = getActorValue(actorKey) + delta;
-  }
-
-  if (!recalculateSecondaryBases) return updateData;
-
-  const st = getActorValue("st") + (Number(attributeDeltas.st) || 0);
-  const dx = getActorValue("dx") + (Number(attributeDeltas.dx) || 0);
-  const ht = getActorValue("ht") + (Number(attributeDeltas.ht) || 0);
-  const per = getActorValue("per") + (Number(attributeDeltas.per) || 0);
-  const basicSpeedBase = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
-  const basicMoveBase = Math.floor(basicSpeedBase);
-  const damage = this._getBasicDamageFromST(st);
-
-  updateData["system.attributes.hp.max"] = st;
-  updateData["system.attributes.fp.max"] = ht;
-  updateData["system.attributes.lifting_st.value"] = st;
-  updateData["system.attributes.vision.value"] = per;
-  updateData["system.attributes.hearing.value"] = per;
-  updateData["system.attributes.tastesmell.value"] = per;
-  updateData["system.attributes.basic_speed.value"] = basicSpeedBase + (Number(attributeDeltas.basic_speed) || 0);
-  updateData["system.attributes.basic_move.value"] = basicMoveBase + (Number(attributeDeltas.basic_move) || 0);
-  updateData["system.attributes.dodge.value"] = Math.floor(updateData["system.attributes.basic_speed.value"]) + 3;
-  updateData["system.attributes.dodge.-=gcs_imported_fixed"] = null;
-  updateData["system.attributes.hp.max"] += (Number(attributeDeltas.hp) || 0);
-  updateData["system.attributes.fp.max"] += (Number(attributeDeltas.fp) || 0);
-  updateData["system.attributes.thrust_damage"] = damage.thrust;
-  updateData["system.attributes.swing_damage"] = damage.swing;
-
-  return updateData;
+  // Selection/saldo confirmation above stays intact; this preview exposes the actual persisted paths.
+  const confirmed = await Dialog.confirm({ title: `Aplicar Modelo: ${escapeTemplateText(templateItem.name)}`,
+    content: `<p>Itens a criar: ${prepared.items.length}.</p>` + renderTemplateLifecyclePreview({ updateData: prepared.updateData }) });
+  if (!confirmed) return false;
+  const result = await this._getTemplateService().apply(prepared);
+  this._showTemplateOperationResult(result);
+  return result.status === "active";
 }
 
 async _resolveTemplateEntrySourceItem(entry) {
@@ -6213,10 +6145,13 @@ async _resolveTemplateEntrySourceItem(entry) {
     const worldItem = game.items.get(entry.sourceId);
     if (worldItem) return worldItem;
 
+    const matches = [];
     for (const pack of game.packs.filter(p => p.documentName === "Item")) {
       const doc = await pack.getDocument(entry.sourceId).catch(() => null);
-      if (doc) return doc;
+      if (doc) matches.push(doc);
     }
+    if (matches.length > 1) throw new Error(`${entry.name || entry.sourceId}: referência ambígua; use UUID.`);
+    if (matches.length === 1) return matches[0];
   }
 
   return null;
@@ -6277,84 +6212,17 @@ async _onRemoveCharacterModel(ev) {
   ev.preventDefault();
   const applicationId = ev.currentTarget?.dataset?.applicationId;
   if (!applicationId) return;
-
-  const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
-  const record = records.find(entry => entry.applicationId === applicationId && !entry.removedAt);
-  if (!record) return;
-
-  const confirmed = await Dialog.confirm({
-    title: `Remover Modelo: ${record.templateName || "Modelo"}`,
-    content: "<p>Deseja remover este modelo da ficha? Itens adicionados e ajustes de atributos serão revertidos.</p>"
-  });
-
-  if (!confirmed) return;
-
-  const createdItemIds = Array.isArray(record.createdItemIds) ? record.createdItemIds.filter(Boolean) : [];
-  const ownedItemIds = createdItemIds.filter(itemId => this.actor.items.has(itemId));
-  if (ownedItemIds.length) {
-    await this.actor.deleteEmbeddedDocuments("Item", ownedItemIds);
-  }
-
-  const attributeReverts = {};
-  const attributeChanges = Array.isArray(record.attributeChanges) ? record.attributeChanges : [];
-  for (const change of attributeChanges) {
-    const key = change?.key;
-    const amount = Number(change?.amount) || 0;
-    if (!key || !amount) continue;
-
-    const path = `system.attributes.${key}.value`;
-    const current = Number(foundry.utils.getProperty(this.actor, path)) || 0;
-    const previous = path in attributeReverts ? Number(attributeReverts[path]) : current;
-    attributeReverts[path] = previous - amount;
-  }
-
-  const pointsLeftover = Number(record.pointsLeftover) || 0;
-  if (pointsLeftover) {
-    const currentUnspent = Number(this.actor.system?.points?.unspent) || 0;
-    attributeReverts["system.points.unspent"] = Math.max(0, currentUnspent - pointsLeftover);
-  }
-
-   const shouldRecalculateSecondary = Boolean(record.secondaryRecalcApplied);
-  if (shouldRecalculateSecondary) {
-    const currentAttrs = this.actor.system?.attributes || {};
-    const getCurrentValue = (key) => Number(currentAttrs?.[key]?.value) || 0;
-    const getRevertedValue = (key) => {
-      const path = `system.attributes.${key}.value`;
-      if (path in attributeReverts) return Number(attributeReverts[path]) || 0;
-      return getCurrentValue(key);
-    };
-
-    const st = getRevertedValue("st");
-    const dx = getRevertedValue("dx");
-    const ht = getRevertedValue("ht");
-    const per = getRevertedValue("per");
-
-    const basicSpeed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
-    const basicMove = Math.floor(basicSpeed);
-    const damage = this._getBasicDamageFromST(st);
-
-    attributeReverts["system.attributes.hp.max"] = st;
-    attributeReverts["system.attributes.fp.max"] = ht;
-    attributeReverts["system.attributes.lifting_st.value"] = st;
-    attributeReverts["system.attributes.vision.value"] = per;
-    attributeReverts["system.attributes.hearing.value"] = per;
-    attributeReverts["system.attributes.tastesmell.value"] = per;
-    attributeReverts["system.attributes.touch.value"] = per;
-    attributeReverts["system.attributes.basic_speed.value"] = basicSpeed;
-    attributeReverts["system.attributes.basic_move.value"] = basicMove;
-    attributeReverts["system.attributes.thrust_damage"] = damage.thrust;
-    attributeReverts["system.attributes.swing_damage"] = damage.swing;
-  }
-
-  record.removedAt = new Date().toISOString();
-  record.removedBy = game.user?.id;
-
-  await this.actor.update({
-    ...attributeReverts,
-    "system.applied_models": records
-  });
-
-  ui.notifications.info(`Modelo "${record.templateName || "Modelo"}" removido com sucesso.`);
+  try {
+    const service = this._getTemplateService();
+    const preview = await service.previewRemoval(applicationId);
+    const record = this.actor.system.applied_models.find(r => r.applicationId === applicationId);
+    const confirmed = await Dialog.confirm({ title: `Remover Modelo: ${escapeTemplateText(record.templateName || "Modelo")}`,
+      content: renderTemplateLifecyclePreview(preview) });
+    if (!confirmed) return;
+    const result = await service.remove(applicationId, preview);
+    this._showTemplateOperationResult(result);
+    if (result.status === "removed") ui.notifications.info(`Modelo "${escapeTemplateText(record.templateName || "Modelo")}" removido com sucesso.`);
+  } catch (error) { ui.notifications.error(escapeTemplateText(error.message || error)); }
 }
 
 
@@ -6366,7 +6234,7 @@ _renderTemplateChoiceRow(view, { includeCostDataAttr = false } = {}) {
 
   return `
     <label class="template-choice-row">
-      <span class="template-choice-input"><input type="checkbox" name="entry" value="${view.id}"${costAttr}></span>
+      <span class="template-choice-input"><input type="checkbox" name="entry" value="${escapeTemplateText(view.id)}"${costAttr}></span>
       <span class="template-choice-content">
         <span class="template-choice-title-row">
           <span class="template-choice-title">${view.title}</span>
