@@ -58,6 +58,7 @@ export function addGCSItemImportButton(app,html) {
   const host=root.querySelector('.directory-header .header-actions')??root.querySelector('.directory-header');
   if(!host)return;
   const button=document.createElement('button');button.type='button';button.className='gum-gcs-item-import-button';
-  button.style.cssText='width:100%;margin-bottom:5px';button.textContent='Importar do GCS';
+  button.style.cssText='flex:0 0 100%;width:100%;margin-bottom:5px';
+  button.innerHTML='<i class="fas fa-file-import" aria-hidden="true"></i> Importar do GCS';
   button.addEventListener('click',()=>importGCSItems());host.append(button);
 }

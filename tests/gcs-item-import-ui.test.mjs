@@ -11,6 +11,6 @@ test('preview escapes filename, item names, warnings and errors',()=>{
 });
 test('directory button accepts native and jQuery roots, is GM-only and does not duplicate',()=>{
  class Root extends HTMLElement {constructor(){super();this.children=[];}querySelector(selector){return selector.includes('button')?this.children[0]:{append:b=>this.children.push(b)};}}
- for(const jquery of [false,true]){const root=new Root();addGCSItemImportButton(null,jquery?[root]:root);addGCSItemImportButton(null,jquery?[root]:root);assert.equal(root.children.length,1);assert.equal(root.children[0].textContent,'Importar do GCS');}
+ for(const jquery of [false,true]){const root=new Root();addGCSItemImportButton(null,jquery?[root]:root);addGCSItemImportButton(null,jquery?[root]:root);assert.equal(root.children.length,1);assert.match(root.children[0].innerHTML,/Importar do GCS$/);}
  game.user.isGM=false;const root=new Root();addGCSItemImportButton(null,root);assert.equal(root.children.length,0);game.user.isGM=true;
 });
