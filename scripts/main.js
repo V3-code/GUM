@@ -1,3 +1,6 @@
+import { trackTemplateDocumentHook } from "../module/utils/template-operation-tracker.mjs";
+import { addGCSItemImportButton } from "../module/apps/gcs-item-importer.js";
+Hooks.on('renderItemDirectory', addGCSItemImportButton);
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //
@@ -2514,7 +2517,7 @@ Hooks.once('init', async function() {
         }
     });
 
-Hooks.on("createItem", async (item, options, userId) => {
+Hooks.on("createItem", trackTemplateDocumentHook("create", async (item, options, userId, templateTracked = false) => {
         // Só executa para o usuário que fez a ação e se o item foi adicionado a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -2549,6 +2552,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                         console.log(` -> Efeito passivo "${effectItem.name}" aplicado.`);
                     } catch (err) {
                         console.error(`[GUM] Falha ao criar ActiveEffect passivo para ${effectItem.name}:`, err);
+                        if (templateTracked) throw err;
                     }
                 }
             }
@@ -2559,9 +2563,9 @@ Hooks.on("createItem", async (item, options, userId) => {
             actor.sheet.render(false);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
-    });
+    }));
 
-    Hooks.on("updateItem", async (item, changes, options, userId) => {
+    Hooks.on("updateItem", trackTemplateDocumentHook("update", async (item, changes, options, userId, templateTracked = false) => {
         // Só executa para o usuário que fez a ação e se o item pertence a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -2615,6 +2619,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             });
                         } catch (err) {
                             console.error(`[GUM] Falha ao criar ActiveEffect passivo (update):`, err);
+                        if (templateTracked) throw err;
                         }
                     }
                 }
@@ -2628,9 +2633,9 @@ Hooks.on("createItem", async (item, options, userId) => {
         await processStatusBindings(actor);
         actor.sheet.render(false);
         actor.getActiveTokens().forEach(token => token.drawEffects());
-    });
+    }));
 
-   Hooks.on("deleteItem", async (item, options, userId) => {
+   Hooks.on("deleteItem", trackTemplateDocumentHook("delete", async (item, options, userId, templateTracked = false) => {
         // Só executa para o usuário que fez a ação e se o item pertencia a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -2661,6 +2666,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                 await actor.deleteEmbeddedDocuments("ActiveEffect", idsToDelete);
             } catch (err) {
                 console.error(`[GUM] Falha ao remover ActiveEffects passivos:`, err);
+                        if (templateTracked) throw err;
             }
         }
         
@@ -2671,7 +2677,7 @@ Hooks.on("createItem", async (item, options, userId) => {
         await processStatusBindings(actor);
         actor.sheet.render(false);
         actor.getActiveTokens().forEach(token => token.drawEffects());
-    });
+    }));
 
    Hooks.on("updateCombat", async (combat, changed, options, userId) => {
         

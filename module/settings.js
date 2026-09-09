@@ -1,4 +1,5 @@
 // GUM/module/settings.js
+import { importGCSItems } from './apps/gcs-item-importer.js';
 
 /**
  * A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
@@ -210,15 +211,15 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importGCSTemplateButton", {
-        name: "Importar Template do GCS",
-        hint: "Importa um arquivo .gct/.gcs de template do GCS e cria um Item do tipo Modelo com blocos para aplicação na ficha.",
+        name: "Importar Itens do GCS",
+        hint: "Importa templates e bibliotecas GCS para Itens, com prévia. Personagens são importados na aba Atores.",
         scope: "world",
         config: true,
         type: Boolean,
         default: false,
         onChange: (value) => {
             if (value) {
-                importTemplateFromGCS();
+                importGCSItems();
                 game.settings.set("gum", "importGCSTemplateButton", false);
             }
         }

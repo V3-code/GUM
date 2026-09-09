@@ -5,7 +5,8 @@ import { ModifierBrowser } from "../apps/modifier-browser.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
 import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
-import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs"; 
+import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
+import { escapeItemText, renderItemPropertyTag, renderSkillLinkOptions } from '../utils/item-text-rendering.mjs';
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -965,7 +966,7 @@ html.find('.delete-modifier').click(async ev => {
                 if (sourceItem?.sheet) return sourceItem.sheet.render(true); 
             } 
  
-            const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : ""; 
+            const createTag = renderItemPropertyTag;
             const tags = [ 
                 createTag("Custo", modifierData.cost), 
                 createTag("Referência", modifierData.ref), 
@@ -976,7 +977,7 @@ html.find('.delete-modifier').click(async ev => {
                 <div class="gurps-dialog-canvas"> 
                     <div class="gurps-item-preview-card"> 
                         <header class="preview-header"> 
-                            <h3>${modifierData.name || "Modificador"}</h3> 
+                            <h3>${escapeItemText(modifierData.name || "Modificador")}</h3>
                             <div class="header-controls"><span class="preview-item-type">Modificador</span></div> 
                         </header> 
                         <div class="preview-content"> 
@@ -1903,7 +1904,7 @@ const rangedFields = `
             return ui.notifications.warn("Nenhuma perícia compatível foi encontrada neste ator."); 
         } 
  
-        let options = skills.map(s => `<option value="${s.name}">${s.name} (NH ${s.system.final_nh})</option>`).join(''); 
+        const options = renderSkillLinkOptions(skills);
         new Dialog({ 
             title: "Vincular Perícia", 
             content: `<div class="form-group"><label>Escolha:</label><select name="skill_selector">${options}</select></div>`, 
