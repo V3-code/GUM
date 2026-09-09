@@ -255,7 +255,7 @@ async function migrateShockConditionIcons() {
 async function migrateAgonyCondition() {
     if (!game.user?.isGM) return;
 
-    const migrationFlag = "agonyConditionMigrationV3";
+    const migrationFlag = "agonyConditionMigrationV4";
     if (game.settings?.get?.("gum", migrationFlag)) return;
 
     const conditionsPack = game.packs?.get?.("gum.conditions");

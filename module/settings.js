@@ -107,6 +107,14 @@ export const registerSystemSettings = function() {
         default: false
     });
 
+    game.settings.register("gum", "agonyConditionMigrationV4", {
+        name: "Migração interna: Condição Agonia (V4)",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
     game.settings.register("gum", "incapacitatingConditionsMigrationV1", {
         name: "Migração interna: Condições incapacitantes",
         scope: "world",
