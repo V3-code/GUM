@@ -387,15 +387,11 @@ async function migrateAgonyCondition() {
         }
 
         const conditionDocuments = await conditionsPack.getDocuments();
-        const candidates = conditionDocuments.filter(isPortugueseAgony);
+        let candidates = conditionDocuments.filter(isPortugueseAgony);
         const worldCandidates = (game.items?.contents || []).filter(isPortugueseAgony);
         const actorCandidates = (game.actors?.contents || [])
             .flatMap((actor) => actor.items?.filter(isPortugueseAgony) || []);
-        const allCandidates = [...new Map([...candidates, ...worldCandidates, ...actorCandidates].map((item) => [item.uuid, item])).values()];
-        if (!allCandidates.length) {
-            console.warn("GUM | Migração da Agonia: nenhum item português foi localizado.");
-            return;
-        }
+        let allCandidates = [...new Map([...candidates, ...worldCandidates, ...actorCandidates].map((item) => [item.uuid, item])).values()];
 
         const description = "<p>Você permanece consciente, mas está sob uma dor tão intensa que não pode fazer nada além de gemer ou gritar. Se estiver de pé ou sentado, você cai.</p><p>Enquanto a Agonia durar, perde 1 PF por minuto ou fração. O Limiar Baixo de Dor dobra essa perda. Depois que se recuperar, qualquer pessoa que possa ameaçar você de forma convincente com a retomada da dor recebe +3 em testes de Interrogatório e Intimidação contra você; o Limiar Baixo de Dor dobra esse bônus.</p><p>O Limiar Alto de Dor permite superar a Agonia e agir, mas com −3 em testes de DX, IQ, perícias baseadas nesses atributos e autocontrole.</p><p><strong>Fonte:</strong> GURPS Basic Set, B428.</p>";
         const conditionUpdate = {
@@ -414,6 +410,25 @@ async function migrateAgonyCondition() {
             "system.triggerOnTurnStartWhileActive": false,
             "system.effects": linkedEffects
         };
+
+        // Uma instalação limpa não possui os registros que foram editados
+        // manualmente durante o desenvolvimento. Crie a condição base no
+        // próprio compêndio para que o PR seja autocontido; instalações com
+        // uma condição importada continuam sendo apenas atualizadas.
+        if (!allCandidates.length) {
+            const created = await Item.create({
+                name: "Agonia",
+                type: "condition",
+                img: "systems/gum/icons/svg/state.svg/agony.svg",
+                ...foundry.utils.expandObject(conditionUpdate),
+                flags: { gum: { conditionSeed: "agonia" } }
+            }, { pack: conditionsPack.collection, renderSheet: false });
+            if (created) allCandidates = [created];
+        }
+        if (!allCandidates.length) {
+            console.warn("GUM | Migração da Agonia: não foi possível criar ou localizar a condição.");
+            return;
+        }
         const updates = allCandidates.map(async (item) => {
             // Foundry escolhe o modelo de Item na criação. Para um Agonia
             // importado como advantage, criar um novo documento condition é a
@@ -776,6 +791,19 @@ async function migrateIncapacitatingConditions() {
                 "system.effects": links
             };
             const candidates = getCandidates(definition);
+            // Em uma instalação limpa, as condições importadas durante o
+            // desenvolvimento não existem no compêndio distribuído. Semeie
+            // o Item jogável para que a migração seja autocontida e idempotente.
+            if (!candidates.length) {
+                const created = await Item.create({
+                    name: definition.name,
+                    type: "condition",
+                    img: conditionUpdate.img,
+                    ...foundry.utils.expandObject(conditionUpdate),
+                    flags: { gum: { conditionSeed: definition.sourceId } }
+                }, { pack: conditionsPack.collection, renderSheet: false });
+                if (created) candidates.push(created);
+            }
             for (const item of candidates) {
                 if (item.type !== "condition") {
                     await replaceWithConditionItem(item, conditionUpdate, candidates);
