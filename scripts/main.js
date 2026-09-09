@@ -33,6 +33,7 @@ import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
+import { buildAgonyModifierEntries, buildPainModifierEntries, replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -203,6 +204,625 @@ async function migrateEffectActionsSchema() {
     }
 
     await game.settings.set("gum", migrationFlag, true);
+}
+
+async function migrateShockConditionIcons() {
+    if (!game.user?.isGM) return;
+
+    const migrationFlag = "shockConditionIconsMigrationV1";
+    if (game.settings?.get?.("gum", migrationFlag)) return;
+
+    const updates = [];
+    const shockIconFor = (item) => {
+        if (item?.type !== "condition") return null;
+        const match = /^Choque por Ferimento\s*([1-4])$/i.exec(`${item.name ?? ""}`.trim());
+        return match ? `systems/gum/icons/svg/blood.svg/shock-${match[1]}.svg` : null;
+    };
+    const collect = (items) => {
+        for (const item of items || []) {
+            const img = shockIconFor(item);
+            if (!img || item.img === img) continue;
+            updates.push(item.update({ img }, { renderSheet: false }));
+        }
+    };
+
+    collect(game.items?.contents || []);
+    for (const actor of game.actors?.contents || []) collect(actor.items?.contents || []);
+
+    const conditionsPack = game.packs?.get?.("gum.conditions");
+    await withUnlockedPack(conditionsPack, async () => {
+        if (conditionsPack) {
+            collect(await conditionsPack.getDocuments());
+        }
+
+        if (!updates.length) {
+            await game.settings.set("gum", migrationFlag, true);
+            return;
+        }
+
+        const results = await Promise.allSettled(updates);
+        const failures = results.filter((result) => result.status === "rejected");
+        if (failures.length) {
+            console.warn(`GUM | Migração de ícones de Choque concluída parcialmente: ${failures.length} atualização(ões) falharam.`);
+            return;
+        }
+
+        console.log(`GUM | Ícones de Choque atualizados em ${updates.length} item(ns).`);
+        await game.settings.set("gum", migrationFlag, true);
+    });
+}
+
+async function migrateAgonyCondition() {
+    if (!game.user?.isGM) return;
+
+    const migrationFlag = "agonyConditionMigrationV4";
+    if (game.settings?.get?.("gum", migrationFlag)) return;
+
+    const conditionsPack = game.packs?.get?.("gum.conditions");
+    if (!conditionsPack) {
+        console.warn("GUM | Migração da Agonia: compêndio gum.conditions não encontrado.");
+        return;
+    }
+
+    const effectsPack = game.packs?.get?.("gum.efeitos");
+    const normalizeName = (value) => String(value ?? "")
+        .trim()
+        .toLocaleLowerCase("pt-BR")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+    const isPortugueseAgony = (item) => {
+        const source = item?.getFlag?.("gum", "gcsImport")?.source;
+        return source?.id === "tWUGFGUUvPk9nMJaJ"
+            || normalizeName(item?.name) === "agonia";
+    };
+    const effectEntry = (label, value, contexts) => ({
+        label,
+        value,
+        value_mode: "fixed",
+        cap: "",
+        contexts,
+        application_side: "self",
+        target_kind: "any",
+        target_mode: "all",
+        target_values: "",
+        source_item_ids: "",
+        source_attack_ids: "",
+        roll_tags: "",
+        roll_tag_match: "any",
+        nh_display_mode: "roll_only"
+    });
+
+    let effectDocuments = effectsPack ? await effectsPack.getDocuments() : [];
+    let incapacityEffect = effectDocuments.find((item) => item?.getFlag?.("gum", "agonyIncapacityEffect") === true)
+        || effectDocuments.find((item) => normalizeName(item?.name) === "agonia - incapacitacao");
+
+    const agonyEffectData = {
+        name: "Agonia — Incapacitação",
+        type: "effect",
+        img: "systems/gum/icons/status/pain.png",
+        system: {
+            description: "<p>Aplica a parte mecânica de Agonia: sem Limiar Alto de Dor, o personagem fica incapaz de agir voluntariamente e sofre −4 nas defesas ativas. Com Limiar Alto de Dor, pode funcionar com −3 em DX, IQ, perícias baseadas nesses atributos e autocontrole.</p><p>A perda periódica de PF e o bônus social após a recuperação continuam sendo controlados pela regra da condição.</p>",
+            chat_description: "<p>Agonia: incapacidade e −4 nas defesas ativas; Limiar Alto de Dor permite agir com −3 em DX, IQ, perícias baseadas neles e autocontrole.</p>",
+            favorite_in_combat: false,
+            ref: "B428",
+            activationEffects: { success: {}, failure: {} },
+            onDamageEffects: {},
+            generalConditions: {},
+            passiveEffects: {},
+            useEventEffects: {},
+            schemaVersion: 2,
+            stackingMode: "unique",
+            tokenIconPolicy: "auto",
+            actions: [{
+                label: "Agonia",
+                type: "roll_modifier",
+                path: "",
+                operation: "ADD",
+                value: 0,
+                key: "",
+                flag_value: "",
+                chat_text: "",
+                has_roll: false,
+                roll_label: "Rolar Teste",
+                roll_attribute: "ht",
+                roll_modifier: 0,
+                roll_modifier_value: 0,
+                roll_modifier_cap: "",
+                roll_modifier_context: "defense",
+                roll_modifier_entries: buildAgonyModifierEntries()
+                    .map((entry) => effectEntry(entry.label, entry.value, entry.contexts)),
+                whisperMode: "public",
+                category: "hp",
+                name: "",
+                chat_notice: true,
+                confirm_prompt: false,
+                variable_value: false,
+                max: "0",
+                source: "B428",
+                hidden: false,
+                exists_policy: "ignore",
+                statusId: "dead"
+            }],
+            duration: {
+                value: 0,
+                unit: "rounds",
+                inCombat: false,
+                isPermanent: true,
+                _uiMode: "permanent",
+                startMode: "apply",
+                endMode: "turnEnd"
+            }
+        },
+        effects: [],
+        flags: { gum: { agonyIncapacityEffect: true } }
+    };
+
+    const originalConditionsLocked = conditionsPack.locked;
+    const originalEffectsLocked = effectsPack?.locked;
+    try {
+        if (originalConditionsLocked) await conditionsPack.configure({ locked: false });
+        if (effectsPack) {
+            if (originalEffectsLocked) await effectsPack.configure({ locked: false });
+            if (!incapacityEffect) {
+                incapacityEffect = await Item.create(agonyEffectData, { pack: effectsPack.collection, renderSheet: false });
+                effectDocuments = [...effectDocuments, incapacityEffect];
+            } else {
+                await incapacityEffect.update({
+                    "system.description": agonyEffectData.system.description,
+                    "system.chat_description": agonyEffectData.system.chat_description,
+                    "system.ref": agonyEffectData.system.ref,
+                    "system.actions": agonyEffectData.system.actions,
+                    "system.duration": agonyEffectData.system.duration,
+                    "flags.gum.agonyIncapacityEffect": true
+                });
+            }
+        }
+
+        const proneEffect = effectDocuments.find((item) => normalizeName(item?.name) === "deitado");
+        const linkedEffects = [incapacityEffect, proneEffect]
+            .filter(Boolean)
+            .map((item) => ({ uuid: item.uuid }));
+        if (!incapacityEffect) {
+            throw new Error("Efeito de incapacidade não pôde ser localizado nem criado.");
+        }
+
+        const conditionDocuments = await conditionsPack.getDocuments();
+        let candidates = conditionDocuments.filter(isPortugueseAgony);
+        const worldCandidates = (game.items?.contents || []).filter(isPortugueseAgony);
+        const actorCandidates = (game.actors?.contents || [])
+            .flatMap((actor) => actor.items?.filter(isPortugueseAgony) || []);
+        let allCandidates = [...new Map([...candidates, ...worldCandidates, ...actorCandidates].map((item) => [item.uuid, item])).values()];
+
+        const description = "<p>Você permanece consciente, mas está sob uma dor tão intensa que não pode fazer nada além de gemer ou gritar. Se estiver de pé ou sentado, você cai.</p><p>Enquanto a Agonia durar, perde 1 PF por minuto ou fração. O Limiar Baixo de Dor dobra essa perda. Depois que se recuperar, qualquer pessoa que possa ameaçar você de forma convincente com a retomada da dor recebe +3 em testes de Interrogatório e Intimidação contra você; o Limiar Baixo de Dor dobra esse bônus.</p><p>O Limiar Alto de Dor permite superar a Agonia e agir, mas com −3 em testes de DX, IQ, perícias baseadas nesses atributos e autocontrole.</p><p><strong>Fonte:</strong> GURPS Basic Set, B428.</p>";
+        const conditionUpdate = {
+            type: "condition",
+            "system.description": description,
+            "system.chat_description": description,
+            "system.ref": "B428",
+            "system.activationEffects": { success: {}, failure: {} },
+            "system.onDamageEffects": {},
+            "system.generalConditions": {},
+            "system.passiveEffects": {},
+            "system.useEventEffects": {},
+            "system.bindingMode": "conditional",
+            "system.statusBinding": { statusId: "", stackMode: "refresh", stackLimit: 1, removeOnStatusOff: true, enabled: false },
+            "system.when": "",
+            "system.triggerOnTurnStartWhileActive": false,
+            "system.effects": linkedEffects
+        };
+
+        // Uma instalação limpa não possui os registros que foram editados
+        // manualmente durante o desenvolvimento. Crie a condição base no
+        // próprio compêndio para que o PR seja autocontido; instalações com
+        // uma condição importada continuam sendo apenas atualizadas.
+        if (!allCandidates.length) {
+            const created = await Item.create({
+                name: "Agonia",
+                type: "condition",
+                img: "systems/gum/icons/svg/state.svg/agony.svg",
+                ...foundry.utils.expandObject(conditionUpdate),
+                flags: { gum: { conditionSeed: "agonia" } }
+            }, { pack: conditionsPack.collection, renderSheet: false });
+            if (created) allCandidates = [created];
+        }
+        if (!allCandidates.length) {
+            console.warn("GUM | Migração da Agonia: não foi possível criar ou localizar a condição.");
+            return;
+        }
+        const updates = allCandidates.map(async (item) => {
+            // Foundry escolhe o modelo de Item na criação. Para um Agonia
+            // importado como advantage, criar um novo documento condition é a
+            // única forma confiável de trocar o tipo sem deixar uma ficha
+            // incompatível em memória.
+            if (item.type !== "condition") {
+                await replaceWithConditionItem(item, {
+                    ...conditionUpdate,
+                    img: item.img || "systems/gum/icons/status/pain.png"
+                }, allCandidates);
+                return;
+            }
+            await item.update({ ...conditionUpdate, img: item.img || "systems/gum/icons/status/pain.png" }, { renderSheet: false });
+        });
+        const results = await Promise.allSettled(updates);
+        const failures = results.filter((result) => result.status === "rejected");
+        if (failures.length) {
+            console.warn(`GUM | Migração da Agonia falhou em ${failures.length} item(ns).`);
+            return;
+        }
+        console.log(`GUM | Agonia convertida e configurada em ${allCandidates.length} item(ns).`);
+        await game.settings.set("gum", migrationFlag, true);
+    } finally {
+        if (originalConditionsLocked !== undefined && conditionsPack.locked !== originalConditionsLocked) {
+            await conditionsPack.configure({ locked: originalConditionsLocked });
+        }
+        if (effectsPack && originalEffectsLocked !== undefined && effectsPack.locked !== originalEffectsLocked) {
+            await effectsPack.configure({ locked: originalEffectsLocked });
+        }
+    }
+}
+
+/**
+ * Converte as demais condições incapacitantes importadas do GCS em Itens de
+ * condição jogáveis. A regra textual continua sendo a fonte para decisões
+ * que dependem de uma escolha do GM (por exemplo, a rolagem de Vontade da
+ * Alucinação), enquanto os modificadores objetivos são efeitos reutilizáveis.
+ */
+async function migrateIncapacitatingConditions() {
+    if (!game.user?.isGM) return;
+
+    const migrationFlag = "incapacitatingConditionsMigrationV2";
+    if (game.settings?.get?.("gum", migrationFlag)) return;
+
+    const conditionsPack = game.packs?.get?.("gum.conditions");
+    if (!conditionsPack) {
+        console.warn("GUM | Migração das condições incapacitantes: compêndio gum.conditions não encontrado.");
+        return;
+    }
+
+    const effectsPack = game.packs?.get?.("gum.efeitos");
+    if (!effectsPack) {
+        console.warn("GUM | Migração das condições incapacitantes: compêndio gum.efeitos não encontrado.");
+        return;
+    }
+
+    const normalizeName = (value) => String(value ?? "")
+        .trim()
+        .toLocaleLowerCase("pt-BR")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+
+    const definitions = [
+        {
+            sourceId: "tTcK-3Q0GYFnuWsdh",
+            name: "Asfixia",
+            reference: "B428/B436",
+            icon: "choking",
+            description: "Você não consegue respirar nem falar. Você não pode fazer nada além de cair. Enquanto a Asfixia durar, sofre os efeitos da sufocação (B436).",
+            falls: true,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tXmu7pVKrIIZsCuyy",
+            name: "Atordoamento",
+            reference: "B428",
+            icon: "daze",
+            description: "Você não pode fazer nada. Se for atingido, esbofeteado ou sacudido, você se recupera no seu próximo turno.",
+            falls: false,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tlXgjXn1FKFppQxDi",
+            name: "Êxtase",
+            reference: "B428",
+            icon: "ecstasy",
+            description: "Você está incapacitado por um prazer avassalador. Você não pode fazer nada além de gemer ou gritar. Se estiver de pé ou sentado, você cai. Enquanto o Êxtase durar, perde 1 PF por minuto ou fração. Depois que se recuperar, alguém que oferecer continuar o prazer recebe +3 em qualquer teste de influência.",
+            falls: true,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tuKdzqyHvUWmQl4OJ",
+            name: "Alucinação",
+            reference: "B429",
+            icon: "hallucinating",
+            description: "Você deve fazer um teste contra Vontade para agir. Em caso de sucesso, sofre 2d segundos de desorientação e −2 em quaisquer testes necessários. Em caso de falha, alucina por 1d minutos e sofre −5 em quaisquer testes necessários. Em uma falha crítica, entra em pânico por 3d minutos — veja B429.",
+            falls: false,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tXJE5KJAerKT_U1Du",
+            name: "Paralisia",
+            reference: "B429",
+            icon: "paralysis",
+            description: "Você não consegue mover nenhum músculo voluntário e cai se não estiver em uma posição equilibrada.",
+            falls: true,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "t3IsOiqOHB8Tay9ie",
+            name: "Ânsia",
+            reference: "B429",
+            icon: "retching",
+            description: "Você falha automaticamente em qualquer ação que exija uma manobra de Concentrar. Ao final da Ânsia, perde 1 PF. Você não se beneficia de refeições recentes nem de medicamentos orais.",
+            falls: false,
+            entries: [
+                { label: "DX, IQ e Percepção", value: -5, contexts: "check_dx,skill_dx,check_iq,skill_iq,check_per" },
+                { label: "Defesas ativas", value: -4, contexts: "defense" }
+            ]
+        },
+        {
+            sourceId: "tlFaRyXUYuIdVW2ej",
+            name: "Convulsão",
+            reference: "B429",
+            icon: "seizure",
+            description: "Você cai se estiver de pé e não consegue falar ou pensar com clareza. Você não pode fazer nada. Ao final da Convulsão, perde 1d PF.",
+            falls: true,
+            entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tfVSkDm_P3qlsMg4r",
+            name: "Bêbado",
+            reference: "B428",
+            icon: "drunk",
+            description: "Você sofre −2 em DX e IQ e −4 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, o álcool reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
+            falls: false,
+            entries: [
+                { label: "DX e IQ", value: -2, contexts: "check_dx,skill_dx,check_iq,skill_iq" },
+                { label: "Autocontrole (exceto Covardia)", value: -4, contexts: "self_control" }
+            ]
+        },
+        {
+            sourceId: "tnI32PnmSKr6Q1A46",
+            name: "Dor Grave",
+            reference: "B428",
+            icon: "severe-pain",
+            description: "A dor impõe −4 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −2; o Limiar Baixo de Dor aumenta a penalidade para −8.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Grave", normal: -4, highPain: -2, lowPain: -8 })
+        },
+        {
+            sourceId: "ta82fnW1eQtF9R6kA",
+            name: "Dor Leve",
+            reference: "B428",
+            icon: "mild-pain",
+            description: "A dor impõe −1 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor permite ignorar o efeito; o Limiar Baixo de Dor aumenta a penalidade para −2.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Leve", normal: -1, highPain: 0, lowPain: -2 })
+        },
+        {
+            sourceId: "tMU0D5jPQ__aYiCy4",
+            name: "Dor Moderada",
+            reference: "B428",
+            icon: "moderate-pain",
+            description: "A dor impõe −2 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −1; o Limiar Baixo de Dor aumenta a penalidade para −4.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Moderada", normal: -2, highPain: -1, lowPain: -4 })
+        },
+        {
+            sourceId: "ts4XQOviPMf6aqcsb",
+            name: "Dor Terrível",
+            reference: "B428",
+            icon: "terrible-pain",
+            description: "A dor impõe −6 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −3; o Limiar Baixo de Dor aumenta a penalidade para −12.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Terrível", normal: -6, highPain: -3, lowPain: -12 })
+        },
+        {
+            sourceId: "tP7JTIGz0bagc7hdD",
+            name: "Espirros",
+            reference: "B428",
+            icon: "sneezing",
+            description: "Você não pode usar Furtividade e sofre −3 em DX e −1 em IQ.",
+            falls: false,
+            entries: [{ label: "DX e IQ", value: -1, contexts: "check_iq" }, { label: "DX", value: -3, contexts: "check_dx,skill_dx" }]
+        },
+        {
+            sourceId: "tUlyQ3H9k_j4rIImP",
+            name: "Euforia",
+            reference: "B428",
+            icon: "euphoria",
+            description: "Você sofre −3 em DX, IQ, perícias e testes de autocontrole.",
+            falls: false,
+            entries: [{ label: "DX, IQ, perícias e autocontrole", value: -3, contexts: "check_dx,check_iq,skill,self_control" }]
+        },
+        {
+            sourceId: "tTJFogEi7XCsUGImp",
+            name: "Náusea",
+            reference: "B428",
+            icon: "nauseated",
+            description: "Faça um teste contra HT depois de comer, ser exposto a um odor repugnante, falhar em um Teste de Pânico ou ficar atordoado, e a cada hora em queda livre ou em qualquer situação que possa causar enjoo de movimento. Uma refeição farta na última hora impõe −2; remédios contra náusea concedem +2. Em caso de falha, você vomita por (25 − HT) segundos — trate como Ânsia.",
+            falls: false,
+            entries: [
+                { label: "Atributos", value: -2, contexts: "check_st,check_dx,check_iq,check_ht,check_per,check_vont" },
+                { label: "Perícias", value: -2, contexts: "skill" },
+                { label: "Defesas ativas", value: -1, contexts: "defense" }
+            ]
+        },
+        {
+            sourceId: "tMdvfUXHGYcOg1_8u",
+            name: "Sonolento",
+            reference: "B428",
+            icon: "drowsy",
+            description: "Você sofre −2 em DX e IQ e −2 em testes de autocontrole. Faça um teste de Vontade a cada duas horas em que permanecer inativo para evitar adormecer.",
+            falls: false,
+            entries: [{ label: "DX, IQ e autocontrole", value: -2, contexts: "check_dx,skill_dx,check_iq,skill_iq,self_control" }]
+        },
+        {
+            sourceId: "tXuQDVZLskKVtKnwU",
+            name: "Tonto",
+            reference: "B428",
+            icon: "tipsy",
+            description: "Você sofre −1 em DX e IQ e −2 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, a condição reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
+            falls: false,
+            entries: [{ label: "DX, IQ e autocontrole (exceto Covardia)", value: -1, contexts: "check_dx,skill_dx,check_iq,skill_iq" }, { label: "Autocontrole (exceto Covardia)", value: -2, contexts: "self_control" }]
+        },
+        {
+            sourceId: "t6XkkkHnWhcXqUT09",
+            name: "Tosse",
+            reference: "B428",
+            icon: "coughing",
+            description: "Você não pode usar Furtividade e sofre −3 em DX e −1 em IQ.",
+            falls: false,
+            entries: [{ label: "DX e IQ", value: -1, contexts: "check_iq" }, { label: "DX", value: -3, contexts: "check_dx,skill_dx" }]
+        }
+    ];
+
+    const conditionDocuments = await conditionsPack.getDocuments();
+    const effectDocuments = await effectsPack.getDocuments();
+    const proneEffect = effectDocuments.find((item) => normalizeName(item?.name) === "deitado");
+    const bySourceId = (item, sourceId) => item?.getFlag?.("gum", "gcsImport")?.source?.id === sourceId;
+    const getCandidates = (definition) => {
+        const packItems = conditionDocuments.filter((item) => bySourceId(item, definition.sourceId) || normalizeName(item.name) === normalizeName(definition.name));
+        const worldItems = (game.items?.contents || []).filter((item) => bySourceId(item, definition.sourceId) || normalizeName(item.name) === normalizeName(definition.name));
+        const actorItems = (game.actors?.contents || []).flatMap((actor) => actor.items?.filter((item) => bySourceId(item, definition.sourceId) || normalizeName(item.name) === normalizeName(definition.name)) || []);
+        return [...new Map([...packItems, ...worldItems, ...actorItems].map((item) => [item.uuid, item])).values()];
+    };
+
+    const effectEntry = (definition, entry) => ({
+        label: entry.label,
+        value: entry.value,
+        value_mode: "fixed",
+        cap: "",
+        contexts: entry.contexts,
+        application_side: "self",
+        target_kind: "any",
+        target_mode: "all",
+        target_values: "",
+        source_item_ids: "",
+        source_attack_ids: "",
+        roll_tags: "",
+        roll_tag_match: "any",
+        nh_display_mode: "roll_only"
+    });
+
+    const originalConditionsLocked = conditionsPack.locked;
+    const originalEffectsLocked = effectsPack.locked;
+    const updated = [];
+    try {
+        if (conditionsPack.locked) await conditionsPack.configure({ locked: false });
+        if (effectsPack.locked) await effectsPack.configure({ locked: false });
+
+        for (const definition of definitions) {
+            const effectFlag = `incapacitatingCondition:${definition.sourceId}`;
+            let effect = effectDocuments.find((item) => item?.getFlag?.("gum", "incapacitatingCondition") === effectFlag);
+            const action = {
+                label: definition.name,
+                type: "roll_modifier",
+                path: "",
+                operation: "ADD",
+                value: definition.entries[0]?.value ?? 0,
+                key: "",
+                flag_value: "",
+                chat_text: "",
+                has_roll: false,
+                roll_label: "Rolar Teste",
+                roll_attribute: "ht",
+                roll_modifier: definition.entries[0]?.value ?? 0,
+                roll_modifier_value: definition.entries[0]?.value ?? 0,
+                roll_modifier_cap: "",
+                roll_modifier_context: definition.entries[0]?.contexts ?? "defense",
+                roll_modifier_entries: definition.entries.map((entry) => effectEntry(definition, entry)),
+                whisperMode: "public",
+                category: "hp",
+                name: "",
+                chat_notice: true,
+                confirm_prompt: false,
+                variable_value: false,
+                max: "0",
+                source: definition.reference,
+                hidden: false,
+                exists_policy: "ignore",
+                statusId: "dead"
+            };
+            const effectData = {
+                name: `Condição — ${definition.name}`,
+                type: "effect",
+                img: `systems/gum/icons/svg/state.svg/${definition.icon}.svg`,
+                system: {
+                    description: `<p>Modificadores objetivos de ${definition.name}. A regra textual da condição permanece na condição para orientar o GM.</p><p><strong>Fonte:</strong> GURPS Basic Set, ${definition.reference}.</p>`,
+                    chat_description: `${definition.name}: ${definition.description}`,
+                    favorite_in_combat: false,
+                    ref: definition.reference,
+                    activationEffects: { success: {}, failure: {} },
+                    onDamageEffects: {},
+                    generalConditions: {},
+                    passiveEffects: {},
+                    useEventEffects: {},
+                    schemaVersion: 2,
+                    stackingMode: "unique",
+                    tokenIconPolicy: "auto",
+                    actions: [action],
+                    duration: { value: 0, unit: "rounds", inCombat: false, isPermanent: true, _uiMode: "permanent", startMode: "apply", endMode: "turnEnd" }
+                },
+                effects: [],
+                flags: { gum: { incapacitatingCondition: effectFlag } }
+            };
+            if (!effect) {
+                effect = await Item.create(effectData, { pack: effectsPack.collection, renderSheet: false });
+                effectDocuments.push(effect);
+            } else {
+                await effect.update({
+                    img: effectData.img,
+                    "system.description": effectData.system.description,
+                    "system.chat_description": effectData.system.chat_description,
+                    "system.ref": effectData.system.ref,
+                    "system.actions": effectData.system.actions,
+                    "system.duration": effectData.system.duration,
+                    "flags.gum.incapacitatingCondition": effectFlag
+                }, { renderSheet: false });
+            }
+
+            const links = [{ uuid: effect.uuid }];
+            if (definition.falls && proneEffect) links.push({ uuid: proneEffect.uuid });
+            const conditionUpdate = {
+                type: "condition",
+                img: `systems/gum/icons/svg/state.svg/${definition.icon}.svg`,
+                "system.description": `<p>${definition.description}</p><p><strong>Fonte:</strong> GURPS Basic Set, ${definition.reference}.</p>`,
+                "system.chat_description": definition.description,
+                "system.ref": definition.reference,
+                "system.activationEffects": { success: {}, failure: {} },
+                "system.onDamageEffects": {},
+                "system.generalConditions": {},
+                "system.passiveEffects": {},
+                "system.useEventEffects": {},
+                "system.bindingMode": "conditional",
+                "system.statusBinding": { statusId: "", stackMode: "refresh", stackLimit: 1, removeOnStatusOff: true, enabled: false },
+                "system.when": "",
+                "system.triggerOnTurnStartWhileActive": false,
+                "system.effects": links
+            };
+            const candidates = getCandidates(definition);
+            // Em uma instalação limpa, as condições importadas durante o
+            // desenvolvimento não existem no compêndio distribuído. Semeie
+            // o Item jogável para que a migração seja autocontida e idempotente.
+            if (!candidates.length) {
+                const created = await Item.create({
+                    name: definition.name,
+                    type: "condition",
+                    img: conditionUpdate.img,
+                    ...foundry.utils.expandObject(conditionUpdate),
+                    flags: { gum: { conditionSeed: definition.sourceId } }
+                }, { pack: conditionsPack.collection, renderSheet: false });
+                if (created) candidates.push(created);
+            }
+            for (const item of candidates) {
+                if (item.type !== "condition") {
+                    await replaceWithConditionItem(item, conditionUpdate, candidates);
+                } else {
+                    await item.update(conditionUpdate, { renderSheet: false });
+                }
+                updated.push(definition.name);
+            }
+        }
+        if (!updated.length) {
+            console.warn("GUM | Migração das condições incapacitantes: nenhum item português foi localizado.");
+            return;
+        }
+        await game.settings.set("gum", migrationFlag, true);
+        console.log(`GUM | Condições incapacitantes configuradas: ${[...new Set(updated)].join(", ")}.`);
+    } finally {
+        if (conditionsPack.locked !== originalConditionsLocked) await conditionsPack.configure({ locked: originalConditionsLocked });
+        if (effectsPack.locked !== originalEffectsLocked) await effectsPack.configure({ locked: originalEffectsLocked });
+    }
 }
 
 function _getCurrentUserRollMode() {
@@ -1935,6 +2555,91 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     if (!source) return 0;
     if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
 
+    // Expressão controlada para efeitos que variam conforme uma característica
+    // do ator. Mantemos a gramática limitada a números e hasTrait(...) para não
+    // executar JavaScript arbitrário vindo de dados importados.
+    const evaluateSafeTraitConditional = (expression) => {
+        const stripOuterParentheses = (value) => {
+            let result = value.trim();
+            while (result.startsWith("(") && result.endsWith(")")) {
+                let depth = 0;
+                let enclosesAll = true;
+                for (let index = 0; index < result.length; index += 1) {
+                    if (result[index] === "(") depth += 1;
+                    else if (result[index] === ")") depth -= 1;
+                    if (depth === 0 && index < result.length - 1) {
+                        enclosesAll = false;
+                        break;
+                    }
+                }
+                if (!enclosesAll) break;
+                result = result.slice(1, -1).trim();
+            }
+            return result;
+        };
+        const findTopLevel = (value, character, start = 0) => {
+            let depth = 0;
+            for (let index = start; index < value.length; index += 1) {
+                if (value[index] === "(") depth += 1;
+                else if (value[index] === ")") depth -= 1;
+                else if (value[index] === character && depth === 0) return index;
+            }
+            return -1;
+        };
+        const normalizeTrait = (value) => String(value ?? "")
+            .trim()
+            .toLocaleLowerCase("pt-BR")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "");
+        const hasTrait = (traitName) => {
+            const requested = normalizeTrait(traitName);
+            return Array.from(actor?.items?.contents ?? actor?.items ?? []).some((item) => {
+                const itemName = normalizeTrait(item?.name);
+                return itemName === requested
+                    || (requested === "high pain threshold" && itemName === "limiar alto de dor")
+                    || (requested === "limiar alto de dor" && itemName === "high pain threshold")
+                    || (requested === "low pain threshold" && itemName === "limiar baixo de dor")
+                    || (requested === "limiar baixo de dor" && itemName === "low pain threshold");
+            });
+        };
+        const parse = (raw) => {
+            const value = stripOuterParentheses(raw);
+            const questionIndex = findTopLevel(value, "?");
+            if (questionIndex < 0) {
+                return /^[+-]?\d+(?:\.\d+)?$/.test(value) ? Number(value) : null;
+            }
+            const colonIndex = findTopLevel(value, ":", questionIndex + 1);
+            if (colonIndex < 0) return null;
+            const condition = stripOuterParentheses(value.slice(0, questionIndex));
+            const match = condition.match(/^hasTrait\(\s*["']([^"']+)["']\s*\)$/i);
+            if (!match) return null;
+            const branch = hasTrait(match[1]) ? value.slice(questionIndex + 1, colonIndex) : value.slice(colonIndex + 1);
+            return parse(branch);
+        };
+        const parsed = parse(expression);
+        return { matched: parsed !== null, value: parsed };
+    };
+    const safeTraitConditional = evaluateSafeTraitConditional(source);
+    if (safeTraitConditional.matched) return safeTraitConditional.value;
+
+    const traitConditional = source.match(/^\(?(?:hasTrait\(\s*["']([^"']+)["']\s*\))\)?\s*\?\s*([+-]?\d+(?:\.\d+)?)\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+    if (traitConditional) {
+        const [, traitName, whenTrue, whenFalse] = traitConditional;
+        const normalizeTrait = (value) => String(value ?? "")
+            .trim()
+            .toLocaleLowerCase("pt-BR")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "");
+        const requested = normalizeTrait(traitName);
+        const hasTrait = Array.from(actor?.items?.contents ?? actor?.items ?? []).some((item) => {
+            const itemName = normalizeTrait(item?.name);
+            return itemName === requested
+                || (requested === "high pain threshold" && itemName === "limiar alto de dor")
+                || (requested === "limiar alto de dor" && itemName === "high pain threshold");
+        });
+        return Number(hasTrait ? whenTrue : whenFalse) || 0;
+    }
+
     const evaluateArithmetic = (expression) => {
         const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
         const reserved = new Set(["maior", "menor", "max", "min", "math"]);
@@ -2801,8 +3506,20 @@ Hooks.once('ready', async function() {
     game.socket.on("system.gum", enqueueResistanceSocketResult);
     console.log("GUM | Fase 'ready': Aplicando configurações.");
 
-    await migrateEffectTokenIconPolicy();
-    await migrateEffectActionsSchema();
+    const migrations = [
+        ["política de ícones de efeitos", migrateEffectTokenIconPolicy],
+        ["schema de ações de efeitos", migrateEffectActionsSchema],
+        ["ícones das condições de Choque", migrateShockConditionIcons],
+        ["condição Agonia", migrateAgonyCondition],
+        ["condições incapacitantes", migrateIncapacitatingConditions]
+    ];
+    for (const [label, migrate] of migrations) {
+        try {
+            await migrate();
+        } catch (error) {
+            console.error(`GUM | Falha na migração de ${label}; a inicialização continuará e a migração será tentada novamente.`, error);
+        }
+    }
 
     if (game.user?.isGM) {
         const ensureCompendiumFolder = async ({ name, color, parent = null }) => {
@@ -3630,6 +4347,18 @@ async function processConditions(actor, eventData = null) {
             // Inclui optional chaining, usado pelas condições de defesas sucessivas.
             return /(^|[^.\w])eventData(?:\?\.|[.\[]|$)/.test(when);
         };
+        const actorHasHighPainThreshold = (candidate) => {
+            const traitNames = new Set(["high pain threshold", "limiar alto de dor"]);
+            return Array.from(candidate?.items?.contents ?? candidate?.items ?? []).some((item) => {
+                const normalized = String(item?.name ?? "")
+                    .trim()
+                    .toLocaleLowerCase("pt-BR")
+                    .normalize("NFD")
+                    .replace(/\p{Diacritic}/gu, "");
+                return traitNames.has(normalized);
+            });
+        };
+        const isShockCondition = (condition) => /^Choque por Ferimento\s*[1-4]$/i.test(`${condition?.name ?? ""}`.trim());
 
         // --- Loop para avaliar Condições e disparar ações únicas ---
         for (const condition of conditions) {
@@ -3646,6 +4375,18 @@ async function processConditions(actor, eventData = null) {
              }
 
              const isEffectivelyActiveNow = isConditionActiveNow && !isManuallyDisabled;
+             // B419: High Pain Threshold completely ignores shock. This guard
+             // also removes a stale condition effect if the trait was added
+             // after the shock condition had already been applied.
+             if (isShockCondition(condition) && actorHasHighPainThreshold(actor)) {
+                 const staleEffects = actor.effects.filter((effect) =>
+                     effect?.flags?.gum?.conditionId === condition.id
+                     || effect?.flags?.gum?.conditionIds?.includes?.(condition.id)
+                 );
+                 if (staleEffects.length) await actor.deleteEmbeddedDocuments("ActiveEffect", staleEffects.map((effect) => effect.id));
+                 if (wasActive) await condition.setFlag("gum", "wasActive", false);
+                 continue;
+             }
              const hasEventPayload = eventData !== null && eventData !== undefined;
              // Todo payload entregue a uma condição dirigida por eventData representa um pulso.
              // `pulse` continua aceito para compatibilidade com emissores existentes.
