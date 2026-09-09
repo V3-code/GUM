@@ -33,6 +33,7 @@ import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
+import { replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -229,28 +230,26 @@ async function migrateShockConditionIcons() {
     for (const actor of game.actors?.contents || []) collect(actor.items?.contents || []);
 
     const conditionsPack = game.packs?.get?.("gum.conditions");
-    if (conditionsPack) {
-        try {
+    await withUnlockedPack(conditionsPack, async () => {
+        if (conditionsPack) {
             collect(await conditionsPack.getDocuments());
-        } catch (error) {
-            console.warn("GUM | Não foi possível ler o compêndio de condições para atualizar os ícones.", error);
         }
-    }
 
-    if (!updates.length) {
+        if (!updates.length) {
+            await game.settings.set("gum", migrationFlag, true);
+            return;
+        }
+
+        const results = await Promise.allSettled(updates);
+        const failures = results.filter((result) => result.status === "rejected");
+        if (failures.length) {
+            console.warn(`GUM | Migração de ícones de Choque concluída parcialmente: ${failures.length} atualização(ões) falharam.`);
+            return;
+        }
+
+        console.log(`GUM | Ícones de Choque atualizados em ${updates.length} item(ns).`);
         await game.settings.set("gum", migrationFlag, true);
-        return;
-    }
-
-    const results = await Promise.allSettled(updates);
-    const failures = results.filter((result) => result.status === "rejected");
-    if (failures.length) {
-        console.warn(`GUM | Migração de ícones de Choque concluída parcialmente: ${failures.length} atualização(ões) falharam.`);
-        return;
-    }
-
-    console.log(`GUM | Ícones de Choque atualizados em ${updates.length} item(ns).`);
-    await game.settings.set("gum", migrationFlag, true);
+    });
 }
 
 async function migrateAgonyCondition() {
@@ -426,13 +425,10 @@ async function migrateAgonyCondition() {
             // única forma confiável de trocar o tipo sem deixar uma ficha
             // incompatível em memória.
             if (item.type !== "condition") {
-                const replacement = item.toObject();
-                delete replacement._id;
-                Object.assign(replacement, conditionUpdate);
-                replacement.img = item.img || "systems/gum/icons/status/pain.png";
-                const createOptions = item.pack ? { pack: item.pack, renderSheet: false } : { renderSheet: false };
-                await Item.create(replacement, createOptions);
-                await item.delete({ render: false });
+                await replaceWithConditionItem(item, {
+                    ...conditionUpdate,
+                    img: item.img || "systems/gum/icons/status/pain.png"
+                }, allCandidates);
                 return;
             }
             await item.update({ ...conditionUpdate, img: item.img || "systems/gum/icons/status/pain.png" }, { renderSheet: false });
@@ -678,14 +674,10 @@ async function migrateIncapacitatingConditions() {
                 "system.triggerOnTurnStartWhileActive": false,
                 "system.effects": links
             };
-            for (const item of getCandidates(definition)) {
+            const candidates = getCandidates(definition);
+            for (const item of candidates) {
                 if (item.type !== "condition") {
-                    const replacement = item.toObject();
-                    delete replacement._id;
-                    Object.assign(replacement, conditionUpdate);
-                    const options = item.pack ? { pack: item.pack, renderSheet: false } : { renderSheet: false };
-                    await Item.create(replacement, options);
-                    await item.delete({ render: false });
+                    await replaceWithConditionItem(item, conditionUpdate, candidates);
                 } else {
                     await item.update(conditionUpdate, { renderSheet: false });
                 }
@@ -3321,11 +3313,20 @@ Hooks.once('ready', async function() {
     game.socket.on("system.gum", enqueueResistanceSocketResult);
     console.log("GUM | Fase 'ready': Aplicando configurações.");
 
-    await migrateEffectTokenIconPolicy();
-    await migrateEffectActionsSchema();
-    await migrateShockConditionIcons();
-    await migrateAgonyCondition();
-    await migrateIncapacitatingConditions();
+    const migrations = [
+        ["política de ícones de efeitos", migrateEffectTokenIconPolicy],
+        ["schema de ações de efeitos", migrateEffectActionsSchema],
+        ["ícones das condições de Choque", migrateShockConditionIcons],
+        ["condição Agonia", migrateAgonyCondition],
+        ["condições incapacitantes", migrateIncapacitatingConditions]
+    ];
+    for (const [label, migrate] of migrations) {
+        try {
+            await migrate();
+        } catch (error) {
+            console.error(`GUM | Falha na migração de ${label}; a inicialização continuará e a migração será tentada novamente.`, error);
+        }
+    }
 
     if (game.user?.isGM) {
         const ensureCompendiumFolder = async ({ name, color, parent = null }) => {
