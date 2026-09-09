@@ -1971,7 +1971,7 @@
           <section class="biography-models-block" aria-label="Modelos aplicados">
             <div class="biography-models-grid">
               <div class="biography-models-action">
-                <button type="button" class="add-character-model-btn biography-model-add-btn">
+                <button type="button" class="add-character-model-btn biography-model-add-btn" {{#if modelsPending}}disabled{{/if}}>
                   <i class="fas fa-plus"></i> Modelo
                 </button>
               </div>
@@ -1982,9 +1982,14 @@
                   {{#each appliedModels as |model|}}
                   <span class="character-model-pill" title="Aplicado em {{model.appliedAtLabel}}">
                     <span class="character-model-pill-label">{{model.templateName}}</span>
-                    <button type="button" class="remove-character-model-btn" data-application-id="{{model.applicationId}}" title="Remover modelo">
+                    {{#if model.pending}}
+                    <span>{{model.stateLabel}}</span>
+                    <button type="button" class="resume-character-model-btn" data-application-id="{{model.applicationId}}" style="color: var(--gum-text-claro, #f0ebe3); width: auto; min-width: 0; flex: 0 0 auto; padding: 2px 8px;">Retomar</button>
+                    {{else}}
+                    <button type="button" class="remove-character-model-btn" data-application-id="{{model.applicationId}}" title="Remover modelo" {{#if model.blocked}}disabled{{/if}}>
                       <i class="fas fa-times"></i>
                     </button>
+                    {{/if}}
                   </span>
                   {{/each}}
                 </div>
