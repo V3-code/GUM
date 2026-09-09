@@ -123,6 +123,14 @@ export const registerSystemSettings = function() {
         default: false
     });
 
+    game.settings.register("gum", "incapacitatingConditionsMigrationV2", {
+        name: "Migração interna: Condições incapacitantes (V2)",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
 // --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
     game.settings.register("gum", "gmScreenConfig", {
         name: "Layout do Escudo",

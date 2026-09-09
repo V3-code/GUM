@@ -121,3 +121,15 @@ test("Agonia aplica a penalidade de HPT também a testes de autocontrole", async
     assert.ok(hptPenalty);
     assert.equal(hptPenalty.contexts.split(",").includes("self_control"), true);
 });
+
+test("condições de dor preservam a prioridade HPT sobre LPT", async () => {
+    const { buildPainModifierEntries } = await loadSubject();
+    assert.equal(typeof buildPainModifierEntries, "function");
+
+    const [entry] = buildPainModifierEntries({ name: "Dor Moderada", normal: -2, highPain: -1, lowPain: -4 });
+    assert.equal(entry.contexts.split(",").includes("self_control"), true);
+    assert.match(entry.value, /High Pain Threshold/);
+    assert.match(entry.value, /Low Pain Threshold/);
+    assert.match(entry.value, /-1/);
+    assert.match(entry.value, /-4/);
+});

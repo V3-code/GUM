@@ -30,9 +30,18 @@ export const buildAgonyModifierEntries = () => {
         {
             label: "DX, IQ, perícias e autocontrole com Limiar Alto de Dor",
             value: `(${hptExpression}) ? -3 : 0`,
-            contexts: "check_dx,skill_dx,check_iq,skill_iq,self_control"
+            contexts: "check_dx,check_iq,skill,self_control"
         }
     ];
+};
+
+export const buildPainModifierEntries = ({ name, normal, highPain, lowPain }) => {
+    const value = `hasTrait("High Pain Threshold") ? ${highPain} : (hasTrait("Low Pain Threshold") ? ${lowPain} : ${normal})`;
+    return [{
+        label: `${name} — DX, IQ, perícias e autocontrole`,
+        value,
+        contexts: "check_dx,check_iq,skill,self_control"
+    }];
 };
 
 export async function withUnlockedPack(pack, operation) {

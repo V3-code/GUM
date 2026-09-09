@@ -37,6 +37,7 @@ const ROLL_MODIFIER_CONTEXT_OPTIONS = [
     { id: "check_per", label: "Atributo Específico: Per" },
     { id: "skill_per", label: "Perícias baseadas em Per" },
     { id: "check_vont", label: "Atributo Específico: Vont" },
+    { id: "self_control", label: "Teste de Autocontrole" },
       { id: "skill_vont", label: "Perícias baseadas em Vont" }
 ];
 

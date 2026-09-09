@@ -33,7 +33,7 @@ import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
-import { buildAgonyModifierEntries, replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
+import { buildAgonyModifierEntries, buildPainModifierEntries, replaceWithConditionItem, withUnlockedPack } from "../module/utils/condition-migration.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -455,7 +455,7 @@ async function migrateAgonyCondition() {
 async function migrateIncapacitatingConditions() {
     if (!game.user?.isGM) return;
 
-    const migrationFlag = "incapacitatingConditionsMigrationV1";
+    const migrationFlag = "incapacitatingConditionsMigrationV2";
     if (game.settings?.get?.("gum", migrationFlag)) return;
 
     const conditionsPack = game.packs?.get?.("gum.conditions");
@@ -542,6 +542,112 @@ async function migrateIncapacitatingConditions() {
             description: "Você cai se estiver de pé e não consegue falar ou pensar com clareza. Você não pode fazer nada. Ao final da Convulsão, perde 1d PF.",
             falls: true,
             entries: [{ label: "Defesas ativas", value: -4, contexts: "defense" }]
+        },
+        {
+            sourceId: "tfVSkDm_P3qlsMg4r",
+            name: "Bêbado",
+            reference: "B428",
+            icon: "drunk",
+            description: "Você sofre −2 em DX e IQ e −4 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, o álcool reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
+            falls: false,
+            entries: [
+                { label: "DX e IQ", value: -2, contexts: "check_dx,skill_dx,check_iq,skill_iq" },
+                { label: "Autocontrole (exceto Covardia)", value: -4, contexts: "self_control" }
+            ]
+        },
+        {
+            sourceId: "tnI32PnmSKr6Q1A46",
+            name: "Dor Grave",
+            reference: "B428",
+            icon: "severe-pain",
+            description: "A dor impõe −4 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −2; o Limiar Baixo de Dor aumenta a penalidade para −8.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Grave", normal: -4, highPain: -2, lowPain: -8 })
+        },
+        {
+            sourceId: "ta82fnW1eQtF9R6kA",
+            name: "Dor Leve",
+            reference: "B428",
+            icon: "mild-pain",
+            description: "A dor impõe −1 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor permite ignorar o efeito; o Limiar Baixo de Dor aumenta a penalidade para −2.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Leve", normal: -1, highPain: 0, lowPain: -2 })
+        },
+        {
+            sourceId: "tMU0D5jPQ__aYiCy4",
+            name: "Dor Moderada",
+            reference: "B428",
+            icon: "moderate-pain",
+            description: "A dor impõe −2 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −1; o Limiar Baixo de Dor aumenta a penalidade para −4.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Moderada", normal: -2, highPain: -1, lowPain: -4 })
+        },
+        {
+            sourceId: "ts4XQOviPMf6aqcsb",
+            name: "Dor Terrível",
+            reference: "B428",
+            icon: "terrible-pain",
+            description: "A dor impõe −6 em todos os testes de DX, IQ, perícias e autocontrole. O Limiar Alto de Dor reduz a penalidade para −3; o Limiar Baixo de Dor aumenta a penalidade para −12.",
+            falls: false,
+            entries: buildPainModifierEntries({ name: "Dor Terrível", normal: -6, highPain: -3, lowPain: -12 })
+        },
+        {
+            sourceId: "tP7JTIGz0bagc7hdD",
+            name: "Espirros",
+            reference: "B428",
+            icon: "sneezing",
+            description: "Você não pode usar Furtividade e sofre −3 em DX e −1 em IQ.",
+            falls: false,
+            entries: [{ label: "DX e IQ", value: -1, contexts: "check_iq" }, { label: "DX", value: -3, contexts: "check_dx,skill_dx" }]
+        },
+        {
+            sourceId: "tUlyQ3H9k_j4rIImP",
+            name: "Euforia",
+            reference: "B428",
+            icon: "euphoria",
+            description: "Você sofre −3 em DX, IQ, perícias e testes de autocontrole.",
+            falls: false,
+            entries: [{ label: "DX, IQ, perícias e autocontrole", value: -3, contexts: "check_dx,check_iq,skill,self_control" }]
+        },
+        {
+            sourceId: "tTJFogEi7XCsUGImp",
+            name: "Náusea",
+            reference: "B428",
+            icon: "nauseated",
+            description: "Faça um teste contra HT depois de comer, ser exposto a um odor repugnante, falhar em um Teste de Pânico ou ficar atordoado, e a cada hora em queda livre ou em qualquer situação que possa causar enjoo de movimento. Uma refeição farta na última hora impõe −2; remédios contra náusea concedem +2. Em caso de falha, você vomita por (25 − HT) segundos — trate como Ânsia.",
+            falls: false,
+            entries: [
+                { label: "Atributos", value: -2, contexts: "check_st,check_dx,check_iq,check_ht,check_per,check_vont" },
+                { label: "Perícias", value: -2, contexts: "skill" },
+                { label: "Defesas ativas", value: -1, contexts: "defense" }
+            ]
+        },
+        {
+            sourceId: "tMdvfUXHGYcOg1_8u",
+            name: "Sonolento",
+            reference: "B428",
+            icon: "drowsy",
+            description: "Você sofre −2 em DX e IQ e −2 em testes de autocontrole. Faça um teste de Vontade a cada duas horas em que permanecer inativo para evitar adormecer.",
+            falls: false,
+            entries: [{ label: "DX, IQ e autocontrole", value: -2, contexts: "check_dx,skill_dx,check_iq,skill_iq,self_control" }]
+        },
+        {
+            sourceId: "tXuQDVZLskKVtKnwU",
+            name: "Tonto",
+            reference: "B428",
+            icon: "tipsy",
+            description: "Você sofre −1 em DX e IQ e −2 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, o álcool reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
+            falls: false,
+            entries: [{ label: "DX, IQ e autocontrole (exceto Covardia)", value: -1, contexts: "check_dx,skill_dx,check_iq,skill_iq" }, { label: "Autocontrole (exceto Covardia)", value: -2, contexts: "self_control" }]
+        },
+        {
+            sourceId: "t6XkkkHnWhcXqUT09",
+            name: "Tosse",
+            reference: "B428",
+            icon: "coughing",
+            description: "Você não pode usar Furtividade e sofre −3 em DX e −1 em IQ.",
+            falls: false,
+            entries: [{ label: "DX e IQ", value: -1, contexts: "check_iq" }, { label: "DX", value: -3, contexts: "check_dx,skill_dx" }]
         }
     ];
 
@@ -2424,6 +2530,70 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     // Expressão controlada para efeitos que variam conforme uma característica
     // do ator. Mantemos a gramática limitada a números e hasTrait(...) para não
     // executar JavaScript arbitrário vindo de dados importados.
+    const evaluateSafeTraitConditional = (expression) => {
+        const stripOuterParentheses = (value) => {
+            let result = value.trim();
+            while (result.startsWith("(") && result.endsWith(")")) {
+                let depth = 0;
+                let enclosesAll = true;
+                for (let index = 0; index < result.length; index += 1) {
+                    if (result[index] === "(") depth += 1;
+                    else if (result[index] === ")") depth -= 1;
+                    if (depth === 0 && index < result.length - 1) {
+                        enclosesAll = false;
+                        break;
+                    }
+                }
+                if (!enclosesAll) break;
+                result = result.slice(1, -1).trim();
+            }
+            return result;
+        };
+        const findTopLevel = (value, character, start = 0) => {
+            let depth = 0;
+            for (let index = start; index < value.length; index += 1) {
+                if (value[index] === "(") depth += 1;
+                else if (value[index] === ")") depth -= 1;
+                else if (value[index] === character && depth === 0) return index;
+            }
+            return -1;
+        };
+        const normalizeTrait = (value) => String(value ?? "")
+            .trim()
+            .toLocaleLowerCase("pt-BR")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "");
+        const hasTrait = (traitName) => {
+            const requested = normalizeTrait(traitName);
+            return Array.from(actor?.items?.contents ?? actor?.items ?? []).some((item) => {
+                const itemName = normalizeTrait(item?.name);
+                return itemName === requested
+                    || (requested === "high pain threshold" && itemName === "limiar alto de dor")
+                    || (requested === "limiar alto de dor" && itemName === "high pain threshold")
+                    || (requested === "low pain threshold" && itemName === "limiar baixo de dor")
+                    || (requested === "limiar baixo de dor" && itemName === "low pain threshold");
+            });
+        };
+        const parse = (raw) => {
+            const value = stripOuterParentheses(raw);
+            const questionIndex = findTopLevel(value, "?");
+            if (questionIndex < 0) {
+                return /^[+-]?\d+(?:\.\d+)?$/.test(value) ? Number(value) : null;
+            }
+            const colonIndex = findTopLevel(value, ":", questionIndex + 1);
+            if (colonIndex < 0) return null;
+            const condition = stripOuterParentheses(value.slice(0, questionIndex));
+            const match = condition.match(/^hasTrait\(\s*["']([^"']+)["']\s*\)$/i);
+            if (!match) return null;
+            const branch = hasTrait(match[1]) ? value.slice(questionIndex + 1, colonIndex) : value.slice(colonIndex + 1);
+            return parse(branch);
+        };
+        const parsed = parse(expression);
+        return { matched: parsed !== null, value: parsed };
+    };
+    const safeTraitConditional = evaluateSafeTraitConditional(source);
+    if (safeTraitConditional.matched) return safeTraitConditional.value;
+
     const traitConditional = source.match(/^\(?(?:hasTrait\(\s*["']([^"']+)["']\s*\))\)?\s*\?\s*([+-]?\d+(?:\.\d+)?)\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
     if (traitConditional) {
         const [, traitName, whenTrue, whenFalse] = traitConditional;
