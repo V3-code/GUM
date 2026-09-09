@@ -41,7 +41,7 @@ Choque não pede teste de resistência: a penalidade é aplicada automaticamente
 
 **High Pain Threshold** ignora completamente a penalidade de Choque. Ele também concede +3 nos testes de HT para evitar nocaute/atordoamento. Isso é diferente da condição contínua de Dor, na qual HPT reduz as penalidades pela metade.
 
-Os quatro gatilhos manuais acima ainda não identificam HPT. Até existir uma identidade de característica confiável no GUM, não se deve adicionar essas condições a um ator com HPT; a automação futura deve excluir o efeito por essa identidade, sem depender apenas do nome traduzido.
+O fluxo de dano e o processador de condições suprimem esses efeitos quando o ator possui uma característica chamada `High Pain Threshold` ou `Limiar Alto de Dor`, com normalização de caixa e acentos. Essa compatibilidade por nome resolve os registros atuais; uma identidade estável de característica continua sendo a evolução preferível para traduções adicionais ou nomes personalizados.
 
 A regra oficial é -1 por PV perdido, limitado a -4, somente no próximo turno; com 20 PV ou mais, usa-se uma fração de PV/10 por ponto de penalidade, ainda com limite -4. O gatilho já enxerga `eventData.injury`, mas os valores dos efeitos vinculados atualmente são avaliados sem `eventData`. Portanto, um valor fixo -4 é apenas um teste provisório; a escala exata exige suporte dinâmico no motor ou condições mutuamente exclusivas por faixa de lesão.
 

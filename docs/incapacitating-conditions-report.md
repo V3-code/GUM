@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-As regras foram transcritas de `C:\Users\User\GCS\Master Library\Basic Set\Conditions_pt_br.adq`, com referências ao GURPS Basic Set B428–B429. A migração não altera arquivos do GCS.
+As regras foram transcritas da biblioteca local `Basic Set/Conditions_pt_br.adq`, com referências ao GURPS Basic Set B428–B429. A migração não inclui nem altera arquivos do GCS.
 
 ## Comportamento implementado
 
@@ -20,7 +20,7 @@ As regras foram transcritas de `C:\Users\User\GCS\Master Library\Basic Set\Condi
 
 ## Migração
 
-A chave de mundo `incapacitatingConditionsMigrationV1` impede duplicação. A migração preserva os dados de origem GCS e o estado de lock dos compêndios. Ela deve ser validada após reiniciar o Foundry no mundo de teste.
+A chave de mundo `incapacitatingConditionsMigrationV1` impede repetição após o sucesso. A substituição registra a UUID do Item de origem, retoma uma execução parcial sem criar outra cópia, preserva itens embutidos no mesmo ator e restaura o estado de lock dos compêndios. Os binários LevelDB gerados durante o teste ficam fora da entrega Git.
 
 ## Limitações conhecidas
 
