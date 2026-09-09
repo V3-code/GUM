@@ -636,7 +636,7 @@ async function migrateIncapacitatingConditions() {
             name: "Tonto",
             reference: "B428",
             icon: "tipsy",
-            description: "Você sofre −1 em DX e IQ e −2 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, o álcool reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
+            description: "Você sofre −1 em DX e IQ e −2 em testes de autocontrole, exceto os feitos para resistir à Covardia. Se tiver Timidez, a condição reduz ou elimina temporariamente essa desvantagem conforme o grau da Timidez; ajuste a desvantagem manualmente enquanto durar a condição.",
             falls: false,
             entries: [{ label: "DX, IQ e autocontrole (exceto Covardia)", value: -1, contexts: "check_dx,skill_dx,check_iq,skill_iq" }, { label: "Autocontrole (exceto Covardia)", value: -2, contexts: "self_control" }]
         },

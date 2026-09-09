@@ -24,4 +24,4 @@ A chave de mundo `incapacitatingConditionsMigrationV2` impede repetição após 
 
 ## Limitações conhecidas
 
-A descrição mantém instruções que exigem decisão do GM quando o motor não possui evento seguro para executá-las automaticamente: exceção de Covardia nos testes de autocontrole de Bêbado/Tonto, Timidez alterada pelo álcool, testes e duração de Náusea/Alucinação/Sonolência, ações proibidas e perdas periódicas de PF. O efeito `Deitado` representa a queda prescrita pela regra, mas não força mudança de postura em um ator que já esteja em posição incompatível.
+A descrição mantém instruções que exigem decisão do GM quando o motor não possui evento seguro para executá-las automaticamente: exceção de Covardia nos testes de autocontrole de Bêbado/Tonto, Timidez alterada pela condição, testes e duração de Náusea/Alucinação/Sonolência, ações proibidas e perdas periódicas de PF. O efeito `Deitado` representa a queda prescrita pela regra, mas não força mudança de postura em um ator que já esteja em posição incompatível.
