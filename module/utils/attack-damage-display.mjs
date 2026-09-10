@@ -1,3 +1,5 @@
+import { getBasicDamageFormula } from "./basic-damage.mjs";
+
 const BASE_DAMAGE_ALIASES = Object.freeze([
   [/(?:gdpa|gdpg|thrustalt|thrust_alt|thrusta)/gi, "thrustAlt"],
   [/(?:geba|gebg|swingalt|swing_alt|swinga)/gi, "swingAlt"],
@@ -17,13 +19,13 @@ function addIntegerModifiers(formula) {
 
 /** Resolve GdP/GeB aliases into the dice expression shown on an actor's combat tab. */
 export function resolveAttackDamageDisplay(formula, attributes = {}) {
-  const thrust = String(attributes.thrust_damage || "0").trim();
-  const swing = String(attributes.swing_damage || "0").trim();
+  const thrust = getBasicDamageFormula(attributes.thrust_damage);
+  const swing = getBasicDamageFormula(attributes.swing_damage);
   const values = {
     thrust,
     swing,
-    thrustAlt: String(attributes.thrust_damage_alt || thrust).trim(),
-    swingAlt: String(attributes.swing_damage_alt || swing).trim()
+    thrustAlt: getBasicDamageFormula(attributes.thrust_damage_alt, thrust),
+    swingAlt: getBasicDamageFormula(attributes.swing_damage_alt, swing)
   };
 
   let resolved = String(formula || "").trim();

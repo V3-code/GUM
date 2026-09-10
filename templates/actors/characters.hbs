@@ -133,28 +133,28 @@
             </div>
             <div class="sidebar-basic-damage-values">
               <a class="sidebar-basic-damage-item rollable-basic-damage" 
-                 data-roll-formula="{{actor.system.attributes.thrust_damage}}" 
+                 data-roll-formula="{{actor.system.attributes.thrust_damage.final}}"
                  data-label="Dano de Golpe de Ponta (GdP)">
                 <span class="label">GdP</span>
-                <span class="value">{{actor.system.attributes.thrust_damage}}</span>
+                <span class="value">{{actor.system.attributes.thrust_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage" 
-                 data-roll-formula="{{actor.system.attributes.swing_damage}}" 
+                 data-roll-formula="{{actor.system.attributes.swing_damage.final}}"
                  data-label="Dano de Golpe em Balanço (GeB)">
                 <span class="label">GeB</span>
-                <span class="value">{{actor.system.attributes.swing_damage}}</span>
+                <span class="value">{{actor.system.attributes.swing_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage" 
-                 data-roll-formula="{{#if actor.system.attributes.thrust_damage_alt}}{{actor.system.attributes.thrust_damage_alt}}{{else}}{{actor.system.attributes.thrust_damage}}{{/if}}" 
+                 data-roll-formula="{{actor.system.attributes.thrust_damage_alt.final}}"
                  data-label="Dano Alternativo de Golpe de Ponta (GdPa)">
                 <span class="label">GdPa</span>
-                <span class="value">{{#if actor.system.attributes.thrust_damage_alt}}{{actor.system.attributes.thrust_damage_alt}}{{else}}—{{/if}}</span>
+                <span class="value">{{actor.system.attributes.thrust_damage_alt.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage" 
                  data-roll-formula="{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}{{actor.system.attributes.swing_damage}}{{/if}}" 
                  data-label="Dano Alternativo em Balanço (GeBa)">
                 <span class="label">GeBa</span>
-                <span class="value">{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}—{{/if}}</span>
+                <span class="value">{{actor.system.attributes.swing_damage_alt.final}}</span>
               </a>
             </div>
           </div>

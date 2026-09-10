@@ -4,7 +4,8 @@ const ATTRIBUTE_GROUPS = Object.freeze([
   { id: "primary", label: "Atributos primários", entries: [["st", "ST"], ["dx", "DX"], ["iq", "IQ"], ["ht", "HT"]] },
   { id: "secondary", label: "Atributos secundários", entries: [["vont", "Vontade"], ["per", "Percepção"], ["hp", "Pontos de Vida"], ["fp", "Pontos de Fadiga"], ["mt", "Margem de Tolerância"]] },
   { id: "movement", label: "Movimento e defesa", entries: [["basic_speed", "Velocidade Básica"], ["basic_move", "Deslocamento Básico"], ["enhanced_move", "Deslocamento Ampliado"], ["lifting_st", "ST de Levantamento"], ["dodge", "Esquiva"]] },
-  { id: "senses", label: "Sentidos", entries: [["vision", "Visão"], ["hearing", "Audição"], ["tastesmell", "Olfato/Paladar"], ["touch", "Tato"]] }
+  { id: "senses", label: "Sentidos", entries: [["vision", "Visão"], ["hearing", "Audição"], ["tastesmell", "Olfato/Paladar"], ["touch", "Tato"]] },
+  { id: "damage", label: "Dano básico", entries: [["thrust_damage", "GdP"], ["swing_damage", "GeB"], ["thrust_damage_alt", "GdPa"], ["swing_damage_alt", "GeBa"]] }
 ]);
 
 const ATTRIBUTE_LAYERS = Object.freeze([

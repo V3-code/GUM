@@ -1,3 +1,5 @@
+import { addBasicDamageModifier } from "./basic-damage.mjs";
+
 const hasOverride = attribute => attribute?.override !== null && attribute?.override !== undefined;
 const number = value => Number(value) || 0;
 
@@ -63,8 +65,8 @@ export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromS
     ["hearing", "senses", "Audição", "system.attributes.hearing.value", attrs.hearing?.value, per, `Calculada a partir de ${sourceReasons.per}`, ["per"]],
     ["tastesmell", "senses", "Paladar/Olfato", "system.attributes.tastesmell.value", attrs.tastesmell?.value, per, `Calculado a partir de ${sourceReasons.per}`, ["per"]],
     ["touch", "senses", "Tato", "system.attributes.touch.value", attrs.touch?.value, per, `Calculado a partir de ${sourceReasons.per}`, ["per"]],
-    ["thrust-damage", "damage", "Golpe de Ponta", "system.attributes.thrust_damage", attrs.thrust_damage, damage.thrust, `Calculado pela tabela de dano para ${sourceReasons.st}`, ["st"]],
-    ["swing-damage", "damage", "Golpe em Balanço", "system.attributes.swing_damage", attrs.swing_damage, damage.swing, `Calculado pela tabela de dano para ${sourceReasons.st}`, ["st"]]
+    ["thrust-damage", "damage", "Golpe de Ponta", "system.attributes.thrust_damage.value", attrs.thrust_damage?.value ?? attrs.thrust_damage, damage.thrust, `Calculado pela tabela de dano para ${sourceReasons.st}`, ["st"], { damage: true }],
+    ["swing-damage", "damage", "Golpe em Balanço", "system.attributes.swing_damage.value", attrs.swing_damage?.value ?? attrs.swing_damage, damage.swing, `Calculado pela tabela de dano para ${sourceReasons.st}`, ["st"], { damage: true }]
   ];
 
   return definitions.map(([id, group, label, path, currentValue, proposedValue, reason, dependencies, options = {}]) => {
@@ -75,6 +77,7 @@ export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromS
       && attrs.dodge?.gcs_imported_fixed !== undefined && attrs.dodge?.gcs_imported_fixed !== "";
     const changed = !protectedByOverride && (!secondaryStatValuesEqual(currentValue, proposedValue, options.precision) || removeImportedFixed);
     let proposedFinal = estimatedFinal(attribute, proposedValue, { pool: options.pool });
+    if (options.damage) proposedFinal = hasOverride(attribute) ? attribute.final : addBasicDamageModifier(proposedValue, number(attribute?.mod) + number(attribute?.passive) + number(attribute?.temp));
     if (options.dodge) proposedFinal = Math.floor(number(speedFinal)) + 3 + number(attribute?.mod) + number(attribute?.passive) + number(attribute?.temp);
     const currentFinal = attribute?.final ?? attribute?.final_computed;
     const warnings = [];

@@ -33,6 +33,8 @@ import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
+import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -205,6 +207,23 @@ async function migrateEffectActionsSchema() {
     await game.settings.set("gum", migrationFlag, true);
 }
 
+async function migrateBasicDamageSchema() {
+    if (!game.user?.isGM || game.settings.get("gum", "basicDamageSchemaMigrationV1")) return;
+    const updates = [];
+    for (const actor of game.actors?.contents || []) {
+        if (actor.type !== "character") continue;
+        const update = {};
+        for (const key of BASIC_DAMAGE_KEYS) {
+            const current = actor._source?.system?.attributes?.[key] ?? actor.system?.attributes?.[key];
+            if (current && typeof current === "object" && !Array.isArray(current)) continue;
+            update[`system.attributes.${key}`] = normalizeBasicDamageData(current, key === "thrust_damage" ? "1d6-2" : key === "swing_damage" ? "1d6" : "");
+        }
+        if (Object.keys(update).length) updates.push(actor.update(update, { render: false }));
+    }
+    await Promise.allSettled(updates);
+    await game.settings.set("gum", "basicDamageSchemaMigrationV1", true);
+}
+
 function _getCurrentUserRollMode() {
     const hasMessageModeSetting = game.settings?.settings?.has("core.messageMode");
     const settingKey = hasMessageModeSetting ? "messageMode" : "rollMode";
@@ -323,9 +342,10 @@ _prepareCharacterItems() {
         };
 
         // --- ETAPA 0: RESETAR VALORES ---
+prepareBasicDamageAttributes(attributes);
 const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'enhanced_move', 'lifting_st', 'dodge',
             'vision', 'hearing', 'tastesmell', 'touch'];
-        allAttributes.forEach(attr => {
+        [...allAttributes, ...BASIC_DAMAGE_KEYS].forEach(attr => {
             if (attributes[attr]) {
                 attributes[attr].temp = 0;
                 attributes[attr].passive = 0;
@@ -478,8 +498,6 @@ const add_sub_modifiers = {};
                                                 + (Number(attributes[pool].temp) || 0);
             }
         }
-
-
         // --- CÁLCULO DE SENTIDOS (Independentes, Base 10) ---
         const senses = ['vision', 'hearing', 'tastesmell', 'touch'];
 
@@ -628,8 +646,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
 
         // --- ETAPA 5: APLICAR MODIFICADORES DE "SET" ---
         for (const path in set_modifiers) {
-            foundry.utils.setProperty(this, path, set_modifiers[path]); 
+            foundry.utils.setProperty(this, path, set_modifiers[path]);
         }
+        prepareBasicDamageAttributes(attributes);
 
         // --- ETAPA 6: CÁLCULO FINALÍSSIMO ---
         for (const attr of allAttributes) {
@@ -1527,25 +1546,7 @@ async function _rollDamageFromChatAction(payload) {
         normalizedAttack.onDamageEffects
     );
 
-    const resolveBaseDamage = (rollActor, formula) => {
-        let f = String(formula || "0").toLowerCase();
-
-        const thrust = String(rollActor.system.attributes.thrust_damage || "0").toLowerCase();
-        const swing = String(rollActor.system.attributes.swing_damage || "0").toLowerCase();
-        const thrustAltRaw = String(rollActor.system.attributes.thrust_damage_alt || "").trim();
-        const swingAltRaw = String(rollActor.system.attributes.swing_damage_alt || "").trim();
-        const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
-        const swingAlt = (swingAltRaw || swing).toLowerCase();
-
-        f = f.replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`);
-        f = f.replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`);
-        f = f.replace(/\b(gdpg)\b/gi, `(${thrustAlt})`);
-        f = f.replace(/\b(gebg)\b/gi, `(${swingAlt})`);
-        f = f.replace(/\b(gdp|thrust)\b/gi, `(${thrust})`);
-        f = f.replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
-
-        return f;
-    };
+    const resolveBaseDamage = (rollActor, formula) => resolveAttackDamageDisplay(formula, rollActor.system.attributes);
 
     const extractMathFormula = (formula) => {
         const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
@@ -2803,6 +2804,7 @@ Hooks.once('ready', async function() {
 
     await migrateEffectTokenIconPolicy();
     await migrateEffectActionsSchema();
+    await migrateBasicDamageSchema();
 
     if (game.user?.isGM) {
         const ensureCompendiumFolder = async ({ name, color, parent = null }) => {

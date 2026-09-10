@@ -6,7 +6,9 @@ import { applyEffectPathSelection, buildAttributeEffectPathOptions, buildDamageR
 test("oferece somente camadas de atributo processadas pelo motor", () => {
   const options = buildAttributeEffectPathOptions().flatMap(group => group.options);
   assert.ok(options.some(option => option.path === "system.attributes.dx.passive" && option.operation === "ADD"));
-  assert.ok(options.some(option => option.path === "system.attributes.dodge.override" && option.operation === "OVERRIDE"));
+   assert.ok(options.some(option => option.path === "system.attributes.dodge.override" && option.operation === "OVERRIDE"));
+  assert.ok(options.some(option => option.path === "system.attributes.thrust_damage.passive" && option.operation === "ADD"));
+  assert.ok(options.some(option => option.path === "system.attributes.swing_damage_alt.override" && option.operation === "OVERRIDE"));
   assert.ok(options.every(option => /\.(passive|temp|override)$/.test(option.path)));
   assert.equal(findEffectPathOption("system.attributes.touch.temp")?.label, "Tato — Bônus temporário");
   assert.equal(findEffectPathOption("system.attributes.dx.final"), null);

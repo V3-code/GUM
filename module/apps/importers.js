@@ -3368,8 +3368,8 @@ async function parseGCSCharacter(gcsData) {
             systemData.attributes.dodge.gcs_imported_fixed = calcDodge;
         }
 
-        systemData.attributes.thrust_damage = formatDamageString(gcsData.calc.thrust) || "1d6-2";
-        systemData.attributes.swing_damage = formatDamageString(gcsData.calc.swing) || "1d6";
+        systemData.attributes.thrust_damage.value = formatDamageString(gcsData.calc.thrust) || "1d6-2";
+        systemData.attributes.swing_damage.value = formatDamageString(gcsData.calc.swing) || "1d6";
     }
 
     // No GURPS os sentidos partem de PER; se vierem ausentes no GCS, preserva uma base coerente.

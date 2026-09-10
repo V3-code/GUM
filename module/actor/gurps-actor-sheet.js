@@ -2622,26 +2622,7 @@ html.on("click", ".rollable-damage", async (ev) => {
   // --------------------------------------------------
   // 3) Helpers (GdP / GeB / limpeza de fórmula)
   // --------------------------------------------------
-  const resolveBaseDamage = (actor, formula) => {
-    let f = String(formula || "0").toLowerCase();
-
-    const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
-    const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
-    const thrustAltRaw = String(actor.system.attributes.thrust_damage_alt || "").trim();
-    const swingAltRaw  = String(actor.system.attributes.swing_damage_alt || "").trim();
-    const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
-    const swingAlt  = (swingAltRaw || swing).toLowerCase();
-
-    f = f.replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`);
-    f = f.replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`);
-    f = f.replace(/\b(gdpg)\b/gi, `(${thrustAlt})`);
-    f = f.replace(/\b(gebg)\b/gi, `(${swingAlt})`);
-
-    f = f.replace(/\b(gdp|thrust)\b/gi, `(${thrust})`);
-    f = f.replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
-
-    return f;
-  };
+  const resolveBaseDamage = (actor, formula) => resolveAttackDamageDisplay(formula, actor.system.attributes);
 
   const extractMathFormula = (formula) => {
     const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
@@ -2923,22 +2904,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     "Dano Básico";
   const basicDamageType = "indef.";
 
-  const resolveBaseDamage = (f) => {
-    const thrust = String(actor.system.attributes.thrust_damage || "0").toLowerCase();
-    const swing  = String(actor.system.attributes.swing_damage || "0").toLowerCase();
-    const thrustAltRaw = String(actor.system.attributes.thrust_damage_alt || "").trim();
-    const swingAltRaw  = String(actor.system.attributes.swing_damage_alt || "").trim();
-    const thrustAlt = (thrustAltRaw || thrust).toLowerCase();
-    const swingAlt  = (swingAltRaw || swing).toLowerCase();
-
-    return String(f)
-      .replace(/\b(gdpa|thrustalt|thrust_alt|thrusta)\b/gi, `(${thrustAlt})`)
-      .replace(/\b(geba|swingalt|swing_alt|swinga)\b/gi, `(${swingAlt})`)
-      .replace(/\b(gdpg)\b/gi, `(${thrustAlt})`)
-      .replace(/\b(gebg)\b/gi, `(${swingAlt})`)
-      .replace(/\b(gdp|thrust)\b/gi, `(${thrust})`)
-      .replace(/\b(geb|gdb|swing)\b/gi, `(${swing})`);
-  };
+  const resolveBaseDamage = (f) => resolveAttackDamageDisplay(f, actor.system.attributes);
 
   const extractMathFormula = (f) => {
     const match = String(f).match(/^([0-9dDkK+\-/*\s()]+)/i);
@@ -3063,6 +3029,18 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
 
         const lifting = getAttr('lifting_st', 0);
         const dodge = getAttr('dodge');
+        const damageRow = (key, label, placeholder) => {
+            const damage = attrs[key] || {};
+            return `<div class="secondary-editor-row">
+                <label>${label}</label>
+                <input type="text" name="${key}.value" value="${safe(damage.value)}" placeholder="${placeholder}" aria-label="Fórmula-base de ${label}" />
+                <input type="number" name="${key}.mod" value="${damage.mod ?? 0}" aria-label="Modificador fixo de ${label}" />
+                <span class="read-only">${fmt(damage.passive)}</span>
+                <span class="read-only" title="Modificadores temporários são controlados por efeitos">${fmt(damage.temp)}</span>
+                <input type="number" name="${key}.points" value="${damage.points ?? 0}" aria-label="Pontos investidos em ${label}" />
+                <span class="final-display">${safe(damage.final)}</span>
+            </div>`;
+        };
         const content = `
             <form class="secondary-stats-editor secondary-stats-editor--unified">
                 <aside class="secondary-editor-nav" aria-label="Seções dos atributos secundários">
@@ -3138,11 +3116,12 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         <section class="secondary-editor-panel" data-panel="damage">
                             <div class="secondary-editor-card secondary-damage-card">
                                 <header><i class="fas fa-dice-d6"></i><div><h3>Dano básico</h3><p>Use fórmulas de dados válidas, como 1d6-2.</p></div></header>
-                                <div class="secondary-damage-fields">
-                                    <label><span>GdP <small>Golpe de ponta</small></span><input type="text" name="thrust_damage" value="${safe(attrs.thrust_damage)}" placeholder="1d6-2" /></label>
-                                    <label><span>GeB <small>Golpe em balanço</small></span><input type="text" name="swing_damage" value="${safe(attrs.swing_damage)}" placeholder="1d6" /></label>
-                                    <label><span>GdPa <small>Ponta alternativo</small></span><input type="text" name="thrust_damage_alt" value="${safe(attrs.thrust_damage_alt)}" placeholder="2d6-1" /></label>
-                                    <label><span>GeBa <small>Balanço alternativo</small></span><input type="text" name="swing_damage_alt" value="${safe(attrs.swing_damage_alt)}" placeholder="2d6" /></label>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Dano</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    ${damageRow('thrust_damage', 'GdP', '1d6-2')}
+                                    ${damageRow('swing_damage', 'GeB', '1d6')}
+                                    ${damageRow('thrust_damage_alt', 'GdPa', 'Opcional')}
+                                    ${damageRow('swing_damage_alt', 'GeBa', 'Opcional')}
                                 </div>
                             </div>
                         </section>
@@ -3172,13 +3151,15 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             "enhanced_move.value", "enhanced_move.mod", "enhanced_move.points", "mt.value", "mt.mod", "mt.points", "dodge.mod", "dodge.points",
                             "lifting_st.value", "lifting_st.mod", "lifting_st.temp", "hp.max", "hp.mod", "hp.temp", "hp.points", "fp.max", "fp.mod", "fp.temp", "fp.points",
                             "vision.value", "vision.mod", "vision.points", "hearing.value", "hearing.mod", "hearing.points",
-                            "tastesmell.value", "tastesmell.mod", "tastesmell.points", "touch.value", "touch.mod", "touch.points"
+                            "tastesmell.value", "tastesmell.mod", "tastesmell.points", "touch.value", "touch.mod", "touch.points",
+                            "thrust_damage.mod", "thrust_damage.points", "swing_damage.mod", "swing_damage.points",
+                            "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points"
                         ];
                         const updateData = {};
                         for (const field of numericFields) {
                             if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = Number(formData[field]);
                         }
-                        for (const field of ["thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt"]) {
+                        for (const field of ["thrust_damage.value", "swing_damage.value", "thrust_damage_alt.value", "swing_damage_alt.value"]) {
                             if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = String(formData[field]).trim();
                         }
                         
@@ -4029,10 +4010,10 @@ async _onEditBasicDamage(ev) {
   ev.stopPropagation();
 
   const attrs = this.actor.system.attributes || {};
-  const thrust = attrs.thrust_damage ?? "";
-  const swing = attrs.swing_damage ?? "";
-  const thrustAlt = attrs.thrust_damage_alt ?? "";
-  const swingAlt = attrs.swing_damage_alt ?? "";
+  const thrust = attrs.thrust_damage?.value ?? "";
+  const swing = attrs.swing_damage?.value ?? "";
+  const thrustAlt = attrs.thrust_damage_alt?.value ?? "";
+  const swingAlt = attrs.swing_damage_alt?.value ?? "";
 
   const content = `
     <form class="gum-dialog-content basic-damage-editor">
@@ -4070,10 +4051,10 @@ async _onEditBasicDamage(ev) {
           const form = html.find("form")[0];
           const fd = new FormData(form);
           const update = {
-            "system.attributes.thrust_damage": (fd.get("thrust") ?? "").toString().trim(),
-            "system.attributes.swing_damage": (fd.get("swing") ?? "").toString().trim(),
-            "system.attributes.thrust_damage_alt": (fd.get("thrust_alt") ?? "").toString().trim(),
-            "system.attributes.swing_damage_alt": (fd.get("swing_alt") ?? "").toString().trim()
+            "system.attributes.thrust_damage.value": (fd.get("thrust") ?? "").toString().trim(),
+            "system.attributes.swing_damage.value": (fd.get("swing") ?? "").toString().trim(),
+            "system.attributes.thrust_damage_alt.value": (fd.get("thrust_alt") ?? "").toString().trim(),
+            "system.attributes.swing_damage_alt.value": (fd.get("swing_alt") ?? "").toString().trim()
           };
           await this.actor.update(update);
         }
@@ -5623,7 +5604,11 @@ _calculateSocialPoints() {
 _calculatePointsSummary() {
   const items = Array.from(this.actor.items || []);
   const attributeRows = this._calculateAttributePoints();
-  const secondaryKeys = ["hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge", "vision", "hearing", "tastesmell", "touch", "mt"];
+  const secondaryKeys = [
+    "hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge",
+    "vision", "hearing", "tastesmell", "touch", "mt",
+    "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt"
+  ];
   const attrs = this.actor.system.attributes || {};
 
   const totals = {
@@ -6197,8 +6182,8 @@ _buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases =
   updateData["system.attributes.dodge.-=gcs_imported_fixed"] = null;
   updateData["system.attributes.hp.max"] += (Number(attributeDeltas.hp) || 0);
   updateData["system.attributes.fp.max"] += (Number(attributeDeltas.fp) || 0);
-  updateData["system.attributes.thrust_damage"] = damage.thrust;
-  updateData["system.attributes.swing_damage"] = damage.swing;
+  updateData["system.attributes.thrust_damage.value"] = damage.thrust;
+  updateData["system.attributes.swing_damage.value"] = damage.swing;
 
   return updateData;
 }

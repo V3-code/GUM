@@ -74,6 +74,9 @@ export const registerSystemSettings = function() {
         type: Boolean,
         default: false
     });
+    game.settings.register("gum", "basicDamageSchemaMigrationV1", {
+        scope: "world", config: false, type: Boolean, default: false
+    });
 
 // --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
     game.settings.register("gum", "gmScreenConfig", {

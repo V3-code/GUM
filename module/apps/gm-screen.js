@@ -6,6 +6,7 @@ import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
+import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
 import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
@@ -767,19 +768,7 @@ activateListeners(html) {
     _resolveDamageFormula(actor, rawFormula) {
         if (!rawFormula) return null;
         
-        const formulaStr = String(rawFormula).toLowerCase();
-        const attrs = actor.system.attributes || {};
-        const thrust = (attrs.thrust_damage || "0").toLowerCase(); // GdP
-        const swing = (attrs.swing_damage || "0").toLowerCase();   // GdB (GeB)
-
-        // Substitui (gdp ou thr) e (gdb ou sw ou geb)
-        let resolved = formulaStr
-            .replace(/gdp|thr/g, `(${thrust})`)
-            .replace(/gdb|sw|geb/g, `(${swing})`);
-            
-        // (Opcional) Poderíamos usar Roll.replaceFormulaData se tivéssemos dados complexos,
-        // mas a substituição de string simples resolve 99% dos casos do GURPS.
-        return resolved;
+    return resolveAttackDamageDisplay(rawFormula, actor.system.attributes || {});
     }
 
 /**
