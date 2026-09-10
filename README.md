@@ -35,7 +35,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.1.7-beta |
+| Versão do GUM | 1.1.8-beta |
 | Foundry VTT mínimo | 12 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil)  |

@@ -2,7 +2,7 @@
 
 **Autor:** V3-code
 **Projeto:** GURPS GUM – Sistema não oficial de GURPS para Foundry VTT  
-**Versão:** v1.1.7-beta de Setembro de 2026
+**Versão:** v1.1.8-beta de Setembro de 2026
 
 ---
 
