@@ -16,6 +16,7 @@ test("resolves basic damage aliases and combines their modifiers for display", (
   assert.equal(resolveAttackDamageDisplay("GeB-1", attributes), "1d6-1");
   assert.equal(resolveAttackDamageDisplay("GdPa+1", attributes), "2d6");
   assert.equal(resolveAttackDamageDisplay("GeBa+2", attributes), "2d6+2");
+  assert.equal(resolveAttackDamageDisplay("GdBa-1", attributes), "2d6-1");
 });
 
 test("supports imported English aliases and the GdB spelling", () => {

@@ -2,7 +2,7 @@ import { getBasicDamageFormula } from "./basic-damage.mjs";
 
 const BASE_DAMAGE_ALIASES = Object.freeze([
   [/(?:gdpa|gdpg|thrustalt|thrust_alt|thrusta)/gi, "thrustAlt"],
-  [/(?:geba|gebg|swingalt|swing_alt|swinga)/gi, "swingAlt"],
+  [/(?:geba|gdba|gebg|swingalt|swing_alt|swinga)/gi, "swingAlt"],
   [/(?:gdp|thrust|thr)/gi, "thrust"],
   [/(?:geb|gdb|swing|sw)/gi, "swing"]
 ]);
