@@ -882,7 +882,7 @@ function getSystemTemplate(documentType, entryType) {
 }
 
 
-function parseGCSLibraryTrait(gcsTrait) {
+export function parseGCSLibraryTrait(gcsTrait) {
     const points = Number(gcsTrait.calc?.points ?? gcsTrait.base_points ?? gcsTrait.points_per_level ?? gcsTrait.points ?? 0) || 0;
     let type, template;
 
@@ -2146,7 +2146,7 @@ function formatGCSDefaultsRollReferenceList(defaults) {
 }
 
 
-function parseGCSLibrarySpell(gcsSpell) {
+export function parseGCSLibrarySpell(gcsSpell) {
     let template = getSystemTemplate("Item", "spell");
 
     template.points = gcsSpell.points || 1;
@@ -2217,7 +2217,7 @@ function parseGCSLibrarySpell(gcsSpell) {
     });
 }
 
-function parseGCSLibraryModifier(gcsMod) {
+export function parseGCSLibraryModifier(gcsMod) {
     let template = getSystemTemplate("Item", "modifier");
 
     // Custo base do modificador no GCS vem normalmente como string: "10%", "-20%" etc.
@@ -2245,7 +2245,7 @@ function parseGCSLibraryModifier(gcsMod) {
     };
 }
 
-function parseGCSLibraryEquipmentModifier(gcsMod) {
+export function parseGCSLibraryEquipmentModifier(gcsMod) {
     let template = getSystemTemplate("Item", "eqp_modifier");
 
     const rawCost = gcsMod.cost || "";
@@ -2344,7 +2344,7 @@ function parseGCSDamageParts(damage = {}) {
     return { formula, type, scaling };
 }
 
-function parseGCSLibraryEquipment(gcsEquip) {
+export function parseGCSLibraryEquipment(gcsEquip) {
     if (!gcsEquip.description) return null; 
     
     let type, template;
