@@ -47,4 +47,16 @@ test("motor captura alterações genéricas de recurso antes de processar condi�
   const main = await readFile(new URL("../scripts/main.js", import.meta.url), "utf8");
   assert.match(main, /Hooks\.on\("preUpdateActor"[\s\S]*captureActorResourceChanges/);
   assert.match(main, /options\.gumResourceChangeEvents[\s\S]*processConditions\(actor, resourceEvent\)/);
+  assert.match(main, /processConditions\(actor, options\.gumEventData \?\? null\)/);
+  assert.match(main, /Hooks\.on\("preUpdateItem"[\s\S]*captureItemResourceChanges/);
+});
+
+test("motor encaminha eventos estruturados de rolagem, combate e ActiveEffect", async () => {
+  const main = await readFile(new URL("../scripts/main.js", import.meta.url), "utf8");
+  assert.match(main, /buildDefenseRollConditionEvent\(\{/);
+  assert.match(main, /phase:\s*"turn_start"/);
+  assert.match(main, /reason:\s*"turnStart"/);
+  assert.match(main, /phase:\s*"turn_end"/);
+  assert.match(main, /buildActiveEffectConditionEvent\(\{/);
+  assert.match(main, /gumSkipConditionProcessing/);
 });

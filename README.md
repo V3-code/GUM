@@ -47,6 +47,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 - [Histórico de alterações](CHANGELOG.md)
 - [Manual de solicitação de testes](docs/test-request-manual.md)
 - [Expressões de valor de Efeitos e Modificadores do Mestre](docs/effect-value-expressions.md)
+- [Itens Condição, Itens Gatilho e gatilhos úteis — referência para IA](docs/referencias-ia/item-condicao-e-gatilho.md)
 - [API pública para macros e módulos (PT-BR)](docs/API.pt-BR.md)
 - [Public API for macros and modules (English)](docs/API.md)
 - [Versões publicadas](https://github.com/V3-code/GURPS-GUM/releases)

@@ -26,13 +26,15 @@ import {
     PERSISTENT_EFFECT_ACTION_TYPES,
     resolveEffectStackingDomain
 } from "../module/utils/effect-stacking.mjs";
+import { isEffectItemBridgeApplicationActive } from "../module/integrations/active-effect-bridge.mjs";
+import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
  * Lida com tipos de efeitos separados:
  * - 'attribute'/'flag'/'roll_modifier': Cria ActiveEffects para mecânica e duração.
  * - 'status': Usa toggleStatusEffect para controlar ícones no token.
- * - 'resource_change', 'macro', 'chat': Executam ações pontuais.
+ * - 'resource_change', 'damage_roll', 'macro', 'chat': Executam ações pontuais.
  */
 
 import {
@@ -302,6 +304,7 @@ const normalizeEffectAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
+    Object.assign(next, normalizeEffectDamageAction(next));
     if (!Array.isArray(next.roll_modifier_entries) || next.roll_modifier_entries.length === 0) {
         next.roll_modifier_entries = [{
             label: "",
@@ -403,6 +406,8 @@ const buildFallbackActionLabel = (action = {}) => {
             return "Alteração de Recurso";
         case "resource_create":
             return "Criar Recurso";
+        case "damage_roll":
+            return "Rolar Dano";
         case "flag":
             return "Flag";
         case "macro":
@@ -436,6 +441,7 @@ const selectCarrierActionIndex = (actions = []) => {
 
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
+    if (!await isEffectItemBridgeApplicationActive(context)) return;
     targets = targets.filter(target => isActorContextAvailable(target?.actor));
     if (targets.length === 0) return;
 
@@ -1075,6 +1081,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             content: `<strong>${escapeHtml(effectItem.name)}:</strong> recurso ${escapeHtml(resourceName)} criado/atualizado (${current}/${max}).`
                         }));
                     }
+                }
+                continue;
+            }
+
+            if (action.type === "damage_roll") {
+                if (context.skipInstantEffects) continue;
+                for (const target of targets) {
+                    if (!target?.actor) continue;
+                    await rollEffectDamageAction({ action, effectItem, target, context });
                 }
                 continue;
             }

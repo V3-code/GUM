@@ -6,6 +6,7 @@ import { contentSourceService } from "../services/content-source-service.mjs";
 import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
 import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, previewCompendiumJsonSynchronization, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
 import { GUM_ITEM_BUNDLE_VERSION, parseItemBundle, prepareItemBundle, previewItemBundleSynchronization, stableBundleDocumentId } from "../utils/item-bundle-json.mjs";
+import { itemNameIdentities, itemNameIdentity, normalizeItemAliases, normalizeItemName } from "../utils/item-name-aliases.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -3009,34 +3010,10 @@ const HYBRID_IMPORTABLE_ITEM_TYPES = new Set(["skill", "spell", "power", "advant
 let HYBRID_ITEM_INDEX_CACHE = { key: null, entries: null };
 
 function normalizeHybridText(value) {
-    return String(value || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function splitNameAndSpecialization(rawName) {
-    const original = String(rawName || "").trim();
-    const match = original.match(/^(.*)\(([^)]+)\)\s*$/);
-    if (!match) {
-        return {
-            full: original,
-            base: original,
-            specialization: ""
-        };
-    }
-
-    return {
-        full: original,
-        base: (match[1] || "").trim(),
-        specialization: (match[2] || "").trim()
-    };
+    return normalizeItemName(value);
 }
 
 function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "", priority = 0) {
-    const parts = splitNameAndSpecialization(item.name);
     return {
         sourceType,
         priority,
@@ -3045,11 +3022,17 @@ function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "", 
         uuid: item.uuid,
         type: item.type,
         name: item.name,
-        nameNorm: normalizeHybridText(parts.full),
-        baseNameNorm: normalizeHybridText(parts.base),
-        specializationNorm: normalizeHybridText(item.system?.specialization || parts.specialization),
+        identities: itemNameIdentities({
+            name: item.name,
+            specialization: item.system?.specialization,
+            aliases: item.system?.aliases
+        }),
         refNorm: normalizeHybridText(item.system?.ref)
     };
+}
+
+export function invalidateHybridItemIndex() {
+    HYBRID_ITEM_INDEX_CACHE = { key: null, entries: null };
 }
 
 async function buildHybridItemIndex() {
@@ -3059,7 +3042,14 @@ async function buildHybridItemIndex() {
     ].filter((id, index, ids) => ids.indexOf(id) === index);
     const searchAllCompendia = game.settings.get("gum", "hybridImportSearchAllCompendia") === true;
     const cacheKey = JSON.stringify({
-        worldIds: game.items.contents.map(item => item.id),
+        worldItems: game.items.contents.map(item => ({
+            id: item.id,
+            name: item.name,
+            type: item.type,
+            ref: item.system?.ref,
+            specialization: item.system?.specialization,
+            aliases: normalizeItemAliases(item.system?.aliases)
+        })),
         configuredPackIds,
         searchAllCompendia
     });
@@ -3080,12 +3070,11 @@ async function buildHybridItemIndex() {
         : [];
 
     for (const [packIndex, pack] of [...configuredPacks, ...fallbackPacks].entries()) {
-        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization"] }).catch(() => null);
+        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization", "system.aliases"] }).catch(() => null);
         if (!index?.contents?.length) continue;
 
         for (const row of index.contents) {
             if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(row.type)) continue;
-            const parts = splitNameAndSpecialization(row.name);
             entries.push({
                 sourceType: "compendium",
                 priority: packIndex + 1,
@@ -3094,9 +3083,11 @@ async function buildHybridItemIndex() {
                 uuid: `Compendium.${pack.collection}.${row._id}`,
                 type: row.type,
                 name: row.name,
-                nameNorm: normalizeHybridText(parts.full),
-                baseNameNorm: normalizeHybridText(parts.base),
-                specializationNorm: normalizeHybridText(row.system?.specialization || parts.specialization),
+                identities: itemNameIdentities({
+                    name: row.name,
+                    specialization: row.system?.specialization,
+                    aliases: row.system?.aliases
+                }),
                 refNorm: normalizeHybridText(row.system?.ref)
             });
         }
@@ -3106,68 +3097,81 @@ async function buildHybridItemIndex() {
     return entries;
 }
 
-async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
+export async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
     if (!parsedItem || !HYBRID_IMPORTABLE_ITEM_TYPES.has(parsedItem.type)) {
-        return { item: null, matchedBy: null };
+        return { item: null, matchedBy: null, ambiguity: null };
     }
 
     const index = await buildHybridItemIndex();
-    const parsedParts = splitNameAndSpecialization(parsedItem.name);
-    const gcsParts = splitNameAndSpecialization(gcsNode?.name || parsedItem.name);
-
     const wantedType = parsedItem.type;
     const wantedRef = normalizeHybridText(gcsNode?.reference || parsedItem.system?.ref);
-    const wantedFullName = normalizeHybridText(parsedParts.full || gcsParts.full);
-    const wantedBaseName = normalizeHybridText(parsedParts.base || gcsParts.base);
-    const wantedSpec = normalizeHybridText(gcsNode?.specialization || parsedItem.system?.specialization || parsedParts.specialization || gcsParts.specialization);
+    const wantedIdentity = itemNameIdentity(
+        parsedItem.name || gcsNode?.name,
+        gcsNode?.specialization || parsedItem.system?.specialization
+    );
 
     const candidates = index.filter(entry => entry.type === wantedType);
 
     const unique = (rows) => {
         if (!rows?.length) return null;
-        const highestPriority = Math.min(...rows.map(row => Number(row.priority) || 0));
-        const preferredRows = rows.filter(row => (Number(row.priority) || 0) === highestPriority);
-        return preferredRows.length === 1 ? preferredRows[0] : null;
+        const byUuid = new Map();
+        for (const row of rows) if (!byUuid.has(row.entry.uuid)) byUuid.set(row.entry.uuid, row);
+        const distinctRows = Array.from(byUuid.values());
+        const highestPriority = Math.min(...distinctRows.map(row => Number(row.entry.priority) || 0));
+        const preferredRows = distinctRows.filter(row => (Number(row.entry.priority) || 0) === highestPriority);
+        return preferredRows.length === 1
+            ? { hit: preferredRows[0], ambiguity: null }
+            : { hit: null, ambiguity: preferredRows.map(row => ({ uuid: row.entry.uuid, name: row.entry.name })) };
     };
 
-    let hit = null;
+    let match = null;
     let matchedBy = null;
+    let ambiguity = null;
 
     if (wantedRef) {
-        hit = unique(candidates.filter(entry => entry.refNorm && entry.refNorm === wantedRef));
-        if (hit) matchedBy = "reference";
+        const result = unique(candidates
+            .filter(entry => entry.refNorm && entry.refNorm === wantedRef)
+            .map(entry => ({ entry, identity: null })));
+        match = result?.hit || null;
+        ambiguity = result?.ambiguity || null;
+        if (match) matchedBy = "reference";
     }
 
-    if (!hit && wantedFullName && wantedSpec) {
-        hit = unique(candidates.filter(entry => entry.nameNorm === wantedFullName && entry.specializationNorm === wantedSpec));
-        if (hit) matchedBy = "name+specialization";
+    if (!match && wantedIdentity.nameNorm) {
+        const identityRows = candidates.flatMap(entry => (entry.identities || [])
+            .filter(identity => identity.nameNorm === wantedIdentity.nameNorm
+                && identity.specializationNorm === wantedIdentity.specializationNorm)
+            .map(identity => ({ entry, identity })));
+        const result = unique(identityRows);
+        match = result?.hit || null;
+        ambiguity = result?.ambiguity || ambiguity;
+        if (match) {
+            const identityKind = match.identity?.kind === "alias" ? "alias" : "name";
+            matchedBy = wantedIdentity.specializationNorm ? `${identityKind}+specialization` : identityKind;
+        }
     }
 
-    if (!hit && wantedBaseName && wantedSpec) {
-        hit = unique(candidates.filter(entry => entry.baseNameNorm === wantedBaseName && entry.specializationNorm === wantedSpec));
-        if (hit) matchedBy = "base+specialization";
+    if (!match) {
+        if (ambiguity?.length) {
+            console.warn("GUM | Correspondência híbrida ambígua; o item do GCS será mantido sem substituição.", {
+                name: parsedItem.name,
+                type: parsedItem.type,
+                candidates: ambiguity
+            });
+        }
+        return { item: null, matchedBy: null, ambiguity };
     }
 
-    if (!hit && wantedFullName) {
-        hit = unique(candidates.filter(entry => entry.nameNorm === wantedFullName));
-        if (hit) matchedBy = "name";
-    }
-
-    if (!hit && wantedBaseName) {
-        hit = unique(candidates.filter(entry => entry.baseNameNorm === wantedBaseName));
-        if (hit) matchedBy = "base";
-    }
-
-    if (!hit) return { item: null, matchedBy: null };
+    const hit = match.entry;
 
     if (hit.sourceType === "world") {
-        return { item: game.items.get(hit.id) || null, matchedBy };
+        return { item: game.items.get(hit.id) || null, matchedBy, ambiguity: null };
     }
 
     const pack = game.packs.get(hit.packCollection);
-    if (!pack) return { item: null, matchedBy: null };
+    if (!pack) return { item: null, matchedBy: null, ambiguity: null };
     const item = await pack.getDocument(hit.id).catch(() => null);
-    return { item, matchedBy };
+    return { item, matchedBy, ambiguity: null };
 }
 
 function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode = "character" } = {}) {
@@ -3230,7 +3234,8 @@ async function buildHybridActorItemFromGCS(
 
     const {
         item: sourceItem,
-        matchedBy
+        matchedBy,
+        ambiguity
     } = await resolveHybridSourceItem({
         gcsNode,
         parsedItem
@@ -3254,6 +3259,7 @@ async function buildHybridActorItemFromGCS(
                             sourceUuid: null,
                             sourceId: null,
                             matchedBy: null,
+                            ambiguity: ambiguity || null,
                             gcsId:
                                 gcsNode?.id || null,
                             importedAt:
@@ -3297,6 +3303,11 @@ async function buildHybridActorItemFromGCS(
 
     merged.flags.gum.hybridImport.matchedBy =
         matchedBy;
+    if (matchedBy?.startsWith("alias")) {
+        merged.flags.gum.hybridImport.importedName = merged.name;
+        merged.name = sourceItem.name;
+        if (sourceItem.system?.specialization) merged.system.specialization = sourceItem.system.specialization;
+    }
 
     /*
      * IMPORTANTE:
@@ -3559,16 +3570,22 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
         entry.level = entry.trait_cost.level;
     }
 
-    const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
+    const { item: sourceItem, matchedBy, ambiguity } = await resolveHybridSourceItem({ gcsNode, parsedItem });
     if (sourceItem) {
+        const importedName = entry.name;
         entry.uuid = sourceItem.uuid;
         entry.sourceId = sourceItem.id;
-        entry.hybrid = { mode: "linked", matchedBy };
+        entry.hybrid = { mode: "linked", matchedBy, importedName: matchedBy?.startsWith("alias") ? importedName : null };
+        if (matchedBy?.startsWith("alias")) {
+            entry.name = sourceItem.name;
+            const sourceSpecialization = String(sourceItem.system?.specialization || "").trim();
+            if (sourceSpecialization) entry.specialization = sourceSpecialization;
+        }
         return entry;
     }
 
     entry.inlineItem = foundry.utils.deepClone(parsedItem);
-    entry.hybrid = { mode: "inline", matchedBy: null };
+    entry.hybrid = { mode: "inline", matchedBy: null, ambiguity: ambiguity || null };
     return entry;
 }
 

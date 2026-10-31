@@ -2003,6 +2003,32 @@
             </details>
           </div>
         </div>
+        {{#if supportsHybridAliases}}
+        <section class="item-aliases-section" aria-labelledby="item-aliases-title">
+          <div class="item-aliases-heading">
+            <div>
+              <h4 id="item-aliases-title"><i class="fas fa-tags" aria-hidden="true"></i> {{localize "GUM.ItemAliases.Title"}}</h4>
+              <p>{{localize "GUM.ItemAliases.Hint"}}</p>
+            </div>
+          </div>
+          {{#if editable}}
+          <div class="item-aliases-entry">
+            <input class="item-alias-input" type="text" placeholder="{{localize 'GUM.ItemAliases.Placeholder'}}" aria-label="{{localize 'GUM.ItemAliases.Title'}}"/>
+            <button type="button" class="add-item-alias" title="{{localize 'GUM.ItemAliases.Add'}}" aria-label="{{localize 'GUM.ItemAliases.Add'}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
+          </div>
+          {{/if}}
+          <div class="item-aliases-list">
+            {{#each itemAliases as |alias|}}
+            <span class="item-alias-chip">
+              {{#if ../editable}}<button type="button" class="edit-item-alias" data-index="{{alias.index}}" data-alias="{{alias.value}}" title="{{localize 'GUM.ItemAliases.Edit'}}">{{alias.value}}</button>{{else}}<span>{{alias.value}}</span>{{/if}}
+              {{#if ../editable}}<button type="button" class="remove-item-alias" data-index="{{alias.index}}" title="{{localize 'GUM.ItemAliases.Remove'}}" aria-label="{{localize 'GUM.ItemAliases.Remove'}}: {{alias.value}}"><i class="fas fa-times" aria-hidden="true"></i></button>{{/if}}
+            </span>
+            {{else}}
+            <span class="item-aliases-empty">{{localize "GUM.ItemAliases.Empty"}}</span>
+            {{/each}}
+          </div>
+        </section>
+        {{/if}}
       </div>
     </div>
 

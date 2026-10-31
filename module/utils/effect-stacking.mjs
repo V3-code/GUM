@@ -12,6 +12,7 @@ export const PERSISTENT_EFFECT_ACTION_TYPES = new Set([
 export const INSTANT_EFFECT_ACTION_TYPES = new Set([
   "resource_change",
   "resource_create",
+  "damage_roll",
   "macro",
   "chat"
 ]);

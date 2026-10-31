@@ -40,7 +40,7 @@ test("classifica todas as ações persistentes e pontuais do motor", () => {
   for (const type of ["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]) {
     assert.equal(isPersistentEffectAction(type), true, type);
   }
-  for (const type of ["resource_change", "resource_create", "macro", "chat"]) {
+  for (const type of ["resource_change", "resource_create", "damage_roll", "macro", "chat"]) {
     assert.equal(isInstantEffectAction({ type }), true, type);
     assert.equal(isPersistentEffectAction(type), false, type);
   }

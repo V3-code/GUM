@@ -854,6 +854,164 @@ color:#121114;
   display: none;
 }
 
+.gum.sheet.item .item-aliases-section {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--item-bg-panel) 72%, transparent);
+}
+.gum.sheet.item .item-aliases-heading h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: .78rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.gum.sheet.item .item-aliases-heading p {
+  margin: 4px 0 8px;
+  color: var(--item-text-muted);
+  font-size: .68rem;
+  line-height: 1.35;
+}
+.gum.sheet.item .item-aliases-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  gap: 6px;
+}
+.gum.sheet.item .item-aliases-entry .item-alias-input {
+  min-width: 0;
+}
+.gum.sheet.item .item-aliases-entry .add-item-alias {
+  width: 30px;
+  min-width: 30px;
+  margin: 0;
+  padding: 0;
+}
+.gum.sheet.item .item-aliases-entry .add-item-alias.is-editing {
+  color: var(--item-accent);
+}
+.gum.sheet.item .item-aliases-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.gum.sheet.item .item-alias-chip {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--item-border);
+  border-radius: 4px;
+  background: var(--item-bg-panel-2);
+  color: var(--item-text);
+}
+.gum.sheet.item .item-alias-chip button {
+  width: auto;
+  min-width: 0;
+  height: 25px;
+  margin: 0;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: .7rem;
+  line-height: 1;
+  box-shadow: none;
+}
+.gum.sheet.item .item-alias-chip .edit-item-alias:hover {
+  color: var(--item-accent);
+}
+.gum.sheet.item .item-alias-chip .remove-item-alias {
+  padding-inline: 6px;
+  border-left: 1px solid var(--item-border);
+  color: var(--item-text-muted);
+}
+.gum.sheet.item .item-alias-chip .remove-item-alias:hover {
+  background: rgba(180, 55, 55, .2);
+  color: #ff9a9a;
+}
+.gum.sheet.item .item-aliases-empty {
+  color: var(--item-text-muted);
+  font-size: .68rem;
+  font-style: italic;
+}
+
+.gum.sheet.item.effect-sheet .effect-damage-roll-config {
+  display: grid;
+  gap: 8px;
+}
+.gum.sheet.item.effect-sheet .effect-damage-roll-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(180, 120, 70, .35);
+  border-radius: 6px;
+  background: rgba(98, 48, 28, .14);
+}
+.gum.sheet.item.effect-sheet .effect-damage-roll-intro > i {
+  margin-top: 2px;
+  color: #d69b62;
+}
+.gum.sheet.item.effect-sheet .effect-damage-roll-intro strong {
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.gum.sheet.item.effect-sheet .effect-damage-roll-intro p {
+  margin: 3px 0 0;
+  color: var(--item-text-muted);
+  font-size: .7rem;
+  line-height: 1.35;
+}
+.gum.sheet.item.effect-sheet .effect-damage-component {
+  overflow: hidden;
+  border: 1px solid var(--item-border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .1);
+}
+.gum.sheet.item.effect-sheet .effect-damage-component > summary {
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.gum.sheet.item.effect-sheet .effect-damage-component > summary small {
+  margin-left: 5px;
+  color: var(--item-text-muted);
+  font-size: .62rem;
+  font-weight: 400;
+}
+.gum.sheet.item.effect-sheet .effect-damage-component[open] > summary {
+  border-bottom: 1px solid var(--item-border);
+  background: rgba(255, 255, 255, .025);
+}
+.gum.sheet.item.effect-sheet .effect-premium-grid-damage {
+  grid-template-columns: minmax(145px, 1.4fr) minmax(90px, .8fr) minmax(90px, .7fr) minmax(120px, 1fr);
+  padding: 9px;
+}
+.gum.sheet.item.effect-sheet .effect-premium-grid-damage-options {
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, .8fr);
+  align-items: end;
+}
+@media (max-width: 720px) {
+  .gum.sheet.item.effect-sheet .effect-premium-grid-damage,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-damage-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ------------------------------------------------------------------- */
 /* ARMADURA - PROTEÇÃO                                                 */
 /* ------------------------------------------------------------------- */
@@ -8836,4 +8994,115 @@ color:#121114;
 @media (max-width: 620px) {
   .gum.sheet.item .spell-power-dashboard .magic-consumption-group__main,
   .gum.sheet.item .skill-details-dashboard .magic-consumption-source__controls { grid-template-columns: 1fr; }
+}
+
+/* Effect Item: compact automation references at the bottom of Configuration. */
+.gum.sheet.item.effect-sheet .effect-automation-reference {
+  margin: 18px 8px 4px;
+  padding: 11px 4px 2px;
+  border-top: 1px solid rgba(201, 161, 94, 0.22);
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-heading i {
+  color: rgba(201, 161, 94, 0.72);
+  font-size: 0.68rem;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-hint {
+  margin: 4px 0 9px;
+  color: var(--item-text-muted);
+  font-size: 0.62rem;
+  line-height: 1.35;
+  opacity: 0.68;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-list {
+  display: grid;
+  gap: 6px;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.32fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-control {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  gap: 4px;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-control input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 27px;
+  padding: 3px 8px;
+  border: 1px solid rgba(201, 161, 94, 0.2);
+  border-radius: 5px;
+  background: rgba(9, 10, 14, 0.38);
+  color: rgba(236, 232, 224, 0.76);
+  font-family: var(--font-monospace, monospace);
+  font-size: 0.61rem;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-control button {
+  flex: 0 0 29px;
+  width: 29px;
+  min-width: 29px;
+  height: 27px;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(201, 161, 94, 0.24);
+  border-radius: 5px;
+  background: rgba(201, 161, 94, 0.07);
+  color: var(--item-text-muted);
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-control button:hover:not(:disabled),
+.gum.sheet.item.effect-sheet .effect-automation-reference-control button:focus-visible {
+  border-color: rgba(201, 161, 94, 0.62);
+  background: rgba(201, 161, 94, 0.16);
+  color: var(--item-accent);
+}
+
+.gum.sheet.item.effect-sheet .effect-automation-reference-control button:disabled {
+  opacity: 0.35;
+}
+
+@media (max-width: 560px) {
+  .gum.sheet.item.effect-sheet .effect-automation-reference-row {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
 }

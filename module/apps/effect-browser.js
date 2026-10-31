@@ -11,7 +11,7 @@ const EFFECT_TYPE_LABELS = {
     attribute: "Attribute", flag: "Flag", roll_modifier: "RollModifier",
     skill_modifier: "SkillModifier", combat_modifier: "CombatModifier",
     resource_change: "ResourceChange", resource_create: "ResourceCreate",
-    chat: "Chat", macro: "Macro", status: "Status"
+    damage_roll: "DamageRoll", chat: "Chat", macro: "Macro", status: "Status"
 };
 
 const getEffectTypeLabel = (type) => EFFECT_TYPE_LABELS[type] ? game.i18n.localize(`GUM.EffectSheet.ActionType.${EFFECT_TYPE_LABELS[type]}`) : type || "-";

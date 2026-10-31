@@ -96,7 +96,7 @@ Fields inherited from the base model (`activationEffects`, `onDamageEffects`, `g
 | `unique` | Keeps only one copy of each persistent action from the same Effect Item in the same application domain. The current copy and duration are preserved. |
 | `refresh` | Keeps only one copy, but recalculates persistent actions and restarts duration on every new application. |
 
-Instant actions (`resource_change`, `resource_create`, `macro`, and `chat`) always run. Direct and Condition applications use separate domains, so they never remove or reuse each other's copies. In the Condition domain, `unique` and `refresh` retain the owner-condition list until the last condition is disabled.
+Instant actions (`resource_change`, `resource_create`, `damage_roll`, `macro`, and `chat`) always run. Direct and Condition applications use separate domains, so they never remove or reuse each other's copies. In the Condition domain, `unique` and `refresh` retain the owner-condition list until the last condition is disabled.
 
 System-managed effects — Item passives, equipment grants, state groups, and status automations — keep the lifecycle of their own mechanisms and do not participate in generic deduplication.
 
@@ -130,6 +130,7 @@ Accepted types:
 | `status` | Foundry/GUM status | Persistent |
 | `resource_change` | Change an existing resource | Instant |
 | `resource_create` | Create/update a resource | Instant |
+| `damage_roll` | Roll damage to a card | Instant |
 | `roll_modifier` | Generic roll modifier | Persistent |
 | `skill_modifier` | Skill modifier | Persistent |
 | `combat_modifier` | Combat-mode modifier | Persistent |
@@ -138,6 +139,34 @@ Accepted types:
 | `flag` | Mechanical `flags.gum` flag | Persistent |
 
 Duration applies to persistent actions. Instant actions run when the effect is applied and do not repeat while the ActiveEffect remains active.
+
+### Instant `damage_roll` action
+
+Creates one damage card for each target receiving the effect. The card retains the target UUID and offers the normal manual damage-application workflow; the action does not reduce HP automatically. Follow-up and fragmentation damage are optional.
+
+```json
+{
+  "id": "damage0000000001",
+  "label": "Spike trap",
+  "type": "damage_roll",
+  "damage_formula": "2d6+1",
+  "damage_type": "imp",
+  "damage_nature": "",
+  "damage_armor_divisor": 1,
+  "damage_follow_up_formula": "1d6",
+  "damage_follow_up_type": "tox",
+  "damage_follow_up_nature": "",
+  "damage_follow_up_armor_divisor": 1,
+  "damage_fragmentation_formula": "",
+  "damage_fragmentation_type": "",
+  "damage_fragmentation_nature": "",
+  "damage_fragmentation_armor_divisor": 1,
+  "damage_show_prompt": false,
+  "roll_visibility": "owners"
+}
+```
+
+`damage_formula` is required. Formulas accept the same data as ordinary damage, including `thr`/`sw` aliases and the effect's conditional expressions. A secondary component is only rolled when its formula is filled in. `damage_show_prompt: true` opens the adjustment dialog before rolling. `roll_visibility` accepts `public`, `owners`, `target`, or `gm`.
 
 ## 6. Multiple selections and collections
 

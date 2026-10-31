@@ -21,13 +21,23 @@ import { applySingleEffect, getEffectActions } from './effects-engine.js';
 import { isPersistentEffectAction, normalizeEffectStackingMode } from '../module/utils/effect-stacking.mjs';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable, isMissingSyntheticActorContextError } from '../module/utils/condition-actor-context.mjs';
 import { captureActorResourceChanges } from '../module/utils/actor-resource-change.mjs';
+import {
+    buildActiveEffectConditionEvent,
+    buildCombatConditionEvent,
+    buildDefenseRollConditionEvent,
+    buildRegionConditionEvent,
+    buildSceneDarknessConditionEvent,
+    buildWorldTimeConditionEvent,
+    collectRegionConditionTransitions
+} from '../module/utils/condition-event-data.mjs';
+import { captureItemResourceChanges } from '../module/utils/item-resource-change.mjs';
 import { PASSIVE_CONDITION_CONFIG_SETTING, normalizePassiveConditionConfiguration, preparePassiveConditionCreateData, resolvePassiveConditionConfiguration } from '../module/utils/passive-condition-sync.mjs';
 import { ConditionEventDeduper, normalizeConditionEffectLinks, shouldExecuteConditionEffectLink } from '../module/utils/condition-effect-link.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
 import { WORLD_STATUS_SETTING, buildWorldStatusBindingRules, buildWorldStatusPresentationPlan, collectWorldStatusActors, localizeBaseStatuses, normalizeWorldStatusConfiguration, resolveWorldStatusRows } from '../module/utils/world-status-config.mjs';
-import { importFromGCS } from "../module/apps/importers.js";
+import { importFromGCS, invalidateHybridItemIndex } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
@@ -59,6 +69,15 @@ import { applyMagicConsumptionTrigger, prepareMagicConsumptionSession } from "..
 import { ContentSourceConfig } from "../module/apps/content-source-config.js";
 import { WorldStatusConfig } from "../module/apps/world-status-config.js";
 import { installGumApi } from "../module/api/gum-api.mjs";
+import { registerGumRegionEffectBehavior, registerMonksActiveTilesEffectAction } from "../module/integrations/scene-effect-integration.mjs";
+import {
+    activateEffectItemBridgeCarrier,
+    cleanupEffectItemBridgeCarrier,
+    deactivateEffectItemBridgeCarrier,
+    ensureEffectItemBridge,
+    isEffectItemBridgeCarrier,
+    synchronizeWorldEffectItemBridges
+} from "../module/integrations/active-effect-bridge.mjs";
 import { getRequestedAttributeOption, normalizeRequestedAttributeKey } from "../module/utils/requested-attributes.mjs";
 import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../module/utils/ability-roll-context.mjs";
 
@@ -73,6 +92,8 @@ import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-
 import { registerMovementRulerIntegration } from "../module/canvas/movement-ruler.mjs";
 import { registerDistanceRulerIntegration } from "../module/canvas/distance-ruler.mjs";
 import { PHYSICAL_FEAT_ATTRIBUTE_KEYS, prepareBasicLiftAttribute, preparePhysicalFeatAttributes } from "../module/utils/physical-feats.mjs";
+
+registerMonksActiveTilesEffectAction();
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -1761,12 +1782,27 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     if (extraOptions.createChatMessage !== false) await ChatMessage.create(chatData);
 
     if (rollData.type === "defense") {
-        await processConditions(actor, {
-            pulse: true,
-            type: "defense_roll",
-            defenseType: rollData.defenseType || null,
-            inCombat: Boolean(game.combat)
-        });
+        const [targetToken] = _resolveCounterTargetsForRoll(rollData);
+        await processConditions(actor, buildDefenseRollConditionEvent({
+            eventId: foundry.utils.randomID(),
+            actor,
+            target: targetToken || null,
+            sourceItem,
+            rollData,
+            rollContext: _determineRollContext(actor, rollData),
+            result: {
+                total,
+                baseValue,
+                totalModifier,
+                effectiveLevel,
+                margin,
+                outcome,
+                isSuccess,
+                isCriticalSuccess: isCritSuccess,
+                isCriticalFailure: isCritFailure
+            },
+            combat: game.combat || null
+        }));
     }
 
     // --- 8. DISPARO DE EFEITOS DE ATIVAÇÃO (SUCESSO/FALHA) ---
@@ -2932,6 +2968,7 @@ function buildEffectApplicationContext(options = {}) {
         "skipPersistentEffects",
         "skipInstantEffects",
         "durationOverride",
+        "applicationId",
         "gumFlags"
     ];
     return Object.fromEntries(allowedFields
@@ -3097,6 +3134,10 @@ Hooks.once('init', async function() {
             openWorldStatusConfig: () => new WorldStatusConfig().render(true)
         }
     });
+
+    if (!registerGumRegionEffectBehavior()) {
+        console.warn("GUM | A API de comportamentos de Região não está disponível nesta versão do Foundry.");
+    }
 
     CONFIG.Actor.documentClass = GurpsActor;
 
@@ -3274,6 +3315,12 @@ Hooks.once('init', async function() {
     });
 
 Hooks.on("createItem", async (item, options, userId) => {
+        invalidateHybridItemIndex();
+        if (game.user.id === userId && item.type === "effect") {
+            await ensureEffectItemBridge(item).catch(error => {
+                console.warn(`GUM | Falha ao criar a ponte ActiveEffect de "${item.name}".`, error);
+            });
+        }
         // Só executa para o usuário que fez a ação e se o item foi adicionado a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -3322,7 +3369,21 @@ Hooks.on("createItem", async (item, options, userId) => {
         await syncItemStateEffects(item, { assumeInactive: true });
     });
 
+    Hooks.on("preUpdateItem", (item, changes, options = {}) => {
+        if (options.gumSkipResourceChangeEvents || !item.parent) return;
+        options.gumResourceChangeEvents = captureItemResourceChanges(item, changes, {
+            eventData: options.gumEventData,
+            eventIdFactory: () => foundry.utils.randomID()
+        });
+    });
+
     Hooks.on("updateItem", async (item, changes, options, userId) => {
+        invalidateHybridItemIndex();
+        if (game.user.id === userId && item.type === "effect" && !options.gumEffectBridgeSync) {
+            await ensureEffectItemBridge(item).catch(error => {
+                console.warn(`GUM | Falha ao sincronizar a ponte ActiveEffect de "${item.name}".`, error);
+            });
+        }
         // Só executa para o usuário que fez a ação e se o item pertence a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -3399,13 +3460,17 @@ const targets = buildActorEffectTargets(actor);
         
         // --- Chamada final de atualização ---
         // Sempre reavalia e redesenha após QUALQUER atualização de item no ator
-        await processConditions(actor);
+        await processConditions(actor, options.gumEventData ?? null);
+        for (const resourceEvent of options.gumResourceChangeEvents || []) {
+            await processConditions(actor, resourceEvent);
+        }
         await processStatusBindings(actor);
         actor.sheet.render(false);
         actor.getActiveTokens().forEach(token => token.drawEffects());
     });
 
    Hooks.on("deleteItem", async (item, options, userId) => {
+        invalidateHybridItemIndex();
         // Só executa para o usuário que fez a ação e se o item pertencia a um ator
         if (game.user.id !== userId || !item.parent) return;
 
@@ -3450,6 +3515,7 @@ const targets = buildActorEffectTargets(actor);
     });
 
    Hooks.on("updateCombat", async (combat, changed, options, userId) => {
+        const isConditionAuthority = isPrimaryActiveGM();
         
         // ==========================================================
         // ✅ BLOCO DE CORREÇÃO DO ÍCONE (INÍCIO)
@@ -3457,8 +3523,19 @@ const targets = buildActorEffectTargets(actor);
         // Se o combate foi desativado (encerrado) ou o round resetado para null
         if (changed.active === false || (changed.hasOwnProperty('round') && changed.round === null)) {
             console.log("GUM | Combate encerrado. Limpando ícones dos tokens.");
-            if (game.user.isGM) {
+            if (isConditionAuthority) {
                 await handleCombatEnd(combat);
+                const eventBaseId = foundry.utils.randomID();
+                for (const combatant of combat.combatants) {
+                    if (!combatant.actor) continue;
+                    await processConditions(combatant.actor, buildCombatConditionEvent({
+                        eventId: `${eventBaseId}:${combatant.id}`,
+                        phase: "combat_end",
+                        combat,
+                        combatant,
+                        previous: combat.previous
+                    }));
+                }
             }
             // Loop em TODOS os combatentes para limpar seus ícones
             for (const combatant of combat.combatants) {
@@ -3474,10 +3551,50 @@ const targets = buildActorEffectTargets(actor);
         // ✅ BLOCO DE CORREÇÃO DO ÍCONE (FIM)
         // ==========================================================
 
-        if (!game.user.isGM) return;
+        if (!isConditionAuthority) return;
 
         if (changed.active === true) {
             await handleCombatStart(combat);
+            const eventBaseId = foundry.utils.randomID();
+            for (const combatant of combat.combatants) {
+                if (!combatant.actor) continue;
+                await processConditions(combatant.actor, buildCombatConditionEvent({
+                    eventId: `${eventBaseId}:${combatant.id}`,
+                    phase: "combat_start",
+                    combat,
+                    combatant,
+                    previous: combat.previous
+                }));
+            }
+        }
+
+        if (changed.round !== undefined) {
+            const previousRound = Number(combat.previous?.round);
+            const currentRound = Number(combat.round);
+            if (Number.isFinite(previousRound) && previousRound > 0 && previousRound !== currentRound) {
+                const roundEndEventId = foundry.utils.randomID();
+                for (const combatant of combat.combatants) {
+                    if (!combatant.actor) continue;
+                    await processConditions(combatant.actor, buildCombatConditionEvent({
+                        eventId: `${roundEndEventId}:${combatant.id}`,
+                        phase: "round_end",
+                        combat,
+                        combatant,
+                        previous: combat.previous
+                    }));
+                }
+            }
+            const roundStartEventId = foundry.utils.randomID();
+            for (const combatant of combat.combatants) {
+                if (!combatant.actor) continue;
+                await processConditions(combatant.actor, buildCombatConditionEvent({
+                    eventId: `${roundStartEventId}:${combatant.id}`,
+                    phase: "round_start",
+                    combat,
+                    combatant,
+                    previous: combat.previous
+                }));
+            }
         }
 
         // --- Lógica de Início de Turno (Seu código original, sem alteração) ---
@@ -3485,7 +3602,14 @@ const targets = buildActorEffectTargets(actor);
             const currentCombatant = combat.combatant;
             if (currentCombatant?.actor) {
                 await handleCombatTurnStart(currentCombatant);
-                await processConditions(currentCombatant.actor, { reason: "turnStart", combatId: combat.id }); 
+                await processConditions(currentCombatant.actor, buildCombatConditionEvent({
+                    eventId: foundry.utils.randomID(),
+                    phase: "turn_start",
+                    reason: "turnStart",
+                    combat,
+                    combatant: currentCombatant,
+                    previous: combat.previous
+                }));
                 currentCombatant.token?.object?.drawEffects(); 
             }
         }
@@ -3496,7 +3620,13 @@ const targets = buildActorEffectTargets(actor);
             if (previousCombatant?.actor) {
                 const actor = previousCombatant.actor;
                 await manageActiveEffectDurations(actor); 
-                await processConditions(actor); 
+                await processConditions(actor, buildCombatConditionEvent({
+                    eventId: foundry.utils.randomID(),
+                    phase: "turn_end",
+                    combat,
+                    combatant: previousCombatant,
+                    previous: combat.previous
+                }));
                 actor.getActiveTokens().forEach(token => token.drawEffects()); 
             }
         }
@@ -3589,15 +3719,41 @@ Hooks.once('ready', async function() {
     await migrateEffectActionsSchema();
     await migrateBasicDamageSchema();
 
-    $('body').on('click', '.apply-damage-button', (ev) => {
+    $('body').on('click', '.apply-damage-button', async (ev) => {
     ev.preventDefault();
     console.log("GUM | DEBUG: Botão 'Aplicar Dano' clicado.");
 
     const button = ev.currentTarget;
 
-    // 1. Prioriza o alvo marcado pelo Foundry e usa o token selecionado como fallback.
+    // 1. Lê o pacote de dados para que cards gerados por efeitos possam conservar seu alvo.
+    const damagePackageJSON = button.dataset.damage;
+    if (!damagePackageJSON) {
+        console.error("GUM | DEBUG: Pacote de dados de dano não encontrado no botão.");
+        return ui.notifications.error("Erro crítico: Pacote de dados de dano ausente.");
+    }
+    let damagePackage;
+    try {
+        damagePackage = JSON.parse(damagePackageJSON);
+    } catch (error) {
+        console.error("GUM | Pacote de dano inválido.", error);
+        return ui.notifications.error("Erro crítico: Pacote de dados de dano inválido.");
+    }
+
+    const preferredTokens = [];
+    if (damagePackage.targetTokenUuid) {
+        const tokenDocument = await fromUuid(damagePackage.targetTokenUuid).catch(() => null);
+        const token = tokenDocument?.object ?? canvas.tokens.get(tokenDocument?.id);
+        if (token?.actor) preferredTokens.push(token);
+    } else if (damagePackage.targetActorUuid) {
+        const actor = await fromUuid(damagePackage.targetActorUuid).catch(() => null);
+        preferredTokens.push(...(actor?.getActiveTokens?.() || []).filter(token => token?.actor));
+    }
+
+    // Um alvo marcado explicitamente vence o alvo conservado no card; o token
+    // controlado continua sendo o último fallback para cards antigos.
     const targetResolution = resolveDamageApplicationTarget({
         targetedTokens: game.user.targets,
+        preferredTokens,
         controlledTokens: canvas.tokens.controlled
     });
     if (!targetResolution.token) {
@@ -3610,13 +3766,6 @@ Hooks.once('ready', async function() {
     const targetActor = targetToken.actor;
     console.log(`GUM | DEBUG: Etapa 1 OK. Alvo: ${targetActor.name}`);
 
-    // 2. Lê o pacote de dados
-    const damagePackageJSON = button.dataset.damage;
-    if (!damagePackageJSON) {
-        console.error("GUM | DEBUG: Falha na Etapa 2. Pacote de dados de dano não encontrado no botão.");
-        return ui.notifications.error("Erro crítico: Pacote de dados de dano ausente.");
-    }
-    const damagePackage = JSON.parse(damagePackageJSON);
     console.log("GUM | DEBUG: Etapa 2 OK. Pacote de dados lido:", damagePackage);
 
     // 3. Encontra o ator atacante pela ID.
@@ -4322,6 +4471,32 @@ const getWorldStatusRuntimeActors = () => collectWorldStatusActors({
     scenes: game.scenes,
     canvasTokens: globalThis.canvas?.tokens?.placeables
 });
+
+const collectSceneConditionActors = (scene) => {
+    const actors = [];
+    const seen = new Set();
+    for (const token of Array.from(scene?.tokens ?? [])) {
+        const actor = token?.actor;
+        if (!isActorContextAvailable(actor)) continue;
+        const key = getActorEvaluationKey(actor) || actor.uuid || actor.id;
+        if (key && seen.has(key)) continue;
+        if (key) seen.add(key);
+        actors.push(actor);
+    }
+    return actors;
+};
+
+const dispatchConditionEvent = async (actors, eventData) => {
+    const results = await Promise.allSettled(Array.from(actors ?? [], actor => processConditions(actor, eventData)));
+    for (const result of results) {
+        if (result.status === "rejected") console.warn("GUM | Falha ao processar um gatilho ambiental de Condição.", result.reason);
+    }
+};
+
+const changedDocumentValue = (changes, path) => {
+    if (Object.prototype.hasOwnProperty.call(changes || {}, path)) return changes[path];
+    return foundry.utils.getProperty(changes || {}, path);
+};
 
 async function synchronizeWorldStatusRuntime(rows) {
     const actors = getWorldStatusRuntimeActors();
@@ -5123,6 +5298,74 @@ Hooks.on("updateToken", (tokenDocument) => {
     if (game.combat) refreshGMScreen();
 });
 
+// Gatilhos ambientais normalizados para Itens Condição.
+Hooks.on("moveToken", async (token, movement, operation = {}, user) => {
+    if (!user?.isSelf || !isActorContextAvailable(token?.actor)) return;
+    const priorRegionIds = operation?._priorRegions?.[token.id];
+    if (!priorRegionIds) return;
+    const transitions = collectRegionConditionTransitions(token, priorRegionIds);
+    if (!transitions.length) return;
+
+    const finalWaypoint = movement?.passed?.waypoints?.at?.(-1) ?? null;
+    const movementAction = finalWaypoint?.action
+        ? CONFIG.Token?.movement?.actions?.[finalWaypoint.action]
+        : null;
+    for (const transition of transitions) {
+        await processConditions(token.actor, buildRegionConditionEvent({
+            eventId: foundry.utils.randomID(),
+            phase: transition.phase,
+            region: transition.region,
+            token,
+            movement,
+            teleport: movementAction?.teleport === true,
+            forced: finalWaypoint?.action === "displace"
+        }));
+    }
+});
+
+Hooks.on("createToken", async (token, options = {}, userId) => {
+    if (game.user.id !== userId || !isActorContextAvailable(token?.actor)) return;
+    for (const region of Array.from(token.regions ?? [])) {
+        await processConditions(token.actor, buildRegionConditionEvent({
+            eventId: foundry.utils.randomID(),
+            phase: "enter",
+            region,
+            token
+        }));
+    }
+});
+
+Hooks.on("preUpdateScene", (scene, changes, options = {}, userId) => {
+    if (game.user.id !== userId) return;
+    if (changedDocumentValue(changes, "environment.darknessLevel") === undefined) return;
+    options.gumPreviousDarknessLevel = Number(scene?.environment?.darknessLevel ?? 0);
+});
+
+Hooks.on("updateScene", async (scene, changes, options = {}, userId) => {
+    if (game.user.id !== userId) return;
+    const requestedDarkness = changedDocumentValue(changes, "environment.darknessLevel");
+    if (requestedDarkness === undefined) return;
+    const eventData = buildSceneDarknessConditionEvent({
+        eventId: foundry.utils.randomID(),
+        scene,
+        before: options.gumPreviousDarknessLevel,
+        after: scene?.environment?.darknessLevel ?? requestedDarkness
+    });
+    await dispatchConditionEvent(collectSceneConditionActors(scene), eventData);
+});
+
+Hooks.on("updateWorldTime", async (worldTime, dt, options = {}, userId) => {
+    const isAuthority = userId ? game.user.id === userId : isPrimaryActiveGM();
+    if (!isAuthority) return;
+    const eventData = buildWorldTimeConditionEvent({
+        eventId: foundry.utils.randomID(),
+        worldTime,
+        delta: dt,
+        components: game.time?.components
+    });
+    await dispatchConditionEvent(getWorldStatusRuntimeActors(), eventData);
+});
+
 // 5. MUDANÇAS DIRETAS EM EFEITOS ATIVOS (remoção)
 // Mantemos somente a remoção aqui para evitar renders intermediários durante
 // aplicações em lote (ex.: 2+ efeitos no mesmo clique no Escudo do Mestre).
@@ -5192,13 +5435,23 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
     }
 };
 
-const refreshFromDeletedActiveEffect = async (effect) => {
+const refreshFromDeletedActiveEffect = async (effect, options = {}, userId) => {
     const actor = effect?.parent;
     if (!isActorContextAvailable(actor)) return;
     try {
+        if (game.user.id === userId && isEffectItemBridgeCarrier(effect)) {
+            await cleanupEffectItemBridgeCarrier(effect, { actor });
+        }
         const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
         if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
         await processStatusBindings(actor);
+        if (game.user.id === userId && !options.gumSkipConditionProcessing) {
+            await processConditions(actor, buildActiveEffectConditionEvent({
+                eventId: foundry.utils.randomID(),
+                operation: "delete",
+                effect
+            }));
+        }
 
         if (actor.hasPlayerOwner || game.combat) {
             refreshGMScreen();
@@ -5210,19 +5463,38 @@ const refreshFromDeletedActiveEffect = async (effect) => {
 };
 
 Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
-Hooks.on("updateActiveEffect", async (effect, changes) => {
+Hooks.on("updateActiveEffect", async (effect, changes, options = {}, userId) => {
     const actor = effect?.parent;
     if (!isActorContextAvailable(actor)) return;
     const disabledChanged = Object.prototype.hasOwnProperty.call(changes || {}, "disabled");
     const statusesChanged = Object.prototype.hasOwnProperty.call(changes || {}, "statuses")
         || Object.prototype.hasOwnProperty.call(changes?.flags?.core || {}, "statusId");
-    if (!disabledChanged && !statusesChanged) return;
+    const presentationChanged = disabledChanged || statusesChanged;
+    const shouldProcessConditions = game.user.id === userId && !options.gumSkipConditionProcessing;
+    if (!presentationChanged && !shouldProcessConditions) return;
 
     try {
-        const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-        if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
-        await processStatusBindings(actor);
-        if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
+        if (game.user.id === userId && disabledChanged && !options.gumEffectBridgeSync && isEffectItemBridgeCarrier(effect)) {
+            if (effect.disabled) await deactivateEffectItemBridgeCarrier(effect);
+            else await activateEffectItemBridgeCarrier(effect, {
+                buildTargets: buildActorEffectTargets,
+                applyEffect: applyEffectWithResistance
+            });
+        }
+        if (presentationChanged) {
+            const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+            if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
+            await processStatusBindings(actor);
+        }
+        if (shouldProcessConditions) {
+            await processConditions(actor, buildActiveEffectConditionEvent({
+                eventId: foundry.utils.randomID(),
+                operation: "update",
+                effect,
+                changes
+            }));
+        }
+        if (presentationChanged && (actor.hasPlayerOwner || game.combat)) refreshGMScreen();
     } catch (error) {
         if (isMissingSyntheticActorContextError(error, actor)) return;
         console.warn("GUM | Falha ao sincronizar status após atualizar ActiveEffect.", error);
@@ -5230,11 +5502,24 @@ Hooks.on("updateActiveEffect", async (effect, changes) => {
 });
 
 
-Hooks.on("createActiveEffect", async (effect) => {
+Hooks.on("createActiveEffect", async (effect, options = {}, userId) => {
     const actor = effect?.parent;
     if (!isActorContextAvailable(actor)) return;
     try {
+        if (game.user.id === userId && !options.gumEffectBridgeSync && isEffectItemBridgeCarrier(effect)) {
+            await activateEffectItemBridgeCarrier(effect, {
+                buildTargets: buildActorEffectTargets,
+                applyEffect: applyEffectWithResistance
+            });
+        }
         await processStatusBindings(actor);
+        if (game.user.id === userId && !options.gumSkipConditionProcessing) {
+            await processConditions(actor, buildActiveEffectConditionEvent({
+                eventId: foundry.utils.randomID(),
+                operation: "create",
+                effect
+            }));
+        }
         if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
     } catch (error) {
         if (isMissingSyntheticActorContextError(error, actor)) return;
@@ -5246,6 +5531,11 @@ Hooks.on("createActiveEffect", async (effect) => {
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
 
 Hooks.once("ready", async () => {
+    if (isPrimaryActiveGM()) {
+        await synchronizeWorldEffectItemBridges().catch(error => {
+            console.error("GUM | Falha ao sincronizar as pontes ActiveEffect dos Itens Efeito.", error);
+        });
+    }
     try {
         await migrateRetiredBundledSources();
     } catch (error) {

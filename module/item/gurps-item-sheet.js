@@ -12,6 +12,7 @@ import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, descr
 import { ammunitionLinkCandidates } from "../utils/ammunition.mjs";
 import { collectMagicConsumptionSources, normalizeMagicConsumptionGroups } from "../utils/magic-consumption.mjs";
 import { canonicalSkillLinkTargetPath, collectSkillLinkCandidates, normalizeSkillLinkSearch } from "../utils/skill-link.mjs";
+import { HYBRID_ALIAS_ITEM_TYPES, normalizeItemAliases, normalizeItemName } from "../utils/item-name-aliases.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -240,6 +241,8 @@ _promptMultipleReferences(parsedList) {
         context.flags = itemData.flags;
         context.canUseItemAttachmentDrops = this._canUseItemAttachmentDrops();
         context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength);
+        context.supportsHybridAliases = HYBRID_ALIAS_ITEM_TYPES.includes(this.item.type);
+        context.itemAliases = normalizeItemAliases(itemData.system?.aliases).map((value, index) => ({ value, index }));
         if (["spell", "power"].includes(this.item.type)) {
             context.consumptionGroups = normalizeMagicConsumptionGroups(itemData.system.consumptionGroups);
             context.magicConsumptionSourceOptions = this.item.actor
@@ -772,6 +775,58 @@ _promptMultipleReferences(parsedList) {
  
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this)); 
         if (!this.isEditable) return;
+        const saveItemAlias = async () => {
+            const input = html.find(".item-alias-input");
+            const value = String(input.val() || "").replace(/\s+/g, " ").trim();
+            if (!value) return;
+            const aliases = normalizeItemAliases(this.item.system?.aliases);
+            const editIndexRaw = input.attr("data-edit-index");
+            const editIndex = editIndexRaw === undefined ? -1 : Number(editIndexRaw);
+            const normalized = normalizeItemName(value);
+            const canonicalNames = [
+                this.item.name,
+                this.item.system?.specialization
+                    ? `${this.item.name} (${this.item.system.specialization})`
+                    : ""
+            ].map(normalizeItemName).filter(Boolean);
+            if (canonicalNames.includes(normalized)) {
+                return ui.notifications.warn(game.i18n.localize("GUM.ItemAliases.CanonicalDuplicate"));
+            }
+            const duplicateIndex = aliases.findIndex((alias, index) => index !== editIndex && normalizeItemName(alias) === normalized);
+            if (duplicateIndex >= 0) {
+                return ui.notifications.warn(game.i18n.localize("GUM.ItemAliases.Duplicate"));
+            }
+            if (editIndex >= 0 && editIndex < aliases.length) aliases[editIndex] = value;
+            else aliases.push(value);
+            await this.item.update({ "system.aliases": normalizeItemAliases(aliases) });
+        };
+        html.on("click", ".add-item-alias", async event => {
+            event.preventDefault();
+            await saveItemAlias();
+        });
+        html.on("keydown", ".item-alias-input", async event => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            await saveItemAlias();
+        });
+        html.on("click", ".edit-item-alias", event => {
+            event.preventDefault();
+            const button = $(event.currentTarget);
+            const input = html.find(".item-alias-input");
+            input.val(button.attr("data-alias") || "");
+            input.attr("data-edit-index", button.attr("data-index"));
+            input.trigger("focus");
+            html.find(".add-item-alias").addClass("is-editing").attr("title", game.i18n.localize("GUM.ItemAliases.SaveEdit"));
+        });
+        html.on("click", ".remove-item-alias", async event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const index = Number(event.currentTarget.dataset.index);
+            const aliases = normalizeItemAliases(this.item.system?.aliases);
+            if (!Number.isInteger(index) || index < 0 || index >= aliases.length) return;
+            aliases.splice(index, 1);
+            await this.item.update({ "system.aliases": aliases });
+        });
         html.on("click", ".add-item-social", this._onAddItemSocial.bind(this));
         html.on("click", ".delete-item-social", this._onDeleteItemSocial.bind(this));
         html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this));

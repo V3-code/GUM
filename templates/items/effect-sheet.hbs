@@ -195,6 +195,10 @@
                                                             {{localize "GUM.EffectSheet.CombatModeModifier"}}
                                                         </option>
 
+                                                        <option value="damage_roll" {{#if (eq action.type "damage_roll")}}selected{{/if}}>
+                                                            {{localize "GUM.EffectSheet.DamageRoll"}}
+                                                        </option>
+
                                                         <option
                                                             value="chat"
                                                             {{#if (eq action.type "chat")}}selected{{/if}}
@@ -226,6 +230,7 @@
                                                 {{#if (eq action.type "roll_modifier")}}is-complex{{/if}}
                                                 {{#if (eq action.type "skill_modifier")}}is-complex{{/if}}
                                                 {{#if (eq action.type "combat_modifier")}}is-complex{{/if}}
+                                                {{#if (eq action.type "damage_roll")}}is-complex is-damage{{/if}}
                                                 {{#if (eq action.type "chat")}}is-chat{{/if}}
                                             "
                                         >
@@ -469,6 +474,53 @@
                                                         </div>
                                                         <button type="button" class="add-combat-damage-change effect-premium-add-action" data-action-index="{{action.index}}"><i class="fas fa-plus"></i> {{localize "GUM.EffectSheet.AddDamageChange"}}</button>
                                                     </section>
+                                                </div>
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: ROLAR DANO                              }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "damage_roll")}}
+                                                <div class="effect-damage-roll-config">
+                                                    <div class="effect-damage-roll-intro">
+                                                        <i class="fas fa-burst" aria-hidden="true"></i>
+                                                        <div><strong>{{localize "GUM.EffectSheet.DamageRoll"}}</strong><p>{{localize "GUM.EffectSheet.DamageRollHint"}}</p></div>
+                                                    </div>
+
+                                                    <details class="effect-damage-component" open>
+                                                        <summary>{{localize "GUM.Damage.Roll.Standard"}}</summary>
+                                                        <div class="effect-premium-grid effect-premium-grid-damage">
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.Damage.Formula"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_formula" value="{{action.damage_formula}}" placeholder="2d6+1"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageType"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_type" value="{{action.damage_type}}" placeholder="cont"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ArmorDivisor"}}</label><div class="effect-premium-field-control"><input type="number" min="0.01" step="any" name="system.actions.{{action.index}}.damage_armor_divisor" value="{{action.damage_armor_divisor}}"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageNature"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_nature" value="{{action.damage_nature}}" placeholder="{{localize 'GUM.EffectSheet.Optional'}}"/></div></div>
+                                                        </div>
+                                                    </details>
+
+                                                    <details class="effect-damage-component">
+                                                        <summary>{{localize "GUM.Damage.Roll.FollowUp"}} <small>{{localize "GUM.EffectSheet.Optional"}}</small></summary>
+                                                        <div class="effect-premium-grid effect-premium-grid-damage">
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.Damage.Formula"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_follow_up_formula" value="{{action.damage_follow_up_formula}}" placeholder="1d6"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageType"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_follow_up_type" value="{{action.damage_follow_up_type}}"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ArmorDivisor"}}</label><div class="effect-premium-field-control"><input type="number" min="0.01" step="any" name="system.actions.{{action.index}}.damage_follow_up_armor_divisor" value="{{action.damage_follow_up_armor_divisor}}"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageNature"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_follow_up_nature" value="{{action.damage_follow_up_nature}}" placeholder="{{localize 'GUM.EffectSheet.Optional'}}"/></div></div>
+                                                        </div>
+                                                    </details>
+
+                                                    <details class="effect-damage-component">
+                                                        <summary>{{localize "GUM.Damage.Roll.Fragmentation"}} <small>{{localize "GUM.EffectSheet.Optional"}}</small></summary>
+                                                        <div class="effect-premium-grid effect-premium-grid-damage">
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.Damage.Formula"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_fragmentation_formula" value="{{action.damage_fragmentation_formula}}" placeholder="1d6"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageType"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_fragmentation_type" value="{{action.damage_fragmentation_type}}"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ArmorDivisor"}}</label><div class="effect-premium-field-control"><input type="number" min="0.01" step="any" name="system.actions.{{action.index}}.damage_fragmentation_armor_divisor" value="{{action.damage_fragmentation_armor_divisor}}"/></div></div>
+                                                            <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.DamageNature"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.damage_fragmentation_nature" value="{{action.damage_fragmentation_nature}}" placeholder="{{localize 'GUM.EffectSheet.Optional'}}"/></div></div>
+                                                        </div>
+                                                    </details>
+
+                                                    <div class="effect-premium-grid effect-premium-grid-damage-options">
+                                                        <label class="effect-premium-checkbox effect-premium-checkbox-card"><input type="checkbox" name="system.actions.{{action.index}}.damage_show_prompt" {{checked action.damage_show_prompt}}/><span>{{localize "GUM.EffectSheet.DamageShowPrompt"}}</span></label>
+                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.TestVisibility"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.roll_visibility"><option value="public" {{#if (eq action.roll_visibility "public")}}selected{{/if}}>{{localize "GUM.EffectSheet.PublicEveryone"}}</option><option value="owners" {{#if (eq action.roll_visibility "owners")}}selected{{/if}}>{{localize "GUM.EffectSheet.TargetAndGM"}}</option><option value="target" {{#if (eq action.roll_visibility "target")}}selected{{/if}}>{{localize "GUM.EffectSheet.TargetOnly"}}</option><option value="gm" {{#if (eq action.roll_visibility "gm")}}selected{{/if}}>{{localize "GUM.EffectSheet.GMOnlyBlind"}}</option></select></div></div>
+                                                    </div>
                                                 </div>
                                             {{/if}}
 
@@ -1787,6 +1839,36 @@
 
 
                      </div>
+                </section>
+
+                <section class="effect-automation-reference" aria-labelledby="effect-automation-reference-title">
+                    <div class="effect-automation-reference-heading" id="effect-automation-reference-title">
+                        <i class="fas fa-link" aria-hidden="true"></i>
+                        <span>{{localize "GUM.EffectSheet.AutomationIntegration"}}</span>
+                    </div>
+                    <p class="effect-automation-reference-hint">{{localize "GUM.EffectSheet.AutomationIntegrationHint"}}</p>
+
+                    <div class="effect-automation-reference-list">
+                        <label class="effect-automation-reference-row">
+                            <span>{{localize "GUM.EffectSheet.EffectItemUuid"}}</span>
+                            <span class="effect-automation-reference-control">
+                                <input type="text" value="{{effectItemUuid}}" readonly aria-label="{{localize 'GUM.EffectSheet.EffectItemUuid'}}" />
+                                <button type="button" class="copy-effect-automation-uuid" data-uuid="{{effectItemUuid}}" title="{{localize 'GUM.EffectSheet.CopyUuid'}}" aria-label="{{localize 'GUM.EffectSheet.CopyUuid'}}">
+                                    <i class="fas fa-paste" aria-hidden="true"></i>
+                                </button>
+                            </span>
+                        </label>
+
+                        <label class="effect-automation-reference-row">
+                            <span>{{localize "GUM.EffectSheet.ActiveEffectBridgeUuid"}}</span>
+                            <span class="effect-automation-reference-control">
+                                <input type="text" value="{{activeEffectBridgeUuid}}" readonly placeholder="{{localize 'GUM.EffectSheet.ActiveEffectBridgeUnavailable'}}" aria-label="{{localize 'GUM.EffectSheet.ActiveEffectBridgeUuid'}}" />
+                                <button type="button" class="copy-effect-automation-uuid" data-uuid="{{activeEffectBridgeUuid}}" title="{{localize 'GUM.EffectSheet.CopyUuid'}}" aria-label="{{localize 'GUM.EffectSheet.CopyUuid'}}" {{#unless hasActiveEffectBridge}}disabled{{/unless}}>
+                                    <i class="fas fa-paste" aria-hidden="true"></i>
+                                </button>
+                            </span>
+                        </label>
+                    </div>
                 </section>
             </div>
         </div>

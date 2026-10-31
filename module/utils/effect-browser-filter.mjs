@@ -1,6 +1,6 @@
 export const EFFECT_ACTION_TYPES = Object.freeze([
   "attribute", "status", "roll_modifier", "skill_modifier", "combat_modifier", "resource_change",
-  "resource_create", "chat", "macro", "flag"
+  "resource_create", "damage_roll", "chat", "macro", "flag"
 ]);
 
 /** Return every action type exposed by both current and legacy effect records. */

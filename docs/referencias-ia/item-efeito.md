@@ -96,7 +96,7 @@ Os campos herdados do modelo-base (`activationEffects`, `onDamageEffects`, `gene
 | `unique` | Mantém somente uma cópia de cada ação persistente do mesmo Item Efeito no mesmo domínio de aplicação. A cópia e a duração atuais são preservadas. |
 | `refresh` | Mantém somente uma cópia, mas recalcula as ações persistentes e reinicia a duração a cada nova aplicação. |
 
-As ações pontuais (`resource_change`, `resource_create`, `macro` e `chat`) sempre são executadas. Aplicações diretas e aplicações por Condição são domínios separados e não removem nem reaproveitam cópias umas das outras. Dentro do domínio de Condição, `unique` e `refresh` conservam a lista de condições proprietárias até a última delas ser desligada.
+As ações pontuais (`resource_change`, `resource_create`, `damage_roll`, `macro` e `chat`) sempre são executadas. Aplicações diretas e aplicações por Condição são domínios separados e não removem nem reaproveitam cópias umas das outras. Dentro do domínio de Condição, `unique` e `refresh` conservam a lista de condições proprietárias até a última delas ser desligada.
 
 Efeitos administrados pelo sistema — passivos de Item, concessões de equipamento, grupos de estado e automações de status — mantêm o ciclo de vida de seus próprios mecanismos e não participam da deduplicação genérica.
 
@@ -130,6 +130,7 @@ Tipos aceitos:
 | `status` | Status do Foundry/GUM | Persistente |
 | `resource_change` | Alteração de recurso existente | Instantânea |
 | `resource_create` | Criação/atualização de recurso | Instantânea |
+| `damage_roll` | Rolagem de dano em card | Instantânea |
 | `roll_modifier` | Modificador genérico de rolagem | Persistente |
 | `skill_modifier` | Modificador de perícias | Persistente |
 | `combat_modifier` | Modificador de modo de combate | Persistente |
@@ -138,6 +139,34 @@ Tipos aceitos:
 | `flag` | Flag mecânica `flags.gum` | Persistente |
 
 A duração aplica-se às ações persistentes. As ações instantâneas são executadas quando o efeito é aplicado e não ficam repetindo enquanto durar o ActiveEffect.
+
+### Ação instantânea `damage_roll`
+
+Cria um card de dano para cada alvo que receber o efeito. O card conserva o UUID do alvo e oferece a aplicação manual normal do dano; a ação não reduz PV automaticamente. Dano de acompanhamento e fragmentação são opcionais.
+
+```json
+{
+  "id": "damage0000000001",
+  "label": "Armadilha de espinhos",
+  "type": "damage_roll",
+  "damage_formula": "2d6+1",
+  "damage_type": "perf",
+  "damage_nature": "",
+  "damage_armor_divisor": 1,
+  "damage_follow_up_formula": "1d6",
+  "damage_follow_up_type": "tox",
+  "damage_follow_up_nature": "",
+  "damage_follow_up_armor_divisor": 1,
+  "damage_fragmentation_formula": "",
+  "damage_fragmentation_type": "",
+  "damage_fragmentation_nature": "",
+  "damage_fragmentation_armor_divisor": 1,
+  "damage_show_prompt": false,
+  "roll_visibility": "owners"
+}
+```
+
+`damage_formula` é obrigatória. As fórmulas aceitam os mesmos dados usados pelo dano comum, inclusive `GdP`/`GdB` e expressões condicionais do efeito. Um componente secundário só é rolado quando sua fórmula estiver preenchida. `damage_show_prompt: true` abre a janela de ajustes antes da rolagem. `roll_visibility` aceita `public`, `owners`, `target` ou `gm`.
 
 ## 6. Múltiplas seleções e coleções
 

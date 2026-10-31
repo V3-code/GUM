@@ -19,6 +19,19 @@ test("searching unrelated compendia is explicit and disabled by default", () => 
 });
 
 test("hybrid matching keeps specialization as part of the identity", () => {
-  assert.match(importer, /specializationNorm: normalizeHybridText/);
-  assert.match(importer, /entry\.baseNameNorm === wantedBaseName && entry\.specializationNorm === wantedSpec/);
+  assert.match(importer, /itemNameIdentities\(\{/);
+  assert.match(importer, /identity\.nameNorm === wantedIdentity\.nameNorm[\s\S]*?identity\.specializationNorm === wantedIdentity\.specializationNorm/);
+  assert.doesNotMatch(importer, /if \(!hit && wantedFullName\)/);
+});
+
+test("hybrid matching indexes aliases and preserves the canonical source name", () => {
+  assert.match(importer, /"system\.aliases"/);
+  assert.match(importer, /matchedBy\?\.startsWith\("alias"\)/);
+  assert.match(importer, /merged\.flags\.gum\.hybridImport\.importedName = merged\.name/);
+  assert.match(importer, /merged\.name = sourceItem\.name/);
+});
+
+test("ambiguous hybrid matches remain inline instead of choosing silently", () => {
+  assert.match(importer, /Correspondência híbrida ambígua/);
+  assert.match(importer, /return \{ item: null, matchedBy: null, ambiguity \}/);
 });

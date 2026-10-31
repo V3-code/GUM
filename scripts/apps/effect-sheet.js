@@ -3,6 +3,7 @@ import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES
 import { getPurposeLabels, normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
 import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
 import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
+import { normalizeEffectDamageAction } from "../../module/services/effect-damage-roll-service.mjs";
 import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
 import { normalizeBarrierBranches } from "../../module/utils/roll-request-data.mjs";
 import {
@@ -11,6 +12,7 @@ import {
     normalizeEffectTestChatVisibility
 } from "../../module/utils/effect-chat-visibility.mjs";
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
+import { ensureEffectItemBridge, findEffectItemBridge } from "../../module/integrations/active-effect-bridge.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -55,6 +57,7 @@ const EFFECT_ACTION_TYPE_PRESENTATION = {
     roll_modifier: { key: "RollModifier", icon: "fas fa-dice", className: "is-roll-modifier" },
     skill_modifier: { key: "SkillModifier", icon: "fas fa-graduation-cap", className: "is-roll-modifier" },
     combat_modifier: { key: "CombatModifier", icon: "fas fa-swords", className: "is-roll-modifier" },
+    damage_roll: { key: "DamageRoll", icon: "fas fa-burst", className: "is-damage-roll" },
     chat: { key: "Chat", icon: "fas fa-comment", className: "is-chat" },
     macro: { key: "Macro", icon: "fas fa-code", className: "is-macro" },
     flag: { key: "Flag", icon: "fas fa-flag", className: "is-flag" }
@@ -121,6 +124,10 @@ const buildActionSummary = (action = {}) => {
         case "combat_modifier": {
             const changes = [action.combat_attack_enabled && localize("GUM.EffectSheet.Summary.Attack"), action.combat_parry_enabled && localize("GUM.EffectSheet.Summary.Parry"), action.combat_block_enabled && localize("GUM.EffectSheet.Summary.Block"), action.combat_damage_enabled && localize("GUM.EffectSheet.Summary.Damage")].filter(Boolean);
             return compactParts(action.combat_scope === "specific" ? localize("GUM.EffectSheet.Summary.SpecificModes") : action.combat_scope, changes.join(", ")).join(" · ") || localize("GUM.EffectSheet.Summary.CombatModifier");
+        }
+        case "damage_roll": {
+            const secondary = [action.damage_follow_up_formula && localize("GUM.Damage.Roll.FollowUp"), action.damage_fragmentation_formula && localize("GUM.Damage.Roll.Fragmentation")].filter(Boolean);
+            return compactParts(action.damage_formula, action.damage_type, secondary.join(", ")).join(" · ") || localize("GUM.EffectSheet.Summary.DamageRoll");
         }
         case "chat":
             return localize(action.chat_text ? "GUM.EffectSheet.Summary.ChatMessagePresent" : "GUM.EffectSheet.Summary.ChatMessage");
@@ -191,6 +198,19 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
     combat_damage_changes: [],
+    damage_formula: "1d6",
+    damage_type: "cont",
+    damage_nature: "",
+    damage_armor_divisor: 1,
+    damage_follow_up_formula: "",
+    damage_follow_up_type: "",
+    damage_follow_up_nature: "",
+    damage_follow_up_armor_divisor: 1,
+    damage_fragmentation_formula: "",
+    damage_fragmentation_type: "",
+    damage_fragmentation_nature: "",
+    damage_fragmentation_armor_divisor: 1,
+    damage_show_prompt: false,
     roll_visibility: "owners",
     requestedPurposeIds: [],
     whisperMode: "public",
@@ -229,6 +249,7 @@ const normalizeAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
+    Object.assign(next, normalizeEffectDamageAction(next));
     const rawEntries = Array.isArray(next.roll_modifier_entries) ? next.roll_modifier_entries : [];
     next.roll_modifier_entries = rawEntries.length
         ? rawEntries.map((entry) => ({
@@ -345,6 +366,11 @@ export class EffectSheet extends ItemSheet {
     }
 
     async getData(options) {
+        if (this.item.isOwner) {
+            await ensureEffectItemBridge(this.item).catch(error => {
+                console.warn(`GUM | Não foi possível preparar a ponte ActiveEffect de "${this.item.name}".`, error);
+            });
+        }
         const context = await super.getData(options);
         context.system = this.item.system;
         context.system.tokenIconPolicy = context.system.tokenIconPolicy || "auto";
@@ -365,6 +391,10 @@ export class EffectSheet extends ItemSheet {
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description || "", { async: true });
         context.owner = context.owner ?? this.item.isOwner;
         context.editable = this.options.editable ?? this.isEditable;
+        const activeEffectBridge = findEffectItemBridge(this.item);
+        context.effectItemUuid = this.item.uuid;
+        context.activeEffectBridgeUuid = activeEffectBridge?.uuid || "";
+        context.hasActiveEffectBridge = Boolean(activeEffectBridge?.uuid);
 
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
@@ -449,7 +479,7 @@ export class EffectSheet extends ItemSheet {
             return decoratedAction;
         });
         const persistentActionTypes = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
-        const instantActionTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
+        const instantActionTypes = new Set(["resource_change", "resource_create", "damage_roll", "macro", "chat"]);
         context.hasPersistentActions = actions.some(action => persistentActionTypes.has(action.type));
         context.hasInstantActions = actions.some(action => instantActionTypes.has(action.type));
         const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
@@ -532,6 +562,18 @@ export class EffectSheet extends ItemSheet {
 
 activateListeners(html) {
     super.activateListeners(html);
+    html.on("click", ".copy-effect-automation-uuid", async event => {
+        event.preventDefault();
+        const uuid = String(event.currentTarget.dataset.uuid || "").trim();
+        if (!uuid) return;
+        try {
+            if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+            await navigator.clipboard.writeText(uuid);
+            ui.notifications.info(game.i18n.localize("GUM.EffectSheet.AutomationUuidCopied"));
+        } catch (error) {
+            ui.notifications.warn(game.i18n.localize("GUM.EffectSheet.AutomationUuidCopyFailed"));
+        }
+    });
     const setSpecializedFieldAvailability = (root, fieldName, enabled) => {
         const visible = root.querySelector(`[name$=".${fieldName}"]:not([type="hidden"])`);
         if (visible) {
@@ -1325,6 +1367,19 @@ activateListeners(html) {
             formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
             formData["system.requestedPurposeIds"] = firstAction.requestedPurposeIds;
             formData["system.roll_visibility"] = firstAction.roll_visibility;
+            formData["system.damage_formula"] = firstAction.damage_formula;
+            formData["system.damage_type"] = firstAction.damage_type;
+            formData["system.damage_nature"] = firstAction.damage_nature;
+            formData["system.damage_armor_divisor"] = firstAction.damage_armor_divisor;
+            formData["system.damage_follow_up_formula"] = firstAction.damage_follow_up_formula;
+            formData["system.damage_follow_up_type"] = firstAction.damage_follow_up_type;
+            formData["system.damage_follow_up_nature"] = firstAction.damage_follow_up_nature;
+            formData["system.damage_follow_up_armor_divisor"] = firstAction.damage_follow_up_armor_divisor;
+            formData["system.damage_fragmentation_formula"] = firstAction.damage_fragmentation_formula;
+            formData["system.damage_fragmentation_type"] = firstAction.damage_fragmentation_type;
+            formData["system.damage_fragmentation_nature"] = firstAction.damage_fragmentation_nature;
+            formData["system.damage_fragmentation_armor_divisor"] = firstAction.damage_fragmentation_armor_divisor;
+            formData["system.damage_show_prompt"] = Boolean(firstAction.damage_show_prompt);
             formData["system.whisperMode"] = firstAction.whisperMode;
             formData["system.category"] = firstAction.category;
             formData["system.name"] = firstAction.name;
