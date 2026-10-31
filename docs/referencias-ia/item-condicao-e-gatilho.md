@@ -4,7 +4,7 @@
 
 > Documento técnico para produzir, revisar e explicar Itens Condição e Gatilho compatíveis com o sistema GURPS GUM (Não Oficial).
 >
-> Mapeamento conferido no GUM `1.5.0-beta`, Foundry VTT mínimo 13 e verificado 14, em 31/10/2026.
+> Mapeamento conferido no GUM `1.5.1-beta`, Foundry VTT mínimo 13 e verificado 14, em 31/10/2026.
 
 ## 1. Finalidade e modelo mental
 

@@ -4,7 +4,7 @@
 
 > Technical reference for producing, reviewing, and explaining Condition and Trigger Items compatible with the unofficial GURPS GUM system.
 >
-> Mapping checked against GUM `1.5.0-beta`, Foundry VTT minimum 13 and verified 14, on 2026-10-31.
+> Mapping checked against GUM `1.5.1-beta`, Foundry VTT minimum 13 and verified 14, on 2026-10-31.
 
 ## 1. Purpose and mental model
 

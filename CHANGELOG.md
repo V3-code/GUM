@@ -4,6 +4,26 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.5.1-beta] - 2026-10-31
+
+### Added
+
+- Itens Efeito agora oferecem a ação instantânea `Rolar Dano`, com dano principal, acompanhamento e fragmentação, fórmulas condicionais, visibilidade configurável e aplicação manual pelo card.
+- Itens Efeito podem ser aplicados por Regiões do Foundry, pela ponte de ActiveEffect e pelo Monk's Active Tile Triggers, preservando o ciclo mecânico do GUM.
+- Itens usados pela importação híbrida aceitam aliases editáveis, permitindo corresponder nomes equivalentes em idiomas diferentes sem um catálogo central de traduções.
+- A referência técnica de Itens Condição e Gatilho documenta caminhos, eventos estruturados e dados úteis para automações e conteúdo produzido por IA.
+
+### Changed
+
+- Eventos de condições derivados de recursos, itens, dano e ActiveEffects carregam dados estruturados mais amplos e aliases compatíveis com gatilhos existentes.
+- Cards de dano criados por Efeitos conservam o ator e o token de destino, mas respeitam um alvo marcado manualmente antes da aplicação.
+- A importação híbrida normaliza nome, especialização e aliases por tipo de item antes de decidir pela substituição do conteúdo importado.
+
+### Fixed
+
+- Alterações de recursos pertencentes a equipamentos participam corretamente da avaliação de condições e preservam a identidade do recurso de origem.
+- A resolução de alvos de dano evita escolhas ambíguas entre múltiplos tokens marcados, vinculados ou controlados.
+
 ## [1.5.0-beta] - 2026-10-30
 
 ### Added
