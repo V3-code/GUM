@@ -189,10 +189,15 @@
 .gum.sheet.item.template-item-sheet .template-block-controls .delete-template-block:hover,
 .gum.sheet.item.template-item-sheet .template-entry-controls .delete-block-entry:hover { color: var(--tpl-danger); }
 .gum.sheet.item.template-item-sheet .template-block-editor { padding: 10px; gap: 8px; background: #121315; }
-.gum.sheet.item.template-item-sheet .template-block-fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 10px; }
+.gum.sheet.item.template-item-sheet .template-block-fields { display: flex; flex-direction: column; gap: 9px; }
+.gum.sheet.item.template-item-sheet .template-block-title-field { width: 100%; }
+.gum.sheet.item.template-item-sheet .template-block-destinations,
+.gum.sheet.item.template-item-sheet .template-block-specific-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 10px; }
+.gum.sheet.item.template-item-sheet .template-block-specific-fields:empty { display: none; }
+.gum.sheet.item.template-item-sheet .template-block-instructions-field textarea { width: 100%; min-height: 52px; padding: 7px 9px; resize: vertical; font: inherit; font-size: .74rem; line-height: 1.35; }
 .gum.sheet.item.template-item-sheet .form-group label { color: var(--tpl-muted); font-size: .69rem; font-weight: 650; }
 .gum.sheet.item.template-item-sheet .template-block-fields .form-group { margin: 0; }
-.gum.sheet.item.template-item-sheet .template-block-fields .template-checkbox-field { grid-column: 2; display: flex; align-items: center; padding-bottom: 3px; }
+.gum.sheet.item.template-item-sheet .template-block-specific-fields .template-checkbox-field { grid-column: 2; display: flex; align-items: center; padding-bottom: 3px; }
 .gum.sheet.item.template-item-sheet .template-block-fields .template-inline-check { display: inline-flex; align-items: center; gap: 7px; margin: 0; cursor: pointer; }
 .gum.sheet.item.template-item-sheet .template-block-fields .template-inline-check input { width: 15px; height: 15px; min-height: 0; margin: 0; padding: 0; accent-color: var(--tpl-accent); }
 .gum.sheet.item.template-item-sheet input,
@@ -369,6 +374,8 @@
 .dialog.gum.template-equipment-add-dialog .template-equipment-add-lock input[type="checkbox"] { flex: 0 0 17px; width: 17px; height: 17px; min-height: 17px; margin: 0; padding: 0; accent-color: var(--tpl-accent); }
 .dialog.gum.template-equipment-add-dialog .template-equipment-add-lock span { min-width: 0; }
 .dialog.gum.template-entry-config-dialog .template-entry-destination { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.dialog.gum.template-entry-config-dialog .template-entry-source-summary { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 10px; padding: 8px 10px; color: var(--tpl-muted); background: var(--tpl-surface); border-radius: 7px; font-size: .7rem; line-height: 1.3; }
+.dialog.gum.template-entry-config-dialog .template-entry-source-summary strong { color: var(--tpl-text); }
 .dialog.gum.template-entry-config-dialog .template-entry-rule-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding-top: 8px; box-shadow: inset 0 1px var(--tpl-hairline); }
 .dialog.gum.template-entry-config-dialog .template-entry-rule-fields .notes { display: none; }
 .dialog.gum.template-package-dialog .dialog-content { display: block; min-height: 0; padding: 12px 16px; overflow-y: auto; scrollbar-width: thin; }
@@ -400,6 +407,14 @@
 .dialog.gum.template-package-dialog .template-package-block-fields .template-inline-check input { width: 15px; height: 15px; min-height: 0; margin: 0; accent-color: var(--tpl-accent); }
 .dialog.gum.template-package-dialog .template-package-block-fields input:not([type="checkbox"]),
 .dialog.gum.template-package-dialog .template-package-block-fields select { width: 100%; height: 28px; min-height: 28px; padding: 3px 7px; font-size: .72rem; }
+.dialog.gum.template-package-dialog .template-package-block-destinations { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 10px; padding: 4px 10px; }
+.dialog.gum.template-package-dialog .template-package-block-destinations .form-group,
+.dialog.gum.template-package-dialog .template-package-block-instructions { min-width: 0; margin: 0; }
+.dialog.gum.template-package-dialog .template-package-block-destinations label,
+.dialog.gum.template-package-dialog .template-package-block-instructions label { display: block; margin-bottom: 3px; }
+.dialog.gum.template-package-dialog .template-package-block-destinations input { width: 100%; height: 28px; min-height: 28px; padding: 3px 7px; font-size: .72rem; }
+.dialog.gum.template-package-dialog .template-package-block-instructions { padding: 4px 10px; }
+.dialog.gum.template-package-dialog .template-package-block-instructions textarea { width: 100%; min-height: 48px; padding: 6px 8px; resize: vertical; font-size: .72rem; line-height: 1.3; }
 .dialog.gum.template-config-dialog .template-package-entry { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 8px; min-height: 40px; padding: 5px 8px; background: #1b1c1f; border: 0; border-radius: 7px; margin: 5px 10px 0; }
 .dialog.gum.template-config-dialog .template-package-entry small { color: var(--tpl-muted); opacity: 1; }
 .dialog.gum.template-package-dialog .template-package-entry-main { display: flex; flex-direction: column; min-width: 0; }
@@ -422,6 +437,8 @@
 .dialog.gum.template-apply-dialog .template-flow-header { margin: 0 0 12px; }
 .dialog.gum.template-apply-dialog .template-flow-header h2 { margin: 0 0 4px; color: var(--tpl-text); font: 700 1.1rem/1.2 'Roboto Condensed', sans-serif; border: 0; }
 .dialog.gum.template-apply-dialog .template-flow-header p { margin: 0; color: var(--tpl-muted); font-size: .74rem; line-height: 1.35; }
+.dialog.gum.template-apply-dialog .template-flow-header .template-flow-instructions { margin: 7px 0 5px; padding: 8px 10px; color: var(--tpl-text); background: rgba(199,166,109,.07); border-left: 3px solid var(--tpl-accent); border-radius: 0 6px 6px 0; font-size: .78rem; line-height: 1.4; }
+.dialog.gum.template-apply-dialog .template-flow-header .template-flow-rule { color: var(--tpl-muted); }
 .dialog.gum.template-apply-dialog .template-apply-options,
 .dialog.gum.template-apply-dialog .template-review-list,
 .dialog.gum.template-apply-dialog .template-remove-options { display: flex; flex-direction: column; gap: 10px; max-height: none; padding: 0; margin: 0; overflow: visible; list-style: none; }
@@ -572,8 +589,9 @@
   .gum.sheet.item.template-item-sheet .sheet-tabs { padding: 0 12px; }
   .gum.sheet.item.template-item-sheet .sheet-body-content { padding: 10px 12px; }
   .gum.sheet.item.template-item-sheet .template-entry-card { grid-template-columns: minmax(0,1fr) auto; }
-  .gum.sheet.item.template-item-sheet .template-block-fields { grid-template-columns: minmax(0,1fr); }
-  .gum.sheet.item.template-item-sheet .template-block-fields .template-checkbox-field { grid-column: 1; }
+  .gum.sheet.item.template-item-sheet .template-block-destinations,
+  .gum.sheet.item.template-item-sheet .template-block-specific-fields { grid-template-columns: minmax(0,1fr); }
+  .gum.sheet.item.template-item-sheet .template-block-specific-fields .template-checkbox-field { grid-column: 1; }
   .gum.sheet.item.template-item-sheet .template-entry-card__meta { grid-column: 1 / -1; justify-content: flex-start; order: 3; }
   .gum.sheet.item.template-item-sheet .template-shared-budget-list { overflow-x: auto; }
   .gum.sheet.item.template-item-sheet .template-shared-budget-columns,
@@ -591,6 +609,7 @@
   .dialog.gum.template-package-dialog .template-package-rule-fields,
   .dialog.gum.template-package-dialog .template-package-block-fields { grid-template-columns: minmax(0,1fr); }
   .dialog.gum.template-package-dialog .template-package-block-fields .template-package-checkbox-field { grid-column: 1; }
+  .dialog.gum.template-package-dialog .template-package-block-destinations { grid-template-columns: minmax(0,1fr); }
   .dialog.gum.template-apply-dialog .template-payment-allocation { grid-template-columns: minmax(0,1fr) 86px 26px; }
   .dialog.gum.template-apply-dialog .template-payment-balance-field { display: none; }
   .dialog.gum.template-apply-dialog .template-payment-line__summary { grid-template-columns: minmax(0,1fr); }

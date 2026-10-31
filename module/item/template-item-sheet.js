@@ -382,41 +382,26 @@ export class TemplateItemSheet extends ItemSheet {
         if (!config) return;
 
         const blocks = foundry.utils.deepClone(this.item.system.blocks || []);
-        blocks.push({
+        const block = {
             ...this._createTemplateBlock(config.type),
-            title: config.title,
-            selectionTarget: config.selectionTarget,
-            collapsed: true
-        });
+            collapsed: false
+        };
+        blocks.push(block);
         await this.item.update({ "system.blocks": blocks });
+        setTimeout(() => this.element?.find(`.block-field[data-block-id="${block.id}"][data-field="title"]`)?.trigger("focus"), 0);
     }
 
     _promptTemplateBlockConfiguration() {
         const content = `
         <div class="template-block-create-dialog">
-            <div class="form-group">
-                <label>${templateText("BlockName")}</label>
-                <input type="text" id="template-block-title" placeholder="${templateText("BlockNameHint")}"/>
-            </div>
-
-            <hr>
-
             <div class="template-block-type-list">
                 <label class="template-block-type-option">
                     <input type="radio" name="template-block-type" value="guaranteed" checked>
                     <span>${templateText("AutomaticDelivery")}</span>
                 </label>
                 <label class="template-block-type-option">
-                    <input type="radio" name="template-block-type" value="selection:items">
+                    <input type="radio" name="template-block-type" value="selection">
                     <span>${templateText("ChooseItems")}</span>
-                </label>
-                <label class="template-block-type-option">
-                    <input type="radio" name="template-block-type" value="selection:packages">
-                    <span>${templateText("ChoosePackages")}</span>
-                </label>
-                <label class="template-block-type-option">
-                    <input type="radio" name="template-block-type" value="selection:templates">
-                    <span>${templateText("ChooseModels")}</span>
                 </label>
                 <label class="template-block-type-option">
                     <input type="radio" name="template-block-type" value="points">
@@ -437,10 +422,8 @@ export class TemplateItemSheet extends ItemSheet {
                 create: {
                     label: templateText("Save"),
                     callback: dlgHtml => {
-                        const structure = String(dlgHtml.find("input[name='template-block-type']:checked").val() || "guaranteed");
-                        const [type, selectionTarget = "items"] = structure.split(":");
-                        const title = (dlgHtml.find("#template-block-title").val() || "").trim();
-                        resolve({ type, title, selectionTarget });
+                        const type = String(dlgHtml.find("input[name='template-block-type']:checked").val() || "guaranteed");
+                        resolve({ type });
                     }
                 },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
@@ -572,123 +555,27 @@ export class TemplateItemSheet extends ItemSheet {
     async _onAddAttribute(event) {
         event.preventDefault();
         const blockId = event.currentTarget.dataset.blockId;
-
-        const content = `
-        <div class="template-attr-dialog">
-
-            <div class="template-attr-grid-header">
-                <span>${templateText("Attribute")}</span>
-                <span>${templateText("Increase")}</span>
-                <span>${templateText("Cost")}</span>
-                <span>${templateText("AttributeLimit")}</span>
-                <span>${templateText("FixedValue")}</span>
-            </div>
-
-            <div class="template-attr-grid">
-                ${this._renderAttributeFieldRows()}
-            </div>
-            <div class="template-attr-summary">
-                <label class="template-attr-secondary"><input type="checkbox" id="link-secondary"> ${templateText("RecalculateSecondary")}</label>
-                <div class="template-attr-total"><label for="template-attr-total-cost">${templateText("TotalCost")}</label><input type="number" id="template-attr-total-cost" value="0" readonly></div>
-            </div>
-            <div class="template-attr-rule-grid" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields({}, "template-attr")}</div>
-        </div>
-        `;
-
-        new Dialog({
-            title: templateText("AddAttribute"),
-            content,
-            buttons: {
-                save: {
-                    label: templateText("Save"),
-                    callback: async (dlgHtml) => {
-                        const { attributes, costs, attributeLimits, selectedAttributes, lockedAttributes } = this._readAttributeFields(dlgHtml);
-
-                        const linkSecondary = dlgHtml.find("#link-secondary").is(":checked");
-                        const cost = this._calculateAttributeCost(attributes, costs);
-
-                        const entry = {
-                            id: foundry.utils.randomID(),
-                            kind: "attribute",
-                            label: templateText("Attributes"),
-                            attributes,
-                            costs,
-                            attributeLimits,
-                            selectedAttributes,
-                            lockedAttributes,
-                            linkSecondary,
-                            cost
-                        };
-                        this._readChoiceRuleFields(entry, dlgHtml, "template-attr");
-
-                        await this._appendEntryToBlock(blockId, entry);
-                    }
-                },
-                cancel: { label: templateText("Cancel") }
-            },
-                default: "save",
-                render: (dlgHtml) => {
-                    const recalc = () => {
-                        const { attributes, costs } = this._readAttributeFields(dlgHtml);
-
-                        dlgHtml.find("#template-attr-total-cost").val(this._calculateAttributeCost(attributes, costs));
-                    };
-
-                    dlgHtml.find(".template-attr-grid input[type='number']").on("input", recalc);
-                    dlgHtml.find(".template-attr-select").on("change", event => event.currentTarget.closest(".template-attr-row")?.classList.toggle("is-selected", event.currentTarget.checked));
-                    dlgHtml.find(".template-attr-select").trigger("change");
-                    recalc();
-                }
-   }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 700, height: 760 }).render(true);
+        const entry = await this._configureEntryDraft({
+            id: foundry.utils.randomID(), kind: "attribute", label: templateText("Attributes"),
+            attributes: {}, costs: {}, attributeLimits: {}, selectedAttributes: [], lockedAttributes: [],
+            linkSecondary: false, cost: 0
+        }, { mode: "create" });
+        if (entry) await this._appendEntryToBlock(blockId, entry);
     }
 
     async _onAddGroup(event) {
         event.preventDefault();
         const blockId = event.currentTarget.dataset.blockId;
-
-        const content = `<div class="template-group-dialog">
-          <div class="form-group"><label>${templateText("PackageName")}</label>
-          <input type="text" id="group-name" placeholder="${templateText("SubgroupExample")}"></div>
-          <div class="form-group"><label>${templateText("LocalNotes")}</label>
-          <input type="text" id="group-notes" placeholder="${templateText("SubgroupNotesExample")}"></div>
-          <div class="form-group"><label>${templateText("DisplayCost")}</label><input type="number" id="group-cost" value="0"></div>
-          ${this._renderChoiceRuleFields({}, "group")}
-          <p class="notes">${templateText("PackageCreatedHint")}</p></div>`;
-
-        new Dialog({
-            title: templateText("AddSubgroup"),
-            content,
-            buttons: {
-                save: {
-                    label: templateText("Save"),
-                    callback: async (dlgHtml) => {
-                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || templateText("Package");
-                        const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
-                        const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
-                        const entry = {
-                            id: foundry.utils.randomID(),
-                            kind: "group",
-                            name,
-                            quantity: 1,
-                            level: "",
-                            cost,
-                            localNotes,
-                            subBlocks: [this._createTemplateBlock("guaranteed")]
-                        };
-                        this._readChoiceRuleFields(entry, dlgHtml, "group");
-
-                        await this._appendEntryToBlock(blockId, entry);
-                    }
-                },
-                cancel: { label: templateText("Cancel") }
-            },
-            default: "save"
-        }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 540 }).render(true);
+        const entry = await this._configureEntryDraft({
+            id: foundry.utils.randomID(), kind: "group", name: templateText("Package"), quantity: 1,
+            level: "", cost: 0, localNotes: "", subBlocks: [this._createTemplateBlock("guaranteed")]
+        }, { mode: "create" });
+        if (entry) await this._appendEntryToBlock(blockId, entry);
     }
 
     _createTemplateBlock(type = "guaranteed") {
         return {
-            id: foundry.utils.randomID(), type, title: "", choiceCount: 1, choiceExact: false,
+            id: foundry.utils.randomID(), type, title: "", instructions: "", destinationGroup: "", containerName: "", choiceCount: 1, choiceExact: false,
             pointsAvailable: 20, moneyAvailable: 1000, spendingLimit: "", budgetPolicy: "hard", moneyMode: "available", moneyAccounting: "budget", moneySourceFilter: "", sharedBudgetKey: "", contents: [], collapsed: false
         };
     }
@@ -706,6 +593,9 @@ export class TemplateItemSheet extends ItemSheet {
                     id: block.id || foundry.utils.randomID(),
                     type,
                     title: String(block.title || "").trim(),
+                    instructions: String(block.instructions || ""),
+                    destinationGroup: String(block.destinationGroup || "").trim(),
+                    containerName: String(block.containerName || "").trim(),
                     choiceCount: Math.max(1, Number(block.choiceCount) || 1),
                     choiceExact: Boolean(block.choiceExact),
                     pointsAvailable: Number(block.pointsAvailable) || 0,
@@ -774,20 +664,8 @@ export class TemplateItemSheet extends ItemSheet {
 
         const entry = (block.contents || []).find(e => e.id === entryId);
         if (!entry) return;
-
-  if (entry.kind === "attribute") {
-            return this._editAttributeEntry(blockId, entryId, entry);
-        }
-
-        if (entry.kind === "group") {
-            return this._editGroupEntry(blockId, entryId, entry);
-        }
-
-        if (entry.kind === "template") {
-            return this._editTemplateEntry(blockId, entryId, entry);
-        }
-
-        return this._editItemEntry(blockId, entryId, entry);
+        const replacement = await this._configureEntryDraft(entry, { mode: "edit" });
+        if (replacement) await this._replaceEntry(blockId, entryId, replacement);
     }
 
     _renderChoiceRuleFields(entry, prefix) {
@@ -805,76 +683,6 @@ export class TemplateItemSheet extends ItemSheet {
             .split(",").map(name => name.trim()).filter(Boolean);
         entry.requiresNames = parse("requires");
         entry.excludesNames = parse("excludes");
-    }
-
-    async _editTemplateEntry(blockId, entryId, entry) {
-        const content = `<div class="form-group"><label>${templateText("Name")}</label>
-          <input type="text" id="template-ref-name" value="${foundry.utils.escapeHTML(entry.name || "")}"></div>
-          <div class="form-group"><label>${templateText("DisplayCost")}</label>
-          <input type="number" id="template-ref-cost" value="${Number(entry.cost) || 0}"></div>
-          <div class="form-group"><label><input type="checkbox" id="template-ref-repeatable" ${entry.repeatable ? "checked" : ""}>
-          ${templateText("AllowRepeatedModel")}</label></div>
-          ${this._renderChoiceRuleFields(entry, "template-ref")}
-          <p class="notes">${templateText("ReferencedModelHint")}</p>`;
-        new Dialog({
-            title: templateText("ReferencedModel"), content,
-            buttons: {
-                save: { label: templateText("Save"), callback: async html => {
-                    entry.name = String(html.find("#template-ref-name").val() || entry.name).trim();
-                    entry.cost = Number(html.find("#template-ref-cost").val()) || 0;
-                    entry.repeatable = html.find("#template-ref-repeatable").is(":checked");
-                    this._readChoiceRuleFields(entry, html, "template-ref");
-                    await this._replaceEntry(blockId, entryId, entry);
-                } },
-                cancel: { label: templateText("Cancel") }
-            }, default: "save"
-        }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 540 }).render(true);
-    }
-
-    async _editGroupEntry(blockId, entryId, entry) {
-        const blocks = this._normalizeGroupSubBlocks(foundry.utils.deepClone(entry.subBlocks || []));
-        const content = `<div class="template-group-dialog template-package-editor">
-          <section class="template-package-settings">
-          <div class="template-package-metadata">
-            <div class="form-group"><label>${templateText("PackageName")}</label>
-            <input type="text" id="group-name" value="${foundry.utils.escapeHTML(entry.name || "")}"></div>
-            <div class="form-group"><label>${templateText("LocalNotes")}</label>
-            <input type="text" id="group-notes" value="${foundry.utils.escapeHTML(entry.localNotes || "")}"></div>
-            <div class="form-group"><label>${templateText("DisplayCost")}</label>
-            <input type="number" id="group-cost" value="${Number(entry.cost) || 0}"></div>
-          </div>
-          <div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div>
-          </section>
-          <div class="template-package-section-title"><span>${templateText("Blocks")}</span>
-            <button type="button" class="template-package-add-block" title="${templateText("AddBlock")}" aria-label="${templateText("AddBlock")}"><i class="fas fa-plus"></i></button>
-          </div>
-          <div class="template-package-blocks"></div>
-        </div>`;
-
-        new Dialog({
-            title: templateText("EditSubgroup"),
-            content,
-            buttons: {
-                save: {
-                    label: templateText("Save"),
-                    callback: async (dlgHtml) => {
-                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || templateText("Package");
-                        const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
-                        const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
-
-                        entry.name = name;
-                        entry.localNotes = localNotes;
-                        entry.cost = cost;
-                        this._readChoiceRuleFields(entry, dlgHtml, "group");
-                        entry.subBlocks = this._normalizeGroupSubBlocks(blocks);
-                        await this._replaceEntry(blockId, entryId, entry);
-                    }
-                },
-                cancel: { label: templateText("Cancel") }
-            },
-            default: "save",
-            render: html => this._activatePackageEditor(html, blocks)
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-package-dialog", "gum-sheet-edit-dialog"], width: 760, height: 600, resizable: true }).render(true);
     }
 
     _renderPackageBlocks(blocks) {
@@ -930,7 +738,11 @@ export class TemplateItemSheet extends ItemSheet {
                       <input type="text" data-field="sharedBudgetKey" value="${esc(block.sharedBudgetKey)}" placeholder="${templateText("OwnBudget")}"></div>${ownBudgetFields}`;
                 }
             }
-            const blockBody = block.collapsed ? "" : `<div class="template-package-block-fields"><div class="form-group"><label>${templateText("CustomTitle")}</label><input type="text" data-field="title" value="${esc(block.title)}" placeholder="${templateText("DefaultTitleHint")}"></div>${selectionFields}${budgetFields}</div>
+            const blockBody = block.collapsed ? "" : `<div class="template-package-block-fields"><div class="form-group"><label>${templateText("CustomTitle")}</label><input type="text" data-field="title" value="${esc(block.title)}" placeholder="${templateText("DefaultTitleHint")}"></div></div>
+              <div class="template-package-block-destinations"><div class="form-group"><label title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" data-field="destinationGroup" value="${esc(block.destinationGroup)}" title="${templateText("DestinationGroupHint")}"></div>
+              <div class="form-group"><label title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" data-field="containerName" value="${esc(block.containerName)}" title="${templateText("DestinationContainerHint")}"></div></div>
+              ${selectionFields || budgetFields ? `<div class="template-package-block-fields template-package-block-specific-fields">${selectionFields}${budgetFields}</div>` : ""}
+              <div class="form-group template-package-block-instructions"><label title="${templateText("BlockInstructionsHint")}">${templateText("BlockInstructions")}</label><textarea data-field="instructions" rows="2" placeholder="${templateText("BlockInstructionsPlaceholder")}">${esc(block.instructions)}</textarea></div>
               <div class="template-package-entries">${entries}</div>
               <div class="template-package-dropzone"><i class="fas fa-box-open"></i> ${templateText("DropItems")}</div>
               <div class="template-package-block-actions"><button type="button" class="template-package-add-attribute"><i class="fas fa-sliders-h"></i> ${templateText("AddAttribute")}</button></div>`;
@@ -1033,265 +845,202 @@ export class TemplateItemSheet extends ItemSheet {
             event.preventDefault();
             const config = await this._promptTemplateBlockConfiguration();
             if (!config) return;
-            blocks.push({ ...this._createTemplateBlock(config.type), title: config.title, selectionTarget: config.selectionTarget, collapsed: false });
+            blocks.push({ ...this._createTemplateBlock(config.type), collapsed: false });
             refresh();
         });
         refresh();
     }
 
-    _createPackageAttributeEntry(existing = {}) {
+    async _configureEntryDraft(entry, { mode = "edit", sourceItem = null } = {}) {
+        const draft = foundry.utils.deepClone(entry || {});
+        if (draft.kind === "attribute") return this._createPackageAttributeEntry(draft, { mode });
+        if (draft.kind === "group") return this._configureGroupEntryDraft(draft, { mode });
+        if (draft.kind === "template") return this._configureTemplateEntryDraft(draft, { mode });
+        if (!sourceItem) {
+            sourceItem = draft.uuid ? await fromUuid(draft.uuid).catch(() => null)
+                : draft.sourceId ? game.items.get(draft.sourceId) : null;
+        }
+        return this._configureItemEntryDraft(draft, { mode, sourceItem });
+    }
+
+    _configureTemplateEntryDraft(entry, { mode = "edit" } = {}) {
+        const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const content = `<div class="form-group"><label>${templateText("Name")}</label>
+          <input type="text" id="template-ref-name" value="${esc(entry.name)}"></div>
+          <div class="form-group"><label>${templateText("DisplayCost")}</label>
+          <input type="number" id="template-ref-cost" value="${Number(entry.cost) || 0}"></div>
+          <div class="form-group"><label><input type="checkbox" id="template-ref-repeatable" ${entry.repeatable ? "checked" : ""}>
+          ${templateText("AllowRepeatedModel")}</label></div>
+          ${this._renderChoiceRuleFields(entry, "template-ref")}
+          <p class="notes">${templateText("ReferencedModelHint")}</p>`;
+        return new Promise(resolve => new Dialog({
+            title: templateText("ReferencedModel"), content,
+            buttons: {
+                save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
+                    entry.name = String(html.find("#template-ref-name").val() || entry.name).trim();
+                    entry.cost = Number(html.find("#template-ref-cost").val()) || 0;
+                    entry.repeatable = html.find("#template-ref-repeatable").is(":checked");
+                    this._readChoiceRuleFields(entry, html, "template-ref");
+                    resolve(entry);
+                } },
+                cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
+            }, default: "save", close: () => resolve(null)
+        }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 540 }).render(true));
+    }
+
+    _configureGroupEntryDraft(entry, { mode = "edit" } = {}) {
+        const blocks = this._normalizeGroupSubBlocks(foundry.utils.deepClone(entry.subBlocks || []));
+        if (!blocks.length) blocks.push(this._createTemplateBlock("guaranteed"));
+        const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const content = `<div class="template-group-dialog template-package-editor">
+          <section class="template-package-settings"><div class="template-package-metadata">
+            <div class="form-group"><label>${templateText("PackageName")}</label><input type="text" id="group-name" value="${esc(entry.name)}" placeholder="${templateText("SubgroupExample")}"></div>
+            <div class="form-group"><label>${templateText("LocalNotes")}</label><input type="text" id="group-notes" value="${esc(entry.localNotes)}" placeholder="${templateText("SubgroupNotesExample")}"></div>
+            <div class="form-group"><label>${templateText("DisplayCost")}</label><input type="number" id="group-cost" value="${Number(entry.cost) || 0}"></div>
+          </div><div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div></section>
+          <div class="template-package-section-title"><span>${templateText("Blocks")}</span>
+            <button type="button" class="template-package-add-block" title="${templateText("AddBlock")}" aria-label="${templateText("AddBlock")}"><i class="fas fa-plus"></i></button></div>
+          <div class="template-package-blocks"></div></div>`;
+        return new Promise(resolve => new Dialog({
+            title: templateText(mode === "create" ? "AddSubgroup" : "EditSubgroup"), content,
+            buttons: {
+                save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
+                    entry.name = String(html.find("#group-name").val() || "").trim() || templateText("Package");
+                    entry.localNotes = String(html.find("#group-notes").val() || "").trim();
+                    entry.cost = Number(html.find("#group-cost").val()) || 0;
+                    this._readChoiceRuleFields(entry, html, "group");
+                    entry.subBlocks = this._normalizeGroupSubBlocks(blocks);
+                    resolve(entry);
+                } },
+                cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
+            }, default: "save", close: () => resolve(null), render: html => this._activatePackageEditor(html, blocks)
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-package-dialog", "gum-sheet-edit-dialog"], width: 760, height: 600, resizable: true }).render(true));
+    }
+
+    _configureItemEntryDraft(entry, { mode = "edit", sourceItem = null } = {}) {
+        const isEquipment = entry.itemType === "equipment";
+        const isTrait = ["advantage", "disadvantage"].includes(entry.itemType) && Boolean(entry.trait_cost);
+        const isLevelledAbility = ["skill", "spell", "power"].includes(entry.itemType);
+        const supportsLevelCap = isLevelledAbility || (isTrait && entry.trait_cost.can_level);
+        const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const groupMode = entry.destinationMode || (entry.destinationGroup ? "group" : "inherit");
+        const containerMode = entry.containerMode || (entry.containerName ? "new" : "inherit");
+        const difficulty = isLevelledAbility && sourceItem ? this._getItemDifficulty(sourceItem) : "";
+        const progression = isLevelledAbility && sourceItem ? this._getPointsPerLevelInfo(sourceItem) : "";
+        const content = `<div class="template-entry-edit-form">
+          <div class="form-group template-edit-name"><label for="entry-name">${templateText("Name")}</label><input type="text" id="entry-name" value="${esc(entry.name)}"></div>
+          ${isLevelledAbility && (difficulty || progression) ? `<div class="template-entry-source-summary">${difficulty ? `<span><strong>${templateText("Difficulty")}</strong> ${esc(difficulty)}</span>` : ""}${progression ? `<span><strong>${templateText("PointsPerLevel")}</strong> ${esc(progression)}</span>` : ""}</div>` : ""}
+          <div class="template-entry-basic-fields ${isEquipment ? "template-entry-basic-fields--equipment" : ""}">
+            ${isEquipment ? `<div class="form-group template-entry-quantity-field"><label>${templateText("Quantity")}</label><span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1"><i class="fas fa-plus"></i></button></span></div>` : ""}
+            ${isTrait ? `<div class="form-group"><label>${templateText("BaseCost")}</label><input type="number" id="entry-base-cost" value="${entry.trait_cost.points ?? 0}"></div>
+              <div class="form-group"><label>${templateText("PointsPerLevel")}</label><input type="number" id="entry-points-per-level" value="${entry.trait_cost.points_per_level ?? 0}"></div>` : ""}
+            <div class="form-group"><label title="${isEquipment ? templateText("EntryLevelValueHint") : ""}">${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="${isEquipment ? "text" : "number"}" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
+            ${!isTrait ? `<div class="form-group"><label title="${isEquipment ? templateText("EntryCostHint") : ""}">${templateText(isEquipment ? "Cost" : "TotalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" ${isLevelledAbility && sourceItem ? "readonly" : ""}></div>` : `<div class="form-group"><label>${templateText("FinalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" readonly></div>`}
+            ${supportsLevelCap ? `<div class="form-group"><label>${templateText("MaximumLevel")}</label><input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" placeholder="${templateText("NoLevelLimit")}"></div>` : ""}
+          </div>
+          <div class="template-entry-destination">
+            ${!isEquipment ? `<div class="form-group"><label for="entry-destination-mode">${templateText("GroupDestinationMode")}</label><select id="entry-destination-mode"><option value="inherit" ${groupMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="group" ${groupMode === "group" ? "selected" : ""}>${templateText("UseNamedGroup")}</option><option value="source" ${groupMode === "source" ? "selected" : ""}>${templateText("KeepSourceGroup")}</option></select></div><div class="form-group template-destination-name"><label for="entry-destination-group" title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" id="entry-destination-group" value="${esc(entry.destinationGroup)}"></div>` : ""}
+            ${isEquipment ? `<div class="form-group"><label for="entry-container-mode">${templateText("ContainerDestinationMode")}</label><select id="entry-container-mode"><option value="inherit" ${containerMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="new" ${containerMode === "new" ? "selected" : ""}>${templateText("CreateContainer")}</option><option value="loose" ${containerMode === "loose" ? "selected" : ""}>${templateText("LooseEquipment")}</option></select></div><div class="form-group template-destination-name"><label for="entry-container-name" title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" id="entry-container-name" value="${esc(entry.containerName)}"></div>` : ""}
+          </div>
+          ${isEquipment ? `<div class="form-group"><label for="entry-points-cost">${templateText("EquipmentPointCost")}</label><input type="number" id="entry-points-cost" value="${Number(entry.pointsCost) || 0}" min="0"></div><div class="template-entry-equipment-options"><label class="template-entry-equipment-option" title="${templateText("LockQuantityHint")}"><input type="checkbox" id="entry-quantity-locked" ${entry.quantityLocked ? "checked" : ""}><span>${templateText("LockQuantity")}</span></label><label class="template-entry-equipment-option" title="${templateText("QuantityConsumesChoicesHint")}"><input type="checkbox" id="entry-selection-quantity" ${entry.selectionQuantity ? "checked" : ""}><span>${templateText("QuantityConsumesChoices")}</span></label></div>` : ""}
+          <div class="template-entry-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "entry")}</div></div>`;
+        return new Promise(resolve => new Dialog({
+            title: `${templateText(mode === "create" ? "Add" : "EditBlockItem")}: ${esc(entry.name)}`, content,
+            buttons: {
+                save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
+                    entry.name = String(html.find("#entry-name").val() || entry.name).trim();
+                    if (isEquipment) {
+                        entry.quantity = Math.max(1, Number(html.find("#entry-qty").val()) || 1);
+                        entry.quantityLocked = html.find("#entry-quantity-locked").is(":checked");
+                        entry.selectionQuantity = html.find("#entry-selection-quantity").is(":checked");
+                        entry.pointsCost = Math.max(0, Number(html.find("#entry-points-cost").val()) || 0);
+                    }
+                    entry.level = html.find("#entry-level").val();
+                    if (!isEquipment) entry.level = Number(entry.level) || 0;
+                    if (supportsLevelCap) {
+                        const raw = html.find("#entry-max-level").val();
+                        entry.maxLevel = raw === "" ? null : Number(raw);
+                        if (entry.maxLevel !== null && Number(entry.level) > entry.maxLevel) entry.level = entry.maxLevel;
+                    }
+                    if (!isEquipment) {
+                        entry.destinationMode = String(html.find("#entry-destination-mode").val() || "inherit");
+                        entry.destinationGroup = String(html.find("#entry-destination-group").val() || "").trim();
+                    } else {
+                        entry.containerMode = String(html.find("#entry-container-mode").val() || "inherit");
+                        entry.containerName = String(html.find("#entry-container-name").val() || "").trim();
+                    }
+                    if (entry.destinationMode === "group" && !entry.destinationGroup) {
+                        ui.notifications.warn(templateText("GroupNameRequired"));
+                        return false;
+                    }
+                    if (entry.containerMode === "new" && !entry.containerName) {
+                        ui.notifications.warn(templateText("ContainerNameRequired"));
+                        return false;
+                    }
+                    this._readChoiceRuleFields(entry, html, "entry");
+                    if (isTrait) {
+                        entry.trait_cost.points = Number(html.find("#entry-base-cost").val()) || 0;
+                        entry.trait_cost.points_per_level = Number(html.find("#entry-points-per-level").val()) || 0;
+                        entry.trait_cost.level = Number(entry.level) || 0;
+                        entry.level = entry.trait_cost.level;
+                        entry.cost = calculateTraitCost(entry.trait_cost).finalPoints;
+                    } else if (isLevelledAbility && sourceItem) entry.cost = this._calculateLevelledItemCost(sourceItem, entry.level);
+                    else entry.cost = Number(html.find("#entry-cost").val()) || 0;
+                    resolve(entry);
+                } },
+                cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
+            }, default: "save", close: () => resolve(null), render: html => {
+                const selector = html.find(isEquipment ? "#entry-container-mode" : "#entry-destination-mode");
+                const updateDestination = () => html.find(".template-destination-name").toggle(selector.val() === (isEquipment ? "new" : "group"));
+                selector.on("change", updateDestination);
+                html.find(".template-entry-quantity-step").on("click", event => { event.preventDefault(); const input = html.find("#entry-qty"); input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))); });
+                const recalc = () => {
+                    const level = Number(html.find("#entry-level").val()) || 0;
+                    if (isTrait) html.find("#entry-cost").val(calculateTraitCost({ ...entry.trait_cost, points: Number(html.find("#entry-base-cost").val()) || 0, points_per_level: Number(html.find("#entry-points-per-level").val()) || 0, level }).finalPoints);
+                    else if (isLevelledAbility && sourceItem) html.find("#entry-cost").val(this._calculateLevelledItemCost(sourceItem, level));
+                };
+                html.find("#entry-base-cost, #entry-points-per-level, #entry-level").on("input", recalc);
+                updateDestination(); recalc();
+            }
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-entry-config-dialog", "gum-sheet-edit-dialog"], width: 560, resizable: true }).render(true));
+    }
+
+    _createPackageAttributeEntry(existing = {}, { mode = "create" } = {}) {
         const content = `<div class="template-attr-dialog"><div class="template-attr-grid-header">
           <span>${templateText("Attribute")}</span><span>${templateText("Increase")}</span><span>${templateText("Cost")}</span><span>${templateText("AttributeLimit")}</span><span>${templateText("FixedValue")}</span></div>
           <div class="template-attr-grid">${this._renderAttributeFieldRows(existing.attributes || {}, existing.costs || {}, existing.attributeLimits || {}, existing.selectedAttributes, existing.lockedAttributes)}</div>
-          <div class="form-group"><label><input type="checkbox" id="link-secondary" ${existing.linkSecondary ? "checked" : ""}> ${templateText("RecalculateSecondary")}</label></div>
+          <div class="template-attr-summary"><label class="template-attr-secondary"><input type="checkbox" id="link-secondary" ${existing.linkSecondary ? "checked" : ""}> ${templateText("RecalculateSecondary")}</label>
+          <div class="template-attr-total"><label for="template-attr-total-cost">${templateText("TotalCost")}</label><input type="number" id="template-attr-total-cost" value="${Number(existing.cost) || 0}" readonly></div></div>
           <div class="template-attr-rule-grid" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(existing, "package-attr")}</div></div>`;
         return new Promise(resolve => new Dialog({
-            title: templateText("AddAttribute"), content,
+            title: templateText(mode === "create" ? "AddAttribute" : "EditAttribute"), content,
             buttons: {
-                save: { label: templateText("Save"), callback: html => {
+                save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
                     const { attributes, costs, attributeLimits, selectedAttributes, lockedAttributes } = this._readAttributeFields(html);
-                    const entry = { id: foundry.utils.randomID(), kind: "attribute", label: templateText("Attributes"), attributes, costs, attributeLimits, selectedAttributes, lockedAttributes,
+                    const entry = { ...foundry.utils.deepClone(existing), id: existing.id || foundry.utils.randomID(), kind: "attribute", label: existing.label || templateText("Attributes"), attributes, costs, attributeLimits, selectedAttributes, lockedAttributes,
                         linkSecondary: html.find("#link-secondary").is(":checked"), cost: this._calculateAttributeCost(attributes, costs) };
                     this._readChoiceRuleFields(entry, html, "package-attr");
                     resolve(entry);
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
-            }, default: "save", close: () => resolve(null)
+            }, default: "save", close: () => resolve(null), render: html => {
+                const recalc = () => {
+                    const { attributes, costs } = this._readAttributeFields(html);
+                    html.find("#template-attr-total-cost").val(this._calculateAttributeCost(attributes, costs));
+                };
+                html.find(".template-attr-grid input[type='number']").on("input", recalc);
+                html.find(".template-attr-select").on("change", event => event.currentTarget.closest(".template-attr-row")?.classList.toggle("is-selected", event.currentTarget.checked));
+                html.find(".template-attr-select").trigger("change");
+                recalc();
+            }
         }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 700, height: 760 }).render(true));
     }
 
     async _editPackageLocalEntry(entry) {
-        if (entry.kind === "attribute") {
-            const replacement = await this._createPackageAttributeEntry(entry);
-            if (!replacement) return false;
-            Object.assign(entry, replacement, { id: entry.id });
-            return true;
-        }
-        const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
-        const isTemplate = entry.kind === "template";
-        const isEquipment = entry.itemType === "equipment";
-        const content = `<div class="form-group"><label>${templateText("Name")}</label><input id="package-entry-name" value="${esc(entry.name || entry.label)}"></div>
-          <div class="form-group"><label>${templateText("DisplayCost")}</label><input type="number" id="package-entry-cost" value="${Number(entry.cost) || 0}"></div>
-          ${isEquipment ? `<div class="form-group"><label>${templateText("Quantity")}</label><input type="number" id="package-entry-quantity" min="1" value="${Math.max(1, Number(entry.quantity) || 1)}"></div>
-          <div class="form-group"><label>${templateText("Level")}</label><input type="text" id="package-entry-level" value="${esc(entry.level)}"></div>
-          <div class="form-group"><label>${templateText("EquipmentPointCost")}</label><input type="number" id="package-entry-points" min="0" value="${Number(entry.pointsCost) || 0}"></div>
-          <div class="form-group"><label title="${templateText("LockQuantityHint")}"><input type="checkbox" id="package-entry-quantity-locked" ${entry.quantityLocked ? "checked" : ""}> ${templateText("LockQuantity")}</label></div>
-          <div class="form-group"><label title="${templateText("QuantityConsumesChoicesHint")}"><input type="checkbox" id="package-entry-selection-quantity" ${entry.selectionQuantity ? "checked" : ""}> ${templateText("QuantityConsumesChoices")}</label></div>` : ""}
-          ${isTemplate ? `<div class="form-group"><label><input type="checkbox" id="package-entry-repeatable" ${entry.repeatable ? "checked" : ""}> ${templateText("AllowRepeatedModel")}</label></div>` : ""}
-          ${this._renderChoiceRuleFields(entry, "package-entry")}`;
-        return new Promise(resolve => new Dialog({
-            title: templateText(isTemplate ? "ReferencedModel" : "EditBlockItem"), content,
-            buttons: {
-                save: { label: templateText("Save"), callback: html => {
-                    entry.name = String(html.find("#package-entry-name").val() || entry.name).trim();
-                    entry.cost = Number(html.find("#package-entry-cost").val()) || 0;
-                    if (isEquipment) {
-                        entry.quantity = Math.max(1, Number(html.find("#package-entry-quantity").val()) || 1);
-                        entry.level = String(html.find("#package-entry-level").val() || "").trim();
-                        entry.pointsCost = Math.max(0, Number(html.find("#package-entry-points").val()) || 0);
-                        entry.quantityLocked = html.find("#package-entry-quantity-locked").is(":checked");
-                        entry.selectionQuantity = html.find("#package-entry-selection-quantity").is(":checked");
-                    }
-                    if (isTemplate) entry.repeatable = html.find("#package-entry-repeatable").is(":checked");
-                    this._readChoiceRuleFields(entry, html, "package-entry");
-                    resolve(true);
-                } },
-                cancel: { label: templateText("Cancel"), callback: () => resolve(false) }
-            }, default: "save", close: () => resolve(false)
-        }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 560 }).render(true));
-    }
-
-    async _editAttributeEntry(blockId, entryId, entry) {
-        const attrs = entry.attributes || {};
-        const costs = entry.costs || {};
-
-        const content = `
-        <div class="template-attr-dialog">
-            <div class="template-attr-grid-header">
-                <span>${templateText("Attribute")}</span>
-                <span>${templateText("Increase")}</span>
-                <span>${templateText("Cost")}</span>
-                <span>${templateText("AttributeLimit")}</span>
-                <span>${templateText("FixedValue")}</span>
-            </div>
-
-            <div class="template-attr-grid">
-                ${this._renderAttributeFieldRows(attrs, costs, entry.attributeLimits || {}, entry.selectedAttributes, entry.lockedAttributes)}
-            </div>
-
-            <div class="template-attr-summary">
-                <label class="template-attr-secondary"><input type="checkbox" id="link-secondary" ${entry.linkSecondary ? "checked" : ""}> ${templateText("RecalculateSecondary")}</label>
-                <div class="template-attr-total"><label for="template-attr-total-cost">${templateText("TotalCost")}</label><input type="number" id="template-attr-total-cost" value="${entry.cost || 0}" readonly></div>
-            </div>
-            <div class="template-attr-rule-grid" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "template-attr")}</div>
-        </div>
-        `;
-
-        new Dialog({
-            title: templateText("EditAttribute"),
-            content,
-            buttons: {
-                save: {
-                    label: templateText("Save"),
-                    callback: async (dlgHtml) => {
-                        ({ attributes: entry.attributes, costs: entry.costs, attributeLimits: entry.attributeLimits, selectedAttributes: entry.selectedAttributes, lockedAttributes: entry.lockedAttributes } = this._readAttributeFields(dlgHtml));
-
-                        entry.linkSecondary = dlgHtml.find("#link-secondary").is(":checked");
-                        entry.cost = this._calculateAttributeCost(entry.attributes, entry.costs);
-                        this._readChoiceRuleFields(entry, dlgHtml, "template-attr");
-
-                        await this._replaceEntry(blockId, entryId, entry);
-                    }
-                },
-                cancel: { label: templateText("Cancel") }
-            },
-            default: "save",
-            render: (dlgHtml) => {
-                const recalc = () => {
-                    const { attributes, costs } = this._readAttributeFields(dlgHtml);
-
-                    dlgHtml.find("#template-attr-total-cost").val(
-                        this._calculateAttributeCost(attributes, costs)
-                    );
-                };
-
-                dlgHtml.find(".template-attr-grid input[type='number']").on("input", recalc);
-                dlgHtml.find(".template-attr-select").on("change", event => event.currentTarget.closest(".template-attr-row")?.classList.toggle("is-selected", event.currentTarget.checked));
-                dlgHtml.find(".template-attr-select").trigger("change");
-                recalc();
-            }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 700, height: 760 }).render(true);
-    }
-
-    async _editItemEntry(blockId, entryId, entry) {
-        const isEquipment = entry.itemType === "equipment";
-        const isTrait = ["advantage", "disadvantage"].includes(entry.itemType) && Boolean(entry.trait_cost);
-        const supportsLevelCap = ["skill", "spell", "power"].includes(entry.itemType) || (isTrait && entry.trait_cost.can_level);
-        const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
-        const levelLabel = templateText("Level");
-        const groupMode = entry.destinationMode || (entry.destinationGroup ? "group" : "inherit");
-        const containerMode = entry.containerMode || (entry.containerName ? "new" : "inherit");
-        const content = `
-        <div class="template-entry-edit-form">
-        <div class="form-group template-edit-name">
-            <label for="entry-name">${templateText("Name")}</label>
-            <input type="text" id="entry-name" value="${esc(entry.name)}">
-        </div>
-        <div class="template-entry-basic-fields ${isEquipment ? "template-entry-basic-fields--equipment" : ""}">
-            ${isEquipment ? `<div class="form-group template-entry-quantity-field">
-                <label>${templateText("Quantity")}</label>
-                <span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span>
-            </div>` : ""}
-            ${isTrait ? `<div class="form-group">
-                <label>${templateText("BaseCost")}</label>
-                <input type="number" id="entry-base-cost" value="${entry.trait_cost.points ?? 0}">
-            </div>
-            <div class="form-group">
-                <label>${templateText("PointsPerLevel")}</label>
-                <input type="number" id="entry-points-per-level" value="${entry.trait_cost.points_per_level ?? 0}">
-            </div>
-            <div class="form-group">
-                <label>${templateText("Level")}</label>
-                <input type="number" id="entry-level" value="${entry.trait_cost.level ?? entry.level ?? 0}" min="0">
-            </div>` : `<div class="form-group">
-                <label title="${isEquipment ? templateText("EntryLevelValueHint") : ""}">${levelLabel}</label>
-                <input type="text" id="entry-level" value="${esc(entry.level)}">
-            </div>
-            <div class="form-group">
-                <label title="${isEquipment ? templateText("EntryCostHint") : ""}">${templateText("Cost")}</label>
-                <input type="number" id="entry-cost" value="${entry.cost ?? 0}">
-            </div>`}
-            ${supportsLevelCap ? `<div class="form-group">
-                <label>${templateText("MaximumLevel")}</label>
-                <input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" placeholder="${templateText("NoLevelLimit")}">
-            </div>` : ""}
-        </div>
-        <div class="template-entry-destination">
-        ${!isEquipment ? `<div class="form-group"><label for="entry-destination-mode">${templateText("GroupDestinationMode")}</label><select id="entry-destination-mode">
-          <option value="inherit" ${groupMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option>
-          <option value="group" ${groupMode === "group" ? "selected" : ""}>${templateText("UseNamedGroup")}</option>
-          <option value="source" ${groupMode === "source" ? "selected" : ""}>${templateText("KeepSourceGroup")}</option>
-        </select></div><div class="form-group template-destination-name"><label for="entry-destination-group">${game.i18n.localize("GUM.Template.DestinationGroup")}</label>
-          <input type="text" id="entry-destination-group" value="${foundry.utils.escapeHTML(entry.destinationGroup || "")}" placeholder="${game.i18n.localize("GUM.Template.InheritBlock")}"></div>` : ""}
-        ${isEquipment ? `<div class="form-group"><label for="entry-container-mode">${templateText("ContainerDestinationMode")}</label><select id="entry-container-mode">
-          <option value="inherit" ${containerMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option>
-          <option value="new" ${containerMode === "new" ? "selected" : ""}>${templateText("CreateContainer")}</option>
-          <option value="loose" ${containerMode === "loose" ? "selected" : ""}>${templateText("LooseEquipment")}</option>
-        </select></div><div class="form-group template-destination-name"><label for="entry-container-name">${game.i18n.localize("GUM.Template.NewContainer")}</label>
-          <input type="text" id="entry-container-name" value="${foundry.utils.escapeHTML(entry.containerName || "")}" placeholder="${game.i18n.localize("GUM.Template.InheritBlock")}"></div>` : ""}
-        </div>
-        ${isEquipment ? `<div class="form-group"><label for="entry-points-cost">${templateText("EquipmentPointCost")}</label>
-          <input type="number" id="entry-points-cost" value="${Number(entry.pointsCost) || 0}" min="0"></div>
-          <div class="template-entry-equipment-options">
-            <label class="template-entry-equipment-option" for="entry-quantity-locked" title="${templateText("LockQuantityHint")}"><input type="checkbox" id="entry-quantity-locked" ${entry.quantityLocked ? "checked" : ""}><span>${templateText("LockQuantity")}</span></label>
-            <label class="template-entry-equipment-option" for="entry-selection-quantity" title="${templateText("QuantityConsumesChoicesHint")}"><input type="checkbox" id="entry-selection-quantity" ${entry.selectionQuantity ? "checked" : ""}><span>${templateText("QuantityConsumesChoices")}</span></label>
-          </div>` : ""}
-        <div class="template-entry-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "entry")}</div>
-        </div>
-        `;
-
-        new Dialog({
-            title: templateText("EditBlockItem"),
-            content,
-            buttons: {
-                save: {
-                    label: templateText("Save"),
-                    callback: async (dlgHtml) => {
-                        entry.name = dlgHtml.find("#entry-name").val();
-                        if (isEquipment) {
-                            entry.quantity = Number(dlgHtml.find("#entry-qty").val()) || 1;
-                            entry.quantityLocked = dlgHtml.find("#entry-quantity-locked").is(":checked");
-                            entry.selectionQuantity = dlgHtml.find("#entry-selection-quantity").is(":checked");
-                        }
-                        entry.level = dlgHtml.find("#entry-level").val();
-                        if (supportsLevelCap) {
-                            const rawMaxLevel = dlgHtml.find("#entry-max-level").val();
-                            entry.maxLevel = rawMaxLevel === "" ? null : Number(rawMaxLevel);
-                            if (entry.maxLevel !== null && Number(entry.level) > entry.maxLevel) entry.level = entry.maxLevel;
-                        }
-                        this._readChoiceRuleFields(entry, dlgHtml, "entry");
-                        if (!isEquipment) {
-                            entry.destinationMode = String(dlgHtml.find("#entry-destination-mode").val() || "inherit");
-                            entry.destinationGroup = String(dlgHtml.find("#entry-destination-group").val() || "").trim();
-                        }
-                        if (isEquipment) {
-                            entry.containerMode = String(dlgHtml.find("#entry-container-mode").val() || "inherit");
-                            entry.containerName = String(dlgHtml.find("#entry-container-name").val() || "").trim();
-                        }
-                        if (entry.destinationMode === "group" && !entry.destinationGroup) {
-                            ui.notifications.warn(templateText("GroupNameRequired"));
-                            return false;
-                        }
-                        if (entry.containerMode === "new" && !entry.containerName) {
-                            ui.notifications.warn(templateText("ContainerNameRequired"));
-                            return false;
-                        }
-                        if (isEquipment) entry.pointsCost = Math.max(0, Number(dlgHtml.find("#entry-points-cost").val()) || 0);
-                        if (entry.trait_cost) {
-                            entry.trait_cost.points = Number(dlgHtml.find("#entry-base-cost").val()) || 0;
-                            entry.trait_cost.points_per_level = Number(dlgHtml.find("#entry-points-per-level").val()) || 0;
-                            entry.trait_cost.level = Number(entry.level);
-                            entry.level = entry.trait_cost.level;
-                            entry.cost = calculateTraitCost(entry.trait_cost).finalPoints;
-                        } else entry.cost = Number(dlgHtml.find("#entry-cost").val()) || 0;
-                        await this._replaceEntry(blockId, entryId, entry);
-                    }
-                },
-                cancel: { label: templateText("Cancel") }
-            },
-            default: "save",
-            render: html => {
-                const selector = html.find(isEquipment ? "#entry-container-mode" : "#entry-destination-mode");
-                const updateDestination = () => html.find(".template-destination-name").toggle(selector.val() === (isEquipment ? "new" : "group"));
-                selector.on("change", updateDestination);
-                html.find(".template-entry-quantity-step").on("click", event => {
-                    event.preventDefault();
-                    const input = html.find("#entry-qty");
-                    input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0)));
-                });
-                updateDestination();
-            }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-entry-config-dialog", "gum-sheet-edit-dialog"], width: 480 }).render(true);
+        const replacement = await this._configureEntryDraft(entry, { mode: "edit" });
+        if (!replacement) return false;
+        Object.assign(entry, replacement, { id: entry.id });
+        return true;
     }
 
     async _replaceEntry(blockId, entryId, newEntry) {
@@ -1330,24 +1079,23 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     async _buildTemplateDropEntry(item) {
+        let entry;
         if (item.type === "template") {
             if (item.uuid === this.item.uuid || item.id === this.item.id) {
                 ui.notifications.warn(templateText("DirectSelfReference"));
                 return null;
             }
-            return {
+            entry = {
                 id: foundry.utils.randomID(), kind: "template", uuid: item.uuid, sourceId: item.id,
                 name: item.name, img: item.img, cost: 0, subBlocks: []
             };
-        }
-
-        if (!["skill", "spell", "power", "advantage", "disadvantage", "equipment"].includes(item.type)) {
+        } else if (!["skill", "spell", "power", "advantage", "disadvantage", "equipment"].includes(item.type)) {
             ui.notifications.warn(templateText("UnsupportedItem"));
             return null;
+        } else {
+            entry = await this._buildEntryFromItem(item);
         }
-
-        const entry = await this._buildEntryFromItem(item);
-        return entry || null;
+        return entry ? this._configureEntryDraft(entry, { mode: "create", sourceItem: item }) : null;
     }
 
     async _buildEntryFromItem(item) {
@@ -1371,207 +1119,25 @@ export class TemplateItemSheet extends ItemSheet {
             base.cost = Number(item.system?.cost) || 0;
             base.pointsCost = Number(item.system?.points) || 0;
             base.quantityLocked = false;
-            return this._promptEquipmentEntry(item, base);
-        }
-
-        if (["skill", "spell", "power"].includes(item.type)) {
-            return this._promptLevelledEntry(item, base);
-        }
-
-        if (["advantage", "disadvantage"].includes(item.type)) {
-            return this._promptAdvantageEntry(item, base);
-        }
-
-        return base;
-    }
-
-    async _promptEquipmentEntry(item, base) {
-        return new Promise(resolve => {
-            new Dialog({
-                title: `${templateText("Add")}: ${item.name}`,
-                content: `
-                <div class="template-equipment-add-fields"><div class="form-group template-equipment-add-quantity">
-                    <label>${templateText("Quantity")}</label>
-                    <span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${base.quantity}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span>
-                </div><div class="form-group template-equipment-add-level">
-                    <label title="${templateText("EntryLevelValueHint")}">${templateText("Level")}</label>
-                    <input type="text" id="entry-level" value="${foundry.utils.escapeHTML(String(base.level || ""))}">
-                </div><div class="form-group template-equipment-add-points">
-                    <label>${templateText("EquipmentPointCost")}</label>
-                    <input type="number" id="entry-points-cost" min="0" step="any" value="${base.pointsCost}">
-                </div><div class="form-group template-equipment-add-lock">
-                    <label for="entry-quantity-locked" title="${templateText("LockQuantityHint")}"><input type="checkbox" id="entry-quantity-locked"><span>${templateText("LockQuantity")}</span></label>
-                </div></div>`,
-                buttons: {
-                    save: {
-                        label: templateText("Add"),
-                        callback: (html) => {
-                            base.quantity = Number(html.find("#entry-qty").val()) || 1;
-                            base.level = String(html.find("#entry-level").val() || "").trim();
-                            base.pointsCost = Math.max(0, Number(html.find("#entry-points-cost").val()) || 0);
-                            base.quantityLocked = html.find("#entry-quantity-locked").is(":checked");
-                            resolve(base);
-                        }
-                    },
-                    cancel: {
-                        label: templateText("Cancel"),
-                        callback: () => resolve(null)
-                    }
-                },
-                default: "save",
-                render: html => html.find(".template-entry-quantity-step").on("click", event => {
-                    event.preventDefault();
-                    const input = html.find("#entry-qty");
-                    input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0)));
-                })
-            }, { classes: ["dialog", "gum", "template-config-dialog", "template-equipment-add-dialog", "gum-sheet-edit-dialog"], width: 460 }).render(true);
-        });
-    }
-
-    async _promptLevelledEntry(item, base) {
-        const levelValue = Number(item.system?.skill_level ?? item.system?.level ?? 0) || 0;
-        const difficultyValue = this._getItemDifficulty(item);
-        const pointsInfo = this._getPointsPerLevelInfo(item);
-        const itemTypeLabel = this._getItemTypeLabel(item.type);
-
-        return new Promise(resolve => {
-            new Dialog({
-                title: `${templateText("Add")}: ${item.name}`,
-                content: `
-                <div class="template-level-dialog">
-                    <div class="template-level-dialog__title">${foundry.utils.escapeHTML(item.name || "Item")}</div>
-                    <div class="template-level-dialog__subtitle">${foundry.utils.escapeHTML(itemTypeLabel)}</div>
-                    <hr>
-
-                    ${difficultyValue ? `
-                    <div class="template-level-dialog__row">
-                        <label>${templateText("Difficulty")}</label>
-                        <input type="text" value="${foundry.utils.escapeHTML(difficultyValue)}" readonly>
-                    </div>` : ""}
-
-                    <div class="template-level-dialog__row">
-                        <label>${templateText("PointsPerLevel")}</label>
-                        <input type="text" value="${foundry.utils.escapeHTML(pointsInfo)}" readonly>
-                    </div>
-
-                    <div class="template-level-dialog__row">
-                        <label>${templateText("RelativeLevel")}</label>
-                        <div class="template-level-stepper">
-                            <button type="button" class="template-level-decrease" title="${templateText("Decrease")}" aria-label="${templateText("Decrease")}"><i class="fas fa-minus"></i></button>
-                            <input type="number" id="entry-level" value="${levelValue}">
-                            <button type="button" class="template-level-increase" title="${templateText("Increase")}" aria-label="${templateText("Increase")}"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="template-level-dialog__row">
-                        <label>${templateText("MaximumLevel")}</label>
-                        <input type="number" id="entry-max-level" value="" placeholder="${templateText("NoLevelLimit")}">
-                    </div>
-
-                    <div class="template-level-dialog__row">
-                        <label>${templateText("TotalCost")}</label>
-                        <input type="number" id="entry-total-cost" value="${this._calculateLevelledItemCost(item, levelValue)}" readonly>
-                    </div>
-                </div>`,
-                buttons: {
-                    save: {
-                        label: templateText("Add"),
-                        callback: (html) => {
-                            const rawMaxLevel = html.find("#entry-max-level").val();
-                            base.maxLevel = rawMaxLevel === "" ? null : Number(rawMaxLevel);
-                            const level = Number(html.find("#entry-level").val()) || 0;
-                            base.level = base.maxLevel === null ? level : Math.min(level, base.maxLevel);
-                            base.cost = this._calculateLevelledItemCost(item, base.level);
-                            resolve(base);
-                        }
-                    },
-                    cancel: {
-                        label: templateText("Cancel"),
-                        callback: () => resolve(null)
-                    }
-                },
-                default: "save",
-                render: (html) => {
-                    const levelInput = html.find("#entry-level");
-                    const totalInput = html.find("#entry-total-cost");
-                    levelInput.on("input", () => {
-                        const level = Number(levelInput.val()) || 0;
-                        totalInput.val(this._calculateLevelledItemCost(item, level));
-                    });
-                    html.find(".template-level-decrease, .template-level-increase").on("click", event => {
-                        const change = event.currentTarget.classList.contains("template-level-increase") ? 1 : -1;
-                        levelInput.val((Number(levelInput.val()) || 0) + change).trigger("input");
-                    });
-                }
-            }, { classes: ["dialog", "gum", "template-config-dialog", "template-level-config-dialog", "gum-sheet-edit-dialog"], width: 500 }).render(true);
-        });
-    }
-
-    async _promptAdvantageEntry(item, base) {
-        base.trait_cost = foundry.utils.deepClone(traitCostInput(item.system));
-        const fixedCost = calculateTraitCost(base.trait_cost).finalPoints;
-        const currentLevel = item.system?.level ?? "";
-
-        if (!item.system.can_level) {
-            base.cost = fixedCost;
             return base;
         }
 
-        return new Promise(resolve => {
-            new Dialog({
-                title: `${templateText("Add")}: ${item.name}`,
-                content: `
-                <div class="template-entry-basic-fields">
-                    <div class="form-group">
-                        <label>${templateText("BaseCost")}</label>
-                        <input type="number" id="entry-base-cost" value="${base.trait_cost.points ?? 0}">
-                    </div>
-                    <div class="form-group">
-                        <label>${templateText("PointsPerLevel")}</label>
-                        <input type="number" id="entry-points-per-level" value="${base.trait_cost.points_per_level ?? 0}">
-                    </div>
-                    <div class="form-group">
-                        <label>${templateText("Level")}</label>
-                        <input type="number" id="entry-level" value="${currentLevel}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>${templateText("MaximumLevel")}</label>
-                        <input type="number" id="entry-max-level" value="" min="0" placeholder="${templateText("NoLevelLimit")}">
-                    </div>
-                    <div class="form-group">
-                        <label>${templateText("FinalCost")}</label>
-                        <input type="number" id="entry-cost" value="${fixedCost}" readonly>
-                    </div>
-                </div>`,
-                buttons: {
-                    save: {
-                        label: templateText("Add"),
-                    callback: (html) => {
-                        const rawMaxLevel = html.find("#entry-max-level").val();
-                        base.maxLevel = rawMaxLevel === "" ? null : Number(rawMaxLevel);
-                        base.level = Number(html.find("#entry-level").val()) || 0;
-                        if (base.maxLevel !== null) base.level = Math.min(base.level, base.maxLevel);
-                        base.trait_cost.points = Number(html.find("#entry-base-cost").val()) || 0;
-                        base.trait_cost.points_per_level = Number(html.find("#entry-points-per-level").val()) || 0;
-                        base.trait_cost.level = Number(base.level);
-                            base.cost = calculateTraitCost(base.trait_cost).finalPoints;
-                            resolve(base);
-                        }
-                    },
-                    cancel: {
-                        label: templateText("Cancel"),
-                        callback: () => resolve(null)
-                    }
-                },
-                default: "save",
-                render: html => html.find("#entry-base-cost, #entry-points-per-level, #entry-level").on("input", () => {
-                    const level = Number(html.find("#entry-level").val()) || 0;
-                    const points = Number(html.find("#entry-base-cost").val()) || 0;
-                    const points_per_level = Number(html.find("#entry-points-per-level").val()) || 0;
-                    html.find("#entry-cost").val(calculateTraitCost({ ...base.trait_cost, points, points_per_level, level }).finalPoints);
-                })
-            }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 600 }).render(true);
-        });
+        if (["skill", "spell", "power"].includes(item.type)) {
+            base.level = Number(item.system?.skill_level ?? item.system?.level ?? 0) || 0;
+            base.maxLevel = null;
+            base.cost = this._calculateLevelledItemCost(item, base.level);
+            return base;
+        }
+
+        if (["advantage", "disadvantage"].includes(item.type)) {
+            base.trait_cost = foundry.utils.deepClone(traitCostInput(item.system));
+            base.level = item.system?.level ?? "";
+            base.maxLevel = null;
+            base.cost = calculateTraitCost(base.trait_cost).finalPoints;
+            return base;
+        }
+
+        return base;
     }
 
     _getItemDifficulty(item) {

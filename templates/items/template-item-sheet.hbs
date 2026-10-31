@@ -150,7 +150,7 @@
             {{#unless block.collapsed}}
             <div class="template-block-editor">
               <div class="template-block-fields">
-                <div class="form-group">
+                <div class="form-group template-block-title-field">
                   <label title="{{localize "GUM.Template.DefaultTitleHint"}}">{{localize "GUM.Template.CustomTitle"}}</label>
                   <input type="text"
                          class="block-field"
@@ -159,15 +159,18 @@
                          value="{{block.title}}"
                          title="{{localize "GUM.Template.DefaultTitleHint"}}"/>
                 </div>
-                <div class="form-group">
-                  <label title="{{localize "GUM.Template.OptionalGroup"}}">{{localize "GUM.Template.DestinationGroup"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="destinationGroup" value="{{block.destinationGroup}}" title="{{localize "GUM.Template.OptionalGroup"}}"/>
-                </div>
-                <div class="form-group">
-                  <label title="{{localize "GUM.Template.OptionalContainer"}}">{{localize "GUM.Template.NewContainer"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="containerName" value="{{block.containerName}}" title="{{localize "GUM.Template.OptionalContainer"}}"/>
+                <div class="template-block-destinations">
+                  <div class="form-group">
+                    <label title="{{localize "GUM.Template.DestinationGroupHint"}}">{{localize "GUM.Template.DestinationGroup"}}</label>
+                    <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="destinationGroup" value="{{block.destinationGroup}}" title="{{localize "GUM.Template.DestinationGroupHint"}}"/>
+                  </div>
+                  <div class="form-group">
+                    <label title="{{localize "GUM.Template.DestinationContainerHint"}}">{{localize "GUM.Template.NewContainer"}}</label>
+                    <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="containerName" value="{{block.containerName}}" title="{{localize "GUM.Template.DestinationContainerHint"}}"/>
+                  </div>
                 </div>
 
+                <div class="template-block-specific-fields">
                 {{#if block.isSelection}}
                 <div class="form-group input-narrow">
                   <label>{{localize "GUM.Template.ChoiceCount"}}</label>
@@ -246,6 +249,12 @@
                 {{/unless}}
                 {{/if}}
                 {{/if}}
+                </div>
+
+                <div class="form-group template-block-instructions-field">
+                  <label title="{{localize "GUM.Template.BlockInstructionsHint"}}">{{localize "GUM.Template.BlockInstructions"}}</label>
+                  <textarea class="block-field" data-block-id="{{block.id}}" data-field="instructions" rows="2" placeholder="{{localize "GUM.Template.BlockInstructionsPlaceholder"}}">{{block.instructions}}</textarea>
+                </div>
               </div>
 
 

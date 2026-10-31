@@ -7990,6 +7990,9 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     : block?.type === "selection" ? `${block.choiceExact ? t("ChooseExactly") : t("ChooseUpTo")} ${Number(block.choiceCount) || 1}`
       : block?.type === "money" ? `${t(moneyDebitsCharacter ? "SpendingLimit" : "MoneyAvailable")}: ${moneyDebitsCharacter && !sharedDefinition && this._resolveTemplateSpendingLimit(block) === null ? t("Unlimited") : Number(sharedDefinition?.amount ?? (blockMoneyMode === "deduct" ? this._resolveTemplateSpendingLimit(block) : block.moneyAvailable)) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`
         : `${t("Budget")}: ${Number(sharedDefinition?.amount ?? block?.pointsAvailable) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`;
+  const blockInstructions = block ? String(block.instructions || "").trim() : "";
+  const blockInstructionsMarkup = blockInstructions
+    ? `<p class="template-flow-instructions">${esc(blockInstructions).replace(/\r?\n/g, "<br>")}</p>` : "";
   const needsPayment = !block && preview?.budgetResults?.some(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0);
   const moneySources = needsPayment ? this.actor.items.filter(item => item.type === "money_source") : [];
   const paymentLines = needsPayment ? preview.budgetResults.filter(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0) : [];
@@ -8043,7 +8046,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const wizardBudgetSummary = pointBudgetSummary || moneyBudgetSummary || guaranteedBudgetSummary || selectionBudgetSummary;
   const reviewConflictCount = block ? 0 : conflictRows.length;
   const content = `<div class="template-apply-block-dialog${wizardBudgetSummary ? " template-apply-block-dialog--budget" : ""}${block ? "" : " template-apply-block-dialog--review"}">
-    <header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${title}</h2><p>${block ? blockHint : t("ReviewHint")}</p></header>
+    <header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${title}</h2>${blockInstructionsMarkup}<p class="template-flow-rule">${block ? blockHint : t("ReviewHint")}</p></header>
     ${block ? `<div class="template-apply-options">${rows}</div>${wizardBudgetSummary || '<div class="template-wizard-balance"></div>'}`
       : `<div class="template-review-body"><details class="template-review-section"><summary><span>${t("ConfirmedItems")}</span><strong>${reviewRows.length - conflictRows.length}</strong></summary>${confirmedSections || `<p class="template-review-empty">${t("NoConfirmedItems")}</p>`}</details>${conflictRows.length ? `<details class="template-review-section template-review-section--conflicts" open><summary><span>${t("ResolveConflicts")}</span><strong>${conflictRows.length}</strong></summary><ul class="template-review-list">${conflictRows.map(row => row.row).join("")}</ul></details>` : ""}${paymentSource}</div><div class="template-review-totals">${reviewTotalsMarkup}</div><ul class="template-rule-issues">${ruleSummary}</ul>`}</div>`;
   return new Promise(resolve => {

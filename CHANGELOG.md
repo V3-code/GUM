@@ -18,6 +18,8 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Eventos de condições derivados de recursos, itens, dano e ActiveEffects carregam dados estruturados mais amplos e aliases compatíveis com gatilhos existentes.
 - Cards de dano criados por Efeitos conservam o ator e o token de destino, mas respeitam um alvo marcado manualmente antes da aplicação.
 - A importação híbrida normaliza nome, especialização e aliases por tipo de item antes de decidir pela substituição do conteúdo importado.
+- O editor de Modelos reorganiza os campos de cada bloco, unifica as modalidades de seleção e reutiliza a mesma configuração ao adicionar ou editar itens, atributos, pacotes e Modelos referenciados.
+- Blocos de Modelo aceitam instruções breves exibidas separadamente das regras mecânicas durante a aplicação.
 
 ### Fixed
 
