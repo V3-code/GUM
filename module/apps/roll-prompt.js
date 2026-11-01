@@ -17,6 +17,7 @@ import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mj
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING, getDistanceModifier } from "../utils/distance-modifier.mjs";
 import { collectActiveEquipmentOwnerModifiers } from "../utils/equipment-owner-modifiers.mjs";
 import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
+import { composeRollModifiers, getRollModifierCompositionOrigin } from "../utils/roll-modifier-composition.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -69,6 +70,7 @@ export class GurpsRollPrompt extends FormApplication {
         this._loadEffectModifiers();
         this._loadEquipmentOwnerModifiers();
         this._loadTargetCounterModifiers();
+        this._composeSemanticModifiers();
         this._loadAutoDistanceModifier();
         this._loadAutoSizeModifier();
         
@@ -197,7 +199,11 @@ export class GurpsRollPrompt extends FormApplication {
                     value: this._evaluateModifierEntryValue(entry),
                     nh_cap: (entry?.cap !== undefined && entry?.cap !== "") ? parseInt(entry.cap) : null,
                     isGM: true,
-                    isEffect: true
+                    isEffect: true,
+                    compositionGroup: entry?.composition_group || "",
+                    compositionMode: entry?.composition_mode || "sum",
+                    compositionPriority: Number(entry?.composition_priority) || 0,
+                    compositionOrigin: getRollModifierCompositionOrigin(effect)
                 });
             });
         });
@@ -230,6 +236,7 @@ export class GurpsRollPrompt extends FormApplication {
     }
 
     _buildCounterGroupKey({ entry, effect, entryIndex = 0 }) {
+        if (String(entry?.composition_group || "").trim()) return `composition-${effect?.id || "effect"}-${entryIndex}`;
         const byLabel = (entry?.label || "").toString().trim();
         if (byLabel) return byLabel.slugify({ strict: true }) || `entry-${entryIndex}`;
         const byEffect = (effect?.name || "").toString().trim();
@@ -319,7 +326,11 @@ export class GurpsRollPrompt extends FormApplication {
                 isGM: true,
                 isEffect: true,
                 isCounterEffect: true,
-                counterSource: `${targetToken.actor.name} • ${candidate.effect.name}`
+                counterSource: `${targetToken.actor.name} • ${candidate.effect.name}`,
+                compositionGroup: candidate.entry?.composition_group || "",
+                compositionMode: candidate.entry?.composition_mode || "sum",
+                compositionPriority: Number(candidate.entry?.composition_priority) || 0,
+                compositionOrigin: getRollModifierCompositionOrigin(candidate.effect)
             };
 
             if (!current || this._isWorseForRoller(payload.value, current.value)) {
@@ -335,6 +346,10 @@ export class GurpsRollPrompt extends FormApplication {
         for (const modifier of recalculationModifiers) grouped.set(modifier.id, modifier);
 
         grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
+    }
+
+    _composeSemanticModifiers() {
+        this.selectedModifiers = composeRollModifiers(this.selectedModifiers);
     }
 
     _buildCounterModifierLabel(candidate) {
@@ -1483,6 +1498,7 @@ return 'default';
         this._loadGMModifiers();
         this._loadEffectModifiers();
         this._loadTargetCounterModifiers();
+        this._composeSemanticModifiers();
         this._refreshRelatedPurposeIds();
     }
 
@@ -1565,9 +1581,10 @@ return 'default';
             let capBadge = m.nh_cap ? `<span class="stack-cap" style="font-size:0.8em; opacity:0.7; margin-right:3px;">[↓${m.nh_cap}]</span>` : '';
             const tagClass = m.isGM ? 'gm-locked' : (m.isEffect ? 'gm-locked' : '');
             const sourceLabel = m.sourceLabel || (m.isCounterEffect ? m.counterSource : "");
-            const title = sourceLabel
-                ? ` title="Origem: ${foundry.utils.escapeHTML(sourceLabel)}"`
-                : '';
+            const compositionNote = m.compositionSuppressedCount
+                ? `${m.compositionSuppressedCount} fonte(s) equivalente(s) suprimida(s)` : "";
+            const titleText = [sourceLabel ? `Origem: ${sourceLabel}` : "", compositionNote].filter(Boolean).join(" · ");
+            const title = titleText ? ` title="${foundry.utils.escapeHTML(titleText)}"` : '';
             const safeLabel = foundry.utils.escapeHTML((m.label || "").toString());
             const tag = $(`<span class="mod-tag ${tagClass}"${title}>${capBadge}${safeLabel} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
             tag.click(() => {

@@ -106,9 +106,13 @@
             <span class="template-budget-unit" title="{{budget.typeLabel}}">{{budget.typeLabel}}</span>
             <select class="template-shared-budget-field" data-budget-id="{{budget.id}}" data-field="policy" title="{{localize "GUM.Template.BudgetPolicy"}}">
               <option value="hard" {{#if (eq budget.policy "hard")}}selected{{/if}}>{{localize "GUM.Template.BudgetHard"}}</option>
+              {{#unless budget.isMoneyDeduct}}
               <option value="allow" {{#if (eq budget.policy "allow")}}selected{{/if}}>{{localize "GUM.Template.BudgetAllow"}}</option>
+              {{/unless}}
               <option value="gm" {{#if (eq budget.policy "gm")}}selected{{/if}}>{{localize "GUM.Template.BudgetGM"}}</option>
+              {{#unless budget.isMoneyDeduct}}
               <option value="unlimited" {{#if (eq budget.policy "unlimited")}}selected{{/if}}>{{localize "GUM.Template.BudgetUnlimited"}}</option>
+              {{/unless}}
             </select>
             {{#if (eq budget.type "money")}}
             <select class="template-shared-budget-field" data-budget-id="{{budget.id}}" data-field="accounting" title="{{localize "GUM.Template.MoneyAccounting"}}">
@@ -116,7 +120,10 @@
               <option value="deduct" {{#if (eq budget.accounting "deduct")}}selected{{/if}}>{{localize "GUM.Template.MoneyDeduct"}}</option>
             </select>
             {{else}}<span class="template-budget-not-applicable" title="{{localize "GUM.Template.MoneyAccounting"}}">—</span>{{/if}}
-            <button type="button" class="delete-template-shared-budget" data-budget-id="{{budget.id}}" title="{{localize "GUM.Template.Remove"}}"><i class="fas fa-trash"></i></button>
+            <span class="template-shared-budget-actions">
+              {{#if budget.isMoney}}<button type="button" class="configure-template-shared-budget-payment" data-budget-id="{{budget.id}}" title="{{localize "GUM.Template.PaymentRules"}}"><i class="fas fa-wallet"></i></button>{{/if}}
+              <button type="button" class="delete-template-shared-budget" data-budget-id="{{budget.id}}" title="{{localize "GUM.Template.Remove"}}"><i class="fas fa-trash"></i></button>
+            </span>
           </div>
           {{/each}}
           </div>
@@ -150,7 +157,9 @@
             {{#unless block.collapsed}}
             <div class="template-block-editor">
               <div class="template-block-fields">
-                <div class="form-group">
+                <section class="template-block-field-section template-block-basic-section">
+                <h4>{{localize "GUM.Template.BasicData"}}</h4>
+                <div class="form-group template-block-title-field">
                   <label title="{{localize "GUM.Template.DefaultTitleHint"}}">{{localize "GUM.Template.CustomTitle"}}</label>
                   <input type="text"
                          class="block-field"
@@ -159,15 +168,29 @@
                          value="{{block.title}}"
                          title="{{localize "GUM.Template.DefaultTitleHint"}}"/>
                 </div>
-                <div class="form-group">
-                  <label title="{{localize "GUM.Template.OptionalGroup"}}">{{localize "GUM.Template.DestinationGroup"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="destinationGroup" value="{{block.destinationGroup}}" title="{{localize "GUM.Template.OptionalGroup"}}"/>
+                <div class="form-group template-block-instructions-field">
+                  <label title="{{localize "GUM.Template.BlockInstructionsHint"}}">{{localize "GUM.Template.BlockInstructions"}}</label>
+                  <textarea class="block-field" data-block-id="{{block.id}}" data-field="instructions" rows="2" placeholder="{{localize "GUM.Template.BlockInstructionsPlaceholder"}}">{{block.instructions}}</textarea>
                 </div>
-                <div class="form-group">
-                  <label title="{{localize "GUM.Template.OptionalContainer"}}">{{localize "GUM.Template.NewContainer"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="containerName" value="{{block.containerName}}" title="{{localize "GUM.Template.OptionalContainer"}}"/>
+                </section>
+                <section class="template-block-field-section">
+                <h4>{{localize "GUM.Template.ApplicationOrganization"}}</h4>
+                <div class="template-block-destinations">
+                  <div class="form-group">
+                    <label title="{{localize "GUM.Template.DestinationGroupHint"}}">{{localize "GUM.Template.DestinationGroup"}}</label>
+                    <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="destinationGroup" value="{{block.destinationGroup}}" title="{{localize "GUM.Template.DestinationGroupHint"}}"/>
+                  </div>
+                  <div class="form-group">
+                    <label title="{{localize "GUM.Template.DestinationContainerHint"}}">{{localize "GUM.Template.NewContainer"}}</label>
+                    <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="containerName" value="{{block.containerName}}" title="{{localize "GUM.Template.DestinationContainerHint"}}"/>
+                  </div>
                 </div>
+                </section>
 
+                {{#if (or block.isSelection block.isBudget)}}
+                <section class="template-block-field-section">
+                <h4>{{localize "GUM.Template.SpecificData"}}</h4>
+                <div class="template-block-specific-fields">
                 {{#if block.isSelection}}
                 <div class="form-group input-narrow">
                   <label>{{localize "GUM.Template.ChoiceCount"}}</label>
@@ -212,15 +235,38 @@
                   <label>{{localize "GUM.Template.BudgetPolicy"}}</label>
                   <select class="block-field" data-block-id="{{block.id}}" data-field="budgetPolicy">
                     <option value="hard" {{#if (eq block.budgetPolicy "hard")}}selected{{/if}}>{{localize "GUM.Template.BudgetHard"}}</option>
+                    {{#unless block.isMoneyDeduct}}
                     <option value="allow" {{#if (eq block.budgetPolicy "allow")}}selected{{/if}}>{{localize "GUM.Template.BudgetAllow"}}</option>
+                    {{/unless}}
                     <option value="gm" {{#if (eq block.budgetPolicy "gm")}}selected{{/if}}>{{localize "GUM.Template.BudgetGM"}}</option>
+                    {{#unless block.isMoneyDeduct}}
                     <option value="unlimited" {{#if (eq block.budgetPolicy "unlimited")}}selected{{/if}}>{{localize "GUM.Template.BudgetUnlimited"}}</option>
+                    {{/unless}}
                   </select>
                 </div>
                 {{#if block.isMoneyDeduct}}
-                <div class="form-group">
-                  <label title="{{localize 'GUM.Template.PaymentSourceFilterHint'}}">{{localize "GUM.Template.PaymentSourceFilter"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="moneySourceFilter" value="{{block.moneySourceFilter}}" title="{{localize 'GUM.Template.PaymentSourceFilterHint'}}"/>
+                <div class="template-payment-rules-fields">
+                  <div class="form-group">
+                    <label title="{{localize 'GUM.Template.PaymentRulesHint'}}">{{localize "GUM.Template.PaymentCategories"}}</label>
+                    <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="paymentRules.categories" value="{{block.paymentCategories}}" placeholder="{{localize 'GUM.Template.PaymentCategoriesPlaceholder'}}" title="{{localize 'GUM.Template.PaymentRulesHint'}}"/>
+                  </div>
+                  <div class="form-group">
+                    <label>{{localize "GUM.Template.PaymentSourceMode"}}</label>
+                    <select class="block-field" data-block-id="{{block.id}}" data-field="paymentRules.modes">
+                      <option value="any" {{#if (eq block.paymentMode "any")}}selected{{/if}}>{{localize "GUM.Template.PaymentAny"}}</option>
+                      <option value="physical" {{#if (eq block.paymentMode "physical")}}selected{{/if}}>{{localize "GUM.Template.PaymentPhysical"}}</option>
+                      <option value="abstract" {{#if (eq block.paymentMode "abstract")}}selected{{/if}}>{{localize "GUM.Template.PaymentAbstract"}}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>{{localize "GUM.Template.PaymentSourceLocation"}}</label>
+                    <select class="block-field" data-block-id="{{block.id}}" data-field="paymentRules.locations">
+                      <option value="any" {{#if (eq block.paymentLocation "any")}}selected{{/if}}>{{localize "GUM.Template.PaymentAny"}}</option>
+                      <option value="carried" {{#if (eq block.paymentLocation "carried")}}selected{{/if}}>{{localize "GUM.Template.PaymentCarried"}}</option>
+                      <option value="stored" {{#if (eq block.paymentLocation "stored")}}selected{{/if}}>{{localize "GUM.Template.PaymentStored"}}</option>
+                      <option value="equipped" {{#if (eq block.paymentLocation "equipped")}}selected{{/if}}>{{localize "GUM.Template.PaymentEquipped"}}</option>
+                    </select>
+                  </div>
                 </div>
                 {{/if}}
                 {{/if}}
@@ -245,6 +291,9 @@
                 </div>
                 {{/unless}}
                 {{/if}}
+                {{/if}}
+                </div>
+                </section>
                 {{/if}}
               </div>
 

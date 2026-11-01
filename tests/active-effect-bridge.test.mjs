@@ -27,6 +27,7 @@ const makeEffectItem = () => {
     isOwner: true,
     effects: [],
     async createEmbeddedDocuments(_type, documents) {
+      this.createCalls = (this.createCalls || 0) + 1;
       const created = documents.map((data, index) => ({
         ...structuredClone(data),
         id: `bridge-${index}`,
@@ -62,6 +63,20 @@ test("builds and maintains one inert ActiveEffect bridge inside each Effect Item
   assert.equal(getEffectItemBridgeData(bridge).effectItemUuid, item.uuid);
   assert.equal(await ensureEffectItemBridge(item), bridge);
   assert.equal(item.effects.length, 1);
+});
+
+test("coalesces simultaneous bridge synchronization requests", async () => {
+  const item = makeEffectItem();
+  const [first, second, third] = await Promise.all([
+    ensureEffectItemBridge(item),
+    ensureEffectItemBridge(item),
+    ensureEffectItemBridge(item)
+  ]);
+
+  assert.equal(item.createCalls, 1);
+  assert.equal(item.effects.length, 1);
+  assert.equal(first, second);
+  assert.equal(second, third);
 });
 
 test("activates an Actor bridge once and routes it to the GUM Effect Item", async () => {

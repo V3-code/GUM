@@ -4,6 +4,28 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.5.2-beta] - 2026-11-01
+
+### Changed
+
+- O editor de Modelos reorganiza os campos de cada bloco, unifica as modalidades de seleção e reutiliza a mesma configuração ao adicionar ou editar itens, atributos, pacotes e Modelos referenciados.
+- Blocos de Modelo aceitam instruções breves exibidas separadamente das regras mecânicas durante a aplicação.
+- Compras de Modelos agora usam preço monetário unitário explícito, regras estruturadas de fontes aceitas, saldo compatível antecipado e distribuição automática entre fontes de pagamento.
+- Opções de Modelo agora aceitam disponibilidade manual, requisitos estruturados do personagem, exibição bloqueada ou oculta e limites mínimo e máximo de quantidade por aplicação.
+- O editor consolidou exigências e incompatibilidades na lista estruturada de requisitos, incluindo Pacotes, Modelos e Atributos, com migração transparente das regras antigas.
+- A configuração de equipamentos em Modelos agora organiza quantidades, valores unitários, comportamento e destino em uma sequência única, com semântica consistente para quantidades bloqueadas.
+- As janelas de configuração de entradas do Modelo agora separam dados, valores, destino e requisitos em seções visuais consistentes e aproveitam melhor a altura disponível da tela.
+- Blocos e subgrupos do Modelo agora organizam dados básicos, instruções, destinos e configurações específicas em seções; novos subgrupos começam sem blocos predefinidos.
+- Perícias, magias, poderes e vantagens ou desvantagens com níveis agora compartilham nível inicial, mínimo, máximo e fixo; ajustes de atributos seguem a mesma lógica, e PV/PF alteram somente seus valores máximos.
+- A ponte `ActiveEffect` do Item Efeito agora ignora corretamente os hooks destinados a Atores e serializa sincronizações concorrentes, evitando avisos e tentativas duplicadas de remoção.
+- Modificadores de rolagem de Itens Efeito agora aceitam grupos de composição entre personagem e alvo, com políticas de soma, pior ou melhor resultado, prioridade e uma aplicação por origem.
+- As seções internas dos blocos ganharam separadores vermelhos sutis, e as instruções do subgrupo voltaram a usar o mesmo tratamento visual dos demais campos.
+
+### Fixed
+
+- Arrastar itens para blocos de Modelo usa a API namespaced do `TextEditor` e evita o processamento duplicado do mesmo evento de `drop` no Foundry 13 ou superior.
+- Fechar sem rolar a janela aberta pelo card de Barreira de Resistência volta a habilitar o botão de teste.
+
 ## [1.5.1-beta] - 2026-10-31
 
 ### Added

@@ -66,6 +66,11 @@ test("status reconciliation skips orphaned synthetic token actors", () => {
   assert.equal(isActorContextAvailable(null), false);
 });
 
+test("ActiveEffects embedded in Items are not treated as Actor runtime effects", () => {
+  assert.equal(isActorContextAvailable({ documentName: "Item", isToken: false }), false);
+  assert.equal(isActorContextAvailable({ documentName: "Actor", isToken: false }), true);
+});
+
 test("effect targets and backend race errors reject orphaned synthetic actors", () => {
   const token = { id: "gone", parent: null };
   const scene = { tokens: new Map() };

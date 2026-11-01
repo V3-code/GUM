@@ -94,6 +94,63 @@ test("choice rules include selected packages and owned items, but exclude ignore
   assert.equal(ruleSheet._validateTemplateChoiceRules(blocks, { choice: { ids: ["package"] } })[0].kind, "required");
 });
 
+test("structured availability requirements inspect owned items, levels, exclusions, and selected options", () => {
+  const availabilitySheet = new context.Sheet();
+  availabilitySheet.actor = { items: [
+    { id: "license", type: "advantage", name: "Licença de Porte", system: { level: 2 } },
+    { id: "enemy", type: "disadvantage", name: "Procurado", system: { level: 1 } }
+  ] };
+  const blocks = [{ id: "shop", type: "money", contents: [
+    { id: "rifle", itemType: "equipment", name: "Rifle", requirements: [
+      { condition: "require", itemType: "advantage", name: "Licença de Porte", minimumLevel: 2 }
+    ] },
+    { id: "restricted", itemType: "equipment", name: "Documento", requirements: [
+      { condition: "exclude", itemType: "disadvantage", name: "Procurado" }
+    ] },
+    { id: "ammo", itemType: "equipment", name: "Munição" },
+    { id: "case", itemType: "equipment", name: "Estojo", requirements: [
+      { condition: "require", itemType: "equipment", name: "Munição" }
+    ] }
+  ] }];
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[0], blocks, {}).available, true);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[1], blocks, {}).available, false);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[3], blocks, { shop: { ids: ["ammo"] } }).available, true);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[3], blocks, { shop: { ids: [] } }).available, false);
+});
+
+test("the unified requirement engine accepts packages, Templates, attributes, and legacy rules", () => {
+  const requirementSheet = new context.Sheet();
+  requirementSheet.actor = { items: [] };
+  const packageEntry = { id: "package", kind: "group", name: "Caçador", subBlocks: [] };
+  const templateEntry = { id: "template", kind: "template", name: "Veterano", subBlocks: [] };
+  const attributeEntry = { id: "attribute", kind: "attribute", label: "ST", attributes: { st: 1 } };
+  const gated = { id: "gated", name: "Recompensa", requirements: [
+    { condition: "require", itemType: "group", name: "Caçador" },
+    { condition: "require", itemType: "template", name: "Veterano" },
+    { condition: "require", itemType: "attribute", name: "ST" }
+  ] };
+  const legacy = { id: "legacy", name: "Legado", requiresNames: ["Caçador"], excludesNames: ["Proibido"] };
+  const blocks = [{ id: "choice", type: "selection", contents: [packageEntry, templateEntry, attributeEntry, gated, legacy] }];
+  const choices = { choice: { ids: ["package", "template", "attribute"] } };
+  assert.equal(requirementSheet._getTemplateEntryAvailability(gated, blocks, choices).available, true);
+  assert.equal(requirementSheet._getTemplateEntryAvailability(legacy, blocks, choices).available, true);
+  assert.equal(requirementSheet._getTemplateEntryRequirements(legacy).length, 2);
+});
+
+test("manual availability can hide entries, omit guaranteed delivery, and allow an explicit GM override", () => {
+  const availabilitySheet = new context.Sheet();
+  availabilitySheet.actor = { items: [] };
+  const hidden = { id: "hidden", kind: "item", itemType: "equipment", name: "Hidden", available: false, unavailableBehavior: "hidden" };
+  const blocks = [{ id: "delivery", type: "guaranteed", contents: [hidden, { id: "open", kind: "item", itemType: "equipment", name: "Open" }] }];
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(hidden, blocks, {}).hidden, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(availabilitySheet._buildTemplatePlanFromChoices(blocks, {}).plan.map(entry => entry.id))), ["open"]);
+  context.game.user.isGM = true;
+  hidden.allowGMOverride = true;
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(hidden, blocks, {}).overridden, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(availabilitySheet._buildTemplatePlanFromChoices(blocks, {}).plan.map(entry => entry.id))), ["hidden", "open"]);
+  context.game.user.isGM = false;
+});
+
 test("template steps include guaranteed blocks and only nested blocks from selected options", () => {
   const nested = { id: "nested", type: "guaranteed", contents: [{ id: "sword", kind: "item" }] };
   const blocks = [
@@ -122,7 +179,7 @@ test("point plan uses chosen levels and equipment quantities without charging eq
   assert.equal(result.plan[1].cost, 100);
 });
 
-test("fixed equipment quantity ignores a requested change unless quantity consumes choices", () => {
+test("fixed equipment quantity ignores requested changes even when quantity consumes choices", () => {
   const fixed = { id: "fixed", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true, pointsCost: 3 };
   const adjustable = { id: "adjustable", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true,
     selectionQuantity: true, pointsCost: 3 };
@@ -131,8 +188,17 @@ test("fixed equipment quantity ignores a requested change unless quantity consum
     points: { ids: ["fixed", "adjustable"], quantities: { fixed: 5, adjustable: 4 } }
   });
   assert.equal(result.plan[0].quantity, 2);
-  assert.equal(result.plan[1].quantity, 4);
-  assert.equal(result.budgetResults[0].spent, 18);
+  assert.equal(result.plan[1].quantity, 2);
+  assert.equal(result.budgetResults[0].spent, 12);
+  assert.equal(sheet._templateSelectionUnits({ contents: [adjustable] }, ["adjustable"], { adjustable: 5 }), 2);
+});
+
+test("equipment quantities are clamped to their configured acquisition limits", () => {
+  const entry = { itemType: "equipment", quantity: 3, minimumQuantity: 2, maximumQuantity: 5 };
+  assert.equal(sheet._templateEntryQuantity(entry, 1), 2);
+  assert.equal(sheet._templateEntryQuantity(entry, 4), 4);
+  assert.equal(sheet._templateEntryQuantity(entry, 10), 5);
+  assert.equal(sheet._templateEntryQuantity({ ...entry, quantityLocked: true }, 5), 3);
 });
 
 test("point allocation scales attribute increments and cost, including quarter speed steps", () => {
@@ -183,6 +249,14 @@ test("individual attribute caps constrain point allocation without limiting othe
     attributeLimits: { st: 3, basic_speed: 0.5 } }, { st: -4, basic_speed: 1 }).st, -3);
   assert.equal(sheet._templateAttributeAmounts({ attributes: { basic_speed: 0.25 },
     attributeLimits: { basic_speed: 0.5 } }, { basic_speed: 1 }).basic_speed, 0.5);
+});
+
+test("attribute adjustments support independent minimum and maximum values", () => {
+  const entry = { attributes: { st: 1, dx: 0, basic_speed: 0.25 }, selectedAttributes: ["st", "dx", "basic_speed"],
+    attributeMinimums: { st: 0, dx: -1, basic_speed: -0.25 },
+    attributeMaximums: { st: 3, dx: 2, basic_speed: 0.5 } };
+  assert.deepEqual({ ...sheet._templateAttributeAmounts(entry, { st: -2, dx: 8, basic_speed: -1 }) },
+    { st: 0, dx: 2, basic_speed: -0.25 });
 });
 
 test("fixed attribute values cannot be reduced or increased during allocation", () => {
@@ -249,6 +323,18 @@ test("template attributes map secondary statistics and maximum HP/FP to their ac
   assert.equal(update["system.attributes.hp.max"], 15);
   assert.equal(update["system.attributes.fp.max"], 13);
   assert.ok(changes.some(change => change.key === "hp.max" && change.amount === 3));
+});
+
+test("legacy PV and PF template adjustments change only the maximum resources", () => {
+  const actorSheet = new context.Sheet();
+  actorSheet.actor = { system: { attributes: { hp: { value: 7, max: 10 }, fp: { value: 5, max: 9 } } } };
+  const deltas = {}, changes = [];
+  actorSheet._accumulateAttributeChanges({ attributes: { hp: 2, fp: 3 } }, deltas, changes);
+  const update = actorSheet._buildTemplateAttributeUpdateData(deltas);
+  assert.equal(update["system.attributes.hp.max"], 12);
+  assert.equal(update["system.attributes.fp.max"], 12);
+  assert.equal(update["system.attributes.hp.value"], undefined);
+  assert.equal(update["system.attributes.fp.value"], undefined);
 });
 
 test("review conflict choices omit ignored entries and return their point budget", () => {
@@ -319,7 +405,8 @@ test("shared points across referenced blocks are charged once and validated cumu
 });
 
 test("shared money pools are charged once and retain the pool accounting rule", () => {
-  const budgets = [{ name: "Equipment", type: "money", amount: 100, policy: "allow", accounting: "deduct" }];
+  const budgets = [{ name: "Equipment", type: "money", amount: 100, policy: "allow", accounting: "deduct",
+    paymentRules: { categories: ["coins"], modes: ["physical"], locations: ["carried"] } }];
   const blocks = [{ id: "a", type: "money", sharedBudgetKey: "Equipment", contents: [
     { id: "rope", kind: "item", itemType: "equipment", cost: 20, quantity: 1 }
   ] }, { id: "b", type: "money", sharedBudgetKey: "Equipment", contents: [
@@ -331,7 +418,16 @@ test("shared money pools are charged once and retain the pool accounting rule", 
   assert.equal(result.budgetResults[0].spent, 55);
   assert.equal(result.budgetResults[0].accounting, "deduct");
   assert.equal(result.budgetResults[0].moneyMode, "shared");
+  assert.deepEqual(JSON.parse(JSON.stringify(result.budgetResults[0].paymentRules)), {
+    categories: ["coins"], modes: ["physical"], locations: ["carried"]
+  });
   assert.equal(result.pointsLeftoverTotal, 0);
+});
+
+test("money costs use an explicit unit price for every entry type and never become negative", () => {
+  assert.equal(sheet._templateMoneyCost({ itemType: "skill", cost: 4, moneyCost: 12 }, 3), 36);
+  assert.equal(sheet._templateMoneyCost({ itemType: "advantage", cost: 20, moneyCost: -5 }, 1), 0);
+  assert.equal(sheet._templateMoneyCost({ itemType: "equipment", cost: 7 }, 2), 14);
 });
 
 test("money spending modes preserve legacy data and explicit mode semantics", () => {
@@ -491,6 +587,34 @@ test("one purchase can be split across multiple money sources", async () => {
   assert.equal(actor.system.applied_models[0].moneyTransactions.length, 2);
 });
 
+test("structured payment rules filter category, source type, and location", () => {
+  const ruleSheet = new context.Sheet();
+  const coin = { id: "coin", name: "Purse", type: "money_source", system: { category: "Coins", mode: "physical", location: "carried", quantity: 5, unit_value: 10 } };
+  const bank = { id: "bank", name: "Bank", type: "money_source", system: { category: "Credit", mode: "abstract", location: "stored", balance: 100 } };
+  const items = [coin, bank];
+  items.get = id => items.find(item => item.id === id);
+  ruleSheet.actor = { items };
+  const result = { paymentRules: { categories: ["coins"], modes: ["physical"], locations: ["carried"] } };
+  assert.deepEqual(ruleSheet._getCompatibleTemplateMoneySources(result).map(item => item.id), ["coin"]);
+  assert.equal(ruleSheet._getCompatibleTemplateMoneyBalance(result), 50);
+  assert.equal(ruleSheet._moneySourceMatchesFilter(coin, "Purse", result.paymentRules), true);
+  assert.equal(ruleSheet._moneySourceMatchesFilter(coin, "Credit", result.paymentRules), false);
+});
+
+test("automatic payment respects physical denominations and can finish with abstract money", () => {
+  const allocationSheet = new context.Sheet();
+  const coins = { id: "coins", type: "money_source", system: { mode: "physical", quantity: 3, unit_value: 10 } };
+  const account = { id: "account", type: "money_source", system: { mode: "abstract", balance: 20 } };
+  allocationSheet.actor = { items: Object.assign([coins, account], { get: id => id === "coins" ? coins : account }) };
+  assert.deepEqual(JSON.parse(JSON.stringify(allocationSheet._buildAutomaticTemplatePaymentAllocations({ spent: 35 }, [coins, account]))), [
+    { sourceId: "coins", amount: 30 }, { sourceId: "account", amount: 5 }
+  ]);
+  const budget = [{ blockId: "buy", type: "money", accounting: "deduct", spent: 15 }];
+  assert.equal(allocationSheet._buildTemplatePaymentTransactions(budget, { buy: [{ sourceId: "coins", amount: 15 }] }).reason, "denomination");
+  assert.equal(allocationSheet._buildTemplatePaymentTransactions([{ ...budget[0], spent: 20 }], { buy: [{ sourceId: "coins", amount: 20 }] }).valid, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(allocationSheet._getMoneySourceDebit(coins, 20))), { "system.quantity": 1 });
+});
+
 test("detaching a template removes only its record and clears item provenance", async () => {
   const item = { id: "sword" };
   const items = [item];
@@ -541,11 +665,14 @@ test("levelled trait cost is recalculated from the chosen level", () => {
   assert.equal(sheet._templateChoiceCost(trait, 2), 25);
 });
 
-test("level caps limit the selected level and its point cost", () => {
-  const trait = { itemType: "advantage", maxLevel: 2, trait_cost: { points: 5, points_per_level: 10, can_level: true, level: 0 } };
+test("level rules enforce minimum, maximum and fixed values in selection and cost", () => {
+  const trait = { itemType: "advantage", level: 1, minLevel: 1, maxLevel: 2,
+    trait_cost: { points: 5, points_per_level: 10, can_level: true, level: 1 } };
+  assert.equal(sheet._templateEntryLevel(trait, 0), 1);
   assert.equal(sheet._templateEntryLevel(trait, 4), 2);
   assert.equal(sheet._templateChoiceCost(trait, 4), 25);
   assert.equal(sheet._templateEntryLevel({ itemType: "skill", maxLevel: 1 }, 3), 1);
+  assert.equal(sheet._templateEntryLevel({ itemType: "skill", level: -1, minLevel: -2, maxLevel: 2, levelLocked: true }, 2), -1);
 });
 
 test("entry destination can override or opt out of a block default", () => {

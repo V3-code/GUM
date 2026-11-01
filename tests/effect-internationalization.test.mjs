@@ -22,7 +22,7 @@ const effectSources = [
 
 test("todas as chaves estáticas do item Efeito existem em inglês e português", () => {
   const keys = new Set(effectSources.flatMap(source => [...source.matchAll(/GUM\.[A-Za-z0-9_.]+/g)].map(match => match[0])));
-  const dynamicPrefixes = ["GUM.EffectSheet.Application.", "GUM.EffectSheet.Context.", "GUM.EffectSheet.ActionType.", "GUM.EffectSheet.Resource.", "GUM.EffectSheet.ChatVisibility."];
+  const dynamicPrefixes = ["GUM.EffectSheet.Application.", "GUM.EffectSheet.Context.", "GUM.EffectSheet.Composition.", "GUM.EffectSheet.ActionType.", "GUM.EffectSheet.Resource.", "GUM.EffectSheet.ChatVisibility."];
   for (const key of keys) {
     if (dynamicPrefixes.includes(key)) continue;
     assert.ok(key in en, `chave ausente em en.json: ${key}`);

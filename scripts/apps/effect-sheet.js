@@ -13,6 +13,7 @@ import {
 } from "../../module/utils/effect-chat-visibility.mjs";
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 import { ensureEffectItemBridge, findEffectItemBridge } from "../../module/integrations/active-effect-bridge.mjs";
+import { normalizeRollModifierCompositionMode, ROLL_MODIFIER_COMPOSITION_MODES } from "../../module/utils/roll-modifier-composition.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -163,6 +164,9 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_cap: "",
     roll_modifier_context: "all",
     roll_modifier_application_side: "self",
+    roll_modifier_composition_group: "",
+    roll_modifier_composition_mode: "sum",
+    roll_modifier_composition_priority: 0,
     roll_modifier_entries: [],
     modifier_value: "0",
     modifier_value_mode: "fixed",
@@ -264,6 +268,9 @@ const normalizeAction = (action = {}) => {
             target_values: (entry?.target_values || "").toString().trim(),
             source_item_ids: (entry?.source_item_ids || "").toString().trim(),
             source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
+            composition_group: (entry?.composition_group || "").toString().trim(),
+            composition_mode: normalizeRollModifierCompositionMode(entry?.composition_mode),
+            composition_priority: Number(entry?.composition_priority) || 0,
             ability_sources: normalizeControlledCsv(entry?.ability_sources),
             ability_groups: normalizeControlledCsv(entry?.ability_groups),
             ability_sheet_groups: normalizeControlledCsv(entry?.ability_sheet_groups),
@@ -271,7 +278,7 @@ const normalizeAction = (action = {}) => {
             ability_classes: normalizeControlledCsv(entry?.ability_classes),
              roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || "").toString().trim(),
             roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
-            nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
+            nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim() || String(entry?.composition_group || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }))
         : [{
             label: "",
@@ -285,14 +292,20 @@ const normalizeAction = (action = {}) => {
             target_values: (next.roll_modifier_target_values || "").toString().trim(),
             source_item_ids: (next.roll_modifier_source_item_ids || "").toString().trim(),
             source_attack_ids: (next.roll_modifier_source_attack_ids || "").toString().trim(),
+            composition_group: (next.roll_modifier_composition_group || "").toString().trim(),
+            composition_mode: normalizeRollModifierCompositionMode(next.roll_modifier_composition_mode),
+            composition_priority: Number(next.roll_modifier_composition_priority) || 0,
             roll_tags: (next.roll_modifier_roll_tags || "").toString().trim(),
             roll_tag_match: next.roll_modifier_roll_tag_match === "all" ? "all" : "any",
-            nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
+            nh_display_mode: String(next.roll_modifier_composition_group || "").trim() ? "roll_only" : (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
+    next.roll_modifier_composition_group = next.roll_modifier_entries[0]?.composition_group ?? "";
+    next.roll_modifier_composition_mode = next.roll_modifier_entries[0]?.composition_mode ?? "sum";
+    next.roll_modifier_composition_priority = next.roll_modifier_entries[0]?.composition_priority ?? 0;
     next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
     next.modifier_value_mode = next.modifier_value_mode === "per_origin_level" ? "per_origin_level" : "fixed";
     next.ability_kind = ["skill", "spell", "power", "all"].includes(next.ability_kind) ? next.ability_kind : "skill";
@@ -410,7 +423,10 @@ export class EffectSheet extends ItemSheet {
  }
         context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Context.${option.key}`) }));
         context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Application.${option.key}`) }));
+        context.rollModifierCompositionOptions = ROLL_MODIFIER_COMPOSITION_MODES.map(id => ({ id, label: localize(`GUM.EffectSheet.Composition.${id}`) }));
         const actions = getEffectActionsFromSystem(context.system);
+        context.rollModifierCompositionGroups = [...new Set(actions.flatMap(action => action.roll_modifier_entries || [])
+            .map(entry => String(entry?.composition_group || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
         const statusLabels = new Map(context.statusEffects.map(status => [status.id, status.label]));
         const contextLabels = new Map(context.rollModifierContextOptions.map(opt => [opt.id, opt.label]));
         context.effectActionsCountLabel = formatActionCount(actions.length);
@@ -432,6 +448,9 @@ export class EffectSheet extends ItemSheet {
                     target_values: entry?.target_values || "",
                     source_item_ids: entry?.source_item_ids || "",
                     source_attack_ids: entry?.source_attack_ids || "",
+                    composition_group: entry?.composition_group || "",
+                    composition_mode: normalizeRollModifierCompositionMode(entry?.composition_mode),
+                    composition_priority: Number(entry?.composition_priority) || 0,
                     ability_sources: entry?.ability_sources || "",
                     ability_groups: entry?.ability_groups || "",
                     ability_sheet_groups: entry?.ability_sheet_groups || "",
@@ -963,6 +982,9 @@ activateListeners(html) {
             target_values: "",
             source_item_ids: "",
             source_attack_ids: "",
+            composition_group: "",
+            composition_mode: "sum",
+            composition_priority: 0,
             roll_tags: "",
             roll_tag_match: "any",
             nh_display_mode: "roll_only"
@@ -1021,6 +1043,9 @@ activateListeners(html) {
                 target_values: "",
                 source_item_ids: "",
                 source_attack_ids: "",
+                composition_group: "",
+                composition_mode: "sum",
+                composition_priority: 0,
                 roll_tags: "",
                 roll_tag_match: "any",
                 nh_display_mode: "roll_only"
@@ -1235,7 +1260,7 @@ activateListeners(html) {
                 delete formData[key];
                 continue;
             }
-            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|roll_tags|roll_tag_match|nh_display_mode)$/); 
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|composition_group|composition_mode|composition_priority|roll_tags|roll_tag_match|nh_display_mode)$/);
             const damageChangeMatch = key.match(/^system\.actions\.(\d+)\.combat_damage_changes\.(\d+)\.(component|operation|value|value_mode|cap|replace_armor_divisor|replace_type|replace_nature)$/);
             if (damageChangeMatch) {
                 const actionIndex = Number(damageChangeMatch[1]);
@@ -1266,6 +1291,9 @@ activateListeners(html) {
                         target_values: "",
                         source_item_ids: "",
                         source_attack_ids: "",
+                        composition_group: "",
+                        composition_mode: "sum",
+                        composition_priority: 0,
                         roll_tags: "",
                         roll_tag_match: "any",
                         nh_display_mode: "roll_only"
@@ -1324,9 +1352,12 @@ activateListeners(html) {
                             target_values: (entry.target_values || "").toString().trim(),
                             source_item_ids: (entry.source_item_ids || "").toString().trim(),
                             source_attack_ids: (entry.source_attack_ids || "").toString().trim(),
+                            composition_group: (entry.composition_group || "").toString().trim(),
+                            composition_mode: normalizeRollModifierCompositionMode(entry.composition_mode),
+                            composition_priority: Number(entry.composition_priority) || 0,
                             roll_tags: (entry.roll_tags || "").toString().trim(),
                             roll_tag_match: entry.roll_tag_match === "all" ? "all" : "any",
-                            nh_display_mode: (entry.roll_tags || "").toString().trim() ? "roll_only" : (entry.nh_display_mode || "roll_only").toString().trim() || "roll_only"
+                            nh_display_mode: (entry.roll_tags || "").toString().trim() || (entry.composition_group || "").toString().trim() ? "roll_only" : (entry.nh_display_mode || "roll_only").toString().trim() || "roll_only"
                         }));
                 }
                 const damageChangeMap = damageChanges.get(index);
@@ -1364,6 +1395,9 @@ activateListeners(html) {
             formData["system.roll_modifier_cap"] = firstAction.roll_modifier_cap;
             formData["system.roll_modifier_context"] = firstAction.roll_modifier_context;
             formData["system.roll_modifier_application_side"] = firstAction.roll_modifier_application_side;
+            formData["system.roll_modifier_composition_group"] = firstAction.roll_modifier_composition_group;
+            formData["system.roll_modifier_composition_mode"] = firstAction.roll_modifier_composition_mode;
+            formData["system.roll_modifier_composition_priority"] = firstAction.roll_modifier_composition_priority;
             formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
             formData["system.requestedPurposeIds"] = firstAction.requestedPurposeIds;
             formData["system.roll_visibility"] = firstAction.roll_visibility;

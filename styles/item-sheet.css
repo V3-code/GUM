@@ -6614,6 +6614,19 @@ color:#121114;
 .gum.sheet.item.effect-sheet .effect-premium-grid-entry-settings {
   grid-template-columns: repeat(2, minmax(220px, 1fr));
 }
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-composition {
+  grid-template-columns: minmax(180px, 1.35fr) minmax(160px, 1fr) minmax(110px, .65fr);
+  gap: 7px;
+}
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-composition .effect-premium-field {
+  gap: 4px;
+  padding: 6px 8px;
+}
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-composition input,
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-composition select {
+  min-height: 29px;
+  padding: 3px 8px;
+}
 
 .gum.sheet.item.effect-sheet .effect-premium-grid-entry-context {
   grid-template-columns: minmax(0, 1fr);
@@ -7028,6 +7041,7 @@ color:#121114;
   .gum.sheet.item.effect-sheet .effect-premium-grid-resource,
   .gum.sheet.item.effect-sheet .effect-premium-grid-entry-primary,
   .gum.sheet.item.effect-sheet .effect-premium-grid-entry-settings,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-entry-composition,
   .gum.sheet.item.effect-sheet .effect-premium-grid-entry-context,
   .gum.sheet.item.effect-sheet .effect-premium-grid-advanced,
   .gum.sheet.item.effect-sheet .effect-premium-grid-chat-roll,

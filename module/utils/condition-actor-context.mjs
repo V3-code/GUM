@@ -14,6 +14,10 @@ export function getActorEvaluationKey(actor) {
  */
 export function isActorContextAvailable(actor) {
   if (!actor) return false;
+  // ActiveEffect hooks also run for effects embedded in Items. Those effects
+  // are configuration data, not part of an Actor condition/status runtime.
+  const ownerDocumentName = actor.documentName ?? actor.constructor?.documentName ?? null;
+  if (ownerDocumentName && ownerDocumentName !== "Actor") return false;
   if (!actor.isToken) return true;
 
   const token = actor.token;

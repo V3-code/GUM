@@ -7526,14 +7526,15 @@ async _resolveTemplateReferenceGraph(templateItem) {
   return blocks ? { blocks, references } : null;
 }
 
-_collectTemplateSteps(blocks, choices, output = []) {
+_collectTemplateSteps(blocks, choices, output = [], rootBlocks = blocks) {
   for (const block of blocks || []) {
     if (!Array.isArray(block.contents) || !block.contents.length) continue;
     output.push(block);
     const selected = block.type === "guaranteed"
-      ? block.contents
-      : block.contents.filter(entry => choices[block.id]?.ids?.includes(entry.id));
-    for (const entry of selected) this._collectTemplateSteps(entry.subBlocks, choices, output);
+      ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, rootBlocks, choices).available)
+      : block.contents.filter(entry => choices[block.id]?.ids?.includes(entry.id)
+        && this._getTemplateEntryAvailability(entry, rootBlocks, choices).available);
+    for (const entry of selected) this._collectTemplateSteps(entry.subBlocks, choices, output, rootBlocks);
   }
   return output;
 }
@@ -7553,7 +7554,8 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
       const blockContainer = block.containerName || inherited.container;
       const contents = Array.isArray(block.contents) ? block.contents : [];
       const choice = choices[block.id] || {};
-      const selected = block.type === "guaranteed" ? contents : contents.filter(entry => choice.ids?.includes(entry.id));
+      const selected = (block.type === "guaranteed" ? contents : contents.filter(entry => choice.ids?.includes(entry.id)))
+        .filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available);
       if (block.type === "points") {
         const spent = selected.filter(entry => choices.__conflicts?.[entry.id]?.action !== "ignore")
           .reduce((sum, entry) => sum + this._templateChoiceCost(entry, choice.levels?.[entry.id], choice.quantities?.[entry.id], choice.attributeValues?.[entry.id]), 0);
@@ -7575,10 +7577,13 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
           const spendingLimit = moneyMode === "deduct" ? this._resolveTemplateSpendingLimit(block) : Number(block.moneyAvailable) || 0;
           const unlimited = moneyMode === "deduct" && spendingLimit === null;
           const budget = unlimited ? 0 : spendingLimit;
+          const configuredPolicy = block.budgetPolicy || "hard";
+          const policy = moneyMode === "deduct" && !["hard", "gm"].includes(configuredPolicy) ? "hard" : configuredPolicy;
           budgetResults.push({ blockId: block.id, title: block.title || "", type: "money", budget,
-            spent, excess: unlimited ? 0 : Math.max(0, spent - budget), policy: block.budgetPolicy || "hard", unlimited,
+            spent, excess: unlimited ? 0 : Math.max(0, spent - budget), policy, unlimited,
             moneyMode, accounting: moneyMode === "deduct" ? "deduct" : "budget",
-            moneySourceFilter: moneyMode === "deduct" ? String(block.moneySourceFilter || "").trim() : "", originChain: block.originChain || [] });
+            moneySourceFilter: moneyMode === "deduct" ? String(block.moneySourceFilter || "").trim() : "",
+            paymentRules: moneyMode === "deduct" ? this._normalizeTemplatePaymentRules(block.paymentRules) : this._normalizeTemplatePaymentRules(), originChain: block.originChain || [] });
         }
       }
       for (const entry of selected) {
@@ -7624,9 +7629,13 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
     const definition = sharedDefinitions.get(key);
     if (!definition) continue;
     const budget = Number(definition.amount) || 0;
+    const accounting = definition.type === "money" && definition.accounting === "deduct" ? "deduct" : "budget";
+    const configuredPolicy = definition.policy || "hard";
+    const policy = accounting === "deduct" && !["hard", "gm"].includes(configuredPolicy) ? "hard" : configuredPolicy;
     const result = { blockId: `shared:${key}`, sharedKey: key, title: definition.name, type: definition.type,
-      budget, spent, excess: Math.max(0, spent - budget), policy: definition.policy || "hard",
-      moneyMode: definition.type === "money" ? "shared" : "", accounting: definition.type === "money" && definition.accounting === "deduct" ? "deduct" : "budget", moneySourceFilter: "", originChain: [] };
+      budget, spent, excess: Math.max(0, spent - budget), policy,
+      moneyMode: definition.type === "money" ? "shared" : "", accounting,
+      moneySourceFilter: String(definition.moneySourceFilter || "").trim(), paymentRules: this._normalizeTemplatePaymentRules(definition.paymentRules), originChain: [] };
     budgetResults.push(result);
     if (definition.type === "points") pointsLeftoverTotal += budget - spent;
   }
@@ -7652,12 +7661,89 @@ _templateRuleNames(value) {
     .map(name => String(name).trim()).filter(Boolean);
 }
 
+_normalizeTemplateEntryRequirements(requirements = []) {
+  return (Array.isArray(requirements) ? requirements : []).map(requirement => {
+    const rawLevel = requirement?.minimumLevel;
+    return { condition: requirement?.condition === "exclude" ? "exclude" : "require",
+      itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment", "group", "template", "attribute"].includes(requirement?.itemType) ? requirement.itemType : "",
+      name: String(requirement?.name || "").trim(),
+      minimumLevel: rawLevel === "" || rawLevel === null || rawLevel === undefined || !Number.isFinite(Number(rawLevel)) ? null : Number(rawLevel) };
+  }).filter(requirement => requirement.name);
+}
+
+_getTemplateEntryRequirements(entry = {}) {
+  const requirements = this._normalizeTemplateEntryRequirements(entry.requirements);
+  for (const [field, condition] of [["requiresNames", "require"], ["excludesNames", "exclude"]]) {
+    for (const name of this._templateRuleNames(entry[field])) requirements.push({ condition, itemType: "", name, minimumLevel: null });
+  }
+  const seen = new Set();
+  return requirements.filter(requirement => {
+    const key = `${requirement.condition}:${requirement.itemType}:${requirement.name.toLocaleLowerCase()}:${requirement.minimumLevel ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+_templateRequirementCandidateLevel(candidate) {
+  const raw = candidate?.system?.level ?? candidate?.system?.skill_level ?? candidate?.trait_cost?.level ?? candidate?.level;
+  return Number.isFinite(Number(raw)) ? Number(raw) : 0;
+}
+
+_templateRequirementMatches(requirement, candidate) {
+  const candidateType = ["group", "template", "attribute"].includes(candidate?.kind)
+    ? candidate.kind : candidate?.type || candidate?.itemType;
+  if (requirement.itemType && candidateType !== requirement.itemType) return false;
+  const normalize = value => String(value || "").trim().toLocaleLowerCase();
+  const target = normalize(requirement.name);
+  const names = [candidate?.name, candidate?.label, templateEntryDisplayName(candidate, candidate)].map(normalize);
+  if (!names.includes(target)) return false;
+  return requirement.minimumLevel === null || this._templateRequirementCandidateLevel(candidate) >= requirement.minimumLevel;
+}
+
+_getTemplateSelectedRequirementCandidates(blocks, choices) {
+  const selected = [];
+  const visit = list => {
+    for (const block of list || []) {
+      const entries = block.type === "guaranteed" ? block.contents || []
+        : (block.contents || []).filter(entry => choices?.[block.id]?.ids?.includes(entry.id));
+      for (const entry of entries) {
+        if (choices?.__conflicts?.[entry.id]?.action === "ignore") continue;
+        selected.push(entry);
+        visit(entry.subBlocks);
+      }
+    }
+  };
+  visit(blocks);
+  return selected;
+}
+
+_getTemplateEntryAvailability(entry, blocks, choices) {
+  const reasons = [];
+  const failedRequirements = [];
+  if (entry?.available === false) reasons.push(game.i18n.localize("GUM.Template.OptionManuallyUnavailable"));
+  const selected = this._getTemplateSelectedRequirementCandidates(blocks, choices).filter(candidate => candidate !== entry && candidate.id !== entry?.id);
+  const candidates = [...(this.actor?.items || []), ...selected];
+  for (const requirement of this._getTemplateEntryRequirements(entry)) {
+    const matched = candidates.some(candidate => this._templateRequirementMatches(requirement, candidate));
+    const failed = requirement.condition === "exclude" ? matched : !matched;
+    if (!failed) continue;
+    failedRequirements.push(requirement);
+    const level = requirement.minimumLevel === null ? "" : ` (${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel})`;
+    reasons.push(`${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`);
+  }
+  const overridden = reasons.length > 0 && Boolean(game.user?.isGM && entry?.allowGMOverride);
+  const available = reasons.length === 0 || overridden;
+  return { available, overridden, hidden: !available && entry?.unavailableBehavior === "hidden",
+    reasons: entry?.unavailableReason && reasons.length ? [String(entry.unavailableReason)] : reasons, failedRequirements };
+}
+
 _validateTemplateChoiceRules(blocks, choices) {
   const selected = [];
   const visit = list => {
     for (const block of list || []) {
       const choice = choices[block.id] || {};
-      const entries = block.type === "guaranteed" ? block.contents || []
+      const entries = block.type === "guaranteed" ? (block.contents || []).filter(entry => entry.available !== false || this._getTemplateEntryAvailability(entry, blocks, choices).available)
         : (block.contents || []).filter(entry => choice.ids?.includes(entry.id));
       for (const entry of entries) {
         if (choices.__conflicts?.[entry.id]?.action === "ignore") continue;
@@ -7667,18 +7753,13 @@ _validateTemplateChoiceRules(blocks, choices) {
     }
   };
   visit(blocks);
-  const normalize = value => String(value || "").trim().toLocaleLowerCase();
-  const actorNames = new Set((this.actor?.items || []).map(item => [normalize(item.name), normalize(templateEntryDisplayName(item, item))]).flat());
   const issues = [];
   for (const entry of selected) {
-    const present = name => actorNames.has(normalize(name)) || selected.some(other => other !== entry
-      && [normalize(other.name || other.label), normalize(templateEntryDisplayName(other))].includes(normalize(name)));
-    for (const name of this._templateRuleNames(entry.requiresNames)) {
-      if (!present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "required" });
-    }
-    for (const name of this._templateRuleNames(entry.excludesNames)) {
-      if (present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "incompatible" });
-    }
+    const availability = this._getTemplateEntryAvailability(entry, blocks, choices);
+    if (!availability.available && availability.failedRequirements.length) {
+      for (const requirement of availability.failedRequirements) issues.push({ entry: templateEntryDisplayName(entry) || "?",
+        target: entry.unavailableReason || requirement.name, kind: requirement.condition === "exclude" ? "incompatible" : "required" });
+    } else if (!availability.available) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: availability.reasons.join(" · "), kind: "unavailable" });
   }
   return issues;
 }
@@ -7719,9 +7800,10 @@ _templateBudgetStatus(block, draftChoice, blocks, choices, sharedBudgets) {
   const result = name
     ? results.find(entry => entry.sharedKey === `${block.type}:${name}`)
     : results.find(entry => entry.blockId === block.id);
-  if (!result) return { spent: 0, budget: 0, valid: false, unlimited: false };
+  if (!result) return { spent: 0, budget: 0, valid: false, unlimited: false, accounting: "budget", paymentRules: this._normalizeTemplatePaymentRules(), moneySourceFilter: "" };
   const valid = this._isTemplateBudgetResultValid(result);
-  return { spent: result.spent, budget: result.budget, valid, unlimited: result.unlimited === true };
+  return { spent: result.spent, budget: result.budget, valid, unlimited: result.unlimited === true,
+    accounting: result.accounting || "budget", paymentRules: this._normalizeTemplatePaymentRules(result.paymentRules), moneySourceFilter: result.moneySourceFilter || "" };
 }
 
 _isTemplateBudgetResultValid(result) {
@@ -7730,7 +7812,7 @@ _isTemplateBudgetResultValid(result) {
 }
 
 _templateMoneyCost(entry, quantity = undefined) {
-  const unitPrice = Number(entry.moneyCost ?? entry.cost) || 0;
+  const unitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
   return unitPrice * this._templateEntryQuantity(entry, quantity);
 }
 
@@ -7769,14 +7851,20 @@ _templateAttributeAmounts(entry, values = undefined) {
   const locked = new Set(Array.isArray(entry.lockedAttributes) ? entry.lockedAttributes : []);
   for (const [key, raw] of Object.entries(entry.attributes || {})) {
     const initial = Number(raw) || 0;
-    const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
-    if (!initial && !(Number.isFinite(configuredLimit) && configuredLimit > 0) && !selected.has(key)) continue;
+    const legacyLimitRaw = entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined);
+    const legacyLimit = Number(legacyLimitRaw);
+    const minimumRaw = entry.attributeMinimums?.[key] ?? (key === "move" ? entry.attributeMinimums?.basic_move : undefined);
+    const maximumRaw = entry.attributeMaximums?.[key] ?? (key === "move" ? entry.attributeMaximums?.basic_move : undefined);
+    let minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+      ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : -Infinity;
+    let maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+      ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : Infinity;
+    if (minimum > maximum) [minimum, maximum] = [maximum, minimum];
+    if (!initial && minimum === -Infinity && maximum === Infinity && !selected.has(key)) continue;
     const step = key === "basic_speed" ? 0.25 : 1;
     const requested = locked.has(key) || values?.[key] === undefined ? initial : Number(values[key]);
     const amount = Number.isFinite(requested) ? requested : initial;
-    const magnitudeLimit = Number.isFinite(configuredLimit) && configuredLimit > 0
-      ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : Infinity;
-    const bounded = Math.min(Math.max(-magnitudeLimit, amount), magnitudeLimit);
+    const bounded = Math.min(maximum, Math.max(minimum, amount));
     result[key] = Math.round(bounded / step) * step;
   }
   return result;
@@ -7823,12 +7911,21 @@ _templateChoiceCost(entry, level = undefined, quantity = undefined, attributeVal
 }
 
 _templateEntryLevel(entry, value) {
-  const level = Number(value) || 0;
+  const configuredRaw = entry?.level !== "" && entry?.level !== null && entry?.level !== undefined
+    ? entry.level : entry?.trait_cost?.level;
+  const configured = Number(configuredRaw) || 0;
+  let level = entry?.levelLocked ? configured : Number(value);
+  if (!Number.isFinite(level)) level = configured;
+  const rawMinimum = entry?.minLevel;
   const rawMaximum = entry?.maxLevel;
-  const maximum = Number(rawMaximum);
-  return rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(maximum)
-    ? Math.min(level, maximum)
-    : level;
+  let minimum = Number(rawMinimum);
+  let maximum = Number(rawMaximum);
+  const hasMinimum = rawMinimum !== "" && rawMinimum !== null && rawMinimum !== undefined && Number.isFinite(minimum);
+  const hasMaximum = rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(maximum);
+  minimum = hasMinimum ? minimum : -Infinity;
+  maximum = hasMaximum ? maximum : Infinity;
+  if (minimum > maximum) [minimum, maximum] = [maximum, minimum];
+  return Math.min(maximum, Math.max(minimum, level));
 }
 
 _isTemplateSelectionValid(block, selectedCount) {
@@ -7846,9 +7943,13 @@ _templateSelectionUnits(block, ids = [], quantities = {}) {
 }
 
 _templateEntryQuantity(entry, requested = undefined) {
-  const configured = Math.max(1, Math.floor(Number(entry?.quantity) || 1));
-  if (entry?.quantityLocked && !entry?.selectionQuantity) return configured;
-  return Math.max(1, Math.floor(Number(requested ?? configured) || 1));
+  const minimum = Math.max(1, Math.floor(Number(entry?.minimumQuantity) || 1));
+  const rawMaximum = entry?.maximumQuantity;
+  const maximum = rawMaximum === "" || rawMaximum === null || rawMaximum === undefined || !Number.isFinite(Number(rawMaximum))
+    ? Infinity : Math.max(minimum, Math.floor(Number(rawMaximum)));
+  const configured = Math.min(maximum, Math.max(minimum, Math.floor(Number(entry?.quantity) || minimum)));
+  if (entry?.quantityLocked) return configured;
+  return Math.min(maximum, Math.max(minimum, Math.floor(Number(requested ?? configured) || minimum)));
 }
 
 _isTemplatePointsSpendValid(block, spent) {
@@ -7883,40 +7984,57 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const rows = block ? block.contents.map((entry, i) => {
     const view = views[i];
     const selected = choice.ids?.includes(entry.id);
+    const initialAvailability = this._getTemplateEntryAvailability(entry, blocks, choices);
     const isLevelled = block.type === "points" && (["skill", "spell", "power"].includes(entry.itemType)
       || (["advantage", "disadvantage"].includes(entry.itemType) && (entry.trait_cost || entry._resolvedTraitCost || entry.inlineItem?.system)?.can_level));
     const level = this._templateEntryLevel(entry, choice.levels?.[entry.id] ?? entry.level ?? 0);
     const quantity = this._templateEntryQuantity(entry, choice.quantities?.[entry.id]);
-    const quantityEditable = entry.itemType === "equipment" && (entry.selectionQuantity === true || (block.type !== "selection" && !entry.quantityLocked));
-    const minimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
+    const quantityEditable = entry.itemType === "equipment" && !entry.quantityLocked
+      && (entry.selectionQuantity === true || block.type !== "selection");
+    const minimumQuantity = Math.max(1, Math.floor(Number(entry.minimumQuantity) || 1));
+    const rawMaximumQuantity = entry.maximumQuantity;
+    const maximumQuantity = rawMaximumQuantity === "" || rawMaximumQuantity === null || rawMaximumQuantity === undefined || !Number.isFinite(Number(rawMaximumQuantity)) ? "" : Math.max(minimumQuantity, Math.floor(Number(rawMaximumQuantity)));
+    const naturalMinimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
+    const rawMinimumLevel = entry.minLevel;
+    const hasMinimumLevel = rawMinimumLevel !== "" && rawMinimumLevel !== null && rawMinimumLevel !== undefined && Number.isFinite(Number(rawMinimumLevel));
+    const minimumLevel = hasMinimumLevel ? Number(rawMinimumLevel) : naturalMinimumLevel;
     const rawMaximumLevel = entry.maxLevel;
     const hasMaximumLevel = rawMaximumLevel !== "" && rawMaximumLevel !== null && rawMaximumLevel !== undefined && Number.isFinite(Number(rawMaximumLevel));
     const maximumLevel = hasMaximumLevel ? Math.max(minimumLevel, Number(rawMaximumLevel)) : Math.max(12, level + 7);
-    const levelOptions = isLevelled ? Array.from({ length: maximumLevel - minimumLevel + 1 }, (_, index) => minimumLevel + index).map(n =>
+    const levelEditable = isLevelled && !entry.levelLocked;
+    const levelOptions = levelEditable ? Array.from({ length: Math.max(0, Math.floor(maximumLevel) - Math.ceil(minimumLevel) + 1) }, (_, index) => Math.ceil(minimumLevel) + index).map(n =>
       `<option value="${n}" ${n === level ? "selected" : ""}>${n} (${this._templateChoiceCost(entry, n)} ${t("Points")})</option>`).join("") : "";
     const attributeAmounts = entry.kind === "attribute" && block.type === "points"
       ? this._templateAttributeAmounts(entry, choice.attributeValues?.[entry.id]) : {};
     const lockedAttributes = new Set(Array.isArray(entry.lockedAttributes) ? entry.lockedAttributes : []);
     const attributeInputs = Object.entries(attributeAmounts).map(([key, amount]) => {
       const initial = Number(entry.attributes[key]) || 0;
-      const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+      const legacyLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+      const minimumRaw = entry.attributeMinimums?.[key] ?? (key === "move" ? entry.attributeMinimums?.basic_move : undefined);
+      const maximumRaw = entry.attributeMaximums?.[key] ?? (key === "move" ? entry.attributeMaximums?.basic_move : undefined);
       const step = key === "basic_speed" ? 0.25 : 1;
-      const limit = Number.isFinite(configuredLimit) && configuredLimit > 0
-        ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : null;
-      const bound = limit !== null ? `min="${-limit}" max="${limit}"` : "";
+      const minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+        ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : null;
+      const maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+        ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : null;
+      const bound = `${minimum === null ? "" : `min="${minimum}"`} ${maximum === null ? "" : `max="${maximum}"`}`.trim();
       if (lockedAttributes.has(key)) return `<label class="template-choice-adjustment template-attribute-adjustment is-locked"><span>${esc(this._templateAttributeLabel(key))}</span><strong>${amount > 0 ? "+" : ""}${amount}</strong></label>`;
       return `<label class="template-choice-adjustment template-attribute-adjustment"><span>${esc(this._templateAttributeLabel(key))}</span><span class="template-attribute-stepper"><button type="button" class="template-attribute-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-attribute-choice" data-entry-id="${esc(entry.id)}" data-attribute="${esc(key)}" ${bound} step="${key === "basic_speed" ? "0.25" : "1"}" value="${amount}"><button type="button" class="template-attribute-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>`;
     }).join("");
     const rowCost = block.type === "money" ? this._templateMoneyCost(entry, quantity)
       : this._templateChoiceCost(entry, isLevelled ? level : undefined, quantity, entry.kind === "attribute" ? attributeAmounts : undefined);
     const costUnit = block.type === "money" ? t("Money") : t("Points");
-    return `<div class="template-choice-row template-wizard-row" data-entry-id="${esc(entry.id)}">
-      ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas fa-check"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected ? "checked" : ""}>`}
-      <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small></span>
-      ${isLevelled ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : ""}
-      ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="1" step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
+    const costDisplay = block.type === "money"
+      ? `${Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0)}${quantity !== 1 ? ` × ${quantity} = ${rowCost}` : ""} ${costUnit}`
+      : `${rowCost} ${costUnit}`;
+    const availabilityText = initialAvailability.overridden ? t("AvailabilityOverridden") : initialAvailability.reasons.join(" · ");
+    return `<div class="template-choice-row template-wizard-row${initialAvailability.available ? "" : " template-choice-row--unavailable"}${initialAvailability.hidden ? " is-hidden" : ""}" data-entry-id="${esc(entry.id)}">
+      ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas ${initialAvailability.available ? "fa-check" : "fa-lock"}"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected && initialAvailability.available ? "checked" : ""} ${initialAvailability.available ? "" : "disabled"}>`}
+      <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small><em class="template-choice-availability">${esc(availabilityText)}</em></span>
+      ${levelEditable ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : isLevelled ? `<label class="template-choice-adjustment is-locked" title="${t("FixedLevelHint")}"><span>${t("Level")}</span><strong>${level}</strong></label>` : ""}
+      ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="${minimumQuantity}" ${maximumQuantity === "" ? "" : `max="${maximumQuantity}"`} step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
       ${attributeInputs ? `<span class="template-attribute-choices">${attributeInputs}</span>` : ""}
-      <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${rowCost} ${costUnit}</span>
+      <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${costDisplay}</span>
       <button type="button" class="template-preview-entry" data-entry-id="${esc(entry.id)}" title="${t("PreviewEntry")}" aria-label="${t("PreviewEntry")}"><i class="fas fa-eye"></i></button>
     </div>`;
   }).join("") : "";
@@ -7951,7 +8069,9 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
       </select>
     </div>${conflicts.length === 1 ? `<input type="hidden" class="template-conflict-target" data-entry-id="${esc(entry.id)}" value="${esc(targetId)}">` : ""}` : "";
     const meta = [entry.itemType === "equipment" ? `×${Math.max(1, Number(entry.quantity) || 1)}` : "", entry.destinationGroup ? esc(entry.destinationGroup) : ""].filter(Boolean).join(" · ");
-    const acquisitionCost = entry.blockType === "money" ? `${this._templateMoneyCost(entry, entry.quantity)} ${t("Money")}`
+    const acquisitionQuantity = Math.max(1, Number(entry.quantity) || 1);
+    const acquisitionUnitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
+    const acquisitionCost = entry.blockType === "money" ? `${t("MoneyUnitPrice")}: ${acquisitionUnitPrice}${acquisitionQuantity !== 1 ? ` × ${acquisitionQuantity} = ${this._templateMoneyCost(entry, acquisitionQuantity)}` : ""} ${t("Money")}`
       : entry.blockType === "points" ? `${this._templateChoiceCost(entry, entry.level, entry.quantity, entry.attributes)} ${t("Points")}` : "";
     const details = [...(reviewViews[index].details || []), entry.level !== "" && entry.level !== null && entry.level !== undefined ? `${t("Level")}: ${entry.level}` : "", acquisitionCost, meta].filter(Boolean).filter((value, position, values) => values.indexOf(value) === position).join(" · ");
     return { entry, index, conflicts, row: `<li class="template-review-card"><div class="template-review-card__main"><strong>${reviewViews[index].title}</strong>${meta ? `<small>${meta}</small>` : ""}</div>
@@ -7977,7 +8097,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const pointTotalsMarkup = pointResults.length ? `<section class="template-review-total" data-review-total="points"><h3>${t("PointsSummary")}</h3><div><span>${t("PointsInvested")}</span><strong data-review-points-invested>${pointTotals.invested}/${pointTotals.disadvantages}</strong></div><div><span>${t("PointsRemaining")}</span><strong data-review-points-remaining>${pointTotals.remaining}</strong></div></section>` : "";
   const moneyTotalsMarkup = moneyResults.length ? `<section class="template-review-total${budgetMoneyResults.length && debitMoneyResults.length ? " template-review-total--triple" : ""}" data-review-total="money"><h3>${t("MoneySummary")}</h3><div><span>${t("PurchaseTotal")}</span><strong data-review-money-invested>${moneyTotals.invested}</strong></div>${budgetMoneyResults.length ? `<div><span>${t("MoneyRemaining")}</span><strong data-review-money-remaining>${moneyTotals.remaining}</strong></div>` : ""}${debitMoneyResults.length ? `<div><span>${t("ToDebit")}</span><strong data-review-money-debit>${moneyTotals.debit}</strong></div>` : ""}</section>` : "";
   const reviewTotalsMarkup = `${pointTotalsMarkup}${moneyTotalsMarkup}`;
-  const ruleSummary = ruleIssues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join("");
+  const issueLabel = issue => t(issue.kind === "required" ? "RequiresChoice" : issue.kind === "unavailable" ? "OptionUnavailable" : "IncompatibleChoice");
+  const ruleSummary = ruleIssues.map(issue => `<li>${issueLabel(issue)}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join("");
   const originLabel = block?.originChain?.length > 1 ? `${block.originChain.map(item => esc(item.name)).join(" → ")} · ` : "";
   const title = block ? `${originLabel}${esc(block.title || t("Block"))} (${index + 1}/${total + 1})` : t("ReviewTitle");
   const blockMoneyMode = block?.type === "money" ? this._resolveTemplateMoneyMode(block) : "";
@@ -7990,9 +8111,13 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     : block?.type === "selection" ? `${block.choiceExact ? t("ChooseExactly") : t("ChooseUpTo")} ${Number(block.choiceCount) || 1}`
       : block?.type === "money" ? `${t(moneyDebitsCharacter ? "SpendingLimit" : "MoneyAvailable")}: ${moneyDebitsCharacter && !sharedDefinition && this._resolveTemplateSpendingLimit(block) === null ? t("Unlimited") : Number(sharedDefinition?.amount ?? (blockMoneyMode === "deduct" ? this._resolveTemplateSpendingLimit(block) : block.moneyAvailable)) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`
         : `${t("Budget")}: ${Number(sharedDefinition?.amount ?? block?.pointsAvailable) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`;
+  const blockInstructions = block ? String(block.instructions || "").trim() : "";
+  const blockInstructionsMarkup = blockInstructions
+    ? `<p class="template-flow-instructions">${esc(blockInstructions).replace(/\r?\n/g, "<br>")}</p>` : "";
   const needsPayment = !block && preview?.budgetResults?.some(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0);
   const moneySources = needsPayment ? this.actor.items.filter(item => item.type === "money_source") : [];
   const paymentLines = needsPayment ? preview.budgetResults.filter(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0) : [];
+  const automaticPaymentReserved = new Map();
   const paymentAllocationRow = (result, accepted, allocation = {}, index = 0) => `<div class="template-payment-allocation" data-payment-id="${esc(result.blockId)}" data-allocation-index="${index}">
     <label class="template-payment-source-field"><span>${t("PaymentSource")}</span><select class="template-money-source" aria-label="${t("PaymentSource")}"><option value="">${t("PaymentSource")}</option>${accepted.map(item => `<option value="${esc(item.id)}" ${allocation.sourceId === item.id ? "selected" : ""}>${esc(item.name)} · ${this._getMoneySourceBalance(item)}</option>`).join("")}</select></label>
     <label class="template-payment-amount"><span>${t("PaymentAmount")}</span><input type="number" min="0" step="any" value="${esc(allocation.amount ?? 0)}" aria-label="${t("PaymentAmount")}"></label>
@@ -8001,12 +8126,18 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   </div>`;
   const paymentSource = needsPayment ? `<details class="template-review-section template-payment-source" open><summary><span>${t("PaymentSources")}</span><strong>${paymentLines.length}</strong></summary><div class="template-payment-source__body">${paymentLines.map(result => {
     const filter = String(result.moneySourceFilter || "").trim();
-    const accepted = moneySources.filter(item => this._moneySourceMatchesFilter(item, filter));
+    const accepted = moneySources.filter(item => this._moneySourceMatchesFilter(item, filter, result.paymentRules));
     const legacySourceId = choices.__moneySourceIds?.[result.blockId] || "";
-    const saved = Array.isArray(choices.__moneyAllocations?.[result.blockId]) ? choices.__moneyAllocations[result.blockId]
-      : [{ sourceId: legacySourceId, amount: Number(result.spent) || 0 }];
-    return `<div class="template-payment-line" data-payment-id="${esc(result.blockId)}"><span class="template-payment-line__summary"><strong>${esc(result.title || t("PurchaseBudget"))}</strong><small>${filter ? `${t("PaymentSourceFilter")}: ${esc(filter)}` : t("PaymentSources")}</small><span class="template-payment-progress"><span>${t("PaymentRequired")}: <strong data-payment-required>${Number(result.spent) || 0}</strong></span><span>${t("PaymentAllocated")}: <strong data-payment-allocated>0</strong></span></span></span><span class="template-payment-line__control">${accepted.length
-      ? `<span class="template-payment-allocations">${saved.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join("")}</span><button type="button" class="template-payment-add" data-payment-id="${esc(result.blockId)}"><i class="fas fa-plus"></i> ${t("AddPaymentSource")}</button><small class="template-payment-error">${t("PaymentAllocationIncomplete")}</small>`
+    const prior = choices.__moneyAllocations?.[result.blockId];
+    const usedAutomaticAllocation = !(Array.isArray(prior) && prior.length) && !legacySourceId;
+    const saved = Array.isArray(prior) && prior.length ? prior
+      : legacySourceId ? [{ sourceId: legacySourceId, amount: Number(result.spent) || 0 }]
+        : this._buildAutomaticTemplatePaymentAllocations(result, accepted, automaticPaymentReserved);
+    if (!usedAutomaticAllocation) for (const allocation of saved) automaticPaymentReserved.set(allocation.sourceId, (automaticPaymentReserved.get(allocation.sourceId) || 0) + Math.max(0, Number(allocation.amount) || 0));
+    const rules = this._normalizeTemplatePaymentRules(result.paymentRules);
+    const ruleSummary = [rules.categories.length ? `${t("PaymentCategories")}: ${rules.categories.join(", ")}` : "", rules.modes.length ? t(rules.modes[0] === "physical" ? "PaymentPhysical" : "PaymentAbstract") : "", rules.locations.length ? t(`Payment${rules.locations[0][0].toUpperCase()}${rules.locations[0].slice(1)}`) : "", filter].filter(Boolean).join(" · ");
+    return `<div class="template-payment-line" data-payment-id="${esc(result.blockId)}"><span class="template-payment-line__summary"><strong>${esc(result.title || t("PurchaseBudget"))}</strong><small>${esc(ruleSummary || t("PaymentAny"))}</small><span class="template-payment-progress"><span>${t("PaymentRequired")}: <strong data-payment-required>${Number(result.spent) || 0}</strong></span><span>${t("PaymentAllocated")}: <strong data-payment-allocated>0</strong></span></span></span><span class="template-payment-line__control">${accepted.length
+      ? `<span class="template-payment-allocations">${saved.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join("")}</span><span class="template-payment-actions"><button type="button" class="template-payment-auto" data-payment-id="${esc(result.blockId)}"><i class="fas fa-wand-magic-sparkles"></i> ${t("AutoAllocatePayment")}</button><button type="button" class="template-payment-add" data-payment-id="${esc(result.blockId)}"><i class="fas fa-plus"></i> ${t("AddPaymentSource")}</button></span><small class="template-payment-error">${t("PaymentAllocationIncomplete")}</small>`
       : `<span class="template-payment-empty">${t("NoPaymentSource")}</span>`}</span></div>`;
   }).join("")}</div></details>` : "";
   const pointBudgetSummary = block?.type === "points" ? `<section class="template-wizard-budget-summary${initialBudgetStatus.valid ? "" : " template-wizard-budget-summary--invalid"}">
@@ -8015,11 +8146,13 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     <div><span>${t("Leftover")}</span><strong data-template-remaining>${initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>
     <p class="template-wizard-budget-notice">${initialBudgetStatus.valid ? "" : t("InvalidBudget")}</p>
   </section>` : "";
-  const moneyBudgetSummary = block?.type === "money" ? `<section class="template-wizard-budget-summary${initialBudgetStatus.valid ? "" : " template-wizard-budget-summary--invalid"}">
+  const initialCompatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(initialBudgetStatus) : 0;
+  const initialMoneyValid = Boolean(initialBudgetStatus?.valid) && (!moneyDebitsCharacter || Number(initialBudgetStatus.spent) <= initialCompatibleBalance + 1e-6);
+  const moneyBudgetSummary = block?.type === "money" ? `<section class="template-wizard-budget-summary${moneyDebitsCharacter ? " template-wizard-budget-summary--four" : ""}${initialMoneyValid ? "" : " template-wizard-budget-summary--invalid"}">
     <div><span>${t(moneyDebitsCharacter ? "SpendingLimit" : "MoneyAvailable")}</span><strong data-template-money-budget>${initialBudgetStatus.unlimited ? t("Unlimited") : initialBudgetStatus.budget}</strong></div>
     <div><span>${t("PurchaseTotal")}</span><strong data-template-money-spent>${initialBudgetStatus.spent}</strong></div>
-    <div><span>${t(moneyDebitsCharacter ? "ToDebit" : "MoneyRemaining")}</span><strong data-template-money-balance>${moneyDebitsCharacter ? initialBudgetStatus.spent : initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>
-    <p class="template-wizard-budget-notice">${initialBudgetStatus.valid ? "" : t("InvalidMoneyBudget")}</p>
+    ${moneyDebitsCharacter ? `<div><span>${t("CompatibleBalance")}</span><strong data-template-money-compatible>${initialCompatibleBalance}</strong></div><div><span>${t("BalanceAfterPurchase")}</span><strong data-template-money-after>${initialCompatibleBalance - initialBudgetStatus.spent}</strong></div>` : `<div><span>${t("MoneyRemaining")}</span><strong data-template-money-balance>${initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>`}
+    <p class="template-wizard-budget-notice">${initialMoneyValid ? "" : t(initialBudgetStatus.valid ? "PaymentInsufficient" : "InvalidMoneyBudget")}</p>
   </section>` : "";
   const guaranteedSpent = block?.type === "guaranteed" ? block.contents.reduce((sum, entry) => sum + this._templateChoiceCost(
     entry,
@@ -8043,7 +8176,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const wizardBudgetSummary = pointBudgetSummary || moneyBudgetSummary || guaranteedBudgetSummary || selectionBudgetSummary;
   const reviewConflictCount = block ? 0 : conflictRows.length;
   const content = `<div class="template-apply-block-dialog${wizardBudgetSummary ? " template-apply-block-dialog--budget" : ""}${block ? "" : " template-apply-block-dialog--review"}">
-    <header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${title}</h2><p>${block ? blockHint : t("ReviewHint")}</p></header>
+    <header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${title}</h2>${blockInstructionsMarkup}<p class="template-flow-rule">${block ? blockHint : t("ReviewHint")}</p></header>
     ${block ? `<div class="template-apply-options">${rows}</div>${wizardBudgetSummary || '<div class="template-wizard-balance"></div>'}`
       : `<div class="template-review-body"><details class="template-review-section"><summary><span>${t("ConfirmedItems")}</span><strong>${reviewRows.length - conflictRows.length}</strong></summary>${confirmedSections || `<p class="template-review-empty">${t("NoConfirmedItems")}</p>`}</details>${conflictRows.length ? `<details class="template-review-section template-review-section--conflicts" open><summary><span>${t("ResolveConflicts")}</span><strong>${conflictRows.length}</strong></summary><ul class="template-review-list">${conflictRows.map(row => row.row).join("")}</ul></details>` : ""}${paymentSource}</div><div class="template-review-totals">${reviewTotalsMarkup}</div><ul class="template-rule-issues">${ruleSummary}</ul>`}</div>`;
   return new Promise(resolve => {
@@ -8057,14 +8190,14 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           if (!block) {
             return finish({ action: "back", ...this._readTemplateReviewChoices(html) });
           }
-          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const ids = block.type === "guaranteed" ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available).map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => {
             const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
             levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
           });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           finish({ action: "back", choice: { ids, levels, quantities, attributeValues } });
         } } } : {}),
@@ -8087,21 +8220,22 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
               const payments = this._buildTemplatePaymentTransactions(currentPlan.budgetResults, review.moneyAllocations);
               if (!payments.valid) {
                 const message = payments.reason === "source" ? "NoPaymentSource"
-                  : payments.reason === "allocation" ? "PaymentAllocationIncomplete" : "PaymentInsufficient";
+                  : payments.reason === "allocation" ? "PaymentAllocationIncomplete"
+                    : payments.reason === "denomination" ? "PaymentExactRequired" : "PaymentInsufficient";
                 ui.notifications.warn(t(message));
                 return finish({ action: "retry" });
               }
             }
             return finish({ action: "next", ...review });
           }
-          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const ids = block.type === "guaranteed" ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available).map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => {
             const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
             levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
           });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           if (block.type === "selection") {
             if (!this._isTemplateSelectionValid(block, this._templateSelectionUnits(block, ids, quantities))) {
@@ -8118,8 +8252,9 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           }
           if (block.type === "money") {
             const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
-            if (!status.valid) {
-              ui.notifications.warn(t("InvalidMoneyBudget"));
+            const compatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(status) : Infinity;
+            if (!status.valid || Number(status.spent) > compatibleBalance + 1e-6) {
+              ui.notifications.warn(t(status.valid ? "PaymentInsufficient" : "InvalidMoneyBudget"));
               return finish({ action: "retry" });
             }
           }
@@ -8141,7 +8276,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             const levelField = html.find(".template-level-choice").filter((_, el) => el.dataset.entryId === entryId);
             const quantityField = html.find(".template-quantity-choice").filter((_, el) => el.dataset.entryId === entryId);
             if (levelField.length) previewEntry.level = Number(levelField.val());
-            if (quantityField.length) previewEntry.quantity = Math.max(1, Number(quantityField.val()) || 1);
+            if (quantityField.length) previewEntry.quantity = this._templateEntryQuantity(entry, quantityField.val());
             if (levelField.length) previewEntry.cost = this._templateChoiceCost(entry, previewEntry.level, previewEntry.quantity);
             if (entry.kind === "attribute" && block.type === "points") {
               const amounts = this._readTemplateAttributeChoices(html)[entryId];
@@ -8168,7 +8303,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             html.find("[data-review-money-invested]").text(currentMoneyResults.reduce((total, result) => total + Number(result.spent || 0), 0));
             html.find("[data-review-money-remaining]").text(currentMoneyResults.filter(result => result.accounting !== "deduct").reduce((total, result) => total + Number(result.budget || 0) - Number(result.spent || 0), 0));
             html.find("[data-review-money-debit]").text(currentMoneyResults.filter(result => result.accounting === "deduct").reduce((total, result) => total + Number(result.spent || 0), 0));
-            html.find(".template-rule-issues").html(issues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join(""));
+            html.find(".template-rule-issues").html(issues.map(issue => `<li>${issueLabel(issue)}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join(""));
             const payments = this._buildTemplatePaymentTransactions(currentPlan.budgetResults, review.moneyAllocations);
             html.find('button[data-button="next"]').prop("disabled", !!issues.length || !!invalidBudget || !payments.valid);
             this._refreshTemplatePaymentBalances(html, currentPlan.budgetResults);
@@ -8195,13 +8330,32 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
               .find(entry => entry.blockId === paymentId);
             if (!result) return;
             const filter = String(result.moneySourceFilter || "").trim();
-            const accepted = this.actor.items.filter(item => item.type === "money_source" && this._moneySourceMatchesFilter(item, filter));
+            const accepted = this.actor.items.filter(item => item.type === "money_source" && this._moneySourceMatchesFilter(item, filter, result.paymentRules));
             const line = html.find(".template-payment-line").filter((_, el) => el.dataset.paymentId === paymentId);
             const allocations = this._readTemplateReviewChoices(html).moneyAllocations[paymentId] || [];
             const allocated = allocations.reduce((sum, allocation) => sum + Math.max(0, Number(allocation.amount) || 0), 0);
             const row = $(paymentAllocationRow(result, accepted, { sourceId: "", amount: Math.max(0, Number(result.spent) - allocated) }, allocations.length));
             line.find(".template-payment-allocations").append(row);
             bindPaymentControls(row);
+            refreshReview();
+          });
+          html.find(".template-payment-auto").on("click", event => {
+            event.preventDefault();
+            const paymentId = event.currentTarget.dataset.paymentId;
+            const review = this._readTemplateReviewChoices(html);
+            const result = this._buildTemplatePlanFromChoices(blocks, { ...choices, __conflicts: review.conflicts, __destinations: review.destinations }, sharedBudgets).budgetResults
+              .find(entry => entry.blockId === paymentId);
+            if (!result) return;
+            const reserved = new Map();
+            for (const [otherId, allocations] of Object.entries(review.moneyAllocations || {})) {
+              if (otherId === paymentId) continue;
+              for (const allocation of allocations || []) reserved.set(allocation.sourceId, (reserved.get(allocation.sourceId) || 0) + Math.max(0, Number(allocation.amount) || 0));
+            }
+            const accepted = this._getCompatibleTemplateMoneySources(result);
+            const allocations = this._buildAutomaticTemplatePaymentAllocations(result, accepted, reserved);
+            const line = html.find(".template-payment-line").filter((_, el) => el.dataset.paymentId === paymentId);
+            line.find(".template-payment-allocations").html(allocations.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join(""));
+            bindPaymentControls(line);
             refreshReview();
           });
           bindPaymentControls(html);
@@ -8212,16 +8366,30 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
         const inputs = html.find('input[name="entry"]');
         const nextButton = html.find('button[data-button="next"]');
         const setNextEnabled = enabled => nextButton.prop("disabled", !enabled).attr("aria-disabled", String(!enabled));
+        const refreshAvailability = () => {
+          const ids = inputs.filter(":checked").map((_, input) => input.value).get();
+          const draftChoices = { ...choices, [block.id]: { ...choice, ids } };
+          for (const entry of block.contents) {
+            const availability = this._getTemplateEntryAvailability(entry, blocks, draftChoices);
+            const row = html.find(".template-wizard-row").filter((_, element) => element.dataset.entryId === entry.id);
+            const input = row.find('input[name="entry"]');
+            row.toggleClass("template-choice-row--unavailable", !availability.available).toggleClass("is-hidden", availability.hidden);
+            if (!availability.available) input.prop("checked", false);
+            input.prop("disabled", !availability.available);
+            row.find(".template-choice-availability").text(availability.overridden ? t("AvailabilityOverridden") : availability.reasons.join(" · "));
+          }
+        };
 
         if (block.type === "selection") {
           const refreshSelection = () => {
+            refreshAvailability();
             const quantities = {};
-            html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+            html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
             const selectedCount = this._templateSelectionUnits(block, inputs.filter(":checked").map((_, input) => input.value).get(), quantities);
             const limit = Math.max(1, Number(block.choiceCount) || 1);
             const atLimit = selectedCount >= limit;
             inputs.each((_, input) => {
-              if (!input.checked) input.disabled = atLimit;
+              if (!input.checked) input.disabled = atLimit || input.closest(".template-wizard-row")?.classList.contains("template-choice-row--unavailable");
             });
             const valid = this._isTemplateSelectionValid(block, selectedCount);
             html.find(".template-wizard-budget-summary")
@@ -8236,23 +8404,28 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           html.find(".template-quantity-step").on("click", event => {
             event.preventDefault();
             const input = $(event.currentTarget).siblings(".template-quantity-choice");
-            input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+            const entry = block.contents.find(candidate => candidate.id === input.get(0)?.dataset.entryId);
+            input.val(this._templateEntryQuantity(entry, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
           });
           refreshSelection();
           return;
         }
 
         const refresh = () => {
+          refreshAvailability();
           const ids = html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => { levels[el.dataset.entryId] = Number(el.value); });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           const isMoneyBlock = block.type === "money";
           const moneyMode = isMoneyBlock ? this._resolveTemplateMoneyMode(block) : "";
           const moneyDebitsCharacter = isMoneyBlock && (moneyMode === "deduct" || (moneyMode === "shared" && sharedDefinition?.accounting === "deduct"));
-          const { spent, budget, valid, unlimited } = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+          const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+          const { spent, budget, unlimited } = status;
+          const compatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(status) : 0;
+          const valid = status.valid && (!moneyDebitsCharacter || spent <= compatibleBalance + 1e-6);
           if (["points", "money"].includes(block.type)) {
             html.find(".template-wizard-budget-summary")
               .toggleClass("template-wizard-budget-summary--invalid", !valid);
@@ -8263,15 +8436,23 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             } else {
               html.find("[data-template-money-budget]").text(unlimited ? t("Unlimited") : budget);
               html.find("[data-template-money-spent]").text(spent);
-              html.find("[data-template-money-balance]").text(moneyDebitsCharacter ? spent : budget - spent);
+              html.find("[data-template-money-balance]").text(budget - spent);
+              html.find("[data-template-money-compatible]").text(compatibleBalance);
+              html.find("[data-template-money-after]").text(compatibleBalance - spent);
             }
-            html.find(".template-wizard-budget-notice").text(valid ? "" : t(block.type === "money" ? "InvalidMoneyBudget" : "InvalidBudget"));
+            html.find(".template-wizard-budget-notice").text(valid ? "" : t(block.type === "money" && status.valid ? "PaymentInsufficient" : block.type === "money" ? "InvalidMoneyBudget" : "InvalidBudget"));
           } else {
             html.find(".template-wizard-balance")
               .toggleClass("template-wizard-balance--invalid", !valid)
               .text(`${t("Leftover")}: ${budget - spent}${valid ? "" : ` · ${t("InvalidBudget")}`}`);
           }
-          for (const entry of block.contents) html.find(`[data-cost-for="${entry.id}"]`).text(`${isMoneyBlock ? this._templateMoneyCost(entry, quantities[entry.id]) : this._templateChoiceCost(entry, levels[entry.id], quantities[entry.id], attributeValues[entry.id])} ${isMoneyBlock ? t("Money") : t("Points")}`);
+          for (const entry of block.contents) {
+            const quantity = this._templateEntryQuantity(entry, quantities[entry.id]);
+            const unitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
+            const display = isMoneyBlock ? `${unitPrice}${quantity !== 1 ? ` × ${quantity} = ${this._templateMoneyCost(entry, quantity)}` : ""} ${t("Money")}`
+              : `${this._templateChoiceCost(entry, levels[entry.id], quantities[entry.id], attributeValues[entry.id])} ${t("Points")}`;
+            html.find(`[data-cost-for="${entry.id}"]`).text(display);
+          }
           setNextEnabled(valid);
         };
         html.find('input[name="entry"], .template-level-choice, .template-quantity-choice').on("change input", refresh);
@@ -8294,7 +8475,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
         html.find(".template-quantity-step").on("click", event => {
           event.preventDefault();
           const input = $(event.currentTarget).siblings(".template-quantity-choice");
-          input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+          const entry = block.contents.find(candidate => candidate.id === input.get(0)?.dataset.entryId);
+          input.val(this._templateEntryQuantity(entry, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
         });
         refresh();
       }
@@ -8341,12 +8523,66 @@ _normalizeMoneySourceTerms(value = "") {
   return String(value || "").split(",").map(term => term.trim().toLocaleLowerCase()).filter(Boolean);
 }
 
-_moneySourceMatchesFilter(item, rawFilter = "") {
+_normalizeTemplatePaymentRules(rules = {}) {
+  const list = value => (Array.isArray(value) ? value : String(value || "").split(","))
+    .map(term => String(term).trim().toLocaleLowerCase()).filter(Boolean);
+  return {
+    categories: [...new Set(list(rules.categories))],
+    modes: [...new Set(list(rules.modes).filter(mode => ["physical", "abstract"].includes(mode)))],
+    locations: [...new Set(list(rules.locations).filter(location => ["equipped", "carried", "stored"].includes(location)))]
+  };
+}
+
+_moneySourceMatchesFilter(item, rawFilter = "", paymentRules = {}) {
   const terms = this._normalizeMoneySourceTerms(rawFilter);
-  if (!terms.length) return true;
   const name = String(item?.name || "").trim().toLocaleLowerCase();
   const category = String(item?.system?.category || "").trim().toLocaleLowerCase();
-  return terms.includes(name) || terms.includes(category);
+  if (terms.length && !terms.includes(name) && !terms.includes(category)) return false;
+  const rules = this._normalizeTemplatePaymentRules(paymentRules);
+  const mode = item?.system?.mode === "abstract" ? "abstract" : "physical";
+  const location = String(item?.system?.location || "").trim().toLocaleLowerCase();
+  if (rules.categories.length && !rules.categories.includes(category)) return false;
+  if (rules.modes.length && !rules.modes.includes(mode)) return false;
+  if (rules.locations.length && !rules.locations.includes(location)) return false;
+  return true;
+}
+
+_getCompatibleTemplateMoneySources(result = {}) {
+  return this.actor.items.filter(item => item.type === "money_source"
+    && this._moneySourceMatchesFilter(item, result.moneySourceFilter, result.paymentRules));
+}
+
+_getCompatibleTemplateMoneyBalance(result = {}) {
+  return this._getCompatibleTemplateMoneySources(result).reduce((sum, item) => sum + this._getMoneySourceBalance(item), 0);
+}
+
+_isExactPhysicalMoneyAmount(item, amount) {
+  if (item?.system?.mode === "abstract") return true;
+  const unitValue = Number(item?.system?.unit_value) || 0;
+  if (!(unitValue > 0)) return false;
+  const units = Math.max(0, Number(amount) || 0) / unitValue;
+  return Math.abs(units - Math.round(units)) <= 1e-6;
+}
+
+_buildAutomaticTemplatePaymentAllocations(result, sources = [], reserved = new Map()) {
+  const allocations = [];
+  let remaining = Math.max(0, Number(result?.spent) || 0);
+  for (const source of sources) {
+    if (remaining <= 1e-6) break;
+    const available = Math.max(0, this._getMoneySourceBalance(source) - (reserved.get(source.id) || 0));
+    if (!(available > 0)) continue;
+    let amount = Math.min(remaining, available);
+    if (source.system?.mode !== "abstract") {
+      const unitValue = Number(source.system?.unit_value) || 0;
+      if (!(unitValue > 0)) continue;
+      amount = Math.floor((amount + 1e-9) / unitValue) * unitValue;
+    }
+    if (!(amount > 1e-9)) continue;
+    allocations.push({ sourceId: source.id, amount });
+    reserved.set(source.id, (reserved.get(source.id) || 0) + amount);
+    remaining -= amount;
+  }
+  return allocations;
 }
 
 _buildTemplatePaymentTransactions(budgetResults = [], moneyAllocations = {}) {
@@ -8365,8 +8601,11 @@ _buildTemplatePaymentTransactions(budgetResults = [], moneyAllocations = {}) {
     }
     for (const allocation of positive) {
       const source = this.actor.items.get(allocation.sourceId);
-      if (!source || source.type !== "money_source" || !this._moneySourceMatchesFilter(source, result.moneySourceFilter)) {
+      if (!source || source.type !== "money_source" || !this._moneySourceMatchesFilter(source, result.moneySourceFilter, result.paymentRules)) {
         return { valid: false, reason: "source", transactions: [], totals };
+      }
+      if (!this._isExactPhysicalMoneyAmount(source, allocation.amount)) {
+        return { valid: false, reason: "denomination", transactions: [], totals };
       }
       totals.set(source.id, (totals.get(source.id) || 0) + allocation.amount);
       const key = `${result.blockId}:${source.id}`;
@@ -8395,16 +8634,22 @@ _refreshTemplatePaymentBalances(html, budgetResults = []) {
     const allocations = selections[line.dataset.paymentId] || [];
     const allocated = allocations.reduce((sum, allocation) => sum + Math.max(0, Number(allocation.amount) || 0), 0);
     const complete = Math.abs(allocated - Number(result.spent)) <= 1e-6;
-    line.classList.toggle("template-payment-line--invalid", !complete);
+    let lineInvalid = !complete;
+    let errorKey = complete ? "" : "PaymentAllocationIncomplete";
     line.querySelector("[data-payment-required]").textContent = Number(result.spent) || 0;
     line.querySelector("[data-payment-allocated]").textContent = allocated;
     $(line).find(".template-payment-allocation").each((index, row) => {
       const allocation = allocations[index] || {};
       const source = this.actor.items.get(allocation.sourceId);
       const balance = row.querySelector(".template-payment-balance");
+      const amountInput = row.querySelector(".template-payment-amount input");
+      if (amountInput) amountInput.step = source?.system?.mode === "physical" ? String(Math.max(0, Number(source.system.unit_value) || 0) || "any") : "any";
       if (!source || !(Number(allocation.amount) > 0)) {
         balance.textContent = "";
-        row.classList.toggle("template-payment-allocation--invalid", Number(allocation.amount) > 0 && !source);
+        const invalid = Number(allocation.amount) > 0 && !source;
+        lineInvalid ||= invalid;
+        if (invalid) errorKey = "NoPaymentSource";
+        row.classList.toggle("template-payment-allocation--invalid", invalid);
         return;
       }
       const before = this._getMoneySourceBalance(source);
@@ -8413,8 +8658,16 @@ _refreshTemplatePaymentBalances(html, budgetResults = []) {
       const after = before - spentBefore - amount;
       running.set(source.id, spentBefore + amount);
       balance.textContent = `${before - spentBefore} → ${after}`;
-      row.classList.toggle("template-payment-allocation--invalid", after < -1e-6);
+      const exact = this._isExactPhysicalMoneyAmount(source, amount);
+      const invalid = after < -1e-6 || !exact;
+      lineInvalid ||= invalid;
+      if (!exact) errorKey = "PaymentExactRequired";
+      else if (after < -1e-6) errorKey = "PaymentInsufficient";
+      row.classList.toggle("template-payment-allocation--invalid", invalid);
     });
+    line.classList.toggle("template-payment-line--invalid", lineInvalid);
+    const error = line.querySelector(".template-payment-error");
+    if (error && errorKey) error.textContent = game.i18n.localize(`GUM.Template.${errorKey}`);
   });
 }
 
@@ -8429,8 +8682,8 @@ _getMoneySourceDebit(item, amount) {
   const spent = Math.max(0, Number(amount) || 0);
   if (system.mode === "abstract") return { "system.balance": Math.max(0, (Number(system.balance) || 0) - spent) };
   const unitValue = Number(system.unit_value) || 0;
-  if (!unitValue) return null;
-  return { "system.quantity": Math.max(0, (Number(system.quantity) || 0) - spent / unitValue) };
+  if (!unitValue || !this._isExactPhysicalMoneyAmount(item, spent)) return null;
+  return { "system.quantity": Math.max(0, Math.round((Number(system.quantity) || 0) - spent / unitValue)) };
 }
 
 _readTemplateAttributeChoices(html) {
@@ -8457,7 +8710,8 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0, budgetRe
   const legacyActorMoney = moneySpent && !hasPerBlockPayment && !moneySourceId;
   if (moneySpent && !hasPerBlockPayment && Object.keys(paymentSelections || {}).length && !paymentPlan.valid) {
     const message = paymentPlan.reason === "source" ? "GUM.Template.NoPaymentSource"
-      : paymentPlan.reason === "allocation" ? "GUM.Template.PaymentAllocationIncomplete" : "GUM.Template.PaymentInsufficient";
+      : paymentPlan.reason === "allocation" ? "GUM.Template.PaymentAllocationIncomplete"
+        : paymentPlan.reason === "denomination" ? "GUM.Template.PaymentExactRequired" : "GUM.Template.PaymentInsufficient";
     ui.notifications.error(game.i18n.localize(`GUM.Template.${message}`));
     return false;
   }
@@ -8687,8 +8941,8 @@ _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
     ht: "ht",
     will: "vont",
     per: "per",
-    hp: "hp",
-    fp: "fp",
+    hp: "hp.max",
+    fp: "fp.max",
     hp_max: "hp.max",
     fp_max: "fp.max",
     lifting_st: "lifting_st",
@@ -9154,8 +9408,11 @@ async _buildTemplateEntryViewData(entry) {
   const sourceItem = entry.kind === "attribute" ? null : await this._resolveTemplateEntrySourceItem(entry);
   const title = foundry.utils.escapeHTML(templateEntryDisplayName(entry, sourceItem) || "Entrada");
   const ruleDetails = [
-    ...this._templateRuleNames(entry.requiresNames).map(name => `${game.i18n.localize("GUM.Template.RequiresNames")}: ${name}`),
-    ...this._templateRuleNames(entry.excludesNames).map(name => `${game.i18n.localize("GUM.Template.ExcludesNames")}: ${name}`)
+    ...this._getTemplateEntryRequirements(entry).map(requirement => {
+      const level = requirement.minimumLevel === null ? "" : ` · ${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel}`;
+      return `${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`;
+    }),
+    ...(entry.available === false ? [game.i18n.localize("GUM.Template.OptionManuallyUnavailable")] : [])
   ].map(detail => foundry.utils.escapeHTML(detail));
 
   if (entry.kind === "attribute") {
@@ -9197,13 +9454,23 @@ _getTemplateAttributeDetailChips(entry) {
   const attributes = entry.attributes || {};
   const selected = new Set(Array.isArray(entry.selectedAttributes) ? entry.selectedAttributes : []);
   const details = Object.entries(attributes)
-    .map(([key, value]) => ({ key, value: Number(value) || 0, limit: Number(entry.attributeLimits?.[key]) }))
-    .filter(attr => attr.value !== 0 || (Number.isFinite(attr.limit) && attr.limit > 0) || selected.has(attr.key))
+    .map(([key, value]) => {
+      const initial = Number(value) || 0;
+      const legacyLimit = Number(entry.attributeLimits?.[key]);
+      const minimumRaw = entry.attributeMinimums?.[key];
+      const maximumRaw = entry.attributeMaximums?.[key];
+      const minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+        ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : null;
+      const maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+        ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : null;
+      return { key, value: initial, minimum, maximum };
+    })
+    .filter(attr => attr.value !== 0 || attr.minimum !== null || attr.maximum !== null || selected.has(attr.key))
     .map(attr => {
       const sign = attr.value > 0 ? "+" : "";
-      const cap = Number.isFinite(attr.limit) && attr.limit > 0
-        ? ` (${attr.value < 0 ? "≥-" : "≤+"}${Math.max(Math.abs(attr.value), attr.limit)})` : "";
-      return `${this._templateAttributeLabel(attr.key)} ${sign}${attr.value}${cap}`;
+      const range = attr.minimum !== null || attr.maximum !== null
+        ? ` (${attr.minimum ?? "−∞"}…${attr.maximum ?? "∞"})` : "";
+      return `${this._templateAttributeLabel(attr.key)} ${sign}${attr.value}${range}`;
     });
 
   if (entry.linkSecondary) details.push(game.i18n.localize("GUM.Template.RecalculateSecondaries"));

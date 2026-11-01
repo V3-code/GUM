@@ -16,3 +16,11 @@ test("barreira permite rerrolagem sem reaplicar um efeito já aplicado", () => {
   assert.match(main, /barrier\.shouldApply && !wasEffectApplied/);
   assert.match(main, /rerollClass: "resistance-reroll-button"/);
 });
+
+test("fechar o prompt da barreira devolve o botão de rolagem ao card", () => {
+  const handler = main.slice(main.indexOf("$('body').on('click', '.resistance-roll-button"), main.indexOf("// ================================================================== //", main.indexOf("$('body').on('click', '.resistance-roll-button")));
+  assert.match(handler, /const restoreButton = \(\) =>/);
+  assert.match(handler, /onPromptClose: restoreButton/);
+  assert.match(handler, /catch \(error\) \{\s*restoreButton\(\)/);
+  assert.match(handler, /if \(!outcome\.accepted\) \{\s*restoreButton\(\)/);
+});
