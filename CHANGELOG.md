@@ -27,6 +27,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - As janelas de configuração de entradas do Modelo agora separam dados, valores, destino e requisitos em seções visuais consistentes e aproveitam melhor a altura disponível da tela.
 - Blocos e subgrupos do Modelo agora organizam dados básicos, instruções, destinos e configurações específicas em seções; novos subgrupos começam sem blocos predefinidos.
 - Perícias, magias, poderes e vantagens ou desvantagens com níveis agora compartilham nível inicial, mínimo, máximo e fixo; ajustes de atributos seguem a mesma lógica, e PV/PF alteram somente seus valores máximos.
+- A ponte `ActiveEffect` do Item Efeito agora ignora corretamente os hooks destinados a Atores e serializa sincronizações concorrentes, evitando avisos e tentativas duplicadas de remoção.
 - As seções internas dos blocos ganharam separadores vermelhos sutis, e as instruções do subgrupo voltaram a usar o mesmo tratamento visual dos demais campos.
 
 ### Fixed

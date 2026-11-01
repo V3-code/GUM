@@ -3,6 +3,7 @@ export const GUM_EFFECT_BRIDGE_VERSION = 1;
 
 const documentName = document => document?.documentName || document?.constructor?.documentName || null;
 const collectionValues = collection => Array.from(collection?.values?.() ?? collection ?? []);
+const bridgeSynchronizations = new WeakMap();
 const resolveDocument = async (resolveUuid, uuid) => {
   if (typeof resolveUuid !== "function" || !uuid) return null;
   try {
@@ -68,8 +69,8 @@ const bridgeNeedsUpdate = (bridge, desired) => {
     || current?.effectItemUuid !== desired.flags.gum[GUM_EFFECT_BRIDGE_FLAG].effectItemUuid;
 };
 
-/** Ensure that a GUM Effect Item exposes one inert ActiveEffect for native Foundry integrations. */
-export async function ensureEffectItemBridge(item, { namePrefix = "GUM" } = {}) {
+/** Perform one serialized synchronization of an Effect Item bridge. */
+async function synchronizeEffectItemBridge(item, { namePrefix = "GUM" } = {}) {
   if (documentName(item) !== "Item" || item?.type !== "effect") return null;
   const desired = buildEffectItemBridgeData(item, { namePrefix });
   const bridges = collectionValues(item.effects).filter(isEffectItemBridgeSource);
@@ -88,6 +89,19 @@ export async function ensureEffectItemBridge(item, { namePrefix = "GUM" } = {}) 
     await item.deleteEmbeddedDocuments("ActiveEffect", duplicateIds, { gumEffectBridgeSync: true });
   }
   return bridge;
+}
+
+/** Ensure that a GUM Effect Item exposes one inert ActiveEffect for native Foundry integrations. */
+export function ensureEffectItemBridge(item, options = {}) {
+  if (documentName(item) !== "Item" || item?.type !== "effect") return Promise.resolve(null);
+  const pending = bridgeSynchronizations.get(item);
+  if (pending) return pending;
+
+  const synchronization = synchronizeEffectItemBridge(item, options).finally(() => {
+    if (bridgeSynchronizations.get(item) === synchronization) bridgeSynchronizations.delete(item);
+  });
+  bridgeSynchronizations.set(item, synchronization);
+  return synchronization;
 }
 
 export function buildEffectItemBridgeApplicationContext(carrier, { applicationId } = {}) {
