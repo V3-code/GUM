@@ -745,7 +745,8 @@ export class TemplateItemSheet extends ItemSheet {
           <input type="number" data-requirement-field="minimumLevel" value="${requirement.minimumLevel ?? ""}" placeholder="—" title="${templateText("RequirementMinimumLevel")}">
           <button type="button" class="template-remove-requirement" title="${templateText("RemoveRequirement")}" aria-label="${templateText("RemoveRequirement")}"><i class="fas fa-trash"></i></button>
         </div>`;
-        return `<section class="template-entry-availability-fields" data-rule-prefix="${prefix}">
+        return `<section class="template-entry-availability-fields template-dialog-section" data-rule-prefix="${prefix}">
+          <h3 class="template-dialog-section-title">${templateText("AvailabilityAndRequirements")}</h3>
           <div class="template-entry-availability-options">
             <label><input type="checkbox" id="${prefix}-available" ${entry.available !== false ? "checked" : ""}> ${templateText("OptionAvailable")}</label>
             <label><input type="checkbox" id="${prefix}-gm-override" ${entry.allowGMOverride ? "checked" : ""}> ${templateText("AllowGMAvailabilityOverride")}</label>
@@ -1014,14 +1015,17 @@ export class TemplateItemSheet extends ItemSheet {
     _configureTemplateEntryDraft(entry, { mode = "edit", block = null } = {}) {
         const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
         const isMoney = block?.type === "money";
-        const content = `<div class="form-group"><label>${templateText("Name")}</label>
-          <input type="text" id="template-ref-name" value="${esc(entry.name)}"></div>
-          <div class="form-group"><label>${templateText(isMoney ? "MoneyUnitPrice" : "DisplayCost")}</label>
-          <input type="number" id="template-ref-cost" min="${isMoney ? 0 : ""}" value="${Number(isMoney ? entry.moneyCost : entry.cost) || 0}"></div>
-          <div class="form-group"><label><input type="checkbox" id="template-ref-repeatable" ${entry.repeatable ? "checked" : ""}>
-          ${templateText("AllowRepeatedModel")}</label></div>
+        const content = `<div class="template-reference-dialog template-sectioned-dialog">
+          <section class="template-dialog-section"><h3 class="template-dialog-section-title">${templateText("ModelData")}</h3>
+            <div class="template-dialog-section-grid"><div class="form-group"><label>${templateText("Name")}</label>
+              <input type="text" id="template-ref-name" value="${esc(entry.name)}"></div>
+              <div class="form-group"><label>${templateText(isMoney ? "MoneyUnitPrice" : "DisplayCost")}</label>
+              <input type="number" id="template-ref-cost" min="${isMoney ? 0 : ""}" value="${Number(isMoney ? entry.moneyCost : entry.cost) || 0}"></div></div>
+            <div class="form-group template-dialog-checkbox"><label><input type="checkbox" id="template-ref-repeatable" ${entry.repeatable ? "checked" : ""}> ${templateText("AllowRepeatedModel")}</label></div>
+            <p class="notes">${templateText("ReferencedModelHint")}</p>
+          </section>
           ${this._renderChoiceRuleFields(entry, "template-ref")}
-          <p class="notes">${templateText("ReferencedModelHint")}</p>`;
+        </div>`;
         return new Promise(resolve => new Dialog({
             title: templateText("ReferencedModel"), content,
             buttons: {
@@ -1035,7 +1039,7 @@ export class TemplateItemSheet extends ItemSheet {
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
             }, default: "save", close: () => resolve(null), render: html => this._activateChoiceRuleFields(html, "template-ref")
-        }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 540 }).render(true));
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-reference-dialog-window", "gum-sheet-edit-dialog"], width: 560, height: Math.min(700, window.innerHeight - 80), resizable: true }).render(true));
     }
 
     _configureGroupEntryDraft(entry, { mode = "edit", block = null } = {}) {
@@ -1043,12 +1047,12 @@ export class TemplateItemSheet extends ItemSheet {
         if (!blocks.length) blocks.push(this._createTemplateBlock("guaranteed"));
         const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
         const isMoney = block?.type === "money";
-        const content = `<div class="template-group-dialog template-package-editor">
-          <section class="template-package-settings"><div class="template-package-metadata">
+        const content = `<div class="template-group-dialog template-package-editor template-sectioned-dialog">
+          <section class="template-package-settings template-dialog-section"><h3 class="template-dialog-section-title">${templateText("PackageData")}</h3><div class="template-package-metadata">
             <div class="form-group"><label>${templateText("PackageName")}</label><input type="text" id="group-name" value="${esc(entry.name)}" placeholder="${templateText("SubgroupExample")}"></div>
             <div class="form-group"><label>${templateText("LocalNotes")}</label><input type="text" id="group-notes" value="${esc(entry.localNotes)}" placeholder="${templateText("SubgroupNotesExample")}"></div>
             <div class="form-group"><label>${templateText(isMoney ? "MoneyUnitPrice" : "DisplayCost")}</label><input type="number" id="group-cost" ${isMoney ? "min=\"0\"" : ""} value="${Number(isMoney ? entry.moneyCost : entry.cost) || 0}"></div>
-          </div><div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div></section>
+          </div></section><div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div>
           <div class="template-package-section-title"><span>${templateText("Blocks")}</span>
             <button type="button" class="template-package-add-block" title="${templateText("AddBlock")}" aria-label="${templateText("AddBlock")}"><i class="fas fa-plus"></i></button></div>
           <div class="template-package-blocks"></div></div>`;
@@ -1069,7 +1073,7 @@ export class TemplateItemSheet extends ItemSheet {
                 this._activatePackageEditor(html, blocks);
                 this._activateChoiceRuleFields(html, "group");
             }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-package-dialog", "gum-sheet-edit-dialog"], width: 760, height: 600, resizable: true }).render(true));
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-package-dialog", "gum-sheet-edit-dialog"], width: 760, height: Math.min(720, window.innerHeight - 80), resizable: true }).render(true));
     }
 
     _configureItemEntryDraft(entry, { mode = "edit", sourceItem = null, block = null } = {}) {
@@ -1083,8 +1087,10 @@ export class TemplateItemSheet extends ItemSheet {
         const containerMode = entry.containerMode || (entry.containerName ? "new" : "inherit");
         const difficulty = isLevelledAbility && sourceItem ? this._getItemDifficulty(sourceItem) : "";
         const progression = isLevelledAbility && sourceItem ? this._getPointsPerLevelInfo(sourceItem) : "";
-        const content = `<div class="template-entry-edit-form">
+        const content = `<div class="template-entry-edit-form template-sectioned-dialog">
+          <section class="template-dialog-section"><h3 class="template-dialog-section-title">${templateText("BasicData")}</h3>
           <div class="form-group template-edit-name"><label for="entry-name">${templateText("Name")}</label><input type="text" id="entry-name" value="${esc(entry.name)}"></div>
+          ${isEquipment ? `</section><section class="template-dialog-section"><h3 class="template-dialog-section-title">${templateText("QuantityAndValues")}</h3>` : ""}
           ${isLevelledAbility && (difficulty || progression) ? `<div class="template-entry-source-summary">${difficulty ? `<span><strong>${templateText("Difficulty")}</strong> ${esc(difficulty)}</span>` : ""}${progression ? `<span><strong>${templateText("PointsPerLevel")}</strong> ${esc(progression)}</span>` : ""}</div>` : ""}
           ${isEquipment ? `<div class="template-entry-equipment-fields">
             <div class="template-entry-equipment-grid template-entry-equipment-quantities">
@@ -1104,11 +1110,11 @@ export class TemplateItemSheet extends ItemSheet {
             <div class="form-group"><label>${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="number" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
             ${isMoney ? `<div class="form-group"><label title="${templateText("MoneyUnitPriceHint")}">${templateText("MoneyUnitPrice")}</label><input type="number" id="entry-money-cost" min="0" step="any" value="${Math.max(0, Number(entry.moneyCost) || 0)}"></div>` : !isTrait ? `<div class="form-group"><label>${templateText("TotalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" ${isLevelledAbility && sourceItem ? "readonly" : ""}></div>` : `<div class="form-group"><label>${templateText("FinalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" readonly></div>`}
             ${supportsLevelCap ? `<div class="form-group"><label>${templateText("MaximumLevel")}</label><input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" placeholder="${templateText("NoLevelLimit")}"></div>` : ""}
-          </div>`}
-          ${isEquipment ? `<section class="template-entry-destination-section"><h3>${templateText("EquipmentDestination")}</h3>` : ""}<div class="template-entry-destination">
+          </div>`}</section>
+          <section class="template-entry-destination-section template-dialog-section"><h3 class="template-dialog-section-title">${templateText(isEquipment ? "EquipmentDestination" : "ItemDestination")}</h3><div class="template-entry-destination">
             ${!isEquipment ? `<div class="form-group"><label for="entry-destination-mode">${templateText("GroupDestinationMode")}</label><select id="entry-destination-mode"><option value="inherit" ${groupMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="group" ${groupMode === "group" ? "selected" : ""}>${templateText("UseNamedGroup")}</option><option value="source" ${groupMode === "source" ? "selected" : ""}>${templateText("KeepSourceGroup")}</option></select></div><div class="form-group template-destination-name"><label for="entry-destination-group" title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" id="entry-destination-group" value="${esc(entry.destinationGroup)}"></div>` : ""}
             ${isEquipment ? `<div class="form-group"><label for="entry-container-mode">${templateText("DestinationMode")}</label><select id="entry-container-mode"><option value="inherit" ${containerMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="new" ${containerMode === "new" ? "selected" : ""}>${templateText("CreateContainer")}</option><option value="loose" ${containerMode === "loose" ? "selected" : ""}>${templateText("LooseEquipment")}</option></select></div><div class="form-group template-destination-name"><label for="entry-container-name" title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" id="entry-container-name" value="${esc(entry.containerName)}"></div>` : ""}
-          </div>${isEquipment ? `</section>` : ""}
+          </div></section>
           <div class="template-entry-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "entry")}</div></div>`;
         return new Promise(resolve => new Dialog({
             title: `${templateText(mode === "create" ? "Add" : "EditBlockItem")}: ${esc(entry.name)}`, content,
@@ -1181,17 +1187,17 @@ export class TemplateItemSheet extends ItemSheet {
                 html.find("#entry-base-cost, #entry-points-per-level, #entry-level").on("input", recalc);
                 updateDestination(); recalc();
             }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-entry-config-dialog", "gum-sheet-edit-dialog"], width: 560, resizable: true }).render(true));
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-entry-config-dialog", "gum-sheet-edit-dialog"], width: 580, height: Math.min(760, window.innerHeight - 80), resizable: true }).render(true));
     }
 
     _createPackageAttributeEntry(existing = {}, { mode = "create", block = null } = {}) {
         const isMoney = block?.type === "money";
-        const content = `<div class="template-attr-dialog"><div class="template-attr-grid-header">
+        const content = `<div class="template-attr-dialog template-sectioned-dialog"><section class="template-dialog-section template-attribute-config-section"><h3 class="template-dialog-section-title">${templateText("AttributeConfiguration")}</h3><div class="template-attr-grid-header">
           <span>${templateText("Attribute")}</span><span>${templateText("Increase")}</span><span>${templateText("Cost")}</span><span>${templateText("AttributeLimit")}</span><span>${templateText("FixedValue")}</span></div>
           <div class="template-attr-grid">${this._renderAttributeFieldRows(existing.attributes || {}, existing.costs || {}, existing.attributeLimits || {}, existing.selectedAttributes, existing.lockedAttributes)}</div>
           <div class="template-attr-summary"><label class="template-attr-secondary"><input type="checkbox" id="link-secondary" ${existing.linkSecondary ? "checked" : ""}> ${templateText("RecalculateSecondary")}</label>
           <div class="template-attr-total"><label for="template-attr-total-cost">${templateText("TotalCost")}</label><input type="number" id="template-attr-total-cost" value="${Number(existing.cost) || 0}" readonly></div></div>
-          ${isMoney ? `<div class="form-group"><label for="template-attr-money-cost">${templateText("MoneyUnitPrice")}</label><input type="number" id="template-attr-money-cost" min="0" step="any" value="${Math.max(0, Number(existing.moneyCost) || 0)}"></div>` : ""}
+          ${isMoney ? `<div class="form-group"><label for="template-attr-money-cost">${templateText("MoneyUnitPrice")}</label><input type="number" id="template-attr-money-cost" min="0" step="any" value="${Math.max(0, Number(existing.moneyCost) || 0)}"></div>` : ""}</section>
           <div class="template-attr-rule-grid" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(existing, "package-attr")}</div></div>`;
         return new Promise(resolve => new Dialog({
             title: templateText(mode === "create" ? "AddAttribute" : "EditAttribute"), content,
@@ -1216,7 +1222,7 @@ export class TemplateItemSheet extends ItemSheet {
                 html.find(".template-attr-select").trigger("change");
                 recalc();
             }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 700, height: 760 }).render(true));
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 720, height: Math.min(800, window.innerHeight - 60), resizable: true }).render(true));
     }
 
     async _editPackageLocalEntry(entry, block = null) {

@@ -287,6 +287,15 @@
 .dialog.gum.template-config-dialog select option,
 .dialog.gum.template-apply-dialog select option { color: var(--tpl-text); background: var(--tpl-field); }
 .dialog.gum.template-config-dialog .notes { color: var(--tpl-muted); }
+.dialog.gum.template-config-dialog .template-sectioned-dialog { display: flex; min-height: 0; flex-direction: column; gap: 10px; }
+.dialog.gum.template-config-dialog .template-dialog-section { display: flex; min-width: 0; flex-direction: column; gap: 8px; margin: 0; padding: 11px 0 0; border: 0; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-config-dialog .template-sectioned-dialog > .template-dialog-section:first-child { padding-top: 0; box-shadow: none; }
+.dialog.gum.template-config-dialog .template-dialog-section-title { margin: 0; color: var(--tpl-text); font: 700 .72rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.dialog.gum.template-config-dialog .template-dialog-section-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.dialog.gum.template-config-dialog .template-dialog-checkbox label { display: inline-flex; align-items: center; gap: 7px; margin: 0; }
+.dialog.gum.template-config-dialog .template-dialog-checkbox input { width: 16px; height: 16px; min-height: 0; margin: 0; accent-color: var(--tpl-accent); }
+.dialog.gum.template-reference-dialog-window .dialog-content,
+.dialog.gum.template-entry-config-dialog .dialog-content { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 .dialog.gum.template-config-dialog hr { border: 0; height: 1px; background: var(--tpl-hairline); margin: 10px 0; }
 .dialog.gum.template-config-dialog .template-block-type-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 8px 0 0; }
 .dialog.gum.template-config-dialog .template-block-type-option { min-height: 40px; padding: 6px 9px; color: var(--tpl-text); background: var(--tpl-surface); border-radius: 6px; cursor: pointer; font-size: .72rem; }
@@ -302,6 +311,7 @@
 .dialog.gum.template-config-dialog.template-attribute-dialog .dialog-content { padding: 10px 14px; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .dialog-buttons { padding: 8px 14px; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-dialog { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.dialog.gum.template-config-dialog.template-attribute-dialog .template-attribute-config-section { flex: 1 1 auto; min-height: 0; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid { flex: 1 1 auto; min-height: 120px; max-height: none; gap: 3px; padding-right: 4px; overflow-y: auto; scrollbar-width: thin; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid-header,
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-row { grid-template-columns: minmax(135px,1.45fr) repeat(3,minmax(70px,1fr)) minmax(72px,.8fr); gap: 6px; }
@@ -379,11 +389,9 @@
 .dialog.gum.template-equipment-add-dialog .template-equipment-add-lock input[type="checkbox"] { flex: 0 0 17px; width: 17px; height: 17px; min-height: 17px; margin: 0; padding: 0; accent-color: var(--tpl-accent); }
 .dialog.gum.template-equipment-add-dialog .template-equipment-add-lock span { min-width: 0; }
 .dialog.gum.template-entry-config-dialog .template-entry-destination { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-.dialog.gum.template-entry-config-dialog .template-entry-destination-section { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 9px 0 0; border: 0; box-shadow: inset 0 1px var(--tpl-hairline); }
-.dialog.gum.template-entry-config-dialog .template-entry-destination-section h3 { margin: 0; color: var(--tpl-text); font: 700 .72rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .04em; text-transform: uppercase; }
 .dialog.gum.template-entry-config-dialog .template-entry-source-summary { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 10px; padding: 8px 10px; color: var(--tpl-muted); background: var(--tpl-surface); border-radius: 7px; font-size: .7rem; line-height: 1.3; }
 .dialog.gum.template-entry-config-dialog .template-entry-source-summary strong { color: var(--tpl-text); }
-.dialog.gum.template-entry-config-dialog .template-entry-rule-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding-top: 8px; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-entry-config-dialog .template-entry-rule-fields { display: block; }
 .dialog.gum.template-entry-config-dialog .template-entry-rule-fields .notes { display: none; }
 .dialog.gum.template-config-dialog .template-entry-availability-fields { display: flex; grid-column: 1 / -1; min-width: 0; flex-direction: column; gap: 8px; padding-top: 8px; box-shadow: inset 0 1px var(--tpl-hairline); }
 .dialog.gum.template-config-dialog .template-entry-availability-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
@@ -408,7 +416,7 @@
 .dialog.gum.template-package-dialog .template-package-rule-fields .form-group { min-width: 0; margin: 0; }
 .dialog.gum.template-package-dialog .template-package-metadata input,
 .dialog.gum.template-package-dialog .template-package-rule-fields input { width: 100%; height: 30px; min-height: 30px; padding: 4px 8px; font-size: .74rem; }
-.dialog.gum.template-package-dialog .template-package-rule-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 8px; padding-top: 8px; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-package-dialog .template-package-rule-fields { display: block; }
 .dialog.gum.template-package-dialog .template-package-rule-fields .notes { display: none; }
 .dialog.gum.template-package-dialog .template-package-section-title { display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 4px 8px 4px 10px; color: var(--tpl-text); background: #202124; border-radius: 6px; box-shadow: inset 3px 0 var(--tpl-accent); font: 700 .72rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .dialog.gum.template-package-dialog .template-package-section-title .template-package-add-block { display: inline-grid; place-items: center; width: 24px; height: 24px; min-height: 0; margin: 0; padding: 0; color: var(--tpl-accent); background: transparent; }

@@ -73,6 +73,27 @@ test("equipment configuration follows the identity, quantity, value, behavior, d
   assert.match(editor, /isMoney \|\| isEquipment[\s\S]+?entry\.moneyCost/);
 });
 
+test("every entry editor uses consistent visual sections and responsive vertical space", () => {
+  const rules = sheet.slice(sheet.indexOf("    _renderChoiceRuleFields("), sheet.indexOf("    _readChoiceRuleFields("));
+  const referenced = sheet.slice(sheet.indexOf("    _configureTemplateEntryDraft("), sheet.indexOf("    _configureGroupEntryDraft("));
+  const group = sheet.slice(sheet.indexOf("    _configureGroupEntryDraft("), sheet.indexOf("    _configureItemEntryDraft("));
+  const item = sheet.slice(sheet.indexOf("    _configureItemEntryDraft("), sheet.indexOf("    _createPackageAttributeEntry("));
+  const attribute = sheet.slice(sheet.indexOf("    _createPackageAttributeEntry("), sheet.indexOf("    async _editPackageLocalEntry("));
+  assert.match(rules, /template-dialog-section-title[^\n]+AvailabilityAndRequirements/);
+  assert.match(referenced, /template-dialog-section-title[^\n]+ModelData/);
+  assert.match(group, /template-dialog-section-title[^\n]+PackageData/);
+  assert.match(item, /template-dialog-section-title[^\n]+BasicData/);
+  assert.match(item, /template-dialog-section-title[^\n]+QuantityAndValues/);
+  assert.match(item, /EquipmentDestination[^\n]+ItemDestination/);
+  assert.match(attribute, /template-dialog-section-title[^\n]+AttributeConfiguration/);
+  for (const editor of [referenced, group, item, attribute]) {
+    assert.match(editor, /height: Math\.min\(/);
+    assert.match(editor, /resizable: true/);
+  }
+  assert.match(styles, /\.template-dialog-section-title \{/);
+  assert.match(styles, /\.template-sectioned-dialog \{/);
+});
+
 test("the unavailability explanation is last and requirement delete buttons are visually borderless", () => {
   const rules = sheet.slice(sheet.indexOf("_renderChoiceRuleFields"), sheet.indexOf("_readChoiceRuleFields"));
   assert.ok(rules.indexOf("template-unavailable-reason") > rules.indexOf("template-structured-requirements"));
