@@ -751,12 +751,13 @@ export class TemplateItemSheet extends ItemSheet {
             <label><input type="checkbox" id="${prefix}-gm-override" ${entry.allowGMOverride ? "checked" : ""}> ${templateText("AllowGMAvailabilityOverride")}</label>
             <label>${templateText("UnavailableBehavior")}<select id="${prefix}-unavailable-behavior"><option value="disabled" ${entry.unavailableBehavior !== "hidden" ? "selected" : ""}>${templateText("ShowUnavailable")}</option><option value="hidden" ${entry.unavailableBehavior === "hidden" ? "selected" : ""}>${templateText("HideUnavailable")}</option></select></label>
           </div>
-          <div class="form-group template-unavailable-reason"><label>${templateText("UnavailableReason")}</label><input type="text" id="${prefix}-unavailable-reason" value="${esc(entry.unavailableReason)}" placeholder="${templateText("UnavailableReasonPlaceholder")}"></div>
           <div class="template-structured-requirements"><div class="template-requirements-heading"><strong>${templateText("CharacterRequirements")}</strong><button type="button" class="template-add-requirement"><i class="fas fa-plus"></i> ${templateText("AddRequirement")}</button></div>
             <div class="template-requirement-list">${requirements.map(requirementRow).join("")}</div>
             <template class="template-requirement-template">${requirementRow({ condition: "require", itemType: "", name: "", minimumLevel: null })}</template>
             <p class="notes">${templateText("CharacterRequirementsHint")}</p>
-          </div></section>`;
+          </div>
+          <div class="form-group template-unavailable-reason"><label>${templateText("UnavailableReason")}</label><input type="text" id="${prefix}-unavailable-reason" value="${esc(entry.unavailableReason)}" placeholder="${templateText("UnavailableReasonPlaceholder")}"></div>
+        </section>`;
     }
 
     _readChoiceRuleFields(entry, html, prefix) {
@@ -1085,21 +1086,29 @@ export class TemplateItemSheet extends ItemSheet {
         const content = `<div class="template-entry-edit-form">
           <div class="form-group template-edit-name"><label for="entry-name">${templateText("Name")}</label><input type="text" id="entry-name" value="${esc(entry.name)}"></div>
           ${isLevelledAbility && (difficulty || progression) ? `<div class="template-entry-source-summary">${difficulty ? `<span><strong>${templateText("Difficulty")}</strong> ${esc(difficulty)}</span>` : ""}${progression ? `<span><strong>${templateText("PointsPerLevel")}</strong> ${esc(progression)}</span>` : ""}</div>` : ""}
-          <div class="template-entry-basic-fields ${isEquipment ? "template-entry-basic-fields--equipment" : ""}">
-            ${isEquipment ? `<div class="form-group template-entry-quantity-field"><label>${templateText("InitialQuantity")}</label><span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1"><i class="fas fa-plus"></i></button></span></div>
+          ${isEquipment ? `<div class="template-entry-equipment-fields">
+            <div class="template-entry-equipment-grid template-entry-equipment-quantities">
+              <div class="form-group template-entry-quantity-field"><label>${templateText("InitialQuantity")}</label><span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1"><i class="fas fa-plus"></i></button></span></div>
               <div class="form-group"><label title="${templateText("MinimumQuantityHint")}">${templateText("MinimumQuantity")}</label><input type="number" id="entry-min-quantity" value="${Math.max(1, Number(entry.minimumQuantity) || 1)}" min="1" step="1"></div>
-              <div class="form-group"><label title="${templateText("MaximumQuantityHint")}">${templateText("MaximumQuantity")}</label><input type="number" id="entry-max-quantity" value="${entry.maximumQuantity ?? ""}" min="1" step="1" placeholder="${templateText("NoQuantityLimit")}"></div>` : ""}
+              <div class="form-group"><label title="${templateText("MaximumQuantityHint")}">${templateText("MaximumQuantity")}</label><input type="number" id="entry-max-quantity" value="${entry.maximumQuantity ?? ""}" min="1" step="1" placeholder="${templateText("NoQuantityLimit")}"></div>
+            </div>
+            <div class="template-entry-equipment-grid template-entry-equipment-values">
+              <div class="form-group"><label title="${templateText("EntryLevelValueHint")}">${templateText("Level")}</label><input type="text" id="entry-level" value="${esc(entry.level)}"></div>
+              <div class="form-group"><label for="entry-points-cost">${templateText("EquipmentPointCost")}</label><input type="number" id="entry-points-cost" value="${Number(entry.pointsCost) || 0}" min="0"></div>
+              <div class="form-group"><label title="${templateText("MoneyUnitPriceHint")}">${templateText("MoneyUnitPrice")}</label><input type="number" id="entry-money-cost" min="0" step="any" value="${Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0)}"></div>
+            </div>
+            <div class="template-entry-equipment-options"><label class="template-entry-equipment-option" title="${templateText("LockQuantityHint")}"><input type="checkbox" id="entry-quantity-locked" ${entry.quantityLocked ? "checked" : ""}><span>${templateText("LockQuantity")}</span></label><label class="template-entry-equipment-option" title="${templateText("QuantityConsumesChoicesHint")}"><input type="checkbox" id="entry-selection-quantity" ${entry.selectionQuantity ? "checked" : ""}><span>${templateText("QuantityConsumesChoices")}</span></label></div>
+          </div>` : `<div class="template-entry-basic-fields">
             ${isTrait ? `<div class="form-group"><label>${templateText("BaseCost")}</label><input type="number" id="entry-base-cost" value="${entry.trait_cost.points ?? 0}"></div>
               <div class="form-group"><label>${templateText("PointsPerLevel")}</label><input type="number" id="entry-points-per-level" value="${entry.trait_cost.points_per_level ?? 0}"></div>` : ""}
-            <div class="form-group"><label title="${isEquipment ? templateText("EntryLevelValueHint") : ""}">${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="${isEquipment ? "text" : "number"}" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
-            ${isMoney ? `<div class="form-group"><label title="${templateText("MoneyUnitPriceHint")}">${templateText("MoneyUnitPrice")}</label><input type="number" id="entry-money-cost" min="0" step="any" value="${Math.max(0, Number(entry.moneyCost) || 0)}"></div>` : !isTrait ? `<div class="form-group"><label title="${isEquipment ? templateText("EntryCostHint") : ""}">${templateText(isEquipment ? "Cost" : "TotalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" ${isLevelledAbility && sourceItem ? "readonly" : ""}></div>` : `<div class="form-group"><label>${templateText("FinalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" readonly></div>`}
+            <div class="form-group"><label>${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="number" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
+            ${isMoney ? `<div class="form-group"><label title="${templateText("MoneyUnitPriceHint")}">${templateText("MoneyUnitPrice")}</label><input type="number" id="entry-money-cost" min="0" step="any" value="${Math.max(0, Number(entry.moneyCost) || 0)}"></div>` : !isTrait ? `<div class="form-group"><label>${templateText("TotalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" ${isLevelledAbility && sourceItem ? "readonly" : ""}></div>` : `<div class="form-group"><label>${templateText("FinalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" readonly></div>`}
             ${supportsLevelCap ? `<div class="form-group"><label>${templateText("MaximumLevel")}</label><input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" placeholder="${templateText("NoLevelLimit")}"></div>` : ""}
-          </div>
-          <div class="template-entry-destination">
+          </div>`}
+          ${isEquipment ? `<section class="template-entry-destination-section"><h3>${templateText("EquipmentDestination")}</h3>` : ""}<div class="template-entry-destination">
             ${!isEquipment ? `<div class="form-group"><label for="entry-destination-mode">${templateText("GroupDestinationMode")}</label><select id="entry-destination-mode"><option value="inherit" ${groupMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="group" ${groupMode === "group" ? "selected" : ""}>${templateText("UseNamedGroup")}</option><option value="source" ${groupMode === "source" ? "selected" : ""}>${templateText("KeepSourceGroup")}</option></select></div><div class="form-group template-destination-name"><label for="entry-destination-group" title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" id="entry-destination-group" value="${esc(entry.destinationGroup)}"></div>` : ""}
-            ${isEquipment ? `<div class="form-group"><label for="entry-container-mode">${templateText("ContainerDestinationMode")}</label><select id="entry-container-mode"><option value="inherit" ${containerMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="new" ${containerMode === "new" ? "selected" : ""}>${templateText("CreateContainer")}</option><option value="loose" ${containerMode === "loose" ? "selected" : ""}>${templateText("LooseEquipment")}</option></select></div><div class="form-group template-destination-name"><label for="entry-container-name" title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" id="entry-container-name" value="${esc(entry.containerName)}"></div>` : ""}
-          </div>
-          ${isEquipment ? `<div class="form-group"><label for="entry-points-cost">${templateText("EquipmentPointCost")}</label><input type="number" id="entry-points-cost" value="${Number(entry.pointsCost) || 0}" min="0"></div><div class="template-entry-equipment-options"><label class="template-entry-equipment-option" title="${templateText("LockQuantityHint")}"><input type="checkbox" id="entry-quantity-locked" ${entry.quantityLocked ? "checked" : ""}><span>${templateText("LockQuantity")}</span></label><label class="template-entry-equipment-option" title="${templateText("QuantityConsumesChoicesHint")}"><input type="checkbox" id="entry-selection-quantity" ${entry.selectionQuantity ? "checked" : ""}><span>${templateText("QuantityConsumesChoices")}</span></label></div>` : ""}
+            ${isEquipment ? `<div class="form-group"><label for="entry-container-mode">${templateText("DestinationMode")}</label><select id="entry-container-mode"><option value="inherit" ${containerMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="new" ${containerMode === "new" ? "selected" : ""}>${templateText("CreateContainer")}</option><option value="loose" ${containerMode === "loose" ? "selected" : ""}>${templateText("LooseEquipment")}</option></select></div><div class="form-group template-destination-name"><label for="entry-container-name" title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" id="entry-container-name" value="${esc(entry.containerName)}"></div>` : ""}
+          </div>${isEquipment ? `</section>` : ""}
           <div class="template-entry-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "entry")}</div></div>`;
         return new Promise(resolve => new Dialog({
             title: `${templateText(mode === "create" ? "Add" : "EditBlockItem")}: ${esc(entry.name)}`, content,
@@ -1139,7 +1148,7 @@ export class TemplateItemSheet extends ItemSheet {
                         return false;
                     }
                     this._readChoiceRuleFields(entry, html, "entry");
-                    if (isMoney) entry.moneyCost = Math.max(0, Number(html.find("#entry-money-cost").val()) || 0);
+                    if (isMoney || isEquipment) entry.moneyCost = Math.max(0, Number(html.find("#entry-money-cost").val()) || 0);
                     if (isTrait) {
                         entry.trait_cost.points = Number(html.find("#entry-base-cost").val()) || 0;
                         entry.trait_cost.points_per_level = Number(html.find("#entry-points-per-level").val()) || 0;
@@ -1147,7 +1156,7 @@ export class TemplateItemSheet extends ItemSheet {
                         entry.level = entry.trait_cost.level;
                         entry.cost = calculateTraitCost(entry.trait_cost).finalPoints;
                     } else if (!isMoney && isLevelledAbility && sourceItem) entry.cost = this._calculateLevelledItemCost(sourceItem, entry.level);
-                    else if (!isMoney) entry.cost = Number(html.find("#entry-cost").val()) || 0;
+                    else if (!isMoney && !isEquipment) entry.cost = Number(html.find("#entry-cost").val()) || 0;
                     resolve(entry);
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
@@ -1297,6 +1306,7 @@ export class TemplateItemSheet extends ItemSheet {
                 base.maximumQuantity = null;
             base.level = String(item.system?.level ?? "").trim();
             base.cost = Number(item.system?.cost) || 0;
+            base.moneyCost = Math.max(0, base.cost);
             base.pointsCost = Number(item.system?.points) || 0;
             base.quantityLocked = false;
             return base;

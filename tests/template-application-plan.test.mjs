@@ -179,7 +179,7 @@ test("point plan uses chosen levels and equipment quantities without charging eq
   assert.equal(result.plan[1].cost, 100);
 });
 
-test("fixed equipment quantity ignores a requested change unless quantity consumes choices", () => {
+test("fixed equipment quantity ignores requested changes even when quantity consumes choices", () => {
   const fixed = { id: "fixed", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true, pointsCost: 3 };
   const adjustable = { id: "adjustable", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true,
     selectionQuantity: true, pointsCost: 3 };
@@ -188,8 +188,9 @@ test("fixed equipment quantity ignores a requested change unless quantity consum
     points: { ids: ["fixed", "adjustable"], quantities: { fixed: 5, adjustable: 4 } }
   });
   assert.equal(result.plan[0].quantity, 2);
-  assert.equal(result.plan[1].quantity, 4);
-  assert.equal(result.budgetResults[0].spent, 18);
+  assert.equal(result.plan[1].quantity, 2);
+  assert.equal(result.budgetResults[0].spent, 12);
+  assert.equal(sheet._templateSelectionUnits({ contents: [adjustable] }, ["adjustable"], { adjustable: 5 }), 2);
 });
 
 test("equipment quantities are clamped to their configured acquisition limits", () => {

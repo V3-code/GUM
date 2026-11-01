@@ -5,6 +5,7 @@ import test from "node:test";
 const sheet = readFileSync(new URL("../module/item/template-item-sheet.js", import.meta.url), "utf8");
 const template = readFileSync(new URL("../templates/items/template-item-sheet.hbs", import.meta.url), "utf8");
 const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../styles/template-experience.css", import.meta.url), "utf8");
 
 test("template blocks present identity, destinations, contextual settings, instructions, and contents in order", () => {
   const title = template.indexOf("template-block-title-field");
@@ -56,6 +57,26 @@ test("entry configuration exposes availability, character requirements, and quan
   assert.match(sheet, /entry\.maximumQuantity/);
   assert.match(actorSheet, /_getTemplateEntryAvailability/);
   assert.match(actorSheet, /_templateEntryQuantity[\s\S]+?minimumQuantity[\s\S]+?maximumQuantity/);
+});
+
+test("equipment configuration follows the identity, quantity, value, behavior, destination, and rule sequence", () => {
+  const editor = sheet.slice(sheet.indexOf("    _configureItemEntryDraft("), sheet.indexOf("    _createPackageAttributeEntry("));
+  const fields = ["entry-name", "entry-qty", "entry-min-quantity", "entry-max-quantity", "entry-level",
+    "entry-points-cost", "entry-money-cost", "entry-quantity-locked", "entry-selection-quantity",
+    "template-entry-destination-section", "template-entry-rule-fields"];
+  let previous = -1;
+  for (const field of fields) {
+    const current = editor.indexOf(field);
+    assert.ok(current > previous, `${field} should follow the previous equipment field`);
+    previous = current;
+  }
+  assert.match(editor, /isMoney \|\| isEquipment[\s\S]+?entry\.moneyCost/);
+});
+
+test("the unavailability explanation is last and requirement delete buttons are visually borderless", () => {
+  const rules = sheet.slice(sheet.indexOf("_renderChoiceRuleFields"), sheet.indexOf("_readChoiceRuleFields"));
+  assert.ok(rules.indexOf("template-unavailable-reason") > rules.indexOf("template-structured-requirements"));
+  assert.match(styles, /\.template-remove-requirement \{[^}]*background: transparent !important;[^}]*border: 0 !important;[^}]*box-shadow: none !important;/);
 });
 
 test("the structured requirement list replaces legacy fields while retaining migration support", () => {

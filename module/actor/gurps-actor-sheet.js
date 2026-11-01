@@ -7933,7 +7933,7 @@ _templateEntryQuantity(entry, requested = undefined) {
   const maximum = rawMaximum === "" || rawMaximum === null || rawMaximum === undefined || !Number.isFinite(Number(rawMaximum))
     ? Infinity : Math.max(minimum, Math.floor(Number(rawMaximum)));
   const configured = Math.min(maximum, Math.max(minimum, Math.floor(Number(entry?.quantity) || minimum)));
-  if (entry?.quantityLocked && !entry?.selectionQuantity) return configured;
+  if (entry?.quantityLocked) return configured;
   return Math.min(maximum, Math.max(minimum, Math.floor(Number(requested ?? configured) || minimum)));
 }
 
@@ -7974,7 +7974,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
       || (["advantage", "disadvantage"].includes(entry.itemType) && (entry.trait_cost || entry._resolvedTraitCost || entry.inlineItem?.system)?.can_level));
     const level = this._templateEntryLevel(entry, choice.levels?.[entry.id] ?? entry.level ?? 0);
     const quantity = this._templateEntryQuantity(entry, choice.quantities?.[entry.id]);
-    const quantityEditable = entry.itemType === "equipment" && (entry.selectionQuantity === true || (block.type !== "selection" && !entry.quantityLocked));
+    const quantityEditable = entry.itemType === "equipment" && !entry.quantityLocked
+      && (entry.selectionQuantity === true || block.type !== "selection");
     const minimumQuantity = Math.max(1, Math.floor(Number(entry.minimumQuantity) || 1));
     const rawMaximumQuantity = entry.maximumQuantity;
     const maximumQuantity = rawMaximumQuantity === "" || rawMaximumQuantity === null || rawMaximumQuantity === undefined || !Number.isFinite(Number(rawMaximumQuantity)) ? "" : Math.max(minimumQuantity, Math.floor(Number(rawMaximumQuantity)));
