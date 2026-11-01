@@ -880,6 +880,39 @@
                                                                 </div>
                                                             </div>
 
+                                                            <div class="effect-premium-grid effect-premium-grid-entry-composition">
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label"><i class="fas fa-object-group" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionGroup"}}</label>
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input type="text"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.composition_group"
+                                                                            value="{{entry.composition_group}}"
+                                                                            list="roll-mod-composition-groups"
+                                                                            placeholder="visibility.smoke" />
+                                                                        <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.CompositionGroupHint"}}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label"><i class="fas fa-layer-group" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionPolicy"}}</label>
+                                                                    <div class="effect-premium-field-control">
+                                                                        <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.composition_mode">
+                                                                            {{#each ../../rollModifierCompositionOptions as |opt|}}
+                                                                                <option value="{{opt.id}}" {{#if (eq opt.id ../composition_mode)}}selected{{/if}}>{{opt.label}}</option>
+                                                                            {{/each}}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label"><i class="fas fa-arrow-up-1-9" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionPriority"}}</label>
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input type="number"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.composition_priority"
+                                                                            value="{{entry.composition_priority}}" step="1" />
+                                                                        <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.CompositionPriorityHint"}}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
                                                             <div class="effect-premium-grid effect-premium-grid-entry-context">
 
                                                                 <div class="effect-premium-field">
@@ -1271,6 +1304,9 @@
                         {{#each rollModifierContextOptions as |ctx|}}
                             <option value="{{ctx.id}}">{{ctx.label}}</option>
                         {{/each}}
+                    </datalist>
+                    <datalist id="roll-mod-composition-groups">
+                        {{#each rollModifierCompositionGroups as |group|}}<option value="{{group}}"></option>{{/each}}
                     </datalist>
 
                     <datalist id="macro-list">

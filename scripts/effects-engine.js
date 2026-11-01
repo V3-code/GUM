@@ -27,6 +27,7 @@ import {
     resolveEffectStackingDomain
 } from "../module/utils/effect-stacking.mjs";
 import { isEffectItemBridgeApplicationActive } from "../module/integrations/active-effect-bridge.mjs";
+import { normalizeRollModifierCompositionMode } from "../module/utils/roll-modifier-composition.mjs";
 import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
 
 /**
@@ -210,6 +211,9 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_context: "all",
     roll_modifier_source_item_ids: "",
     roll_modifier_source_attack_ids: "",
+    roll_modifier_composition_group: "",
+    roll_modifier_composition_mode: "sum",
+    roll_modifier_composition_priority: 0,
     roll_modifier_entries: [],
     modifier_value: "0",
     modifier_value_mode: "fixed",
@@ -318,9 +322,12 @@ const normalizeEffectAction = (action = {}) => {
             target_values: (next.roll_modifier_target_values || "").toString().trim(),
             source_item_ids: (next.roll_modifier_source_item_ids || "").toString().trim(),
             source_attack_ids: (next.roll_modifier_source_attack_ids || "").toString().trim(),
+            composition_group: (next.roll_modifier_composition_group || "").toString().trim(),
+            composition_mode: normalizeRollModifierCompositionMode(next.roll_modifier_composition_mode),
+            composition_priority: Number(next.roll_modifier_composition_priority) || 0,
             roll_tags: (next.roll_modifier_roll_tags || "").toString().trim(),
             roll_tag_match: next.roll_modifier_roll_tag_match === "all" ? "all" : "any",
-            nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
+            nh_display_mode: String(next.roll_modifier_composition_group || "").trim() ? "roll_only" : (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     }
     next.roll_modifier_entries = next.roll_modifier_entries.map((entry) => ({
@@ -335,6 +342,9 @@ const normalizeEffectAction = (action = {}) => {
         target_values: (entry?.target_values || "").toString().trim(),
         source_item_ids: (entry?.source_item_ids || "").toString().trim(),
         source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
+        composition_group: (entry?.composition_group || "").toString().trim(),
+        composition_mode: normalizeRollModifierCompositionMode(entry?.composition_mode),
+        composition_priority: Number(entry?.composition_priority) || 0,
         ability_sources: normalizeControlledCsv(entry?.ability_sources),
         ability_groups: normalizeControlledCsv(entry?.ability_groups),
         ability_sheet_groups: normalizeControlledCsv(entry?.ability_sheet_groups),
@@ -342,13 +352,16 @@ const normalizeEffectAction = (action = {}) => {
         ability_classes: normalizeControlledCsv(entry?.ability_classes),
          roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || "").toString().trim(),
         roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
-        nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
+        nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim() || String(entry?.composition_group || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
     }));
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_source_item_ids = next.roll_modifier_entries[0]?.source_item_ids ?? "";
     next.roll_modifier_source_attack_ids = next.roll_modifier_entries[0]?.source_attack_ids ?? "";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
+    next.roll_modifier_composition_group = next.roll_modifier_entries[0]?.composition_group ?? "";
+    next.roll_modifier_composition_mode = next.roll_modifier_entries[0]?.composition_mode ?? "sum";
+    next.roll_modifier_composition_priority = next.roll_modifier_entries[0]?.composition_priority ?? 0;
     next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
     next.modifier_value_mode = normalizeEffectValueMode(next.modifier_value_mode);
     next.modifier_application_side = normalizeRollModifierApplicationSide(next.modifier_application_side);
@@ -719,6 +732,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 target_values: action.roll_modifier_target_values ?? "",
                                 source_item_ids: action.roll_modifier_source_item_ids ?? "",
                                 source_attack_ids: action.roll_modifier_source_attack_ids ?? "",
+                                composition_group: action.roll_modifier_composition_group ?? "",
+                                composition_mode: action.roll_modifier_composition_mode ?? "sum",
+                                composition_priority: Number(action.roll_modifier_composition_priority) || 0,
                                 roll_tags: action.roll_modifier_roll_tags ?? "",
                                 roll_tag_match: action.roll_modifier_roll_tag_match ?? "any",
                                 nh_display_mode: action.roll_modifier_nh_display_mode ?? "roll_only"

@@ -87,6 +87,7 @@ import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../module/uti
 import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 import { collectActiveEquipmentOwnerModifiers, equipmentAttributeBonus, equipmentSkillBonus } from "../module/utils/equipment-owner-modifiers.mjs";
+import { composeRollModifiers, getRollModifierCompositionOrigin } from "../module/utils/roll-modifier-composition.mjs";
 import { registerHexOccupancyCanvasHooks } from "../module/canvas/hex-occupancy-overlay.js";
 import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-layer.mjs";
 import { registerMovementRulerIntegration } from "../module/canvas/movement-ruler.mjs";
@@ -1597,19 +1598,13 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         });
 
         const effectMods = _collectEffectRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
-        effectMods.forEach(m => {
-            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
-            if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
-                const capVal = parseInt(m.cap);
-                if (!isNaN(capVal) && capVal < lowestCap) {
-                    lowestCap = capVal;
-                }
-            }
-        });
-
         const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
-        counterEffectMods.forEach(m => {
-            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
+        const composedEffectMods = composeRollModifiers([...effectMods, ...counterEffectMods].map(modifier => ({
+            ...modifier,
+            value: _evaluateModifierEntryValue(modifier.evaluationActor || actor, modifier, rollData)
+        })));
+        composedEffectMods.forEach(m => {
+            globalModValue += Number(m.value) || 0;
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -2720,7 +2715,11 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
                 cap: entry?.cap ?? entry?.nh_cap ?? data.cap,
                 value_mode: entry?.value_mode,
                 origin_level: entry?.origin_level,
-                defer_value_evaluation: entry?.defer_value_evaluation
+                defer_value_evaluation: entry?.defer_value_evaluation,
+                compositionGroup: entry?.composition_group || "",
+                compositionMode: entry?.composition_mode || "sum",
+                compositionPriority: Number(entry?.composition_priority) || 0,
+                compositionOrigin: getRollModifierCompositionOrigin(effect)
             });
         });
     }
@@ -2738,6 +2737,7 @@ function _isCounterContextSupported(rollContext) {
 }
 
 function _buildCounterGroupKey(entry = {}, effect = {}, entryIndex = 0) {
+    if (String(entry?.composition_group || "").trim()) return `composition-${effect?.id || "effect"}-${entryIndex}`;
     const label = (entry?.label || "").toString().trim();
     if (label) return label.slugify({ strict: true }) || `entry-${entryIndex}`;
     const effectName = (effect?.name || "").toString().trim();
@@ -2849,7 +2849,11 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
             grouped.set(key, {
                 id: `counter::${targetToken.id}::${key}`,
                 value,
-                cap
+                cap,
+                compositionGroup: candidate.entry?.composition_group || "",
+                compositionMode: candidate.entry?.composition_mode || "sum",
+                compositionPriority: Number(candidate.entry?.composition_priority) || 0,
+                compositionOrigin: getRollModifierCompositionOrigin(candidate.effect)
             });
         }
     }

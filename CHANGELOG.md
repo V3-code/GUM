@@ -28,6 +28,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Blocos e subgrupos do Modelo agora organizam dados básicos, instruções, destinos e configurações específicas em seções; novos subgrupos começam sem blocos predefinidos.
 - Perícias, magias, poderes e vantagens ou desvantagens com níveis agora compartilham nível inicial, mínimo, máximo e fixo; ajustes de atributos seguem a mesma lógica, e PV/PF alteram somente seus valores máximos.
 - A ponte `ActiveEffect` do Item Efeito agora ignora corretamente os hooks destinados a Atores e serializa sincronizações concorrentes, evitando avisos e tentativas duplicadas de remoção.
+- Modificadores de rolagem de Itens Efeito agora aceitam grupos de composição entre personagem e alvo, com políticas de soma, pior ou melhor resultado, prioridade e uma aplicação por origem.
 - As seções internas dos blocos ganharam separadores vermelhos sutis, e as instruções do subgrupo voltaram a usar o mesmo tratamento visual dos demais campos.
 
 ### Fixed
