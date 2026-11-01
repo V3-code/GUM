@@ -120,6 +120,9 @@ test("subgroups start empty and follow basic data, blocks, then availability", (
   assert.ok(packageBlocks.indexOf("BasicData") < packageBlocks.indexOf("BlockInstructions"));
   assert.ok(packageBlocks.indexOf("BlockInstructions") < packageBlocks.indexOf("ApplicationOrganization"));
   assert.ok(packageBlocks.indexOf("ApplicationOrganization") < packageBlocks.indexOf("SpecificData"));
+  assert.match(styles, /\.template-block-field-section \{[^}]*linear-gradient[^}]*rgba\(170,58,52,\.52\)/);
+  assert.match(styles, /\.template-package-block-section \{[^}]*linear-gradient[^}]*rgba\(170,58,52,\.52\)/);
+  assert.match(styles, /\.template-package-instructions textarea \{[^}]*background: var\(--tpl-field\) !important[^}]*border: 1px solid transparent !important/);
 });
 
 test("the unavailability explanation is last and requirement delete buttons are visually borderless", () => {

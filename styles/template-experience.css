@@ -194,8 +194,8 @@
 .gum.sheet.item.template-item-sheet .template-entry-controls .delete-block-entry:hover { color: var(--tpl-danger); }
 .gum.sheet.item.template-item-sheet .template-block-editor { padding: 12px; gap: 12px; background: #121315; }
 .gum.sheet.item.template-item-sheet .template-block-fields { display: flex; flex-direction: column; gap: 13px; }
-.gum.sheet.item.template-item-sheet .template-block-field-section { display: flex; flex-direction: column; gap: 9px; padding: 12px 6px 0; box-shadow: inset 0 1px var(--tpl-hairline); }
-.gum.sheet.item.template-item-sheet .template-block-field-section:first-child { padding-top: 0; box-shadow: none; }
+.gum.sheet.item.template-item-sheet .template-block-field-section { display: flex; flex-direction: column; gap: 9px; padding: 12px 8px 4px; background: linear-gradient(180deg, rgba(116,35,35,.09), transparent 34px); box-shadow: inset 0 1px rgba(170,58,52,.52); }
+.gum.sheet.item.template-item-sheet .template-block-field-section:first-child { padding-top: 4px; box-shadow: none; }
 .gum.sheet.item.template-item-sheet .template-block-field-section > h4 { margin: 0; color: var(--tpl-text); font: 700 .7rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .gum.sheet.item.template-item-sheet .template-block-title-field { width: 100%; }
 .gum.sheet.item.template-item-sheet .template-block-destinations,
@@ -416,7 +416,9 @@
 .dialog.gum.template-package-dialog .template-package-settings { padding: 10px; background: #121315; border-radius: 8px; }
 .dialog.gum.template-package-dialog .template-package-metadata { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(120px,.6fr); gap: 12px; }
 .dialog.gum.template-package-dialog .template-package-instructions { grid-column: 1 / -1; }
-.dialog.gum.template-package-dialog .template-package-instructions textarea { width: 100%; min-height: 68px; padding: 7px 9px; resize: vertical; font-size: .72rem; line-height: 1.35; }
+.dialog.gum.template-package-dialog .template-package-instructions textarea { width: 100%; min-height: 68px; padding: 7px 9px; resize: vertical; color: var(--tpl-text) !important; background: var(--tpl-field) !important; border: 1px solid transparent !important; border-radius: 8px; box-shadow: none !important; font-size: .72rem; line-height: 1.35; }
+.dialog.gum.template-package-dialog .template-package-instructions textarea:focus { outline: 0; border-color: rgba(199,166,109,.55) !important; }
+.dialog.gum.template-package-dialog .template-package-instructions textarea::placeholder { color: var(--tpl-soft); }
 .dialog.gum.template-package-dialog .template-package-metadata .form-group,
 .dialog.gum.template-package-dialog .template-package-rule-fields .form-group { min-width: 0; margin: 0; }
 .dialog.gum.template-package-dialog .template-package-metadata input,
@@ -435,7 +437,7 @@
 .dialog.gum.template-package-dialog .template-package-delete-block { width: 28px; height: 28px; min-height: 0; padding: 0; color: var(--tpl-muted); background: transparent; }
 .dialog.gum.template-package-dialog .template-package-delete-block:hover { color: var(--tpl-danger); }
 .dialog.gum.template-package-dialog .template-package-block-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 10px; padding: 9px 10px 4px; }
-.dialog.gum.template-package-dialog .template-package-block-section { display: flex; flex-direction: column; gap: 7px; margin: 0 10px; padding: 11px 0 0; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-package-dialog .template-package-block-section { display: flex; flex-direction: column; gap: 7px; margin: 0 10px; padding: 11px 6px 4px; background: linear-gradient(180deg, rgba(116,35,35,.09), transparent 32px); box-shadow: inset 0 1px rgba(170,58,52,.52); }
 .dialog.gum.template-package-dialog .template-package-block-section:first-of-type { padding-top: 9px; box-shadow: none; }
 .dialog.gum.template-package-dialog .template-package-block-section > h4 { margin: 0; color: var(--tpl-text); font: 700 .67rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .dialog.gum.template-package-dialog .template-package-block-section .template-package-block-fields,
