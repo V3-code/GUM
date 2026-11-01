@@ -7575,10 +7575,13 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
           const spendingLimit = moneyMode === "deduct" ? this._resolveTemplateSpendingLimit(block) : Number(block.moneyAvailable) || 0;
           const unlimited = moneyMode === "deduct" && spendingLimit === null;
           const budget = unlimited ? 0 : spendingLimit;
+          const configuredPolicy = block.budgetPolicy || "hard";
+          const policy = moneyMode === "deduct" && !["hard", "gm"].includes(configuredPolicy) ? "hard" : configuredPolicy;
           budgetResults.push({ blockId: block.id, title: block.title || "", type: "money", budget,
-            spent, excess: unlimited ? 0 : Math.max(0, spent - budget), policy: block.budgetPolicy || "hard", unlimited,
+            spent, excess: unlimited ? 0 : Math.max(0, spent - budget), policy, unlimited,
             moneyMode, accounting: moneyMode === "deduct" ? "deduct" : "budget",
-            moneySourceFilter: moneyMode === "deduct" ? String(block.moneySourceFilter || "").trim() : "", originChain: block.originChain || [] });
+            moneySourceFilter: moneyMode === "deduct" ? String(block.moneySourceFilter || "").trim() : "",
+            paymentRules: moneyMode === "deduct" ? this._normalizeTemplatePaymentRules(block.paymentRules) : this._normalizeTemplatePaymentRules(), originChain: block.originChain || [] });
         }
       }
       for (const entry of selected) {
@@ -7624,9 +7627,13 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
     const definition = sharedDefinitions.get(key);
     if (!definition) continue;
     const budget = Number(definition.amount) || 0;
+    const accounting = definition.type === "money" && definition.accounting === "deduct" ? "deduct" : "budget";
+    const configuredPolicy = definition.policy || "hard";
+    const policy = accounting === "deduct" && !["hard", "gm"].includes(configuredPolicy) ? "hard" : configuredPolicy;
     const result = { blockId: `shared:${key}`, sharedKey: key, title: definition.name, type: definition.type,
-      budget, spent, excess: Math.max(0, spent - budget), policy: definition.policy || "hard",
-      moneyMode: definition.type === "money" ? "shared" : "", accounting: definition.type === "money" && definition.accounting === "deduct" ? "deduct" : "budget", moneySourceFilter: "", originChain: [] };
+      budget, spent, excess: Math.max(0, spent - budget), policy,
+      moneyMode: definition.type === "money" ? "shared" : "", accounting,
+      moneySourceFilter: String(definition.moneySourceFilter || "").trim(), paymentRules: this._normalizeTemplatePaymentRules(definition.paymentRules), originChain: [] };
     budgetResults.push(result);
     if (definition.type === "points") pointsLeftoverTotal += budget - spent;
   }
@@ -7719,9 +7726,10 @@ _templateBudgetStatus(block, draftChoice, blocks, choices, sharedBudgets) {
   const result = name
     ? results.find(entry => entry.sharedKey === `${block.type}:${name}`)
     : results.find(entry => entry.blockId === block.id);
-  if (!result) return { spent: 0, budget: 0, valid: false, unlimited: false };
+  if (!result) return { spent: 0, budget: 0, valid: false, unlimited: false, accounting: "budget", paymentRules: this._normalizeTemplatePaymentRules(), moneySourceFilter: "" };
   const valid = this._isTemplateBudgetResultValid(result);
-  return { spent: result.spent, budget: result.budget, valid, unlimited: result.unlimited === true };
+  return { spent: result.spent, budget: result.budget, valid, unlimited: result.unlimited === true,
+    accounting: result.accounting || "budget", paymentRules: this._normalizeTemplatePaymentRules(result.paymentRules), moneySourceFilter: result.moneySourceFilter || "" };
 }
 
 _isTemplateBudgetResultValid(result) {
@@ -7730,7 +7738,7 @@ _isTemplateBudgetResultValid(result) {
 }
 
 _templateMoneyCost(entry, quantity = undefined) {
-  const unitPrice = Number(entry.moneyCost ?? entry.cost) || 0;
+  const unitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
   return unitPrice * this._templateEntryQuantity(entry, quantity);
 }
 
@@ -7910,13 +7918,16 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     const rowCost = block.type === "money" ? this._templateMoneyCost(entry, quantity)
       : this._templateChoiceCost(entry, isLevelled ? level : undefined, quantity, entry.kind === "attribute" ? attributeAmounts : undefined);
     const costUnit = block.type === "money" ? t("Money") : t("Points");
+    const costDisplay = block.type === "money"
+      ? `${Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0)}${quantity !== 1 ? ` × ${quantity} = ${rowCost}` : ""} ${costUnit}`
+      : `${rowCost} ${costUnit}`;
     return `<div class="template-choice-row template-wizard-row" data-entry-id="${esc(entry.id)}">
       ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas fa-check"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected ? "checked" : ""}>`}
       <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small></span>
       ${isLevelled ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : ""}
       ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="1" step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
       ${attributeInputs ? `<span class="template-attribute-choices">${attributeInputs}</span>` : ""}
-      <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${rowCost} ${costUnit}</span>
+      <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${costDisplay}</span>
       <button type="button" class="template-preview-entry" data-entry-id="${esc(entry.id)}" title="${t("PreviewEntry")}" aria-label="${t("PreviewEntry")}"><i class="fas fa-eye"></i></button>
     </div>`;
   }).join("") : "";
@@ -7951,7 +7962,9 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
       </select>
     </div>${conflicts.length === 1 ? `<input type="hidden" class="template-conflict-target" data-entry-id="${esc(entry.id)}" value="${esc(targetId)}">` : ""}` : "";
     const meta = [entry.itemType === "equipment" ? `×${Math.max(1, Number(entry.quantity) || 1)}` : "", entry.destinationGroup ? esc(entry.destinationGroup) : ""].filter(Boolean).join(" · ");
-    const acquisitionCost = entry.blockType === "money" ? `${this._templateMoneyCost(entry, entry.quantity)} ${t("Money")}`
+    const acquisitionQuantity = Math.max(1, Number(entry.quantity) || 1);
+    const acquisitionUnitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
+    const acquisitionCost = entry.blockType === "money" ? `${t("MoneyUnitPrice")}: ${acquisitionUnitPrice}${acquisitionQuantity !== 1 ? ` × ${acquisitionQuantity} = ${this._templateMoneyCost(entry, acquisitionQuantity)}` : ""} ${t("Money")}`
       : entry.blockType === "points" ? `${this._templateChoiceCost(entry, entry.level, entry.quantity, entry.attributes)} ${t("Points")}` : "";
     const details = [...(reviewViews[index].details || []), entry.level !== "" && entry.level !== null && entry.level !== undefined ? `${t("Level")}: ${entry.level}` : "", acquisitionCost, meta].filter(Boolean).filter((value, position, values) => values.indexOf(value) === position).join(" · ");
     return { entry, index, conflicts, row: `<li class="template-review-card"><div class="template-review-card__main"><strong>${reviewViews[index].title}</strong>${meta ? `<small>${meta}</small>` : ""}</div>
@@ -7996,6 +8009,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const needsPayment = !block && preview?.budgetResults?.some(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0);
   const moneySources = needsPayment ? this.actor.items.filter(item => item.type === "money_source") : [];
   const paymentLines = needsPayment ? preview.budgetResults.filter(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0) : [];
+  const automaticPaymentReserved = new Map();
   const paymentAllocationRow = (result, accepted, allocation = {}, index = 0) => `<div class="template-payment-allocation" data-payment-id="${esc(result.blockId)}" data-allocation-index="${index}">
     <label class="template-payment-source-field"><span>${t("PaymentSource")}</span><select class="template-money-source" aria-label="${t("PaymentSource")}"><option value="">${t("PaymentSource")}</option>${accepted.map(item => `<option value="${esc(item.id)}" ${allocation.sourceId === item.id ? "selected" : ""}>${esc(item.name)} · ${this._getMoneySourceBalance(item)}</option>`).join("")}</select></label>
     <label class="template-payment-amount"><span>${t("PaymentAmount")}</span><input type="number" min="0" step="any" value="${esc(allocation.amount ?? 0)}" aria-label="${t("PaymentAmount")}"></label>
@@ -8004,12 +8018,18 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   </div>`;
   const paymentSource = needsPayment ? `<details class="template-review-section template-payment-source" open><summary><span>${t("PaymentSources")}</span><strong>${paymentLines.length}</strong></summary><div class="template-payment-source__body">${paymentLines.map(result => {
     const filter = String(result.moneySourceFilter || "").trim();
-    const accepted = moneySources.filter(item => this._moneySourceMatchesFilter(item, filter));
+    const accepted = moneySources.filter(item => this._moneySourceMatchesFilter(item, filter, result.paymentRules));
     const legacySourceId = choices.__moneySourceIds?.[result.blockId] || "";
-    const saved = Array.isArray(choices.__moneyAllocations?.[result.blockId]) ? choices.__moneyAllocations[result.blockId]
-      : [{ sourceId: legacySourceId, amount: Number(result.spent) || 0 }];
-    return `<div class="template-payment-line" data-payment-id="${esc(result.blockId)}"><span class="template-payment-line__summary"><strong>${esc(result.title || t("PurchaseBudget"))}</strong><small>${filter ? `${t("PaymentSourceFilter")}: ${esc(filter)}` : t("PaymentSources")}</small><span class="template-payment-progress"><span>${t("PaymentRequired")}: <strong data-payment-required>${Number(result.spent) || 0}</strong></span><span>${t("PaymentAllocated")}: <strong data-payment-allocated>0</strong></span></span></span><span class="template-payment-line__control">${accepted.length
-      ? `<span class="template-payment-allocations">${saved.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join("")}</span><button type="button" class="template-payment-add" data-payment-id="${esc(result.blockId)}"><i class="fas fa-plus"></i> ${t("AddPaymentSource")}</button><small class="template-payment-error">${t("PaymentAllocationIncomplete")}</small>`
+    const prior = choices.__moneyAllocations?.[result.blockId];
+    const usedAutomaticAllocation = !(Array.isArray(prior) && prior.length) && !legacySourceId;
+    const saved = Array.isArray(prior) && prior.length ? prior
+      : legacySourceId ? [{ sourceId: legacySourceId, amount: Number(result.spent) || 0 }]
+        : this._buildAutomaticTemplatePaymentAllocations(result, accepted, automaticPaymentReserved);
+    if (!usedAutomaticAllocation) for (const allocation of saved) automaticPaymentReserved.set(allocation.sourceId, (automaticPaymentReserved.get(allocation.sourceId) || 0) + Math.max(0, Number(allocation.amount) || 0));
+    const rules = this._normalizeTemplatePaymentRules(result.paymentRules);
+    const ruleSummary = [rules.categories.length ? `${t("PaymentCategories")}: ${rules.categories.join(", ")}` : "", rules.modes.length ? t(rules.modes[0] === "physical" ? "PaymentPhysical" : "PaymentAbstract") : "", rules.locations.length ? t(`Payment${rules.locations[0][0].toUpperCase()}${rules.locations[0].slice(1)}`) : "", filter].filter(Boolean).join(" · ");
+    return `<div class="template-payment-line" data-payment-id="${esc(result.blockId)}"><span class="template-payment-line__summary"><strong>${esc(result.title || t("PurchaseBudget"))}</strong><small>${esc(ruleSummary || t("PaymentAny"))}</small><span class="template-payment-progress"><span>${t("PaymentRequired")}: <strong data-payment-required>${Number(result.spent) || 0}</strong></span><span>${t("PaymentAllocated")}: <strong data-payment-allocated>0</strong></span></span></span><span class="template-payment-line__control">${accepted.length
+      ? `<span class="template-payment-allocations">${saved.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join("")}</span><span class="template-payment-actions"><button type="button" class="template-payment-auto" data-payment-id="${esc(result.blockId)}"><i class="fas fa-wand-magic-sparkles"></i> ${t("AutoAllocatePayment")}</button><button type="button" class="template-payment-add" data-payment-id="${esc(result.blockId)}"><i class="fas fa-plus"></i> ${t("AddPaymentSource")}</button></span><small class="template-payment-error">${t("PaymentAllocationIncomplete")}</small>`
       : `<span class="template-payment-empty">${t("NoPaymentSource")}</span>`}</span></div>`;
   }).join("")}</div></details>` : "";
   const pointBudgetSummary = block?.type === "points" ? `<section class="template-wizard-budget-summary${initialBudgetStatus.valid ? "" : " template-wizard-budget-summary--invalid"}">
@@ -8018,11 +8038,13 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     <div><span>${t("Leftover")}</span><strong data-template-remaining>${initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>
     <p class="template-wizard-budget-notice">${initialBudgetStatus.valid ? "" : t("InvalidBudget")}</p>
   </section>` : "";
-  const moneyBudgetSummary = block?.type === "money" ? `<section class="template-wizard-budget-summary${initialBudgetStatus.valid ? "" : " template-wizard-budget-summary--invalid"}">
+  const initialCompatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(initialBudgetStatus) : 0;
+  const initialMoneyValid = Boolean(initialBudgetStatus?.valid) && (!moneyDebitsCharacter || Number(initialBudgetStatus.spent) <= initialCompatibleBalance + 1e-6);
+  const moneyBudgetSummary = block?.type === "money" ? `<section class="template-wizard-budget-summary${moneyDebitsCharacter ? " template-wizard-budget-summary--four" : ""}${initialMoneyValid ? "" : " template-wizard-budget-summary--invalid"}">
     <div><span>${t(moneyDebitsCharacter ? "SpendingLimit" : "MoneyAvailable")}</span><strong data-template-money-budget>${initialBudgetStatus.unlimited ? t("Unlimited") : initialBudgetStatus.budget}</strong></div>
     <div><span>${t("PurchaseTotal")}</span><strong data-template-money-spent>${initialBudgetStatus.spent}</strong></div>
-    <div><span>${t(moneyDebitsCharacter ? "ToDebit" : "MoneyRemaining")}</span><strong data-template-money-balance>${moneyDebitsCharacter ? initialBudgetStatus.spent : initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>
-    <p class="template-wizard-budget-notice">${initialBudgetStatus.valid ? "" : t("InvalidMoneyBudget")}</p>
+    ${moneyDebitsCharacter ? `<div><span>${t("CompatibleBalance")}</span><strong data-template-money-compatible>${initialCompatibleBalance}</strong></div><div><span>${t("BalanceAfterPurchase")}</span><strong data-template-money-after>${initialCompatibleBalance - initialBudgetStatus.spent}</strong></div>` : `<div><span>${t("MoneyRemaining")}</span><strong data-template-money-balance>${initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>`}
+    <p class="template-wizard-budget-notice">${initialMoneyValid ? "" : t(initialBudgetStatus.valid ? "PaymentInsufficient" : "InvalidMoneyBudget")}</p>
   </section>` : "";
   const guaranteedSpent = block?.type === "guaranteed" ? block.contents.reduce((sum, entry) => sum + this._templateChoiceCost(
     entry,
@@ -8090,7 +8112,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
               const payments = this._buildTemplatePaymentTransactions(currentPlan.budgetResults, review.moneyAllocations);
               if (!payments.valid) {
                 const message = payments.reason === "source" ? "NoPaymentSource"
-                  : payments.reason === "allocation" ? "PaymentAllocationIncomplete" : "PaymentInsufficient";
+                  : payments.reason === "allocation" ? "PaymentAllocationIncomplete"
+                    : payments.reason === "denomination" ? "PaymentExactRequired" : "PaymentInsufficient";
                 ui.notifications.warn(t(message));
                 return finish({ action: "retry" });
               }
@@ -8121,8 +8144,9 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           }
           if (block.type === "money") {
             const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
-            if (!status.valid) {
-              ui.notifications.warn(t("InvalidMoneyBudget"));
+            const compatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(status) : Infinity;
+            if (!status.valid || Number(status.spent) > compatibleBalance + 1e-6) {
+              ui.notifications.warn(t(status.valid ? "PaymentInsufficient" : "InvalidMoneyBudget"));
               return finish({ action: "retry" });
             }
           }
@@ -8198,13 +8222,32 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
               .find(entry => entry.blockId === paymentId);
             if (!result) return;
             const filter = String(result.moneySourceFilter || "").trim();
-            const accepted = this.actor.items.filter(item => item.type === "money_source" && this._moneySourceMatchesFilter(item, filter));
+            const accepted = this.actor.items.filter(item => item.type === "money_source" && this._moneySourceMatchesFilter(item, filter, result.paymentRules));
             const line = html.find(".template-payment-line").filter((_, el) => el.dataset.paymentId === paymentId);
             const allocations = this._readTemplateReviewChoices(html).moneyAllocations[paymentId] || [];
             const allocated = allocations.reduce((sum, allocation) => sum + Math.max(0, Number(allocation.amount) || 0), 0);
             const row = $(paymentAllocationRow(result, accepted, { sourceId: "", amount: Math.max(0, Number(result.spent) - allocated) }, allocations.length));
             line.find(".template-payment-allocations").append(row);
             bindPaymentControls(row);
+            refreshReview();
+          });
+          html.find(".template-payment-auto").on("click", event => {
+            event.preventDefault();
+            const paymentId = event.currentTarget.dataset.paymentId;
+            const review = this._readTemplateReviewChoices(html);
+            const result = this._buildTemplatePlanFromChoices(blocks, { ...choices, __conflicts: review.conflicts, __destinations: review.destinations }, sharedBudgets).budgetResults
+              .find(entry => entry.blockId === paymentId);
+            if (!result) return;
+            const reserved = new Map();
+            for (const [otherId, allocations] of Object.entries(review.moneyAllocations || {})) {
+              if (otherId === paymentId) continue;
+              for (const allocation of allocations || []) reserved.set(allocation.sourceId, (reserved.get(allocation.sourceId) || 0) + Math.max(0, Number(allocation.amount) || 0));
+            }
+            const accepted = this._getCompatibleTemplateMoneySources(result);
+            const allocations = this._buildAutomaticTemplatePaymentAllocations(result, accepted, reserved);
+            const line = html.find(".template-payment-line").filter((_, el) => el.dataset.paymentId === paymentId);
+            line.find(".template-payment-allocations").html(allocations.map((allocation, index) => paymentAllocationRow(result, accepted, allocation, index)).join(""));
+            bindPaymentControls(line);
             refreshReview();
           });
           bindPaymentControls(html);
@@ -8255,7 +8298,10 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           const isMoneyBlock = block.type === "money";
           const moneyMode = isMoneyBlock ? this._resolveTemplateMoneyMode(block) : "";
           const moneyDebitsCharacter = isMoneyBlock && (moneyMode === "deduct" || (moneyMode === "shared" && sharedDefinition?.accounting === "deduct"));
-          const { spent, budget, valid, unlimited } = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+          const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+          const { spent, budget, unlimited } = status;
+          const compatibleBalance = moneyDebitsCharacter ? this._getCompatibleTemplateMoneyBalance(status) : 0;
+          const valid = status.valid && (!moneyDebitsCharacter || spent <= compatibleBalance + 1e-6);
           if (["points", "money"].includes(block.type)) {
             html.find(".template-wizard-budget-summary")
               .toggleClass("template-wizard-budget-summary--invalid", !valid);
@@ -8266,15 +8312,23 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             } else {
               html.find("[data-template-money-budget]").text(unlimited ? t("Unlimited") : budget);
               html.find("[data-template-money-spent]").text(spent);
-              html.find("[data-template-money-balance]").text(moneyDebitsCharacter ? spent : budget - spent);
+              html.find("[data-template-money-balance]").text(budget - spent);
+              html.find("[data-template-money-compatible]").text(compatibleBalance);
+              html.find("[data-template-money-after]").text(compatibleBalance - spent);
             }
-            html.find(".template-wizard-budget-notice").text(valid ? "" : t(block.type === "money" ? "InvalidMoneyBudget" : "InvalidBudget"));
+            html.find(".template-wizard-budget-notice").text(valid ? "" : t(block.type === "money" && status.valid ? "PaymentInsufficient" : block.type === "money" ? "InvalidMoneyBudget" : "InvalidBudget"));
           } else {
             html.find(".template-wizard-balance")
               .toggleClass("template-wizard-balance--invalid", !valid)
               .text(`${t("Leftover")}: ${budget - spent}${valid ? "" : ` · ${t("InvalidBudget")}`}`);
           }
-          for (const entry of block.contents) html.find(`[data-cost-for="${entry.id}"]`).text(`${isMoneyBlock ? this._templateMoneyCost(entry, quantities[entry.id]) : this._templateChoiceCost(entry, levels[entry.id], quantities[entry.id], attributeValues[entry.id])} ${isMoneyBlock ? t("Money") : t("Points")}`);
+          for (const entry of block.contents) {
+            const quantity = this._templateEntryQuantity(entry, quantities[entry.id]);
+            const unitPrice = Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0);
+            const display = isMoneyBlock ? `${unitPrice}${quantity !== 1 ? ` × ${quantity} = ${this._templateMoneyCost(entry, quantity)}` : ""} ${t("Money")}`
+              : `${this._templateChoiceCost(entry, levels[entry.id], quantities[entry.id], attributeValues[entry.id])} ${t("Points")}`;
+            html.find(`[data-cost-for="${entry.id}"]`).text(display);
+          }
           setNextEnabled(valid);
         };
         html.find('input[name="entry"], .template-level-choice, .template-quantity-choice').on("change input", refresh);
@@ -8344,12 +8398,66 @@ _normalizeMoneySourceTerms(value = "") {
   return String(value || "").split(",").map(term => term.trim().toLocaleLowerCase()).filter(Boolean);
 }
 
-_moneySourceMatchesFilter(item, rawFilter = "") {
+_normalizeTemplatePaymentRules(rules = {}) {
+  const list = value => (Array.isArray(value) ? value : String(value || "").split(","))
+    .map(term => String(term).trim().toLocaleLowerCase()).filter(Boolean);
+  return {
+    categories: [...new Set(list(rules.categories))],
+    modes: [...new Set(list(rules.modes).filter(mode => ["physical", "abstract"].includes(mode)))],
+    locations: [...new Set(list(rules.locations).filter(location => ["equipped", "carried", "stored"].includes(location)))]
+  };
+}
+
+_moneySourceMatchesFilter(item, rawFilter = "", paymentRules = {}) {
   const terms = this._normalizeMoneySourceTerms(rawFilter);
-  if (!terms.length) return true;
   const name = String(item?.name || "").trim().toLocaleLowerCase();
   const category = String(item?.system?.category || "").trim().toLocaleLowerCase();
-  return terms.includes(name) || terms.includes(category);
+  if (terms.length && !terms.includes(name) && !terms.includes(category)) return false;
+  const rules = this._normalizeTemplatePaymentRules(paymentRules);
+  const mode = item?.system?.mode === "abstract" ? "abstract" : "physical";
+  const location = String(item?.system?.location || "").trim().toLocaleLowerCase();
+  if (rules.categories.length && !rules.categories.includes(category)) return false;
+  if (rules.modes.length && !rules.modes.includes(mode)) return false;
+  if (rules.locations.length && !rules.locations.includes(location)) return false;
+  return true;
+}
+
+_getCompatibleTemplateMoneySources(result = {}) {
+  return this.actor.items.filter(item => item.type === "money_source"
+    && this._moneySourceMatchesFilter(item, result.moneySourceFilter, result.paymentRules));
+}
+
+_getCompatibleTemplateMoneyBalance(result = {}) {
+  return this._getCompatibleTemplateMoneySources(result).reduce((sum, item) => sum + this._getMoneySourceBalance(item), 0);
+}
+
+_isExactPhysicalMoneyAmount(item, amount) {
+  if (item?.system?.mode === "abstract") return true;
+  const unitValue = Number(item?.system?.unit_value) || 0;
+  if (!(unitValue > 0)) return false;
+  const units = Math.max(0, Number(amount) || 0) / unitValue;
+  return Math.abs(units - Math.round(units)) <= 1e-6;
+}
+
+_buildAutomaticTemplatePaymentAllocations(result, sources = [], reserved = new Map()) {
+  const allocations = [];
+  let remaining = Math.max(0, Number(result?.spent) || 0);
+  for (const source of sources) {
+    if (remaining <= 1e-6) break;
+    const available = Math.max(0, this._getMoneySourceBalance(source) - (reserved.get(source.id) || 0));
+    if (!(available > 0)) continue;
+    let amount = Math.min(remaining, available);
+    if (source.system?.mode !== "abstract") {
+      const unitValue = Number(source.system?.unit_value) || 0;
+      if (!(unitValue > 0)) continue;
+      amount = Math.floor((amount + 1e-9) / unitValue) * unitValue;
+    }
+    if (!(amount > 1e-9)) continue;
+    allocations.push({ sourceId: source.id, amount });
+    reserved.set(source.id, (reserved.get(source.id) || 0) + amount);
+    remaining -= amount;
+  }
+  return allocations;
 }
 
 _buildTemplatePaymentTransactions(budgetResults = [], moneyAllocations = {}) {
@@ -8368,8 +8476,11 @@ _buildTemplatePaymentTransactions(budgetResults = [], moneyAllocations = {}) {
     }
     for (const allocation of positive) {
       const source = this.actor.items.get(allocation.sourceId);
-      if (!source || source.type !== "money_source" || !this._moneySourceMatchesFilter(source, result.moneySourceFilter)) {
+      if (!source || source.type !== "money_source" || !this._moneySourceMatchesFilter(source, result.moneySourceFilter, result.paymentRules)) {
         return { valid: false, reason: "source", transactions: [], totals };
+      }
+      if (!this._isExactPhysicalMoneyAmount(source, allocation.amount)) {
+        return { valid: false, reason: "denomination", transactions: [], totals };
       }
       totals.set(source.id, (totals.get(source.id) || 0) + allocation.amount);
       const key = `${result.blockId}:${source.id}`;
@@ -8398,16 +8509,22 @@ _refreshTemplatePaymentBalances(html, budgetResults = []) {
     const allocations = selections[line.dataset.paymentId] || [];
     const allocated = allocations.reduce((sum, allocation) => sum + Math.max(0, Number(allocation.amount) || 0), 0);
     const complete = Math.abs(allocated - Number(result.spent)) <= 1e-6;
-    line.classList.toggle("template-payment-line--invalid", !complete);
+    let lineInvalid = !complete;
+    let errorKey = complete ? "" : "PaymentAllocationIncomplete";
     line.querySelector("[data-payment-required]").textContent = Number(result.spent) || 0;
     line.querySelector("[data-payment-allocated]").textContent = allocated;
     $(line).find(".template-payment-allocation").each((index, row) => {
       const allocation = allocations[index] || {};
       const source = this.actor.items.get(allocation.sourceId);
       const balance = row.querySelector(".template-payment-balance");
+      const amountInput = row.querySelector(".template-payment-amount input");
+      if (amountInput) amountInput.step = source?.system?.mode === "physical" ? String(Math.max(0, Number(source.system.unit_value) || 0) || "any") : "any";
       if (!source || !(Number(allocation.amount) > 0)) {
         balance.textContent = "";
-        row.classList.toggle("template-payment-allocation--invalid", Number(allocation.amount) > 0 && !source);
+        const invalid = Number(allocation.amount) > 0 && !source;
+        lineInvalid ||= invalid;
+        if (invalid) errorKey = "NoPaymentSource";
+        row.classList.toggle("template-payment-allocation--invalid", invalid);
         return;
       }
       const before = this._getMoneySourceBalance(source);
@@ -8416,8 +8533,16 @@ _refreshTemplatePaymentBalances(html, budgetResults = []) {
       const after = before - spentBefore - amount;
       running.set(source.id, spentBefore + amount);
       balance.textContent = `${before - spentBefore} → ${after}`;
-      row.classList.toggle("template-payment-allocation--invalid", after < -1e-6);
+      const exact = this._isExactPhysicalMoneyAmount(source, amount);
+      const invalid = after < -1e-6 || !exact;
+      lineInvalid ||= invalid;
+      if (!exact) errorKey = "PaymentExactRequired";
+      else if (after < -1e-6) errorKey = "PaymentInsufficient";
+      row.classList.toggle("template-payment-allocation--invalid", invalid);
     });
+    line.classList.toggle("template-payment-line--invalid", lineInvalid);
+    const error = line.querySelector(".template-payment-error");
+    if (error && errorKey) error.textContent = game.i18n.localize(`GUM.Template.${errorKey}`);
   });
 }
 
@@ -8432,8 +8557,8 @@ _getMoneySourceDebit(item, amount) {
   const spent = Math.max(0, Number(amount) || 0);
   if (system.mode === "abstract") return { "system.balance": Math.max(0, (Number(system.balance) || 0) - spent) };
   const unitValue = Number(system.unit_value) || 0;
-  if (!unitValue) return null;
-  return { "system.quantity": Math.max(0, (Number(system.quantity) || 0) - spent / unitValue) };
+  if (!unitValue || !this._isExactPhysicalMoneyAmount(item, spent)) return null;
+  return { "system.quantity": Math.max(0, Math.round((Number(system.quantity) || 0) - spent / unitValue)) };
 }
 
 _readTemplateAttributeChoices(html) {
@@ -8460,7 +8585,8 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0, budgetRe
   const legacyActorMoney = moneySpent && !hasPerBlockPayment && !moneySourceId;
   if (moneySpent && !hasPerBlockPayment && Object.keys(paymentSelections || {}).length && !paymentPlan.valid) {
     const message = paymentPlan.reason === "source" ? "GUM.Template.NoPaymentSource"
-      : paymentPlan.reason === "allocation" ? "GUM.Template.PaymentAllocationIncomplete" : "GUM.Template.PaymentInsufficient";
+      : paymentPlan.reason === "allocation" ? "GUM.Template.PaymentAllocationIncomplete"
+        : paymentPlan.reason === "denomination" ? "GUM.Template.PaymentExactRequired" : "GUM.Template.PaymentInsufficient";
     ui.notifications.error(game.i18n.localize(`GUM.Template.${message}`));
     return false;
   }

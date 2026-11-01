@@ -31,11 +31,20 @@ test("block creation exposes one selection kind and no longer persists a cosmeti
 });
 
 test("creation and later configuration route through the same entry editor", () => {
-  assert.match(sheet, /_onEditEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "edit" \}\)/);
-  assert.match(sheet, /_buildTemplateDropEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "create", sourceItem: item \}\)/);
-  assert.match(sheet, /_editPackageLocalEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "edit" \}\)/);
+  assert.match(sheet, /_onEditEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "edit", block \}\)/);
+  assert.match(sheet, /_buildTemplateDropEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "create", sourceItem: item, block \}\)/);
+  assert.match(sheet, /_editPackageLocalEntry[\s\S]+?_configureEntryDraft\(entry, \{ mode: "edit", block \}\)/);
   assert.match(sheet, /_configureEntryDraft[\s\S]+?draft\.kind === "attribute"[\s\S]+?draft\.kind === "group"[\s\S]+?draft\.kind === "template"/);
   assert.doesNotMatch(sheet, /_(?:promptEquipmentEntry|promptLevelledEntry|promptAdvantageEntry|editAttributeEntry|editItemEntry|editGroupEntry|editTemplateEntry)\s*\(/);
+});
+
+test("money blocks configure unit prices and structured payment rules", () => {
+  assert.match(sheet, /MoneyUnitPriceHint/);
+  assert.match(sheet, /entry\.moneyCost = Math\.max\(0/);
+  assert.match(template, /data-field="paymentRules\.categories"/);
+  assert.match(template, /data-field="paymentRules\.modes"/);
+  assert.match(template, /data-field="paymentRules\.locations"/);
+  assert.match(template, /configure-template-shared-budget-payment/);
 });
 
 test("plain block instructions are escaped and shown separately from the mechanical rule", () => {

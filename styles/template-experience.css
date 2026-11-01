@@ -144,7 +144,7 @@
 .gum.sheet.item.template-item-sheet .template-shared-budget-columns,
 .gum.sheet.item.template-item-sheet .template-shared-budget-row {
   display: grid;
-  grid-template-columns: minmax(90px,1.25fr) 75px 50px minmax(100px,1fr) minmax(135px,1.15fr) 24px;
+  grid-template-columns: minmax(90px,1.25fr) 75px 50px minmax(100px,1fr) minmax(135px,1.15fr) 54px;
   gap: 8px;
   align-items: center;
 }
@@ -161,8 +161,12 @@
 .gum.sheet.item.template-item-sheet .template-shared-budget-row select { height: 28px; min-height: 28px; padding: 3px 7px; font-size: .75rem; }
 .gum.sheet.item.template-item-sheet .template-shared-budget-row > input:not(:first-child),
 .gum.sheet.item.template-item-sheet .template-shared-budget-row > select { text-align: center; text-align-last: center; }
-.gum.sheet.item.template-item-sheet .template-shared-budget-row .delete-template-shared-budget { display: inline-grid; place-items: center; width: 24px; height: 28px; min-height: 0; padding: 0; margin: 0; color: var(--tpl-muted); background: transparent !important; border: 0 !important; box-shadow: none !important; line-height: 1; }
+.gum.sheet.item.template-item-sheet .template-shared-budget-actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.gum.sheet.item.template-item-sheet .template-shared-budget-actions button { display: inline-grid; place-items: center; width: 24px; height: 28px; min-height: 0; padding: 0; margin: 0; color: var(--tpl-muted); background: transparent !important; border: 0 !important; box-shadow: none !important; line-height: 1; }
+.gum.sheet.item.template-item-sheet .template-shared-budget-actions .configure-template-shared-budget-payment:hover { color: var(--tpl-accent); }
 .gum.sheet.item.template-item-sheet .template-shared-budget-row .delete-template-shared-budget:hover { color: var(--tpl-danger); }
+.gum.sheet.item.template-item-sheet .template-payment-rules-fields { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.dialog.gum.template-config-dialog .template-payment-rules-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
 .gum.sheet.item.template-item-sheet .template-block-list { gap: 5px; }
 .gum.sheet.item.template-item-sheet .template-block {
   overflow: hidden;
@@ -471,6 +475,7 @@
 .dialog.gum.template-apply-dialog .template-wizard-balance,
 .dialog.gum.template-apply-dialog .template-review-leftover-card { display: flex; align-items: center; justify-content: space-between; min-height: 54px; margin-top: 16px; padding: 12px 16px; color: var(--tpl-accent); background: rgba(199,166,109,.09); border-radius: 10px; font-size: .85rem; font-weight: 750; }
 .dialog.gum.template-apply-dialog .template-wizard-budget-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; margin-top: 12px; overflow: hidden; background: var(--tpl-hairline); border-radius: 8px; }
+.dialog.gum.template-apply-dialog .template-wizard-budget-summary--four { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .dialog.gum.template-apply-dialog .template-wizard-budget-summary > div { display: flex; min-height: 52px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 10px; background: var(--tpl-surface); }
 .dialog.gum.template-apply-dialog .template-wizard-budget-summary span { color: var(--tpl-muted); font-size: .61rem; font-weight: 700; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
 .dialog.gum.template-apply-dialog .template-wizard-budget-summary strong { color: var(--tpl-accent); font-size: .92rem; line-height: 1; }
@@ -561,8 +566,11 @@
 .dialog.gum.template-apply-dialog .template-payment-balance { display: flex; min-height: 30px; align-items: center; justify-content: center; padding: 2px 4px; background: rgba(0,0,0,.12); border-radius: 4px; text-align: center; white-space: nowrap; }
 .dialog.gum.template-apply-dialog .template-payment-remove { width: 30px; min-width: 30px; height: 30px; min-height: 30px; padding: 0; color: var(--tpl-danger); background: rgba(226,146,146,.07); border: 1px solid rgba(226,146,146,.22); }
 .dialog.gum.template-apply-dialog .template-payment-remove:hover { background: rgba(226,146,146,.14); border-color: rgba(226,146,146,.42); }
-.dialog.gum.template-apply-dialog .template-payment-add { align-self: flex-start; width: auto; min-height: 28px; margin-top: 1px; padding: 3px 10px; color: var(--tpl-accent); background: rgba(199,166,109,.07); border: 1px solid rgba(199,166,109,.22); font-size: .65rem; }
-.dialog.gum.template-apply-dialog .template-payment-add:hover { background: rgba(199,166,109,.13); border-color: rgba(199,166,109,.4); }
+.dialog.gum.template-apply-dialog .template-payment-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.dialog.gum.template-apply-dialog .template-payment-add,
+.dialog.gum.template-apply-dialog .template-payment-auto { align-self: flex-start; width: auto; min-height: 28px; margin-top: 1px; padding: 3px 10px; color: var(--tpl-accent); background: rgba(199,166,109,.07); border: 1px solid rgba(199,166,109,.22); font-size: .65rem; }
+.dialog.gum.template-apply-dialog .template-payment-add:hover,
+.dialog.gum.template-apply-dialog .template-payment-auto:hover { background: rgba(199,166,109,.13); border-color: rgba(199,166,109,.4); }
 .dialog.gum.template-apply-dialog .template-payment-error { display: none; color: var(--tpl-danger); font-size: .62rem; }
 .dialog.gum.template-apply-dialog .template-payment-line--invalid .template-payment-error { display: block; }
 .dialog.gum.gcs-actor-import-review-dialog .dialog-content { display: flex; overflow: hidden; }

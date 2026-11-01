@@ -319,7 +319,8 @@ test("shared points across referenced blocks are charged once and validated cumu
 });
 
 test("shared money pools are charged once and retain the pool accounting rule", () => {
-  const budgets = [{ name: "Equipment", type: "money", amount: 100, policy: "allow", accounting: "deduct" }];
+  const budgets = [{ name: "Equipment", type: "money", amount: 100, policy: "allow", accounting: "deduct",
+    paymentRules: { categories: ["coins"], modes: ["physical"], locations: ["carried"] } }];
   const blocks = [{ id: "a", type: "money", sharedBudgetKey: "Equipment", contents: [
     { id: "rope", kind: "item", itemType: "equipment", cost: 20, quantity: 1 }
   ] }, { id: "b", type: "money", sharedBudgetKey: "Equipment", contents: [
@@ -331,7 +332,16 @@ test("shared money pools are charged once and retain the pool accounting rule", 
   assert.equal(result.budgetResults[0].spent, 55);
   assert.equal(result.budgetResults[0].accounting, "deduct");
   assert.equal(result.budgetResults[0].moneyMode, "shared");
+  assert.deepEqual(JSON.parse(JSON.stringify(result.budgetResults[0].paymentRules)), {
+    categories: ["coins"], modes: ["physical"], locations: ["carried"]
+  });
   assert.equal(result.pointsLeftoverTotal, 0);
+});
+
+test("money costs use an explicit unit price for every entry type and never become negative", () => {
+  assert.equal(sheet._templateMoneyCost({ itemType: "skill", cost: 4, moneyCost: 12 }, 3), 36);
+  assert.equal(sheet._templateMoneyCost({ itemType: "advantage", cost: 20, moneyCost: -5 }, 1), 0);
+  assert.equal(sheet._templateMoneyCost({ itemType: "equipment", cost: 7 }, 2), 14);
 });
 
 test("money spending modes preserve legacy data and explicit mode semantics", () => {
@@ -489,6 +499,34 @@ test("one purchase can be split across multiple money sources", async () => {
   assert.equal(purse.system.balance, 10);
   assert.equal(bank.system.balance, 10);
   assert.equal(actor.system.applied_models[0].moneyTransactions.length, 2);
+});
+
+test("structured payment rules filter category, source type, and location", () => {
+  const ruleSheet = new context.Sheet();
+  const coin = { id: "coin", name: "Purse", type: "money_source", system: { category: "Coins", mode: "physical", location: "carried", quantity: 5, unit_value: 10 } };
+  const bank = { id: "bank", name: "Bank", type: "money_source", system: { category: "Credit", mode: "abstract", location: "stored", balance: 100 } };
+  const items = [coin, bank];
+  items.get = id => items.find(item => item.id === id);
+  ruleSheet.actor = { items };
+  const result = { paymentRules: { categories: ["coins"], modes: ["physical"], locations: ["carried"] } };
+  assert.deepEqual(ruleSheet._getCompatibleTemplateMoneySources(result).map(item => item.id), ["coin"]);
+  assert.equal(ruleSheet._getCompatibleTemplateMoneyBalance(result), 50);
+  assert.equal(ruleSheet._moneySourceMatchesFilter(coin, "Purse", result.paymentRules), true);
+  assert.equal(ruleSheet._moneySourceMatchesFilter(coin, "Credit", result.paymentRules), false);
+});
+
+test("automatic payment respects physical denominations and can finish with abstract money", () => {
+  const allocationSheet = new context.Sheet();
+  const coins = { id: "coins", type: "money_source", system: { mode: "physical", quantity: 3, unit_value: 10 } };
+  const account = { id: "account", type: "money_source", system: { mode: "abstract", balance: 20 } };
+  allocationSheet.actor = { items: Object.assign([coins, account], { get: id => id === "coins" ? coins : account }) };
+  assert.deepEqual(JSON.parse(JSON.stringify(allocationSheet._buildAutomaticTemplatePaymentAllocations({ spent: 35 }, [coins, account]))), [
+    { sourceId: "coins", amount: 30 }, { sourceId: "account", amount: 5 }
+  ]);
+  const budget = [{ blockId: "buy", type: "money", accounting: "deduct", spent: 15 }];
+  assert.equal(allocationSheet._buildTemplatePaymentTransactions(budget, { buy: [{ sourceId: "coins", amount: 15 }] }).reason, "denomination");
+  assert.equal(allocationSheet._buildTemplatePaymentTransactions([{ ...budget[0], spent: 20 }], { buy: [{ sourceId: "coins", amount: 20 }] }).valid, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(allocationSheet._getMoneySourceDebit(coins, 20))), { "system.quantity": 1 });
 });
 
 test("detaching a template removes only its record and clears item provenance", async () => {
