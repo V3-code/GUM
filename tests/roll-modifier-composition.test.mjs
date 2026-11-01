@@ -58,6 +58,9 @@ test("Effect Item editing and both roll paths carry composition metadata", () =>
     assert.match(template, new RegExp(field));
     assert.match(engine, new RegExp(field));
   }
+  assert.match(template, /CompositionGroupHint'\}\}"/);
+  assert.match(template, /CompositionPriorityHint'\}\}"/);
+  assert.doesNotMatch(template, /effect-premium-field-hint[^>]*>\{\{localize "GUM\.EffectSheet\.Composition(?:Group|Priority)Hint"/);
   assert.match(prompt, /composeRollModifiers\(this\.selectedModifiers\)/);
   assert.match(main, /composeRollModifiers\(\[\.\.\.effectMods, \.\.\.counterEffectMods\]/);
 });

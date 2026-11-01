@@ -882,14 +882,14 @@
 
                                                             <div class="effect-premium-grid effect-premium-grid-entry-composition">
                                                                 <div class="effect-premium-field">
-                                                                    <label class="effect-premium-field-label"><i class="fas fa-object-group" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionGroup"}}</label>
+                                                                    <label class="effect-premium-field-label" title="{{localize 'GUM.EffectSheet.CompositionGroupHint'}}"><i class="fas fa-object-group" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionGroup"}}</label>
                                                                     <div class="effect-premium-field-control">
                                                                         <input type="text"
                                                                             name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.composition_group"
                                                                             value="{{entry.composition_group}}"
                                                                             list="roll-mod-composition-groups"
+                                                                            title="{{localize 'GUM.EffectSheet.CompositionGroupHint'}}"
                                                                             placeholder="visibility.smoke" />
-                                                                        <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.CompositionGroupHint"}}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div class="effect-premium-field">
@@ -903,12 +903,12 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="effect-premium-field">
-                                                                    <label class="effect-premium-field-label"><i class="fas fa-arrow-up-1-9" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionPriority"}}</label>
+                                                                    <label class="effect-premium-field-label" title="{{localize 'GUM.EffectSheet.CompositionPriorityHint'}}"><i class="fas fa-arrow-up-1-9" aria-hidden="true"></i> {{localize "GUM.EffectSheet.CompositionPriority"}}</label>
                                                                     <div class="effect-premium-field-control">
                                                                         <input type="number"
                                                                             name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.composition_priority"
-                                                                            value="{{entry.composition_priority}}" step="1" />
-                                                                        <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.CompositionPriorityHint"}}</p>
+                                                                            value="{{entry.composition_priority}}" step="1"
+                                                                            title="{{localize 'GUM.EffectSheet.CompositionPriorityHint'}}" />
                                                                     </div>
                                                                 </div>
                                                             </div>
