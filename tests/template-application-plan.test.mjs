@@ -251,6 +251,14 @@ test("individual attribute caps constrain point allocation without limiting othe
     attributeLimits: { basic_speed: 0.5 } }, { basic_speed: 1 }).basic_speed, 0.5);
 });
 
+test("attribute adjustments support independent minimum and maximum values", () => {
+  const entry = { attributes: { st: 1, dx: 0, basic_speed: 0.25 }, selectedAttributes: ["st", "dx", "basic_speed"],
+    attributeMinimums: { st: 0, dx: -1, basic_speed: -0.25 },
+    attributeMaximums: { st: 3, dx: 2, basic_speed: 0.5 } };
+  assert.deepEqual({ ...sheet._templateAttributeAmounts(entry, { st: -2, dx: 8, basic_speed: -1 }) },
+    { st: 0, dx: 2, basic_speed: -0.25 });
+});
+
 test("fixed attribute values cannot be reduced or increased during allocation", () => {
   const entry = { id: "attrs", kind: "attribute", attributes: { st: 2, dx: 1 }, lockedAttributes: ["st"],
     attributeLimits: { st: 4, dx: 4 }, costs: { st: 10, dx: 20 }, cost: 40 };
@@ -315,6 +323,18 @@ test("template attributes map secondary statistics and maximum HP/FP to their ac
   assert.equal(update["system.attributes.hp.max"], 15);
   assert.equal(update["system.attributes.fp.max"], 13);
   assert.ok(changes.some(change => change.key === "hp.max" && change.amount === 3));
+});
+
+test("legacy PV and PF template adjustments change only the maximum resources", () => {
+  const actorSheet = new context.Sheet();
+  actorSheet.actor = { system: { attributes: { hp: { value: 7, max: 10 }, fp: { value: 5, max: 9 } } } };
+  const deltas = {}, changes = [];
+  actorSheet._accumulateAttributeChanges({ attributes: { hp: 2, fp: 3 } }, deltas, changes);
+  const update = actorSheet._buildTemplateAttributeUpdateData(deltas);
+  assert.equal(update["system.attributes.hp.max"], 12);
+  assert.equal(update["system.attributes.fp.max"], 12);
+  assert.equal(update["system.attributes.hp.value"], undefined);
+  assert.equal(update["system.attributes.fp.value"], undefined);
 });
 
 test("review conflict choices omit ignored entries and return their point budget", () => {
@@ -645,11 +665,14 @@ test("levelled trait cost is recalculated from the chosen level", () => {
   assert.equal(sheet._templateChoiceCost(trait, 2), 25);
 });
 
-test("level caps limit the selected level and its point cost", () => {
-  const trait = { itemType: "advantage", maxLevel: 2, trait_cost: { points: 5, points_per_level: 10, can_level: true, level: 0 } };
+test("level rules enforce minimum, maximum and fixed values in selection and cost", () => {
+  const trait = { itemType: "advantage", level: 1, minLevel: 1, maxLevel: 2,
+    trait_cost: { points: 5, points_per_level: 10, can_level: true, level: 1 } };
+  assert.equal(sheet._templateEntryLevel(trait, 0), 1);
   assert.equal(sheet._templateEntryLevel(trait, 4), 2);
   assert.equal(sheet._templateChoiceCost(trait, 4), 25);
   assert.equal(sheet._templateEntryLevel({ itemType: "skill", maxLevel: 1 }, 3), 1);
+  assert.equal(sheet._templateEntryLevel({ itemType: "skill", level: -1, minLevel: -2, maxLevel: 2, levelLocked: true }, 2), -1);
 });
 
 test("entry destination can override or opt out of a block default", () => {

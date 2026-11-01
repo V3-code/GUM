@@ -7851,14 +7851,20 @@ _templateAttributeAmounts(entry, values = undefined) {
   const locked = new Set(Array.isArray(entry.lockedAttributes) ? entry.lockedAttributes : []);
   for (const [key, raw] of Object.entries(entry.attributes || {})) {
     const initial = Number(raw) || 0;
-    const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
-    if (!initial && !(Number.isFinite(configuredLimit) && configuredLimit > 0) && !selected.has(key)) continue;
+    const legacyLimitRaw = entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined);
+    const legacyLimit = Number(legacyLimitRaw);
+    const minimumRaw = entry.attributeMinimums?.[key] ?? (key === "move" ? entry.attributeMinimums?.basic_move : undefined);
+    const maximumRaw = entry.attributeMaximums?.[key] ?? (key === "move" ? entry.attributeMaximums?.basic_move : undefined);
+    let minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+      ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : -Infinity;
+    let maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+      ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : Infinity;
+    if (minimum > maximum) [minimum, maximum] = [maximum, minimum];
+    if (!initial && minimum === -Infinity && maximum === Infinity && !selected.has(key)) continue;
     const step = key === "basic_speed" ? 0.25 : 1;
     const requested = locked.has(key) || values?.[key] === undefined ? initial : Number(values[key]);
     const amount = Number.isFinite(requested) ? requested : initial;
-    const magnitudeLimit = Number.isFinite(configuredLimit) && configuredLimit > 0
-      ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : Infinity;
-    const bounded = Math.min(Math.max(-magnitudeLimit, amount), magnitudeLimit);
+    const bounded = Math.min(maximum, Math.max(minimum, amount));
     result[key] = Math.round(bounded / step) * step;
   }
   return result;
@@ -7905,12 +7911,21 @@ _templateChoiceCost(entry, level = undefined, quantity = undefined, attributeVal
 }
 
 _templateEntryLevel(entry, value) {
-  const level = Number(value) || 0;
+  const configuredRaw = entry?.level !== "" && entry?.level !== null && entry?.level !== undefined
+    ? entry.level : entry?.trait_cost?.level;
+  const configured = Number(configuredRaw) || 0;
+  let level = entry?.levelLocked ? configured : Number(value);
+  if (!Number.isFinite(level)) level = configured;
+  const rawMinimum = entry?.minLevel;
   const rawMaximum = entry?.maxLevel;
-  const maximum = Number(rawMaximum);
-  return rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(maximum)
-    ? Math.min(level, maximum)
-    : level;
+  let minimum = Number(rawMinimum);
+  let maximum = Number(rawMaximum);
+  const hasMinimum = rawMinimum !== "" && rawMinimum !== null && rawMinimum !== undefined && Number.isFinite(minimum);
+  const hasMaximum = rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(maximum);
+  minimum = hasMinimum ? minimum : -Infinity;
+  maximum = hasMaximum ? maximum : Infinity;
+  if (minimum > maximum) [minimum, maximum] = [maximum, minimum];
+  return Math.min(maximum, Math.max(minimum, level));
 }
 
 _isTemplateSelectionValid(block, selectedCount) {
@@ -7979,22 +7994,30 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     const minimumQuantity = Math.max(1, Math.floor(Number(entry.minimumQuantity) || 1));
     const rawMaximumQuantity = entry.maximumQuantity;
     const maximumQuantity = rawMaximumQuantity === "" || rawMaximumQuantity === null || rawMaximumQuantity === undefined || !Number.isFinite(Number(rawMaximumQuantity)) ? "" : Math.max(minimumQuantity, Math.floor(Number(rawMaximumQuantity)));
-    const minimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
+    const naturalMinimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
+    const rawMinimumLevel = entry.minLevel;
+    const hasMinimumLevel = rawMinimumLevel !== "" && rawMinimumLevel !== null && rawMinimumLevel !== undefined && Number.isFinite(Number(rawMinimumLevel));
+    const minimumLevel = hasMinimumLevel ? Number(rawMinimumLevel) : naturalMinimumLevel;
     const rawMaximumLevel = entry.maxLevel;
     const hasMaximumLevel = rawMaximumLevel !== "" && rawMaximumLevel !== null && rawMaximumLevel !== undefined && Number.isFinite(Number(rawMaximumLevel));
     const maximumLevel = hasMaximumLevel ? Math.max(minimumLevel, Number(rawMaximumLevel)) : Math.max(12, level + 7);
-    const levelOptions = isLevelled ? Array.from({ length: maximumLevel - minimumLevel + 1 }, (_, index) => minimumLevel + index).map(n =>
+    const levelEditable = isLevelled && !entry.levelLocked;
+    const levelOptions = levelEditable ? Array.from({ length: Math.max(0, Math.floor(maximumLevel) - Math.ceil(minimumLevel) + 1) }, (_, index) => Math.ceil(minimumLevel) + index).map(n =>
       `<option value="${n}" ${n === level ? "selected" : ""}>${n} (${this._templateChoiceCost(entry, n)} ${t("Points")})</option>`).join("") : "";
     const attributeAmounts = entry.kind === "attribute" && block.type === "points"
       ? this._templateAttributeAmounts(entry, choice.attributeValues?.[entry.id]) : {};
     const lockedAttributes = new Set(Array.isArray(entry.lockedAttributes) ? entry.lockedAttributes : []);
     const attributeInputs = Object.entries(attributeAmounts).map(([key, amount]) => {
       const initial = Number(entry.attributes[key]) || 0;
-      const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+      const legacyLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+      const minimumRaw = entry.attributeMinimums?.[key] ?? (key === "move" ? entry.attributeMinimums?.basic_move : undefined);
+      const maximumRaw = entry.attributeMaximums?.[key] ?? (key === "move" ? entry.attributeMaximums?.basic_move : undefined);
       const step = key === "basic_speed" ? 0.25 : 1;
-      const limit = Number.isFinite(configuredLimit) && configuredLimit > 0
-        ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : null;
-      const bound = limit !== null ? `min="${-limit}" max="${limit}"` : "";
+      const minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+        ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : null;
+      const maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+        ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : null;
+      const bound = `${minimum === null ? "" : `min="${minimum}"`} ${maximum === null ? "" : `max="${maximum}"`}`.trim();
       if (lockedAttributes.has(key)) return `<label class="template-choice-adjustment template-attribute-adjustment is-locked"><span>${esc(this._templateAttributeLabel(key))}</span><strong>${amount > 0 ? "+" : ""}${amount}</strong></label>`;
       return `<label class="template-choice-adjustment template-attribute-adjustment"><span>${esc(this._templateAttributeLabel(key))}</span><span class="template-attribute-stepper"><button type="button" class="template-attribute-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-attribute-choice" data-entry-id="${esc(entry.id)}" data-attribute="${esc(key)}" ${bound} step="${key === "basic_speed" ? "0.25" : "1"}" value="${amount}"><button type="button" class="template-attribute-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>`;
     }).join("");
@@ -8008,7 +8031,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     return `<div class="template-choice-row template-wizard-row${initialAvailability.available ? "" : " template-choice-row--unavailable"}${initialAvailability.hidden ? " is-hidden" : ""}" data-entry-id="${esc(entry.id)}">
       ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas ${initialAvailability.available ? "fa-check" : "fa-lock"}"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected && initialAvailability.available ? "checked" : ""} ${initialAvailability.available ? "" : "disabled"}>`}
       <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small><em class="template-choice-availability">${esc(availabilityText)}</em></span>
-      ${isLevelled ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : ""}
+      ${levelEditable ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : isLevelled ? `<label class="template-choice-adjustment is-locked" title="${t("FixedLevelHint")}"><span>${t("Level")}</span><strong>${level}</strong></label>` : ""}
       ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="${minimumQuantity}" ${maximumQuantity === "" ? "" : `max="${maximumQuantity}"`} step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
       ${attributeInputs ? `<span class="template-attribute-choices">${attributeInputs}</span>` : ""}
       <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${costDisplay}</span>
@@ -8918,8 +8941,8 @@ _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
     ht: "ht",
     will: "vont",
     per: "per",
-    hp: "hp",
-    fp: "fp",
+    hp: "hp.max",
+    fp: "fp.max",
     hp_max: "hp.max",
     fp_max: "fp.max",
     lifting_st: "lifting_st",
@@ -9431,13 +9454,23 @@ _getTemplateAttributeDetailChips(entry) {
   const attributes = entry.attributes || {};
   const selected = new Set(Array.isArray(entry.selectedAttributes) ? entry.selectedAttributes : []);
   const details = Object.entries(attributes)
-    .map(([key, value]) => ({ key, value: Number(value) || 0, limit: Number(entry.attributeLimits?.[key]) }))
-    .filter(attr => attr.value !== 0 || (Number.isFinite(attr.limit) && attr.limit > 0) || selected.has(attr.key))
+    .map(([key, value]) => {
+      const initial = Number(value) || 0;
+      const legacyLimit = Number(entry.attributeLimits?.[key]);
+      const minimumRaw = entry.attributeMinimums?.[key];
+      const maximumRaw = entry.attributeMaximums?.[key];
+      const minimum = minimumRaw !== "" && minimumRaw !== null && minimumRaw !== undefined && Number.isFinite(Number(minimumRaw))
+        ? Number(minimumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -Math.max(Math.abs(initial), legacyLimit) : null;
+      const maximum = maximumRaw !== "" && maximumRaw !== null && maximumRaw !== undefined && Number.isFinite(Number(maximumRaw))
+        ? Number(maximumRaw) : Number.isFinite(legacyLimit) && legacyLimit > 0 ? Math.max(Math.abs(initial), legacyLimit) : null;
+      return { key, value: initial, minimum, maximum };
+    })
+    .filter(attr => attr.value !== 0 || attr.minimum !== null || attr.maximum !== null || selected.has(attr.key))
     .map(attr => {
       const sign = attr.value > 0 ? "+" : "";
-      const cap = Number.isFinite(attr.limit) && attr.limit > 0
-        ? ` (${attr.value < 0 ? "≥-" : "≤+"}${Math.max(Math.abs(attr.value), attr.limit)})` : "";
-      return `${this._templateAttributeLabel(attr.key)} ${sign}${attr.value}${cap}`;
+      const range = attr.minimum !== null || attr.maximum !== null
+        ? ` (${attr.minimum ?? "−∞"}…${attr.maximum ?? "∞"})` : "";
+      return `${this._templateAttributeLabel(attr.key)} ${sign}${attr.value}${range}`;
     });
 
   if (entry.linkSecondary) details.push(game.i18n.localize("GUM.Template.RecalculateSecondaries"));

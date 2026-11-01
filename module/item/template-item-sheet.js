@@ -6,8 +6,7 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
 const templateText = key => game.i18n.localize(`GUM.Template.${key}`);
 const ATTRIBUTE_FIELDS = [
     ["st", "ST", 10], ["dx", "DX", 20], ["iq", "IQ", 20], ["ht", "HT", 10],
-    ["will", "Vont", 5], ["per", "Per", 5], ["hp", "PV", 2], ["fp", "PF", 3],
-    ["hp_max", "PV máx.", 2], ["fp_max", "PF máx.", 3],
+    ["will", "Vont", 5], ["per", "Per", 5], ["hp_max", "PV máx.", 2], ["fp_max", "PF máx.", 3],
     ["lifting_st", "ST levantamento", 3], ["vision", "Visão", 2], ["hearing", "Audição", 2],
     ["tastesmell", "Olfato/Paladar", 2], ["touch", "Tato", 2], ["mt", "MT", 0],
     ["basic_speed", "Velocidade", 5, 0.25], ["basic_move", "Deslocamento", 5],
@@ -207,12 +206,17 @@ export class TemplateItemSheet extends ItemSheet {
         const selected = new Set(Array.isArray(entry.selectedAttributes) ? entry.selectedAttributes : []);
         return Object.entries(entry.attributes || {}).flatMap(([key, raw]) => {
             const value = Number(raw) || 0;
-            const configuredLimit = Number(entry.attributeLimits?.[key]);
-            const hasLimit = Number.isFinite(configuredLimit) && configuredLimit > 0;
-            if (!value && !hasLimit && !selected.has(key)) return [];
+            const legacyLimit = Number(entry.attributeLimits?.[key]);
+            const rawMinimum = entry.attributeMinimums?.[key];
+            const rawMaximum = entry.attributeMaximums?.[key];
+            const minimum = rawMinimum !== "" && rawMinimum !== null && rawMinimum !== undefined && Number.isFinite(Number(rawMinimum)) ? Number(rawMinimum)
+                : Number.isFinite(legacyLimit) && legacyLimit > 0 ? -legacyLimit : null;
+            const maximum = rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(Number(rawMaximum)) ? Number(rawMaximum)
+                : Number.isFinite(legacyLimit) && legacyLimit > 0 ? legacyLimit : null;
+            if (!value && minimum === null && maximum === null && !selected.has(key)) return [];
             const amount = `${value > 0 ? "+" : ""}${value}`;
-            const limit = hasLimit ? ` (${templateText("AttributeMaxShort")} ${value < 0 ? "-" : "+"}${Math.max(Math.abs(value), configuredLimit)})` : "";
-            return [`${this._getAttributeLabel(key)}: ${amount}${limit}`];
+            const range = minimum !== null || maximum !== null ? ` (${minimum ?? "−∞"}…${maximum ?? "∞"})` : "";
+            return [`${this._getAttributeLabel(key)}: ${amount}${range}`];
         });
     }
 
@@ -257,15 +261,18 @@ export class TemplateItemSheet extends ItemSheet {
         return ATTRIBUTE_FIELDS.find(field => field[0] === key)?.[2] ?? (key === "move" ? 5 : 0);
     }
 
-    _renderAttributeFieldRows(attributes = {}, costs = {}, limits = {}, selectedAttributes = undefined, lockedAttributes = []) {
+    _renderAttributeFieldRows(attributes = {}, costs = {}, minimums = {}, maximums = {}, legacyLimits = {}, selectedAttributes = undefined, lockedAttributes = []) {
         const hasExplicitSelection = Array.isArray(selectedAttributes);
         const selected = new Set(selectedAttributes || []);
         const locked = new Set(lockedAttributes || []);
         return ATTRIBUTE_FIELDS.map(([key, , defaultCost, step]) => {
             const value = attributes[key] ?? (key === "basic_move" ? attributes.move : undefined) ?? 0;
             const cost = costs[key] ?? (key === "basic_move" ? costs.move : undefined) ?? defaultCost;
-            const limit = limits[key] ?? (key === "basic_move" ? limits.move : undefined) ?? "";
-            const checked = hasExplicitSelection ? selected.has(key) : Boolean(Number(value) || Number(limit));
+            const legacyLimit = legacyLimits[key] ?? (key === "basic_move" ? legacyLimits.move : undefined);
+            const legacyBound = Number.isFinite(Number(legacyLimit)) && Number(legacyLimit) > 0 ? Math.max(Math.abs(Number(value) || 0), Number(legacyLimit)) : null;
+            const minimum = minimums[key] ?? (key === "basic_move" ? minimums.move : undefined) ?? (legacyBound === null ? "" : -legacyBound);
+            const maximum = maximums[key] ?? (key === "basic_move" ? maximums.move : undefined) ?? (legacyBound === null ? "" : legacyBound);
+            const checked = hasExplicitSelection ? selected.has(key) : Boolean(Number(value) || minimum !== "" || maximum !== "");
             return `
             <div class="template-attr-row">
                 <label class="template-attr-selector" for="select-${key}" title="${templateText("SelectAttributeHint")}">
@@ -274,7 +281,8 @@ export class TemplateItemSheet extends ItemSheet {
                 </label>
                 <input type="number" id="attr-${key}" value="${value}" step="${step || 1}">
                 <input type="number" id="cost-${key}" value="${cost}">
-                <input type="number" id="limit-${key}" value="${limit}" min="${step || 1}" step="${step || 1}" placeholder="∞" title="${templateText("AttributeLimitHint")}">
+                <input type="number" id="min-${key}" value="${minimum}" step="${step || 1}" placeholder="−∞" title="${templateText("AttributeMinimumHint")}">
+                <input type="number" id="max-${key}" value="${maximum}" step="${step || 1}" placeholder="∞" title="${templateText("AttributeMaximumHint")}">
                 <label class="template-attr-fixed" for="locked-${key}" title="${templateText("FixedValueHint")}">
                     <input type="checkbox" id="locked-${key}" class="template-attr-lock" ${locked.has(key) ? "checked" : ""}>
                     <span>${templateText("FixedValue")}</span>
@@ -284,23 +292,26 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     _readAttributeFields(html) {
-        const attributes = {}, costs = {}, attributeLimits = {}, selectedAttributes = [], lockedAttributes = [];
+        const attributes = {}, costs = {}, attributeMinimums = {}, attributeMaximums = {}, selectedAttributes = [], lockedAttributes = [];
         for (const [key] of ATTRIBUTE_FIELDS) {
             const value = Number(html.find(`#attr-${key}`).val()) || 0;
             const cost = Number(html.find(`#cost-${key}`).val()) || 0;
-            const rawLimit = String(html.find(`#limit-${key}`).val() ?? "").trim();
-            const limit = Number(rawLimit);
-            const isSelected = html.find(`#select-${key}`).is(":checked") || value !== 0 || (rawLimit && Number.isFinite(limit) && limit > 0);
+            const rawMinimum = String(html.find(`#min-${key}`).val() ?? "").trim();
+            const rawMaximum = String(html.find(`#max-${key}`).val() ?? "").trim();
+            let minimum = Number(rawMinimum), maximum = Number(rawMaximum);
+            const hasMinimum = rawMinimum !== "" && Number.isFinite(minimum);
+            const hasMaximum = rawMaximum !== "" && Number.isFinite(maximum);
+            if (hasMinimum && hasMaximum && minimum > maximum) [minimum, maximum] = [maximum, minimum];
+            const isSelected = html.find(`#select-${key}`).is(":checked") || value !== 0 || hasMinimum || hasMaximum;
             if (!isSelected) continue;
             selectedAttributes.push(key);
-            attributes[key] = value;
+            attributes[key] = Math.min(hasMaximum ? maximum : Infinity, Math.max(hasMinimum ? minimum : -Infinity, value));
             costs[key] = cost;
             if (html.find(`#locked-${key}`).is(":checked")) lockedAttributes.push(key);
-            if (rawLimit && Number.isFinite(limit) && limit > 0) {
-                attributeLimits[key] = Math.max(Math.abs(value), limit);
-            }
+            if (hasMinimum) attributeMinimums[key] = minimum;
+            if (hasMaximum) attributeMaximums[key] = maximum;
         }
-        return { attributes, costs, attributeLimits, selectedAttributes, lockedAttributes };
+        return { attributes, costs, attributeMinimums, attributeMaximums, selectedAttributes, lockedAttributes };
     }
 
     activateListeners(html) {
@@ -1107,9 +1118,13 @@ export class TemplateItemSheet extends ItemSheet {
           </div>` : `<div class="template-entry-basic-fields">
             ${isTrait ? `<div class="form-group"><label>${templateText("BaseCost")}</label><input type="number" id="entry-base-cost" value="${entry.trait_cost.points ?? 0}"></div>
               <div class="form-group"><label>${templateText("PointsPerLevel")}</label><input type="number" id="entry-points-per-level" value="${entry.trait_cost.points_per_level ?? 0}"></div>` : ""}
-            <div class="form-group"><label>${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="number" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
+            ${supportsLevelCap ? `<div class="template-entry-level-rules">
+              <div class="form-group"><label>${templateText("InitialLevel")}</label><input type="number" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
+              <div class="form-group"><label>${templateText("MinimumLevel")}</label><input type="number" id="entry-min-level" value="${entry.minLevel ?? ""}" ${isTrait ? "min=\"0\"" : ""} placeholder="${templateText("NaturalMinimum")}"></div>
+              <div class="form-group"><label>${templateText("MaximumLevel")}</label><input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" ${isTrait ? "min=\"0\"" : ""} placeholder="${templateText("NoLevelLimit")}"></div>
+              <label class="template-entry-level-lock" title="${templateText("FixedLevelHint")}"><input type="checkbox" id="entry-level-locked" ${entry.levelLocked ? "checked" : ""}><span>${templateText("FixedLevel")}</span></label>
+            </div>` : `<div class="form-group"><label>${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="number" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}"></div>`}
             ${isMoney ? `<div class="form-group"><label title="${templateText("MoneyUnitPriceHint")}">${templateText("MoneyUnitPrice")}</label><input type="number" id="entry-money-cost" min="0" step="any" value="${Math.max(0, Number(entry.moneyCost) || 0)}"></div>` : !isTrait ? `<div class="form-group"><label>${templateText("TotalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" ${isLevelledAbility && sourceItem ? "readonly" : ""}></div>` : `<div class="form-group"><label>${templateText("FinalCost")}</label><input type="number" id="entry-cost" value="${Number(entry.cost) || 0}" readonly></div>`}
-            ${supportsLevelCap ? `<div class="form-group"><label>${templateText("MaximumLevel")}</label><input type="number" id="entry-max-level" value="${entry.maxLevel ?? ""}" placeholder="${templateText("NoLevelLimit")}"></div>` : ""}
           </div>`}</section>
           <section class="template-entry-destination-section template-dialog-section"><h3 class="template-dialog-section-title">${templateText(isEquipment ? "EquipmentDestination" : "ItemDestination")}</h3><div class="template-entry-destination">
             ${!isEquipment ? `<div class="form-group"><label for="entry-destination-mode">${templateText("GroupDestinationMode")}</label><select id="entry-destination-mode"><option value="inherit" ${groupMode === "inherit" ? "selected" : ""}>${templateText("InheritBlock")}</option><option value="group" ${groupMode === "group" ? "selected" : ""}>${templateText("UseNamedGroup")}</option><option value="source" ${groupMode === "source" ? "selected" : ""}>${templateText("KeepSourceGroup")}</option></select></div><div class="form-group template-destination-name"><label for="entry-destination-group" title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" id="entry-destination-group" value="${esc(entry.destinationGroup)}"></div>` : ""}
@@ -1134,9 +1149,13 @@ export class TemplateItemSheet extends ItemSheet {
                     entry.level = html.find("#entry-level").val();
                     if (!isEquipment) entry.level = Number(entry.level) || 0;
                     if (supportsLevelCap) {
-                        const raw = html.find("#entry-max-level").val();
-                        entry.maxLevel = raw === "" ? null : Number(raw);
-                        if (entry.maxLevel !== null && Number(entry.level) > entry.maxLevel) entry.level = entry.maxLevel;
+                        const rawMinimum = html.find("#entry-min-level").val();
+                        const rawMaximum = html.find("#entry-max-level").val();
+                        entry.minLevel = rawMinimum === "" ? null : Number(rawMinimum);
+                        entry.maxLevel = rawMaximum === "" ? null : Number(rawMaximum);
+                        if (entry.minLevel !== null && entry.maxLevel !== null && entry.minLevel > entry.maxLevel) [entry.minLevel, entry.maxLevel] = [entry.maxLevel, entry.minLevel];
+                        entry.level = Math.min(entry.maxLevel ?? Infinity, Math.max(entry.minLevel ?? -Infinity, Number(entry.level) || 0));
+                        entry.levelLocked = html.find("#entry-level-locked").is(":checked");
                     }
                     if (!isEquipment) {
                         entry.destinationMode = String(html.find("#entry-destination-mode").val() || "inherit");
@@ -1191,10 +1210,28 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     _createPackageAttributeEntry(existing = {}, { mode = "create", block = null } = {}) {
+        existing = foundry.utils.deepClone(existing || {});
+        for (const [legacyKey, canonicalKey] of [["hp", "hp_max"], ["fp", "fp_max"]]) {
+            if (!Object.prototype.hasOwnProperty.call(existing.attributes || {}, legacyKey)) continue;
+            existing.attributes ||= {};
+            existing.attributes[canonicalKey] = (Number(existing.attributes[canonicalKey]) || 0) + (Number(existing.attributes[legacyKey]) || 0);
+            delete existing.attributes[legacyKey];
+            existing.costs ||= {};
+            if (existing.costs[canonicalKey] === undefined && existing.costs[legacyKey] !== undefined) existing.costs[canonicalKey] = existing.costs[legacyKey];
+            delete existing.costs[legacyKey];
+            for (const field of ["attributeMinimums", "attributeMaximums", "attributeLimits"]) {
+                if (existing[field]?.[canonicalKey] === undefined && existing[field]?.[legacyKey] !== undefined) existing[field][canonicalKey] = existing[field][legacyKey];
+                if (existing[field]) delete existing[field][legacyKey];
+            }
+            for (const field of ["selectedAttributes", "lockedAttributes"]) {
+                if (!Array.isArray(existing[field])) continue;
+                existing[field] = [...new Set(existing[field].map(key => key === legacyKey ? canonicalKey : key))];
+            }
+        }
         const isMoney = block?.type === "money";
         const content = `<div class="template-attr-dialog template-sectioned-dialog"><section class="template-dialog-section template-attribute-config-section"><h3 class="template-dialog-section-title">${templateText("AttributeConfiguration")}</h3><div class="template-attr-grid-header">
-          <span>${templateText("Attribute")}</span><span>${templateText("Increase")}</span><span>${templateText("Cost")}</span><span>${templateText("AttributeLimit")}</span><span>${templateText("FixedValue")}</span></div>
-          <div class="template-attr-grid">${this._renderAttributeFieldRows(existing.attributes || {}, existing.costs || {}, existing.attributeLimits || {}, existing.selectedAttributes, existing.lockedAttributes)}</div>
+          <span>${templateText("Attribute")}</span><span>${templateText("InitialAdjustment")}</span><span>${templateText("Cost")}</span><span>${templateText("MinimumAdjustment")}</span><span>${templateText("MaximumAdjustment")}</span><span>${templateText("FixedValue")}</span></div>
+          <div class="template-attr-grid">${this._renderAttributeFieldRows(existing.attributes || {}, existing.costs || {}, existing.attributeMinimums || {}, existing.attributeMaximums || {}, existing.attributeLimits || {}, existing.selectedAttributes, existing.lockedAttributes)}</div>
           <div class="template-attr-summary"><label class="template-attr-secondary"><input type="checkbox" id="link-secondary" ${existing.linkSecondary ? "checked" : ""}> ${templateText("RecalculateSecondary")}</label>
           <div class="template-attr-total"><label for="template-attr-total-cost">${templateText("TotalCost")}</label><input type="number" id="template-attr-total-cost" value="${Number(existing.cost) || 0}" readonly></div></div>
           ${isMoney ? `<div class="form-group"><label for="template-attr-money-cost">${templateText("MoneyUnitPrice")}</label><input type="number" id="template-attr-money-cost" min="0" step="any" value="${Math.max(0, Number(existing.moneyCost) || 0)}"></div>` : ""}</section>
@@ -1203,9 +1240,10 @@ export class TemplateItemSheet extends ItemSheet {
             title: templateText(mode === "create" ? "AddAttribute" : "EditAttribute"), content,
             buttons: {
                 save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
-                    const { attributes, costs, attributeLimits, selectedAttributes, lockedAttributes } = this._readAttributeFields(html);
-                    const entry = { ...foundry.utils.deepClone(existing), id: existing.id || foundry.utils.randomID(), kind: "attribute", label: existing.label || templateText("Attributes"), attributes, costs, attributeLimits, selectedAttributes, lockedAttributes,
+                    const { attributes, costs, attributeMinimums, attributeMaximums, selectedAttributes, lockedAttributes } = this._readAttributeFields(html);
+                    const entry = { ...foundry.utils.deepClone(existing), id: existing.id || foundry.utils.randomID(), kind: "attribute", label: existing.label || templateText("Attributes"), attributes, costs, attributeMinimums, attributeMaximums, selectedAttributes, lockedAttributes,
                         linkSecondary: html.find("#link-secondary").is(":checked"), cost: this._calculateAttributeCost(attributes, costs) };
+                    delete entry.attributeLimits;
                     if (isMoney) entry.moneyCost = Math.max(0, Number(html.find("#template-attr-money-cost").val()) || 0);
                     this._readChoiceRuleFields(entry, html, "package-attr");
                     resolve(entry);
@@ -1222,7 +1260,7 @@ export class TemplateItemSheet extends ItemSheet {
                 html.find(".template-attr-select").trigger("change");
                 recalc();
             }
-        }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 720, height: Math.min(800, window.innerHeight - 60), resizable: true }).render(true));
+        }, { classes: ["dialog", "gum", "template-config-dialog", "template-attribute-dialog", "gum-sheet-edit-dialog"], width: 820, height: Math.min(800, window.innerHeight - 60), resizable: true }).render(true));
     }
 
     async _editPackageLocalEntry(entry, block = null) {
@@ -1320,7 +1358,9 @@ export class TemplateItemSheet extends ItemSheet {
 
         if (["skill", "spell", "power"].includes(item.type)) {
             base.level = Number(item.system?.skill_level ?? item.system?.level ?? 0) || 0;
+            base.minLevel = null;
             base.maxLevel = null;
+            base.levelLocked = false;
             base.cost = this._calculateLevelledItemCost(item, base.level);
             return base;
         }
@@ -1328,7 +1368,9 @@ export class TemplateItemSheet extends ItemSheet {
         if (["advantage", "disadvantage"].includes(item.type)) {
             base.trait_cost = foundry.utils.deepClone(traitCostInput(item.system));
             base.level = item.system?.level ?? "";
+            base.minLevel = null;
             base.maxLevel = null;
+            base.levelLocked = false;
             base.cost = calculateTraitCost(base.trait_cost).finalPoints;
             return base;
         }

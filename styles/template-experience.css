@@ -317,7 +317,7 @@
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attribute-config-section { flex: 1 1 auto; min-height: 0; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid { flex: 1 1 auto; min-height: 120px; max-height: none; gap: 3px; padding-right: 4px; overflow-y: auto; scrollbar-width: thin; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid-header,
-.dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-row { grid-template-columns: minmax(135px,1.45fr) repeat(3,minmax(70px,1fr)) minmax(72px,.8fr); gap: 6px; }
+.dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-row { grid-template-columns: minmax(125px,1.35fr) repeat(4,minmax(64px,.85fr)) minmax(68px,.75fr); gap: 6px; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid-header { padding: 0 8px; margin: 0 4px 3px 0; color: var(--tpl-soft); font-size: .62rem; font-weight: 700; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-grid-header > span:not(:first-child) { text-align: center; }
 .dialog.gum.template-config-dialog.template-attribute-dialog .template-attr-row { min-height: 34px; padding: 3px 8px; background: #161719; border-radius: 6px; }
@@ -361,6 +361,9 @@
 .dialog.gum.template-entry-config-dialog .form-group input,
 .dialog.gum.template-entry-config-dialog .form-group select { width: 100%; height: 30px; min-height: 30px; padding: 4px 8px; font-size: .74rem; }
 .dialog.gum.template-entry-config-dialog .template-entry-basic-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.dialog.gum.template-entry-config-dialog .template-entry-level-rules { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3,minmax(0,1fr)) minmax(110px,.85fr); align-items: end; gap: 8px; }
+.dialog.gum.template-entry-config-dialog .template-entry-level-lock { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 30px; margin: 0; padding: 5px 8px; color: var(--tpl-text); background: var(--tpl-surface); border: 1px solid var(--tpl-hairline); border-radius: 6px; cursor: pointer; font-size: .68rem; line-height: 1.1; text-align: left; }
+.dialog.gum.template-entry-config-dialog .template-entry-level-lock input { flex: 0 0 15px; width: 15px; height: 15px; min-height: 15px; margin: 0; padding: 0; accent-color: var(--tpl-accent); }
 .dialog.gum.template-entry-config-dialog .template-entry-equipment-fields { display: flex; flex-direction: column; gap: 9px; }
 .dialog.gum.template-entry-config-dialog .template-entry-equipment-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
 .dialog.gum.template-entry-config-dialog .template-entry-quantity-stepper,
@@ -504,6 +507,7 @@
 .dialog.gum.template-apply-dialog .template-choice-adjustment select,
 .dialog.gum.template-apply-dialog .template-choice-adjustment input { width: 82px; min-width: 0; height: 26px; min-height: 26px; padding: 2px 5px; font-size: .68rem; text-align: center; }
 .dialog.gum.template-apply-dialog .template-choice-adjustment select.template-level-choice { width: 74px; height: 24px; min-height: 24px; padding: 1px 3px; font-size: .62rem; }
+.dialog.gum.template-apply-dialog .template-choice-adjustment.is-locked strong { display: grid; place-items: center; min-width: 52px; min-height: 24px; padding: 2px 7px; color: var(--tpl-accent); background: var(--tpl-surface); border-radius: 5px; font-size: .68rem; }
 .dialog.gum.template-apply-dialog .template-preview-entry { width: 24px; min-width: 24px; height: 24px; min-height: 24px; padding: 0; color: var(--tpl-accent); background: transparent; border: 0; border-radius: 6px; font-size: .72rem; }
 .dialog.gum.template-apply-dialog .template-preview-entry:hover { background: #393a39; color: #f1d29a; }
 .dialog.gum.template-apply-dialog .template-choice-cost { min-width: 42px; color: var(--tpl-accent); font-size: .72rem; font-weight: 800; text-align: right; white-space: nowrap; }
