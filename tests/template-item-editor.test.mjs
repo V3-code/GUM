@@ -58,6 +58,16 @@ test("entry configuration exposes availability, character requirements, and quan
   assert.match(actorSheet, /_templateEntryQuantity[\s\S]+?minimumQuantity[\s\S]+?maximumQuantity/);
 });
 
+test("the structured requirement list replaces legacy fields while retaining migration support", () => {
+  assert.doesNotMatch(sheet, /id="\$\{prefix\}-requires"|id="\$\{prefix\}-excludes"/);
+  assert.match(sheet, /\["requiresNames", "require"\]/);
+  assert.match(sheet, /\["excludesNames", "exclude"\]/);
+  assert.match(sheet, /delete entry\.requiresNames/);
+  assert.match(sheet, /\["group", "Package"\]/);
+  assert.match(sheet, /\["template", "ReferencedModel"\]/);
+  assert.match(sheet, /\["attribute", "Attributes"\]/);
+});
+
 test("plain block instructions are escaped and shown separately from the mechanical rule", () => {
   assert.match(actorSheet, /const blockInstructions = block \? String\(block\.instructions \|\| ""\)\.trim\(\) : ""/);
   assert.match(actorSheet, /esc\(blockInstructions\)\.replace/);

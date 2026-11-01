@@ -733,10 +733,10 @@ export class TemplateItemSheet extends ItemSheet {
 
     _renderChoiceRuleFields(entry, prefix) {
         const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
-        const names = value => Array.isArray(value) ? value.join(", ") : String(value || "");
-        const requirements = this._normalizeEntryRequirements(entry.requirements);
+        const requirements = this._getEntryRequirements(entry);
         const typeOptions = selected => [["", "AnyItemType"], ["advantage", "Advantage"], ["disadvantage", "Disadvantage"],
-            ["skill", "Skill"], ["spell", "Spell"], ["power", "Power"], ["equipment", "Equipment"]]
+            ["skill", "Skill"], ["spell", "Spell"], ["power", "Power"], ["equipment", "Equipment"],
+            ["group", "Package"], ["template", "ReferencedModel"], ["attribute", "Attributes"]]
             .map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${templateText(label)}</option>`).join("");
         const requirementRow = requirement => `<div class="template-requirement-row">
           <select data-requirement-field="condition" title="${templateText("RequirementCondition")}"><option value="require" ${requirement.condition !== "exclude" ? "selected" : ""}>${templateText("RequirementMustHave")}</option><option value="exclude" ${requirement.condition === "exclude" ? "selected" : ""}>${templateText("RequirementMustNotHave")}</option></select>
@@ -756,19 +756,10 @@ export class TemplateItemSheet extends ItemSheet {
             <div class="template-requirement-list">${requirements.map(requirementRow).join("")}</div>
             <template class="template-requirement-template">${requirementRow({ condition: "require", itemType: "", name: "", minimumLevel: null })}</template>
             <p class="notes">${templateText("CharacterRequirementsHint")}</p>
-          </div>
-          <div class="template-legacy-choice-rules"><div class="form-group"><label>${templateText("RequiresNames")}</label>
-          <input type="text" id="${prefix}-requires" value="${esc(names(entry.requiresNames))}"></div>
-          <div class="form-group"><label>${templateText("ExcludesNames")}</label>
-          <input type="text" id="${prefix}-excludes" value="${esc(names(entry.excludesNames))}"></div>
-          <p class="notes">${templateText("RuleNamesHint")}</p></div></section>`;
+          </div></section>`;
     }
 
     _readChoiceRuleFields(entry, html, prefix) {
-        const parse = key => String(html.find(`#${prefix}-${key}`).val() || "")
-            .split(",").map(name => name.trim()).filter(Boolean);
-        entry.requiresNames = parse("requires");
-        entry.excludesNames = parse("excludes");
         entry.available = html.find(`#${prefix}-available`).is(":checked");
         entry.allowGMOverride = html.find(`#${prefix}-gm-override`).is(":checked");
         entry.unavailableBehavior = html.find(`#${prefix}-unavailable-behavior`).val() === "hidden" ? "hidden" : "disabled";
@@ -784,16 +775,36 @@ export class TemplateItemSheet extends ItemSheet {
                 minimumLevel: rawLevel === "" || rawLevel === undefined ? null : Number(rawLevel) });
         });
         entry.requirements = this._normalizeEntryRequirements(requirements);
+        delete entry.requiresNames;
+        delete entry.excludesNames;
     }
 
     _normalizeEntryRequirements(requirements = []) {
         return (Array.isArray(requirements) ? requirements : []).map(requirement => {
             const rawLevel = requirement?.minimumLevel;
             return { condition: requirement?.condition === "exclude" ? "exclude" : "require",
-                itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment"].includes(requirement?.itemType) ? requirement.itemType : "",
+                itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment", "group", "template", "attribute"].includes(requirement?.itemType) ? requirement.itemType : "",
                 name: String(requirement?.name || "").trim(),
                 minimumLevel: rawLevel === "" || rawLevel === null || rawLevel === undefined || !Number.isFinite(Number(rawLevel)) ? null : Number(rawLevel) };
         }).filter(requirement => requirement.name);
+    }
+
+    _getEntryRequirements(entry = {}) {
+        const requirements = this._normalizeEntryRequirements(entry.requirements);
+        for (const [field, condition] of [["requiresNames", "require"], ["excludesNames", "exclude"]]) {
+            const names = Array.isArray(entry[field]) ? entry[field] : String(entry[field] || "").split(",");
+            for (const rawName of names) {
+                const name = String(rawName || "").trim();
+                if (name) requirements.push({ condition, itemType: "", name, minimumLevel: null });
+            }
+        }
+        const seen = new Set();
+        return requirements.filter(requirement => {
+            const key = `${requirement.condition}:${requirement.itemType}:${requirement.name.toLocaleLowerCase()}:${requirement.minimumLevel ?? ""}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
     }
 
     _activateChoiceRuleFields(html, prefix) {

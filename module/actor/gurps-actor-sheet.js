@@ -7665,10 +7665,24 @@ _normalizeTemplateEntryRequirements(requirements = []) {
   return (Array.isArray(requirements) ? requirements : []).map(requirement => {
     const rawLevel = requirement?.minimumLevel;
     return { condition: requirement?.condition === "exclude" ? "exclude" : "require",
-      itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment"].includes(requirement?.itemType) ? requirement.itemType : "",
+      itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment", "group", "template", "attribute"].includes(requirement?.itemType) ? requirement.itemType : "",
       name: String(requirement?.name || "").trim(),
       minimumLevel: rawLevel === "" || rawLevel === null || rawLevel === undefined || !Number.isFinite(Number(rawLevel)) ? null : Number(rawLevel) };
   }).filter(requirement => requirement.name);
+}
+
+_getTemplateEntryRequirements(entry = {}) {
+  const requirements = this._normalizeTemplateEntryRequirements(entry.requirements);
+  for (const [field, condition] of [["requiresNames", "require"], ["excludesNames", "exclude"]]) {
+    for (const name of this._templateRuleNames(entry[field])) requirements.push({ condition, itemType: "", name, minimumLevel: null });
+  }
+  const seen = new Set();
+  return requirements.filter(requirement => {
+    const key = `${requirement.condition}:${requirement.itemType}:${requirement.name.toLocaleLowerCase()}:${requirement.minimumLevel ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 _templateRequirementCandidateLevel(candidate) {
@@ -7677,7 +7691,9 @@ _templateRequirementCandidateLevel(candidate) {
 }
 
 _templateRequirementMatches(requirement, candidate) {
-  if (requirement.itemType && (candidate?.type || candidate?.itemType) !== requirement.itemType) return false;
+  const candidateType = ["group", "template", "attribute"].includes(candidate?.kind)
+    ? candidate.kind : candidate?.type || candidate?.itemType;
+  if (requirement.itemType && candidateType !== requirement.itemType) return false;
   const normalize = value => String(value || "").trim().toLocaleLowerCase();
   const target = normalize(requirement.name);
   const names = [candidate?.name, candidate?.label, templateEntryDisplayName(candidate, candidate)].map(normalize);
@@ -7692,6 +7708,7 @@ _getTemplateSelectedRequirementCandidates(blocks, choices) {
       const entries = block.type === "guaranteed" ? block.contents || []
         : (block.contents || []).filter(entry => choices?.[block.id]?.ids?.includes(entry.id));
       for (const entry of entries) {
+        if (choices?.__conflicts?.[entry.id]?.action === "ignore") continue;
         selected.push(entry);
         visit(entry.subBlocks);
       }
@@ -7703,20 +7720,22 @@ _getTemplateSelectedRequirementCandidates(blocks, choices) {
 
 _getTemplateEntryAvailability(entry, blocks, choices) {
   const reasons = [];
+  const failedRequirements = [];
   if (entry?.available === false) reasons.push(game.i18n.localize("GUM.Template.OptionManuallyUnavailable"));
   const selected = this._getTemplateSelectedRequirementCandidates(blocks, choices).filter(candidate => candidate !== entry && candidate.id !== entry?.id);
   const candidates = [...(this.actor?.items || []), ...selected];
-  for (const requirement of this._normalizeTemplateEntryRequirements(entry?.requirements)) {
+  for (const requirement of this._getTemplateEntryRequirements(entry)) {
     const matched = candidates.some(candidate => this._templateRequirementMatches(requirement, candidate));
     const failed = requirement.condition === "exclude" ? matched : !matched;
     if (!failed) continue;
+    failedRequirements.push(requirement);
     const level = requirement.minimumLevel === null ? "" : ` (${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel})`;
     reasons.push(`${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`);
   }
   const overridden = reasons.length > 0 && Boolean(game.user?.isGM && entry?.allowGMOverride);
   const available = reasons.length === 0 || overridden;
   return { available, overridden, hidden: !available && entry?.unavailableBehavior === "hidden",
-    reasons: entry?.unavailableReason && reasons.length ? [String(entry.unavailableReason)] : reasons };
+    reasons: entry?.unavailableReason && reasons.length ? [String(entry.unavailableReason)] : reasons, failedRequirements };
 }
 
 _validateTemplateChoiceRules(blocks, choices) {
@@ -7724,7 +7743,7 @@ _validateTemplateChoiceRules(blocks, choices) {
   const visit = list => {
     for (const block of list || []) {
       const choice = choices[block.id] || {};
-      const entries = block.type === "guaranteed" ? (block.contents || []).filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available)
+      const entries = block.type === "guaranteed" ? (block.contents || []).filter(entry => entry.available !== false || this._getTemplateEntryAvailability(entry, blocks, choices).available)
         : (block.contents || []).filter(entry => choice.ids?.includes(entry.id));
       for (const entry of entries) {
         if (choices.__conflicts?.[entry.id]?.action === "ignore") continue;
@@ -7734,20 +7753,13 @@ _validateTemplateChoiceRules(blocks, choices) {
     }
   };
   visit(blocks);
-  const normalize = value => String(value || "").trim().toLocaleLowerCase();
-  const actorNames = new Set((this.actor?.items || []).map(item => [normalize(item.name), normalize(templateEntryDisplayName(item, item))]).flat());
   const issues = [];
   for (const entry of selected) {
     const availability = this._getTemplateEntryAvailability(entry, blocks, choices);
-    if (!availability.available) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: availability.reasons.join(" · "), kind: "unavailable" });
-    const present = name => actorNames.has(normalize(name)) || selected.some(other => other !== entry
-      && [normalize(other.name || other.label), normalize(templateEntryDisplayName(other))].includes(normalize(name)));
-    for (const name of this._templateRuleNames(entry.requiresNames)) {
-      if (!present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "required" });
-    }
-    for (const name of this._templateRuleNames(entry.excludesNames)) {
-      if (present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "incompatible" });
-    }
+    if (!availability.available && availability.failedRequirements.length) {
+      for (const requirement of availability.failedRequirements) issues.push({ entry: templateEntryDisplayName(entry) || "?",
+        target: entry.unavailableReason || requirement.name, kind: requirement.condition === "exclude" ? "incompatible" : "required" });
+    } else if (!availability.available) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: availability.reasons.join(" · "), kind: "unavailable" });
   }
   return issues;
 }
@@ -9372,9 +9384,7 @@ async _buildTemplateEntryViewData(entry) {
   const sourceItem = entry.kind === "attribute" ? null : await this._resolveTemplateEntrySourceItem(entry);
   const title = foundry.utils.escapeHTML(templateEntryDisplayName(entry, sourceItem) || "Entrada");
   const ruleDetails = [
-    ...this._templateRuleNames(entry.requiresNames).map(name => `${game.i18n.localize("GUM.Template.RequiresNames")}: ${name}`),
-    ...this._templateRuleNames(entry.excludesNames).map(name => `${game.i18n.localize("GUM.Template.ExcludesNames")}: ${name}`),
-    ...this._normalizeTemplateEntryRequirements(entry.requirements).map(requirement => {
+    ...this._getTemplateEntryRequirements(entry).map(requirement => {
       const level = requirement.minimumLevel === null ? "" : ` · ${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel}`;
       return `${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`;
     }),

@@ -22,6 +22,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Blocos de Modelo aceitam instruções breves exibidas separadamente das regras mecânicas durante a aplicação.
 - Compras de Modelos agora usam preço monetário unitário explícito, regras estruturadas de fontes aceitas, saldo compatível antecipado e distribuição automática entre fontes de pagamento.
 - Opções de Modelo agora aceitam disponibilidade manual, requisitos estruturados do personagem, exibição bloqueada ou oculta e limites mínimo e máximo de quantidade por aplicação.
+- O editor consolidou exigências e incompatibilidades na lista estruturada de requisitos, incluindo Pacotes, Modelos e Atributos, com migração transparente das regras antigas.
 
 ### Fixed
 

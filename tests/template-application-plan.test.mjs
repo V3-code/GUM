@@ -118,6 +118,25 @@ test("structured availability requirements inspect owned items, levels, exclusio
   assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[3], blocks, { shop: { ids: [] } }).available, false);
 });
 
+test("the unified requirement engine accepts packages, Templates, attributes, and legacy rules", () => {
+  const requirementSheet = new context.Sheet();
+  requirementSheet.actor = { items: [] };
+  const packageEntry = { id: "package", kind: "group", name: "Caçador", subBlocks: [] };
+  const templateEntry = { id: "template", kind: "template", name: "Veterano", subBlocks: [] };
+  const attributeEntry = { id: "attribute", kind: "attribute", label: "ST", attributes: { st: 1 } };
+  const gated = { id: "gated", name: "Recompensa", requirements: [
+    { condition: "require", itemType: "group", name: "Caçador" },
+    { condition: "require", itemType: "template", name: "Veterano" },
+    { condition: "require", itemType: "attribute", name: "ST" }
+  ] };
+  const legacy = { id: "legacy", name: "Legado", requiresNames: ["Caçador"], excludesNames: ["Proibido"] };
+  const blocks = [{ id: "choice", type: "selection", contents: [packageEntry, templateEntry, attributeEntry, gated, legacy] }];
+  const choices = { choice: { ids: ["package", "template", "attribute"] } };
+  assert.equal(requirementSheet._getTemplateEntryAvailability(gated, blocks, choices).available, true);
+  assert.equal(requirementSheet._getTemplateEntryAvailability(legacy, blocks, choices).available, true);
+  assert.equal(requirementSheet._getTemplateEntryRequirements(legacy).length, 2);
+});
+
 test("manual availability can hide entries, omit guaranteed delivery, and allow an explicit GM override", () => {
   const availabilitySheet = new context.Sheet();
   availabilitySheet.actor = { items: [] };
