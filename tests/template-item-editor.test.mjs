@@ -45,6 +45,14 @@ test("creation and later configuration route through the same entry editor", () 
   assert.doesNotMatch(sheet, /_(?:promptEquipmentEntry|promptLevelledEntry|promptAdvantageEntry|editAttributeEntry|editItemEntry|editGroupEntry|editTemplateEntry)\s*\(/);
 });
 
+test("template drops use the namespaced TextEditor and a single native drop path", () => {
+  assert.match(sheet, /const TextEditorImpl = foundry\?\.applications\?\.ux\?\.TextEditor/);
+  assert.match(sheet, /const data = TextEditorImpl\.getDragEventData\(event\)/);
+  assert.doesNotMatch(sheet, /const data = TextEditor\.getDragEventData\(event\)/);
+  assert.doesNotMatch(sheet, /html\.on\("drop", "\.template-dropzone"/);
+  assert.match(sheet, /dragDrop: \[\{ dragSelector: null, dropSelector: "\.template-dropzone" \}\]/);
+});
+
 test("money blocks configure unit prices and structured payment rules", () => {
   assert.match(sheet, /MoneyUnitPriceHint/);
   assert.match(sheet, /entry\.moneyCost = Math\.max\(0/);

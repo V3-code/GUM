@@ -327,7 +327,6 @@ export class TemplateItemSheet extends ItemSheet {
         html.on("click", ".edit-block-entry", this._onEditEntry.bind(this));
 
         html.on("dragover", ".template-dropzone", ev => ev.preventDefault());
- html.on("drop", ".template-dropzone", this._onDrop.bind(this));
 
     }
 
@@ -1262,7 +1261,7 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     async _resolveTemplateDroppedItem(event) {
-        const data = TextEditor.getDragEventData(event);
+        const data = TextEditorImpl.getDragEventData(event);
         let item = null;
         if (data.uuid) item = await fromUuid(data.uuid).catch(() => null);
         if (!item && data.type === "Item" && data.id) item = game.items.get(data.id);
