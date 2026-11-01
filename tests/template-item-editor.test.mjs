@@ -7,16 +7,22 @@ const template = readFileSync(new URL("../templates/items/template-item-sheet.hb
 const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/template-experience.css", import.meta.url), "utf8");
 
-test("template blocks present identity, destinations, contextual settings, instructions, and contents in order", () => {
+test("template blocks group basic data, application organization, specific data, and contents in order", () => {
+  const basic = template.indexOf("GUM.Template.BasicData");
   const title = template.indexOf("template-block-title-field");
-  const destinations = template.indexOf("template-block-destinations");
-  const specific = template.indexOf("template-block-specific-fields");
   const instructions = template.indexOf("template-block-instructions-field");
+  const organization = template.indexOf("GUM.Template.ApplicationOrganization");
+  const destinations = template.indexOf("template-block-destinations");
+  const specificHeading = template.indexOf("GUM.Template.SpecificData");
+  const specific = template.indexOf("template-block-specific-fields");
   const entries = template.indexOf("template-entry-list");
-  assert.ok(title >= 0 && title < destinations);
-  assert.ok(destinations < specific);
-  assert.ok(specific < instructions);
-  assert.ok(instructions < entries);
+  assert.ok(basic >= 0 && basic < title);
+  assert.ok(title < instructions);
+  assert.ok(instructions < organization);
+  assert.ok(organization < destinations);
+  assert.ok(destinations < specificHeading);
+  assert.ok(specificHeading < specific);
+  assert.ok(specific < entries);
   assert.match(template, /data-field="destinationGroup"[\s\S]+DestinationGroupHint/);
   assert.match(template, /data-field="containerName"[\s\S]+DestinationContainerHint/);
   assert.match(template, /data-field="instructions"/);
@@ -92,6 +98,20 @@ test("every entry editor uses consistent visual sections and responsive vertical
   }
   assert.match(styles, /\.template-dialog-section-title \{/);
   assert.match(styles, /\.template-sectioned-dialog \{/);
+});
+
+test("subgroups start empty and follow basic data, blocks, then availability", () => {
+  const addGroup = sheet.slice(sheet.indexOf("    async _onAddGroup("), sheet.indexOf("    _createTemplateBlock("));
+  const group = sheet.slice(sheet.indexOf("    _configureGroupEntryDraft("), sheet.indexOf("    _configureItemEntryDraft("));
+  const packageBlocks = sheet.slice(sheet.indexOf("    _renderPackageBlocks("), sheet.indexOf("    _activatePackageEditor("));
+  assert.match(addGroup, /subBlocks: \[\]/);
+  assert.doesNotMatch(group, /if \(!blocks\.length\)/);
+  assert.match(group, /template-package-instructions[\s\S]+?<textarea id="group-notes"/);
+  assert.ok(group.indexOf("PackageData") < group.indexOf("template-package-section-title"));
+  assert.ok(group.indexOf("template-package-section-title") < group.indexOf("template-package-rule-fields"));
+  assert.ok(packageBlocks.indexOf("BasicData") < packageBlocks.indexOf("BlockInstructions"));
+  assert.ok(packageBlocks.indexOf("BlockInstructions") < packageBlocks.indexOf("ApplicationOrganization"));
+  assert.ok(packageBlocks.indexOf("ApplicationOrganization") < packageBlocks.indexOf("SpecificData"));
 });
 
 test("the unavailability explanation is last and requirement delete buttons are visually borderless", () => {

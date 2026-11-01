@@ -192,8 +192,11 @@
 .gum.sheet.item.template-item-sheet .template-entry-controls button:hover { color: var(--tpl-text); background: rgba(255,255,255,.065); }
 .gum.sheet.item.template-item-sheet .template-block-controls .delete-template-block:hover,
 .gum.sheet.item.template-item-sheet .template-entry-controls .delete-block-entry:hover { color: var(--tpl-danger); }
-.gum.sheet.item.template-item-sheet .template-block-editor { padding: 10px; gap: 8px; background: #121315; }
-.gum.sheet.item.template-item-sheet .template-block-fields { display: flex; flex-direction: column; gap: 9px; }
+.gum.sheet.item.template-item-sheet .template-block-editor { padding: 12px; gap: 12px; background: #121315; }
+.gum.sheet.item.template-item-sheet .template-block-fields { display: flex; flex-direction: column; gap: 13px; }
+.gum.sheet.item.template-item-sheet .template-block-field-section { display: flex; flex-direction: column; gap: 9px; padding: 12px 6px 0; box-shadow: inset 0 1px var(--tpl-hairline); }
+.gum.sheet.item.template-item-sheet .template-block-field-section:first-child { padding-top: 0; box-shadow: none; }
+.gum.sheet.item.template-item-sheet .template-block-field-section > h4 { margin: 0; color: var(--tpl-text); font: 700 .7rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .gum.sheet.item.template-item-sheet .template-block-title-field { width: 100%; }
 .gum.sheet.item.template-item-sheet .template-block-destinations,
 .gum.sheet.item.template-item-sheet .template-block-specific-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 10px; }
@@ -287,8 +290,8 @@
 .dialog.gum.template-config-dialog select option,
 .dialog.gum.template-apply-dialog select option { color: var(--tpl-text); background: var(--tpl-field); }
 .dialog.gum.template-config-dialog .notes { color: var(--tpl-muted); }
-.dialog.gum.template-config-dialog .template-sectioned-dialog { display: flex; min-height: 0; flex-direction: column; gap: 10px; }
-.dialog.gum.template-config-dialog .template-dialog-section { display: flex; min-width: 0; flex-direction: column; gap: 8px; margin: 0; padding: 11px 0 0; border: 0; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-config-dialog .template-sectioned-dialog { display: flex; min-height: 0; flex-direction: column; gap: 14px; }
+.dialog.gum.template-config-dialog .template-dialog-section { display: flex; min-width: 0; flex-direction: column; gap: 12px; margin: 0; padding: 15px 4px 0; border: 0; box-shadow: inset 0 1px var(--tpl-hairline); }
 .dialog.gum.template-config-dialog .template-sectioned-dialog > .template-dialog-section:first-child { padding-top: 0; box-shadow: none; }
 .dialog.gum.template-config-dialog .template-dialog-section-title { margin: 0; color: var(--tpl-text); font: 700 .72rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .dialog.gum.template-config-dialog .template-dialog-section-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
@@ -409,9 +412,11 @@
 .dialog.gum.template-config-dialog .template-remove-requirement { width: 28px; height: 28px; min-height: 28px; padding: 0; color: var(--tpl-danger); background: transparent !important; border: 0 !important; box-shadow: none !important; }
 .dialog.gum.template-config-dialog .template-remove-requirement:hover { color: #f0a0a0; background: transparent !important; }
 .dialog.gum.template-package-dialog .dialog-content { display: block; min-height: 0; padding: 12px 16px; overflow-y: auto; scrollbar-width: thin; }
-.dialog.gum.template-package-dialog .template-package-editor { display: flex; min-height: 0; flex-direction: column; gap: 8px; }
+.dialog.gum.template-package-dialog .template-package-editor { display: flex; min-height: 0; flex-direction: column; gap: 14px; }
 .dialog.gum.template-package-dialog .template-package-settings { padding: 10px; background: #121315; border-radius: 8px; }
-.dialog.gum.template-package-dialog .template-package-metadata { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1.25fr) minmax(105px,.6fr); gap: 8px 10px; }
+.dialog.gum.template-package-dialog .template-package-metadata { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(120px,.6fr); gap: 12px; }
+.dialog.gum.template-package-dialog .template-package-instructions { grid-column: 1 / -1; }
+.dialog.gum.template-package-dialog .template-package-instructions textarea { width: 100%; min-height: 68px; padding: 7px 9px; resize: vertical; font-size: .72rem; line-height: 1.35; }
 .dialog.gum.template-package-dialog .template-package-metadata .form-group,
 .dialog.gum.template-package-dialog .template-package-rule-fields .form-group { min-width: 0; margin: 0; }
 .dialog.gum.template-package-dialog .template-package-metadata input,
@@ -430,6 +435,12 @@
 .dialog.gum.template-package-dialog .template-package-delete-block { width: 28px; height: 28px; min-height: 0; padding: 0; color: var(--tpl-muted); background: transparent; }
 .dialog.gum.template-package-dialog .template-package-delete-block:hover { color: var(--tpl-danger); }
 .dialog.gum.template-package-dialog .template-package-block-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 10px; padding: 9px 10px 4px; }
+.dialog.gum.template-package-dialog .template-package-block-section { display: flex; flex-direction: column; gap: 7px; margin: 0 10px; padding: 11px 0 0; box-shadow: inset 0 1px var(--tpl-hairline); }
+.dialog.gum.template-package-dialog .template-package-block-section:first-of-type { padding-top: 9px; box-shadow: none; }
+.dialog.gum.template-package-dialog .template-package-block-section > h4 { margin: 0; color: var(--tpl-text); font: 700 .67rem/1.2 'Roboto Condensed',sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.dialog.gum.template-package-dialog .template-package-block-section .template-package-block-fields,
+.dialog.gum.template-package-dialog .template-package-block-section .template-package-block-destinations,
+.dialog.gum.template-package-dialog .template-package-block-section .template-package-block-instructions { padding-right: 0; padding-left: 0; }
 .dialog.gum.template-package-dialog .template-package-block-fields .form-group { min-width: 0; margin: 0; }
 .dialog.gum.template-package-dialog .template-package-block-fields .form-group label { display: block; margin-bottom: 3px; }
 .dialog.gum.template-package-dialog .template-package-block-fields .template-package-checkbox-field { display: flex; grid-column: 2; align-items: center; min-height: 28px; padding: 0; }

@@ -630,7 +630,7 @@ export class TemplateItemSheet extends ItemSheet {
         const block = (this.item.system.blocks || []).find(candidate => candidate.id === blockId);
         const entry = await this._configureEntryDraft({
             id: foundry.utils.randomID(), kind: "group", name: templateText("Package"), quantity: 1,
-            level: "", cost: 0, localNotes: "", subBlocks: [this._createTemplateBlock("guaranteed")]
+            level: "", cost: 0, localNotes: "", subBlocks: []
         }, { mode: "create", block });
         if (entry) await this._appendEntryToBlock(blockId, entry);
     }
@@ -880,11 +880,12 @@ export class TemplateItemSheet extends ItemSheet {
                       <input type="text" data-field="sharedBudgetKey" value="${esc(block.sharedBudgetKey)}" placeholder="${templateText("OwnBudget")}"></div>${ownBudgetFields}`;
                 }
             }
-            const blockBody = block.collapsed ? "" : `<div class="template-package-block-fields"><div class="form-group"><label>${templateText("CustomTitle")}</label><input type="text" data-field="title" value="${esc(block.title)}" placeholder="${templateText("DefaultTitleHint")}"></div></div>
-              <div class="template-package-block-destinations"><div class="form-group"><label title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" data-field="destinationGroup" value="${esc(block.destinationGroup)}" title="${templateText("DestinationGroupHint")}"></div>
-              <div class="form-group"><label title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" data-field="containerName" value="${esc(block.containerName)}" title="${templateText("DestinationContainerHint")}"></div></div>
-              ${selectionFields || budgetFields ? `<div class="template-package-block-fields template-package-block-specific-fields">${selectionFields}${budgetFields}</div>` : ""}
-              <div class="form-group template-package-block-instructions"><label title="${templateText("BlockInstructionsHint")}">${templateText("BlockInstructions")}</label><textarea data-field="instructions" rows="2" placeholder="${templateText("BlockInstructionsPlaceholder")}">${esc(block.instructions)}</textarea></div>
+            const blockBody = block.collapsed ? "" : `<section class="template-package-block-section template-package-block-basic"><h4>${templateText("BasicData")}</h4>
+              <div class="template-package-block-fields"><div class="form-group"><label>${templateText("CustomTitle")}</label><input type="text" data-field="title" value="${esc(block.title)}" placeholder="${templateText("DefaultTitleHint")}"></div></div>
+              <div class="form-group template-package-block-instructions"><label title="${templateText("BlockInstructionsHint")}">${templateText("BlockInstructions")}</label><textarea data-field="instructions" rows="2" placeholder="${templateText("BlockInstructionsPlaceholder")}">${esc(block.instructions)}</textarea></div></section>
+              <section class="template-package-block-section"><h4>${templateText("ApplicationOrganization")}</h4><div class="template-package-block-destinations"><div class="form-group"><label title="${templateText("DestinationGroupHint")}">${templateText("DestinationGroup")}</label><input type="text" data-field="destinationGroup" value="${esc(block.destinationGroup)}" title="${templateText("DestinationGroupHint")}"></div>
+              <div class="form-group"><label title="${templateText("DestinationContainerHint")}">${templateText("NewContainer")}</label><input type="text" data-field="containerName" value="${esc(block.containerName)}" title="${templateText("DestinationContainerHint")}"></div></div></section>
+              ${selectionFields || budgetFields ? `<section class="template-package-block-section"><h4>${templateText("SpecificData")}</h4><div class="template-package-block-fields template-package-block-specific-fields">${selectionFields}${budgetFields}</div></section>` : ""}
               <div class="template-package-entries">${entries}</div>
               <div class="template-package-dropzone"><i class="fas fa-box-open"></i> ${templateText("DropItems")}</div>
               <div class="template-package-block-actions"><button type="button" class="template-package-add-attribute"><i class="fas fa-sliders-h"></i> ${templateText("AddAttribute")}</button></div>`;
@@ -1044,18 +1045,18 @@ export class TemplateItemSheet extends ItemSheet {
 
     _configureGroupEntryDraft(entry, { mode = "edit", block = null } = {}) {
         const blocks = this._normalizeGroupSubBlocks(foundry.utils.deepClone(entry.subBlocks || []));
-        if (!blocks.length) blocks.push(this._createTemplateBlock("guaranteed"));
         const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
         const isMoney = block?.type === "money";
         const content = `<div class="template-group-dialog template-package-editor template-sectioned-dialog">
           <section class="template-package-settings template-dialog-section"><h3 class="template-dialog-section-title">${templateText("PackageData")}</h3><div class="template-package-metadata">
             <div class="form-group"><label>${templateText("PackageName")}</label><input type="text" id="group-name" value="${esc(entry.name)}" placeholder="${templateText("SubgroupExample")}"></div>
-            <div class="form-group"><label>${templateText("LocalNotes")}</label><input type="text" id="group-notes" value="${esc(entry.localNotes)}" placeholder="${templateText("SubgroupNotesExample")}"></div>
             <div class="form-group"><label>${templateText(isMoney ? "MoneyUnitPrice" : "DisplayCost")}</label><input type="number" id="group-cost" ${isMoney ? "min=\"0\"" : ""} value="${Number(isMoney ? entry.moneyCost : entry.cost) || 0}"></div>
-          </div></section><div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div>
+            <div class="form-group template-package-instructions"><label title="${templateText("SubgroupInstructionsHint")}">${templateText("SubgroupInstructions")}</label><textarea id="group-notes" rows="3" placeholder="${templateText("SubgroupNotesExample")}">${esc(entry.localNotes)}</textarea></div>
+          </div></section>
           <div class="template-package-section-title"><span>${templateText("Blocks")}</span>
             <button type="button" class="template-package-add-block" title="${templateText("AddBlock")}" aria-label="${templateText("AddBlock")}"><i class="fas fa-plus"></i></button></div>
-          <div class="template-package-blocks"></div></div>`;
+          <div class="template-package-blocks"></div>
+          <div class="template-package-rule-fields" title="${templateText("RuleNamesHint")}">${this._renderChoiceRuleFields(entry, "group")}</div></div>`;
         return new Promise(resolve => new Dialog({
             title: templateText(mode === "create" ? "AddSubgroup" : "EditSubgroup"), content,
             buttons: {

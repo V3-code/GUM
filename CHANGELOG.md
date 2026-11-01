@@ -25,6 +25,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - O editor consolidou exigências e incompatibilidades na lista estruturada de requisitos, incluindo Pacotes, Modelos e Atributos, com migração transparente das regras antigas.
 - A configuração de equipamentos em Modelos agora organiza quantidades, valores unitários, comportamento e destino em uma sequência única, com semântica consistente para quantidades bloqueadas.
 - As janelas de configuração de entradas do Modelo agora separam dados, valores, destino e requisitos em seções visuais consistentes e aproveitam melhor a altura disponível da tela.
+- Blocos e subgrupos do Modelo agora organizam dados básicos, instruções, destinos e configurações específicas em seções; novos subgrupos começam sem blocos predefinidos.
 
 ### Fixed
 

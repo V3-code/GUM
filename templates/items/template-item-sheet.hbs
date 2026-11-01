@@ -157,6 +157,8 @@
             {{#unless block.collapsed}}
             <div class="template-block-editor">
               <div class="template-block-fields">
+                <section class="template-block-field-section template-block-basic-section">
+                <h4>{{localize "GUM.Template.BasicData"}}</h4>
                 <div class="form-group template-block-title-field">
                   <label title="{{localize "GUM.Template.DefaultTitleHint"}}">{{localize "GUM.Template.CustomTitle"}}</label>
                   <input type="text"
@@ -166,6 +168,13 @@
                          value="{{block.title}}"
                          title="{{localize "GUM.Template.DefaultTitleHint"}}"/>
                 </div>
+                <div class="form-group template-block-instructions-field">
+                  <label title="{{localize "GUM.Template.BlockInstructionsHint"}}">{{localize "GUM.Template.BlockInstructions"}}</label>
+                  <textarea class="block-field" data-block-id="{{block.id}}" data-field="instructions" rows="2" placeholder="{{localize "GUM.Template.BlockInstructionsPlaceholder"}}">{{block.instructions}}</textarea>
+                </div>
+                </section>
+                <section class="template-block-field-section">
+                <h4>{{localize "GUM.Template.ApplicationOrganization"}}</h4>
                 <div class="template-block-destinations">
                   <div class="form-group">
                     <label title="{{localize "GUM.Template.DestinationGroupHint"}}">{{localize "GUM.Template.DestinationGroup"}}</label>
@@ -176,7 +185,11 @@
                     <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="containerName" value="{{block.containerName}}" title="{{localize "GUM.Template.DestinationContainerHint"}}"/>
                   </div>
                 </div>
+                </section>
 
+                {{#if (or block.isSelection block.isBudget)}}
+                <section class="template-block-field-section">
+                <h4>{{localize "GUM.Template.SpecificData"}}</h4>
                 <div class="template-block-specific-fields">
                 {{#if block.isSelection}}
                 <div class="form-group input-narrow">
@@ -280,11 +293,8 @@
                 {{/if}}
                 {{/if}}
                 </div>
-
-                <div class="form-group template-block-instructions-field">
-                  <label title="{{localize "GUM.Template.BlockInstructionsHint"}}">{{localize "GUM.Template.BlockInstructions"}}</label>
-                  <textarea class="block-field" data-block-id="{{block.id}}" data-field="instructions" rows="2" placeholder="{{localize "GUM.Template.BlockInstructionsPlaceholder"}}">{{block.instructions}}</textarea>
-                </div>
+                </section>
+                {{/if}}
               </div>
 
 
