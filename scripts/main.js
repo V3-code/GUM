@@ -4000,6 +4000,10 @@ $('body').on('click', '.resistance-roll-button, .resistance-reroll-button', asyn
     const button = ev.currentTarget;
     const isReroll = button.classList.contains('resistance-reroll-button');
     button.disabled = true;
+    let resultSubmitted = false;
+    const restoreButton = () => {
+        if (!resultSubmitted && button.isConnected) button.disabled = false;
+    };
     const messageElement = button.closest('.message, li.chat-message');
     const message = game.messages.get(messageElement?.dataset.messageId);
     const legacyPayload = (() => { try { return JSON.parse(button.dataset.rollData || "{}"); } catch (_error) { return {}; } })();
@@ -4034,16 +4038,27 @@ $('body').on('click', '.resistance-roll-button, .resistance-reroll-button', asyn
         delivery: storedRequest?.delivery || {}, responses: storedRequest?.responses || []
     };
 
-    const outcome = await executeRollRequest(request, request.targets[0].targetKey, { prompt: !ev.shiftKey, onResult: async result => {
-        const payload = { type: context.mode === "damage" ? "rollRequest:damageResult" : "rollRequest:barrierResult", messageId: message.id, requestId: request.id, targetKey: request.targets[0].targetKey, userId: game.user.id, reroll: isReroll, result };
-        if (game.user.isGM) await enqueueResistanceSocketResult(payload);
-        else {
-            game.socket.emit("system.gum", payload);
-            ui.notifications.info("Resultado de resistência enviado ao Mestre.");
-        }
-    }});
+    let outcome;
+    try {
+        outcome = await executeRollRequest(request, request.targets[0].targetKey, { prompt: !ev.shiftKey,
+            onPromptClose: restoreButton,
+            onResult: async result => {
+                const payload = { type: context.mode === "damage" ? "rollRequest:damageResult" : "rollRequest:barrierResult", messageId: message.id, requestId: request.id, targetKey: request.targets[0].targetKey, userId: game.user.id, reroll: isReroll, result };
+                if (game.user.isGM) await enqueueResistanceSocketResult(payload);
+                else {
+                    game.socket.emit("system.gum", payload);
+                    ui.notifications.info("Resultado de resistência enviado ao Mestre.");
+                }
+                resultSubmitted = true;
+            }
+        });
+    } catch (error) {
+        restoreButton();
+        console.error("GUM | Falha ao abrir ou executar teste da Barreira de Resistência:", error);
+        return ui.notifications.error("Não foi possível realizar o teste de resistência.");
+    }
     if (!outcome.accepted) {
-        button.disabled = false;
+        restoreButton();
         ui.notifications.warn(typeof outcome.reason === "string" && !["target", "permission", "processing"].includes(outcome.reason) ? outcome.reason : "Não foi possível realizar o teste de resistência.");
     } 
 });

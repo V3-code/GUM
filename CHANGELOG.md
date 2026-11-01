@@ -27,6 +27,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 ### Fixed
 
+- Fechar sem rolar a janela aberta pelo card de Barreira de Resistência volta a habilitar o botão de teste.
 - Alterações de recursos pertencentes a equipamentos participam corretamente da avaliação de condições e preservam a identidade do recurso de origem.
 - A resolução de alvos de dano evita escolhas ambíguas entre múltiplos tokens marcados, vinculados ou controlados.
 
