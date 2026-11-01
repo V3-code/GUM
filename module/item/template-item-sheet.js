@@ -734,11 +734,34 @@ export class TemplateItemSheet extends ItemSheet {
     _renderChoiceRuleFields(entry, prefix) {
         const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
         const names = value => Array.isArray(value) ? value.join(", ") : String(value || "");
-        return `<div class="form-group"><label>${templateText("RequiresNames")}</label>
+        const requirements = this._normalizeEntryRequirements(entry.requirements);
+        const typeOptions = selected => [["", "AnyItemType"], ["advantage", "Advantage"], ["disadvantage", "Disadvantage"],
+            ["skill", "Skill"], ["spell", "Spell"], ["power", "Power"], ["equipment", "Equipment"]]
+            .map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${templateText(label)}</option>`).join("");
+        const requirementRow = requirement => `<div class="template-requirement-row">
+          <select data-requirement-field="condition" title="${templateText("RequirementCondition")}"><option value="require" ${requirement.condition !== "exclude" ? "selected" : ""}>${templateText("RequirementMustHave")}</option><option value="exclude" ${requirement.condition === "exclude" ? "selected" : ""}>${templateText("RequirementMustNotHave")}</option></select>
+          <select data-requirement-field="itemType" title="${templateText("RequirementItemType")}">${typeOptions(requirement.itemType)}</select>
+          <input data-requirement-field="name" value="${esc(requirement.name)}" placeholder="${templateText("RequirementNamePlaceholder")}" title="${templateText("RequirementName")}">
+          <input type="number" data-requirement-field="minimumLevel" value="${requirement.minimumLevel ?? ""}" placeholder="—" title="${templateText("RequirementMinimumLevel")}">
+          <button type="button" class="template-remove-requirement" title="${templateText("RemoveRequirement")}" aria-label="${templateText("RemoveRequirement")}"><i class="fas fa-trash"></i></button>
+        </div>`;
+        return `<section class="template-entry-availability-fields" data-rule-prefix="${prefix}">
+          <div class="template-entry-availability-options">
+            <label><input type="checkbox" id="${prefix}-available" ${entry.available !== false ? "checked" : ""}> ${templateText("OptionAvailable")}</label>
+            <label><input type="checkbox" id="${prefix}-gm-override" ${entry.allowGMOverride ? "checked" : ""}> ${templateText("AllowGMAvailabilityOverride")}</label>
+            <label>${templateText("UnavailableBehavior")}<select id="${prefix}-unavailable-behavior"><option value="disabled" ${entry.unavailableBehavior !== "hidden" ? "selected" : ""}>${templateText("ShowUnavailable")}</option><option value="hidden" ${entry.unavailableBehavior === "hidden" ? "selected" : ""}>${templateText("HideUnavailable")}</option></select></label>
+          </div>
+          <div class="form-group template-unavailable-reason"><label>${templateText("UnavailableReason")}</label><input type="text" id="${prefix}-unavailable-reason" value="${esc(entry.unavailableReason)}" placeholder="${templateText("UnavailableReasonPlaceholder")}"></div>
+          <div class="template-structured-requirements"><div class="template-requirements-heading"><strong>${templateText("CharacterRequirements")}</strong><button type="button" class="template-add-requirement"><i class="fas fa-plus"></i> ${templateText("AddRequirement")}</button></div>
+            <div class="template-requirement-list">${requirements.map(requirementRow).join("")}</div>
+            <template class="template-requirement-template">${requirementRow({ condition: "require", itemType: "", name: "", minimumLevel: null })}</template>
+            <p class="notes">${templateText("CharacterRequirementsHint")}</p>
+          </div>
+          <div class="template-legacy-choice-rules"><div class="form-group"><label>${templateText("RequiresNames")}</label>
           <input type="text" id="${prefix}-requires" value="${esc(names(entry.requiresNames))}"></div>
           <div class="form-group"><label>${templateText("ExcludesNames")}</label>
           <input type="text" id="${prefix}-excludes" value="${esc(names(entry.excludesNames))}"></div>
-          <p class="notes">${templateText("RuleNamesHint")}</p>`;
+          <p class="notes">${templateText("RuleNamesHint")}</p></div></section>`;
     }
 
     _readChoiceRuleFields(entry, html, prefix) {
@@ -746,6 +769,44 @@ export class TemplateItemSheet extends ItemSheet {
             .split(",").map(name => name.trim()).filter(Boolean);
         entry.requiresNames = parse("requires");
         entry.excludesNames = parse("excludes");
+        entry.available = html.find(`#${prefix}-available`).is(":checked");
+        entry.allowGMOverride = html.find(`#${prefix}-gm-override`).is(":checked");
+        entry.unavailableBehavior = html.find(`#${prefix}-unavailable-behavior`).val() === "hidden" ? "hidden" : "disabled";
+        entry.unavailableReason = String(html.find(`#${prefix}-unavailable-reason`).val() || "").trim();
+        const requirements = [];
+        html.find(`[data-rule-prefix="${prefix}"] .template-requirement-row`).each((_, row) => {
+            const field = name => row.querySelector(`[data-requirement-field="${name}"]`)?.value;
+            const name = String(field("name") || "").trim();
+            if (!name) return;
+            const rawLevel = field("minimumLevel");
+            requirements.push({ condition: field("condition") === "exclude" ? "exclude" : "require",
+                itemType: String(field("itemType") || ""), name,
+                minimumLevel: rawLevel === "" || rawLevel === undefined ? null : Number(rawLevel) });
+        });
+        entry.requirements = this._normalizeEntryRequirements(requirements);
+    }
+
+    _normalizeEntryRequirements(requirements = []) {
+        return (Array.isArray(requirements) ? requirements : []).map(requirement => {
+            const rawLevel = requirement?.minimumLevel;
+            return { condition: requirement?.condition === "exclude" ? "exclude" : "require",
+                itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment"].includes(requirement?.itemType) ? requirement.itemType : "",
+                name: String(requirement?.name || "").trim(),
+                minimumLevel: rawLevel === "" || rawLevel === null || rawLevel === undefined || !Number.isFinite(Number(rawLevel)) ? null : Number(rawLevel) };
+        }).filter(requirement => requirement.name);
+    }
+
+    _activateChoiceRuleFields(html, prefix) {
+        const root = html.find(`[data-rule-prefix="${prefix}"]`);
+        root.find(".template-add-requirement").on("click", event => {
+            event.preventDefault();
+            const template = root.find(".template-requirement-template").get(0);
+            if (template) root.find(".template-requirement-list").append(template.content.cloneNode(true));
+        });
+        root.on("click", ".template-remove-requirement", event => {
+            event.preventDefault();
+            event.currentTarget.closest(".template-requirement-row")?.remove();
+        });
     }
 
     _renderPackageBlocks(blocks) {
@@ -961,7 +1022,7 @@ export class TemplateItemSheet extends ItemSheet {
                     resolve(entry);
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
-            }, default: "save", close: () => resolve(null)
+            }, default: "save", close: () => resolve(null), render: html => this._activateChoiceRuleFields(html, "template-ref")
         }, { classes: ["dialog", "gum", "template-config-dialog", "gum-sheet-edit-dialog"], width: 540 }).render(true));
     }
 
@@ -992,7 +1053,10 @@ export class TemplateItemSheet extends ItemSheet {
                     resolve(entry);
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
-            }, default: "save", close: () => resolve(null), render: html => this._activatePackageEditor(html, blocks)
+            }, default: "save", close: () => resolve(null), render: html => {
+                this._activatePackageEditor(html, blocks);
+                this._activateChoiceRuleFields(html, "group");
+            }
         }, { classes: ["dialog", "gum", "template-config-dialog", "template-package-dialog", "gum-sheet-edit-dialog"], width: 760, height: 600, resizable: true }).render(true));
     }
 
@@ -1011,7 +1075,9 @@ export class TemplateItemSheet extends ItemSheet {
           <div class="form-group template-edit-name"><label for="entry-name">${templateText("Name")}</label><input type="text" id="entry-name" value="${esc(entry.name)}"></div>
           ${isLevelledAbility && (difficulty || progression) ? `<div class="template-entry-source-summary">${difficulty ? `<span><strong>${templateText("Difficulty")}</strong> ${esc(difficulty)}</span>` : ""}${progression ? `<span><strong>${templateText("PointsPerLevel")}</strong> ${esc(progression)}</span>` : ""}</div>` : ""}
           <div class="template-entry-basic-fields ${isEquipment ? "template-entry-basic-fields--equipment" : ""}">
-            ${isEquipment ? `<div class="form-group template-entry-quantity-field"><label>${templateText("Quantity")}</label><span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1"><i class="fas fa-plus"></i></button></span></div>` : ""}
+            ${isEquipment ? `<div class="form-group template-entry-quantity-field"><label>${templateText("InitialQuantity")}</label><span class="template-entry-quantity-stepper"><button type="button" class="template-entry-quantity-step" data-step="-1"><i class="fas fa-minus"></i></button><input type="number" id="entry-qty" value="${entry.quantity ?? 1}" min="1"><button type="button" class="template-entry-quantity-step" data-step="1"><i class="fas fa-plus"></i></button></span></div>
+              <div class="form-group"><label title="${templateText("MinimumQuantityHint")}">${templateText("MinimumQuantity")}</label><input type="number" id="entry-min-quantity" value="${Math.max(1, Number(entry.minimumQuantity) || 1)}" min="1" step="1"></div>
+              <div class="form-group"><label title="${templateText("MaximumQuantityHint")}">${templateText("MaximumQuantity")}</label><input type="number" id="entry-max-quantity" value="${entry.maximumQuantity ?? ""}" min="1" step="1" placeholder="${templateText("NoQuantityLimit")}"></div>` : ""}
             ${isTrait ? `<div class="form-group"><label>${templateText("BaseCost")}</label><input type="number" id="entry-base-cost" value="${entry.trait_cost.points ?? 0}"></div>
               <div class="form-group"><label>${templateText("PointsPerLevel")}</label><input type="number" id="entry-points-per-level" value="${entry.trait_cost.points_per_level ?? 0}"></div>` : ""}
             <div class="form-group"><label title="${isEquipment ? templateText("EntryLevelValueHint") : ""}">${isLevelledAbility ? templateText("RelativeLevel") : templateText("Level")}</label><input type="${isEquipment ? "text" : "number"}" id="entry-level" value="${esc(isTrait ? entry.trait_cost.level ?? entry.level ?? 0 : entry.level)}" ${isTrait ? "min=\"0\"" : ""}></div>
@@ -1030,7 +1096,11 @@ export class TemplateItemSheet extends ItemSheet {
                 save: { label: templateText(mode === "create" ? "Add" : "Save"), callback: html => {
                     entry.name = String(html.find("#entry-name").val() || entry.name).trim();
                     if (isEquipment) {
-                        entry.quantity = Math.max(1, Number(html.find("#entry-qty").val()) || 1);
+                        entry.minimumQuantity = Math.max(1, Math.floor(Number(html.find("#entry-min-quantity").val()) || 1));
+                        const rawMaximum = html.find("#entry-max-quantity").val();
+                        entry.maximumQuantity = rawMaximum === "" ? null : Math.max(entry.minimumQuantity, Math.floor(Number(rawMaximum) || entry.minimumQuantity));
+                        entry.quantity = Math.max(entry.minimumQuantity, Math.floor(Number(html.find("#entry-qty").val()) || entry.minimumQuantity));
+                        if (entry.maximumQuantity !== null) entry.quantity = Math.min(entry.quantity, entry.maximumQuantity);
                         entry.quantityLocked = html.find("#entry-quantity-locked").is(":checked");
                         entry.selectionQuantity = html.find("#entry-selection-quantity").is(":checked");
                         entry.pointsCost = Math.max(0, Number(html.find("#entry-points-cost").val()) || 0);
@@ -1071,10 +1141,18 @@ export class TemplateItemSheet extends ItemSheet {
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
             }, default: "save", close: () => resolve(null), render: html => {
+                this._activateChoiceRuleFields(html, "entry");
                 const selector = html.find(isEquipment ? "#entry-container-mode" : "#entry-destination-mode");
                 const updateDestination = () => html.find(".template-destination-name").toggle(selector.val() === (isEquipment ? "new" : "group"));
                 selector.on("change", updateDestination);
-                html.find(".template-entry-quantity-step").on("click", event => { event.preventDefault(); const input = html.find("#entry-qty"); input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))); });
+                const clampEntryQuantity = value => {
+                    const minimum = Math.max(1, Math.floor(Number(html.find("#entry-min-quantity").val()) || 1));
+                    const rawMaximum = html.find("#entry-max-quantity").val();
+                    const maximum = rawMaximum === "" ? Infinity : Math.max(minimum, Math.floor(Number(rawMaximum) || minimum));
+                    return Math.min(maximum, Math.max(minimum, Math.floor(Number(value) || minimum)));
+                };
+                html.find(".template-entry-quantity-step").on("click", event => { event.preventDefault(); const input = html.find("#entry-qty"); input.val(clampEntryQuantity((Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))); });
+                html.find("#entry-min-quantity, #entry-max-quantity").on("change", () => html.find("#entry-qty").val(clampEntryQuantity(html.find("#entry-qty").val())));
                 const recalc = () => {
                     const level = Number(html.find("#entry-level").val()) || 0;
                     if (!isMoney && isTrait) html.find("#entry-cost").val(calculateTraitCost({ ...entry.trait_cost, points: Number(html.find("#entry-base-cost").val()) || 0, points_per_level: Number(html.find("#entry-points-per-level").val()) || 0, level }).finalPoints);
@@ -1108,6 +1186,7 @@ export class TemplateItemSheet extends ItemSheet {
                 } },
                 cancel: { label: templateText("Cancel"), callback: () => resolve(null) }
             }, default: "save", close: () => resolve(null), render: html => {
+                this._activateChoiceRuleFields(html, "package-attr");
                 const recalc = () => {
                     const { attributes, costs } = this._readAttributeFields(html);
                     html.find("#template-attr-total-cost").val(this._calculateAttributeCost(attributes, costs));
@@ -1203,6 +1282,8 @@ export class TemplateItemSheet extends ItemSheet {
 
         if (item.type === "equipment") {
             base.quantity = Math.max(1, Number(item.system?.quantity) || 1);
+                base.minimumQuantity = 1;
+                base.maximumQuantity = null;
             base.level = String(item.system?.level ?? "").trim();
             base.cost = Number(item.system?.cost) || 0;
             base.pointsCost = Number(item.system?.points) || 0;

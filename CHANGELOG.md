@@ -21,6 +21,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - O editor de Modelos reorganiza os campos de cada bloco, unifica as modalidades de seleção e reutiliza a mesma configuração ao adicionar ou editar itens, atributos, pacotes e Modelos referenciados.
 - Blocos de Modelo aceitam instruções breves exibidas separadamente das regras mecânicas durante a aplicação.
 - Compras de Modelos agora usam preço monetário unitário explícito, regras estruturadas de fontes aceitas, saldo compatível antecipado e distribuição automática entre fontes de pagamento.
+- Opções de Modelo agora aceitam disponibilidade manual, requisitos estruturados do personagem, exibição bloqueada ou oculta e limites mínimo e máximo de quantidade por aplicação.
 
 ### Fixed
 

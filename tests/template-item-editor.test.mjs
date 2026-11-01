@@ -47,6 +47,17 @@ test("money blocks configure unit prices and structured payment rules", () => {
   assert.match(template, /configure-template-shared-budget-payment/);
 });
 
+test("entry configuration exposes availability, character requirements, and quantity limits", () => {
+  assert.match(sheet, /template-entry-availability-fields/);
+  assert.match(sheet, /data-requirement-field="condition"/);
+  assert.match(sheet, /data-requirement-field="itemType"/);
+  assert.match(sheet, /data-requirement-field="minimumLevel"/);
+  assert.match(sheet, /entry\.minimumQuantity/);
+  assert.match(sheet, /entry\.maximumQuantity/);
+  assert.match(actorSheet, /_getTemplateEntryAvailability/);
+  assert.match(actorSheet, /_templateEntryQuantity[\s\S]+?minimumQuantity[\s\S]+?maximumQuantity/);
+});
+
 test("plain block instructions are escaped and shown separately from the mechanical rule", () => {
   assert.match(actorSheet, /const blockInstructions = block \? String\(block\.instructions \|\| ""\)\.trim\(\) : ""/);
   assert.match(actorSheet, /esc\(blockInstructions\)\.replace/);

@@ -7526,14 +7526,15 @@ async _resolveTemplateReferenceGraph(templateItem) {
   return blocks ? { blocks, references } : null;
 }
 
-_collectTemplateSteps(blocks, choices, output = []) {
+_collectTemplateSteps(blocks, choices, output = [], rootBlocks = blocks) {
   for (const block of blocks || []) {
     if (!Array.isArray(block.contents) || !block.contents.length) continue;
     output.push(block);
     const selected = block.type === "guaranteed"
-      ? block.contents
-      : block.contents.filter(entry => choices[block.id]?.ids?.includes(entry.id));
-    for (const entry of selected) this._collectTemplateSteps(entry.subBlocks, choices, output);
+      ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, rootBlocks, choices).available)
+      : block.contents.filter(entry => choices[block.id]?.ids?.includes(entry.id)
+        && this._getTemplateEntryAvailability(entry, rootBlocks, choices).available);
+    for (const entry of selected) this._collectTemplateSteps(entry.subBlocks, choices, output, rootBlocks);
   }
   return output;
 }
@@ -7553,7 +7554,8 @@ _buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
       const blockContainer = block.containerName || inherited.container;
       const contents = Array.isArray(block.contents) ? block.contents : [];
       const choice = choices[block.id] || {};
-      const selected = block.type === "guaranteed" ? contents : contents.filter(entry => choice.ids?.includes(entry.id));
+      const selected = (block.type === "guaranteed" ? contents : contents.filter(entry => choice.ids?.includes(entry.id)))
+        .filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available);
       if (block.type === "points") {
         const spent = selected.filter(entry => choices.__conflicts?.[entry.id]?.action !== "ignore")
           .reduce((sum, entry) => sum + this._templateChoiceCost(entry, choice.levels?.[entry.id], choice.quantities?.[entry.id], choice.attributeValues?.[entry.id]), 0);
@@ -7659,12 +7661,70 @@ _templateRuleNames(value) {
     .map(name => String(name).trim()).filter(Boolean);
 }
 
+_normalizeTemplateEntryRequirements(requirements = []) {
+  return (Array.isArray(requirements) ? requirements : []).map(requirement => {
+    const rawLevel = requirement?.minimumLevel;
+    return { condition: requirement?.condition === "exclude" ? "exclude" : "require",
+      itemType: ["advantage", "disadvantage", "skill", "spell", "power", "equipment"].includes(requirement?.itemType) ? requirement.itemType : "",
+      name: String(requirement?.name || "").trim(),
+      minimumLevel: rawLevel === "" || rawLevel === null || rawLevel === undefined || !Number.isFinite(Number(rawLevel)) ? null : Number(rawLevel) };
+  }).filter(requirement => requirement.name);
+}
+
+_templateRequirementCandidateLevel(candidate) {
+  const raw = candidate?.system?.level ?? candidate?.system?.skill_level ?? candidate?.trait_cost?.level ?? candidate?.level;
+  return Number.isFinite(Number(raw)) ? Number(raw) : 0;
+}
+
+_templateRequirementMatches(requirement, candidate) {
+  if (requirement.itemType && (candidate?.type || candidate?.itemType) !== requirement.itemType) return false;
+  const normalize = value => String(value || "").trim().toLocaleLowerCase();
+  const target = normalize(requirement.name);
+  const names = [candidate?.name, candidate?.label, templateEntryDisplayName(candidate, candidate)].map(normalize);
+  if (!names.includes(target)) return false;
+  return requirement.minimumLevel === null || this._templateRequirementCandidateLevel(candidate) >= requirement.minimumLevel;
+}
+
+_getTemplateSelectedRequirementCandidates(blocks, choices) {
+  const selected = [];
+  const visit = list => {
+    for (const block of list || []) {
+      const entries = block.type === "guaranteed" ? block.contents || []
+        : (block.contents || []).filter(entry => choices?.[block.id]?.ids?.includes(entry.id));
+      for (const entry of entries) {
+        selected.push(entry);
+        visit(entry.subBlocks);
+      }
+    }
+  };
+  visit(blocks);
+  return selected;
+}
+
+_getTemplateEntryAvailability(entry, blocks, choices) {
+  const reasons = [];
+  if (entry?.available === false) reasons.push(game.i18n.localize("GUM.Template.OptionManuallyUnavailable"));
+  const selected = this._getTemplateSelectedRequirementCandidates(blocks, choices).filter(candidate => candidate !== entry && candidate.id !== entry?.id);
+  const candidates = [...(this.actor?.items || []), ...selected];
+  for (const requirement of this._normalizeTemplateEntryRequirements(entry?.requirements)) {
+    const matched = candidates.some(candidate => this._templateRequirementMatches(requirement, candidate));
+    const failed = requirement.condition === "exclude" ? matched : !matched;
+    if (!failed) continue;
+    const level = requirement.minimumLevel === null ? "" : ` (${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel})`;
+    reasons.push(`${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`);
+  }
+  const overridden = reasons.length > 0 && Boolean(game.user?.isGM && entry?.allowGMOverride);
+  const available = reasons.length === 0 || overridden;
+  return { available, overridden, hidden: !available && entry?.unavailableBehavior === "hidden",
+    reasons: entry?.unavailableReason && reasons.length ? [String(entry.unavailableReason)] : reasons };
+}
+
 _validateTemplateChoiceRules(blocks, choices) {
   const selected = [];
   const visit = list => {
     for (const block of list || []) {
       const choice = choices[block.id] || {};
-      const entries = block.type === "guaranteed" ? block.contents || []
+      const entries = block.type === "guaranteed" ? (block.contents || []).filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available)
         : (block.contents || []).filter(entry => choice.ids?.includes(entry.id));
       for (const entry of entries) {
         if (choices.__conflicts?.[entry.id]?.action === "ignore") continue;
@@ -7678,6 +7738,8 @@ _validateTemplateChoiceRules(blocks, choices) {
   const actorNames = new Set((this.actor?.items || []).map(item => [normalize(item.name), normalize(templateEntryDisplayName(item, item))]).flat());
   const issues = [];
   for (const entry of selected) {
+    const availability = this._getTemplateEntryAvailability(entry, blocks, choices);
+    if (!availability.available) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: availability.reasons.join(" · "), kind: "unavailable" });
     const present = name => actorNames.has(normalize(name)) || selected.some(other => other !== entry
       && [normalize(other.name || other.label), normalize(templateEntryDisplayName(other))].includes(normalize(name)));
     for (const name of this._templateRuleNames(entry.requiresNames)) {
@@ -7854,9 +7916,13 @@ _templateSelectionUnits(block, ids = [], quantities = {}) {
 }
 
 _templateEntryQuantity(entry, requested = undefined) {
-  const configured = Math.max(1, Math.floor(Number(entry?.quantity) || 1));
+  const minimum = Math.max(1, Math.floor(Number(entry?.minimumQuantity) || 1));
+  const rawMaximum = entry?.maximumQuantity;
+  const maximum = rawMaximum === "" || rawMaximum === null || rawMaximum === undefined || !Number.isFinite(Number(rawMaximum))
+    ? Infinity : Math.max(minimum, Math.floor(Number(rawMaximum)));
+  const configured = Math.min(maximum, Math.max(minimum, Math.floor(Number(entry?.quantity) || minimum)));
   if (entry?.quantityLocked && !entry?.selectionQuantity) return configured;
-  return Math.max(1, Math.floor(Number(requested ?? configured) || 1));
+  return Math.min(maximum, Math.max(minimum, Math.floor(Number(requested ?? configured) || minimum)));
 }
 
 _isTemplatePointsSpendValid(block, spent) {
@@ -7891,11 +7957,15 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const rows = block ? block.contents.map((entry, i) => {
     const view = views[i];
     const selected = choice.ids?.includes(entry.id);
+    const initialAvailability = this._getTemplateEntryAvailability(entry, blocks, choices);
     const isLevelled = block.type === "points" && (["skill", "spell", "power"].includes(entry.itemType)
       || (["advantage", "disadvantage"].includes(entry.itemType) && (entry.trait_cost || entry._resolvedTraitCost || entry.inlineItem?.system)?.can_level));
     const level = this._templateEntryLevel(entry, choice.levels?.[entry.id] ?? entry.level ?? 0);
     const quantity = this._templateEntryQuantity(entry, choice.quantities?.[entry.id]);
     const quantityEditable = entry.itemType === "equipment" && (entry.selectionQuantity === true || (block.type !== "selection" && !entry.quantityLocked));
+    const minimumQuantity = Math.max(1, Math.floor(Number(entry.minimumQuantity) || 1));
+    const rawMaximumQuantity = entry.maximumQuantity;
+    const maximumQuantity = rawMaximumQuantity === "" || rawMaximumQuantity === null || rawMaximumQuantity === undefined || !Number.isFinite(Number(rawMaximumQuantity)) ? "" : Math.max(minimumQuantity, Math.floor(Number(rawMaximumQuantity)));
     const minimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
     const rawMaximumLevel = entry.maxLevel;
     const hasMaximumLevel = rawMaximumLevel !== "" && rawMaximumLevel !== null && rawMaximumLevel !== undefined && Number.isFinite(Number(rawMaximumLevel));
@@ -7921,11 +7991,12 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
     const costDisplay = block.type === "money"
       ? `${Math.max(0, Number(entry.moneyCost ?? entry.cost) || 0)}${quantity !== 1 ? ` × ${quantity} = ${rowCost}` : ""} ${costUnit}`
       : `${rowCost} ${costUnit}`;
-    return `<div class="template-choice-row template-wizard-row" data-entry-id="${esc(entry.id)}">
-      ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas fa-check"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected ? "checked" : ""}>`}
-      <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small></span>
+    const availabilityText = initialAvailability.overridden ? t("AvailabilityOverridden") : initialAvailability.reasons.join(" · ");
+    return `<div class="template-choice-row template-wizard-row${initialAvailability.available ? "" : " template-choice-row--unavailable"}${initialAvailability.hidden ? " is-hidden" : ""}" data-entry-id="${esc(entry.id)}">
+      ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas ${initialAvailability.available ? "fa-check" : "fa-lock"}"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected && initialAvailability.available ? "checked" : ""} ${initialAvailability.available ? "" : "disabled"}>`}
+      <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small><em class="template-choice-availability">${esc(availabilityText)}</em></span>
       ${isLevelled ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : ""}
-      ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="1" step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
+      ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="${minimumQuantity}" ${maximumQuantity === "" ? "" : `max="${maximumQuantity}"`} step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
       ${attributeInputs ? `<span class="template-attribute-choices">${attributeInputs}</span>` : ""}
       <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${costDisplay}</span>
       <button type="button" class="template-preview-entry" data-entry-id="${esc(entry.id)}" title="${t("PreviewEntry")}" aria-label="${t("PreviewEntry")}"><i class="fas fa-eye"></i></button>
@@ -7990,7 +8061,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
   const pointTotalsMarkup = pointResults.length ? `<section class="template-review-total" data-review-total="points"><h3>${t("PointsSummary")}</h3><div><span>${t("PointsInvested")}</span><strong data-review-points-invested>${pointTotals.invested}/${pointTotals.disadvantages}</strong></div><div><span>${t("PointsRemaining")}</span><strong data-review-points-remaining>${pointTotals.remaining}</strong></div></section>` : "";
   const moneyTotalsMarkup = moneyResults.length ? `<section class="template-review-total${budgetMoneyResults.length && debitMoneyResults.length ? " template-review-total--triple" : ""}" data-review-total="money"><h3>${t("MoneySummary")}</h3><div><span>${t("PurchaseTotal")}</span><strong data-review-money-invested>${moneyTotals.invested}</strong></div>${budgetMoneyResults.length ? `<div><span>${t("MoneyRemaining")}</span><strong data-review-money-remaining>${moneyTotals.remaining}</strong></div>` : ""}${debitMoneyResults.length ? `<div><span>${t("ToDebit")}</span><strong data-review-money-debit>${moneyTotals.debit}</strong></div>` : ""}</section>` : "";
   const reviewTotalsMarkup = `${pointTotalsMarkup}${moneyTotalsMarkup}`;
-  const ruleSummary = ruleIssues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join("");
+  const issueLabel = issue => t(issue.kind === "required" ? "RequiresChoice" : issue.kind === "unavailable" ? "OptionUnavailable" : "IncompatibleChoice");
+  const ruleSummary = ruleIssues.map(issue => `<li>${issueLabel(issue)}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join("");
   const originLabel = block?.originChain?.length > 1 ? `${block.originChain.map(item => esc(item.name)).join(" → ")} · ` : "";
   const title = block ? `${originLabel}${esc(block.title || t("Block"))} (${index + 1}/${total + 1})` : t("ReviewTitle");
   const blockMoneyMode = block?.type === "money" ? this._resolveTemplateMoneyMode(block) : "";
@@ -8082,14 +8154,14 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           if (!block) {
             return finish({ action: "back", ...this._readTemplateReviewChoices(html) });
           }
-          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const ids = block.type === "guaranteed" ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available).map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => {
             const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
             levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
           });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           finish({ action: "back", choice: { ids, levels, quantities, attributeValues } });
         } } } : {}),
@@ -8120,14 +8192,14 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             }
             return finish({ action: "next", ...review });
           }
-          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const ids = block.type === "guaranteed" ? block.contents.filter(entry => this._getTemplateEntryAvailability(entry, blocks, choices).available).map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => {
             const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
             levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
           });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           if (block.type === "selection") {
             if (!this._isTemplateSelectionValid(block, this._templateSelectionUnits(block, ids, quantities))) {
@@ -8168,7 +8240,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             const levelField = html.find(".template-level-choice").filter((_, el) => el.dataset.entryId === entryId);
             const quantityField = html.find(".template-quantity-choice").filter((_, el) => el.dataset.entryId === entryId);
             if (levelField.length) previewEntry.level = Number(levelField.val());
-            if (quantityField.length) previewEntry.quantity = Math.max(1, Number(quantityField.val()) || 1);
+            if (quantityField.length) previewEntry.quantity = this._templateEntryQuantity(entry, quantityField.val());
             if (levelField.length) previewEntry.cost = this._templateChoiceCost(entry, previewEntry.level, previewEntry.quantity);
             if (entry.kind === "attribute" && block.type === "points") {
               const amounts = this._readTemplateAttributeChoices(html)[entryId];
@@ -8195,7 +8267,7 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
             html.find("[data-review-money-invested]").text(currentMoneyResults.reduce((total, result) => total + Number(result.spent || 0), 0));
             html.find("[data-review-money-remaining]").text(currentMoneyResults.filter(result => result.accounting !== "deduct").reduce((total, result) => total + Number(result.budget || 0) - Number(result.spent || 0), 0));
             html.find("[data-review-money-debit]").text(currentMoneyResults.filter(result => result.accounting === "deduct").reduce((total, result) => total + Number(result.spent || 0), 0));
-            html.find(".template-rule-issues").html(issues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join(""));
+            html.find(".template-rule-issues").html(issues.map(issue => `<li>${issueLabel(issue)}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join(""));
             const payments = this._buildTemplatePaymentTransactions(currentPlan.budgetResults, review.moneyAllocations);
             html.find('button[data-button="next"]').prop("disabled", !!issues.length || !!invalidBudget || !payments.valid);
             this._refreshTemplatePaymentBalances(html, currentPlan.budgetResults);
@@ -8258,16 +8330,30 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
         const inputs = html.find('input[name="entry"]');
         const nextButton = html.find('button[data-button="next"]');
         const setNextEnabled = enabled => nextButton.prop("disabled", !enabled).attr("aria-disabled", String(!enabled));
+        const refreshAvailability = () => {
+          const ids = inputs.filter(":checked").map((_, input) => input.value).get();
+          const draftChoices = { ...choices, [block.id]: { ...choice, ids } };
+          for (const entry of block.contents) {
+            const availability = this._getTemplateEntryAvailability(entry, blocks, draftChoices);
+            const row = html.find(".template-wizard-row").filter((_, element) => element.dataset.entryId === entry.id);
+            const input = row.find('input[name="entry"]');
+            row.toggleClass("template-choice-row--unavailable", !availability.available).toggleClass("is-hidden", availability.hidden);
+            if (!availability.available) input.prop("checked", false);
+            input.prop("disabled", !availability.available);
+            row.find(".template-choice-availability").text(availability.overridden ? t("AvailabilityOverridden") : availability.reasons.join(" · "));
+          }
+        };
 
         if (block.type === "selection") {
           const refreshSelection = () => {
+            refreshAvailability();
             const quantities = {};
-            html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+            html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
             const selectedCount = this._templateSelectionUnits(block, inputs.filter(":checked").map((_, input) => input.value).get(), quantities);
             const limit = Math.max(1, Number(block.choiceCount) || 1);
             const atLimit = selectedCount >= limit;
             inputs.each((_, input) => {
-              if (!input.checked) input.disabled = atLimit;
+              if (!input.checked) input.disabled = atLimit || input.closest(".template-wizard-row")?.classList.contains("template-choice-row--unavailable");
             });
             const valid = this._isTemplateSelectionValid(block, selectedCount);
             html.find(".template-wizard-budget-summary")
@@ -8282,18 +8368,20 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
           html.find(".template-quantity-step").on("click", event => {
             event.preventDefault();
             const input = $(event.currentTarget).siblings(".template-quantity-choice");
-            input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+            const entry = block.contents.find(candidate => candidate.id === input.get(0)?.dataset.entryId);
+            input.val(this._templateEntryQuantity(entry, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
           });
           refreshSelection();
           return;
         }
 
         const refresh = () => {
+          refreshAvailability();
           const ids = html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
           const levels = {};
           html.find(".template-level-choice").each((_, el) => { levels[el.dataset.entryId] = Number(el.value); });
           const quantities = {};
-          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          html.find(".template-quantity-choice").each((_, el) => { const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId); quantities[el.dataset.entryId] = this._templateEntryQuantity(entry, el.value); });
           const attributeValues = this._readTemplateAttributeChoices(html);
           const isMoneyBlock = block.type === "money";
           const moneyMode = isMoneyBlock ? this._resolveTemplateMoneyMode(block) : "";
@@ -8351,7 +8439,8 @@ async _promptTemplateWizardStep(block, choices, index, total, templateItem, bloc
         html.find(".template-quantity-step").on("click", event => {
           event.preventDefault();
           const input = $(event.currentTarget).siblings(".template-quantity-choice");
-          input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+          const entry = block.contents.find(candidate => candidate.id === input.get(0)?.dataset.entryId);
+          input.val(this._templateEntryQuantity(entry, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
         });
         refresh();
       }
@@ -9284,7 +9373,12 @@ async _buildTemplateEntryViewData(entry) {
   const title = foundry.utils.escapeHTML(templateEntryDisplayName(entry, sourceItem) || "Entrada");
   const ruleDetails = [
     ...this._templateRuleNames(entry.requiresNames).map(name => `${game.i18n.localize("GUM.Template.RequiresNames")}: ${name}`),
-    ...this._templateRuleNames(entry.excludesNames).map(name => `${game.i18n.localize("GUM.Template.ExcludesNames")}: ${name}`)
+    ...this._templateRuleNames(entry.excludesNames).map(name => `${game.i18n.localize("GUM.Template.ExcludesNames")}: ${name}`),
+    ...this._normalizeTemplateEntryRequirements(entry.requirements).map(requirement => {
+      const level = requirement.minimumLevel === null ? "" : ` · ${game.i18n.localize("GUM.Template.MinimumLevelShort")} ${requirement.minimumLevel}`;
+      return `${game.i18n.localize(requirement.condition === "exclude" ? "GUM.Template.RequirementMustNotHave" : "GUM.Template.RequirementMustHave")}: ${requirement.name}${level}`;
+    }),
+    ...(entry.available === false ? [game.i18n.localize("GUM.Template.OptionManuallyUnavailable")] : [])
   ].map(detail => foundry.utils.escapeHTML(detail));
 
   if (entry.kind === "attribute") {

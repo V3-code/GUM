@@ -94,6 +94,44 @@ test("choice rules include selected packages and owned items, but exclude ignore
   assert.equal(ruleSheet._validateTemplateChoiceRules(blocks, { choice: { ids: ["package"] } })[0].kind, "required");
 });
 
+test("structured availability requirements inspect owned items, levels, exclusions, and selected options", () => {
+  const availabilitySheet = new context.Sheet();
+  availabilitySheet.actor = { items: [
+    { id: "license", type: "advantage", name: "Licença de Porte", system: { level: 2 } },
+    { id: "enemy", type: "disadvantage", name: "Procurado", system: { level: 1 } }
+  ] };
+  const blocks = [{ id: "shop", type: "money", contents: [
+    { id: "rifle", itemType: "equipment", name: "Rifle", requirements: [
+      { condition: "require", itemType: "advantage", name: "Licença de Porte", minimumLevel: 2 }
+    ] },
+    { id: "restricted", itemType: "equipment", name: "Documento", requirements: [
+      { condition: "exclude", itemType: "disadvantage", name: "Procurado" }
+    ] },
+    { id: "ammo", itemType: "equipment", name: "Munição" },
+    { id: "case", itemType: "equipment", name: "Estojo", requirements: [
+      { condition: "require", itemType: "equipment", name: "Munição" }
+    ] }
+  ] }];
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[0], blocks, {}).available, true);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[1], blocks, {}).available, false);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[3], blocks, { shop: { ids: ["ammo"] } }).available, true);
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(blocks[0].contents[3], blocks, { shop: { ids: [] } }).available, false);
+});
+
+test("manual availability can hide entries, omit guaranteed delivery, and allow an explicit GM override", () => {
+  const availabilitySheet = new context.Sheet();
+  availabilitySheet.actor = { items: [] };
+  const hidden = { id: "hidden", kind: "item", itemType: "equipment", name: "Hidden", available: false, unavailableBehavior: "hidden" };
+  const blocks = [{ id: "delivery", type: "guaranteed", contents: [hidden, { id: "open", kind: "item", itemType: "equipment", name: "Open" }] }];
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(hidden, blocks, {}).hidden, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(availabilitySheet._buildTemplatePlanFromChoices(blocks, {}).plan.map(entry => entry.id))), ["open"]);
+  context.game.user.isGM = true;
+  hidden.allowGMOverride = true;
+  assert.equal(availabilitySheet._getTemplateEntryAvailability(hidden, blocks, {}).overridden, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(availabilitySheet._buildTemplatePlanFromChoices(blocks, {}).plan.map(entry => entry.id))), ["hidden", "open"]);
+  context.game.user.isGM = false;
+});
+
 test("template steps include guaranteed blocks and only nested blocks from selected options", () => {
   const nested = { id: "nested", type: "guaranteed", contents: [{ id: "sword", kind: "item" }] };
   const blocks = [
@@ -133,6 +171,14 @@ test("fixed equipment quantity ignores a requested change unless quantity consum
   assert.equal(result.plan[0].quantity, 2);
   assert.equal(result.plan[1].quantity, 4);
   assert.equal(result.budgetResults[0].spent, 18);
+});
+
+test("equipment quantities are clamped to their configured acquisition limits", () => {
+  const entry = { itemType: "equipment", quantity: 3, minimumQuantity: 2, maximumQuantity: 5 };
+  assert.equal(sheet._templateEntryQuantity(entry, 1), 2);
+  assert.equal(sheet._templateEntryQuantity(entry, 4), 4);
+  assert.equal(sheet._templateEntryQuantity(entry, 10), 5);
+  assert.equal(sheet._templateEntryQuantity({ ...entry, quantityLocked: true }, 5), 3);
 });
 
 test("point allocation scales attribute increments and cost, including quarter speed steps", () => {
