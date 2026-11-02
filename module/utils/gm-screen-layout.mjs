@@ -43,3 +43,25 @@ export function moveUuidBetweenGroups(source, target, uuid, targetIndex) {
     target.items.splice(clampIndex(targetIndex, target.items.length), 0, uuid);
     return true;
 }
+
+export function clearGMScreenLayout(config, { scope = "tabs", targetIds = [], removeGroups = false } = {}) {
+    const targets = new Set(Array.isArray(targetIds) ? targetIds : []);
+    const removedUuids = new Set();
+    const tabs = (Array.isArray(config?.tabs) ? config.tabs : []).map(tab => {
+        const clearWholeTab = scope === "all-tabs" || (scope === "tabs" && targets.has(tab.id));
+        const groups = (Array.isArray(tab.groups) ? tab.groups : []).flatMap(group => {
+            const shouldClear = clearWholeTab || (scope === "groups" && targets.has(group.id));
+            if (!shouldClear) return [{ ...group }];
+            (group.items || []).forEach(uuid => removedUuids.add(uuid));
+            if (removeGroups) return [];
+            return [{ ...group, items: [], macroOptions: {} }];
+        });
+        return { ...tab, groups };
+    });
+
+    const remainingUuids = new Set(tabs.flatMap(tab => (tab.groups || []).flatMap(group => group.items || [])));
+    return {
+        config: { ...config, tabs },
+        removedUuids: [...removedUuids].filter(uuid => !remainingUuids.has(uuid))
+    };
+}

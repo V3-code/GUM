@@ -658,13 +658,14 @@
 .gum.gm-screen .delete-mod-btn:hover { color: #ff6b6b; }
 .gum.gm-screen .palette-mod.is-macro { cursor: default; }
 .gum.gm-screen .palette-mod.is-macro .mod-icon { box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.28); }
-.gum.gm-screen .macro-context-label {
-    max-width: 105px;
-    overflow: hidden;
+.gum.gm-screen .macro-context-icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
     color: var(--gm-muted, #aaa);
-    font-size: 0.68rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 0.7rem;
 }
 .gum.gm-screen .macro-execution-mode {
     width: 128px;
@@ -679,21 +680,23 @@
 }
 .gum.gm-screen .macro-run-btn {
     display: inline-flex;
-    width: 26px;
-    min-width: 26px;
-    height: 24px;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
     margin: 0;
     padding: 0;
     align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--gum-accent-gold) 38%, transparent);
-    border-radius: 5px;
-    background: color-mix(in srgb, var(--gum-accent-gold) 10%, rgba(0, 0, 0, 0.3));
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
     color: var(--gum-accent-gold);
+    font-size: 0.68rem;
 }
 .gum.gm-screen .macro-run-btn:hover:not(:disabled) {
-    border-color: var(--gum-accent-gold);
-    background: color-mix(in srgb, var(--gum-accent-gold) 20%, rgba(0, 0, 0, 0.3));
+    background: color-mix(in srgb, var(--gum-accent-gold) 14%, transparent);
+    color: #f0d698;
 }
 .gum.gm-screen .macro-run-btn.is-running { color: var(--gum-text-claro); }
 .gum.gm-screen .macro-open-btn { color: #888; }
@@ -716,6 +719,23 @@
     background: color-mix(in srgb, var(--gum-accent-gold) 16%, var(--gm-surface, #292929));
     color: var(--gum-accent-gold);
 }
+.gum.gm-screen .bulk-clear-layout-btn {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(229, 83, 75, 0.32);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    color: #b97a76;
+}
+.gum.gm-screen .bulk-clear-layout-btn:hover { border-color: #e5534b; color: #ff7770; }
+.gum-bulk-clear-form fieldset { margin: 10px 0; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.14); }
+.gum-bulk-clear-form .checkbox { display: block; margin: 5px 0; }
+.gum-bulk-clear-form .gum-bulk-clear-choices { max-height: 120px; margin: 3px 0 8px 22px; overflow-y: auto; color: #bbb; }
+.gum-bulk-clear-form .gum-bulk-clear-all { margin-top: 10px; color: #ff8b84; font-weight: 700; }
+.gum-bulk-clear-form .notes.warning { color: #d7a36d; }
 .gum.gm-screen .layout-editor-banner {
     display: flex;
     flex: 0 0 auto;

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 import {
+    clearGMScreenLayout,
     moveEntryById,
     moveUuidBetweenGroups,
     normalizeMacroExecutionMode,
@@ -31,6 +32,23 @@ test("items move within and between groups without duplicates", () => {
     assert.deepEqual(target.items, ["other", "two"]);
 });
 
+test("layout cleanup can clear contents or complete groups at different scopes", () => {
+    const config = { activeTabId: "one", tabs: [
+        { id: "one", groups: [{ id: "a", items: ["Item.a"], macroOptions: { "Item.a": {} } }, { id: "b", items: ["Item.b"] }] },
+        { id: "two", groups: [{ id: "c", items: ["Item.c", "Item.b"] }] }
+    ] };
+    const contents = clearGMScreenLayout(config, { scope: "groups", targetIds: ["a"] });
+    assert.deepEqual(contents.config.tabs[0].groups[0].items, []);
+    assert.equal(contents.config.tabs[0].groups.length, 2);
+    assert.deepEqual(contents.removedUuids, ["Item.a"]);
+    const tabs = clearGMScreenLayout(config, { scope: "tabs", targetIds: ["two"], removeGroups: true });
+    assert.equal(tabs.config.tabs[0].groups.length, 2);
+    assert.equal(tabs.config.tabs[1].groups.length, 0);
+    assert.deepEqual(tabs.removedUuids, ["Item.c"], "items still referenced by another tab remain selected");
+    const all = clearGMScreenLayout(config, { scope: "all-tabs", removeGroups: true });
+    assert.deepEqual(all.config.tabs.map(tab => tab.groups.length), [0, 0]);
+});
+
 test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /this\.layoutEditMode = false/);
     assert.match(application, /GM_SCREEN_LAYOUT_DRAG_TYPE/);
@@ -39,6 +57,8 @@ test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(template, /class="layout-drag-handle group-drag-handle"/);
     assert.match(template, /class="layout-drag-handle item-drag-handle"/);
     assert.match(template, /LayoutEditingActive/);
+    assert.match(template, /class="bulk-clear-layout-btn"/);
+    assert.match(application, /_openBulkClearDialog/);
 });
 
 test("macro execution modes validate and partition GM targets", () => {
@@ -63,5 +83,6 @@ test("macro cards use explicit execution and remain separate from modifier selec
     assert.match(application, /macro\.execute\(\{ targets, origin, gmScreen \}\)/);
     assert.match(template, /class="macro-run-btn/);
     assert.match(template, /class="macro-execution-mode"/);
+    assert.match(template, /class="macro-context-icon"/);
     assert.match(macroBrowser, /game\.macros/);
 });

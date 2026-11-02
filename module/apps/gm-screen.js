@@ -20,7 +20,7 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
-import { moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
+import { clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
 
 const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
 const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
@@ -175,6 +175,11 @@ async getData() {
                         itemData.canExecute = item.canExecute === true;
                         itemData.macroExecutionMode = normalizeMacroExecutionMode(group.macroOptions?.[itemUuid]?.executionMode);
                         itemData.macroExecutionLabel = this._t(`GUM.GMScreen.MacroMode.${itemData.macroExecutionMode}`);
+                        itemData.macroExecutionIcon = {
+                            standard: "fa-bolt",
+                            "single-target": "fa-crosshairs",
+                            "each-target": "fa-users"
+                        }[itemData.macroExecutionMode];
                         itemData.macroRunning = this._runningMacros.has(`${group.id}:${itemUuid}`);
                     }
                     if (itemData.type === "gm_modifier") {
@@ -721,6 +726,12 @@ activateListeners(html) {
                 title: this._t("GUM.GMScreen.NewGroup"), content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" autofocus/></div>`,
                 buttons: { create: { label: this._t("GUM.GMScreen.Create"), callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
             }).render(true);
+        });
+
+        html.find('.bulk-clear-layout-btn').click(ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            this._openBulkClearDialog();
         });
 
   html.find('.group-collapse-toggle').click(async ev => {
@@ -2041,6 +2052,78 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             activeTab.groups = (activeTab.groups || []).filter(g => g.id !== groupId);
             await this._saveConfig(config);
         }
+    }
+
+    async _openBulkClearDialog() {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const escape = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const groupOptions = (activeTab?.groups || []).map(group => `
+            <label class="checkbox"><input type="checkbox" name="clear-group" value="${escape(group.id)}"> ${escape(group.name)}</label>
+        `).join("") || `<p class="notes">${this._t("GUM.GMScreen.NoGroupsInCurrentTab")}</p>`;
+        const tabOptions = (config.tabs || []).map(tab => `
+            <label class="checkbox"><input type="checkbox" name="clear-tab" value="${escape(tab.id)}"> ${escape(tab.name)}</label>
+        `).join("");
+
+        new Dialog({
+            title: this._t("GUM.GMScreen.BulkClearTitle"),
+            content: `
+                <form class="gum-bulk-clear-form">
+                    <p class="notes">${this._t("GUM.GMScreen.BulkClearHint")}</p>
+                    <div class="form-group"><label>${this._t("GUM.GMScreen.BulkClearAction")}</label><select name="clear-action">
+                        <option value="contents">${this._t("GUM.GMScreen.ClearContentsOnly")}</option>
+                        <option value="groups">${this._t("GUM.GMScreen.ClearGroupsAndContents")}</option>
+                    </select></div>
+                    <fieldset><legend>${this._t("GUM.GMScreen.BulkClearScope")}</legend>
+                        <label class="checkbox"><input type="radio" name="clear-scope" value="groups" checked> ${this._t("GUM.GMScreen.SelectedGroups")}</label>
+                        <div class="gum-bulk-clear-choices">${groupOptions}</div>
+                        <label class="checkbox"><input type="radio" name="clear-scope" value="active-tab"> ${this._t("GUM.GMScreen.CurrentTab")}</label>
+                        <label class="checkbox"><input type="radio" name="clear-scope" value="tabs"> ${this._t("GUM.GMScreen.SelectedTabs")}</label>
+                        <div class="gum-bulk-clear-choices">${tabOptions}</div>
+                        <label class="checkbox gum-bulk-clear-all"><input type="radio" name="clear-scope" value="all-tabs"> ${this._t("GUM.GMScreen.EntireScreen")}</label>
+                    </fieldset>
+                    <p class="notes warning"><i class="fas fa-triangle-exclamation"></i> ${this._t("GUM.GMScreen.BulkClearReferencesOnly")}</p>
+                </form>
+            `,
+            buttons: {
+                clear: {
+                    icon: '<i class="fas fa-trash"></i>',
+                    label: this._t("GUM.GMScreen.ClearLayout"),
+                    callback: html => {
+                        const scope = html.find('[name="clear-scope"]:checked').val();
+                        const removeGroups = html.find('[name="clear-action"]').val() === "groups";
+                        let targetIds = [];
+                        if (scope === "groups") targetIds = html.find('[name="clear-group"]:checked').map((_, input) => input.value).get();
+                        if (scope === "active-tab") targetIds = activeTab ? [activeTab.id] : [];
+                        if (scope === "tabs") targetIds = html.find('[name="clear-tab"]:checked').map((_, input) => input.value).get();
+                        if (scope !== "all-tabs" && targetIds.length === 0) {
+                            ui.notifications.warn(this._t("GUM.GMScreen.SelectClearTargets"));
+                            return false;
+                        }
+                        this._confirmBulkClear({ scope: scope === "active-tab" ? "tabs" : scope, targetIds, removeGroups });
+                    }
+                },
+                cancel: { label: this._t("GUM.GMScreen.Cancel") }
+            },
+            default: "cancel"
+        }).render(true);
+    }
+
+    _confirmBulkClear(options) {
+        Dialog.confirm({
+            title: this._t("GUM.GMScreen.ConfirmBulkClearTitle"),
+            content: `<p>${this._t(options.removeGroups ? "GUM.GMScreen.ConfirmClearGroups" : "GUM.GMScreen.ConfirmClearContents")}</p>`,
+            yes: () => this._clearLayout(options),
+            defaultYes: false
+        });
+    }
+
+    async _clearLayout(options) {
+        const config = await this._normalizeConfig();
+        const result = clearGMScreenLayout(config, options);
+        result.removedUuids.forEach(uuid => this.selectedModifiers.delete(uuid));
+        await this._saveConfig(result.config);
+        ui.notifications.info(this._t("GUM.GMScreen.LayoutCleared"));
     }
     async _renameGroup(groupId, newName) {
         const config = await this._normalizeConfig();

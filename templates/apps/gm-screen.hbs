@@ -70,6 +70,9 @@
             </button>
             {{#if layoutEditMode}}<button type="button" class="add-group-btn" title="{{localize 'GUM.GMScreen.CreateGroup'}}">
                 <i class="fas fa-plus"></i><span class="toolbar-action-label">{{localize "GUM.GMScreen.Group"}}</span>
+            </button>
+            <button type="button" class="bulk-clear-layout-btn" title="{{localize 'GUM.GMScreen.BulkClearTitle'}}" aria-label="{{localize 'GUM.GMScreen.BulkClearTitle'}}">
+                <i class="fas fa-trash-can"></i>
             </button>{{/if}}
         </header>
         <nav class="main-tab-selector gm-workspace-tabs" aria-label="{{localize 'GUM.GMScreen.Workspaces'}}">
@@ -139,7 +142,7 @@
                                                 <option value="each-target" {{#if (eq this.macroExecutionMode "each-target")}}selected{{/if}}>{{localize "GUM.GMScreen.MacroMode.each-target"}}</option>
                                             </select>
                                             {{else}}
-                                            <span class="macro-context-label" title="{{localize 'GUM.GMScreen.MacroExecutionMode'}}">{{this.macroExecutionLabel}}</span>
+                                            <span class="macro-context-icon" title="{{this.macroExecutionLabel}}" aria-label="{{this.macroExecutionLabel}}"><i class="fas {{this.macroExecutionIcon}}"></i></span>
                                             <button type="button" class="macro-run-btn {{#if this.macroRunning}}is-running{{/if}}" title="{{localize 'GUM.GMScreen.ExecuteMacro'}}" aria-label="{{localize 'GUM.GMScreen.ExecuteMacro'}}" {{#unless this.canExecute}}disabled{{/unless}} {{#if this.macroRunning}}disabled{{/if}}><i class="fas {{#if this.macroRunning}}fa-spinner fa-spin{{else}}fa-play{{/if}}"></i></button>
                                             {{/if}}
                                         {{/if}}
