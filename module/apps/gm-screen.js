@@ -1,4 +1,5 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
+import { GMMacroBrowser } from "./gm-macro-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "../../scripts/main.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
@@ -19,7 +20,7 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
-import { moveEntryById, moveUuidBetweenGroups } from "../utils/gm-screen-layout.mjs";
+import { moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
 
 const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
 const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
@@ -46,6 +47,7 @@ export class GumGMScreen extends Application {
         // O editor de layout e local a esta janela. Somente as alteracoes
         // estruturais confirmadas por uma acao sao persistidas no mundo.
         this.layoutEditMode = false;
+        this._runningMacros = new Set();
 
         this._lastContextClick = {
             actorId: null,
@@ -166,7 +168,15 @@ async getData() {
                     if (!item) return null;
                     const itemData = item.toObject();
                     itemData.uuid = itemUuid;
-                    itemData.isSelected = this.selectedModifiers.has(itemUuid);
+                    itemData.documentName = item.documentName;
+                    itemData.isMacro = item.documentName === "Macro";
+                    itemData.isSelected = !itemData.isMacro && this.selectedModifiers.has(itemUuid);
+                    if (itemData.isMacro) {
+                        itemData.canExecute = item.canExecute === true;
+                        itemData.macroExecutionMode = normalizeMacroExecutionMode(group.macroOptions?.[itemUuid]?.executionMode);
+                        itemData.macroExecutionLabel = this._t(`GUM.GMScreen.MacroMode.${itemData.macroExecutionMode}`);
+                        itemData.macroRunning = this._runningMacros.has(`${group.id}:${itemUuid}`);
+                    }
                     if (itemData.type === "gm_modifier") {
                         const presentation = this._formatModifierExpression(itemData.system?.modifier);
                         itemData.modifierDisplay = presentation.text;
@@ -410,7 +420,7 @@ activateListeners(html) {
             this.layoutEditMode = false;
             this.render(false);
         });
-        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
+        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .macro-open-btn, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
             if (!['Enter', ' '].includes(ev.key)) return;
             ev.preventDefault();
             $(ev.currentTarget).trigger('click');
@@ -582,6 +592,7 @@ activateListeners(html) {
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
+            if (btn.data('documentName') === 'Macro') return;
             const itemType = btn.data('item-type') || "gm_modifier";
             const modUuid = btn.data('uuid');
             const modValue = btn.data('value');
@@ -774,6 +785,12 @@ activateListeners(html) {
             const groupId = $(ev.currentTarget).data('group-id');
             new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
+
+        html.find('.add-macro-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
+            const groupId = $(ev.currentTarget).data('group-id');
+            new GMMacroBrowser({ onSelect: async macros => { await this._addItemsToGroup(groupId, macros); } }).render(true);
+        });
         
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
@@ -813,6 +830,36 @@ activateListeners(html) {
                 item.data('uuid'),
                 Number($(ev.currentTarget).data('offset')) || 0
             );
+        });
+
+        html.find('.macro-execution-mode').on('change', async ev => {
+            if (!this.layoutEditMode) return;
+            const item = $(ev.currentTarget).closest('.palette-mod');
+            await this._setMacroExecutionMode(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                ev.currentTarget.value
+            );
+        });
+
+        html.find('.macro-run-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            const item = button.closest('.palette-mod');
+            await this._executeMacroFromGroup(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                button
+            );
+        });
+
+        html.find('.macro-open-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const macro = await fromUuid($(ev.currentTarget).closest('.palette-mod').data('uuid')).catch(() => null);
+            macro?.sheet?.render(true);
         });
 
         html.on('click', ev => {
@@ -1808,7 +1855,14 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         this._materializeManualOrder(source);
         if (target !== source) this._materializeManualOrder(target);
+        source.macroOptions = this._normalizeMacroOptions(source.macroOptions);
+        target.macroOptions = this._normalizeMacroOptions(target.macroOptions);
+        const macroOption = source.macroOptions[itemUuid];
         if (!moveUuidBetweenGroups(source, target, itemUuid, targetIndex)) return;
+        if (target !== source && macroOption) {
+            delete source.macroOptions[itemUuid];
+            target.macroOptions[itemUuid] = macroOption;
+        }
         await this._saveConfig(config);
     }
 
@@ -1882,6 +1936,13 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         return this.gmTabs.map(tab => ({ id: tab.id, name: tab.name, groups: [] }));
     }
 
+    _normalizeMacroOptions(options) {
+        if (!options || typeof options !== "object" || Array.isArray(options)) return {};
+        return Object.fromEntries(Object.entries(options).map(([uuid, value]) => [uuid, {
+            executionMode: normalizeMacroExecutionMode(value?.executionMode)
+        }]));
+    }
+
     async _normalizeConfig() {
         const config = game.settings.get("gum", "gmScreenConfig") || {};
 
@@ -1896,6 +1957,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                         id: group.id || foundry.utils.randomID(),
                         name: group.name || this._t("GUM.GMScreen.Group"),
                         items: Array.isArray(group.items) ? group.items : [],
+                        macroOptions: this._normalizeMacroOptions(group.macroOptions),
                         collapsed: group.collapsed === true,
                         sortMode: group.sortMode === "manual" ? "manual" : "auto"
                     }))
@@ -1915,6 +1977,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 id: group.id || foundry.utils.randomID(),
                 name: group.name || this._t("GUM.GMScreen.Group"),
                 items: Array.isArray(group.items) ? group.items : [],
+                macroOptions: this._normalizeMacroOptions(group.macroOptions),
                 collapsed: group.collapsed === true,
                 sortMode: group.sortMode === "manual" ? "manual" : "auto"
             }));
@@ -1927,6 +1990,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             id: group.id || foundry.utils.randomID(),
             name: group.name || this._t("GUM.GMScreen.Group"),
             items: Array.isArray(group.items) ? group.items : [],
+            macroOptions: this._normalizeMacroOptions(group.macroOptions),
             collapsed: group.collapsed === true,
             sortMode: group.sortMode === "manual" ? "manual" : "auto"
         }));
@@ -1957,7 +2021,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         if (!activeTab) return;
         activeTab.groups = activeTab.groups || [];
-        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false, sortMode: "auto" });
+        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], macroOptions: {}, collapsed: false, sortMode: "auto" });
         await this._saveConfig(config);
     }
     async _toggleGroupCollapse(groupId) {
@@ -1991,8 +2055,13 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
+            group.macroOptions = this._normalizeMacroOptions(group.macroOptions);
             items.forEach(item => {
+                if (!item?.uuid) return;
                 if (!group.items.includes(item.uuid)) group.items.push(item.uuid);
+                if (item.documentName === "Macro") {
+                    group.macroOptions[item.uuid] ??= { executionMode: "standard" };
+                }
             });
             await this._saveConfig(config);
         }
@@ -2003,20 +2072,87 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             group.items = group.items.filter(u => u !== itemUuid);
+            if (group.macroOptions) delete group.macroOptions[itemUuid];
             this.selectedModifiers.delete(itemUuid);
             await this._saveConfig(config);
+        }
+    }
+
+    async _setMacroExecutionMode(groupId, macroUuid, executionMode) {
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group || !group.items?.includes(macroUuid)) return;
+        group.macroOptions = this._normalizeMacroOptions(group.macroOptions);
+        group.macroOptions[macroUuid] = { executionMode: normalizeMacroExecutionMode(executionMode) };
+        await this._saveConfig(config);
+    }
+
+    async _executeMacroFromGroup(groupId, macroUuid, button) {
+        const executionKey = `${groupId}:${macroUuid}`;
+        if (this._runningMacros.has(executionKey)) return;
+        this._runningMacros.add(executionKey);
+        const icon = button?.find?.('i');
+        button?.prop?.('disabled', true)?.addClass?.('is-running');
+        icon?.removeClass?.('fa-play')?.addClass?.('fa-spinner fa-spin');
+        try {
+            const macro = await fromUuid(macroUuid).catch(() => null);
+            if (!macro || macro.documentName !== "Macro") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroNotFound"));
+            }
+            if (!macro.canExecute) {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroPermissionDenied"));
+            }
+
+            const config = await this._normalizeConfig();
+            const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+            const plan = planGMScreenMacroExecution(group?.macroOptions?.[macroUuid]?.executionMode, game.user?.targets);
+            const mode = plan.executionMode;
+            const targets = plan.targets;
+            if (plan.reason === "single-target") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroRequiresSingleTarget"));
+            }
+            if (plan.reason === "targets") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroRequiresTargets"));
+            }
+
+            const origin = { type: "gm-screen", source: "GM Screen", groupId, macroUuid };
+            const gmScreen = { groupId, macroUuid, executionMode: mode, allTargets: targets };
+            const executeForTarget = target => macro.execute({
+                actor: target.actor,
+                token: target,
+                speaker: ChatMessage.getSpeaker({ actor: target.actor, token: target }),
+                targets: [target],
+                origin,
+                gmScreen
+            });
+            if (mode === "standard") {
+                await macro.execute({ targets, origin, gmScreen });
+            } else {
+                for (const execution of plan.executions) await executeForTarget(execution.target);
+            }
+        } catch (error) {
+            console.error("GUM | Falha ao executar Macro pelo Escudo do Mestre.", error);
+            ui.notifications.error(this._t("GUM.GMScreen.MacroExecutionFailed", { error: error?.message || String(error) }));
+        } finally {
+            this._runningMacros.delete(executionKey);
+            if (button?.[0]?.isConnected) {
+                button.prop('disabled', false).removeClass('is-running');
+                icon.removeClass('fa-spinner fa-spin').addClass('fa-play');
+            }
         }
     }
     async _onDrop(event) { 
         if (!this.layoutEditMode) return;
         const data = TextEditor.getDragEventData(event);
-        if (data.type !== "Item") return;
+        if (!["Item", "Macro"].includes(data.type)) return;
         const dropTarget = event.target.closest(".group-content-area");
         if (!dropTarget) return;
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
         const item = await fromUuid(data.uuid);
-        if (!item || !["gm_modifier", "effect"].includes(item.type)) {
-            return ui.notifications.warn(this._t("GUM.GMScreen.OnlyModifiersAndEffects"));
+        const isSupportedItem = item?.documentName === "Item" && ["gm_modifier", "effect"].includes(item.type);
+        const isMacro = item?.documentName === "Macro";
+        if (!isSupportedItem && !isMacro) {
+            return ui.notifications.warn(this._t("GUM.GMScreen.OnlySupportedEntries"));
         }
         await this._addItemsToGroup(groupId, [item]);
     }
@@ -2109,6 +2245,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                                 id: group.id || foundry.utils.randomID(),
                                 name: group.name || this._t("GUM.GMScreen.Group"),
                                 items: Array.isArray(group.items) ? group.items : [],
+                                macroOptions: this._normalizeMacroOptions(group.macroOptions),
                                 collapsed: group.collapsed === true,
                                 sortMode: group.sortMode === "manual" ? "manual" : "auto"
                             }));

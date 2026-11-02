@@ -94,6 +94,43 @@ test("exports referenced documents once and keeps missing external references", 
   assert.equal(bundle.documents["effect-glow"].folder, undefined);
 });
 
+test("GM Screen exports preserve Macro UUIDs as external unsupported references", async () => {
+  const macro = { id: "weather", name: "Weather", type: "script", documentName: "Macro" };
+  const configuration = { groups: [{
+    id: "tools",
+    items: ["Macro.weather"],
+    macroOptions: { "Macro.weather": { executionMode: "single-target" } }
+  }] };
+  const bundle = await buildConfigurationBundle({
+    id: "macro-reference", kind: "gm-screen", configuration,
+    resolveUuid: uuid => uuid === "Macro.weather" ? macro : null
+  });
+  assert.deepEqual(bundle.documents, {});
+  assert.deepEqual(bundle.configuration.groups[0].items, ["Macro.weather"]);
+  assert.equal(bundle.configuration.groups[0].macroOptions["Macro.weather"].executionMode, "single-target");
+  assert.deepEqual(bundle.portability.unsupportedReferences, ["Macro.weather"]);
+  assert.equal(bundle.portability.complete, false);
+});
+
+test("GM Screen merges per-group Macro execution modes with the selected import policy", () => {
+  const current = { tabs: [{ id: "tab-1", groups: [{
+    id: "tools", items: ["Macro.shared"],
+    macroOptions: { "Macro.shared": { executionMode: "standard" } }
+  }] }] };
+  const incoming = { tabs: [{ id: "tab-1", groups: [{
+    id: "tools", items: ["Macro.shared", "Macro.new"],
+    macroOptions: {
+      "Macro.shared": { executionMode: "single-target" },
+      "Macro.new": { executionMode: "each-target" }
+    }
+  }] }] };
+  const added = combineConfigurationImport("gm-screen", current, incoming, "add");
+  assert.equal(added.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "standard");
+  assert.equal(added.tabs[0].groups[0].macroOptions["Macro.new"].executionMode, "each-target");
+  const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
+  assert.equal(merged.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "single-target");
+});
+
 test("exports effects linked indirectly by a GM modifier", async () => {
   const documents = new Map([
     ["Item.modifier", {

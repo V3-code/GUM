@@ -3,6 +3,30 @@ function clampIndex(index, length) {
     return Math.max(0, Math.min(Math.trunc(numeric), length));
 }
 
+export const GM_SCREEN_MACRO_EXECUTION_MODES = Object.freeze(["standard", "single-target", "each-target"]);
+
+export function normalizeMacroExecutionMode(mode) {
+    return GM_SCREEN_MACRO_EXECUTION_MODES.includes(mode) ? mode : "standard";
+}
+
+export function planGMScreenMacroExecution(mode, rawTargets = []) {
+    const executionMode = normalizeMacroExecutionMode(mode);
+    const targets = Array.from(rawTargets || []);
+    if (executionMode === "single-target" && targets.length !== 1) {
+        return { ok: false, reason: "single-target", executionMode, targets, executions: [] };
+    }
+    if (executionMode === "each-target" && targets.length === 0) {
+        return { ok: false, reason: "targets", executionMode, targets, executions: [] };
+    }
+    if (executionMode === "single-target") {
+        return { ok: true, reason: null, executionMode, targets, executions: [{ target: targets[0], targets }] };
+    }
+    if (executionMode === "each-target") {
+        return { ok: true, reason: null, executionMode, targets, executions: targets.map(target => ({ target, targets: [target] })) };
+    }
+    return { ok: true, reason: null, executionMode, targets, executions: [{ target: null, targets }] };
+}
+
 export function moveEntryById(entries, id, targetIndex) {
     const next = Array.isArray(entries) ? [...entries] : [];
     const sourceIndex = next.findIndex(entry => entry?.id === id);

@@ -656,6 +656,48 @@
 .gum.gm-screen .mod-quick-view:hover { color: var(--gum-accent-gold); }
 .gum.gm-screen .delete-mod-btn { color: #888; font-size: 0.9em; }
 .gum.gm-screen .delete-mod-btn:hover { color: #ff6b6b; }
+.gum.gm-screen .palette-mod.is-macro { cursor: default; }
+.gum.gm-screen .palette-mod.is-macro .mod-icon { box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.28); }
+.gum.gm-screen .macro-context-label {
+    max-width: 105px;
+    overflow: hidden;
+    color: var(--gm-muted, #aaa);
+    font-size: 0.68rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.gum.gm-screen .macro-execution-mode {
+    width: 128px;
+    height: 24px;
+    margin: 0;
+    padding: 0 22px 0 6px;
+    border: 1px solid rgba(197, 160, 91, 0.25);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--gum-text-claro);
+    font-size: 0.68rem;
+}
+.gum.gm-screen .macro-run-btn {
+    display: inline-flex;
+    width: 26px;
+    min-width: 26px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--gum-accent-gold) 38%, transparent);
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--gum-accent-gold) 10%, rgba(0, 0, 0, 0.3));
+    color: var(--gum-accent-gold);
+}
+.gum.gm-screen .macro-run-btn:hover:not(:disabled) {
+    border-color: var(--gum-accent-gold);
+    background: color-mix(in srgb, var(--gum-accent-gold) 20%, rgba(0, 0, 0, 0.3));
+}
+.gum.gm-screen .macro-run-btn.is-running { color: var(--gum-text-claro); }
+.gum.gm-screen .macro-open-btn { color: #888; }
+.gum.gm-screen .macro-open-btn:hover { color: var(--gum-accent-gold); }
 
 /* Editor de layout */
 .gum.gm-screen .layout-edit-toggle {

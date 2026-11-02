@@ -80,8 +80,12 @@ function mergeGMScreenConfiguration(current, incoming, mode) {
         continue;
       }
       const items = mergeUniqueValues(targetGroup.items, incomingGroup?.items);
+      const macroOptions = mode === "merge"
+        ? { ...clone(targetGroup.macroOptions || {}), ...clone(incomingGroup?.macroOptions || {}) }
+        : { ...clone(incomingGroup?.macroOptions || {}), ...clone(targetGroup.macroOptions || {}) };
       if (mode === "merge") Object.assign(targetGroup, clone(incomingGroup));
       targetGroup.items = items;
+      targetGroup.macroOptions = macroOptions;
     }
   }
 
