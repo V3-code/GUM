@@ -39,12 +39,12 @@
         <section class="gm-sidebar-actions">
             {{#if hasCombat}}
             <div class="combat-controls">
-                <button type="button" class="combat-btn prev-turn" title="{{localize 'GUM.GMScreen.PreviousTurn'}}" aria-label="{{localize 'GUM.GMScreen.PreviousTurn'}}"><i class="fas fa-backward"></i></button>
-                <button type="button" class="combat-btn end-combat" title="{{localize 'GUM.GMScreen.EndCombat'}}" aria-label="{{localize 'GUM.GMScreen.EndCombat'}}"><i class="fas fa-stop"></i></button>
-                <button type="button" class="combat-btn next-turn" title="{{localize 'GUM.GMScreen.NextTurn'}}" aria-label="{{localize 'GUM.GMScreen.NextTurn'}}"><i class="fas fa-forward"></i></button>
+                <button type="button" class="combat-btn prev-turn" title="{{localize 'GUM.GMScreen.PreviousTurn'}}" aria-label="{{localize 'GUM.GMScreen.PreviousTurn'}}" {{#if layoutEditMode}}disabled{{/if}}><i class="fas fa-backward"></i></button>
+                <button type="button" class="combat-btn end-combat" title="{{localize 'GUM.GMScreen.EndCombat'}}" aria-label="{{localize 'GUM.GMScreen.EndCombat'}}" {{#if layoutEditMode}}disabled{{/if}}><i class="fas fa-stop"></i></button>
+                <button type="button" class="combat-btn next-turn" title="{{localize 'GUM.GMScreen.NextTurn'}}" aria-label="{{localize 'GUM.GMScreen.NextTurn'}}" {{#if layoutEditMode}}disabled{{/if}}><i class="fas fa-forward"></i></button>
             </div>
             {{/if}}
-            <button type="button" class="gm-request-test"><i class="fas fa-dice"></i> {{localize "GUM.GMScreen.RequestTest"}}</button>
+            <button type="button" class="gm-request-test" {{#if layoutEditMode}}disabled{{/if}}><i class="fas fa-dice"></i> {{localize "GUM.GMScreen.RequestTest"}}</button>
         </section>
 
     </aside>
@@ -62,20 +62,27 @@
                 <span>{{selectionCount}}</span>
                 <strong>{{selectionTotalText}}</strong>
             </div>
-            <button type="button" class="clear-selection-btn" title="{{localize 'GUM.GMScreen.ClearSelection'}}" aria-label="{{localize 'GUM.GMScreen.ClearSelection'}}" {{#unless selectionCount}}disabled{{/unless}}>
+            <button type="button" class="clear-selection-btn" title="{{localize 'GUM.GMScreen.ClearSelection'}}" aria-label="{{localize 'GUM.GMScreen.ClearSelection'}}" {{#if layoutEditMode}}disabled{{else}}{{#unless selectionCount}}disabled{{/unless}}{{/if}}>
                 <i class="fas fa-eraser"></i>
             </button>
-            <button type="button" class="add-group-btn" title="{{localize 'GUM.GMScreen.CreateGroup'}}">
-                <i class="fas fa-plus"></i><span class="toolbar-action-label">{{localize "GUM.GMScreen.Group"}}</span>
+            <button type="button" class="layout-edit-toggle {{#if layoutEditMode}}is-active{{/if}}" title="{{#if layoutEditMode}}{{localize 'GUM.GMScreen.FinishLayoutEditing'}}{{else}}{{localize 'GUM.GMScreen.EditLayout'}}{{/if}}" aria-pressed="{{#if layoutEditMode}}true{{else}}false{{/if}}">
+                <i class="fas {{#if layoutEditMode}}fa-check{{else}}fa-lock{{/if}}"></i><span class="toolbar-action-label">{{#if layoutEditMode}}{{localize "GUM.GMScreen.Finish"}}{{else}}{{localize "GUM.GMScreen.EditLayout"}}{{/if}}</span>
             </button>
+            {{#if layoutEditMode}}<button type="button" class="add-group-btn" title="{{localize 'GUM.GMScreen.CreateGroup'}}">
+                <i class="fas fa-plus"></i><span class="toolbar-action-label">{{localize "GUM.GMScreen.Group"}}</span>
+            </button>{{/if}}
         </header>
         <nav class="main-tab-selector gm-workspace-tabs" aria-label="{{localize 'GUM.GMScreen.Workspaces'}}">
             {{#each mainTabs}}
-                <button type="button" class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{localize 'GUM.GMScreen.WorkspaceTitle' name=this.name}}" {{#if (eq this.id ../activeMainTab)}}aria-current="page"{{/if}}>
-                    {{this.name}}
-                </button>
+                <span class="gm-workspace-tab">
+                    <button type="button" class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{localize 'GUM.GMScreen.WorkspaceTitle' name=this.name}}" {{#if (eq this.id ../activeMainTab)}}aria-current="page"{{/if}}>
+                        <span>{{this.name}}</span>{{#if this.selectedCount}}<small>{{this.selectedCount}}</small>{{/if}}
+                    </button>
+                    {{#if ../layoutEditMode}}<button type="button" class="rename-main-tab-btn" data-tab-id="{{this.id}}" data-tab-name="{{this.name}}" title="{{localize 'GUM.GMScreen.RenameWorkspace'}}" aria-label="{{localize 'GUM.GMScreen.RenameWorkspace'}}"><i class="fas fa-pen"></i></button>{{/if}}
+                </span>
             {{/each}}
         </nav>
+        {{#if layoutEditMode}}<div class="layout-editor-banner"><i class="fas fa-pen-ruler"></i> {{localize "GUM.GMScreen.LayoutEditingActive"}}</div>{{/if}}
         <section class="screen-body">
             <div class="tab modifiers-dashboard">
                 <div class="modular-grid">
@@ -83,10 +90,13 @@
                         {{#each groups as |group|}}
                         <div class="modifier-group {{#if group.collapsed}}is-collapsed{{/if}}" data-group-id="{{group.id}}">
                             <div class="group-header">
+                                {{#if @root.layoutEditMode}}<button type="button" class="layout-drag-handle group-drag-handle" draggable="true" title="{{localize 'GUM.GMScreen.DragGroup'}}" aria-label="{{localize 'GUM.GMScreen.DragGroup'}}"><i class="fas fa-grip-vertical"></i></button>{{/if}}
                                 <button type="button" class="group-collapse-toggle" data-group-id="{{group.id}}" title="{{localize 'GUM.GMScreen.ToggleGroup'}}" aria-expanded="{{#unless group.collapsed}}true{{else}}false{{/unless}}">
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
                                 <span class="group-title" title="{{group.name}}">{{group.name}}</span>
+                                <span class="group-item-count" title="{{localize 'GUM.GMScreen.GroupItemCount'}}">{{group.itemCount}}{{#if group.selectedCount}} · <strong>{{group.selectedCount}}</strong>{{/if}}{{#if group.unavailableItemCount}} · <i class="fas fa-triangle-exclamation"></i> {{group.unavailableItemCount}}{{/if}}</span>
+                                {{#if @root.layoutEditMode}}
                                 <div class="group-actions">
                                     <button type="button" class="group-menu-trigger" data-group-id="{{group.id}}" title="{{localize 'GUM.GMScreen.GroupOptions'}}" aria-label="{{localize 'GUM.GMScreen.GroupOptions'}}" aria-expanded="false">
                                         <i class="fas fa-ellipsis-v"></i>
@@ -94,15 +104,20 @@
                                     <div class="group-actions-menu" data-group-id="{{group.id}}">
                                         <a class="add-mod-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i> {{localize "GUM.GMScreen.AddModifier"}}</a>
                                         <a class="add-effect-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-sparkles"></i> {{localize "GUM.GMScreen.AddEffect"}}</a>
+                                        <a class="move-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-offset="-1"><i class="fas fa-arrow-up"></i> {{localize "GUM.GMScreen.MoveEarlier"}}</a>
+                                        <a class="move-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-offset="1"><i class="fas fa-arrow-down"></i> {{localize "GUM.GMScreen.MoveLater"}}</a>
+                                        <a class="toggle-group-sort-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas {{#if group.isManualOrder}}fa-arrow-down-a-z{{else}}fa-hand-pointer{{/if}}"></i> {{#if group.isManualOrder}}{{localize "GUM.GMScreen.UseAutomaticOrder"}}{{else}}{{localize "GUM.GMScreen.UseManualOrder"}}{{/if}}</a>
                                         <a class="edit-group-name-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-group-name="{{group.name}}"><i class="fas fa-pen"></i> {{localize "GUM.GMScreen.RenameGroup"}}</a>
                                         <a class="delete-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-trash"></i> {{localize "GUM.GMScreen.DeleteGroup"}}</a>
                                     </div>
                                 </div>
+                                {{/if}}
                             </div>
                             <div class="group-content-area">
                                 {{#each group.enrichedItems}}
                                 <div class="palette-mod {{#if this.isSelected}}active{{/if}}" role="button" tabindex="0" aria-pressed="{{#if this.isSelected}}true{{else}}false{{/if}}" data-uuid="{{this.uuid}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
                                     <div class="mod-left">
+                                        {{#if @root.layoutEditMode}}<button type="button" class="layout-drag-handle item-drag-handle" draggable="true" title="{{localize 'GUM.GMScreen.DragItem'}}" aria-label="{{localize 'GUM.GMScreen.DragItem'}}"><i class="fas fa-grip-vertical"></i></button>{{/if}}
                                         <img src="{{this.img}}" class="mod-icon"/>
                                         <span class="mod-name">{{this.name}}</span>
                                     </div>
@@ -117,7 +132,9 @@
                                         {{/if}}
                                         <div class="mod-hover-controls">
                                             <a class="mod-quick-view" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.QuickView'}}"><i class="fas fa-eye"></i></a>
-                                            <a class="delete-mod-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.RemoveFromGroup'}}"><i class="fas fa-times"></i></a>
+                                            {{#if @root.layoutEditMode}}<a class="move-item-btn" role="button" tabindex="0" data-offset="-1" aria-label="{{localize 'GUM.GMScreen.MoveEarlier'}}"><i class="fas fa-arrow-up"></i></a>
+                                            <a class="move-item-btn" role="button" tabindex="0" data-offset="1" aria-label="{{localize 'GUM.GMScreen.MoveLater'}}"><i class="fas fa-arrow-down"></i></a>
+                                            <a class="delete-mod-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.RemoveFromGroup'}}"><i class="fas fa-times"></i></a>{{/if}}
                                         </div>
                                     </div>
                                 </div>
@@ -178,10 +195,10 @@
                 </div>
             </div>
             <div class="gm-utility-toggle-row">
-                <button type="button" class="gm-utility-toggle {{#if quickRollOpen}}is-active{{/if}}" data-utility-panel="quick-roll" aria-expanded="{{#if quickRollOpen}}true{{else}}false{{/if}}">
+                <button type="button" class="gm-utility-toggle {{#if quickRollOpen}}is-active{{/if}}" data-utility-panel="quick-roll" aria-expanded="{{#if quickRollOpen}}true{{else}}false{{/if}}" {{#if layoutEditMode}}disabled{{/if}}>
                     <i class="fas fa-dice"></i><span>{{localize "GUM.GMScreen.QuickRoll"}}</span><strong class="qr-dock-total">{{selectionTotalText}}</strong>
                 </button>
-                <button type="button" class="gm-utility-toggle {{#if manualOpen}}is-active{{/if}} {{#if isManualActive}}has-active-value{{/if}}" data-utility-panel="manual-modifier" aria-expanded="{{#if manualOpen}}true{{else}}false{{/if}}">
+                <button type="button" class="gm-utility-toggle {{#if manualOpen}}is-active{{/if}} {{#if isManualActive}}has-active-value{{/if}}" data-utility-panel="manual-modifier" aria-expanded="{{#if manualOpen}}true{{else}}false{{/if}}" {{#if layoutEditMode}}disabled{{/if}}>
                     <i class="fas fa-sliders-h"></i><span>{{localize "GUM.GMScreen.ManualModifier"}}</span><strong class="manual-dock-total">{{manualTotalText}}</strong>
                 </button>
             </div>
@@ -191,12 +208,13 @@
 
 {{!-- PARTIAL ATUALIZADO: INICIATIVA DENTRO DO CARD --}}
 {{#*inline "monitorCard"}}
-<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isTargeted}}is-gm-target{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
+<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isTargeted}}is-gm-target{{/if}} {{#if actor.isDefeated}}defeated{{/if}} {{#if @root.layoutEditMode}}layout-edit-inert{{/if}}"
      role="button"
      tabindex="0"
      data-actor-id="{{actor.id}}"
      data-token-id="{{actor.tokenId}}"
      data-combatant-id="{{actor.combatantId}}"
+     aria-disabled="{{#if @root.layoutEditMode}}true{{else}}false{{/if}}"
      title="{{localize 'GUM.GMScreen.ApplySelectionHint'}}">
 
     {{#if actor.isTargeted}}

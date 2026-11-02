@@ -19,6 +19,10 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
+import { moveEntryById, moveUuidBetweenGroups } from "../utils/gm-screen-layout.mjs";
+
+const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
+const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
 
 export class GumGMScreen extends Application {
     
@@ -39,6 +43,9 @@ export class GumGMScreen extends Application {
         // expandida por vez para preservar o espaço vertical da paleta.
         this.utilityPanel = null;
         this.searchQuery = "";
+        // O editor de layout e local a esta janela. Somente as alteracoes
+        // estruturais confirmadas por uma acao sao persistidas no mundo.
+        this.layoutEditMode = false;
 
         this._lastContextClick = {
             actorId: null,
@@ -65,6 +72,7 @@ export class GumGMScreen extends Application {
 
     async close(options = {}) {
         Hooks.off("targetToken", this._onTargetToken);
+        this.layoutEditMode = false;
         return super.close(options);
     }
 
@@ -85,8 +93,14 @@ export class GumGMScreen extends Application {
             tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" },
                 { navSelector: ".monitor-tabs", contentSelector: ".monitor-body", initial: "characters" }
             ],
-            dragDrop: [{ dragSelector: ".palette-mod", dropSelector: ".group-content-area" }]
+            // O DragDrop do Foundry continua recebendo Itens externos. O
+            // arraste interno usa um payload proprio e alcas explicitas.
+            dragDrop: [{ dragSelector: null, dropSelector: ".group-content-area" }]
         });
+    }
+
+    _canDragDrop(_selector) {
+        return this.layoutEditMode;
     }
 
 async getData() {
@@ -165,9 +179,22 @@ async getData() {
                     return null;
                 }
             }));
-            group.enrichedItems = enrichedItems
-                .filter(item => item !== null)
-                .sort((a, b) => this._compareGroupedItems(a, b));
+            const availableItems = enrichedItems.filter(item => item !== null);
+            group.unavailableItemCount = Math.max(0, (group.items || []).length - availableItems.length);
+            group.itemCount = availableItems.length;
+            group.selectedCount = availableItems.filter(item => item.isSelected).length;
+            group.sortMode = group.sortMode === "manual" ? "manual" : "auto";
+            group.isManualOrder = group.sortMode === "manual";
+            group.enrichedItems = group.isManualOrder
+                ? availableItems
+                : availableItems.sort((a, b) => this._compareGroupedItems(a, b));
+        }));
+
+        const mainTabs = (config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] }))).map(tab => ({
+            ...tab,
+            selectedCount: new Set((tab.groups || [])
+                .flatMap(group => group.items || [])
+                .filter(uuid => this.selectedModifiers.has(uuid))).size
         }));
 
         const selectionCount = this.selectedModifiers.size;
@@ -182,7 +209,7 @@ async getData() {
             combatants: combatData,
             hasCombat: !!(combat && combat.combatants.size > 0), 
             groups,
-            mainTabs: config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] })),
+            mainTabs,
             activeMainTab,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
@@ -193,7 +220,8 @@ async getData() {
             manualTotalText: signedValue(Number(this.manualCache.value) || 0),
             utilityPanel: this.utilityPanel,
             quickRollOpen: this.utilityPanel === "quick-roll",
-            manualOpen: this.utilityPanel === "manual-modifier"
+            manualOpen: this.utilityPanel === "manual-modifier",
+            layoutEditMode: this.layoutEditMode
         };
     }
 
@@ -369,17 +397,36 @@ async getData() {
             });
 
             group.toggle(!query || groupMatches || visibleItems > 0);
+            group.toggleClass('is-search-expanded', Boolean(query && visibleItems > 0));
         });
     }
     
 activateListeners(html) {
         super.activateListeners(html);
-        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .delete-mod-btn').on('keydown', ev => {
+        this._activateLayoutEditor(html);
+        html.on('keydown.gm-layout-editor', ev => {
+            if (ev.key !== 'Escape' || !this.layoutEditMode) return;
+            ev.preventDefault();
+            this.layoutEditMode = false;
+            this.render(false);
+        });
+        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
             if (!['Enter', ' '].includes(ev.key)) return;
             ev.preventDefault();
             $(ev.currentTarget).trigger('click');
         });
-        html.find('.gm-request-test').click(event => { event.preventDefault(); openTestRequestLauncher(); });
+        html.find('.gm-request-test').click(event => {
+            event.preventDefault();
+            if (this.layoutEditMode) return;
+            openTestRequestLauncher();
+        });
+
+        html.find('.layout-edit-toggle').click(ev => {
+            ev.preventDefault();
+            this.layoutEditMode = !this.layoutEditMode;
+            this.utilityPanel = null;
+            this.render(false);
+        });
 
         html.find('.main-tab-btn').click(async ev => {
             ev.preventDefault();
@@ -406,6 +453,7 @@ activateListeners(html) {
 
         html.find('.gm-utility-toggle').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const panel = $(ev.currentTarget).data('utility-panel');
             this.utilityPanel = this.utilityPanel === panel ? null : panel;
             this.render(false);
@@ -415,6 +463,7 @@ activateListeners(html) {
         // 1. APLICAÇÃO DE MODIFICADOR (CLIQUE NO CARD)
         // ===========================================================
         html.find('.monitor-card').click(async ev => {
+            if (this.layoutEditMode) return;
             // Ignora cliques em botões internos (remover, link, etc)
             if ($(ev.target).closest('.remove-mod, .remove-effect, .actor-identity, .active-mod-tag').length) return;
             
@@ -464,6 +513,7 @@ activateListeners(html) {
         // 2. REMOÇÃO DE MODIFICADOR (CLIQUE NO X DA TAG)
         // ===========================================================
         html.find('.remove-mod').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.stopPropagation(); // Não ativa o clique do card
             
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
@@ -498,6 +548,7 @@ activateListeners(html) {
         // 2.1 REMOÇÃO DE EFEITO DO ESCUDO DO MESTRE (CLIQUE NO X DA TAG)
         // ===========================================================
         html.find('.remove-effect').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.stopPropagation();
 
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
@@ -527,6 +578,7 @@ activateListeners(html) {
 // Seleção na Paleta (Toggle)
         html.find('.palette-mod').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
@@ -563,6 +615,7 @@ activateListeners(html) {
         // Ativar Manual
         html.find('.activate-manual-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             if (this.selectedModifiers.has("manual")) {
                 this.selectedModifiers.delete("manual");
             } else {
@@ -593,6 +646,7 @@ activateListeners(html) {
         // Botões de Passo (+/-)
         html.find('.step-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const action = $(ev.currentTarget).data('action');
             let current = parseInt(this.manualCache.value) || 0;
             if (action === 'inc') current += 1;
@@ -608,6 +662,7 @@ activateListeners(html) {
         // Botões de Preset (-6, +4...)
         html.find('.preset-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const val = parseInt($(ev.currentTarget).data('val'));
             this.manualCache.value = val;
             html.find('.manual-value').val(val);
@@ -625,6 +680,7 @@ activateListeners(html) {
         // Limpar Seleção
         html.find('.clear-selection-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             this.selectedModifiers.clear();
             this.render(false);
         });
@@ -649,6 +705,7 @@ activateListeners(html) {
         });
         
         html.find('.add-group-btn').click(async ev => {
+            if (!this.layoutEditMode) return;
             new Dialog({
                 title: this._t("GUM.GMScreen.NewGroup"), content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" autofocus/></div>`,
                 buttons: { create: { label: this._t("GUM.GMScreen.Create"), callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
@@ -678,13 +735,15 @@ activateListeners(html) {
 
         html.on('click', '.edit-group-name-btn', async ev => {
             ev.preventDefault();
+            if (!this.layoutEditMode) return;
             const button = $(ev.currentTarget);
             const groupId = button.data('group-id');
             const currentName = button.data('group-name') || '';
+            const escapedCurrentName = foundry.utils.escapeHTML(String(currentName));
 
             new Dialog({
                 title: this._t("GUM.GMScreen.RenameGroup"),
-                content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" value="${currentName}" autofocus/></div>`,
+                content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" value="${escapedCurrentName}" autofocus/></div>`,
                 buttons: {
                     save: {
                         label: this._t("GUM.GMScreen.Save"),
@@ -699,25 +758,61 @@ activateListeners(html) {
         });
         
         html.find('.delete-group-btn').click(async ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             Dialog.confirm({ title: this._t("GUM.GMScreen.DeleteGroup"), content: `<p>${this._t("GUM.GMScreen.ConfirmDeleteGroup")}</p>`, yes: () => this._removeGroup(groupId) });
         });
         
         html.find('.add-mod-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
 
         html.find('.add-effect-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
         
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
+            if (!this.layoutEditMode) return;
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const groupId = $(ev.currentTarget).closest('.modifier-group').data('group-id');
             await this._removeItemFromGroup(groupId, uuid);
+        });
+
+        html.find('.rename-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            this._promptRenameMainTab(button.data('tab-id'), button.data('tab-name') || '');
+        });
+
+        html.find('.move-group-btn').click(async ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            await this._moveGroup($(ev.currentTarget).data('group-id'), Number($(ev.currentTarget).data('offset')) || 0);
+        });
+
+        html.find('.toggle-group-sort-btn').click(async ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            await this._toggleGroupSortMode($(ev.currentTarget).data('group-id'));
+        });
+
+        html.find('.move-item-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            const item = $(ev.currentTarget).closest('.palette-mod');
+            await this._moveItemByOffset(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                Number($(ev.currentTarget).data('offset')) || 0
+            );
         });
 
         html.on('click', ev => {
@@ -733,16 +828,19 @@ activateListeners(html) {
         // ===========================================================
         
         html.find('.next-turn').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) await game.combat.nextTurn();
         });
 
         html.find('.prev-turn').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) await game.combat.previousTurn();
         });
 
         html.find('.end-combat').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) {
                 Dialog.confirm({
@@ -758,6 +856,7 @@ activateListeners(html) {
         // ===========================================================
 
         html.find('.qr-toggle-mode').click(ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             btn.toggleClass('active');
@@ -775,6 +874,7 @@ activateListeners(html) {
         });
 
         html.find('.roll-test').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const nhBase = parseInt(html.find('.qr-nh').val()) || 10;
             const activeModsTotal = this._getTotalActiveModifier(); 
@@ -815,6 +915,7 @@ activateListeners(html) {
         });
 
         html.find('.roll-damage').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const formula = html.find('.qr-formula').val();
             const type = html.find('.qr-type').val() || ""; 
@@ -840,6 +941,7 @@ activateListeners(html) {
         // MENU DE CONTEXTO (CLIQUE DIREITO)
         // ===========================================================
         html.find('.monitor-card').contextmenu(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             ev.stopPropagation();
 
@@ -1536,6 +1638,246 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         return [];
     }
 
+    _readLayoutDragData(dataTransfer) {
+        if (!dataTransfer) return null;
+        for (const mime of [GM_SCREEN_LAYOUT_MIME, "text/plain"]) {
+            const raw = dataTransfer.getData(mime);
+            if (!raw) continue;
+            try {
+                const data = JSON.parse(raw);
+                if (data?.type === GM_SCREEN_LAYOUT_DRAG_TYPE) return data;
+            } catch (_error) {
+                // O payload pode pertencer ao Foundry ou a outro modulo.
+            }
+        }
+        return null;
+    }
+
+    _activateLayoutEditor(html) {
+        const root = html?.[0];
+        if (!root) return;
+
+        const clearDropState = () => {
+            root.querySelectorAll('.is-layout-drop-target, .layout-drop-before, .layout-drop-after')
+                .forEach(element => element.classList.remove('is-layout-drop-target', 'layout-drop-before', 'layout-drop-after'));
+        };
+        const blockedBySearch = () => this.searchQuery.trim().length > 0;
+
+        root.addEventListener('dragstart', event => {
+            const handle = event.target.closest('.layout-drag-handle');
+            if (!handle || !root.contains(handle) || !this.layoutEditMode || !event.dataTransfer) return;
+            if (blockedBySearch()) {
+                event.preventDefault();
+                ui.notifications.warn(this._t("GUM.GMScreen.ClearFilterToReorder"));
+                return;
+            }
+
+            const groupElement = handle.closest('.modifier-group');
+            const itemElement = handle.closest('.palette-mod');
+            const payload = itemElement
+                ? {
+                    type: GM_SCREEN_LAYOUT_DRAG_TYPE,
+                    kind: 'item',
+                    itemUuid: itemElement.dataset.uuid,
+                    sourceGroupId: groupElement?.dataset.groupId
+                }
+                : {
+                    type: GM_SCREEN_LAYOUT_DRAG_TYPE,
+                    kind: 'group',
+                    groupId: groupElement?.dataset.groupId
+                };
+            if ((payload.kind === 'item' && (!payload.itemUuid || !payload.sourceGroupId)) || !groupElement) {
+                event.preventDefault();
+                return;
+            }
+            const serialized = JSON.stringify(payload);
+            event.dataTransfer.setData(GM_SCREEN_LAYOUT_MIME, serialized);
+            event.dataTransfer.setData('text/plain', serialized);
+            event.dataTransfer.effectAllowed = 'move';
+            requestAnimationFrame(() => (itemElement || groupElement).classList.add('is-layout-dragging'));
+        }, true);
+
+        root.addEventListener('dragover', event => {
+            if (!this.layoutEditMode || blockedBySearch()) return;
+            const data = this._readLayoutDragData(event.dataTransfer);
+            if (!data) return;
+
+            if (data.kind === 'item') {
+                const area = event.target.closest('.group-content-area');
+                if (!area || !root.contains(area)) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                clearDropState();
+                area.classList.add('is-layout-drop-target');
+                const targetItem = event.target.closest('.palette-mod');
+                if (targetItem && targetItem.dataset.uuid !== data.itemUuid) {
+                    const bounds = targetItem.getBoundingClientRect();
+                    targetItem.classList.add(event.clientY > bounds.top + bounds.height / 2
+                        ? 'layout-drop-after'
+                        : 'layout-drop-before');
+                }
+                return;
+            }
+
+            if (data.kind === 'group') {
+                const targetGroup = event.target.closest('.modifier-group');
+                if (!targetGroup || !root.contains(targetGroup) || targetGroup.dataset.groupId === data.groupId) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                clearDropState();
+                const bounds = targetGroup.getBoundingClientRect();
+                const after = event.clientY > bounds.top + bounds.height / 2
+                    || (Math.abs(event.clientY - (bounds.top + bounds.height / 2)) < bounds.height / 4
+                        && event.clientX > bounds.left + bounds.width / 2);
+                targetGroup.classList.add(after ? 'layout-drop-after' : 'layout-drop-before');
+            }
+        }, true);
+
+        root.addEventListener('drop', async event => {
+            if (!this.layoutEditMode || blockedBySearch()) return;
+            const data = this._readLayoutDragData(event.dataTransfer);
+            if (!data) return; // Deixa o DragDrop do Foundry tratar Itens externos.
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (data.kind === 'item') {
+                const area = event.target.closest('.group-content-area');
+                const targetGroupId = area?.closest('.modifier-group')?.dataset.groupId;
+                if (!area || !targetGroupId) return clearDropState();
+                const targetItem = event.target.closest('.palette-mod');
+                if (targetItem?.dataset.uuid === data.itemUuid && targetGroupId === data.sourceGroupId) return clearDropState();
+                const candidates = [...area.querySelectorAll('.palette-mod')]
+                    .filter(element => !(targetGroupId === data.sourceGroupId && element.dataset.uuid === data.itemUuid));
+                let targetIndex = candidates.length;
+                if (targetItem) {
+                    const index = candidates.indexOf(targetItem);
+                    if (index >= 0) {
+                        const bounds = targetItem.getBoundingClientRect();
+                        targetIndex = index + (event.clientY > bounds.top + bounds.height / 2 ? 1 : 0);
+                    }
+                }
+                clearDropState();
+                await this._moveItemToGroup(data.sourceGroupId, targetGroupId, data.itemUuid, targetIndex);
+                return;
+            }
+
+            if (data.kind === 'group') {
+                const targetGroup = event.target.closest('.modifier-group');
+                if (!targetGroup || targetGroup.dataset.groupId === data.groupId) return clearDropState();
+                const candidates = [...root.querySelectorAll('.modular-grid > .modifier-group')]
+                    .filter(element => element.dataset.groupId !== data.groupId);
+                const index = candidates.indexOf(targetGroup);
+                if (index < 0) return clearDropState();
+                const bounds = targetGroup.getBoundingClientRect();
+                const after = event.clientY > bounds.top + bounds.height / 2
+                    || (Math.abs(event.clientY - (bounds.top + bounds.height / 2)) < bounds.height / 4
+                        && event.clientX > bounds.left + bounds.width / 2);
+                clearDropState();
+                await this._moveGroupToIndex(data.groupId, index + (after ? 1 : 0));
+            }
+        }, true);
+
+        root.addEventListener('dragend', event => {
+            event.target.closest('.palette-mod, .modifier-group')?.classList.remove('is-layout-dragging');
+            clearDropState();
+        }, true);
+    }
+
+    _getDisplayedItemOrder(groupId) {
+        const group = this.element?.find?.('.modifier-group')
+            ?.filter?.((_index, element) => element.dataset.groupId === String(groupId))
+            ?.first?.();
+        if (!group?.length) return [];
+        return group.find('.palette-mod').toArray().map(element => element.dataset.uuid).filter(Boolean);
+    }
+
+    _materializeManualOrder(group) {
+        const displayed = this._getDisplayedItemOrder(group.id);
+        const current = Array.isArray(group.items) ? group.items : [];
+        group.items = [...displayed.filter(uuid => current.includes(uuid)), ...current.filter(uuid => !displayed.includes(uuid))];
+        group.sortMode = 'manual';
+    }
+
+    async _moveItemToGroup(sourceGroupId, targetGroupId, itemUuid, targetIndex) {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const source = (activeTab?.groups || []).find(group => group.id === sourceGroupId);
+        const target = (activeTab?.groups || []).find(group => group.id === targetGroupId);
+        if (!source || !target || !source.items?.includes(itemUuid)) return;
+
+        this._materializeManualOrder(source);
+        if (target !== source) this._materializeManualOrder(target);
+        if (!moveUuidBetweenGroups(source, target, itemUuid, targetIndex)) return;
+        await this._saveConfig(config);
+    }
+
+    async _moveItemByOffset(groupId, itemUuid, offset) {
+        if (!offset) return;
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group) return;
+        this._materializeManualOrder(group);
+        const index = group.items.indexOf(itemUuid);
+        const target = index + offset;
+        if (index < 0 || target < 0 || target >= group.items.length) return;
+        [group.items[index], group.items[target]] = [group.items[target], group.items[index]];
+        await this._saveConfig(config);
+    }
+
+    async _moveGroupToIndex(groupId, targetIndex) {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const groups = activeTab?.groups || [];
+        const sourceIndex = groups.findIndex(group => group.id === groupId);
+        if (sourceIndex < 0) return;
+        activeTab.groups = moveEntryById(groups, groupId, targetIndex);
+        await this._saveConfig(config);
+    }
+
+    async _moveGroup(groupId, offset) {
+        if (!offset) return;
+        const config = await this._normalizeConfig();
+        const groups = this._getActiveConfigTab(config)?.groups || [];
+        const index = groups.findIndex(group => group.id === groupId);
+        const target = index + offset;
+        if (index < 0 || target < 0 || target >= groups.length) return;
+        [groups[index], groups[target]] = [groups[target], groups[index]];
+        await this._saveConfig(config);
+    }
+
+    async _toggleGroupSortMode(groupId) {
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group) return;
+        if (group.sortMode === 'manual') group.sortMode = 'auto';
+        else this._materializeManualOrder(group);
+        await this._saveConfig(config);
+    }
+
+    _promptRenameMainTab(tabId, currentName) {
+        const escapedName = foundry.utils.escapeHTML(String(currentName || ''));
+        new Dialog({
+            title: this._t("GUM.GMScreen.RenameWorkspace"),
+            content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="tab-name" value="${escapedName}" autofocus maxlength="24"/></div>`,
+            buttons: {
+                save: {
+                    label: this._t("GUM.GMScreen.Save"),
+                    callback: async dialogHtml => {
+                        const name = dialogHtml.find('#tab-name').val()?.trim();
+                        if (!name) return;
+                        const config = await this._normalizeConfig();
+                        const tab = (config.tabs || []).find(entry => entry.id === tabId);
+                        if (!tab) return;
+                        tab.name = name;
+                        await this._saveConfig(config);
+                    }
+                }
+            },
+            default: 'save'
+        }).render(true);
+    }
+
     _createDefaultTabs() {
         return this.gmTabs.map(tab => ({ id: tab.id, name: tab.name, groups: [] }));
     }
@@ -1554,7 +1896,8 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                         id: group.id || foundry.utils.randomID(),
                         name: group.name || this._t("GUM.GMScreen.Group"),
                         items: Array.isArray(group.items) ? group.items : [],
-                        collapsed: group.collapsed === true
+                        collapsed: group.collapsed === true,
+                        sortMode: group.sortMode === "manual" ? "manual" : "auto"
                     }))
                 };
             });
@@ -1572,7 +1915,8 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 id: group.id || foundry.utils.randomID(),
                 name: group.name || this._t("GUM.GMScreen.Group"),
                 items: Array.isArray(group.items) ? group.items : [],
-                collapsed: group.collapsed === true
+                collapsed: group.collapsed === true,
+                sortMode: group.sortMode === "manual" ? "manual" : "auto"
             }));
             const migrated = { tabs, activeTabId: tabs[0].id };
             await game.settings.set("gum", "gmScreenConfig", migrated);
@@ -1583,7 +1927,8 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             id: group.id || foundry.utils.randomID(),
             name: group.name || this._t("GUM.GMScreen.Group"),
             items: Array.isArray(group.items) ? group.items : [],
-            collapsed: group.collapsed === true
+            collapsed: group.collapsed === true,
+            sortMode: group.sortMode === "manual" ? "manual" : "auto"
         }));
 
         const tabs = this._createDefaultTabs();
@@ -1612,7 +1957,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         if (!activeTab) return;
         activeTab.groups = activeTab.groups || [];
-        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false });
+        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false, sortMode: "auto" });
         await this._saveConfig(config);
     }
     async _toggleGroupCollapse(groupId) {
@@ -1663,6 +2008,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         }
     }
     async _onDrop(event) { 
+        if (!this.layoutEditMode) return;
         const data = TextEditor.getDragEventData(event);
         if (data.type !== "Item") return;
         const dropTarget = event.target.closest(".group-content-area");
@@ -1763,7 +2109,8 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                                 id: group.id || foundry.utils.randomID(),
                                 name: group.name || this._t("GUM.GMScreen.Group"),
                                 items: Array.isArray(group.items) ? group.items : [],
-                                collapsed: group.collapsed === true
+                                collapsed: group.collapsed === true,
+                                sortMode: group.sortMode === "manual" ? "manual" : "auto"
                             }));
                             const tabs = this._createDefaultTabs();
                             tabs[0].groups = groups;
