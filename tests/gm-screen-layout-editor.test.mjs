@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 import {
+    buildGMScreenClearRequest,
     clearGMScreenLayout,
     moveEntryById,
     moveUuidBetweenGroups,
@@ -49,6 +50,28 @@ test("layout cleanup can clear contents or complete groups at different scopes",
     assert.deepEqual(tabs.removedUuids, ["Item.c"], "items still referenced by another tab remain selected");
     const all = clearGMScreenLayout(config, { scope: "all-tabs", removeGroups: true });
     assert.deepEqual(all.config.tabs.map(tab => tab.groups.length), [0, 0]);
+});
+
+test("bulk cleanup maps the dialog action to complete group removal", () => {
+    assert.deepEqual(buildGMScreenClearRequest({
+        action: "groups",
+        scope: "active-tab",
+        activeTabId: "one"
+    }), {
+        scope: "tabs",
+        targetIds: ["one"],
+        removeGroups: true
+    });
+
+    assert.deepEqual(buildGMScreenClearRequest({
+        action: "contents",
+        scope: "groups",
+        selectedGroupIds: ["a", "b"]
+    }), {
+        scope: "groups",
+        targetIds: ["a", "b"],
+        removeGroups: false
+    });
 });
 
 test("the GM Screen exposes an explicit, local layout editor", () => {

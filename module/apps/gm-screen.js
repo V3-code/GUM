@@ -21,7 +21,7 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
-import { clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
+import { buildGMScreenClearRequest, clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
 
 const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
 const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
@@ -2312,17 +2312,20 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                     icon: '<i class="fas fa-trash"></i>',
                     label: this._t("GUM.GMScreen.ClearLayout"),
                     callback: html => {
-                        const scope = html.find('[name="clear-scope"]:checked').val();
-                        const removeGroups = html.find('[name="clear-action"]').val() === "groups";
-                        let targetIds = [];
-                        if (scope === "groups") targetIds = html.find('[name="clear-group"]:checked').map((_, input) => input.value).get();
-                        if (scope === "active-tab") targetIds = activeTab ? [activeTab.id] : [];
-                        if (scope === "tabs") targetIds = html.find('[name="clear-tab"]:checked').map((_, input) => input.value).get();
-                        if (scope !== "all-tabs" && targetIds.length === 0) {
+                        const form = html.find('form.gum-bulk-clear-form')[0];
+                        const formData = new FormData(form);
+                        const options = buildGMScreenClearRequest({
+                            action: String(formData.get("clear-action") || "contents"),
+                            scope: String(formData.get("clear-scope") || "active-tab"),
+                            activeTabId: activeTab?.id || null,
+                            selectedGroupIds: formData.getAll("clear-group").map(String),
+                            selectedTabIds: formData.getAll("clear-tab").map(String)
+                        });
+                        if (options.scope !== "all-tabs" && options.targetIds.length === 0) {
                             ui.notifications.warn(this._t("GUM.GMScreen.SelectClearTargets"));
                             return false;
                         }
-                        this._confirmBulkClear({ scope: scope === "active-tab" ? "tabs" : scope, targetIds, removeGroups });
+                        this._confirmBulkClear(options);
                     }
                 },
                 cancel: { label: this._t("GUM.GMScreen.Cancel") }
