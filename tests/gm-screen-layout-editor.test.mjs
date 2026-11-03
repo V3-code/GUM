@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 import {
+    buildGMScreenClearRequest,
     clearGMScreenLayout,
     moveEntryById,
     moveUuidBetweenGroups,
@@ -51,6 +52,28 @@ test("layout cleanup can clear contents or complete groups at different scopes",
     assert.deepEqual(all.config.tabs.map(tab => tab.groups.length), [0, 0]);
 });
 
+test("bulk cleanup maps the dialog action to complete group removal", () => {
+    assert.deepEqual(buildGMScreenClearRequest({
+        action: "groups",
+        scope: "active-tab",
+        activeTabId: "one"
+    }), {
+        scope: "tabs",
+        targetIds: ["one"],
+        removeGroups: true
+    });
+
+    assert.deepEqual(buildGMScreenClearRequest({
+        action: "contents",
+        scope: "groups",
+        selectedGroupIds: ["a", "b"]
+    }), {
+        scope: "groups",
+        targetIds: ["a", "b"],
+        removeGroups: false
+    });
+});
+
 test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /this\.layoutEditMode = false/);
     assert.match(application, /GM_SCREEN_LAYOUT_DRAG_TYPE/);
@@ -65,6 +88,10 @@ test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /gum-gm-screen-clear-confirm/);
     assert.match(application, /data-clear-targets="groups"/);
     assert.match(application, /data-clear-targets="tabs"/);
+    assert.match(application, /name="clear-action" value="contents" checked/);
+    assert.match(application, /name="clear-action" value="groups"/);
+    assert.match(application, /height: Math\.min\(720, window\.innerHeight - 80\)/);
+    assert.match(application, /resizable: true/);
 });
 
 test("GM Screen tabs are dynamic while preserving a safe minimum", () => {

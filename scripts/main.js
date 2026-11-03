@@ -37,7 +37,7 @@ import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectG
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
 import { WORLD_STATUS_SETTING, buildWorldStatusBindingRules, buildWorldStatusPresentationPlan, collectWorldStatusActors, localizeBaseStatuses, normalizeWorldStatusConfiguration, resolveWorldStatusRows } from '../module/utils/world-status-config.mjs';
-import { importFromGCS, invalidateHybridItemIndex } from "../module/apps/importers.js";
+import { importCharacterFromJson, importFromGCS, invalidateHybridItemIndex } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
@@ -52,6 +52,7 @@ import { activateRollRequestChatListeners, executeRollRequest, registerRollReque
 import { evaluateBarrierConsequence, isMatchingDamageResistance, normalizeResistanceRoll, normalizeRollRequest } from "../module/utils/roll-request-data.mjs";import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
+import { shouldRefreshGMScreenForActor } from "../module/utils/gm-screen-refresh.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
@@ -3249,6 +3250,7 @@ Hooks.once('init', async function() {
         hooks: Hooks,
         dependencies: {
             importFromGCS,
+            importCharacterFromJson,
             rollFromHotbar,
             damageFromHotbar,
             performGURPSRoll,
@@ -3824,15 +3826,14 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
         row.className = "gum-directory-import-actions";
         row.innerHTML = `
             <button class="gcs-import-button" type="button">
-                <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportCharacter")}
+                <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportGCSCharacter")}
+            </button>
+            <button class="gum-character-json-import-button" type="button">
+                <i class="fas fa-user-plus"></i> ${game.i18n.localize("GUM.LibraryImport.ImportGumCharacter")}
             </button>
         `;
-        const button = row.querySelector("button");
-        
-        button.addEventListener("click", () => {
-            // Chama a função de importação que está em importers.js
-            game.gum.importFromGCS();
-        });
+        row.querySelector(".gcs-import-button").addEventListener("click", () => game.gum.importFromGCS());
+        row.querySelector(".gum-character-json-import-button").addEventListener("click", () => game.gum.importCharacterFromJson());
 
         headerActions.append(row);
     });
@@ -5442,8 +5443,10 @@ Hooks.on("deleteCombat", refreshGMScreen); // ✅ Resolve o problema da lista n�
 // 3. MUDANÇAS NOS ATORES (HP, FP, Flags de Modificadores)
 Hooks.on("updateActor", (actor, changes, options = {}) => {
     if (options.gumSkipGMScreenRefresh) return;
-    // Renderiza se for PJ ou se houver um combate rolando (para monstros)
-    if (actor.hasPlayerOwner || game.combat) {
+    // Mudanças de propriedade precisam atualizar nos dois sentidos. Após remover
+    // o último jogador proprietário, hasPlayerOwner já é falso, mas o card ainda
+    // precisa desaparecer imediatamente do monitor do Escudo.
+    if (shouldRefreshGMScreenForActor(actor, changes, { combatActive: Boolean(game.combat) })) {
         refreshGMScreen();
     }
 });

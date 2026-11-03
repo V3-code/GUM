@@ -21,7 +21,7 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
-import { clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
+import { buildGMScreenClearRequest, clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
 
 const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
 const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
@@ -2279,10 +2279,12 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             content: `
                 <form class="gum-bulk-clear-form">
                     <p class="notes">${this._t("GUM.GMScreen.BulkClearHint")}</p>
-                    <div class="form-group"><label>${this._t("GUM.GMScreen.BulkClearAction")}</label><select name="clear-action">
-                        <option value="contents">${this._t("GUM.GMScreen.ClearContentsOnly")}</option>
-                        <option value="groups">${this._t("GUM.GMScreen.ClearGroupsAndContents")}</option>
-                    </select></div>
+                    <fieldset class="gum-bulk-clear-action-fieldset"><legend>${this._t("GUM.GMScreen.BulkClearAction")}</legend>
+                        <div class="gum-bulk-clear-actions">
+                            <label class="gum-bulk-clear-action"><input type="radio" name="clear-action" value="contents" checked><span><i class="fas fa-eraser"></i><strong>${this._t("GUM.GMScreen.ClearContentsOnly")}</strong><small>${this._t("GUM.GMScreen.ClearContentsOnlyHint")}</small></span></label>
+                            <label class="gum-bulk-clear-action is-danger"><input type="radio" name="clear-action" value="groups"><span><i class="fas fa-trash"></i><strong>${this._t("GUM.GMScreen.ClearGroupsAndContents")}</strong><small>${this._t("GUM.GMScreen.ClearGroupsAndContentsHint")}</small></span></label>
+                        </div>
+                    </fieldset>
                     <fieldset><legend>${this._t("GUM.GMScreen.BulkClearScope")}</legend>
                         <div class="gum-bulk-clear-scopes">
                             <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="active-tab" checked><span><i class="fas fa-table-columns"></i><strong>${this._t("GUM.GMScreen.CurrentTab")}</strong><small>${this._t("GUM.GMScreen.CurrentTabHint")}</small></span></label>
@@ -2297,6 +2299,11 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 </form>
             `,
             render: html => {
+                const updateAction = () => {
+                    const action = html.find('[name="clear-action"]:checked').val();
+                    html.find('.gum-bulk-clear-action').removeClass('is-selected');
+                    html.find(`[name="clear-action"][value="${action}"]`).closest('.gum-bulk-clear-action').addClass('is-selected');
+                };
                 const updateTargets = () => {
                     const scope = html.find('[name="clear-scope"]:checked').val();
                     html.find('.gum-bulk-clear-scope').removeClass('is-selected');
@@ -2304,7 +2311,9 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                     html.find('[data-clear-targets]').prop('hidden', true);
                     html.find(`[data-clear-targets="${scope}"]`).prop('hidden', false);
                 };
+                html.find('[name="clear-action"]').on('change', updateAction);
                 html.find('[name="clear-scope"]').on('change', updateTargets);
+                updateAction();
                 updateTargets();
             },
             buttons: {
@@ -2312,17 +2321,20 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                     icon: '<i class="fas fa-trash"></i>',
                     label: this._t("GUM.GMScreen.ClearLayout"),
                     callback: html => {
-                        const scope = html.find('[name="clear-scope"]:checked').val();
-                        const removeGroups = html.find('[name="clear-action"]').val() === "groups";
-                        let targetIds = [];
-                        if (scope === "groups") targetIds = html.find('[name="clear-group"]:checked').map((_, input) => input.value).get();
-                        if (scope === "active-tab") targetIds = activeTab ? [activeTab.id] : [];
-                        if (scope === "tabs") targetIds = html.find('[name="clear-tab"]:checked').map((_, input) => input.value).get();
-                        if (scope !== "all-tabs" && targetIds.length === 0) {
+                        const form = html.find('form.gum-bulk-clear-form')[0];
+                        const formData = new FormData(form);
+                        const options = buildGMScreenClearRequest({
+                            action: String(formData.get("clear-action") || "contents"),
+                            scope: String(formData.get("clear-scope") || "active-tab"),
+                            activeTabId: activeTab?.id || null,
+                            selectedGroupIds: formData.getAll("clear-group").map(String),
+                            selectedTabIds: formData.getAll("clear-tab").map(String)
+                        });
+                        if (options.scope !== "all-tabs" && options.targetIds.length === 0) {
                             ui.notifications.warn(this._t("GUM.GMScreen.SelectClearTargets"));
                             return false;
                         }
-                        this._confirmBulkClear({ scope: scope === "active-tab" ? "tabs" : scope, targetIds, removeGroups });
+                        this._confirmBulkClear(options);
                     }
                 },
                 cancel: { label: this._t("GUM.GMScreen.Cancel") }
@@ -2330,8 +2342,9 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             default: "cancel"
         }, {
             classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-clear-dialog"],
-            width: 560,
-            height: "auto"
+            width: 620,
+            height: Math.min(720, window.innerHeight - 80),
+            resizable: true
         }).render(true);
     }
 

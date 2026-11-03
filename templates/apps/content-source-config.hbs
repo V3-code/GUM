@@ -17,6 +17,20 @@
       </button>
     </header>
 
+    {{#if purpose.hybridScopeOptions}}
+    <div class="content-source-hybrid-scope">
+      <label for="gum-hybrid-item-match-scope">{{localize "GUM.ContentSources.HybridScope.Label"}}</label>
+      <select id="gum-hybrid-item-match-scope" name="hybridItemMatchScope">
+        {{#each purpose.hybridScopeOptions as |option|}}
+        <option value="{{option.value}}" data-hint="{{option.hint}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+        {{/each}}
+      </select>
+      {{#each purpose.hybridScopeOptions as |option|}}
+        {{#if option.selected}}<p class="notes"><i class="fas fa-circle-info"></i> <span data-hybrid-scope-hint>{{option.hint}}</span></p>{{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
     <input type="hidden" name="{{purpose.id}}Sources" value='{{purpose.sourceIdsJson}}'>
     <ol class="content-source-list">
       {{#each purpose.sources as |source|}}

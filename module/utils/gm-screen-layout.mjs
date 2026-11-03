@@ -44,6 +44,26 @@ export function moveUuidBetweenGroups(source, target, uuid, targetIndex) {
     return true;
 }
 
+export function buildGMScreenClearRequest({
+    action = "contents",
+    scope = "active-tab",
+    activeTabId = null,
+    selectedGroupIds = [],
+    selectedTabIds = []
+} = {}) {
+    const normalizedScope = scope === "active-tab" ? "tabs" : scope;
+    let targetIds = [];
+    if (scope === "active-tab" && activeTabId) targetIds = [activeTabId];
+    else if (scope === "groups") targetIds = Array.isArray(selectedGroupIds) ? selectedGroupIds : [];
+    else if (scope === "tabs") targetIds = Array.isArray(selectedTabIds) ? selectedTabIds : [];
+
+    return {
+        scope: normalizedScope,
+        targetIds: [...targetIds],
+        removeGroups: action === "groups"
+    };
+}
+
 export function clearGMScreenLayout(config, { scope = "tabs", targetIds = [], removeGroups = false } = {}) {
     const targets = new Set(Array.isArray(targetIds) ? targetIds : []);
     const removedUuids = new Set();

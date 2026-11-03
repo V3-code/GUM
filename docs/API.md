@@ -94,6 +94,7 @@ const { documents } = await game.gum.api.content.getDocuments("effects");
 
 ```js
 await game.gum.api.imports.gcs({ actor });
+await game.gum.api.imports.gumJson(); // opens the GUM character JSON importer
 const statuses = game.gum.api.status.list();
 
 game.gum.api.ui.openTestRequest();

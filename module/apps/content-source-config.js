@@ -3,11 +3,13 @@ import {
   contentSourceService
 } from "../services/content-source-service.mjs";
 import { WORLD_STATUS_SETTING, normalizeWorldStatusConfiguration } from "../utils/world-status-config.mjs";
+import { HYBRID_IMPORT_SCOPE_SETTING, HYBRID_IMPORT_SCOPES, normalizeHybridImportScope } from "../utils/hybrid-import-policy.mjs";
 
 export class ContentSourceConfig extends FormApplication {
   constructor(...args) {
     super(...args);
     this.selectedByPurpose = new Map();
+    this.hybridScope = null;
   }
 
   static get defaultOptions() {
@@ -19,6 +21,7 @@ export class ContentSourceConfig extends FormApplication {
       width: 720,
       height: 740,
       resizable: true,
+      scrollY: [".content-source-scroll"],
       closeOnSubmit: true
     });
   }
@@ -33,13 +36,13 @@ export class ContentSourceConfig extends FormApplication {
     const worldStatuses = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
     const definitions = Object.values(CONTENT_SOURCE_PURPOSES)
       .filter(definition => definition.id !== "statusBindings" || !worldStatuses.bindingsMigrated);
-    this.visiblePurposeIds = definitions.map(definition => definition.id);
     context.purposes = definitions.map(definition => {
       if (!this.selectedByPurpose.has(definition.id)) {
         this.selectedByPurpose.set(definition.id, contentSourceService.getSourceIds(definition.id));
       }
       return this.#preparePurpose(definition, itemPacks);
-    });
+    }).sort((left, right) => left.label.localeCompare(right.label, game.i18n.lang, { sensitivity: "base" }));
+    this.visiblePurposeIds = context.purposes.map(purpose => purpose.id);
     context.itemPacks = itemPacks;
     return context;
   }
@@ -47,7 +50,7 @@ export class ContentSourceConfig extends FormApplication {
   #preparePurpose(definition, itemPacks) {
     const labels = new Map(itemPacks.map(pack => [pack.id, pack.label]));
     const selectedIds = this.selectedByPurpose.get(definition.id) || [];
-    return {
+    const purpose = {
       ...definition,
       label: game.i18n.localize(definition.label),
       description: game.i18n.localize(definition.description),
@@ -61,6 +64,20 @@ export class ContentSourceConfig extends FormApplication {
         canMoveDown: index < selectedIds.length - 1
       }))
     };
+    if (definition.id === "characterImport") {
+      this.hybridScope ??= normalizeHybridImportScope(game.settings.get("gum", HYBRID_IMPORT_SCOPE_SETTING), {
+          legacySearchAll: game.settings.get("gum", "hybridImportSearchAllCompendia") === true
+        });
+      const scope = this.hybridScope;
+      purpose.hybridScope = scope;
+      purpose.hybridScopeOptions = HYBRID_IMPORT_SCOPES.map(value => ({
+        value,
+        label: game.i18n.localize(`GUM.ContentSources.HybridScope.${value}.Name`),
+        hint: game.i18n.localize(`GUM.ContentSources.HybridScope.${value}.Hint`),
+        selected: value === scope
+      }));
+    }
+    return purpose;
   }
 
   activateListeners(html) {
@@ -70,6 +87,12 @@ export class ContentSourceConfig extends FormApplication {
     html.find("[data-action='move-source-up']").on("click", event => this.#changeSource(event, "up"));
     html.find("[data-action='move-source-down']").on("click", event => this.#changeSource(event, "down"));
     html.find("[data-action='restore-defaults']").on("click", event => this.#restoreDefaults(event));
+    html.find("select[name='hybridItemMatchScope']").on("change", event => {
+      this.hybridScope = normalizeHybridImportScope(event.currentTarget.value);
+      const hint = event.currentTarget.selectedOptions?.[0]?.dataset?.hint || "";
+      event.currentTarget.closest(".content-source-hybrid-scope")
+        ?.querySelector("[data-hybrid-scope-hint]")?.replaceChildren(document.createTextNode(hint));
+    });
   }
 
   #addSource(event) {
@@ -81,7 +104,7 @@ export class ContentSourceConfig extends FormApplication {
     const selected = this.selectedByPurpose.get(purpose) || [];
     if (!selected.includes(id)) selected.push(id);
     this.selectedByPurpose.set(purpose, selected);
-    this.render();
+    this.render(false);
   }
 
   #changeSource(event, action) {
@@ -96,17 +119,19 @@ export class ContentSourceConfig extends FormApplication {
     if (action === "up" && index > 0) [selected[index - 1], selected[index]] = [selected[index], selected[index - 1]];
     if (action === "down" && index < selected.length - 1) [selected[index + 1], selected[index]] = [selected[index], selected[index + 1]];
     this.selectedByPurpose.set(purpose, selected);
-    this.render();
+    this.render(false);
   }
 
   #restoreDefaults(event) {
     event.preventDefault();
     const purpose = event.currentTarget.closest("[data-purpose]").dataset.purpose;
     this.selectedByPurpose.set(purpose, [...CONTENT_SOURCE_PURPOSES[purpose].defaults]);
-    this.render();
+    this.render(false);
   }
 
   async _updateObject(_event, formData) {
+    const hybridScope = normalizeHybridImportScope(formData.hybridItemMatchScope || this.hybridScope);
+    await game.settings.set("gum", HYBRID_IMPORT_SCOPE_SETTING, hybridScope);
     for (const purpose of this.visiblePurposeIds || Object.keys(CONTENT_SOURCE_PURPOSES)) {
       const raw = formData[`${purpose}Sources`] || "[]";
       let ids = [];

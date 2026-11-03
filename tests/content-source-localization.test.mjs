@@ -35,6 +35,12 @@ test("status automation is the localized public name while stable binding IDs re
   assert.deepEqual(CONTENT_SOURCE_PURPOSES.statusBindings.defaults, []);
 });
 
+test("the general item condition source has an explicit user-facing name", () => {
+  assert.equal(catalogs["pt-BR"]["GUM.ContentSources.Purposes.Conditions.Name"], "Condições gerais de itens");
+  assert.equal(catalogs.en["GUM.ContentSources.Purposes.Conditions.Name"], "General item conditions");
+  assert.equal(CONTENT_SOURCE_PURPOSES.conditions.id, "conditions");
+});
+
 test("library and character import actions are available in every supported language", () => {
   const keys = [
     "GUM.LibraryImport.ImportLibrary",
@@ -56,10 +62,17 @@ test("content source groups use a compact header grid and distinct card styling"
   assert.match(styles, /content-source-purpose:nth-of-type\(3n \+ 2\)/);
 });
 
+test("content source purposes are presented alphabetically in the active language", () => {
+  assert.match(contentSourceApp, /\.sort\(\(left, right\) => left\.label\.localeCompare\(right\.label, game\.i18n\.lang, \{ sensitivity: "base" \}\)\)/);
+  assert.match(contentSourceApp, /this\.visiblePurposeIds = context\.purposes\.map\(purpose => purpose\.id\)/);
+});
+
 test("content source window has a bounded scroll area and a fixed GUM footer", () => {
   assert.match(contentSourceApp, /classes: \["gum", "gum-dialog", "gum-sheet-edit-dialog", "content-source-config"\]/);
   assert.match(contentSourceApp, /width: 720/);
   assert.match(contentSourceApp, /height: 740/);
+  assert.match(contentSourceApp, /scrollY: \["\.content-source-scroll"\]/);
+  assert.match(contentSourceApp, /this\.render\(false\)/);
   assert.match(contentSourceTemplate, /class="content-source-scroll"/);
   assert.match(contentSourceTemplate, /class="sheet-footer content-source-footer flexrow"/);
   assert.match(styles, /#gum-content-source-config\.app\.window-app \.window-content[\s\S]*?overflow: hidden/);

@@ -99,6 +99,7 @@ Também existem `resolveSources`, `setSourceIds` e `restoreDefaults`. Os dois ú
 
 ```js
 await game.gum.api.imports.gcs({ actor });
+await game.gum.api.imports.gumJson(); // abre o importador de ficha JSON do GUM
 const statuses = game.gum.api.status.list();
 
 game.gum.api.ui.openTestRequest();

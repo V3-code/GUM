@@ -54,7 +54,7 @@ async function syncCompendiumRules() {
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
-import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
+import { importFromJson, importFromGCS, importTemplateFromGCS, importCharacterFromJson, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 import { ContentSourceConfig } from "./apps/content-source-config.js";
 import { WorldStatusConfig } from "./apps/world-status-config.js";
 import { PassiveConditionConfig } from "./apps/passive-condition-config.js";
@@ -64,6 +64,7 @@ import { PASSIVE_CONDITION_CONFIG_SETTING, buildPassiveConditionSyncOperations, 
 import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStatusConfiguration } from "./utils/world-status-config.mjs";
 import { MOVEMENT_RULER_SETTING } from "./canvas/movement-ruler.mjs";
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING } from "./utils/distance-modifier.mjs";
+import { HYBRID_IMPORT_SCOPE_SETTING } from "./utils/hybrid-import-policy.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
 const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV2";
@@ -363,9 +364,18 @@ export const registerSystemSettings = function() {
         name: "GUM.Settings.HybridImportSearchAll.Name",
         hint: "GUM.Settings.HybridImportSearchAll.Hint",
         scope: "world",
-        config: true,
+        config: false,
         type: Boolean,
         default: false
+    });
+
+    game.settings.register("gum", HYBRID_IMPORT_SCOPE_SETTING, {
+        name: "GUM.Settings.HybridImportScope.Name",
+        hint: "GUM.Settings.HybridImportScope.Hint",
+        scope: "world",
+        config: false,
+        type: String,
+        default: ""
     });
 
 
@@ -481,6 +491,21 @@ export const registerSystemSettings = function() {
             if (value) {
                 importTemplateFromGCS();
                 game.settings.set("gum", "importGCSTemplateButton", false);
+            }
+        }
+    });
+
+    game.settings.register("gum", "importCharacterJSONButton", {
+        name: "GUM.Settings.ImportCharacterJson.Name",
+        hint: "GUM.Settings.ImportCharacterJson.Hint",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: value => {
+            if (value) {
+                importCharacterFromJson();
+                game.settings.set("gum", "importCharacterJSONButton", false);
             }
         }
     });

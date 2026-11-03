@@ -54,6 +54,7 @@ function fixture({ isGM = true } = {}) {
     resolveCombatDamageProfile: () => ({ main: { formula: "2d+1" } }),
     resolveTargetCombatDefenseRecalculationModifiers: () => [{ value: -2 }],
     importFromGCS: async options => (calls.push(["gcs", options]), options.actor),
+    importCharacterFromJson: async options => (calls.push(["gum-json", options]), options),
     openTestRequestLauncher: () => "test-window",
     openGmScreen: () => "gm-window",
     openContentSourceConfig: () => "content-window",
@@ -159,6 +160,13 @@ test("resolves actor references before importing a GCS character", async () => {
   assert.equal(await api.imports.gcs({ actor: setup.actor.uuid }), setup.actor);
   assert.equal(setup.calls[0][0], "gcs");
   assert.equal(setup.calls[0][1].actor, setup.actor);
+});
+
+test("routes GUM JSON character restoration through the supported importer", async () => {
+  const setup = fixture();
+  const api = createGumApi(setup);
+  assert.deepEqual(await api.imports.gumJson({ hybrid: true }), { hybrid: true });
+  assert.deepEqual(setup.calls[0], ["gum-json", { hybrid: true }]);
 });
 
 test("reports missing optional implementations as stable capability errors", async () => {

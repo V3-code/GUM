@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 const importer = readFileSync(new URL("../module/apps/importers.js", import.meta.url), "utf8");
 const main = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
+const pt = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
+const en = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
 
 test("o diretório de compêndios oferece importação global e contextual", () => {
   assert.match(importer, /renderCompendiumDirectory/);
@@ -69,9 +71,15 @@ test("criar novo compêndio é o destino padrão quando o usuário pode criá-lo
   assert.match(importer, /value="new" \$\{preferNewBundlePack \|\| !allItemPacks\.length \? "checked" : ""\}/);
 });
 
-test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
-  assert.match(main, /GUM\.LibraryImport\.ImportCharacter/);
+test("o diretório de atores distingue importações GCS e JSON do GUM", () => {
+  assert.match(main, /GUM\.LibraryImport\.ImportGCSCharacter/);
+  assert.match(main, /GUM\.LibraryImport\.ImportGumCharacter/);
   assert.doesNotMatch(main, /> Importar do GCS/);
+});
+
+test("o diretório usa o rótulo conciso Importar GUM", () => {
+  assert.equal(pt["GUM.LibraryImport.ImportGumCharacter"], "Importar GUM");
+  assert.equal(en["GUM.LibraryImport.ImportGumCharacter"], "Import GUM");
 });
 
 test("os menus de compêndio usam opções com fundo escuro e texto legível", () => {

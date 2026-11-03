@@ -4,6 +4,28 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.1-beta] - 2026-11-03
+
+### Added
+
+- A correspondência híbrida de Itens ganhou escopos explícitos para desativar a busca, consultar somente as fontes configuradas, incluir os Itens do mundo ou realizar uma pesquisa ampla.
+- Fichas exportadas pelo próprio GUM podem ser restauradas por JSON de forma fiel ou com reconciliação híbrida opcional dos Itens.
+
+### Changed
+
+- As fontes de correspondência híbrida agora são independentes dos compêndios de Perícias e respeitam estritamente a ordem configurada antes de consultar fontes adicionais.
+- A configuração de fontes foi organizada alfabeticamente, esclareceu o uso de Condições gerais de Itens e preserva a posição da rolagem durante alterações na janela.
+- A importação de fichas no diretório de Atores distingue arquivos do GCS da opção concisa `Importar GUM`.
+- A limpeza em massa do Escudo do Mestre destaca melhor a diferença entre remover conteúdos e excluir grupos completos.
+
+### Fixed
+
+- A limpeza em massa do Escudo do Mestre exclui corretamente os grupos quando essa modalidade é escolhida.
+- Fichas removidas da propriedade de um jogador desaparecem imediatamente do Escudo do Mestre, sem exigir atualização manual da janela.
+- A importação híbrida preserva as descrições autorais completa e curta do Item encontrado na biblioteca GUM, mantendo a atualização dos dados mecânicos importados.
+- O seletor de escopo híbrido e o diálogo de importação de ficha receberam correções de contraste e tema.
+- Importações de status permanecem restritas ao seu formato próprio, evitando que pacotes de outros tipos sejam interpretados incorretamente.
+
 ## [1.6.0-beta] - 2026-11-03
 
 ### Added

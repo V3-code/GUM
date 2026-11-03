@@ -32,4 +32,7 @@ test("roll prompt and actor import consume the centralized roll modifier purpose
   assert.match(actorSheet, /contentSourceService\.getDocuments\("rollModifiers"\)/);
   assert.doesNotMatch(prompt, /game\.packs\.get\("gum\.gm_modifiers"\)/);
   assert.doesNotMatch(actorSheet, /game\.packs\.get\("gum\.gm_modifiers"\)/);
+  assert.match(actorSheet, /setFlag\("gum", "useDefaultModifiers", checked\)/);
+  assert.match(prompt, /getFlag\("gum", "useDefaultModifiers"\)/);
+  assert.match(prompt, /if \(useDefaults\)[\s\S]*?getDocuments\("rollModifiers"\)/);
 });

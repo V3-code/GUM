@@ -1,11 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-globalThis.foundry = { utils: { deepClone: structuredClone } };
+globalThis.foundry = { utils: {
+  deepClone: structuredClone,
+  mergeObject(original, other) {
+    const result = structuredClone(original ?? {});
+    const merge = (target, source) => {
+      for (const [key, value] of Object.entries(source ?? {})) {
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          target[key] = merge(target[key] && typeof target[key] === "object" ? target[key] : {}, value);
+        } else target[key] = structuredClone(value);
+      }
+      return target;
+    };
+    return merge(result, other);
+  }
+} };
 globalThis.Hooks = { on() {} };
 
 const packs = [];
-packs.get = () => null;
+packs.get = id => packs.find(pack => pack.collection === id) || null;
+let contentSources = {};
+let hybridScope = "configured-world";
 
 globalThis.game = {
   items: {
@@ -15,14 +31,15 @@ globalThis.game = {
   packs,
   settings: {
     get(_namespace, key) {
-      if (key === "contentSources") return {};
+      if (key === "contentSources") return contentSources;
+      if (key === "hybridItemMatchScope") return hybridScope;
       if (key === "hybridImportSearchAllCompendia") return false;
       return null;
     }
   }
 };
 
-const { invalidateHybridItemIndex, resolveHybridSourceItem } = await import("../module/apps/importers.js");
+const { invalidateHybridItemIndex, prepareGumCharacterImportData, resolveHybridSourceItem } = await import("../module/apps/importers.js");
 
 function worldItem(id, name, { type = "skill", specialization = "", aliases = [], ref = "" } = {}) {
   return { id, uuid: `Item.${id}`, name, type, system: { specialization, aliases, ref } };
@@ -76,4 +93,89 @@ test("reports same-priority alias collisions without choosing an item", async ()
 
   assert.equal(result.item, null);
   assert.equal(result.ambiguity.length, 2);
+});
+
+test("configured compendia take priority over world items", async () => {
+  const compendiumItem = worldItem("pack-skill", "Stealth");
+  compendiumItem.toObject = () => structuredClone(compendiumItem);
+  const pack = {
+    collection: "world.hybrid",
+    documentName: "Item",
+    async getIndex() {
+      return { contents: [{ _id: compendiumItem.id, name: compendiumItem.name, type: compendiumItem.type, system: compendiumItem.system }] };
+    },
+    async getDocument(id) { return id === compendiumItem.id ? compendiumItem : null; }
+  };
+  packs.push(pack);
+  contentSources = { characterImport: [pack.collection] };
+  hybridScope = "configured-world";
+  game.items.contents = [worldItem("world-skill", "Stealth")];
+  invalidateHybridItemIndex();
+
+  const result = await resolveHybridSourceItem({ gcsNode: null, parsedItem: parsedItem("Stealth") });
+  assert.equal(result.item, compendiumItem);
+  packs.length = 0;
+  contentSources = {};
+});
+
+test("faithful GUM JSON restoration leaves embedded item data unchanged", async () => {
+  hybridScope = "configured";
+  const source = {
+    _id: "actor-old",
+    name: "Backup",
+    type: "character",
+    system: { notes: "kept" },
+    items: [{ _id: "item-old", name: "Stealth", type: "skill", system: { level: 12 } }]
+  };
+  const restored = await prepareGumCharacterImportData(source);
+  assert.equal(restored._id, undefined);
+  assert.deepEqual(restored.items, source.items);
+});
+
+test("hybrid reconciliation preserves authored GUM descriptions", async () => {
+  const sourceItem = {
+    id: "library-sword",
+    uuid: "Compendium.world.hybrid.Item.library-sword",
+    name: "Sword",
+    type: "equipment",
+    system: {
+      aliases: [], ref: "B271", specialization: "",
+      description: "Descrição completa da biblioteca GUM.",
+      chat_description: "Descrição breve da biblioteca GUM.",
+      quantity: 1
+    },
+    toObject() {
+      return {
+        _id: this.id, name: this.name, type: this.type,
+        system: structuredClone(this.system), flags: {}
+      };
+    }
+  };
+  const pack = {
+    collection: "world.hybrid",
+    documentName: "Item",
+    async getIndex() {
+      return { contents: [{ _id: sourceItem.id, name: sourceItem.name, type: sourceItem.type, system: sourceItem.system }] };
+    },
+    async getDocument(id) { return id === sourceItem.id ? sourceItem : null; }
+  };
+  packs.push(pack);
+  contentSources = { characterImport: [pack.collection] };
+  hybridScope = "configured";
+  game.items.contents = [];
+  invalidateHybridItemIndex();
+
+  const actorData = await prepareGumCharacterImportData({
+    name: "Backup", type: "character", system: {},
+    items: [{
+      name: "Sword", type: "equipment",
+      system: { description: "Texto importado.", chat_description: "Resumo importado.", quantity: 3 }
+    }]
+  }, { hybrid: true });
+
+  assert.equal(actorData.items[0].system.description, sourceItem.system.description);
+  assert.equal(actorData.items[0].system.chat_description, sourceItem.system.chat_description);
+  assert.equal(actorData.items[0].system.quantity, 3);
+  packs.length = 0;
+  contentSources = {};
 });
