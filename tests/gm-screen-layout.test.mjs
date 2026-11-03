@@ -4,6 +4,7 @@ import test from "node:test";
 
 const template = fs.readFileSync(new URL("../templates/apps/gm-screen.hbs", import.meta.url), "utf8");
 const styles = fs.readFileSync(new URL("../styles/gm-screen.css", import.meta.url), "utf8");
+const coreStyles = fs.readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 const application = fs.readFileSync(new URL("../module/apps/gm-screen.js", import.meta.url), "utf8");
 const macroBrowser = fs.readFileSync(new URL("../module/apps/gm-macro-browser.js", import.meta.url), "utf8");
 const macroBrowserTemplate = fs.readFileSync(new URL("../templates/apps/gm-macro-browser.hbs", import.meta.url), "utf8");
@@ -22,6 +23,7 @@ test("GM Screen separates target actions, workspace navigation, and utility tool
     assert.match(template, /gm-main-toolbar[\s\S]*?gm-workspace-tabs[\s\S]*?screen-body[\s\S]*?gm-utility-dock/);
     assert.match(styles, /bulk-clear-layout-btn\s*\{[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/);
     assert.match(styles, /gm-main-toolbar\s*\{[\s\S]*?grid-template-columns:\s*minmax\(120px, 1fr\) auto 32px auto auto 28px;/);
+    assert.match(coreStyles, /dialog\.gum \.window-header[\s\S]*?color:\s*var\(--gum-text-claro/);
     assert.match(template, /data-utility-panel="quick-roll"/);
     assert.match(template, /data-utility-panel="manual-modifier"/);
 });

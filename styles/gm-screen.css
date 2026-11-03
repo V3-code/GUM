@@ -740,10 +740,24 @@
 .dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form select { width: 100%; height: 32px; margin: 0; }
 .dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; background: rgba(255,255,255,0.025); }
 .dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form legend { padding: 0 5px; color: var(--gum-text-label, #c8bda8); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .checkbox { display: flex; align-items: center; gap: 7px; margin: 5px 0; color: var(--gum-text-claro, #eee); font-size: 0.74rem; text-transform: none; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scopes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope { position: relative; display: block; min-width: 0; margin: 0; cursor: pointer; text-transform: none; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope > input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope > span { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 1px 8px; min-height: 52px; padding: 8px 9px; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; background: rgba(255,255,255,0.035); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope i { grid-row: 1 / span 2; align-self: center; color: var(--gum-text-medio, #aaa); text-align: center; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope strong { overflow: hidden; color: var(--gum-text-claro, #eee); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope small { overflow: hidden; color: var(--gum-text-medio, #aaa); font-family: var(--gum-font-primary); font-size: 0.62rem; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope:hover > span { background: rgba(255,255,255,0.06); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope.is-selected > span { border-color: rgba(197,160,91,0.6); background: rgba(197,160,91,0.1); box-shadow: inset 3px 0 var(--gum-accent-gold); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope.is-selected i { color: var(--gum-accent-gold); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope.is-danger.is-selected > span { border-color: rgba(229,83,75,0.55); background: rgba(229,83,75,0.1); box-shadow: inset 3px 0 #e5534b; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-scope.is-danger.is-selected i { color: #ff8b84; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-targets { margin-top: 10px; padding: 9px 10px 7px; border-radius: 6px; background: rgba(0,0,0,0.14); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-targets[hidden] { display: none; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-targets-label { color: var(--gum-text-label, #c8bda8); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .checkbox { display: flex; align-items: center; gap: 7px; margin: 5px 0; color: var(--gum-text-claro, #eee); font-size: 0.7rem; text-transform: none; }
 .dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .checkbox input { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; }
-.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 14px; max-height: 170px; margin: 3px 0 8px 21px; overflow-y: auto; color: #bbb; }
-.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-all { margin-top: 10px; color: #ff8b84; font-weight: 700; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 14px; max-height: 150px; margin: 4px 0 0; overflow-y: auto; color: #bbb; }
 .dialog.gum.gum-gm-screen-clear-dialog .notes.warning { padding: 8px 10px; border-radius: 6px; background: rgba(215, 163, 109, 0.08); color: #d7a36d; }
 .dialog.gum.gum-gm-screen-clear-dialog .dialog-buttons { margin: 0; padding: 10px 16px 14px; background: rgba(0,0,0,0.12); }
 .dialog.gum.gum-gm-screen-clear-dialog .dialog-buttons button[data-button="clear"] { border-color: rgba(229,83,75,0.35); color: #ff8b84; }

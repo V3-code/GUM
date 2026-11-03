@@ -2075,16 +2075,29 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                         <option value="groups">${this._t("GUM.GMScreen.ClearGroupsAndContents")}</option>
                     </select></div>
                     <fieldset><legend>${this._t("GUM.GMScreen.BulkClearScope")}</legend>
-                        <label class="checkbox"><input type="radio" name="clear-scope" value="groups" checked> ${this._t("GUM.GMScreen.SelectedGroups")}</label>
-                        <div class="gum-bulk-clear-choices">${groupOptions}</div>
-                        <label class="checkbox"><input type="radio" name="clear-scope" value="active-tab"> ${this._t("GUM.GMScreen.CurrentTab")}</label>
-                        <label class="checkbox"><input type="radio" name="clear-scope" value="tabs"> ${this._t("GUM.GMScreen.SelectedTabs")}</label>
-                        <div class="gum-bulk-clear-choices">${tabOptions}</div>
-                        <label class="checkbox gum-bulk-clear-all"><input type="radio" name="clear-scope" value="all-tabs"> ${this._t("GUM.GMScreen.EntireScreen")}</label>
+                        <div class="gum-bulk-clear-scopes">
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="active-tab" checked><span><i class="fas fa-table-columns"></i><strong>${this._t("GUM.GMScreen.CurrentTab")}</strong><small>${this._t("GUM.GMScreen.CurrentTabHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="groups"><span><i class="fas fa-layer-group"></i><strong>${this._t("GUM.GMScreen.SelectedGroups")}</strong><small>${this._t("GUM.GMScreen.SelectedGroupsHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="tabs"><span><i class="fas fa-clone"></i><strong>${this._t("GUM.GMScreen.SelectedTabs")}</strong><small>${this._t("GUM.GMScreen.SelectedTabsHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope is-danger"><input type="radio" name="clear-scope" value="all-tabs"><span><i class="fas fa-triangle-exclamation"></i><strong>${this._t("GUM.GMScreen.EntireScreen")}</strong><small>${this._t("GUM.GMScreen.EntireScreenHint")}</small></span></label>
+                        </div>
+                        <div class="gum-bulk-clear-targets" data-clear-targets="groups"><span class="gum-bulk-clear-targets-label">${this._t("GUM.GMScreen.ChooseGroups")}</span><div class="gum-bulk-clear-choices">${groupOptions}</div></div>
+                        <div class="gum-bulk-clear-targets" data-clear-targets="tabs"><span class="gum-bulk-clear-targets-label">${this._t("GUM.GMScreen.ChooseTabs")}</span><div class="gum-bulk-clear-choices">${tabOptions}</div></div>
                     </fieldset>
                     <p class="notes warning"><i class="fas fa-triangle-exclamation"></i> ${this._t("GUM.GMScreen.BulkClearReferencesOnly")}</p>
                 </form>
             `,
+            render: html => {
+                const updateTargets = () => {
+                    const scope = html.find('[name="clear-scope"]:checked').val();
+                    html.find('.gum-bulk-clear-scope').removeClass('is-selected');
+                    html.find(`[name="clear-scope"][value="${scope}"]`).closest('.gum-bulk-clear-scope').addClass('is-selected');
+                    html.find('[data-clear-targets]').prop('hidden', true);
+                    html.find(`[data-clear-targets="${scope}"]`).prop('hidden', false);
+                };
+                html.find('[name="clear-scope"]').on('change', updateTargets);
+                updateTargets();
+            },
             buttons: {
                 clear: {
                     icon: '<i class="fas fa-trash"></i>',

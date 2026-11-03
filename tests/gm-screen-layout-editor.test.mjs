@@ -61,6 +61,8 @@ test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /_openBulkClearDialog/);
     assert.match(application, /gum-gm-screen-clear-dialog/);
     assert.match(application, /gum-gm-screen-clear-confirm/);
+    assert.match(application, /data-clear-targets="groups"/);
+    assert.match(application, /data-clear-targets="tabs"/);
 });
 
 test("macro execution modes validate and partition GM targets", () => {
