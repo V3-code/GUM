@@ -125,6 +125,22 @@ test("GM Screen exports preserve Macro UUIDs as external unsupported references"
   assert.equal(bundle.portability.complete, false);
 });
 
+test("GM Screen exports preserve RollTable UUIDs as external references", async () => {
+  const table = { id: "weather", name: "Weather", documentName: "RollTable" };
+  const configuration = { groups: [{
+    id: "tables",
+    items: ["RollTable.weather"]
+  }] };
+  const bundle = await buildConfigurationBundle({
+    id: "roll-table-reference", kind: "gm-screen", configuration,
+    resolveUuid: uuid => uuid === "RollTable.weather" ? table : null
+  });
+
+  assert.deepEqual(bundle.configuration.groups[0].items, ["RollTable.weather"]);
+  assert.deepEqual(bundle.portability.unsupportedReferences, ["RollTable.weather"]);
+  assert.deepEqual(bundle.documents, {});
+});
+
 test("GM Screen merges per-group Macro execution modes with the selected import policy", () => {
   const current = { tabs: [{ id: "tab-1", groups: [{
     id: "tools", items: ["Macro.shared"],

@@ -8,6 +8,8 @@ const coreStyles = fs.readFileSync(new URL("../styles/styles.css", import.meta.u
 const application = fs.readFileSync(new URL("../module/apps/gm-screen.js", import.meta.url), "utf8");
 const macroBrowser = fs.readFileSync(new URL("../module/apps/gm-macro-browser.js", import.meta.url), "utf8");
 const macroBrowserTemplate = fs.readFileSync(new URL("../templates/apps/gm-macro-browser.hbs", import.meta.url), "utf8");
+const rollTableBrowser = fs.readFileSync(new URL("../module/apps/gm-roll-table-browser.js", import.meta.url), "utf8");
+const rollTableBrowserTemplate = fs.readFileSync(new URL("../templates/apps/gm-roll-table-browser.hbs", import.meta.url), "utf8");
 const pt = JSON.parse(fs.readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
 const en = JSON.parse(fs.readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
 
@@ -63,8 +65,8 @@ test("GM Screen preserves and reapplies its modifier search across renders", () 
 });
 
 test("all GM Screen localization keys exist in English and Portuguese", () => {
-    const templateKeys = [...`${template}\n${macroBrowserTemplate}`.matchAll(/localize\s+["']([^"']+)["']/g)].map(match => match[1]);
-    const applicationKeys = [...`${application}\n${macroBrowser}`.matchAll(/["'](GUM\.GMScreen\.[A-Za-z0-9.-]+)["']/g)].map(match => match[1]);
+    const templateKeys = [...`${template}\n${macroBrowserTemplate}\n${rollTableBrowserTemplate}`.matchAll(/localize\s+["']([^"']+)["']/g)].map(match => match[1]);
+    const applicationKeys = [...`${application}\n${macroBrowser}\n${rollTableBrowser}`.matchAll(/["'](GUM\.GMScreen\.[A-Za-z0-9.-]+)["']/g)].map(match => match[1]);
     const keys = [...templateKeys, ...applicationKeys];
     assert.ok(keys.length > 60);
 

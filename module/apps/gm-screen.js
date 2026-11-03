@@ -1,5 +1,6 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
 import { GMMacroBrowser } from "./gm-macro-browser.js";
+import { GMRollTableBrowser } from "./gm-roll-table-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "../../scripts/main.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
@@ -48,6 +49,7 @@ export class GumGMScreen extends Application {
         // estruturais confirmadas por uma acao sao persistidas no mundo.
         this.layoutEditMode = false;
         this._runningMacros = new Set();
+        this._runningRollTables = new Set();
 
         this._lastContextClick = {
             actorId: null,
@@ -166,11 +168,14 @@ async getData() {
                 try {
                     const item = await fromUuid(itemUuid);
                     if (!item) return null;
-                    const itemData = item.toObject();
+                    const itemData = item.documentName === "RollTable"
+                        ? { id: item.id, name: item.name, img: item.img, type: "roll-table" }
+                        : item.toObject();
                     itemData.uuid = itemUuid;
                     itemData.documentName = item.documentName;
                     itemData.isMacro = item.documentName === "Macro";
-                    itemData.isSelected = !itemData.isMacro && this.selectedModifiers.has(itemUuid);
+                    itemData.isRollTable = item.documentName === "RollTable";
+                    itemData.isSelected = item.documentName === "Item" && this.selectedModifiers.has(itemUuid);
                     if (itemData.isMacro) {
                         itemData.canExecute = item.canExecute === true;
                         itemData.macroExecutionMode = normalizeMacroExecutionMode(group.macroOptions?.[itemUuid]?.executionMode);
@@ -181,6 +186,10 @@ async getData() {
                             "each-target": "fa-users"
                         }[itemData.macroExecutionMode];
                         itemData.macroRunning = this._runningMacros.has(`${group.id}:${itemUuid}`);
+                    }
+                    if (itemData.isRollTable) {
+                        itemData.canDraw = item.visible !== false;
+                        itemData.rollTableRunning = this._runningRollTables.has(`${group.id}:${itemUuid}`);
                     }
                     if (itemData.type === "gm_modifier") {
                         const presentation = this._formatModifierExpression(itemData.system?.modifier);
@@ -426,7 +435,7 @@ activateListeners(html) {
             this.layoutEditMode = false;
             this.render(false);
         });
-        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .macro-open-btn, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
+        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .macro-open-btn, .roll-table-open-btn, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
             if (!['Enter', ' '].includes(ev.key)) return;
             ev.preventDefault();
             $(ev.currentTarget).trigger('click');
@@ -598,7 +607,7 @@ activateListeners(html) {
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
-            if (btn.data('documentName') === 'Macro') return;
+            if (btn.data('documentName') !== 'Item') return;
             const itemType = btn.data('item-type') || "gm_modifier";
             const modUuid = btn.data('uuid');
             const modValue = btn.data('value');
@@ -803,6 +812,12 @@ activateListeners(html) {
             const groupId = $(ev.currentTarget).data('group-id');
             new GMMacroBrowser({ onSelect: async macros => { await this._addItemsToGroup(groupId, macros); } }).render(true);
         });
+
+        html.find('.add-roll-table-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
+            const groupId = $(ev.currentTarget).data('group-id');
+            new GMRollTableBrowser({ onSelect: async tables => { await this._addItemsToGroup(groupId, tables); } }).render(true);
+        });
         
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
@@ -885,6 +900,26 @@ activateListeners(html) {
             ev.stopPropagation();
             const macro = await fromUuid($(ev.currentTarget).closest('.palette-mod').data('uuid')).catch(() => null);
             macro?.sheet?.render(true);
+        });
+
+        html.find('.roll-table-draw-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            const item = button.closest('.palette-mod');
+            await this._drawRollTableFromGroup(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                button
+            );
+        });
+
+        html.find('.roll-table-open-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const table = await fromUuid($(ev.currentTarget).closest('.palette-mod').data('uuid')).catch(() => null);
+            table?.sheet?.render(true);
         });
 
         html.on('click', ev => {
@@ -2320,17 +2355,49 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             }
         }
     }
+
+    async _drawRollTableFromGroup(groupId, tableUuid, button) {
+        const executionKey = `${groupId}:${tableUuid}`;
+        if (this._runningRollTables.has(executionKey)) return;
+        this._runningRollTables.add(executionKey);
+        const icon = button?.find?.('i');
+        button?.prop?.('disabled', true)?.addClass?.('is-running');
+        icon?.removeClass?.('fa-dice-d20')?.addClass?.('fa-spinner fa-spin');
+        try {
+            const table = await fromUuid(tableUuid).catch(() => null);
+            if (!table || table.documentName !== "RollTable") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.RollTableNotFound"));
+            }
+            if (table.visible === false) {
+                return ui.notifications.warn(this._t("GUM.GMScreen.RollTablePermissionDenied"));
+            }
+            const draw = await table.draw({ displayChat: true });
+            if (!Array.from(draw?.results || []).length) {
+                ui.notifications.warn(this._t("GUM.GMScreen.RollTableNoResults"));
+            }
+        } catch (error) {
+            console.error("GUM | Falha ao rolar tabela pelo Escudo do Mestre.", error);
+            ui.notifications.error(this._t("GUM.GMScreen.RollTableDrawFailed", { error: error?.message || String(error) }));
+        } finally {
+            this._runningRollTables.delete(executionKey);
+            if (button?.[0]?.isConnected) {
+                button.prop('disabled', false).removeClass('is-running');
+                icon.removeClass('fa-spinner fa-spin').addClass('fa-dice-d20');
+            }
+        }
+    }
     async _onDrop(event) { 
         if (!this.layoutEditMode) return;
         const data = TextEditor.getDragEventData(event);
-        if (!["Item", "Macro"].includes(data.type)) return;
+        if (!["Item", "Macro", "RollTable"].includes(data.type)) return;
         const dropTarget = event.target.closest(".group-content-area");
         if (!dropTarget) return;
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
         const item = await fromUuid(data.uuid);
         const isSupportedItem = item?.documentName === "Item" && ["gm_modifier", "effect"].includes(item.type);
         const isMacro = item?.documentName === "Macro";
-        if (!isSupportedItem && !isMacro) {
+        const isRollTable = item?.documentName === "RollTable";
+        if (!isSupportedItem && !isMacro && !isRollTable) {
             return ui.notifications.warn(this._t("GUM.GMScreen.OnlySupportedEntries"));
         }
         await this._addItemsToGroup(groupId, [item]);

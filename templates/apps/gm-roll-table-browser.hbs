@@ -1,0 +1,33 @@
+<form class="gm-roll-table-browser-form gum-browser" autocomplete="off">
+    <div class="browser-container">
+        <aside class="browser-sidebar">
+            <div class="filter-group">
+                <h3 class="filter-title">{{localize "GUM.GMScreen.SearchRollTables"}}</h3>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="{{localize 'GUM.GMScreen.Filter'}}">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <p class="hint">{{localize "GUM.GMScreen.RollTableBrowserHint"}}</p>
+        </aside>
+        <main class="browser-content">
+            <ol class="results-list">
+                {{#each tables}}
+                <li class="result-item" data-search="{{this.name}} {{this.formula}} {{this.folderName}}">
+                    <div class="item-icon"><img src="{{this.img}}" alt="{{this.name}}"></div>
+                    <div class="item-info">
+                        <span class="item-name">{{this.name}}</span>
+                        <span class="item-details">{{this.formula}}{{#if this.folderName}} • {{this.folderName}}{{/if}}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button type="button" class="browser-open-roll-table" data-table-id="{{this.id}}" title="{{localize 'GUM.GMScreen.OpenRollTable'}}"><i class="fas fa-pen"></i></button>
+                        <label class="item-select"><input type="checkbox" name="roll-table-{{this.id}}"></label>
+                    </div>
+                </li>
+                {{/each}}
+                {{#unless tables}}<li class="placeholder-text">{{localize "GUM.GMScreen.NoRollTablesAvailable"}}</li>{{/unless}}
+            </ol>
+        </main>
+    </div>
+    <footer class="browser-footer"><button type="submit"><i class="fas fa-plus-circle"></i> {{localize "GUM.GMScreen.AddSelectedRollTables"}}</button></footer>
+</form>

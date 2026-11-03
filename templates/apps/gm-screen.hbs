@@ -114,6 +114,7 @@
                                         <a class="add-mod-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i> {{localize "GUM.GMScreen.AddModifier"}}</a>
                                         <a class="add-effect-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-sparkles"></i> {{localize "GUM.GMScreen.AddEffect"}}</a>
                                         <a class="add-macro-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-code"></i> {{localize "GUM.GMScreen.AddMacro"}}</a>
+                                        <a class="add-roll-table-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-dice-d20"></i> {{localize "GUM.GMScreen.AddRollTable"}}</a>
                                         <a class="move-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-offset="-1"><i class="fas fa-arrow-up"></i> {{localize "GUM.GMScreen.MoveEarlier"}}</a>
                                         <a class="move-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-offset="1"><i class="fas fa-arrow-down"></i> {{localize "GUM.GMScreen.MoveLater"}}</a>
                                         <a class="toggle-group-sort-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas {{#if group.isManualOrder}}fa-arrow-down-a-z{{else}}fa-hand-pointer{{/if}}"></i> {{#if group.isManualOrder}}{{localize "GUM.GMScreen.UseAutomaticOrder"}}{{else}}{{localize "GUM.GMScreen.UseManualOrder"}}{{/if}}</a>
@@ -125,7 +126,7 @@
                             </div>
                             <div class="group-content-area">
                                 {{#each group.enrichedItems}}
-                                <div class="palette-mod {{#if this.isMacro}}is-macro{{/if}} {{#if this.isSelected}}active{{/if}}" role="button" tabindex="0" aria-pressed="{{#if this.isSelected}}true{{else}}false{{/if}}" data-uuid="{{this.uuid}}" data-document-name="{{this.documentName}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
+                                <div class="palette-mod {{#if this.isMacro}}is-macro{{/if}} {{#if this.isRollTable}}is-roll-table{{/if}} {{#if this.isSelected}}active{{/if}}" role="button" tabindex="0" aria-pressed="{{#if this.isSelected}}true{{else}}false{{/if}}" data-uuid="{{this.uuid}}" data-document-name="{{this.documentName}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
                                     <div class="mod-left">
                                         {{#if @root.layoutEditMode}}<button type="button" class="layout-drag-handle item-drag-handle" draggable="true" title="{{localize 'GUM.GMScreen.DragItem'}}" aria-label="{{localize 'GUM.GMScreen.DragItem'}}"><i class="fas fa-grip-vertical"></i></button>{{/if}}
                                         <img src="{{this.img}}" class="mod-icon"/>
@@ -152,8 +153,12 @@
                                             <button type="button" class="macro-run-btn {{#if this.macroRunning}}is-running{{/if}}" title="{{localize 'GUM.GMScreen.ExecuteMacro'}}" aria-label="{{localize 'GUM.GMScreen.ExecuteMacro'}}" {{#unless this.canExecute}}disabled{{/unless}} {{#if this.macroRunning}}disabled{{/if}}><i class="fas {{#if this.macroRunning}}fa-spinner fa-spin{{else}}fa-play{{/if}}"></i></button>
                                             {{/if}}
                                         {{/if}}
+                                        {{#if this.isRollTable}}
+                                            <span class="roll-table-type-icon" title="{{localize 'GUM.GMScreen.RollTable'}}" aria-label="{{localize 'GUM.GMScreen.RollTable'}}"><i class="fas fa-list-ol"></i></span>
+                                            <button type="button" class="roll-table-draw-btn {{#if this.rollTableRunning}}is-running{{/if}}" title="{{localize 'GUM.GMScreen.DrawRollTable'}}" aria-label="{{localize 'GUM.GMScreen.DrawRollTable'}}" {{#unless this.canDraw}}disabled{{/unless}} {{#if this.rollTableRunning}}disabled{{/if}}><i class="fas {{#if this.rollTableRunning}}fa-spinner fa-spin{{else}}fa-dice-d20{{/if}}"></i></button>
+                                        {{/if}}
                                         <div class="mod-hover-controls">
-                                            {{#if this.isMacro}}<a class="macro-open-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.OpenMacro'}}"><i class="fas fa-pen"></i></a>{{else}}<a class="mod-quick-view" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.QuickView'}}"><i class="fas fa-eye"></i></a>{{/if}}
+                                            {{#if this.isMacro}}<a class="macro-open-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.OpenMacro'}}"><i class="fas fa-pen"></i></a>{{else}}{{#if this.isRollTable}}<a class="roll-table-open-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.OpenRollTable'}}"><i class="fas fa-pen"></i></a>{{else}}<a class="mod-quick-view" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.QuickView'}}"><i class="fas fa-eye"></i></a>{{/if}}{{/if}}
                                             {{#if @root.layoutEditMode}}<a class="move-item-btn" role="button" tabindex="0" data-offset="-1" aria-label="{{localize 'GUM.GMScreen.MoveEarlier'}}"><i class="fas fa-arrow-up"></i></a>
                                             <a class="move-item-btn" role="button" tabindex="0" data-offset="1" aria-label="{{localize 'GUM.GMScreen.MoveLater'}}"><i class="fas fa-arrow-down"></i></a>
                                             <a class="delete-mod-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.RemoveFromGroup'}}"><i class="fas fa-times"></i></a>{{/if}}

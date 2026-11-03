@@ -13,6 +13,7 @@ import {
 const application = fs.readFileSync(new URL("../module/apps/gm-screen.js", import.meta.url), "utf8");
 const template = fs.readFileSync(new URL("../templates/apps/gm-screen.hbs", import.meta.url), "utf8");
 const macroBrowser = fs.readFileSync(new URL("../module/apps/gm-macro-browser.js", import.meta.url), "utf8");
+const rollTableBrowser = fs.readFileSync(new URL("../module/apps/gm-roll-table-browser.js", import.meta.url), "utf8");
 
 test("layout entries can be moved to a bounded target index", () => {
     const entries = [{ id: "a" }, { id: "b" }, { id: "c" }];
@@ -93,11 +94,23 @@ test("macro execution modes validate and partition GM targets", () => {
 
 test("macro cards use explicit execution and remain separate from modifier selection", () => {
     assert.match(application, /macro\.documentName !== "Macro"/);
-    assert.match(application, /if \(btn\.data\('documentName'\) === 'Macro'\) return/);
+    assert.match(application, /if \(btn\.data\('documentName'\) !== 'Item'\) return/);
     assert.match(application, /this\._runningMacros\.has\(executionKey\)/);
     assert.match(application, /macro\.execute\(\{ targets, origin, gmScreen \}\)/);
     assert.match(template, /class="macro-run-btn/);
     assert.match(template, /class="macro-execution-mode"/);
     assert.match(template, /class="macro-context-icon"/);
     assert.match(macroBrowser, /game\.macros/);
+});
+
+test("roll table cards draw external tables without entering modifier selection", () => {
+    assert.match(application, /btn\.data\('documentName'\) !== 'Item'/);
+    assert.match(application, /table\.documentName !== "RollTable"/);
+    assert.match(application, /table\.draw\(\{ displayChat: true \}\)/);
+    assert.match(application, /this\._runningRollTables\.has\(executionKey\)/);
+    assert.match(application, /\["Item", "Macro", "RollTable"\]/);
+    assert.match(template, /class="add-roll-table-to-group-btn"/);
+    assert.match(template, /class="roll-table-draw-btn/);
+    assert.match(template, /class="roll-table-open-btn"/);
+    assert.match(rollTableBrowser, /game\.tables/);
 });

@@ -701,6 +701,40 @@
 .gum.gm-screen .macro-run-btn.is-running { color: var(--gum-text-claro); }
 .gum.gm-screen .macro-open-btn { color: #888; }
 .gum.gm-screen .macro-open-btn:hover { color: var(--gum-accent-gold); }
+.gum.gm-screen .palette-mod.is-roll-table { cursor: default; }
+.gum.gm-screen .palette-mod.is-roll-table .mod-icon { box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.28); }
+.gum.gm-screen .roll-table-type-icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    color: var(--gm-muted, #aaa);
+    font-size: 0.7rem;
+}
+.gum.gm-screen .roll-table-draw-btn {
+    display: inline-flex;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--gum-accent-gold);
+    font-size: 0.68rem;
+}
+.gum.gm-screen .roll-table-draw-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--gum-accent-gold) 14%, transparent);
+    color: #f0d698;
+}
+.gum.gm-screen .roll-table-draw-btn.is-running { color: var(--gum-text-claro); }
+.gum.gm-screen .roll-table-open-btn { color: #888; }
+.gum.gm-screen .roll-table-open-btn:hover { color: var(--gum-accent-gold); }
 
 /* Editor de layout */
 .gum.gm-screen .layout-edit-toggle {
