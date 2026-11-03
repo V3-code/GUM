@@ -56,6 +56,11 @@ test("content source groups use a compact header grid and distinct card styling"
   assert.match(styles, /content-source-purpose:nth-of-type\(3n \+ 2\)/);
 });
 
+test("content source purposes are presented alphabetically in the active language", () => {
+  assert.match(contentSourceApp, /\.sort\(\(left, right\) => left\.label\.localeCompare\(right\.label, game\.i18n\.lang, \{ sensitivity: "base" \}\)\)/);
+  assert.match(contentSourceApp, /this\.visiblePurposeIds = context\.purposes\.map\(purpose => purpose\.id\)/);
+});
+
 test("content source window has a bounded scroll area and a fixed GUM footer", () => {
   assert.match(contentSourceApp, /classes: \["gum", "gum-dialog", "gum-sheet-edit-dialog", "content-source-config"\]/);
   assert.match(contentSourceApp, /width: 720/);

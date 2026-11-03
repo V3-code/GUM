@@ -34,13 +34,13 @@ export class ContentSourceConfig extends FormApplication {
     const worldStatuses = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
     const definitions = Object.values(CONTENT_SOURCE_PURPOSES)
       .filter(definition => definition.id !== "statusBindings" || !worldStatuses.bindingsMigrated);
-    this.visiblePurposeIds = definitions.map(definition => definition.id);
     context.purposes = definitions.map(definition => {
       if (!this.selectedByPurpose.has(definition.id)) {
         this.selectedByPurpose.set(definition.id, contentSourceService.getSourceIds(definition.id));
       }
       return this.#preparePurpose(definition, itemPacks);
-    });
+    }).sort((left, right) => left.label.localeCompare(right.label, game.i18n.lang, { sensitivity: "base" }));
+    this.visiblePurposeIds = context.purposes.map(purpose => purpose.id);
     context.itemPacks = itemPacks;
     return context;
   }
