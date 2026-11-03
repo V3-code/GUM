@@ -1082,7 +1082,7 @@
   "GUM.LibraryImport.TemplateImportFailed": "Não foi possível importar os Modelos: {error}",
   "GUM.LibraryImport.ImportCharacter": "Importar Personagem",
   "GUM.LibraryImport.ImportGCSCharacter": "Importar GCS",
-  "GUM.LibraryImport.ImportGumCharacter": "Importar JSON GUM",
+  "GUM.LibraryImport.ImportGumCharacter": "Importar GUM",
   "GUM.LibraryImport.ImportIntoCompendium": "Importar Biblioteca neste Compêndio",
   "GUM.LibraryImport.ExportCompendium": "Exportar Compêndio",
   "GUM.LibraryImport.ClearCompendium": "Limpar Compêndio",

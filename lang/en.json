@@ -1082,7 +1082,7 @@
   "GUM.LibraryImport.TemplateImportFailed": "Could not import Templates: {error}",
   "GUM.LibraryImport.ImportCharacter": "Import Character",
   "GUM.LibraryImport.ImportGCSCharacter": "Import GCS",
-  "GUM.LibraryImport.ImportGumCharacter": "Import GUM JSON",
+  "GUM.LibraryImport.ImportGumCharacter": "Import GUM",
   "GUM.LibraryImport.ImportIntoCompendium": "Import Library into This Compendium",
   "GUM.LibraryImport.ExportCompendium": "Export Compendium",
   "GUM.LibraryImport.ClearCompendium": "Clear Compendium",

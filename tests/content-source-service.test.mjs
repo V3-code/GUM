@@ -89,6 +89,27 @@ test("loads only roll modifiers from roll modifier sources", async () => {
   });
 });
 
+test("loads roll modifiers from every configured source in configured order", async () => {
+  const first = { id: "first", type: "gm_modifier", uuid: "Compendium.world.first.Item.first" };
+  const ignored = { id: "ignored", type: "modifier", uuid: "Compendium.world.first.Item.ignored" };
+  const second = { id: "second", type: "gm_modifier", uuid: "Compendium.world.second.Item.second" };
+  const service = new ContentSourceService({
+    packs: new Map([
+      ["world.first", { documentName: "Item", getDocuments: async () => [first, ignored] }],
+      ["world.second", { documentName: "Item", getDocuments: async () => [second] }]
+    ]),
+    settings: {
+      get: () => ({ rollModifiers: ["world.first", "world.second"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("rollModifiers"), {
+    documents: [first, second],
+    invalidSources: []
+  });
+});
+
 test("loads only templates from template sources", async () => {
   const template = { type: "template", uuid: "Compendium.world.templates.Item.a" };
   const advantage = { type: "advantage", uuid: "Compendium.world.templates.Item.b" };
