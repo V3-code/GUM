@@ -373,6 +373,49 @@
     transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 .roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--gum-accent-gold); }
+.roll-submit-row,
+.gum-damage-roll-prompt .damage-roll-primary-action {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    min-width: 0;
+}
+.roll-privacy-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 24px);
+    gap: 3px;
+    align-content: center;
+    padding: 3px;
+    border: 1px solid rgba(197, 160, 91, 0.28);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.22);
+}
+.roll-privacy-selector .roll-privacy-btn,
+.gum-damage-roll-prompt .roll-privacy-selector .roll-privacy-btn {
+    display: inline-flex;
+    width: 24px;
+    min-width: 24px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    color: #8f9299;
+    font-size: 0.68rem;
+}
+.roll-privacy-selector .roll-privacy-btn:hover {
+    border-color: rgba(197, 160, 91, 0.45);
+    color: #ddd;
+}
+.roll-privacy-selector .roll-privacy-btn.active {
+    border-color: var(--gum-accent-gold);
+    background: rgba(197, 160, 91, 0.18);
+    color: var(--gum-accent-gold);
+}
 
 /* ================================================================== */
 /* AVISO DE TETO NA JANELA DE ROLAGEM                                 */
@@ -577,6 +620,7 @@
   background: linear-gradient(180deg, #5a6478, #40495d);
   border-color: rgba(197,160,91,0.5);
 }
+.gum-damage-roll-prompt .damage-roll-primary-action > button[type="submit"] { width: 100%; }
 @media (max-width: 620px) {
   .gum-damage-roll-prompt .damage-column-headings { display: none; }
   .gum-damage-roll-prompt .damage-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 76px); }

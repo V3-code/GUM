@@ -57,6 +57,7 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
+import { applyRollPrivacy, getCurrentRollPrivacyMode } from "../module/utils/roll-privacy.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { evaluateJavaScriptNumericExpression, resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
@@ -511,12 +512,6 @@ async function migrateBasicDamageSchema() {
     await game.settings.set("gum", "basicDamageSchemaMigrationV1", true);
 }
 
-function _getCurrentUserRollMode() {
-    const hasMessageModeSetting = game.settings?.settings?.has("core.messageMode");
-    const settingKey = hasMessageModeSetting ? "messageMode" : "rollMode";
-    return game.settings?.get("core", settingKey) ?? CONST.DICE_ROLL_MODES.PUBLIC;
-}
-
 function getDefaultSkillRollFormula() {
     const fallback = "3d6";
     const rawFormula = game.settings?.get?.("gum", "defaultSkillRollFormula");
@@ -531,41 +526,12 @@ function getDefaultSkillRollFormula() {
     }
 }
 
-export function applyCurrentRollPrivacy(chatData, { force = false } = {}) {
+export function applyCurrentRollPrivacy(chatData, { force = false, rollMode = null } = {}) {
     if (!chatData || typeof chatData !== "object") return chatData;
 
-const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
-    if (hasExplicitPrivacy && !force) return chatData;
-
-    const rollMode = _getCurrentUserRollMode();
-    if (typeof ChatMessage.applyMode === "function") {
-        return ChatMessage.applyMode({ ...chatData }, rollMode);
-    }
-
-    if (typeof ChatMessage.applyRollMode === "function") {
-        return ChatMessage.applyRollMode({ ...chatData }, rollMode);
-    }
-
-    const nextData = { ...chatData, rollMode };
-    delete nextData.whisper;
-    delete nextData.blind;
-
-    switch (rollMode) {
-        case CONST.DICE_ROLL_MODES.PRIVATE:
-            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
-            break;
-        case CONST.DICE_ROLL_MODES.BLIND:
-            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
-            nextData.blind = true;
-            break;
-        case CONST.DICE_ROLL_MODES.SELF:
-            nextData.whisper = [game.user.id];
-            break;
-        default:
-            break;
-    }
-
-    return nextData;
+    const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
+    if (hasExplicitPrivacy && !force && !rollMode) return chatData;
+    return applyRollPrivacy(chatData, rollMode || getCurrentRollPrivacyMode());
 }
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
@@ -1771,7 +1737,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         content: content,
         rolls: [roll],
         sound: CONFIG.sounds.dice
-    });
+    }, { rollMode: extraOptions.rollMode });
     showDiceForMessageLessRoll(roll, {
         createChatMessage: extraOptions.createChatMessage,
         dice3d: game.dice3d,
@@ -2182,7 +2148,7 @@ async function _rollDamageFromChatAction(payload) {
         speaker: ChatMessage.getSpeaker({ actor }),
         content,
         rolls
-    });
+    }, { rollMode: promptResult.rollMode });
     await ChatMessage.create(chatData);
 }
 
@@ -3867,12 +3833,12 @@ $('body').on('click', '.chat-message .rollable', async (ev) => {
             };
 
             new GurpsRollPrompt(actor, promptData, {
-                onRoll: async (_actor, promptPayload) => {
+                onRoll: async (_actor, promptPayload, promptOptions = {}) => {
                     await performGURPSRoll(actor, {
                         label: rollLabel,
                         value: rollValue,
                         modifier: promptPayload.modifier || 0
-                    });
+                    }, { rollMode: promptOptions.rollMode });
                 }
             }).render(true);
             return;

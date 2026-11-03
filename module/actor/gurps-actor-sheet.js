@@ -1,5 +1,5 @@
 import { calculateItemTraitCost, calculateTraitCost } from "../utils/trait-cost.mjs";
-import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
+import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
@@ -4169,11 +4169,12 @@ html.on("click", ".rollable-damage", async (ev) => {
 
 
 
-    await ChatMessage.create({
+    const chatData = applyCurrentRollPrivacy({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content,
       rolls
-    });
+    }, { rollMode: promptResult.rollMode });
+    await ChatMessage.create(chatData);
   };
 
   // --------------------------------------------------
@@ -4362,11 +4363,12 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
       </div>
     `;
 
-    await ChatMessage.create({
+    const chatData = applyCurrentRollPrivacy({
       speaker: ChatMessage.getSpeaker({ actor }),
       content,
       rolls: [roll, followUpRoll, fragmentationRoll].filter(Boolean)
-    });
+    }, { rollMode: promptResult.rollMode });
+    await ChatMessage.create(chatData);
   };
 
   performBasicRoll();

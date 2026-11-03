@@ -18,6 +18,7 @@ import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING, get
 import { collectActiveEquipmentOwnerModifiers } from "../utils/equipment-owner-modifiers.mjs";
 import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
 import { composeRollModifiers, getRollModifierCompositionOrigin } from "../utils/roll-modifier-composition.mjs";
+import { getCurrentRollPrivacyMode, normalizeRollPrivacyMode, rollPrivacyOptions } from "../utils/roll-privacy.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -34,6 +35,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.selectedAmmunitionId = "";
         this.selectedModifiers = [];
         this.onRoll = options.onRoll;
+        this.rollMode = normalizeRollPrivacyMode(options.rollMode || getCurrentRollPrivacyMode());
         this.baseAttributeOptions = [];
         this.baseAttributeOptionsMap = new Map();
         this.baseDefaultKey = "skill";
@@ -1178,6 +1180,7 @@ return 'default';
         context.contextualPurposeCount = contextualIds.size;
         context.purposeLabels = getPurposeLabels(this.purposeIds, { short: true });
         context.hasPurposes = context.purposeLabels.length > 0;
+        context.rollPrivacyOptions = rollPrivacyOptions(this.rollMode, key => game.i18n.localize(key));
         
         context.blocks = await this._fetchAndOrganizeModifiers();
         return context;
@@ -1187,6 +1190,16 @@ return 'default';
         super.activateListeners(html);
         const inputManual = html.find('input[name="manualMod"]');
         this._applyMenuState(html);
+
+        html.find('.roll-privacy-btn').click(ev => {
+            ev.preventDefault();
+            this.rollMode = normalizeRollPrivacyMode($(ev.currentTarget).data('roll-mode'));
+            html.find('.roll-privacy-btn').each((_index, element) => {
+                const selected = element.dataset.rollMode === this.rollMode;
+                element.classList.toggle('active', selected);
+                element.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+        });
 
         html.find('.step-btn').click(ev => {
             ev.preventDefault();
@@ -1901,7 +1914,8 @@ const rollPayload = {
         rollPayload.requestedPurposeIds = normalizePurposeIds(this.requestedPurposeIds);
         const rollOptions = {
             ignoreGlobals: true, // Já processamos os globais aqui no prompt
-            effectiveCap: lowestCap // ✅ O SEGREDO: Enviamos o teto calculado aqui!
+            effectiveCap: lowestCap, // ✅ O SEGREDO: Enviamos o teto calculado aqui!
+            rollMode: this.rollMode
         };
 
         if (typeof this.onRoll === "function") {

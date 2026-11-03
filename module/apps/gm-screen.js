@@ -1508,7 +1508,13 @@ activateListeners(html) {
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
             const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${finalFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">${this._t("GUM.GMScreen.Dice")}</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">${this._t("GUM.GMScreen.Total")}</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> ${this._t("GUM.GMScreen.Apply")}</button></footer></div>`;
 
-            ChatMessage.create({ user: game.user.id, speaker: { alias: actor.name }, content: content, rolls: [roll] });
+            const chatData = applyCurrentRollPrivacy({
+                user: game.user.id,
+                speaker: { alias: actor.name },
+                content,
+                rolls: [roll]
+            }, { rollMode: promptResult.rollMode });
+            await ChatMessage.create(chatData);
             menu.remove();
         });
     }
