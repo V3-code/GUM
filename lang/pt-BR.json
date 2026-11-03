@@ -1194,7 +1194,6 @@
   "GUM.WorldStatus.Cancel": "Cancelar",
   "GUM.WorldStatus.MissingEffect": "Efeito não encontrado",
   "GUM.WorldStatus.InvalidFile": "O arquivo não é uma configuração de status do GUM.",
-  "GUM.WorldStatus.LegacyLibraryImported": "A biblioteca legada de automações de status foi convertida para a configuração atual.",
   "GUM.WorldStatus.UnsupportedVersion": "O arquivo usa uma versão mais recente e incompatível desta configuração.",
   "GUM.WorldStatus.ImportFailed": "Não foi possível importar a configuração: {error}",
   "GUM.WorldStatus.Saved": "A configuração de status do mundo foi salva.",

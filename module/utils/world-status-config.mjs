@@ -1,5 +1,3 @@
-import { parseCompendiumLibraryExport } from "./compendium-library-json.mjs";
-
 export const WORLD_STATUS_SETTING = "worldStatusConfiguration";
 export const WORLD_STATUS_SCHEMA_VERSION = 2;
 
@@ -58,40 +56,6 @@ export function normalizeWorldStatusConfiguration(value) {
     bindingsMigrated: source.bindingsMigrated !== false,
     statuses
   };
-}
-
-/** Convert a legacy Item compendium export containing status-link Conditions. */
-export function convertStatusCompendiumLibrary(baseStatuses, value) {
-  const library = parseCompendiumLibraryExport(value);
-  if (!library || library.documentType !== "Item") return null;
-
-  const baseIds = new Set(Array.from(baseStatuses ?? [], entry => normalizeWorldStatusId(entry?.id)).filter(Boolean));
-  const statuses = library.documents.flatMap(document => {
-    const system = document?.system || {};
-    const binding = system.statusBinding || {};
-    if (system.bindingMode !== "status-link" || binding.enabled === false) return [];
-    const id = normalizeWorldStatusId(binding.statusId);
-    if (!id) return [];
-    return [{
-      id,
-      name: String(document.name || id),
-      nameKey: "",
-      img: String(document.img || DEFAULT_ICON),
-      effectUuids: Array.isArray(system.effects) ? system.effects.map(link => link?.uuid).filter(Boolean) : [],
-      legacyRuleUuids: [],
-      stackMode: binding.stackMode,
-      stackLimit: binding.stackLimit,
-      removeOnStatusOff: binding.removeOnStatusOff,
-      custom: !baseIds.has(id)
-    }];
-  });
-  if (!statuses.length) return null;
-
-  return normalizeWorldStatusConfiguration({
-    initialized: true,
-    bindingsMigrated: true,
-    statuses
-  });
 }
 
 export function localizeBaseStatuses(baseStatuses, localize = value => value) {

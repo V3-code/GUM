@@ -12,7 +12,6 @@ import {
   WORLD_STATUS_SETTING,
   buildWorldStatusCleanupPlan,
   buildWorldStatusConfiguration,
-  convertStatusCompendiumLibrary,
   collectWorldStatusActors,
   collectInvalidWorldStatusReferences,
   collectWorldStatusDependencies,
@@ -478,16 +477,13 @@ export class WorldStatusConfig extends FormApplication {
           if (result) this.render();
           return;
         }
-        const legacyLibraryConfiguration = convertStatusCompendiumLibrary(this.baseStatuses, parsed);
-        if (parsed?.format && parsed.format !== EXPORT_FORMAT && !legacyLibraryConfiguration) {
-          throw new Error(game.i18n.localize("GUM.WorldStatus.InvalidFile"));
-        }
+        if (parsed?.format && parsed.format !== EXPORT_FORMAT) throw new Error(game.i18n.localize("GUM.WorldStatus.InvalidFile"));
         if (Number(parsed?.version || WORLD_STATUS_SCHEMA_VERSION) > WORLD_STATUS_SCHEMA_VERSION) {
           throw new Error(game.i18n.localize("GUM.WorldStatus.UnsupportedVersion"));
         }
         const incomingConfiguration = materializeWorldStatusConfiguration(
           this.baseStatuses,
-          legacyLibraryConfiguration ?? parsed?.configuration ?? parsed
+          parsed?.configuration ?? parsed
         );
         const mode = await chooseConfigurationImportMode(
           "world-statuses",
@@ -505,9 +501,6 @@ export class WorldStatusConfig extends FormApplication {
         this.loadedLegacyBindings = false;
         this.pendingCleanupIds.clear();
         this.render();
-        if (legacyLibraryConfiguration) {
-          ui.notifications.info(game.i18n.localize("GUM.WorldStatus.LegacyLibraryImported"));
-        }
       } catch (error) {
         ui.notifications.error(game.i18n.format("GUM.WorldStatus.ImportFailed", { error: error.message }));
       }
