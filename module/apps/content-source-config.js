@@ -19,6 +19,7 @@ export class ContentSourceConfig extends FormApplication {
       width: 720,
       height: 740,
       resizable: true,
+      scrollY: [".content-source-scroll"],
       closeOnSubmit: true
     });
   }
@@ -81,7 +82,7 @@ export class ContentSourceConfig extends FormApplication {
     const selected = this.selectedByPurpose.get(purpose) || [];
     if (!selected.includes(id)) selected.push(id);
     this.selectedByPurpose.set(purpose, selected);
-    this.render();
+    this.render(false);
   }
 
   #changeSource(event, action) {
@@ -96,14 +97,14 @@ export class ContentSourceConfig extends FormApplication {
     if (action === "up" && index > 0) [selected[index - 1], selected[index]] = [selected[index], selected[index - 1]];
     if (action === "down" && index < selected.length - 1) [selected[index + 1], selected[index]] = [selected[index], selected[index + 1]];
     this.selectedByPurpose.set(purpose, selected);
-    this.render();
+    this.render(false);
   }
 
   #restoreDefaults(event) {
     event.preventDefault();
     const purpose = event.currentTarget.closest("[data-purpose]").dataset.purpose;
     this.selectedByPurpose.set(purpose, [...CONTENT_SOURCE_PURPOSES[purpose].defaults]);
-    this.render();
+    this.render(false);
   }
 
   async _updateObject(_event, formData) {

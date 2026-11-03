@@ -60,6 +60,8 @@ test("content source window has a bounded scroll area and a fixed GUM footer", (
   assert.match(contentSourceApp, /classes: \["gum", "gum-dialog", "gum-sheet-edit-dialog", "content-source-config"\]/);
   assert.match(contentSourceApp, /width: 720/);
   assert.match(contentSourceApp, /height: 740/);
+  assert.match(contentSourceApp, /scrollY: \["\.content-source-scroll"\]/);
+  assert.match(contentSourceApp, /this\.render\(false\)/);
   assert.match(contentSourceTemplate, /class="content-source-scroll"/);
   assert.match(contentSourceTemplate, /class="sheet-footer content-source-footer flexrow"/);
   assert.match(styles, /#gum-content-source-config\.app\.window-app \.window-content[\s\S]*?overflow: hidden/);

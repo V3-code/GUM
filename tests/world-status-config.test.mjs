@@ -10,6 +10,7 @@ import {
   collectWorldStatusActors,
   collectInvalidWorldStatusReferences,
   collectWorldStatusDependencies,
+  convertStatusCompendiumLibrary,
   getItemStatusReferences,
   itemReferencesStatus,
   materializeWorldStatusConfiguration,
@@ -62,6 +63,54 @@ test("reference statuses seed only an uninitialized configuration", () => {
   });
   assert.deepEqual(initial.statuses.map(status => status.id), ["stunned", "prone"]);
   assert.deepEqual(deliberatelyEmpty.statuses, []);
+});
+
+test("legacy status-link compendium exports convert to the current status configuration", () => {
+  const configuration = convertStatusCompendiumLibrary(base, {
+    format: "gum-compendium-library",
+    version: 1,
+    documentType: "Item",
+    folders: [],
+    documents: [
+      {
+        name: "Atordoado",
+        type: "condition",
+        img: "stunned-new.png",
+        system: {
+          bindingMode: "status-link",
+          statusBinding: { statusId: "stunned", enabled: true, stackMode: "stack", stackLimit: 2, removeOnStatusOff: false },
+          effects: [{ uuid: "Compendium.gum.effects.Item.stunned" }]
+        }
+      },
+      { name: "Ignorada", type: "condition", system: { bindingMode: "manual" } }
+    ]
+  });
+
+  assert.equal(configuration.initialized, true);
+  assert.equal(configuration.bindingsMigrated, true);
+  assert.equal(configuration.statuses.length, 1);
+  assert.deepEqual(configuration.statuses[0], {
+    id: "stunned",
+    name: "Atordoado",
+    nameKey: "",
+    img: "stunned-new.png",
+    effectUuids: ["Compendium.gum.effects.Item.stunned"],
+    legacyRuleUuids: [],
+    stackMode: "stack",
+    stackLimit: 2,
+    removeOnStatusOff: false,
+    custom: false
+  });
+});
+
+test("ordinary compendium exports are not mistaken for status configurations", () => {
+  assert.equal(convertStatusCompendiumLibrary(base, {
+    format: "gum-compendium-library",
+    version: 1,
+    documentType: "Item",
+    folders: [],
+    documents: [{ name: "Espada", type: "equipment", system: {} }]
+  }), null);
 });
 
 test("world status effects become Foundry statuses and automation rules", () => {
