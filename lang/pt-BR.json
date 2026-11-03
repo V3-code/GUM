@@ -2633,7 +2633,7 @@
   "GUM.GMScreen.BulkClearScope": "Escopo",
   "GUM.GMScreen.ClearContentsOnly": "Somente os conteúdos (manter grupos)",
   "GUM.GMScreen.ClearGroupsAndContents": "Grupos e seus conteúdos",
-  "GUM.GMScreen.SelectedGroups": "Grupos selecionados da aba atual",
+  "GUM.GMScreen.SelectedGroups": "Grupos da aba atual",
   "GUM.GMScreen.SelectedGroupsHint": "Escolha grupos específicos",
   "GUM.GMScreen.CurrentTab": "Aba atual",
   "GUM.GMScreen.CurrentTabHint": "Limpa somente a aba aberta",

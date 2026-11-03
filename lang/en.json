@@ -2633,7 +2633,7 @@
   "GUM.GMScreen.BulkClearScope": "Scope",
   "GUM.GMScreen.ClearContentsOnly": "Contents only (keep groups)",
   "GUM.GMScreen.ClearGroupsAndContents": "Groups and their contents",
-  "GUM.GMScreen.SelectedGroups": "Selected groups in the current tab",
+  "GUM.GMScreen.SelectedGroups": "Groups in current tab",
   "GUM.GMScreen.SelectedGroupsHint": "Choose specific groups",
   "GUM.GMScreen.CurrentTab": "Current tab",
   "GUM.GMScreen.CurrentTabHint": "Clears only the open tab",
