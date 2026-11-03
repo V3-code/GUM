@@ -35,6 +35,12 @@ test("status automation is the localized public name while stable binding IDs re
   assert.deepEqual(CONTENT_SOURCE_PURPOSES.statusBindings.defaults, []);
 });
 
+test("the general item condition source has an explicit user-facing name", () => {
+  assert.equal(catalogs["pt-BR"]["GUM.ContentSources.Purposes.Conditions.Name"], "Condições gerais de itens");
+  assert.equal(catalogs.en["GUM.ContentSources.Purposes.Conditions.Name"], "General item conditions");
+  assert.equal(CONTENT_SOURCE_PURPOSES.conditions.id, "conditions");
+});
+
 test("library and character import actions are available in every supported language", () => {
   const keys = [
     "GUM.LibraryImport.ImportLibrary",
