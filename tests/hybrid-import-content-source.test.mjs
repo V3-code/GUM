@@ -5,17 +5,28 @@ import test from "node:test";
 const importer = fs.readFileSync("module/apps/importers.js", "utf8");
 const settings = fs.readFileSync("module/settings.js", "utf8");
 
-test("hybrid character import searches world items before configured sources", () => {
+test("hybrid item matching uses only its configured sources and honors their priority", () => {
   assert.match(importer, /game\.items\.contents/);
-  assert.match(importer, /contentSourceService\.getSourceIds\("skills"\)/);
   assert.match(importer, /contentSourceService\.getSourceIds\("characterImport"\)/);
+  assert.doesNotMatch(importer, /contentSourceService\.getSourceIds\("skills"\)/);
+  assert.match(importer, /for \(const pack of configuredPacks\)/);
   assert.match(importer, /highestPriority = Math\.min/);
 });
 
-test("searching unrelated compendia is explicit and disabled by default", () => {
+test("world items and unrelated compendia are controlled by the centralized scope", () => {
   assert.match(importer, /hybridImportSearchAllCompendia/);
-  assert.match(importer, /searchAllCompendia\s*\? game\.packs\.filter/);
+  assert.match(importer, /policy\.includeWorldItems/);
+  assert.match(importer, /policy\.includeOtherCompendia/);
+  assert.match(importer, /getHybridImportPolicy/);
   assert.match(settings, /"hybridImportSearchAllCompendia"[\s\S]*?default: false/);
+  assert.match(settings, /HYBRID_IMPORT_SCOPE_SETTING[\s\S]*?default: ""/);
+});
+
+test("GUM character JSON restoration can opt into the same hybrid resolver", () => {
+  assert.match(importer, /prepareGumCharacterImportData/);
+  assert.match(importer, /mode: "gum-json"/);
+  assert.match(importer, /resolveHybridSourceItem\(\{/);
+  assert.match(importer, /Faithful\.Name/);
 });
 
 test("hybrid matching keeps specialization as part of the identity", () => {

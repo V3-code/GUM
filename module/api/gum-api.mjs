@@ -238,6 +238,9 @@ export function createGumApi({
       const normalized = { ...options };
       if (options.actor) normalized.actor = await resolveActor(options.actor);
       return requireFunction(dependencies, "importFromGCS")(normalized);
+    },
+    async gumJson(options = {}) {
+      return requireFunction(dependencies, "importCharacterFromJson")(options);
     }
   });
 
@@ -283,6 +286,7 @@ export function installGumApi({ gameRef = globalThis.game, hooks = globalThis.Ho
 
   const legacyAliases = {
     importFromGCS: "importFromGCS",
+    importCharacterFromJson: "importCharacterFromJson",
     rollFromHotbar: "rollFromHotbar",
     damageFromHotbar: "damageFromHotbar",
     applyUseEventEffects: "applyUseEventEffects",

@@ -37,7 +37,7 @@ import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectG
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
 import { WORLD_STATUS_SETTING, buildWorldStatusBindingRules, buildWorldStatusPresentationPlan, collectWorldStatusActors, localizeBaseStatuses, normalizeWorldStatusConfiguration, resolveWorldStatusRows } from '../module/utils/world-status-config.mjs';
-import { importFromGCS, invalidateHybridItemIndex } from "../module/apps/importers.js";
+import { importCharacterFromJson, importFromGCS, invalidateHybridItemIndex } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
@@ -3250,6 +3250,7 @@ Hooks.once('init', async function() {
         hooks: Hooks,
         dependencies: {
             importFromGCS,
+            importCharacterFromJson,
             rollFromHotbar,
             damageFromHotbar,
             performGURPSRoll,
@@ -3825,15 +3826,14 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
         row.className = "gum-directory-import-actions";
         row.innerHTML = `
             <button class="gcs-import-button" type="button">
-                <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportCharacter")}
+                <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportGCSCharacter")}
+            </button>
+            <button class="gum-character-json-import-button" type="button">
+                <i class="fas fa-user-plus"></i> ${game.i18n.localize("GUM.LibraryImport.ImportGumCharacter")}
             </button>
         `;
-        const button = row.querySelector("button");
-        
-        button.addEventListener("click", () => {
-            // Chama a função de importação que está em importers.js
-            game.gum.importFromGCS();
-        });
+        row.querySelector(".gcs-import-button").addEventListener("click", () => game.gum.importFromGCS());
+        row.querySelector(".gum-character-json-import-button").addEventListener("click", () => game.gum.importCharacterFromJson());
 
         headerActions.append(row);
     });

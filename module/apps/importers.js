@@ -1,12 +1,13 @@
 import { calculateItemTraitCost, importGCSTraitCost, importGCSModifier } from "../utils/trait-cost.mjs";
 import { getBodyProfile } from "../config/body-profiles.js";
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
-import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
+import { canUserCreateActors, canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
 import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, previewCompendiumJsonSynchronization, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
 import { GUM_ITEM_BUNDLE_VERSION, parseItemBundle, prepareItemBundle, previewItemBundleSynchronization, stableBundleDocumentId } from "../utils/item-bundle-json.mjs";
 import { itemNameIdentities, itemNameIdentity, normalizeItemAliases, normalizeItemName } from "../utils/item-name-aliases.mjs";
+import { HYBRID_IMPORT_SCOPE_SETTING, hybridImportScopeCapabilities, normalizeHybridImportScope } from "../utils/hybrid-import-policy.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -3035,41 +3036,47 @@ export function invalidateHybridItemIndex() {
     HYBRID_ITEM_INDEX_CACHE = { key: null, entries: null };
 }
 
+export function getHybridImportPolicy() {
+    const scope = normalizeHybridImportScope(game.settings.get("gum", HYBRID_IMPORT_SCOPE_SETTING), {
+        legacySearchAll: game.settings.get("gum", "hybridImportSearchAllCompendia") === true
+    });
+    return hybridImportScopeCapabilities(scope);
+}
+
 async function buildHybridItemIndex() {
-    const configuredPackIds = [
-        ...contentSourceService.getSourceIds("skills"),
-        ...contentSourceService.getSourceIds("characterImport")
-    ].filter((id, index, ids) => ids.indexOf(id) === index);
-    const searchAllCompendia = game.settings.get("gum", "hybridImportSearchAllCompendia") === true;
+    const configuredPackIds = contentSourceService.getSourceIds("characterImport")
+        .filter((id, index, ids) => ids.indexOf(id) === index);
+    const policy = getHybridImportPolicy();
     const cacheKey = JSON.stringify({
-        worldItems: game.items.contents.map(item => ({
+        scope: policy.scope,
+        worldItems: policy.includeWorldItems ? game.items.contents.map(item => ({
             id: item.id,
             name: item.name,
             type: item.type,
             ref: item.system?.ref,
             specialization: item.system?.specialization,
             aliases: normalizeItemAliases(item.system?.aliases)
-        })),
-        configuredPackIds,
-        searchAllCompendia
+        })) : [],
+        configuredPackIds
     });
     if (HYBRID_ITEM_INDEX_CACHE.key === cacheKey) return HYBRID_ITEM_INDEX_CACHE.entries;
 
-    const entries = [];
-    for (const item of game.items.contents) {
-        if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(item.type)) continue;
-        entries.push(buildIndexEntryFromItemDocument(item, "world"));
+    if (!policy.enabled) {
+        HYBRID_ITEM_INDEX_CACHE = { key: cacheKey, entries: [] };
+        return HYBRID_ITEM_INDEX_CACHE.entries;
     }
 
+    const entries = [];
     const configuredPacks = configuredPackIds
         .map(id => game.packs.get(id))
         .filter(pack => pack?.documentName === "Item");
     const configuredPackSet = new Set(configuredPacks.map(pack => pack.collection));
-    const fallbackPacks = searchAllCompendia
+    const fallbackPacks = policy.includeOtherCompendia
         ? game.packs.filter(pack => pack.documentName === "Item" && !configuredPackSet.has(pack.collection))
         : [];
 
-    for (const [packIndex, pack] of [...configuredPacks, ...fallbackPacks].entries()) {
+    let priority = 0;
+    for (const pack of configuredPacks) {
         const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization", "system.aliases"] }).catch(() => null);
         if (!index?.contents?.length) continue;
 
@@ -3077,7 +3084,7 @@ async function buildHybridItemIndex() {
             if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(row.type)) continue;
             entries.push({
                 sourceType: "compendium",
-                priority: packIndex + 1,
+                priority,
                 packCollection: pack.collection,
                 id: row._id,
                 uuid: `Compendium.${pack.collection}.${row._id}`,
@@ -3091,6 +3098,39 @@ async function buildHybridItemIndex() {
                 refNorm: normalizeHybridText(row.system?.ref)
             });
         }
+        priority += 1;
+    }
+
+    if (policy.includeWorldItems) {
+        for (const item of game.items.contents) {
+            if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(item.type)) continue;
+            entries.push(buildIndexEntryFromItemDocument(item, "world", "", priority));
+        }
+        priority += 1;
+    }
+
+    for (const pack of fallbackPacks) {
+        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization", "system.aliases"] }).catch(() => null);
+        if (!index?.contents?.length) continue;
+        for (const row of index.contents) {
+            if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(row.type)) continue;
+            entries.push({
+                sourceType: "compendium",
+                priority,
+                packCollection: pack.collection,
+                id: row._id,
+                uuid: `Compendium.${pack.collection}.${row._id}`,
+                type: row.type,
+                name: row.name,
+                identities: itemNameIdentities({
+                    name: row.name,
+                    specialization: row.system?.specialization,
+                    aliases: row.system?.aliases
+                }),
+                refNorm: normalizeHybridText(row.system?.ref)
+            });
+        }
+        priority += 1;
     }
 
     HYBRID_ITEM_INDEX_CACHE = { key: cacheKey, entries };
@@ -3111,6 +3151,7 @@ export async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
     );
 
     const candidates = index.filter(entry => entry.type === wantedType);
+    const wantedSourceUuid = parsedItem.flags?.gum?.hybridImport?.sourceUuid || null;
 
     const unique = (rows) => {
         if (!rows?.length) return null;
@@ -3128,7 +3169,16 @@ export async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
     let matchedBy = null;
     let ambiguity = null;
 
-    if (wantedRef) {
+    if (wantedSourceUuid) {
+        const result = unique(candidates
+            .filter(entry => entry.uuid === wantedSourceUuid)
+            .map(entry => ({ entry, identity: null })));
+        match = result?.hit || null;
+        ambiguity = result?.ambiguity || null;
+        if (match) matchedBy = "source";
+    }
+
+    if (!match && wantedRef) {
         const result = unique(candidates
             .filter(entry => entry.refNorm && entry.refNorm === wantedRef)
             .map(entry => ({ entry, identity: null })));
@@ -3206,7 +3256,7 @@ function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode 
                     mode,
                     sourceUuid: sourceItem.uuid,
                     sourceId: sourceItem.id,
-                    gcsId: gcsNode?.id || null,
+                    gcsId: gcsNode?.id || parsedItem.flags?.gum?.hybridImport?.gcsId || null,
                     importedAt: new Date().toISOString()
                 }
             }
@@ -4266,6 +4316,116 @@ export async function exportCharacterToJson() {
         },
         default: "export"
     }).render(true);
+}
+
+export async function prepareGumCharacterImportData(source, { hybrid = false } = {}) {
+    if (!source || source.type !== "character" || !source.system || !Array.isArray(source.items)) {
+        throw new Error(game.i18n.localize("GUM.CharacterJsonImport.InvalidFile"));
+    }
+
+    const actorData = foundry.utils.deepClone(source);
+    delete actorData._id;
+    delete actorData._stats;
+    if (actorData.folder && !game.folders?.get?.(actorData.folder)) actorData.folder = null;
+
+    if (!hybrid) return actorData;
+
+    actorData.items = await Promise.all(actorData.items.map(async itemData => {
+        if (!HYBRID_IMPORTABLE_ITEM_TYPES.has(itemData?.type)) return itemData;
+        const { item: sourceItem, matchedBy, ambiguity } = await resolveHybridSourceItem({
+            gcsNode: null,
+            parsedItem: itemData
+        });
+        if (!sourceItem) {
+            if (ambiguity?.length) {
+                const preserved = foundry.utils.deepClone(itemData);
+                preserved.flags = foundry.utils.mergeObject(preserved.flags || {}, {
+                    gum: { hybridImport: { ambiguity } }
+                }, { inplace: false, overwrite: true });
+                return preserved;
+            }
+            return itemData;
+        }
+
+        const merged = mergeHybridImportedData(sourceItem, itemData, { mode: "gum-json" });
+        merged.flags.gum.hybridImport.matchedBy = matchedBy;
+        if (matchedBy?.startsWith("alias")) {
+            merged.flags.gum.hybridImport.importedName = itemData.name;
+            merged.name = sourceItem.name;
+            if (sourceItem.system?.specialization) merged.system.specialization = sourceItem.system.specialization;
+        }
+        return merged;
+    }));
+    return actorData;
+}
+
+async function chooseGumCharacterImportMode(fileName) {
+    const policy = getHybridImportPolicy();
+    const scopeName = game.i18n.localize(`GUM.ContentSources.HybridScope.${policy.scope}.Name`);
+    return new Promise(resolve => {
+        new Dialog({
+            title: game.i18n.localize("GUM.CharacterJsonImport.Title"),
+            content: `
+                <div class="gum-character-json-import">
+                    <p>${game.i18n.format("GUM.CharacterJsonImport.Introduction", { file: escapeImportHTML(fileName) })}</p>
+                    <label class="gum-character-json-import__mode">
+                        <input type="radio" name="gum-character-import-mode" value="faithful" checked>
+                        <span><strong>${game.i18n.localize("GUM.CharacterJsonImport.Faithful.Name")}</strong><small>${game.i18n.localize("GUM.CharacterJsonImport.Faithful.Hint")}</small></span>
+                    </label>
+                    <label class="gum-character-json-import__mode ${policy.enabled ? "" : "is-disabled"}">
+                        <input type="radio" name="gum-character-import-mode" value="hybrid" ${policy.enabled ? "" : "disabled"}>
+                        <span><strong>${game.i18n.localize("GUM.CharacterJsonImport.Hybrid.Name")}</strong><small>${game.i18n.format("GUM.CharacterJsonImport.Hybrid.Hint", { scope: escapeImportHTML(scopeName) })}</small></span>
+                    </label>
+                </div>`,
+            buttons: {
+                import: {
+                    icon: '<i class="fas fa-file-import"></i>',
+                    label: game.i18n.localize("GUM.CharacterJsonImport.Import"),
+                    callback: html => resolve(html.find('input[name="gum-character-import-mode"]:checked').val() || "faithful")
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: game.i18n.localize("GUM.CharacterJsonImport.Cancel"),
+                    callback: () => resolve(null)
+                }
+            },
+            default: "import",
+            close: () => resolve(null)
+        }, {
+            classes: ["dialog", "gum", "gum-character-json-import-dialog"],
+            width: 560
+        }).render(true);
+    });
+}
+
+/** Importa uma ficha exportada pelo próprio GUM como um novo Ator. */
+export async function importCharacterFromJson() {
+    if (!canUserCreateActors(game.user)) {
+        return ui.notifications.error(game.i18n.localize("GUM.CharacterJsonImport.PermissionDenied"));
+    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async event => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        try {
+            const source = JSON.parse(await file.text());
+            if (!source || source.type !== "character" || !source.system || !Array.isArray(source.items)) {
+                throw new Error(game.i18n.localize("GUM.CharacterJsonImport.InvalidFile"));
+            }
+            const mode = await chooseGumCharacterImportMode(file.name);
+            if (!mode) return;
+            const actorData = await prepareGumCharacterImportData(source, { hybrid: mode === "hybrid" });
+            const created = await Actor.create(actorData);
+            ui.notifications.info(game.i18n.format("GUM.CharacterJsonImport.Success", { name: created.name }));
+            created.sheet?.render(true);
+        } catch (error) {
+            console.error("GUM | Falha ao importar ficha JSON do GUM:", error);
+            ui.notifications.error(error?.message || game.i18n.localize("GUM.CharacterJsonImport.InvalidFile"));
+        }
+    };
+    input.click();
 }
 
 function downloadJsonFile(data, filename) {

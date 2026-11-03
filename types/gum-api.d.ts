@@ -49,7 +49,10 @@ export interface GumApi {
     restoreDefaults(purpose: string): Promise<any>;
   };
   readonly status: { list(): any[] };
-  readonly imports: { gcs(options?: { actor?: GumDocumentReference | null; [key: string]: unknown }): Promise<any> };
+    readonly imports: {
+      gcs(options?: { actor?: GumDocumentReference | null; [key: string]: unknown }): Promise<any>;
+      gumJson(options?: Record<string, unknown>): Promise<any>;
+    };
   readonly ui: {
     openTestRequest(): any;
     openGmScreen(): any;

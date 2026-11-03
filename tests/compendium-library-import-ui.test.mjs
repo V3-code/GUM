@@ -69,8 +69,9 @@ test("criar novo compêndio é o destino padrão quando o usuário pode criá-lo
   assert.match(importer, /value="new" \$\{preferNewBundlePack \|\| !allItemPacks\.length \? "checked" : ""\}/);
 });
 
-test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
-  assert.match(main, /GUM\.LibraryImport\.ImportCharacter/);
+test("o diretório de atores distingue importações GCS e JSON do GUM", () => {
+  assert.match(main, /GUM\.LibraryImport\.ImportGCSCharacter/);
+  assert.match(main, /GUM\.LibraryImport\.ImportGumCharacter/);
   assert.doesNotMatch(main, /> Importar do GCS/);
 });
 
