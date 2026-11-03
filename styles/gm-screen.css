@@ -1675,6 +1675,7 @@
     display: flex;
     flex: 1 1 auto;
     min-width: 0;
+    padding: 4px;
     align-items: center;
     gap: 2px;
     overflow-x: auto;
