@@ -20,6 +20,8 @@ test("GM Screen separates target actions, workspace navigation, and utility tool
     assert.ok(quickRollIndex > sidebarEnd);
     assert.ok(manualIndex > sidebarEnd);
     assert.match(template, /gm-main-toolbar[\s\S]*?gm-workspace-tabs[\s\S]*?screen-body[\s\S]*?gm-utility-dock/);
+    assert.match(styles, /bulk-clear-layout-btn\s*\{[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/);
+    assert.match(styles, /gm-main-toolbar\s*\{[\s\S]*?grid-template-columns:\s*minmax\(120px, 1fr\) auto 32px auto auto 28px;/);
     assert.match(template, /data-utility-panel="quick-roll"/);
     assert.match(template, /data-utility-panel="manual-modifier"/);
 });

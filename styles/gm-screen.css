@@ -720,17 +720,18 @@
     color: var(--gum-accent-gold);
 }
 .gum.gm-screen .bulk-clear-layout-btn {
-    width: 32px;
-    min-width: 32px;
+    width: 28px;
+    min-width: 28px;
     height: 32px;
     margin: 0;
     padding: 0;
-    border: 1px solid rgba(229, 83, 75, 0.32);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
     color: #b97a76;
 }
-.gum.gm-screen .bulk-clear-layout-btn:hover { border-color: #e5534b; color: #ff7770; }
+.gum.gm-screen .bulk-clear-layout-btn:hover { border: 0; background: rgba(229, 83, 75, 0.1); color: #ff7770; }
 .gum-bulk-clear-form fieldset { margin: 10px 0; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.14); }
 .gum-bulk-clear-form .checkbox { display: block; margin: 5px 0; }
 .gum-bulk-clear-form .gum-bulk-clear-choices { max-height: 120px; margin: 3px 0 8px 22px; overflow-y: auto; color: #bbb; }
@@ -1518,7 +1519,7 @@
 
 .gum.gm-screen .gm-main-toolbar {
     display: grid;
-    grid-template-columns: minmax(150px, 1fr) auto 32px auto auto;
+    grid-template-columns: minmax(120px, 1fr) auto 32px auto auto 28px;
     flex: 0 0 auto;
     align-items: center;
     gap: 8px;
@@ -1554,7 +1555,8 @@
 
 .gum.gm-screen .gm-main-toolbar .clear-selection-btn,
 .gum.gm-screen .gm-main-toolbar .add-group-btn,
-.gum.gm-screen .gm-main-toolbar .layout-edit-toggle {
+.gum.gm-screen .gm-main-toolbar .layout-edit-toggle,
+.gum.gm-screen .gm-main-toolbar .bulk-clear-layout-btn {
     height: 32px;
     margin: 0;
     grid-column: auto;
@@ -1782,7 +1784,7 @@
     }
 
     .gum.gm-screen .gm-main-toolbar {
-        grid-template-columns: minmax(100px, 1fr) auto 32px 32px 32px;
+        grid-template-columns: minmax(80px, 1fr) auto 32px 32px 32px 28px;
         padding-inline: 9px;
     }
 
@@ -1858,7 +1860,7 @@
 
 @container gum-gm-screen (max-width: 540px) {
     .gum.gm-screen .gm-main-toolbar {
-        grid-template-columns: minmax(0, 1fr) 32px 32px 32px;
+        grid-template-columns: minmax(0, 1fr) 32px 32px 32px 28px;
     }
 
     .gum.gm-screen .gm-selection-summary {
