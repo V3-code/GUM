@@ -88,6 +88,10 @@ test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /gum-gm-screen-clear-confirm/);
     assert.match(application, /data-clear-targets="groups"/);
     assert.match(application, /data-clear-targets="tabs"/);
+    assert.match(application, /name="clear-action" value="contents" checked/);
+    assert.match(application, /name="clear-action" value="groups"/);
+    assert.match(application, /height: Math\.min\(720, window\.innerHeight - 80\)/);
+    assert.match(application, /resizable: true/);
 });
 
 test("GM Screen tabs are dynamic while preserving a safe minimum", () => {
