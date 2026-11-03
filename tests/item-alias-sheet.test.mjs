@@ -12,9 +12,14 @@ test("item aliases use an array in the shared item model", () => {
 
 test("description tab exposes accessible editable alias chips", () => {
   assert.match(template, /data-tab="description"[\s\S]*?item-aliases-section/);
+  assert.match(template, /<details class="item-aliases-section"/);
+  assert.match(template, /class="item-aliases-summary"/);
+  assert.match(template, /\{\{itemAliasCount\}\}/);
   assert.match(template, /class="item-alias-input"/);
   assert.match(template, /class="edit-item-alias"/);
   assert.match(template, /class="remove-item-alias"/);
   assert.match(sheet, /html\.on\("keydown", "\.item-alias-input"/);
+  assert.match(sheet, /this\._aliasesExpanded = event\.currentTarget\.open/);
+  assert.match(sheet, /context\.itemAliasCount = context\.itemAliases\.length/);
   assert.match(sheet, /"system\.aliases": normalizeItemAliases\(aliases\)/);
 });
