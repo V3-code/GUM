@@ -35,11 +35,12 @@ test("items move within and between groups without duplicates", () => {
 
 test("layout cleanup can clear contents or complete groups at different scopes", () => {
     const config = { activeTabId: "one", tabs: [
-        { id: "one", groups: [{ id: "a", items: ["Item.a"], macroOptions: { "Item.a": {} } }, { id: "b", items: ["Item.b"] }] },
+        { id: "one", groups: [{ id: "a", items: ["Item.a"], macroOptions: { "Item.a": {} }, referenceMetadata: { "Item.a": { name: "A" } } }, { id: "b", items: ["Item.b"] }] },
         { id: "two", groups: [{ id: "c", items: ["Item.c", "Item.b"] }] }
     ] };
     const contents = clearGMScreenLayout(config, { scope: "groups", targetIds: ["a"] });
     assert.deepEqual(contents.config.tabs[0].groups[0].items, []);
+    assert.deepEqual(contents.config.tabs[0].groups[0].referenceMetadata, {});
     assert.equal(contents.config.tabs[0].groups.length, 2);
     assert.deepEqual(contents.removedUuids, ["Item.a"]);
     const tabs = clearGMScreenLayout(config, { scope: "tabs", targetIds: ["two"], removeGroups: true });
@@ -113,4 +114,15 @@ test("roll table cards draw external tables without entering modifier selection"
     assert.match(template, /class="roll-table-draw-btn/);
     assert.match(template, /class="roll-table-open-btn"/);
     assert.match(rollTableBrowser, /game\.tables/);
+});
+
+test("unavailable references remain visible and removable from the layout", () => {
+    assert.match(application, /_prepareUnavailableReference\(itemUuid, group\.referenceMetadata\?\.\[itemUuid\]\)/);
+    assert.match(application, /async _backfillReferenceMetadata\(tabs\)/);
+    assert.match(application, /delete group\.referenceMetadata\[itemUuid\]/);
+    assert.match(application, /target\.referenceMetadata\[itemUuid\] = referenceMetadata/);
+    assert.match(application, /if \(btn\.hasClass\('is-unavailable'\)\) return/);
+    assert.match(template, /is-unavailable/);
+    assert.match(template, /class="unavailable-reference-status"/);
+    assert.match(template, /group-unavailable-count/);
 });

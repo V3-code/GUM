@@ -129,7 +129,10 @@ test("GM Screen exports preserve RollTable UUIDs as external references", async 
   const table = { id: "weather", name: "Weather", documentName: "RollTable" };
   const configuration = { groups: [{
     id: "tables",
-    items: ["RollTable.weather"]
+    items: ["RollTable.weather"],
+    referenceMetadata: {
+      "RollTable.weather": { name: "Weather", img: "icons/svg/d20.svg", documentName: "RollTable", type: "" }
+    }
   }] };
   const bundle = await buildConfigurationBundle({
     id: "roll-table-reference", kind: "gm-screen", configuration,
@@ -137,6 +140,7 @@ test("GM Screen exports preserve RollTable UUIDs as external references", async 
   });
 
   assert.deepEqual(bundle.configuration.groups[0].items, ["RollTable.weather"]);
+  assert.equal(bundle.configuration.groups[0].referenceMetadata["RollTable.weather"].name, "Weather");
   assert.deepEqual(bundle.portability.unsupportedReferences, ["RollTable.weather"]);
   assert.deepEqual(bundle.documents, {});
 });
@@ -144,20 +148,28 @@ test("GM Screen exports preserve RollTable UUIDs as external references", async 
 test("GM Screen merges per-group Macro execution modes with the selected import policy", () => {
   const current = { tabs: [{ id: "tab-1", groups: [{
     id: "tools", items: ["Macro.shared"],
-    macroOptions: { "Macro.shared": { executionMode: "standard" } }
+    macroOptions: { "Macro.shared": { executionMode: "standard" } },
+    referenceMetadata: { "Macro.shared": { name: "Local macro" } }
   }] }] };
   const incoming = { tabs: [{ id: "tab-1", groups: [{
     id: "tools", items: ["Macro.shared", "Macro.new"],
     macroOptions: {
       "Macro.shared": { executionMode: "single-target" },
       "Macro.new": { executionMode: "each-target" }
+    },
+    referenceMetadata: {
+      "Macro.shared": { name: "Imported macro" },
+      "Macro.new": { name: "New macro" }
     }
   }] }] };
   const added = combineConfigurationImport("gm-screen", current, incoming, "add");
   assert.equal(added.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "standard");
   assert.equal(added.tabs[0].groups[0].macroOptions["Macro.new"].executionMode, "each-target");
+  assert.equal(added.tabs[0].groups[0].referenceMetadata["Macro.shared"].name, "Local macro");
+  assert.equal(added.tabs[0].groups[0].referenceMetadata["Macro.new"].name, "New macro");
   const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
   assert.equal(merged.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "single-target");
+  assert.equal(merged.tabs[0].groups[0].referenceMetadata["Macro.shared"].name, "Imported macro");
 });
 
 test("exports effects linked indirectly by a GM modifier", async () => {

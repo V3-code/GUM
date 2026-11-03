@@ -54,7 +54,7 @@ export function clearGMScreenLayout(config, { scope = "tabs", targetIds = [], re
             if (!shouldClear) return [{ ...group }];
             (group.items || []).forEach(uuid => removedUuids.add(uuid));
             if (removeGroups) return [];
-            return [{ ...group, items: [], macroOptions: {} }];
+            return [{ ...group, items: [], macroOptions: {}, referenceMetadata: {} }];
         });
         return { ...tab, groups };
     });

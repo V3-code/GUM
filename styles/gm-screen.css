@@ -735,6 +735,32 @@
 .gum.gm-screen .roll-table-draw-btn.is-running { color: var(--gum-text-claro); }
 .gum.gm-screen .roll-table-open-btn { color: #888; }
 .gum.gm-screen .roll-table-open-btn:hover { color: var(--gum-accent-gold); }
+.gum.gm-screen .group-unavailable-count { color: #d6a15d; }
+.gum.gm-screen .palette-mod.is-unavailable {
+    border-style: dashed;
+    border-color: rgba(214, 161, 93, 0.58);
+    background: linear-gradient(135deg, rgba(58, 51, 45, 0.74), rgba(42, 39, 37, 0.82));
+    color: #bdb7ae;
+    cursor: default;
+}
+.gum.gm-screen .palette-mod.is-unavailable:hover {
+    border-color: rgba(230, 176, 105, 0.82);
+    background: linear-gradient(135deg, rgba(67, 58, 49, 0.88), rgba(48, 43, 39, 0.9));
+    color: #ddd5ca;
+}
+.gum.gm-screen .palette-mod.is-unavailable .mod-icon {
+    filter: grayscale(0.8);
+    opacity: 0.55;
+}
+.gum.gm-screen .unavailable-reference-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #d6a15d;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
 /* Editor de layout */
 .gum.gm-screen .layout-edit-toggle {

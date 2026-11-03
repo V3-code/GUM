@@ -83,9 +83,13 @@ function mergeGMScreenConfiguration(current, incoming, mode) {
       const macroOptions = mode === "merge"
         ? { ...clone(targetGroup.macroOptions || {}), ...clone(incomingGroup?.macroOptions || {}) }
         : { ...clone(incomingGroup?.macroOptions || {}), ...clone(targetGroup.macroOptions || {}) };
+      const referenceMetadata = mode === "merge"
+        ? { ...clone(targetGroup.referenceMetadata || {}), ...clone(incomingGroup?.referenceMetadata || {}) }
+        : { ...clone(incomingGroup?.referenceMetadata || {}), ...clone(targetGroup.referenceMetadata || {}) };
       if (mode === "merge") Object.assign(targetGroup, clone(incomingGroup));
       targetGroup.items = items;
       targetGroup.macroOptions = macroOptions;
+      targetGroup.referenceMetadata = referenceMetadata;
     }
   }
 

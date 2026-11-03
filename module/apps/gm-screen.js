@@ -167,7 +167,7 @@ async getData() {
             const enrichedItems = await Promise.all((group.items || []).map(async (itemUuid) => {
                 try {
                     const item = await fromUuid(itemUuid);
-                    if (!item) return null;
+                    if (!item) return this._prepareUnavailableReference(itemUuid, group.referenceMetadata?.[itemUuid]);
                     const itemData = item.documentName === "RollTable"
                         ? { id: item.id, name: item.name, img: item.img, type: "roll-table" }
                         : item.toObject();
@@ -200,18 +200,18 @@ async getData() {
                     }
                     return itemData;
                 } catch (e) {
-                    return null;
+                    return this._prepareUnavailableReference(itemUuid, group.referenceMetadata?.[itemUuid]);
                 }
             }));
-            const availableItems = enrichedItems.filter(item => item !== null);
-            group.unavailableItemCount = Math.max(0, (group.items || []).length - availableItems.length);
-            group.itemCount = availableItems.length;
-            group.selectedCount = availableItems.filter(item => item.isSelected).length;
+            group.unavailableItemCount = enrichedItems.filter(item => item.isUnavailable).length;
+            group.unavailableItemsHint = this._t("GUM.GMScreen.UnavailableReferencesHint", { count: group.unavailableItemCount });
+            group.itemCount = enrichedItems.length;
+            group.selectedCount = enrichedItems.filter(item => item.isSelected).length;
             group.sortMode = group.sortMode === "manual" ? "manual" : "auto";
             group.isManualOrder = group.sortMode === "manual";
             group.enrichedItems = group.isManualOrder
-                ? availableItems
-                : availableItems.sort((a, b) => this._compareGroupedItems(a, b));
+                ? enrichedItems
+                : enrichedItems.sort((a, b) => this._compareGroupedItems(a, b));
         }));
 
         const mainTabs = (config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] }))).map(tab => ({
@@ -395,6 +395,38 @@ async getData() {
         const nameA = String(a?.name || "");
         const nameB = String(b?.name || "");
         return nameA.localeCompare(nameB, game.i18n?.lang || undefined, { sensitivity: "base" });
+    }
+
+    _inferReferenceDocumentName(uuid) {
+        const parts = String(uuid || "").split(".");
+        return ["Macro", "RollTable", "Item"].find(type => parts.includes(type)) || "Document";
+    }
+
+    _referenceTypeLabel(documentName, itemType = "") {
+        if (documentName === "Macro") return this._t("GUM.GMScreen.ReferenceTypeMacro");
+        if (documentName === "RollTable") return this._t("GUM.GMScreen.ReferenceTypeRollTable");
+        if (itemType === "effect") return this._t("GUM.GMScreen.ReferenceTypeEffect");
+        if (itemType === "gm_modifier") return this._t("GUM.GMScreen.ReferenceTypeModifier");
+        return this._t("GUM.GMScreen.ReferenceTypeDocument");
+    }
+
+    _prepareUnavailableReference(uuid, rawMetadata = {}) {
+        const metadata = rawMetadata && typeof rawMetadata === "object" ? rawMetadata : {};
+        const documentName = metadata.documentName || this._inferReferenceDocumentName(uuid);
+        const type = metadata.type || "unavailable";
+        const typeLabel = this._referenceTypeLabel(documentName, type);
+        return {
+            uuid,
+            name: metadata.name || this._t("GUM.GMScreen.UnavailableReferenceName", { type: typeLabel }),
+            img: metadata.img || "icons/svg/hazard.svg",
+            documentName,
+            type,
+            isMacro: documentName === "Macro",
+            isRollTable: documentName === "RollTable",
+            isUnavailable: true,
+            isSelected: false,
+            unavailableHint: this._t("GUM.GMScreen.UnavailableReferenceHint", { uuid })
+        };
     }
 
     _t(key, data = null) {
@@ -607,6 +639,7 @@ activateListeners(html) {
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
+            if (btn.hasClass('is-unavailable')) return;
             if (btn.data('documentName') !== 'Item') return;
             const itemType = btn.data('item-type') || "gm_modifier";
             const modUuid = btn.data('uuid');
@@ -1917,11 +1950,18 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         if (target !== source) this._materializeManualOrder(target);
         source.macroOptions = this._normalizeMacroOptions(source.macroOptions);
         target.macroOptions = this._normalizeMacroOptions(target.macroOptions);
+        source.referenceMetadata = this._normalizeReferenceMetadata(source.referenceMetadata, source.items);
+        target.referenceMetadata = this._normalizeReferenceMetadata(target.referenceMetadata, target.items);
         const macroOption = source.macroOptions[itemUuid];
+        const referenceMetadata = source.referenceMetadata[itemUuid];
         if (!moveUuidBetweenGroups(source, target, itemUuid, targetIndex)) return;
         if (target !== source && macroOption) {
             delete source.macroOptions[itemUuid];
             target.macroOptions[itemUuid] = macroOption;
+        }
+        if (target !== source && referenceMetadata) {
+            delete source.referenceMetadata[itemUuid];
+            target.referenceMetadata[itemUuid] = referenceMetadata;
         }
         await this._saveConfig(config);
     }
@@ -2065,12 +2105,62 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         }]));
     }
 
+    _normalizeReferenceMetadata(metadata, items = []) {
+        const source = metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {};
+        const itemUuids = new Set(Array.isArray(items) ? items : []);
+        return Object.fromEntries(Object.entries(source).flatMap(([uuid, value]) => {
+            if (!itemUuids.has(uuid) || !value || typeof value !== "object" || Array.isArray(value)) return [];
+            return [[uuid, {
+                name: String(value.name || ""),
+                img: String(value.img || ""),
+                documentName: String(value.documentName || this._inferReferenceDocumentName(uuid)),
+                type: String(value.type || "")
+            }]];
+        }));
+    }
+
+    _referenceMetadataFromDocument(document) {
+        return {
+            name: String(document?.name || ""),
+            img: String(document?.img || ""),
+            documentName: String(document?.documentName || "Document"),
+            type: String(document?.type || "")
+        };
+    }
+
+    async _backfillReferenceMetadata(tabs) {
+        const missing = new Set();
+        for (const group of (tabs || []).flatMap(tab => tab.groups || [])) {
+            group.referenceMetadata = this._normalizeReferenceMetadata(group.referenceMetadata, group.items);
+            for (const uuid of group.items || []) {
+                if (!group.referenceMetadata[uuid]) missing.add(uuid);
+            }
+        }
+        const resolved = new Map(await Promise.all([...missing].map(async uuid => {
+            const document = await fromUuid(uuid).catch(() => null);
+            return [uuid, document ? this._referenceMetadataFromDocument(document) : null];
+        })));
+        let changed = false;
+        for (const group of (tabs || []).flatMap(tab => tab.groups || [])) {
+            for (const uuid of group.items || []) {
+                const metadata = resolved.get(uuid);
+                if (!group.referenceMetadata[uuid] && metadata) {
+                    group.referenceMetadata[uuid] = metadata;
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
     _normalizeConfigGroup(group = {}) {
+        const items = Array.isArray(group?.items) ? group.items : [];
         return {
             id: group?.id || foundry.utils.randomID(),
             name: group?.name || this._t("GUM.GMScreen.Group"),
-            items: Array.isArray(group?.items) ? group.items : [],
+            items,
             macroOptions: this._normalizeMacroOptions(group?.macroOptions),
+            referenceMetadata: this._normalizeReferenceMetadata(group?.referenceMetadata, items),
             collapsed: group?.collapsed === true,
             sortMode: group?.sortMode === "manual" ? "manual" : "auto"
         };
@@ -2098,6 +2188,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         if (Array.isArray(config.tabs)) {
             const normalizedTabs = this._normalizeConfigTabs(config.tabs);
+            await this._backfillReferenceMetadata(normalizedTabs);
             const activeTabId = normalizedTabs.some(tab => tab.id === config.activeTabId) ? config.activeTabId : normalizedTabs[0].id;
             const normalized = { tabs: normalizedTabs, activeTabId };
             if (JSON.stringify(normalized) !== JSON.stringify(config)) {
@@ -2109,6 +2200,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         if (Array.isArray(config.groups)) {
             const tabs = this._createDefaultTabs();
             tabs[0].groups = config.groups.map(group => this._normalizeConfigGroup(group));
+            await this._backfillReferenceMetadata(tabs);
             const migrated = { tabs, activeTabId: tabs[0].id };
             await game.settings.set("gum", "gmScreenConfig", migrated);
             return migrated;
@@ -2118,6 +2210,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         const tabs = this._createDefaultTabs();
         tabs[0].groups = groups;
+        await this._backfillReferenceMetadata(tabs);
         const normalized = { tabs, activeTabId: tabs[0].id };
         await game.settings.set("gum", "gmScreenConfig", normalized);
         return normalized;
@@ -2142,7 +2235,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         if (!activeTab) return;
         activeTab.groups = activeTab.groups || [];
-        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], macroOptions: {}, collapsed: false, sortMode: "auto" });
+        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], macroOptions: {}, referenceMetadata: {}, collapsed: false, sortMode: "auto" });
         await this._saveConfig(config);
     }
     async _toggleGroupCollapse(groupId) {
@@ -2270,9 +2363,11 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             group.macroOptions = this._normalizeMacroOptions(group.macroOptions);
+            group.referenceMetadata = this._normalizeReferenceMetadata(group.referenceMetadata, group.items);
             items.forEach(item => {
                 if (!item?.uuid) return;
                 if (!group.items.includes(item.uuid)) group.items.push(item.uuid);
+                group.referenceMetadata[item.uuid] = this._referenceMetadataFromDocument(item);
                 if (item.documentName === "Macro") {
                     group.macroOptions[item.uuid] ??= { executionMode: "standard" };
                 }
@@ -2287,6 +2382,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         if (group) {
             group.items = group.items.filter(u => u !== itemUuid);
             if (group.macroOptions) delete group.macroOptions[itemUuid];
+            if (group.referenceMetadata) delete group.referenceMetadata[itemUuid];
             this.selectedModifiers.delete(itemUuid);
             await this._saveConfig(config);
         }
