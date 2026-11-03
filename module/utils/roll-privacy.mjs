@@ -35,7 +35,7 @@ export function rollPrivacyOptions(selectedMode, localize = key => key) {
   const selected = normalizeRollPrivacyMode(selectedMode);
   return [
     { mode: "publicroll", icon: "fa-globe", labelKey: "GUM.RollPrivacy.Public" },
-    { mode: "gmroll", icon: "fa-user-shield", labelKey: "GUM.RollPrivacy.PrivateGM" },
+    { mode: "gmroll", icon: "fa-user-secret", labelKey: "GUM.RollPrivacy.PrivateGM" },
     { mode: "blindroll", icon: "fa-eye-slash", labelKey: "GUM.RollPrivacy.Blind" },
     { mode: "selfroll", icon: "fa-user", labelKey: "GUM.RollPrivacy.Self" }
   ].map(option => ({ ...option, label: localize(option.labelKey), selected: option.mode === selected }));

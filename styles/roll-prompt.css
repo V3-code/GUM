@@ -373,22 +373,38 @@
     transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 .roll-big-btn:hover { background: #fff; box-shadow: 0 0 15px var(--gum-accent-gold); }
-.roll-submit-row,
-.gum-damage-roll-prompt .damage-roll-primary-action {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 6px;
+.roll-submit-stack { display: grid; gap: 6px; min-width: 0; }
+.roll-privacy-row {
+    display: flex;
     min-width: 0;
+    min-height: 30px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 3px 5px 3px 9px;
+    border: 1px solid rgba(197, 160, 91, 0.25);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.18);
 }
+.roll-privacy-label {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+    color: #9b9da3;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.roll-privacy-label i { color: rgba(197, 160, 91, 0.75); font-size: 0.62rem; }
 .roll-privacy-selector {
     display: grid;
     grid-template-columns: repeat(4, 24px);
     gap: 3px;
     align-content: center;
-    padding: 3px;
-    border: 1px solid rgba(197, 160, 91, 0.28);
-    border-radius: 5px;
-    background: rgba(0, 0, 0, 0.22);
+    padding: 0;
 }
 .roll-privacy-selector .roll-privacy-btn,
 .gum-damage-roll-prompt .roll-privacy-selector .roll-privacy-btn {
@@ -620,7 +636,7 @@
   background: linear-gradient(180deg, #5a6478, #40495d);
   border-color: rgba(197,160,91,0.5);
 }
-.gum-damage-roll-prompt .damage-roll-primary-action > button[type="submit"] { width: 100%; }
+.gum-damage-roll-prompt .damage-prompt-actions .roll-privacy-row { grid-column: 1 / -1; }
 @media (max-width: 620px) {
   .gum-damage-roll-prompt .damage-column-headings { display: none; }
   .gum-damage-roll-prompt .damage-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 76px); }

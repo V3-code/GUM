@@ -52,4 +52,5 @@ test("privacy selector exposes one selected accessible option", () => {
   assert.equal(options.length, 4);
   assert.equal(options.filter(option => option.selected).length, 1);
   assert.equal(options.find(option => option.selected).mode, "blindroll");
+  assert.equal(options.find(option => option.mode === "gmroll").icon, "fa-user-secret");
 });
