@@ -72,9 +72,10 @@ const profile = game.gum.api.damage.resolveProfile(actor, item, attack, "ranged"
   rollData
 });
 const formula = game.gum.api.damage.resolveFormula(actor, item, attack, "ranged", rollData);
+await game.gum.api.damage.fromHotbar({ actorUuid: actor.uuid, damageData });
 ```
 
-`damage.resolveTargetDefenseModifiers(actor, rollContext, rollData)` is also available.
+`damage.fromHotbar` executes a damage shortcut after resolving the current actor, item, and attack mode again. `damage.resolveTargetDefenseModifiers(actor, rollContext, rollData)` is also available.
 
 ## Content sources
 

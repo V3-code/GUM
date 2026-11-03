@@ -77,9 +77,10 @@ const profile = game.gum.api.damage.resolveProfile(actor, item, attack, "ranged"
   rollData
 });
 const formula = game.gum.api.damage.resolveFormula(actor, item, attack, "ranged", rollData);
+await game.gum.api.damage.fromHotbar({ actorUuid: actor.uuid, damageData });
 ```
 
-Também está disponível `damage.resolveTargetDefenseModifiers(actor, rollContext, rollData)`.
+`damage.fromHotbar` executa um atalho de dano resolvendo novamente o ator, o item e o modo de ataque. Também está disponível `damage.resolveTargetDefenseModifiers(actor, rollContext, rollData)`.
 
 ## Fontes de conteúdo
 

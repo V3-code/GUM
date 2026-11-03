@@ -151,24 +151,28 @@
             </div>
             <div class="sidebar-basic-damage-values">
               <a class="sidebar-basic-damage-item rollable-basic-damage"
+                 data-basic-damage-key="thrust_damage"
                  data-roll-formula="{{actor.system.attributes.thrust_damage.final}}"
                  data-label="{{localize 'GUM.Character.Sidebar.ThrustDamageTest'}}">
                 <span class="label">{{localize "GUM.Character.Sidebar.ThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
+                 data-basic-damage-key="swing_damage"
                  data-roll-formula="{{actor.system.attributes.swing_damage.final}}"
                  data-label="{{localize 'GUM.Character.Sidebar.SwingDamageTest'}}">
                 <span class="label">{{localize "GUM.Character.Sidebar.SwingAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.swing_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
+                 data-basic-damage-key="thrust_damage_alt"
                  data-roll-formula="{{actor.system.attributes.thrust_damage_alt.final}}"
                  data-label="{{localize 'GUM.Character.Sidebar.AlternateThrustDamageTest'}}">
                 <span class="label">{{localize "GUM.Character.Sidebar.AlternateThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage_alt.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
+                 data-basic-damage-key="swing_damage_alt"
                  data-roll-formula="{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}{{actor.system.attributes.swing_damage}}{{/if}}"
                  data-label="{{localize 'GUM.Character.Sidebar.AlternateSwingDamageTest'}}">
                 <span class="label">{{localize "GUM.Character.Sidebar.AlternateSwingAbbrev"}}</span>

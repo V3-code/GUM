@@ -169,6 +169,9 @@ export function createGumApi({
   });
 
   const damage = freezeNamespace({
+    fromHotbar(options = {}) {
+      return requireFunction(dependencies, "damageFromHotbar")(options);
+    },
     resolveFormula(actor, item, attack, attackType, rollData = {}) {
       return requireFunction(dependencies, "resolveCombatDamageFormula")(actor, item, attack, attackType, rollData);
     },
@@ -281,6 +284,7 @@ export function installGumApi({ gameRef = globalThis.game, hooks = globalThis.Ho
   const legacyAliases = {
     importFromGCS: "importFromGCS",
     rollFromHotbar: "rollFromHotbar",
+    damageFromHotbar: "damageFromHotbar",
     applyUseEventEffects: "applyUseEventEffects",
     applySingleEffect: "applySingleEffect",
     getEffectActions: "getEffectActions",

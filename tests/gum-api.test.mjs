@@ -42,6 +42,7 @@ function fixture({ isGM = true } = {}) {
   const dependencies = {
     performGURPSRoll: async (...args) => (calls.push(["perform", ...args]), "roll-result"),
     rollFromHotbar: (...args) => (calls.push(["hotbar", ...args]), "hotbar-result"),
+    damageFromHotbar: (...args) => (calls.push(["damage-hotbar", ...args]), "damage-hotbar-result"),
     executeRollRequest: (...args) => (calls.push(["request", ...args]), "request-result"),
     getEffectActions: system => system.actions,
     applyEffectWithResistance: async (...args) => (calls.push(["apply", ...args]), "effect-result"),
@@ -97,6 +98,7 @@ test("installs after preserving runtime state and keeps historical aliases", () 
   assert.equal(setup.gameRef.gum.gmScreen.rendered, true);
   assert.equal(setup.gameRef.gum.api, api);
   assert.equal(setup.gameRef.gum.rollFromHotbar, setup.dependencies.rollFromHotbar);
+  assert.equal(setup.gameRef.gum.damageFromHotbar, setup.dependencies.damageFromHotbar);
   assert.equal(setup.gameRef.gum.applySingleEffect, setup.dependencies.applySingleEffect);
   assert.deepEqual(emitted, [[GUM_API_HOOKS.READY, api]]);
 });
@@ -131,6 +133,7 @@ test("routes rolls and effects through the supported system flows", async () => 
 test("exposes damage helpers and defensive copies of content metadata", async () => {
   const setup = fixture();
   const api = createGumApi(setup);
+  assert.equal(api.damage.fromHotbar({ actorId: setup.actor.id }), "damage-hotbar-result");
   assert.equal(api.damage.resolveFormula({}, {}, {}, "melee"), "2d+1");
   assert.deepEqual(api.damage.resolveProfile({}, {}, {}, "melee"), { main: { formula: "2d+1" } });
   const purposes = api.content.purposes();
