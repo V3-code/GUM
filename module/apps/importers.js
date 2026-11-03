@@ -3231,6 +3231,16 @@ function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode 
         overwrite: true
     });
 
+    // Textos autorais da biblioteca GUM pertencem ao item de referência. Dados
+    // mecânicos continuam vindo da importação, mas uma descrição existente na
+    // fonte não deve ser apagada por notas ou descrições recebidas do GCS/JSON.
+    for (const field of ["description", "chat_description"]) {
+        const sourceText = base.system?.[field];
+        if (typeof sourceText === "string" ? sourceText.trim() : sourceText) {
+            mergedSystem[field] = foundry.utils.deepClone(sourceText);
+        }
+    }
+
     if (["advantage", "disadvantage"].includes(parsedItem.type)) {
         mergedSystem.modifiers = foundry.utils.deepClone(parsedItem.system.modifiers);
     }
@@ -4392,7 +4402,7 @@ async function chooseGumCharacterImportMode(fileName) {
             default: "import",
             close: () => resolve(null)
         }, {
-            classes: ["dialog", "gum", "gum-character-json-import-dialog"],
+            classes: ["dialog", "gum", "gum-dialog", "gum-sheet-edit-dialog", "gum-character-json-import-dialog"],
             width: 560
         }).render(true);
     });

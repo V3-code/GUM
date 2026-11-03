@@ -27,6 +27,12 @@ test("GUM character JSON restoration can opt into the same hybrid resolver", () 
   assert.match(importer, /mode: "gum-json"/);
   assert.match(importer, /resolveHybridSourceItem\(\{/);
   assert.match(importer, /Faithful\.Name/);
+  assert.match(importer, /"gum-dialog", "gum-sheet-edit-dialog", "gum-character-json-import-dialog"/);
+});
+
+test("hybrid matching preserves descriptions authored in the GUM source", () => {
+  assert.match(importer, /\["description", "chat_description"\]/);
+  assert.match(importer, /mergedSystem\[field\] = foundry\.utils\.deepClone\(sourceText\)/);
 });
 
 test("hybrid matching keeps specialization as part of the identity", () => {

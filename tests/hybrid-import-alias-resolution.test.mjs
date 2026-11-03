@@ -131,3 +131,51 @@ test("faithful GUM JSON restoration leaves embedded item data unchanged", async 
   assert.equal(restored._id, undefined);
   assert.deepEqual(restored.items, source.items);
 });
+
+test("hybrid reconciliation preserves authored GUM descriptions", async () => {
+  const sourceItem = {
+    id: "library-sword",
+    uuid: "Compendium.world.hybrid.Item.library-sword",
+    name: "Sword",
+    type: "equipment",
+    system: {
+      aliases: [], ref: "B271", specialization: "",
+      description: "Descrição completa da biblioteca GUM.",
+      chat_description: "Descrição breve da biblioteca GUM.",
+      quantity: 1
+    },
+    toObject() {
+      return {
+        _id: this.id, name: this.name, type: this.type,
+        system: structuredClone(this.system), flags: {}
+      };
+    }
+  };
+  const pack = {
+    collection: "world.hybrid",
+    documentName: "Item",
+    async getIndex() {
+      return { contents: [{ _id: sourceItem.id, name: sourceItem.name, type: sourceItem.type, system: sourceItem.system }] };
+    },
+    async getDocument(id) { return id === sourceItem.id ? sourceItem : null; }
+  };
+  packs.push(pack);
+  contentSources = { characterImport: [pack.collection] };
+  hybridScope = "configured";
+  game.items.contents = [];
+  invalidateHybridItemIndex();
+
+  const actorData = await prepareGumCharacterImportData({
+    name: "Backup", type: "character", system: {},
+    items: [{
+      name: "Sword", type: "equipment",
+      system: { description: "Texto importado.", chat_description: "Resumo importado.", quantity: 3 }
+    }]
+  }, { hybrid: true });
+
+  assert.equal(actorData.items[0].system.description, sourceItem.system.description);
+  assert.equal(actorData.items[0].system.chat_description, sourceItem.system.chat_description);
+  assert.equal(actorData.items[0].system.quantity, 3);
+  packs.length = 0;
+  contentSources = {};
+});

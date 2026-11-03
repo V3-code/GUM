@@ -10057,6 +10057,10 @@ background-color: var(--gum-accent-gold);
   color: var(--source-text);
 }
 
+.content-source-config .content-source-hybrid-scope select option {
+  color: #28251f;
+}
+
 .content-source-config .content-source-hybrid-scope .notes {
   grid-column: 1 / -1;
   line-height: 1.35;
