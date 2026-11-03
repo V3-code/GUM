@@ -1,6 +1,7 @@
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
+import { applyRollPrivacy } from "../utils/roll-privacy.mjs";
 import { getEffectTestChatPrivacy, normalizeEffectTestChatVisibility } from "../utils/effect-chat-visibility.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 
@@ -143,9 +144,11 @@ export async function rollEffectDamageAction({ action = {}, effectItem, target }
     .filter(component => component.key === "main" || component.formula);
   if (!components[0]?.formula) throw new Error("A ação Rolar Dano precisa de uma fórmula de dano principal.");
 
+  let promptedRollMode = null;
   if (normalized.damage_show_prompt) {
     const result = await promptForAdjustments(sourceName, components);
     if (!result) return null;
+    promptedRollMode = result.rollMode;
     components = applyPromptResult(components, result);
   }
 
@@ -209,15 +212,18 @@ export async function rollEffectDamageAction({ action = {}, effectItem, target }
     </div>`;
 
   const privacy = getEffectTestChatPrivacy({ visibility: normalized.roll_visibility, actor, users: Array.from(game.users || []) });
-  const chatData = {
+  let chatData = {
     user: game.user.id,
     speaker: { alias: effectItem?.name || sourceName },
     content,
     rolls: rolled.map(component => component.roll),
     flags: { gum: { effectDamage: { effectUuid: effectItem?.uuid || null, actionId: action.id || null, targetActorUuid: actor?.uuid || null } } }
   };
-  if (privacy.whisper.length) chatData.whisper = privacy.whisper;
-  if (privacy.blind) chatData.blind = true;
+  if (promptedRollMode) chatData = applyRollPrivacy(chatData, promptedRollMode);
+  else {
+    if (privacy.whisper.length) chatData.whisper = privacy.whisper;
+    if (privacy.blind) chatData.blind = true;
+  }
   await ChatMessage.create(chatData);
   return { damagePackage, rolls: rolled.map(component => component.roll) };
 }

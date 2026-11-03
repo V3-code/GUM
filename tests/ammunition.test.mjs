@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ammunitionAvailableUses, ammunitionLinkCandidates, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+import fs from "node:fs";
+import { ammunitionAvailableUses, ammunitionLinkCandidates, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum } from "../module/utils/ammunition.mjs";
+
+const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
 
 test("an equipment item can link itself as ammunition for its own ranged attack", () => {
     const hybrid = { id: "thrown-weapon", system: { quantity: 3, ammunition: { enabled: true } } };
@@ -38,6 +41,18 @@ test("critical rapid fire hits with every shot and rate of fire accepts only sim
     assert.equal(numericRateOfFire("6"), 6);
     assert.equal(numericRateOfFire("3x9"), null);
     assert.equal(numericRateOfFire("0"), null);
+});
+
+test("ignoring weapon rate of fire keeps the ammunition limit", () => {
+    assert.equal(resolveRapidFireMaximum({ cadence: 3, ammunitionAvailable: 8 }), 3);
+    assert.equal(resolveRapidFireMaximum({ cadence: 3, ammunitionAvailable: 8, ignoreCadence: true }), 8);
+    assert.equal(resolveRapidFireMaximum({ cadence: 3, ignoreCadence: true }), null);
+});
+
+test("ranged confirmation offers a per-attack rate-of-fire override", () => {
+    assert.match(main, /name="ignoreCadence"/);
+    assert.match(main, /!choice\.ignoreCadence && amount > numericCadence/);
+    assert.match(main, /ammunitionAvailable: selected \? ammunitionAvailableUses\(selected\) : null/);
 });
 
 test("only linked, available ammunition can be selected", () => {

@@ -63,6 +63,14 @@
   </section>
 
   <footer class="damage-prompt-actions">
+    <div class="roll-privacy-row">
+      <span class="roll-privacy-label"><i class="fas fa-lock"></i> {{localize "GUM.RollPrivacy.Label"}}</span>
+      <div class="roll-privacy-selector" role="group" aria-label="{{localize 'GUM.RollPrivacy.Label'}}">
+        {{#each rollPrivacyOptions}}
+        <button type="button" class="roll-privacy-btn {{#if this.selected}}active{{/if}}" data-roll-mode="{{this.mode}}" title="{{this.label}}" aria-label="{{this.label}}" aria-pressed="{{#if this.selected}}true{{else}}false{{/if}}"><i class="fas {{this.icon}}"></i></button>
+        {{/each}}
+      </div>
+    </div>
     <button type="submit"><i class="fas fa-dice"></i> Rolar Dano</button>
     <button type="button" data-action="cancel">Cancelar</button>
   </footer>

@@ -1,5 +1,6 @@
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
+import { getCurrentRollPrivacyMode, normalizeRollPrivacyMode, rollPrivacyOptions } from "../utils/roll-privacy.mjs";
 
 const formatDamageNatureAbbreviation = (value) => resolveDamageNature(value)?.abbreviation || String(value || "").trim();
 export class GurpsDamageRollPrompt extends FormApplication {
@@ -7,6 +8,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
         super(options);
         this.damageData = options.damageData || {};
         this.onRoll = options.onRoll;
+        this.rollMode = normalizeRollPrivacyMode(options.rollMode || this.damageData.rollMode || getCurrentRollPrivacyMode());
         this._cleanFormula = (formula) => String(formula || "").replace(/[(){}\[\]]/g, "").replace(/\s+/g, "").trim();
     }
 
@@ -88,6 +90,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             fragmentation,
             natureOptions: buildDamageNatureSearchOptions(),
             visualCards,
+            rollPrivacyOptions: rollPrivacyOptions(this.rollMode, key => game.i18n.localize(key)),
             mainTypeLocked: !!main.type,
             followUpTypeLocked: !!followUp.type,
             fragmentationTypeLocked: !!fragmentation.type
@@ -110,6 +113,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
         });
         html.find("input[name$='Nature']").on("input change", () => this._refreshVisualCards(html));
         html.find("button[data-action='cancel']").on("click", (ev) => { ev.preventDefault(); this.close(); });
+        html.find('.roll-privacy-btn').on('click', ev => {
+            ev.preventDefault();
+            this.rollMode = normalizeRollPrivacyMode($(ev.currentTarget).data('roll-mode'));
+            html.find('.roll-privacy-btn').each((_index, element) => {
+                const selected = element.dataset.rollMode === this.rollMode;
+                element.classList.toggle('active', selected);
+                element.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+        });
         this._validateForm(html);
         this._refreshVisualCards(html);
     }
@@ -341,13 +353,14 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 followUpAdditional: this._normalizeAdditionalFormula(followExpr),
                 fragmentationAdditional: this._normalizeAdditionalFormula(fragExpr),
                 followUpType: sections[1].type,
-                fragmentationType: sections[2].type
-                ,mainArmorDivisor: armorDivisors[0].value
-                ,followUpArmorDivisor: armorDivisors[1].value
-                ,fragmentationArmorDivisor: armorDivisors[2].value
-                ,mainNature: natures[0]
-                ,followUpNature: natures[1]
-                ,fragmentationNature: natures[2]
+                fragmentationType: sections[2].type,
+                mainArmorDivisor: armorDivisors[0].value,
+                followUpArmorDivisor: armorDivisors[1].value,
+                fragmentationArmorDivisor: armorDivisors[2].value,
+                mainNature: natures[0],
+                followUpNature: natures[1],
+                fragmentationNature: natures[2],
+                rollMode: this.rollMode
             }
         };
     }

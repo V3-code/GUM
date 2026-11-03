@@ -41,7 +41,7 @@ import { importFromGCS, invalidateHybridItemIndex } from "../module/apps/importe
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
-import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
@@ -57,7 +57,9 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
-import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import { applyRollPrivacy, getCurrentRollPrivacyMode } from "../module/utils/roll-privacy.mjs";
+import { BASIC_DAMAGE_KEYS, getBasicDamageFormula, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import { normalizeGurpsDamageExpression } from "../module/utils/damage-normalization.js";
 import { evaluateJavaScriptNumericExpression, resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
@@ -511,12 +513,6 @@ async function migrateBasicDamageSchema() {
     await game.settings.set("gum", "basicDamageSchemaMigrationV1", true);
 }
 
-function _getCurrentUserRollMode() {
-    const hasMessageModeSetting = game.settings?.settings?.has("core.messageMode");
-    const settingKey = hasMessageModeSetting ? "messageMode" : "rollMode";
-    return game.settings?.get("core", settingKey) ?? CONST.DICE_ROLL_MODES.PUBLIC;
-}
-
 function getDefaultSkillRollFormula() {
     const fallback = "3d6";
     const rawFormula = game.settings?.get?.("gum", "defaultSkillRollFormula");
@@ -531,41 +527,12 @@ function getDefaultSkillRollFormula() {
     }
 }
 
-export function applyCurrentRollPrivacy(chatData, { force = false } = {}) {
+export function applyCurrentRollPrivacy(chatData, { force = false, rollMode = null } = {}) {
     if (!chatData || typeof chatData !== "object") return chatData;
 
-const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
-    if (hasExplicitPrivacy && !force) return chatData;
-
-    const rollMode = _getCurrentUserRollMode();
-    if (typeof ChatMessage.applyMode === "function") {
-        return ChatMessage.applyMode({ ...chatData }, rollMode);
-    }
-
-    if (typeof ChatMessage.applyRollMode === "function") {
-        return ChatMessage.applyRollMode({ ...chatData }, rollMode);
-    }
-
-    const nextData = { ...chatData, rollMode };
-    delete nextData.whisper;
-    delete nextData.blind;
-
-    switch (rollMode) {
-        case CONST.DICE_ROLL_MODES.PRIVATE:
-            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
-            break;
-        case CONST.DICE_ROLL_MODES.BLIND:
-            nextData.whisper = ChatMessage.getWhisperRecipients("GM");
-            nextData.blind = true;
-            break;
-        case CONST.DICE_ROLL_MODES.SELF:
-            nextData.whisper = [game.user.id];
-            break;
-        default:
-            break;
-    }
-
-    return nextData;
+    const hasExplicitPrivacy = chatData.whisper !== undefined || chatData.blind !== undefined || chatData.rollMode !== undefined;
+    if (hasExplicitPrivacy && !force && !rollMode) return chatData;
+    return applyRollPrivacy(chatData, rollMode || getCurrentRollPrivacyMode());
 }
 // ================================================================== //
 //  ✅ CLASSE DO ATOR (GURPS ACTOR) - ATUALIZADA COM MODIFICADORES DE EQUIPAMENTO
@@ -1448,6 +1415,39 @@ async function createGumRollMacro(data, slot) {
     return false;
 }
 
+async function createGumDamageMacro(data, slot) {
+    const damageData = data?.damageData || {};
+    let actor = null;
+
+    if (data?.actorUuid) actor = await fromUuid(data.actorUuid).catch(() => null);
+    if (!actor && data?.actorId) actor = game.actors.get(data.actorId);
+    if (!actor) {
+        ui.notifications.warn("[GUM] Ator não encontrado para criar atalho de dano.");
+        return false;
+    }
+
+    const sourceLabel = damageData.sourceLabel || game.i18n.localize("GUM.RollCard.BasicDamage") || "Dano";
+    const label = `Dano — ${sourceLabel}`;
+    const command = `game.gum.damageFromHotbar(${JSON.stringify({
+        actorId: actor.id,
+        actorUuid: actor.uuid,
+        damageData
+    })})`;
+    let macro = game.macros.find(macro => macro.name === label && macro.command === command);
+
+    if (!macro) {
+        macro = await Macro.create({
+            name: label,
+            type: "script",
+            img: damageData.img || actor.img || "icons/svg/blood.svg",
+            command
+        }, { displaySheet: false });
+    }
+
+    game.user.assignHotbarMacro(macro, slot);
+    return false;
+}
+
 export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     
     // --- 1. LÓGICA DE VALORES BASE ---
@@ -1486,29 +1486,34 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                 <div class="gum-ammo-confirm-card gum-ammo-confirm-quantity"><label for="gum-ammo-confirm-amount">${game.i18n.localize("GUM.RapidFire.ShotsFired")}</label>
                     <div class="gum-ammo-quantity-controls"><button type="button" class="gum-ammo-quantity-step" data-step="-1" aria-label="−">−</button><input id="gum-ammo-confirm-amount" type="number" name="amount" min="1" ${numericCadence ? `max="${numericCadence}"` : ""} step="1" value="1"><button type="button" class="gum-ammo-quantity-step" data-step="1" aria-label="+">+</button></div>
                     <small class="gum-ammo-standard-note">${game.i18n.localize("GUM.RapidFire.ShotsFiredHint")}</small>
+                    ${numericCadence ? `<label class="gum-ammo-ignore-cadence"><input type="checkbox" name="ignoreCadence"><span><strong>${game.i18n.localize("GUM.RapidFire.IgnoreCadence")}</strong><small>${game.i18n.localize("GUM.RapidFire.IgnoreCadenceHint")}</small></span></label>` : ""}
                 </div>
             </form>`,
             render: html => {
                 const amountInput = html.find('[name="amount"]');
                 const updateQuantity = () => {
                     const selected = options.find(item => item.id === html.find('[name="ammunition"]').val());
-                    const maximum = selected
-                        ? Math.min(ammunitionAvailableUses(selected), numericCadence || Infinity)
-                        : numericCadence || 1;
-                    amountInput.attr('max', Math.max(1, maximum));
-                    html.find('.gum-ammo-quantity-step').prop('disabled', maximum < 1);
-                    amountInput.val(Math.min(Math.max(1, Number(amountInput.val()) || 1), Math.max(1, maximum)));
+                    const maximum = resolveRapidFireMaximum({
+                        cadence: numericCadence || 1,
+                        ammunitionAvailable: selected ? ammunitionAvailableUses(selected) : null,
+                        ignoreCadence: html.find('[name="ignoreCadence"]').prop('checked') === true
+                    });
+                    if (maximum === null) amountInput.removeAttr('max');
+                    else amountInput.attr('max', Math.max(1, maximum));
+                    html.find('.gum-ammo-quantity-step').prop('disabled', maximum !== null && maximum < 1);
+                    const current = Math.max(1, Number(amountInput.val()) || 1);
+                    amountInput.val(maximum === null ? current : Math.min(current, Math.max(1, maximum)));
                 };
-                html.find('[name="ammunition"]').on('change', updateQuantity);
+                html.find('[name="ammunition"], [name="ignoreCadence"]').on('change', updateQuantity);
                 html.find('.gum-ammo-quantity-step').on('click', event => {
-                    const maximum = Number(amountInput.attr('max')) || 1;
+                    const maximum = amountInput.attr('max') ? Number(amountInput.attr('max')) : Infinity;
                     const next = (Number(amountInput.val()) || 1) + Number(event.currentTarget.dataset.step);
                     amountInput.val(Math.min(maximum, Math.max(1, next)));
                 });
                 updateQuantity();
             },
             buttons: {
-                fire: { label: game.i18n.localize("GUM.Equipment.Ammunition.Fire"), callback: html => resolve({ id: String(html.find('[name="ammunition"]').val() || ""), amount: Number(html.find('[name="amount"]').val()) }) },
+                fire: { label: game.i18n.localize("GUM.Equipment.Ammunition.Fire"), callback: html => resolve({ id: String(html.find('[name="ammunition"]').val() || ""), amount: Number(html.find('[name="amount"]').val()), ignoreCadence: html.find('[name="ignoreCadence"]').prop('checked') === true }) },
                 cancel: { label: game.i18n.localize("GUM.Equipment.Attacks.Cancel"), callback: () => resolve(null) }
             },
             default: "fire", close: () => resolve(null)
@@ -1516,7 +1521,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         if (!choice) return;
         let selectedModifier = 0;
         const amount = choice.amount;
-        if (!Number.isSafeInteger(amount) || amount < 1 || (numericCadence && amount > numericCadence)) {
+        if (!Number.isSafeInteger(amount) || amount < 1 || (numericCadence && !choice.ignoreCadence && amount > numericCadence)) {
             ui.notifications.warn(game.i18n.localize("GUM.RapidFire.InvalidShots"));
             return;
         }
@@ -1527,7 +1532,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                 ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.InvalidQuantity"));
                 return;
             }
-            if (numericCadence && amount > numericCadence) {
+            if (numericCadence && !choice.ignoreCadence && amount > numericCadence) {
                 ui.notifications.warn(game.i18n.format("GUM.Equipment.Ammunition.ExceedsCadence", { cadence: numericCadence }));
                 return;
             }
@@ -1766,7 +1771,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         content: content,
         rolls: [roll],
         sound: CONFIG.sounds.dice
-    });
+    }, { rollMode: extraOptions.rollMode });
     showDiceForMessageLessRoll(roll, {
         createChatMessage: extraOptions.createChatMessage,
         dice3d: game.dice3d,
@@ -1892,6 +1897,9 @@ async function _rollDamageFromChatAction(payload) {
 
     if (attackId && (item.system?.melee_attacks || item.system?.ranged_attacks)) {
         const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
+        if (!attack) {
+            return ui.notifications.warn("O modo de ataque vinculado a esta rolagem de dano não foi encontrado.");
+        }
         if (attack?.effective_damage_formula || attack?.damage_formula) {
             const effectiveDamage = payload.ammunitionDamageProfile || resolveCombatDamageProfile(actor, item, attack, item.system?.melee_attacks?.[attackId] ? "melee" : "ranged", { includeTargeted: true, rollData: payload });
             normalizedAttack = {
@@ -2177,8 +2185,135 @@ async function _rollDamageFromChatAction(payload) {
         speaker: ChatMessage.getSpeaker({ actor }),
         content,
         rolls
-    });
+    }, { rollMode: promptResult.rollMode });
     await ChatMessage.create(chatData);
+}
+
+async function _rollBasicDamageFromHotbar(actor, damageData) {
+    const basicDamageKey = String(damageData?.basicDamageKey || "");
+    if (!BASIC_DAMAGE_KEYS.includes(basicDamageKey)) {
+        return ui.notifications.warn("[GUM] O tipo de dano básico deste atalho não é mais válido.");
+    }
+
+    const formula = getBasicDamageFormula(actor.system?.attributes?.[basicDamageKey], "0").toLowerCase();
+    const label = damageData?.sourceLabel || game.i18n.localize("GUM.RollCard.BasicDamage");
+    const basicDamageType = "indef.";
+    const extractMathFormula = value => {
+        const match = String(value).match(/^([0-9dDkKlLhH+\-/*\s(){},.]+)/i);
+        return match ? match[1].trim() : "0";
+    };
+    const normalizeFormula = value => {
+        if (!game.settings.get("gum", "normalizeGurpsDamageDice")) return value;
+        return normalizeGurpsDamageExpression(value)?.formula || value;
+    };
+    const cleaned = extractMathFormula(resolveAttackDamageDisplay(formula, actor.system.attributes));
+    const promptResult = await GurpsDamageRollPrompt.prompt({
+        sourceName: label,
+        main: { formula, displayFormula: cleaned, summaryFormula: cleaned, type: basicDamageType },
+        followUp: { formula: "", displayFormula: "", type: "" },
+        fragmentation: { formula: "", displayFormula: "", type: "" }
+    });
+    if (!promptResult) return;
+
+    const mainFormula = normalizeFormula(`${cleaned}${promptResult.mainAdditional || ""}`);
+    const followUpFormula = promptResult.followUpAdditional
+        ? normalizeFormula(String(promptResult.followUpAdditional).replace(/^\+/, ""))
+        : "";
+    const fragmentationFormula = promptResult.fragmentationAdditional
+        ? normalizeFormula(String(promptResult.fragmentationAdditional).replace(/^\+/, ""))
+        : "";
+    const mainRoll = new Roll(mainFormula);
+    await mainRoll.evaluate();
+    const followUpRoll = followUpFormula ? await new Roll(followUpFormula).evaluate() : null;
+    const fragmentationRoll = fragmentationFormula ? await new Roll(fragmentationFormula).evaluate() : null;
+    const rolls = [mainRoll, followUpRoll, fragmentationRoll].filter(Boolean);
+
+    const damagePackage = {
+        attackerId: actor.id,
+        attackerTokenId: actor.token?.id || null,
+        attackerTokenImg: resolveCharacterImage(actor),
+        sourceName: label,
+        main: {
+            total: mainRoll.total,
+            type: basicDamageType,
+            nature: promptResult.mainNature || null,
+            armorDivisor: promptResult.mainArmorDivisor || 1
+        },
+        onDamageEffects: {},
+        generalConditions: {}
+    };
+    if (followUpRoll) {
+        damagePackage.followUp = {
+            total: followUpRoll.total,
+            type: promptResult.followUpType || "",
+            nature: promptResult.followUpNature || null,
+            armorDivisor: promptResult.followUpArmorDivisor || 1
+        };
+    }
+    if (fragmentationRoll) {
+        damagePackage.fragmentation = {
+            total: fragmentationRoll.total,
+            type: promptResult.fragmentationType || "",
+            nature: promptResult.fragmentationNature || null,
+            armorDivisor: promptResult.fragmentationArmorDivisor || 1
+        };
+    }
+
+    const escapeHtml = value => foundry.utils.escapeHTML(String(value ?? ""));
+    const diceHtml = mainRoll.dice.flatMap(die => die.results)
+        .map(result => `<span class="die-damage">${escapeHtml(result.result)}</span>`)
+        .join("");
+    const formulaPill = [mainFormula, followUpFormula, fragmentationFormula]
+        .filter(Boolean)
+        .map(escapeHtml)
+        .join(" • ");
+    const encodedDamage = escapeHtml(JSON.stringify(damagePackage));
+    const extraDamage = (followUpRoll || fragmentationRoll) ? `
+      <footer class="card-footer">
+        ${followUpRoll ? `<div class="extra-damage-block"><div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FollowUpDamage")}</div><div class="extra-damage-roll"><div class="extra-total"><span class="damage-value">${escapeHtml(followUpRoll.total)}</span><span class="damage-type">${escapeHtml(promptResult.followUpType || "")}</span></div></div></div>` : ""}
+        ${fragmentationRoll ? `<div class="extra-damage-block"><div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FragmentationDamage")}</div><div class="extra-damage-roll"><div class="extra-total"><span class="damage-value">${escapeHtml(fragmentationRoll.total)}</span><span class="damage-type">${escapeHtml(promptResult.fragmentationType || "")}</span></div></div></div>` : ""}
+      </footer>` : "";
+    const content = `
+      <div class="gurps-damage-card">
+        <header class="card-header"><h3>${escapeHtml(label)}</h3><div class="card-subtitle">${game.i18n.localize("GUM.RollCard.BasicDamage")}</div></header>
+        <div class="card-formula-container"><span class="formula-pill">${formulaPill}</span></div>
+        <div class="card-content"><div class="card-main-flex">
+          <div class="roll-column"><span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span><div class="individual-dice-damage">${diceHtml || '<span class="die-damage">–</span>'}</div></div>
+          <div class="column-separator"></div>
+          <div class="target-column"><span class="column-label">${game.i18n.localize("GUM.RollCard.TotalDamage")}</span><div class="damage-total"><span class="damage-value">${escapeHtml(mainRoll.total)}</span></div></div>
+        </div></div>
+        ${extraDamage}
+        <footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${encodedDamage}'><i class="fas fa-crosshairs"></i> ${game.i18n.localize("GUM.RollCard.ApplyToTarget")}</button></footer>
+      </div>`;
+    const chatData = applyCurrentRollPrivacy({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content,
+        rolls
+    }, { rollMode: promptResult.rollMode });
+    return ChatMessage.create(chatData);
+}
+
+export async function damageFromHotbar({ actorId, actorUuid, damageData } = {}) {
+    let actor = null;
+    if (actorUuid) actor = await fromUuid(actorUuid).catch(() => null);
+    if (!actor && actorId) actor = game.actors.get(actorId);
+    if (!actor) {
+        return ui.notifications.warn("[GUM] O ator vinculado a este atalho de dano não foi encontrado.");
+    }
+
+    if (damageData?.kind === "basic") {
+        return _rollBasicDamageFromHotbar(actor, damageData);
+    }
+    if (damageData?.kind !== "item") {
+        return ui.notifications.warn("[GUM] Este atalho de dano possui um formato inválido.");
+    }
+    return _rollDamageFromChatAction({
+        actorId: actor.id,
+        actorUuid: actor.uuid,
+        itemId: damageData.itemId,
+        itemUuid: damageData.itemUuid,
+        attackId: damageData.attackId || null
+    });
 }
 
 function _gumChatHelpContent() {
@@ -3115,6 +3250,7 @@ Hooks.once('init', async function() {
         dependencies: {
             importFromGCS,
             rollFromHotbar,
+            damageFromHotbar,
             performGURPSRoll,
             executeRollRequest,
             applyUseEventEffects,
@@ -3166,8 +3302,8 @@ Hooks.once('init', async function() {
     });
 
     Hooks.on("hotbarDrop", (bar, data, slot) => {
-        if (data?.type !== "GUM.Roll") return;
-        return createGumRollMacro(data, slot);
+        if (data?.type === "GUM.Roll") return createGumRollMacro(data, slot);
+        if (data?.type === "GUM.DamageRoll") return createGumDamageMacro(data, slot);
     });
     
     // --- 2. LÊ A CONFIGURAÇÃO E APLICA NO SISTEMA DE COMBATE ---
@@ -3862,12 +3998,12 @@ $('body').on('click', '.chat-message .rollable', async (ev) => {
             };
 
             new GurpsRollPrompt(actor, promptData, {
-                onRoll: async (_actor, promptPayload) => {
+                onRoll: async (_actor, promptPayload, promptOptions = {}) => {
                     await performGURPSRoll(actor, {
                         label: rollLabel,
                         value: rollValue,
                         modifier: promptPayload.modifier || 0
-                    });
+                    }, { rollMode: promptOptions.rollMode });
                 }
             }).render(true);
             return;

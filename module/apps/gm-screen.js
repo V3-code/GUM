@@ -1,4 +1,6 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
+import { GMMacroBrowser } from "./gm-macro-browser.js";
+import { GMRollTableBrowser } from "./gm-roll-table-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "../../scripts/main.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
@@ -19,6 +21,10 @@ import {
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
+import { clearGMScreenLayout, moveEntryById, moveUuidBetweenGroups, normalizeMacroExecutionMode, planGMScreenMacroExecution } from "../utils/gm-screen-layout.mjs";
+
+const GM_SCREEN_LAYOUT_DRAG_TYPE = "GUM.GMScreenLayout";
+const GM_SCREEN_LAYOUT_MIME = "application/x-gum-gm-screen-layout";
 
 export class GumGMScreen extends Application {
     
@@ -39,6 +45,11 @@ export class GumGMScreen extends Application {
         // expandida por vez para preservar o espaço vertical da paleta.
         this.utilityPanel = null;
         this.searchQuery = "";
+        // O editor de layout e local a esta janela. Somente as alteracoes
+        // estruturais confirmadas por uma acao sao persistidas no mundo.
+        this.layoutEditMode = false;
+        this._runningMacros = new Set();
+        this._runningRollTables = new Set();
 
         this._lastContextClick = {
             actorId: null,
@@ -65,6 +76,7 @@ export class GumGMScreen extends Application {
 
     async close(options = {}) {
         Hooks.off("targetToken", this._onTargetToken);
+        this.layoutEditMode = false;
         return super.close(options);
     }
 
@@ -85,8 +97,14 @@ export class GumGMScreen extends Application {
             tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" },
                 { navSelector: ".monitor-tabs", contentSelector: ".monitor-body", initial: "characters" }
             ],
-            dragDrop: [{ dragSelector: ".palette-mod", dropSelector: ".group-content-area" }]
+            // O DragDrop do Foundry continua recebendo Itens externos. O
+            // arraste interno usa um payload proprio e alcas explicitas.
+            dragDrop: [{ dragSelector: null, dropSelector: ".group-content-area" }]
         });
+    }
+
+    _canDragDrop(_selector) {
+        return this.layoutEditMode;
     }
 
 async getData() {
@@ -149,10 +167,30 @@ async getData() {
             const enrichedItems = await Promise.all((group.items || []).map(async (itemUuid) => {
                 try {
                     const item = await fromUuid(itemUuid);
-                    if (!item) return null;
-                    const itemData = item.toObject();
+                    if (!item) return this._prepareUnavailableReference(itemUuid, group.referenceMetadata?.[itemUuid]);
+                    const itemData = item.documentName === "RollTable"
+                        ? { id: item.id, name: item.name, img: item.img, type: "roll-table" }
+                        : item.toObject();
                     itemData.uuid = itemUuid;
-                    itemData.isSelected = this.selectedModifiers.has(itemUuid);
+                    itemData.documentName = item.documentName;
+                    itemData.isMacro = item.documentName === "Macro";
+                    itemData.isRollTable = item.documentName === "RollTable";
+                    itemData.isSelected = item.documentName === "Item" && this.selectedModifiers.has(itemUuid);
+                    if (itemData.isMacro) {
+                        itemData.canExecute = item.canExecute === true;
+                        itemData.macroExecutionMode = normalizeMacroExecutionMode(group.macroOptions?.[itemUuid]?.executionMode);
+                        itemData.macroExecutionLabel = this._t(`GUM.GMScreen.MacroMode.${itemData.macroExecutionMode}`);
+                        itemData.macroExecutionIcon = {
+                            standard: "fa-bolt",
+                            "single-target": "fa-crosshairs",
+                            "each-target": "fa-users"
+                        }[itemData.macroExecutionMode];
+                        itemData.macroRunning = this._runningMacros.has(`${group.id}:${itemUuid}`);
+                    }
+                    if (itemData.isRollTable) {
+                        itemData.canDraw = item.visible !== false;
+                        itemData.rollTableRunning = this._runningRollTables.has(`${group.id}:${itemUuid}`);
+                    }
                     if (itemData.type === "gm_modifier") {
                         const presentation = this._formatModifierExpression(itemData.system?.modifier);
                         itemData.modifierDisplay = presentation.text;
@@ -162,12 +200,25 @@ async getData() {
                     }
                     return itemData;
                 } catch (e) {
-                    return null;
+                    return this._prepareUnavailableReference(itemUuid, group.referenceMetadata?.[itemUuid]);
                 }
             }));
-            group.enrichedItems = enrichedItems
-                .filter(item => item !== null)
-                .sort((a, b) => this._compareGroupedItems(a, b));
+            group.unavailableItemCount = enrichedItems.filter(item => item.isUnavailable).length;
+            group.unavailableItemsHint = this._t("GUM.GMScreen.UnavailableReferencesHint", { count: group.unavailableItemCount });
+            group.itemCount = enrichedItems.length;
+            group.selectedCount = enrichedItems.filter(item => item.isSelected).length;
+            group.sortMode = group.sortMode === "manual" ? "manual" : "auto";
+            group.isManualOrder = group.sortMode === "manual";
+            group.enrichedItems = group.isManualOrder
+                ? enrichedItems
+                : enrichedItems.sort((a, b) => this._compareGroupedItems(a, b));
+        }));
+
+        const mainTabs = (config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] }))).map(tab => ({
+            ...tab,
+            selectedCount: new Set((tab.groups || [])
+                .flatMap(group => group.items || [])
+                .filter(uuid => this.selectedModifiers.has(uuid))).size
         }));
 
         const selectionCount = this.selectedModifiers.size;
@@ -182,7 +233,8 @@ async getData() {
             combatants: combatData,
             hasCombat: !!(combat && combat.combatants.size > 0), 
             groups,
-            mainTabs: config.tabs || this.gmTabs.map(tab => ({ ...tab, groups: [] })),
+            mainTabs,
+            canDeleteTabs: mainTabs.length > 1,
             activeMainTab,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
@@ -193,7 +245,8 @@ async getData() {
             manualTotalText: signedValue(Number(this.manualCache.value) || 0),
             utilityPanel: this.utilityPanel,
             quickRollOpen: this.utilityPanel === "quick-roll",
-            manualOpen: this.utilityPanel === "manual-modifier"
+            manualOpen: this.utilityPanel === "manual-modifier",
+            layoutEditMode: this.layoutEditMode
         };
     }
 
@@ -344,6 +397,38 @@ async getData() {
         return nameA.localeCompare(nameB, game.i18n?.lang || undefined, { sensitivity: "base" });
     }
 
+    _inferReferenceDocumentName(uuid) {
+        const parts = String(uuid || "").split(".");
+        return ["Macro", "RollTable", "Item"].find(type => parts.includes(type)) || "Document";
+    }
+
+    _referenceTypeLabel(documentName, itemType = "") {
+        if (documentName === "Macro") return this._t("GUM.GMScreen.ReferenceTypeMacro");
+        if (documentName === "RollTable") return this._t("GUM.GMScreen.ReferenceTypeRollTable");
+        if (itemType === "effect") return this._t("GUM.GMScreen.ReferenceTypeEffect");
+        if (itemType === "gm_modifier") return this._t("GUM.GMScreen.ReferenceTypeModifier");
+        return this._t("GUM.GMScreen.ReferenceTypeDocument");
+    }
+
+    _prepareUnavailableReference(uuid, rawMetadata = {}) {
+        const metadata = rawMetadata && typeof rawMetadata === "object" ? rawMetadata : {};
+        const documentName = metadata.documentName || this._inferReferenceDocumentName(uuid);
+        const type = metadata.type || "unavailable";
+        const typeLabel = this._referenceTypeLabel(documentName, type);
+        return {
+            uuid,
+            name: metadata.name || this._t("GUM.GMScreen.UnavailableReferenceName", { type: typeLabel }),
+            img: metadata.img || "icons/svg/hazard.svg",
+            documentName,
+            type,
+            isMacro: documentName === "Macro",
+            isRollTable: documentName === "RollTable",
+            isUnavailable: true,
+            isSelected: false,
+            unavailableHint: this._t("GUM.GMScreen.UnavailableReferenceHint", { uuid })
+        };
+    }
+
     _t(key, data = null) {
         return data ? game.i18n.format(key, data) : game.i18n.localize(key);
     }
@@ -369,17 +454,36 @@ async getData() {
             });
 
             group.toggle(!query || groupMatches || visibleItems > 0);
+            group.toggleClass('is-search-expanded', Boolean(query && visibleItems > 0));
         });
     }
     
 activateListeners(html) {
         super.activateListeners(html);
-        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .delete-mod-btn').on('keydown', ev => {
+        this._activateLayoutEditor(html);
+        html.on('keydown.gm-layout-editor', ev => {
+            if (ev.key !== 'Escape' || !this.layoutEditMode) return;
+            ev.preventDefault();
+            this.layoutEditMode = false;
+            this.render(false);
+        });
+        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .macro-open-btn, .roll-table-open-btn, .delete-mod-btn, .move-item-btn').on('keydown', ev => {
             if (!['Enter', ' '].includes(ev.key)) return;
             ev.preventDefault();
             $(ev.currentTarget).trigger('click');
         });
-        html.find('.gm-request-test').click(event => { event.preventDefault(); openTestRequestLauncher(); });
+        html.find('.gm-request-test').click(event => {
+            event.preventDefault();
+            if (this.layoutEditMode) return;
+            openTestRequestLauncher();
+        });
+
+        html.find('.layout-edit-toggle').click(ev => {
+            ev.preventDefault();
+            this.layoutEditMode = !this.layoutEditMode;
+            this.utilityPanel = null;
+            this.render(false);
+        });
 
         html.find('.main-tab-btn').click(async ev => {
             ev.preventDefault();
@@ -406,6 +510,7 @@ activateListeners(html) {
 
         html.find('.gm-utility-toggle').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const panel = $(ev.currentTarget).data('utility-panel');
             this.utilityPanel = this.utilityPanel === panel ? null : panel;
             this.render(false);
@@ -415,6 +520,7 @@ activateListeners(html) {
         // 1. APLICAÇÃO DE MODIFICADOR (CLIQUE NO CARD)
         // ===========================================================
         html.find('.monitor-card').click(async ev => {
+            if (this.layoutEditMode) return;
             // Ignora cliques em botões internos (remover, link, etc)
             if ($(ev.target).closest('.remove-mod, .remove-effect, .actor-identity, .active-mod-tag').length) return;
             
@@ -464,6 +570,7 @@ activateListeners(html) {
         // 2. REMOÇÃO DE MODIFICADOR (CLIQUE NO X DA TAG)
         // ===========================================================
         html.find('.remove-mod').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.stopPropagation(); // Não ativa o clique do card
             
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
@@ -498,6 +605,7 @@ activateListeners(html) {
         // 2.1 REMOÇÃO DE EFEITO DO ESCUDO DO MESTRE (CLIQUE NO X DA TAG)
         // ===========================================================
         html.find('.remove-effect').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.stopPropagation();
 
             const tag = $(ev.currentTarget).closest('.active-mod-tag');
@@ -527,9 +635,12 @@ activateListeners(html) {
 // Seleção na Paleta (Toggle)
         html.find('.palette-mod').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             if ($(ev.target).closest('.mod-hover-controls').length) return;
 
             const btn = $(ev.currentTarget);
+            if (btn.hasClass('is-unavailable')) return;
+            if (btn.data('documentName') !== 'Item') return;
             const itemType = btn.data('item-type') || "gm_modifier";
             const modUuid = btn.data('uuid');
             const modValue = btn.data('value');
@@ -563,6 +674,7 @@ activateListeners(html) {
         // Ativar Manual
         html.find('.activate-manual-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             if (this.selectedModifiers.has("manual")) {
                 this.selectedModifiers.delete("manual");
             } else {
@@ -593,6 +705,7 @@ activateListeners(html) {
         // Botões de Passo (+/-)
         html.find('.step-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const action = $(ev.currentTarget).data('action');
             let current = parseInt(this.manualCache.value) || 0;
             if (action === 'inc') current += 1;
@@ -608,6 +721,7 @@ activateListeners(html) {
         // Botões de Preset (-6, +4...)
         html.find('.preset-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             const val = parseInt($(ev.currentTarget).data('val'));
             this.manualCache.value = val;
             html.find('.manual-value').val(val);
@@ -625,6 +739,7 @@ activateListeners(html) {
         // Limpar Seleção
         html.find('.clear-selection-btn').click(ev => {
             ev.preventDefault();
+            if (this.layoutEditMode) return;
             this.selectedModifiers.clear();
             this.render(false);
         });
@@ -649,10 +764,17 @@ activateListeners(html) {
         });
         
         html.find('.add-group-btn').click(async ev => {
+            if (!this.layoutEditMode) return;
             new Dialog({
                 title: this._t("GUM.GMScreen.NewGroup"), content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" autofocus/></div>`,
                 buttons: { create: { label: this._t("GUM.GMScreen.Create"), callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
             }).render(true);
+        });
+
+        html.find('.bulk-clear-layout-btn').click(ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            this._openBulkClearDialog();
         });
 
   html.find('.group-collapse-toggle').click(async ev => {
@@ -678,13 +800,15 @@ activateListeners(html) {
 
         html.on('click', '.edit-group-name-btn', async ev => {
             ev.preventDefault();
+            if (!this.layoutEditMode) return;
             const button = $(ev.currentTarget);
             const groupId = button.data('group-id');
             const currentName = button.data('group-name') || '';
+            const escapedCurrentName = foundry.utils.escapeHTML(String(currentName));
 
             new Dialog({
                 title: this._t("GUM.GMScreen.RenameGroup"),
-                content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" value="${currentName}" autofocus/></div>`,
+                content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" value="${escapedCurrentName}" autofocus/></div>`,
                 buttons: {
                     save: {
                         label: this._t("GUM.GMScreen.Save"),
@@ -699,25 +823,136 @@ activateListeners(html) {
         });
         
         html.find('.delete-group-btn').click(async ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             Dialog.confirm({ title: this._t("GUM.GMScreen.DeleteGroup"), content: `<p>${this._t("GUM.GMScreen.ConfirmDeleteGroup")}</p>`, yes: () => this._removeGroup(groupId) });
         });
         
         html.find('.add-mod-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             new GMModifierBrowser({ onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
         });
 
         html.find('.add-effect-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
             const groupId = $(ev.currentTarget).data('group-id');
             new EffectBrowser(null, { onSelect: async (items) => { await this._addItemsToGroup(groupId, items); } }).render(true);
+        });
+
+        html.find('.add-macro-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
+            const groupId = $(ev.currentTarget).data('group-id');
+            new GMMacroBrowser({ onSelect: async macros => { await this._addItemsToGroup(groupId, macros); } }).render(true);
+        });
+
+        html.find('.add-roll-table-to-group-btn').click(ev => {
+            if (!this.layoutEditMode) return;
+            const groupId = $(ev.currentTarget).data('group-id');
+            new GMRollTableBrowser({ onSelect: async tables => { await this._addItemsToGroup(groupId, tables); } }).render(true);
         });
         
         html.find('.delete-mod-btn').click(async ev => {
             ev.stopPropagation();
+            if (!this.layoutEditMode) return;
             const uuid = $(ev.currentTarget).closest('.palette-mod').data('uuid');
             const groupId = $(ev.currentTarget).closest('.modifier-group').data('group-id');
             await this._removeItemFromGroup(groupId, uuid);
+        });
+
+        html.find('.rename-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            this._promptRenameMainTab(button.data('tab-id'), button.data('tab-name') || '');
+        });
+
+        html.find('.add-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            this._promptCreateMainTab();
+        });
+
+        html.find('.delete-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            this._confirmRemoveMainTab($(ev.currentTarget).data('tab-id'));
+        });
+
+        html.find('.move-group-btn').click(async ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            await this._moveGroup($(ev.currentTarget).data('group-id'), Number($(ev.currentTarget).data('offset')) || 0);
+        });
+
+        html.find('.toggle-group-sort-btn').click(async ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            await this._toggleGroupSortMode($(ev.currentTarget).data('group-id'));
+        });
+
+        html.find('.move-item-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            const item = $(ev.currentTarget).closest('.palette-mod');
+            await this._moveItemByOffset(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                Number($(ev.currentTarget).data('offset')) || 0
+            );
+        });
+
+        html.find('.macro-execution-mode').on('change', async ev => {
+            if (!this.layoutEditMode) return;
+            const item = $(ev.currentTarget).closest('.palette-mod');
+            await this._setMacroExecutionMode(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                ev.currentTarget.value
+            );
+        });
+
+        html.find('.macro-run-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            const item = button.closest('.palette-mod');
+            await this._executeMacroFromGroup(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                button
+            );
+        });
+
+        html.find('.macro-open-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const macro = await fromUuid($(ev.currentTarget).closest('.palette-mod').data('uuid')).catch(() => null);
+            macro?.sheet?.render(true);
+        });
+
+        html.find('.roll-table-draw-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.layoutEditMode) return;
+            const button = $(ev.currentTarget);
+            const item = button.closest('.palette-mod');
+            await this._drawRollTableFromGroup(
+                item.closest('.modifier-group').data('group-id'),
+                item.data('uuid'),
+                button
+            );
+        });
+
+        html.find('.roll-table-open-btn').click(async ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const table = await fromUuid($(ev.currentTarget).closest('.palette-mod').data('uuid')).catch(() => null);
+            table?.sheet?.render(true);
         });
 
         html.on('click', ev => {
@@ -733,16 +968,19 @@ activateListeners(html) {
         // ===========================================================
         
         html.find('.next-turn').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) await game.combat.nextTurn();
         });
 
         html.find('.prev-turn').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) await game.combat.previousTurn();
         });
 
         html.find('.end-combat').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             if (game.combat) {
                 Dialog.confirm({
@@ -758,6 +996,7 @@ activateListeners(html) {
         // ===========================================================
 
         html.find('.qr-toggle-mode').click(ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             btn.toggleClass('active');
@@ -775,6 +1014,7 @@ activateListeners(html) {
         });
 
         html.find('.roll-test').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const nhBase = parseInt(html.find('.qr-nh').val()) || 10;
             const activeModsTotal = this._getTotalActiveModifier(); 
@@ -815,6 +1055,7 @@ activateListeners(html) {
         });
 
         html.find('.roll-damage').click(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             const formula = html.find('.qr-formula').val();
             const type = html.find('.qr-type').val() || ""; 
@@ -840,6 +1081,7 @@ activateListeners(html) {
         // MENU DE CONTEXTO (CLIQUE DIREITO)
         // ===========================================================
         html.find('.monitor-card').contextmenu(async ev => {
+            if (this.layoutEditMode) return;
             ev.preventDefault();
             ev.stopPropagation();
 
@@ -1266,7 +1508,13 @@ activateListeners(html) {
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
             const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${finalFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">${this._t("GUM.GMScreen.Dice")}</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">${this._t("GUM.GMScreen.Total")}</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> ${this._t("GUM.GMScreen.Apply")}</button></footer></div>`;
 
-            ChatMessage.create({ user: game.user.id, speaker: { alias: actor.name }, content: content, rolls: [roll] });
+            const chatData = applyCurrentRollPrivacy({
+                user: game.user.id,
+                speaker: { alias: actor.name },
+                content,
+                rolls: [roll]
+            }, { rollMode: promptResult.rollMode });
+            await ChatMessage.create(chatData);
             menu.remove();
         });
     }
@@ -1536,28 +1784,417 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         return [];
     }
 
+    _readLayoutDragData(dataTransfer) {
+        if (!dataTransfer) return null;
+        for (const mime of [GM_SCREEN_LAYOUT_MIME, "text/plain"]) {
+            const raw = dataTransfer.getData(mime);
+            if (!raw) continue;
+            try {
+                const data = JSON.parse(raw);
+                if (data?.type === GM_SCREEN_LAYOUT_DRAG_TYPE) return data;
+            } catch (_error) {
+                // O payload pode pertencer ao Foundry ou a outro modulo.
+            }
+        }
+        return null;
+    }
+
+    _activateLayoutEditor(html) {
+        const root = html?.[0];
+        if (!root) return;
+
+        const clearDropState = () => {
+            root.querySelectorAll('.is-layout-drop-target, .layout-drop-before, .layout-drop-after')
+                .forEach(element => element.classList.remove('is-layout-drop-target', 'layout-drop-before', 'layout-drop-after'));
+        };
+        const blockedBySearch = () => this.searchQuery.trim().length > 0;
+
+        root.addEventListener('dragstart', event => {
+            const handle = event.target.closest('.layout-drag-handle');
+            if (!handle || !root.contains(handle) || !this.layoutEditMode || !event.dataTransfer) return;
+            if (blockedBySearch()) {
+                event.preventDefault();
+                ui.notifications.warn(this._t("GUM.GMScreen.ClearFilterToReorder"));
+                return;
+            }
+
+            const groupElement = handle.closest('.modifier-group');
+            const itemElement = handle.closest('.palette-mod');
+            const payload = itemElement
+                ? {
+                    type: GM_SCREEN_LAYOUT_DRAG_TYPE,
+                    kind: 'item',
+                    itemUuid: itemElement.dataset.uuid,
+                    sourceGroupId: groupElement?.dataset.groupId
+                }
+                : {
+                    type: GM_SCREEN_LAYOUT_DRAG_TYPE,
+                    kind: 'group',
+                    groupId: groupElement?.dataset.groupId
+                };
+            if ((payload.kind === 'item' && (!payload.itemUuid || !payload.sourceGroupId)) || !groupElement) {
+                event.preventDefault();
+                return;
+            }
+            const serialized = JSON.stringify(payload);
+            event.dataTransfer.setData(GM_SCREEN_LAYOUT_MIME, serialized);
+            event.dataTransfer.setData('text/plain', serialized);
+            event.dataTransfer.effectAllowed = 'move';
+            requestAnimationFrame(() => (itemElement || groupElement).classList.add('is-layout-dragging'));
+        }, true);
+
+        root.addEventListener('dragover', event => {
+            if (!this.layoutEditMode || blockedBySearch()) return;
+            const data = this._readLayoutDragData(event.dataTransfer);
+            if (!data) return;
+
+            if (data.kind === 'item') {
+                const area = event.target.closest('.group-content-area');
+                if (!area || !root.contains(area)) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                clearDropState();
+                area.classList.add('is-layout-drop-target');
+                const targetItem = event.target.closest('.palette-mod');
+                if (targetItem && targetItem.dataset.uuid !== data.itemUuid) {
+                    const bounds = targetItem.getBoundingClientRect();
+                    targetItem.classList.add(event.clientY > bounds.top + bounds.height / 2
+                        ? 'layout-drop-after'
+                        : 'layout-drop-before');
+                }
+                return;
+            }
+
+            if (data.kind === 'group') {
+                const targetGroup = event.target.closest('.modifier-group');
+                if (!targetGroup || !root.contains(targetGroup) || targetGroup.dataset.groupId === data.groupId) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                clearDropState();
+                const bounds = targetGroup.getBoundingClientRect();
+                const after = event.clientY > bounds.top + bounds.height / 2
+                    || (Math.abs(event.clientY - (bounds.top + bounds.height / 2)) < bounds.height / 4
+                        && event.clientX > bounds.left + bounds.width / 2);
+                targetGroup.classList.add(after ? 'layout-drop-after' : 'layout-drop-before');
+            }
+        }, true);
+
+        root.addEventListener('drop', async event => {
+            if (!this.layoutEditMode || blockedBySearch()) return;
+            const data = this._readLayoutDragData(event.dataTransfer);
+            if (!data) return; // Deixa o DragDrop do Foundry tratar Itens externos.
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (data.kind === 'item') {
+                const area = event.target.closest('.group-content-area');
+                const targetGroupId = area?.closest('.modifier-group')?.dataset.groupId;
+                if (!area || !targetGroupId) return clearDropState();
+                const targetItem = event.target.closest('.palette-mod');
+                if (targetItem?.dataset.uuid === data.itemUuid && targetGroupId === data.sourceGroupId) return clearDropState();
+                const candidates = [...area.querySelectorAll('.palette-mod')]
+                    .filter(element => !(targetGroupId === data.sourceGroupId && element.dataset.uuid === data.itemUuid));
+                let targetIndex = candidates.length;
+                if (targetItem) {
+                    const index = candidates.indexOf(targetItem);
+                    if (index >= 0) {
+                        const bounds = targetItem.getBoundingClientRect();
+                        targetIndex = index + (event.clientY > bounds.top + bounds.height / 2 ? 1 : 0);
+                    }
+                }
+                clearDropState();
+                await this._moveItemToGroup(data.sourceGroupId, targetGroupId, data.itemUuid, targetIndex);
+                return;
+            }
+
+            if (data.kind === 'group') {
+                const targetGroup = event.target.closest('.modifier-group');
+                if (!targetGroup || targetGroup.dataset.groupId === data.groupId) return clearDropState();
+                const candidates = [...root.querySelectorAll('.modular-grid > .modifier-group')]
+                    .filter(element => element.dataset.groupId !== data.groupId);
+                const index = candidates.indexOf(targetGroup);
+                if (index < 0) return clearDropState();
+                const bounds = targetGroup.getBoundingClientRect();
+                const after = event.clientY > bounds.top + bounds.height / 2
+                    || (Math.abs(event.clientY - (bounds.top + bounds.height / 2)) < bounds.height / 4
+                        && event.clientX > bounds.left + bounds.width / 2);
+                clearDropState();
+                await this._moveGroupToIndex(data.groupId, index + (after ? 1 : 0));
+            }
+        }, true);
+
+        root.addEventListener('dragend', event => {
+            event.target.closest('.palette-mod, .modifier-group')?.classList.remove('is-layout-dragging');
+            clearDropState();
+        }, true);
+    }
+
+    _getDisplayedItemOrder(groupId) {
+        const group = this.element?.find?.('.modifier-group')
+            ?.filter?.((_index, element) => element.dataset.groupId === String(groupId))
+            ?.first?.();
+        if (!group?.length) return [];
+        return group.find('.palette-mod').toArray().map(element => element.dataset.uuid).filter(Boolean);
+    }
+
+    _materializeManualOrder(group) {
+        const displayed = this._getDisplayedItemOrder(group.id);
+        const current = Array.isArray(group.items) ? group.items : [];
+        group.items = [...displayed.filter(uuid => current.includes(uuid)), ...current.filter(uuid => !displayed.includes(uuid))];
+        group.sortMode = 'manual';
+    }
+
+    async _moveItemToGroup(sourceGroupId, targetGroupId, itemUuid, targetIndex) {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const source = (activeTab?.groups || []).find(group => group.id === sourceGroupId);
+        const target = (activeTab?.groups || []).find(group => group.id === targetGroupId);
+        if (!source || !target || !source.items?.includes(itemUuid)) return;
+
+        this._materializeManualOrder(source);
+        if (target !== source) this._materializeManualOrder(target);
+        source.macroOptions = this._normalizeMacroOptions(source.macroOptions);
+        target.macroOptions = this._normalizeMacroOptions(target.macroOptions);
+        source.referenceMetadata = this._normalizeReferenceMetadata(source.referenceMetadata, source.items);
+        target.referenceMetadata = this._normalizeReferenceMetadata(target.referenceMetadata, target.items);
+        const macroOption = source.macroOptions[itemUuid];
+        const referenceMetadata = source.referenceMetadata[itemUuid];
+        if (!moveUuidBetweenGroups(source, target, itemUuid, targetIndex)) return;
+        if (target !== source && macroOption) {
+            delete source.macroOptions[itemUuid];
+            target.macroOptions[itemUuid] = macroOption;
+        }
+        if (target !== source && referenceMetadata) {
+            delete source.referenceMetadata[itemUuid];
+            target.referenceMetadata[itemUuid] = referenceMetadata;
+        }
+        await this._saveConfig(config);
+    }
+
+    async _moveItemByOffset(groupId, itemUuid, offset) {
+        if (!offset) return;
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group) return;
+        this._materializeManualOrder(group);
+        const index = group.items.indexOf(itemUuid);
+        const target = index + offset;
+        if (index < 0 || target < 0 || target >= group.items.length) return;
+        [group.items[index], group.items[target]] = [group.items[target], group.items[index]];
+        await this._saveConfig(config);
+    }
+
+    async _moveGroupToIndex(groupId, targetIndex) {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const groups = activeTab?.groups || [];
+        const sourceIndex = groups.findIndex(group => group.id === groupId);
+        if (sourceIndex < 0) return;
+        activeTab.groups = moveEntryById(groups, groupId, targetIndex);
+        await this._saveConfig(config);
+    }
+
+    async _moveGroup(groupId, offset) {
+        if (!offset) return;
+        const config = await this._normalizeConfig();
+        const groups = this._getActiveConfigTab(config)?.groups || [];
+        const index = groups.findIndex(group => group.id === groupId);
+        const target = index + offset;
+        if (index < 0 || target < 0 || target >= groups.length) return;
+        [groups[index], groups[target]] = [groups[target], groups[index]];
+        await this._saveConfig(config);
+    }
+
+    async _toggleGroupSortMode(groupId) {
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group) return;
+        if (group.sortMode === 'manual') group.sortMode = 'auto';
+        else this._materializeManualOrder(group);
+        await this._saveConfig(config);
+    }
+
+    _promptRenameMainTab(tabId, currentName) {
+        const escapedName = foundry.utils.escapeHTML(String(currentName || ''));
+        new Dialog({
+            title: this._t("GUM.GMScreen.RenameWorkspace"),
+            content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="tab-name" value="${escapedName}" autofocus maxlength="24"/></div>`,
+            buttons: {
+                save: {
+                    label: this._t("GUM.GMScreen.Save"),
+                    callback: async dialogHtml => {
+                        const name = dialogHtml.find('#tab-name').val()?.trim();
+                        if (!name) return;
+                        const config = await this._normalizeConfig();
+                        const tab = (config.tabs || []).find(entry => entry.id === tabId);
+                        if (!tab) return;
+                        tab.name = name;
+                        await this._saveConfig(config);
+                    }
+                }
+            },
+            default: 'save'
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 420, height: "auto" }).render(true);
+    }
+
+    async _promptCreateMainTab() {
+        const config = await this._normalizeConfig();
+        const usedNames = new Set((config.tabs || []).map(tab => String(tab.name || "").trim()));
+        let sequence = 1;
+        while (usedNames.has(String(sequence))) sequence += 1;
+        const suggestedName = String(sequence);
+        new Dialog({
+            title: this._t("GUM.GMScreen.CreateWorkspace"),
+            content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="tab-name" value="${suggestedName}" autofocus maxlength="24"/></div>`,
+            buttons: {
+                create: {
+                    icon: '<i class="fas fa-plus"></i>',
+                    label: this._t("GUM.GMScreen.Create"),
+                    callback: dialogHtml => this._addMainTab(dialogHtml.find('#tab-name').val()?.trim() || suggestedName)
+                },
+                cancel: { label: this._t("GUM.GMScreen.Cancel") }
+            },
+            default: "create"
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 420, height: "auto" }).render(true);
+    }
+
+    async _addMainTab(name) {
+        const config = await this._normalizeConfig();
+        const id = foundry.utils.randomID();
+        config.tabs.push({ id, name: String(name || config.tabs.length + 1), groups: [] });
+        config.activeTabId = id;
+        await this._saveConfig(config);
+    }
+
+    async _confirmRemoveMainTab(tabId) {
+        const config = await this._normalizeConfig();
+        if (config.tabs.length <= 1) return ui.notifications.warn(this._t("GUM.GMScreen.KeepOneWorkspace"));
+        const tab = config.tabs.find(entry => entry.id === tabId);
+        if (!tab) return;
+        const groups = tab.groups?.length || 0;
+        const items = new Set((tab.groups || []).flatMap(group => group.items || [])).size;
+        Dialog.confirm({
+            title: this._t("GUM.GMScreen.DeleteWorkspace"),
+            content: `<p>${this._t("GUM.GMScreen.ConfirmDeleteWorkspace", {
+                name: foundry.utils.escapeHTML(String(tab.name || "")), groups, items
+            })}</p>`,
+            yes: () => this._removeMainTab(tabId),
+            defaultYes: false
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 440, height: "auto" });
+    }
+
+    async _removeMainTab(tabId) {
+        const config = await this._normalizeConfig();
+        if (config.tabs.length <= 1) return ui.notifications.warn(this._t("GUM.GMScreen.KeepOneWorkspace"));
+        const index = config.tabs.findIndex(tab => tab.id === tabId);
+        if (index < 0) return;
+        const [removed] = config.tabs.splice(index, 1);
+        if (config.activeTabId === tabId) {
+            config.activeTabId = config.tabs[Math.min(index, config.tabs.length - 1)].id;
+        }
+        const remainingUuids = new Set(config.tabs.flatMap(tab => (tab.groups || []).flatMap(group => group.items || [])));
+        for (const uuid of (removed.groups || []).flatMap(group => group.items || [])) {
+            if (!remainingUuids.has(uuid)) this.selectedModifiers.delete(uuid);
+        }
+        await this._saveConfig(config);
+    }
+
     _createDefaultTabs() {
         return this.gmTabs.map(tab => ({ id: tab.id, name: tab.name, groups: [] }));
+    }
+
+    _normalizeMacroOptions(options) {
+        if (!options || typeof options !== "object" || Array.isArray(options)) return {};
+        return Object.fromEntries(Object.entries(options).map(([uuid, value]) => [uuid, {
+            executionMode: normalizeMacroExecutionMode(value?.executionMode)
+        }]));
+    }
+
+    _normalizeReferenceMetadata(metadata, items = []) {
+        const source = metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {};
+        const itemUuids = new Set(Array.isArray(items) ? items : []);
+        return Object.fromEntries(Object.entries(source).flatMap(([uuid, value]) => {
+            if (!itemUuids.has(uuid) || !value || typeof value !== "object" || Array.isArray(value)) return [];
+            return [[uuid, {
+                name: String(value.name || ""),
+                img: String(value.img || ""),
+                documentName: String(value.documentName || this._inferReferenceDocumentName(uuid)),
+                type: String(value.type || "")
+            }]];
+        }));
+    }
+
+    _referenceMetadataFromDocument(document) {
+        return {
+            name: String(document?.name || ""),
+            img: String(document?.img || ""),
+            documentName: String(document?.documentName || "Document"),
+            type: String(document?.type || "")
+        };
+    }
+
+    async _backfillReferenceMetadata(tabs) {
+        const missing = new Set();
+        for (const group of (tabs || []).flatMap(tab => tab.groups || [])) {
+            group.referenceMetadata = this._normalizeReferenceMetadata(group.referenceMetadata, group.items);
+            for (const uuid of group.items || []) {
+                if (!group.referenceMetadata[uuid]) missing.add(uuid);
+            }
+        }
+        const resolved = new Map(await Promise.all([...missing].map(async uuid => {
+            const document = await fromUuid(uuid).catch(() => null);
+            return [uuid, document ? this._referenceMetadataFromDocument(document) : null];
+        })));
+        let changed = false;
+        for (const group of (tabs || []).flatMap(tab => tab.groups || [])) {
+            for (const uuid of group.items || []) {
+                const metadata = resolved.get(uuid);
+                if (!group.referenceMetadata[uuid] && metadata) {
+                    group.referenceMetadata[uuid] = metadata;
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    _normalizeConfigGroup(group = {}) {
+        const items = Array.isArray(group?.items) ? group.items : [];
+        return {
+            id: group?.id || foundry.utils.randomID(),
+            name: group?.name || this._t("GUM.GMScreen.Group"),
+            items,
+            macroOptions: this._normalizeMacroOptions(group?.macroOptions),
+            referenceMetadata: this._normalizeReferenceMetadata(group?.referenceMetadata, items),
+            collapsed: group?.collapsed === true,
+            sortMode: group?.sortMode === "manual" ? "manual" : "auto"
+        };
+    }
+
+    _normalizeConfigTabs(rawTabs) {
+        const sourceTabs = Array.isArray(rawTabs) && rawTabs.length
+            ? rawTabs
+            : [{ id: foundry.utils.randomID(), name: "1", groups: [] }];
+        const usedIds = new Set();
+        return sourceTabs.map((existing, index) => {
+            let id = String(existing?.id || "").trim();
+            if (!id || usedIds.has(id)) id = foundry.utils.randomID();
+            usedIds.add(id);
+            return {
+                id,
+                name: String(existing?.name || index + 1),
+                groups: this._extractGroupsFromConfig(existing).map(group => this._normalizeConfigGroup(group))
+            };
+        });
     }
 
     async _normalizeConfig() {
         const config = game.settings.get("gum", "gmScreenConfig") || {};
 
         if (Array.isArray(config.tabs)) {
-            const tabsMap = new Map((config.tabs || []).map(tab => [tab.id, tab]));
-            const normalizedTabs = this.gmTabs.map(baseTab => {
-                const existing = tabsMap.get(baseTab.id) || {};
-                return {
-                    id: baseTab.id,
-                    name: existing.name || baseTab.name,
-                    groups: this._extractGroupsFromConfig(existing).map(group => ({
-                        id: group.id || foundry.utils.randomID(),
-                        name: group.name || this._t("GUM.GMScreen.Group"),
-                        items: Array.isArray(group.items) ? group.items : [],
-                        collapsed: group.collapsed === true
-                    }))
-                };
-            });
+            const normalizedTabs = this._normalizeConfigTabs(config.tabs);
+            await this._backfillReferenceMetadata(normalizedTabs);
             const activeTabId = normalizedTabs.some(tab => tab.id === config.activeTabId) ? config.activeTabId : normalizedTabs[0].id;
             const normalized = { tabs: normalizedTabs, activeTabId };
             if (JSON.stringify(normalized) !== JSON.stringify(config)) {
@@ -1568,26 +2205,18 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         if (Array.isArray(config.groups)) {
             const tabs = this._createDefaultTabs();
-            tabs[0].groups = config.groups.map(group => ({
-                id: group.id || foundry.utils.randomID(),
-                name: group.name || this._t("GUM.GMScreen.Group"),
-                items: Array.isArray(group.items) ? group.items : [],
-                collapsed: group.collapsed === true
-            }));
+            tabs[0].groups = config.groups.map(group => this._normalizeConfigGroup(group));
+            await this._backfillReferenceMetadata(tabs);
             const migrated = { tabs, activeTabId: tabs[0].id };
             await game.settings.set("gum", "gmScreenConfig", migrated);
             return migrated;
         }
 
-        const groups = this._extractGroupsFromConfig(config).map(group => ({
-            id: group.id || foundry.utils.randomID(),
-            name: group.name || this._t("GUM.GMScreen.Group"),
-            items: Array.isArray(group.items) ? group.items : [],
-            collapsed: group.collapsed === true
-        }));
+        const groups = this._extractGroupsFromConfig(config).map(group => this._normalizeConfigGroup(group));
 
         const tabs = this._createDefaultTabs();
         tabs[0].groups = groups;
+        await this._backfillReferenceMetadata(tabs);
         const normalized = { tabs, activeTabId: tabs[0].id };
         await game.settings.set("gum", "gmScreenConfig", normalized);
         return normalized;
@@ -1612,7 +2241,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         if (!activeTab) return;
         activeTab.groups = activeTab.groups || [];
-        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], collapsed: false });
+        activeTab.groups.push({ id: foundry.utils.randomID(), name, items: [], macroOptions: {}, referenceMetadata: {}, collapsed: false, sortMode: "auto" });
         await this._saveConfig(config);
     }
     async _toggleGroupCollapse(groupId) {
@@ -1633,6 +2262,99 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             await this._saveConfig(config);
         }
     }
+
+    async _openBulkClearDialog() {
+        const config = await this._normalizeConfig();
+        const activeTab = this._getActiveConfigTab(config);
+        const escape = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const groupOptions = (activeTab?.groups || []).map(group => `
+            <label class="checkbox"><input type="checkbox" name="clear-group" value="${escape(group.id)}"> ${escape(group.name)}</label>
+        `).join("") || `<p class="notes">${this._t("GUM.GMScreen.NoGroupsInCurrentTab")}</p>`;
+        const tabOptions = (config.tabs || []).map(tab => `
+            <label class="checkbox"><input type="checkbox" name="clear-tab" value="${escape(tab.id)}"> ${escape(tab.name)}</label>
+        `).join("");
+
+        new Dialog({
+            title: this._t("GUM.GMScreen.BulkClearTitle"),
+            content: `
+                <form class="gum-bulk-clear-form">
+                    <p class="notes">${this._t("GUM.GMScreen.BulkClearHint")}</p>
+                    <div class="form-group"><label>${this._t("GUM.GMScreen.BulkClearAction")}</label><select name="clear-action">
+                        <option value="contents">${this._t("GUM.GMScreen.ClearContentsOnly")}</option>
+                        <option value="groups">${this._t("GUM.GMScreen.ClearGroupsAndContents")}</option>
+                    </select></div>
+                    <fieldset><legend>${this._t("GUM.GMScreen.BulkClearScope")}</legend>
+                        <div class="gum-bulk-clear-scopes">
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="active-tab" checked><span><i class="fas fa-table-columns"></i><strong>${this._t("GUM.GMScreen.CurrentTab")}</strong><small>${this._t("GUM.GMScreen.CurrentTabHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="groups"><span><i class="fas fa-layer-group"></i><strong>${this._t("GUM.GMScreen.SelectedGroups")}</strong><small>${this._t("GUM.GMScreen.SelectedGroupsHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope"><input type="radio" name="clear-scope" value="tabs"><span><i class="fas fa-clone"></i><strong>${this._t("GUM.GMScreen.SelectedTabs")}</strong><small>${this._t("GUM.GMScreen.SelectedTabsHint")}</small></span></label>
+                            <label class="gum-bulk-clear-scope is-danger"><input type="radio" name="clear-scope" value="all-tabs"><span><i class="fas fa-triangle-exclamation"></i><strong>${this._t("GUM.GMScreen.EntireScreen")}</strong><small>${this._t("GUM.GMScreen.EntireScreenHint")}</small></span></label>
+                        </div>
+                        <div class="gum-bulk-clear-targets" data-clear-targets="groups"><span class="gum-bulk-clear-targets-label">${this._t("GUM.GMScreen.ChooseGroups")}</span><div class="gum-bulk-clear-choices">${groupOptions}</div></div>
+                        <div class="gum-bulk-clear-targets" data-clear-targets="tabs"><span class="gum-bulk-clear-targets-label">${this._t("GUM.GMScreen.ChooseTabs")}</span><div class="gum-bulk-clear-choices">${tabOptions}</div></div>
+                    </fieldset>
+                    <p class="notes warning"><i class="fas fa-triangle-exclamation"></i> ${this._t("GUM.GMScreen.BulkClearReferencesOnly")}</p>
+                </form>
+            `,
+            render: html => {
+                const updateTargets = () => {
+                    const scope = html.find('[name="clear-scope"]:checked').val();
+                    html.find('.gum-bulk-clear-scope').removeClass('is-selected');
+                    html.find(`[name="clear-scope"][value="${scope}"]`).closest('.gum-bulk-clear-scope').addClass('is-selected');
+                    html.find('[data-clear-targets]').prop('hidden', true);
+                    html.find(`[data-clear-targets="${scope}"]`).prop('hidden', false);
+                };
+                html.find('[name="clear-scope"]').on('change', updateTargets);
+                updateTargets();
+            },
+            buttons: {
+                clear: {
+                    icon: '<i class="fas fa-trash"></i>',
+                    label: this._t("GUM.GMScreen.ClearLayout"),
+                    callback: html => {
+                        const scope = html.find('[name="clear-scope"]:checked').val();
+                        const removeGroups = html.find('[name="clear-action"]').val() === "groups";
+                        let targetIds = [];
+                        if (scope === "groups") targetIds = html.find('[name="clear-group"]:checked').map((_, input) => input.value).get();
+                        if (scope === "active-tab") targetIds = activeTab ? [activeTab.id] : [];
+                        if (scope === "tabs") targetIds = html.find('[name="clear-tab"]:checked').map((_, input) => input.value).get();
+                        if (scope !== "all-tabs" && targetIds.length === 0) {
+                            ui.notifications.warn(this._t("GUM.GMScreen.SelectClearTargets"));
+                            return false;
+                        }
+                        this._confirmBulkClear({ scope: scope === "active-tab" ? "tabs" : scope, targetIds, removeGroups });
+                    }
+                },
+                cancel: { label: this._t("GUM.GMScreen.Cancel") }
+            },
+            default: "cancel"
+        }, {
+            classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-clear-dialog"],
+            width: 560,
+            height: "auto"
+        }).render(true);
+    }
+
+    _confirmBulkClear(options) {
+        Dialog.confirm({
+            title: this._t("GUM.GMScreen.ConfirmBulkClearTitle"),
+            content: `<p>${this._t(options.removeGroups ? "GUM.GMScreen.ConfirmClearGroups" : "GUM.GMScreen.ConfirmClearContents")}</p>`,
+            yes: () => this._clearLayout(options),
+            defaultYes: false
+        }, {
+            classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-clear-confirm"],
+            width: 420,
+            height: "auto"
+        });
+    }
+
+    async _clearLayout(options) {
+        const config = await this._normalizeConfig();
+        const result = clearGMScreenLayout(config, options);
+        result.removedUuids.forEach(uuid => this.selectedModifiers.delete(uuid));
+        await this._saveConfig(result.config);
+        ui.notifications.info(this._t("GUM.GMScreen.LayoutCleared"));
+    }
     async _renameGroup(groupId, newName) {
         const config = await this._normalizeConfig();
         const activeTab = this._getActiveConfigTab(config);
@@ -1646,8 +2368,15 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const activeTab = this._getActiveConfigTab(config);
         const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
+            group.macroOptions = this._normalizeMacroOptions(group.macroOptions);
+            group.referenceMetadata = this._normalizeReferenceMetadata(group.referenceMetadata, group.items);
             items.forEach(item => {
+                if (!item?.uuid) return;
                 if (!group.items.includes(item.uuid)) group.items.push(item.uuid);
+                group.referenceMetadata[item.uuid] = this._referenceMetadataFromDocument(item);
+                if (item.documentName === "Macro") {
+                    group.macroOptions[item.uuid] ??= { executionMode: "standard" };
+                }
             });
             await this._saveConfig(config);
         }
@@ -1658,19 +2387,120 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const group = (activeTab?.groups || []).find(g => g.id === groupId);
         if (group) {
             group.items = group.items.filter(u => u !== itemUuid);
+            if (group.macroOptions) delete group.macroOptions[itemUuid];
+            if (group.referenceMetadata) delete group.referenceMetadata[itemUuid];
             this.selectedModifiers.delete(itemUuid);
             await this._saveConfig(config);
         }
     }
+
+    async _setMacroExecutionMode(groupId, macroUuid, executionMode) {
+        const config = await this._normalizeConfig();
+        const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+        if (!group || !group.items?.includes(macroUuid)) return;
+        group.macroOptions = this._normalizeMacroOptions(group.macroOptions);
+        group.macroOptions[macroUuid] = { executionMode: normalizeMacroExecutionMode(executionMode) };
+        await this._saveConfig(config);
+    }
+
+    async _executeMacroFromGroup(groupId, macroUuid, button) {
+        const executionKey = `${groupId}:${macroUuid}`;
+        if (this._runningMacros.has(executionKey)) return;
+        this._runningMacros.add(executionKey);
+        const icon = button?.find?.('i');
+        button?.prop?.('disabled', true)?.addClass?.('is-running');
+        icon?.removeClass?.('fa-play')?.addClass?.('fa-spinner fa-spin');
+        try {
+            const macro = await fromUuid(macroUuid).catch(() => null);
+            if (!macro || macro.documentName !== "Macro") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroNotFound"));
+            }
+            if (!macro.canExecute) {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroPermissionDenied"));
+            }
+
+            const config = await this._normalizeConfig();
+            const group = (this._getActiveConfigTab(config)?.groups || []).find(entry => entry.id === groupId);
+            const plan = planGMScreenMacroExecution(group?.macroOptions?.[macroUuid]?.executionMode, game.user?.targets);
+            const mode = plan.executionMode;
+            const targets = plan.targets;
+            if (plan.reason === "single-target") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroRequiresSingleTarget"));
+            }
+            if (plan.reason === "targets") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.MacroRequiresTargets"));
+            }
+
+            const origin = { type: "gm-screen", source: "GM Screen", groupId, macroUuid };
+            const gmScreen = { groupId, macroUuid, executionMode: mode, allTargets: targets };
+            const executeForTarget = target => macro.execute({
+                actor: target.actor,
+                token: target,
+                speaker: ChatMessage.getSpeaker({ actor: target.actor, token: target }),
+                targets: [target],
+                origin,
+                gmScreen
+            });
+            if (mode === "standard") {
+                await macro.execute({ targets, origin, gmScreen });
+            } else {
+                for (const execution of plan.executions) await executeForTarget(execution.target);
+            }
+        } catch (error) {
+            console.error("GUM | Falha ao executar Macro pelo Escudo do Mestre.", error);
+            ui.notifications.error(this._t("GUM.GMScreen.MacroExecutionFailed", { error: error?.message || String(error) }));
+        } finally {
+            this._runningMacros.delete(executionKey);
+            if (button?.[0]?.isConnected) {
+                button.prop('disabled', false).removeClass('is-running');
+                icon.removeClass('fa-spinner fa-spin').addClass('fa-play');
+            }
+        }
+    }
+
+    async _drawRollTableFromGroup(groupId, tableUuid, button) {
+        const executionKey = `${groupId}:${tableUuid}`;
+        if (this._runningRollTables.has(executionKey)) return;
+        this._runningRollTables.add(executionKey);
+        const icon = button?.find?.('i');
+        button?.prop?.('disabled', true)?.addClass?.('is-running');
+        icon?.removeClass?.('fa-dice-d20')?.addClass?.('fa-spinner fa-spin');
+        try {
+            const table = await fromUuid(tableUuid).catch(() => null);
+            if (!table || table.documentName !== "RollTable") {
+                return ui.notifications.warn(this._t("GUM.GMScreen.RollTableNotFound"));
+            }
+            if (table.visible === false) {
+                return ui.notifications.warn(this._t("GUM.GMScreen.RollTablePermissionDenied"));
+            }
+            const draw = await table.draw({ displayChat: true });
+            if (!Array.from(draw?.results || []).length) {
+                ui.notifications.warn(this._t("GUM.GMScreen.RollTableNoResults"));
+            }
+        } catch (error) {
+            console.error("GUM | Falha ao rolar tabela pelo Escudo do Mestre.", error);
+            ui.notifications.error(this._t("GUM.GMScreen.RollTableDrawFailed", { error: error?.message || String(error) }));
+        } finally {
+            this._runningRollTables.delete(executionKey);
+            if (button?.[0]?.isConnected) {
+                button.prop('disabled', false).removeClass('is-running');
+                icon.removeClass('fa-spinner fa-spin').addClass('fa-dice-d20');
+            }
+        }
+    }
     async _onDrop(event) { 
+        if (!this.layoutEditMode) return;
         const data = TextEditor.getDragEventData(event);
-        if (data.type !== "Item") return;
+        if (!["Item", "Macro", "RollTable"].includes(data.type)) return;
         const dropTarget = event.target.closest(".group-content-area");
         if (!dropTarget) return;
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
         const item = await fromUuid(data.uuid);
-        if (!item || !["gm_modifier", "effect"].includes(item.type)) {
-            return ui.notifications.warn(this._t("GUM.GMScreen.OnlyModifiersAndEffects"));
+        const isSupportedItem = item?.documentName === "Item" && ["gm_modifier", "effect"].includes(item.type);
+        const isMacro = item?.documentName === "Macro";
+        const isRollTable = item?.documentName === "RollTable";
+        if (!isSupportedItem && !isMacro && !isRollTable) {
+            return ui.notifications.warn(this._t("GUM.GMScreen.OnlySupportedEntries"));
         }
         await this._addItemsToGroup(groupId, [item]);
     }
@@ -1759,15 +2589,17 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                                 if (result) this.render(true);
                                 return;
                             }
-                            const groups = this._extractGroupsFromConfig(json).map(group => ({
-                                id: group.id || foundry.utils.randomID(),
-                                name: group.name || this._t("GUM.GMScreen.Group"),
-                                items: Array.isArray(group.items) ? group.items : [],
-                                collapsed: group.collapsed === true
-                            }));
-                            const tabs = this._createDefaultTabs();
-                            tabs[0].groups = groups;
-                            const incomingConfiguration = { tabs, activeTabId: tabs[0].id };
+                            let tabs;
+                            let activeTabId;
+                            if (Array.isArray(json.tabs)) {
+                                tabs = this._normalizeConfigTabs(json.tabs);
+                                activeTabId = tabs.some(tab => tab.id === json.activeTabId) ? json.activeTabId : tabs[0].id;
+                            } else {
+                                tabs = this._createDefaultTabs();
+                                tabs[0].groups = this._extractGroupsFromConfig(json).map(group => this._normalizeConfigGroup(group));
+                                activeTabId = tabs[0].id;
+                            }
+                            const incomingConfiguration = { tabs, activeTabId };
                             const currentConfiguration = game.settings.get("gum", "gmScreenConfig") || {};
                             const mode = await chooseConfigurationImportMode(
                                 "gm-screen",

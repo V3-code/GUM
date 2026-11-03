@@ -1,5 +1,5 @@
 import { calculateItemTraitCost, calculateTraitCost } from "../utils/trait-cost.mjs";
-import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
+import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
@@ -1753,6 +1753,43 @@ _getRollDataFromElement(element) {
     };
 }
 
+_getDamageRollDataFromElement(element) {
+    const dataset = element.dataset || {};
+
+    if (element.classList?.contains("rollable-basic-damage")) {
+        return {
+            kind: "basic",
+            basicDamageKey: dataset.basicDamageKey || null,
+            sourceLabel: dataset.label || game.i18n.localize("GUM.RollCard.BasicDamage"),
+            img: this.actor.img || "icons/svg/blood.svg"
+        };
+    }
+
+    const $element = $(element);
+    const itemId = dataset.itemId
+        || $element.data("itemId")
+        || $element.closest("[data-item-id]").data("itemId")
+        || $element.closest(".item").data("itemId")
+        || null;
+    const attackId = dataset.attackId
+        || $element.data("attackId")
+        || $element.closest("[data-attack-id]").data("attackId")
+        || null;
+    const item = itemId ? this.actor.items.get(itemId) : null;
+    const attack = attackId
+        ? item?.system?.melee_attacks?.[attackId] || item?.system?.ranged_attacks?.[attackId]
+        : null;
+
+    return {
+        kind: "item",
+        itemId,
+        itemUuid: item?.uuid || null,
+        attackId,
+        sourceLabel: attack ? `${item.name} (${attack.mode ?? attackId})` : item?.name || dataset.label || "Dano",
+        img: item?.img || this.actor.img || "icons/svg/blood.svg"
+    };
+}
+
 _onDragStart(event) {
     const target = event.currentTarget;
     const dataTransfer = event?.dataTransfer || event?.originalEvent?.dataTransfer;
@@ -1768,6 +1805,27 @@ _onDragStart(event) {
         };
 
         dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        return;
+    }
+
+    if (target?.classList?.contains("rollable-damage") || target?.classList?.contains("rollable-basic-damage")) {
+        if (!dataTransfer) return;
+        event.stopPropagation?.();
+        const damageData = this._getDamageRollDataFromElement(target);
+        if (damageData.kind === "item" && !damageData.itemId) {
+            ui.notifications.warn("[GUM] Não foi possível identificar a origem desta rolagem de dano.");
+            return;
+        }
+        if (damageData.kind === "basic" && !damageData.basicDamageKey) {
+            ui.notifications.warn("[GUM] Não foi possível identificar o tipo de dano básico.");
+            return;
+        }
+        dataTransfer.setData("text/plain", JSON.stringify({
+            type: "GUM.DamageRoll",
+            actorId: this.actor.id,
+            actorUuid: this.actor.uuid,
+            damageData
+        }));
         return;
     }
 
@@ -3785,13 +3843,15 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
 
     html.find(".rollable").attr("draggable", true);
     html.on("dragstart", ".rollable", this._onDragStart.bind(this));
+    html.find(".rollable-damage, .rollable-basic-damage").attr("draggable", true);
+    html.on("dragstart", ".rollable-damage, .rollable-basic-damage", this._onDragStart.bind(this));
 
     // Os cards compactos de magia ficam fora de `.item-list`, portanto não
     // recebem o listener de arraste criado pelo ActorSheet base. O listener
     // direto garante que currentTarget seja exatamente o card selecionado.
     html.find(".magic-card").each((_, card) => {
         card.addEventListener("dragstart", ev => {
-            if (ev.target.closest?.(".rollable")) return;
+            if (ev.target.closest?.(".rollable, .rollable-damage, .rollable-basic-damage")) return;
             this._onDragStart(ev);
 
             // O Chromium pode usar todo o grid como imagem nativa quando um
@@ -4169,11 +4229,12 @@ html.on("click", ".rollable-damage", async (ev) => {
 
 
 
-    await ChatMessage.create({
+    const chatData = applyCurrentRollPrivacy({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content,
       rolls
-    });
+    }, { rollMode: promptResult.rollMode });
+    await ChatMessage.create(chatData);
   };
 
   // --------------------------------------------------
@@ -4362,11 +4423,12 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
       </div>
     `;
 
-    await ChatMessage.create({
+    const chatData = applyCurrentRollPrivacy({
       speaker: ChatMessage.getSpeaker({ actor }),
       content,
       rolls: [roll, followUpRoll, fragmentationRoll].filter(Boolean)
-    });
+    }, { rollMode: promptResult.rollMode });
+    await ChatMessage.create(chatData);
   };
 
   performBasicRoll();

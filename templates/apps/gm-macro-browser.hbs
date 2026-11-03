@@ -1,0 +1,33 @@
+<form class="gm-macro-browser-form gum-browser" autocomplete="off">
+    <div class="browser-container">
+        <aside class="browser-sidebar">
+            <div class="filter-group">
+                <h3 class="filter-title">{{localize "GUM.GMScreen.SearchMacros"}}</h3>
+                <div class="search-box">
+                    <input type="text" name="search" placeholder="{{localize 'GUM.GMScreen.Filter'}}">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <p class="hint">{{localize "GUM.GMScreen.MacroBrowserHint"}}</p>
+        </aside>
+        <main class="browser-content">
+            <ol class="results-list">
+                {{#each macros}}
+                <li class="result-item" data-search="{{this.name}} {{this.typeLabel}} {{this.folderName}}">
+                    <div class="item-icon"><img src="{{this.img}}" alt="{{this.name}}"></div>
+                    <div class="item-info">
+                        <span class="item-name">{{this.name}}</span>
+                        <span class="item-details">{{this.typeLabel}}{{#if this.folderName}} • {{this.folderName}}{{/if}}{{#unless this.canExecute}} • {{localize "GUM.GMScreen.MacroUnavailable"}}{{/unless}}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button type="button" class="browser-open-macro" data-macro-id="{{this.id}}" title="{{localize 'GUM.GMScreen.OpenMacro'}}"><i class="fas fa-pen"></i></button>
+                        <label class="item-select"><input type="checkbox" name="macro-{{this.id}}"></label>
+                    </div>
+                </li>
+                {{/each}}
+                {{#unless macros}}<li class="placeholder-text">{{localize "GUM.GMScreen.NoMacrosAvailable"}}</li>{{/unless}}
+            </ol>
+        </main>
+    </div>
+    <footer class="browser-footer"><button type="submit"><i class="fas fa-plus-circle"></i> {{localize "GUM.GMScreen.AddSelectedMacros"}}</button></footer>
+</form>

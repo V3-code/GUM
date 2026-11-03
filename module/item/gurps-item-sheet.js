@@ -76,6 +76,11 @@ const ROLL_CONTEXT_OPTIONS = [
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    // 
 // ================================================================== // 
 export class GurpsItemSheet extends ItemSheet {
+    constructor(...args) {
+        super(...args);
+        this._aliasesExpanded = false;
+    }
+
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, { 
             classes: ["gum", "sheet", "item", "theme-dark"], 
@@ -243,6 +248,8 @@ _promptMultipleReferences(parsedList) {
         context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength);
         context.supportsHybridAliases = HYBRID_ALIAS_ITEM_TYPES.includes(this.item.type);
         context.itemAliases = normalizeItemAliases(itemData.system?.aliases).map((value, index) => ({ value, index }));
+        context.itemAliasCount = context.itemAliases.length;
+        context.aliasesExpanded = this._aliasesExpanded;
         if (["spell", "power"].includes(this.item.type)) {
             context.consumptionGroups = normalizeMagicConsumptionGroups(itemData.system.consumptionGroups);
             context.magicConsumptionSourceOptions = this.item.actor
@@ -774,6 +781,9 @@ _promptMultipleReferences(parsedList) {
         this._bindHeaderNameAutosize(html); 
  
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this)); 
+        html.find('.item-aliases-section').on('toggle', event => {
+            this._aliasesExpanded = event.currentTarget.open;
+        });
         if (!this.isEditable) return;
         const saveItemAlias = async () => {
             const input = html.find(".item-alias-input");

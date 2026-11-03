@@ -4,7 +4,12 @@ import test from "node:test";
 
 const template = fs.readFileSync(new URL("../templates/apps/gm-screen.hbs", import.meta.url), "utf8");
 const styles = fs.readFileSync(new URL("../styles/gm-screen.css", import.meta.url), "utf8");
+const coreStyles = fs.readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 const application = fs.readFileSync(new URL("../module/apps/gm-screen.js", import.meta.url), "utf8");
+const macroBrowser = fs.readFileSync(new URL("../module/apps/gm-macro-browser.js", import.meta.url), "utf8");
+const macroBrowserTemplate = fs.readFileSync(new URL("../templates/apps/gm-macro-browser.hbs", import.meta.url), "utf8");
+const rollTableBrowser = fs.readFileSync(new URL("../module/apps/gm-roll-table-browser.js", import.meta.url), "utf8");
+const rollTableBrowserTemplate = fs.readFileSync(new URL("../templates/apps/gm-roll-table-browser.hbs", import.meta.url), "utf8");
 const pt = JSON.parse(fs.readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
 const en = JSON.parse(fs.readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
 
@@ -18,6 +23,9 @@ test("GM Screen separates target actions, workspace navigation, and utility tool
     assert.ok(quickRollIndex > sidebarEnd);
     assert.ok(manualIndex > sidebarEnd);
     assert.match(template, /gm-main-toolbar[\s\S]*?gm-workspace-tabs[\s\S]*?screen-body[\s\S]*?gm-utility-dock/);
+    assert.match(styles, /bulk-clear-layout-btn\s*\{[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/);
+    assert.match(styles, /gm-main-toolbar\s*\{[\s\S]*?grid-template-columns:\s*minmax\(120px, 1fr\) auto 32px auto auto 28px;/);
+    assert.match(coreStyles, /dialog\.gum \.window-header[\s\S]*?color:\s*var\(--gum-text-claro/);
     assert.match(template, /data-utility-panel="quick-roll"/);
     assert.match(template, /data-utility-panel="manual-modifier"/);
 });
@@ -57,8 +65,8 @@ test("GM Screen preserves and reapplies its modifier search across renders", () 
 });
 
 test("all GM Screen localization keys exist in English and Portuguese", () => {
-    const templateKeys = [...template.matchAll(/localize\s+["']([^"']+)["']/g)].map(match => match[1]);
-    const applicationKeys = [...application.matchAll(/["'](GUM\.GMScreen\.[A-Za-z0-9]+)["']/g)].map(match => match[1]);
+    const templateKeys = [...`${template}\n${macroBrowserTemplate}\n${rollTableBrowserTemplate}`.matchAll(/localize\s+["']([^"']+)["']/g)].map(match => match[1]);
+    const applicationKeys = [...`${application}\n${macroBrowser}\n${rollTableBrowser}`.matchAll(/["'](GUM\.GMScreen\.[A-Za-z0-9.-]+)["']/g)].map(match => match[1]);
     const keys = [...templateKeys, ...applicationKeys];
     assert.ok(keys.length > 60);
 

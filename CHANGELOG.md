@@ -4,6 +4,32 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.0-beta] - 2026-11-03
+
+### Added
+
+- O Escudo do Mestre recebeu um modo de edição de layout que desativa temporariamente as ações mecânicas e permite reorganizar grupos, conteúdos e abas com segurança.
+- Abas do Escudo do Mestre agora podem ser criadas, renomeadas, reordenadas e excluídas, preservando ao menos uma área de trabalho válida.
+- Macros e Tabelas de Rolagem do Foundry podem ser adicionadas ao Escudo do Mestre por referência, executadas diretamente e transportadas pela configuração sem duplicar os documentos originais.
+- O editor do Escudo do Mestre ganhou limpeza em massa por grupos, aba atual, conjunto de abas ou escudo completo, com opção de manter os grupos e remover somente seus conteúdos.
+- Janelas de rolagem de teste e dano agora permitem escolher a privacidade apenas para a rolagem atual, sem alterar o modo padrão do chat do usuário.
+- Rolagens de dano de ataques, Magias, Poderes e danos básicos podem ser arrastadas para a hotbar do Foundry; os atalhos resolvem novamente os valores atuais quando executados.
+- A confirmação de ataques à distância permite ignorar a cadência da arma somente naquela execução.
+
+### Changed
+
+- Cards de Macro no Escudo do Mestre usam controles mais discretos e indicadores visuais de contexto de alvo.
+- Referências indisponíveis de Macros e Tabelas permanecem visíveis e editáveis até que o usuário as remova, com identificação clara do documento ausente.
+- O editor de aliases dos Itens foi compactado e tornou-se recolhível para ocupar menos espaço na ficha.
+- Janelas e fichas do sistema receberam correções de contraste nos títulos e barras superiores.
+- A janela de limpeza do Escudo do Mestre foi reorganizada em opções de escopo mais claras e responsivas.
+
+### Fixed
+
+- A exportação e importação do Escudo do Mestre preservam a quantidade dinâmica de abas e as referências de Macros e Tabelas sem tentar incorporar documentos potencialmente inseguros.
+- Atalhos de dano informam quando ator, item ou modo de ataque não existe mais, em vez de executar dados congelados ou inválidos.
+- O rótulo da confirmação de ataques à distância passou de `Cadência do modo` para `Cadência da arma`.
+
 ## [1.5.2-beta] - 2026-11-01
 
 ### Changed

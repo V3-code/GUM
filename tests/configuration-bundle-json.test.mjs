@@ -94,6 +94,84 @@ test("exports referenced documents once and keeps missing external references", 
   assert.equal(bundle.documents["effect-glow"].folder, undefined);
 });
 
+test("GM Screen bundles preserve dynamic and empty tabs", async () => {
+  const configuration = { activeTabId: "custom", tabs: [
+    { id: "main", name: "Main", groups: [] },
+    { id: "custom", name: "Custom", groups: [] }
+  ] };
+  const bundle = await buildConfigurationBundle({
+    id: "dynamic-tabs", kind: "gm-screen", configuration, resolveUuid: async () => null
+  });
+  assert.deepEqual(bundle.configuration, configuration);
+  const prepared = prepareConfigurationBundle(bundle);
+  assert.deepEqual(prepared.configuration, configuration);
+});
+
+test("GM Screen exports preserve Macro UUIDs as external unsupported references", async () => {
+  const macro = { id: "weather", name: "Weather", type: "script", documentName: "Macro" };
+  const configuration = { groups: [{
+    id: "tools",
+    items: ["Macro.weather"],
+    macroOptions: { "Macro.weather": { executionMode: "single-target" } }
+  }] };
+  const bundle = await buildConfigurationBundle({
+    id: "macro-reference", kind: "gm-screen", configuration,
+    resolveUuid: uuid => uuid === "Macro.weather" ? macro : null
+  });
+  assert.deepEqual(bundle.documents, {});
+  assert.deepEqual(bundle.configuration.groups[0].items, ["Macro.weather"]);
+  assert.equal(bundle.configuration.groups[0].macroOptions["Macro.weather"].executionMode, "single-target");
+  assert.deepEqual(bundle.portability.unsupportedReferences, ["Macro.weather"]);
+  assert.equal(bundle.portability.complete, false);
+});
+
+test("GM Screen exports preserve RollTable UUIDs as external references", async () => {
+  const table = { id: "weather", name: "Weather", documentName: "RollTable" };
+  const configuration = { groups: [{
+    id: "tables",
+    items: ["RollTable.weather"],
+    referenceMetadata: {
+      "RollTable.weather": { name: "Weather", img: "icons/svg/d20.svg", documentName: "RollTable", type: "" }
+    }
+  }] };
+  const bundle = await buildConfigurationBundle({
+    id: "roll-table-reference", kind: "gm-screen", configuration,
+    resolveUuid: uuid => uuid === "RollTable.weather" ? table : null
+  });
+
+  assert.deepEqual(bundle.configuration.groups[0].items, ["RollTable.weather"]);
+  assert.equal(bundle.configuration.groups[0].referenceMetadata["RollTable.weather"].name, "Weather");
+  assert.deepEqual(bundle.portability.unsupportedReferences, ["RollTable.weather"]);
+  assert.deepEqual(bundle.documents, {});
+});
+
+test("GM Screen merges per-group Macro execution modes with the selected import policy", () => {
+  const current = { tabs: [{ id: "tab-1", groups: [{
+    id: "tools", items: ["Macro.shared"],
+    macroOptions: { "Macro.shared": { executionMode: "standard" } },
+    referenceMetadata: { "Macro.shared": { name: "Local macro" } }
+  }] }] };
+  const incoming = { tabs: [{ id: "tab-1", groups: [{
+    id: "tools", items: ["Macro.shared", "Macro.new"],
+    macroOptions: {
+      "Macro.shared": { executionMode: "single-target" },
+      "Macro.new": { executionMode: "each-target" }
+    },
+    referenceMetadata: {
+      "Macro.shared": { name: "Imported macro" },
+      "Macro.new": { name: "New macro" }
+    }
+  }] }] };
+  const added = combineConfigurationImport("gm-screen", current, incoming, "add");
+  assert.equal(added.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "standard");
+  assert.equal(added.tabs[0].groups[0].macroOptions["Macro.new"].executionMode, "each-target");
+  assert.equal(added.tabs[0].groups[0].referenceMetadata["Macro.shared"].name, "Local macro");
+  assert.equal(added.tabs[0].groups[0].referenceMetadata["Macro.new"].name, "New macro");
+  const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
+  assert.equal(merged.tabs[0].groups[0].macroOptions["Macro.shared"].executionMode, "single-target");
+  assert.equal(merged.tabs[0].groups[0].referenceMetadata["Macro.shared"].name, "Imported macro");
+});
+
 test("exports effects linked indirectly by a GM modifier", async () => {
   const documents = new Map([
     ["Item.modifier", {
@@ -144,18 +222,20 @@ test("GM Screen imports support add, merge, and replace without duplicating item
     tabs: [{ id: "tab-1", name: "Imported", groups: [
       { id: "shared", name: "New", collapsed: true, items: ["Item.a", "Item.b"] },
       { id: "added", name: "Added", items: ["Item.c"] }
-    ] }]
+    ] }, { id: "custom-tab", name: "Imported empty tab", groups: [] }]
   };
 
   const added = combineConfigurationImport("gm-screen", current, incoming, "add");
   assert.equal(added.tabs[0].name, "Current");
   assert.equal(added.tabs[0].groups.find(group => group.id === "shared").name, "Old");
   assert.deepEqual(added.tabs[0].groups.find(group => group.id === "shared").items, ["Item.a", "Item.b"]);
+  assert.equal(added.tabs.find(tab => tab.id === "custom-tab").name, "Imported empty tab");
 
   const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
   assert.equal(merged.tabs[0].name, "Imported");
   assert.equal(merged.tabs[0].groups.find(group => group.id === "shared").name, "New");
   assert.ok(merged.tabs[0].groups.some(group => group.id === "local"));
+  assert.ok(merged.tabs.some(tab => tab.id === "custom-tab"));
   assert.equal(merged.activeTabId, "tab-1");
 
   const replaced = combineConfigurationImport("gm-screen", current, incoming, "replace");
@@ -244,7 +324,7 @@ test("configuration preview counts matching, changed, new, and current-only entr
   }, {
     groups: [{ id: "same", items: ["Item.a"] }, { id: "create", items: [] }]
   });
-  assert.deepEqual(summary, { creates: 1, updates: 1, unchanged: 0, removes: 1 });
+  assert.deepEqual(summary, { creates: 1, updates: 1, unchanged: 1, removes: 1 });
 });
 
 test("exports a portability report for unresolved references and external assets", async () => {

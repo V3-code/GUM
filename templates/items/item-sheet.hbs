@@ -2004,13 +2004,13 @@
           </div>
         </div>
         {{#if supportsHybridAliases}}
-        <section class="item-aliases-section" aria-labelledby="item-aliases-title">
-          <div class="item-aliases-heading">
-            <div>
-              <h4 id="item-aliases-title"><i class="fas fa-tags" aria-hidden="true"></i> {{localize "GUM.ItemAliases.Title"}}</h4>
-              <p>{{localize "GUM.ItemAliases.Hint"}}</p>
-            </div>
-          </div>
+        <details class="item-aliases-section" aria-labelledby="item-aliases-title" {{#if aliasesExpanded}}open{{/if}}>
+          <summary class="item-aliases-summary" id="item-aliases-title">
+            <span class="item-aliases-summary-title"><i class="fas fa-tags" aria-hidden="true"></i> {{localize "GUM.ItemAliases.Title"}}</span>
+            <span class="item-aliases-summary-meta"><span class="item-aliases-count">{{itemAliasCount}}</span><i class="fas fa-chevron-down item-aliases-chevron" aria-hidden="true"></i></span>
+          </summary>
+          <div class="item-aliases-content">
+          <p class="item-aliases-hint">{{localize "GUM.ItemAliases.Hint"}}</p>
           {{#if editable}}
           <div class="item-aliases-entry">
             <input class="item-alias-input" type="text" placeholder="{{localize 'GUM.ItemAliases.Placeholder'}}" aria-label="{{localize 'GUM.ItemAliases.Title'}}"/>
@@ -2027,7 +2027,8 @@
             <span class="item-aliases-empty">{{localize "GUM.ItemAliases.Empty"}}</span>
             {{/each}}
           </div>
-        </section>
+          </div>
+        </details>
         {{/if}}
       </div>
     </div>

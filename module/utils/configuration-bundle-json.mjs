@@ -80,8 +80,16 @@ function mergeGMScreenConfiguration(current, incoming, mode) {
         continue;
       }
       const items = mergeUniqueValues(targetGroup.items, incomingGroup?.items);
+      const macroOptions = mode === "merge"
+        ? { ...clone(targetGroup.macroOptions || {}), ...clone(incomingGroup?.macroOptions || {}) }
+        : { ...clone(incomingGroup?.macroOptions || {}), ...clone(targetGroup.macroOptions || {}) };
+      const referenceMetadata = mode === "merge"
+        ? { ...clone(targetGroup.referenceMetadata || {}), ...clone(incomingGroup?.referenceMetadata || {}) }
+        : { ...clone(incomingGroup?.referenceMetadata || {}), ...clone(targetGroup.referenceMetadata || {}) };
       if (mode === "merge") Object.assign(targetGroup, clone(incomingGroup));
       targetGroup.items = items;
+      targetGroup.macroOptions = macroOptions;
+      targetGroup.referenceMetadata = referenceMetadata;
     }
   }
 
@@ -160,10 +168,16 @@ export function combineConfigurationImport(kind, current, incoming, mode = "merg
 
 function configurationEntries(kind, configuration) {
   if (kind === "gm-screen") {
-    return new Map(gmScreenTabs(configuration).flatMap((tab, tabIndex) => (tab?.groups || []).map((group, groupIndex) => [
-      `group:${tab?.id || tabIndex}:${group?.id || groupIndex}`,
-      group
-    ])));
+    return new Map(gmScreenTabs(configuration).flatMap((tab, tabIndex) => {
+      const tabId = tab?.id || tabIndex;
+      return [
+        [`tab:${tabId}`, { id: tab?.id, name: tab?.name }],
+        ...(tab?.groups || []).map((group, groupIndex) => [
+          `group:${tabId}:${group?.id || groupIndex}`,
+          group
+        ])
+      ];
+    }));
   }
   if (kind === "passive-conditions") {
     return new Map((configuration?.entries || []).map((value, index) => [`condition:${value?.id || value?.sourceUuid || index}`, value]));

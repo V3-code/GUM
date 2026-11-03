@@ -34,6 +34,7 @@ export interface GumApi {
     syncItem(item: GumDocumentReference, options?: Record<string, unknown>): Promise<any>;
   };
   readonly damage: {
+    fromHotbar(options?: Record<string, unknown>): Promise<any> | any;
     resolveFormula(actor: any, item: any, attack: any, attackType: string, rollData?: Record<string, unknown>): string;
     resolveProfile(actor: any, item: any, attack: any, attackType: string, options?: Record<string, unknown>): any;
     resolveTargetDefenseModifiers(actor: any, rollContext: any, rollData?: Record<string, unknown>): any;

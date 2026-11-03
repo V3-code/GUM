@@ -113,6 +113,20 @@
     font-size: var(--gum-font-size-base);
 }
 
+/* Cabeçalho-base dos diálogos GUM. Regras específicas abaixo continuam podendo sobrescrever este padrão. */
+.app.window-app.dialog.gum .window-header {
+    color: var(--gum-text-claro, #f3eadc);
+}
+.app.window-app.dialog.gum .window-header .window-title {
+    color: inherit;
+}
+.app.window-app.dialog.gum .window-header .header-button {
+    color: var(--gum-accent-gold, #c5a05b);
+}
+.app.window-app.gum > .window-header .window-title {
+    color: var(--gum-text-claro, #f3eadc);
+}
+
 /* Links */
 .gum a {
     color: var(--gum-accent-gold);
