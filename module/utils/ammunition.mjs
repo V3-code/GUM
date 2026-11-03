@@ -13,6 +13,15 @@ export function numericRateOfFire(value) {
     return Number.isSafeInteger(rate) && rate > 0 ? rate : null;
 }
 
+export function resolveRapidFireMaximum({ cadence, ammunitionAvailable = null, ignoreCadence = false } = {}) {
+    const limits = [];
+    const numericCadence = Number(cadence);
+    const numericAvailable = Number(ammunitionAvailable);
+    if (!ignoreCadence && Number.isFinite(numericCadence) && numericCadence > 0) limits.push(Math.floor(numericCadence));
+    if (ammunitionAvailable !== null && Number.isFinite(numericAvailable) && numericAvailable >= 0) limits.push(Math.floor(numericAvailable));
+    return limits.length ? Math.min(...limits) : null;
+}
+
 export function calculateRapidFireHits({ isSuccess = false, isCriticalSuccess = false, margin = 0, recoil, shotsFired }) {
     const shots = Math.floor(Number(shotsFired));
     const rcl = Number(recoil);

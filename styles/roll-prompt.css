@@ -615,6 +615,11 @@
 .gum-ammo-confirm-card select:focus,
 .gum-ammo-confirm-card input:focus { border-color: var(--gum-accent-gold, #c5a05b); outline: none; }
 .gum-ammo-confirm-card small { color: var(--gum-text-medio, #b5b1ad); font-size: 10px; line-height: 1.3; }
+.gum-ammo-confirm-card .gum-ammo-ignore-cadence { display: flex; width: 100%; align-items: center; gap: 8px; margin-top: 3px; padding: 7px 8px; border-radius: 5px; background: rgba(255,255,255,.035); cursor: pointer; text-align: left; }
+.gum-ammo-confirm-card .gum-ammo-ignore-cadence input { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; accent-color: var(--gum-accent-gold, #c5a05b); }
+.gum-ammo-confirm-card .gum-ammo-ignore-cadence span { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
+.gum-ammo-confirm-card .gum-ammo-ignore-cadence strong { color: var(--gum-text-claro, #ebe8e2); font-size: 10px; }
+.gum-ammo-confirm-card .gum-ammo-ignore-cadence small { color: var(--gum-text-medio, #b5b1ad); font-size: 9px; font-weight: 400; }
 .dialog.gum.gum-ammo-confirm-dialog .dialog-buttons { display: flex; gap: 8px; margin: 0; padding: 14px 18px 16px; background: var(--gum-bg-body, #18191e); }
 .dialog.gum.gum-ammo-confirm-dialog .dialog-buttons button { min-height: 34px; margin: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #292d35; color: var(--gum-text-claro, #ebe8e2); font-size: 12px; font-weight: 650; box-shadow: none; }
 .dialog.gum.gum-ammo-confirm-dialog .dialog-buttons button[data-button="fire"] { border-color: var(--gum-accent-gold, #c5a05b); background: var(--gum-accent-gold, #c5a05b); color: #1b1712; }
