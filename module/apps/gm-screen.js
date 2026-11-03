@@ -2106,6 +2106,10 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 cancel: { label: this._t("GUM.GMScreen.Cancel") }
             },
             default: "cancel"
+        }, {
+            classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-clear-dialog"],
+            width: 560,
+            height: "auto"
         }).render(true);
     }
 
@@ -2115,6 +2119,10 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             content: `<p>${this._t(options.removeGroups ? "GUM.GMScreen.ConfirmClearGroups" : "GUM.GMScreen.ConfirmClearContents")}</p>`,
             yes: () => this._clearLayout(options),
             defaultYes: false
+        }, {
+            classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-clear-confirm"],
+            width: 420,
+            height: "auto"
         });
     }
 

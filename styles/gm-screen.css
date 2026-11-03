@@ -732,11 +732,23 @@
     color: #b97a76;
 }
 .gum.gm-screen .bulk-clear-layout-btn:hover { border: 0; background: rgba(229, 83, 75, 0.1); color: #ff7770; }
-.gum-bulk-clear-form fieldset { margin: 10px 0; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.14); }
-.gum-bulk-clear-form .checkbox { display: block; margin: 5px 0; }
-.gum-bulk-clear-form .gum-bulk-clear-choices { max-height: 120px; margin: 3px 0 8px 22px; overflow-y: auto; color: #bbb; }
-.gum-bulk-clear-form .gum-bulk-clear-all { margin-top: 10px; color: #ff8b84; font-weight: 700; }
-.gum-bulk-clear-form .notes.warning { color: #d7a36d; }
+.dialog.gum.gum-gm-screen-clear-dialog .window-content { padding: 0; background: var(--gum-bg-body, #18191e); }
+.dialog.gum.gum-gm-screen-clear-dialog .dialog-content { padding: 14px 16px 8px; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form { display: flex; flex-direction: column; gap: 10px; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form > .notes { margin: 0; line-height: 1.4; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .form-group { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 10px; margin: 0; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form select { width: 100%; height: 32px; margin: 0; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; background: rgba(255,255,255,0.025); }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form legend { padding: 0 5px; color: var(--gum-text-label, #c8bda8); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .checkbox { display: flex; align-items: center; gap: 7px; margin: 5px 0; color: var(--gum-text-claro, #eee); font-size: 0.74rem; text-transform: none; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-form .checkbox input { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 14px; max-height: 170px; margin: 3px 0 8px 21px; overflow-y: auto; color: #bbb; }
+.dialog.gum.gum-gm-screen-clear-dialog .gum-bulk-clear-all { margin-top: 10px; color: #ff8b84; font-weight: 700; }
+.dialog.gum.gum-gm-screen-clear-dialog .notes.warning { padding: 8px 10px; border-radius: 6px; background: rgba(215, 163, 109, 0.08); color: #d7a36d; }
+.dialog.gum.gum-gm-screen-clear-dialog .dialog-buttons { margin: 0; padding: 10px 16px 14px; background: rgba(0,0,0,0.12); }
+.dialog.gum.gum-gm-screen-clear-dialog .dialog-buttons button[data-button="clear"] { border-color: rgba(229,83,75,0.35); color: #ff8b84; }
+.dialog.gum.gum-gm-screen-clear-dialog .dialog-buttons button[data-button="clear"]:hover { background: rgba(229,83,75,0.16); }
+.dialog.gum.gum-gm-screen-clear-confirm .window-content { background: var(--gum-bg-body, #18191e); color: var(--gum-text-claro, #eee); }
 .gum.gm-screen .layout-editor-banner {
     display: flex;
     flex: 0 0 auto;
