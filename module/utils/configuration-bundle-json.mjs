@@ -164,10 +164,16 @@ export function combineConfigurationImport(kind, current, incoming, mode = "merg
 
 function configurationEntries(kind, configuration) {
   if (kind === "gm-screen") {
-    return new Map(gmScreenTabs(configuration).flatMap((tab, tabIndex) => (tab?.groups || []).map((group, groupIndex) => [
-      `group:${tab?.id || tabIndex}:${group?.id || groupIndex}`,
-      group
-    ])));
+    return new Map(gmScreenTabs(configuration).flatMap((tab, tabIndex) => {
+      const tabId = tab?.id || tabIndex;
+      return [
+        [`tab:${tabId}`, { id: tab?.id, name: tab?.name }],
+        ...(tab?.groups || []).map((group, groupIndex) => [
+          `group:${tabId}:${group?.id || groupIndex}`,
+          group
+        ])
+      ];
+    }));
   }
   if (kind === "passive-conditions") {
     return new Map((configuration?.entries || []).map((value, index) => [`condition:${value?.id || value?.sourceUuid || index}`, value]));

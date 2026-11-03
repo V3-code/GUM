@@ -225,6 +225,7 @@ async getData() {
             hasCombat: !!(combat && combat.combatants.size > 0), 
             groups,
             mainTabs,
+            canDeleteTabs: mainTabs.length > 1,
             activeMainTab,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
@@ -817,6 +818,19 @@ activateListeners(html) {
             if (!this.layoutEditMode) return;
             const button = $(ev.currentTarget);
             this._promptRenameMainTab(button.data('tab-id'), button.data('tab-name') || '');
+        });
+
+        html.find('.add-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            if (!this.layoutEditMode) return;
+            this._promptCreateMainTab();
+        });
+
+        html.find('.delete-main-tab-btn').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.layoutEditMode) return;
+            this._confirmRemoveMainTab($(ev.currentTarget).data('tab-id'));
         });
 
         html.find('.move-group-btn').click(async ev => {
@@ -1940,7 +1954,69 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 }
             },
             default: 'save'
-        }).render(true);
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 420, height: "auto" }).render(true);
+    }
+
+    async _promptCreateMainTab() {
+        const config = await this._normalizeConfig();
+        const usedNames = new Set((config.tabs || []).map(tab => String(tab.name || "").trim()));
+        let sequence = 1;
+        while (usedNames.has(String(sequence))) sequence += 1;
+        const suggestedName = String(sequence);
+        new Dialog({
+            title: this._t("GUM.GMScreen.CreateWorkspace"),
+            content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="tab-name" value="${suggestedName}" autofocus maxlength="24"/></div>`,
+            buttons: {
+                create: {
+                    icon: '<i class="fas fa-plus"></i>',
+                    label: this._t("GUM.GMScreen.Create"),
+                    callback: dialogHtml => this._addMainTab(dialogHtml.find('#tab-name').val()?.trim() || suggestedName)
+                },
+                cancel: { label: this._t("GUM.GMScreen.Cancel") }
+            },
+            default: "create"
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 420, height: "auto" }).render(true);
+    }
+
+    async _addMainTab(name) {
+        const config = await this._normalizeConfig();
+        const id = foundry.utils.randomID();
+        config.tabs.push({ id, name: String(name || config.tabs.length + 1), groups: [] });
+        config.activeTabId = id;
+        await this._saveConfig(config);
+    }
+
+    async _confirmRemoveMainTab(tabId) {
+        const config = await this._normalizeConfig();
+        if (config.tabs.length <= 1) return ui.notifications.warn(this._t("GUM.GMScreen.KeepOneWorkspace"));
+        const tab = config.tabs.find(entry => entry.id === tabId);
+        if (!tab) return;
+        const groups = tab.groups?.length || 0;
+        const items = new Set((tab.groups || []).flatMap(group => group.items || [])).size;
+        Dialog.confirm({
+            title: this._t("GUM.GMScreen.DeleteWorkspace"),
+            content: `<p>${this._t("GUM.GMScreen.ConfirmDeleteWorkspace", {
+                name: foundry.utils.escapeHTML(String(tab.name || "")), groups, items
+            })}</p>`,
+            yes: () => this._removeMainTab(tabId),
+            defaultYes: false
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-gm-screen-tab-dialog"], width: 440, height: "auto" });
+    }
+
+    async _removeMainTab(tabId) {
+        const config = await this._normalizeConfig();
+        if (config.tabs.length <= 1) return ui.notifications.warn(this._t("GUM.GMScreen.KeepOneWorkspace"));
+        const index = config.tabs.findIndex(tab => tab.id === tabId);
+        if (index < 0) return;
+        const [removed] = config.tabs.splice(index, 1);
+        if (config.activeTabId === tabId) {
+            config.activeTabId = config.tabs[Math.min(index, config.tabs.length - 1)].id;
+        }
+        const remainingUuids = new Set(config.tabs.flatMap(tab => (tab.groups || []).flatMap(group => group.items || [])));
+        for (const uuid of (removed.groups || []).flatMap(group => group.items || [])) {
+            if (!remainingUuids.has(uuid)) this.selectedModifiers.delete(uuid);
+        }
+        await this._saveConfig(config);
     }
 
     _createDefaultTabs() {
@@ -1954,26 +2030,39 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         }]));
     }
 
+    _normalizeConfigGroup(group = {}) {
+        return {
+            id: group?.id || foundry.utils.randomID(),
+            name: group?.name || this._t("GUM.GMScreen.Group"),
+            items: Array.isArray(group?.items) ? group.items : [],
+            macroOptions: this._normalizeMacroOptions(group?.macroOptions),
+            collapsed: group?.collapsed === true,
+            sortMode: group?.sortMode === "manual" ? "manual" : "auto"
+        };
+    }
+
+    _normalizeConfigTabs(rawTabs) {
+        const sourceTabs = Array.isArray(rawTabs) && rawTabs.length
+            ? rawTabs
+            : [{ id: foundry.utils.randomID(), name: "1", groups: [] }];
+        const usedIds = new Set();
+        return sourceTabs.map((existing, index) => {
+            let id = String(existing?.id || "").trim();
+            if (!id || usedIds.has(id)) id = foundry.utils.randomID();
+            usedIds.add(id);
+            return {
+                id,
+                name: String(existing?.name || index + 1),
+                groups: this._extractGroupsFromConfig(existing).map(group => this._normalizeConfigGroup(group))
+            };
+        });
+    }
+
     async _normalizeConfig() {
         const config = game.settings.get("gum", "gmScreenConfig") || {};
 
         if (Array.isArray(config.tabs)) {
-            const tabsMap = new Map((config.tabs || []).map(tab => [tab.id, tab]));
-            const normalizedTabs = this.gmTabs.map(baseTab => {
-                const existing = tabsMap.get(baseTab.id) || {};
-                return {
-                    id: baseTab.id,
-                    name: existing.name || baseTab.name,
-                    groups: this._extractGroupsFromConfig(existing).map(group => ({
-                        id: group.id || foundry.utils.randomID(),
-                        name: group.name || this._t("GUM.GMScreen.Group"),
-                        items: Array.isArray(group.items) ? group.items : [],
-                        macroOptions: this._normalizeMacroOptions(group.macroOptions),
-                        collapsed: group.collapsed === true,
-                        sortMode: group.sortMode === "manual" ? "manual" : "auto"
-                    }))
-                };
-            });
+            const normalizedTabs = this._normalizeConfigTabs(config.tabs);
             const activeTabId = normalizedTabs.some(tab => tab.id === config.activeTabId) ? config.activeTabId : normalizedTabs[0].id;
             const normalized = { tabs: normalizedTabs, activeTabId };
             if (JSON.stringify(normalized) !== JSON.stringify(config)) {
@@ -1984,27 +2073,13 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         if (Array.isArray(config.groups)) {
             const tabs = this._createDefaultTabs();
-            tabs[0].groups = config.groups.map(group => ({
-                id: group.id || foundry.utils.randomID(),
-                name: group.name || this._t("GUM.GMScreen.Group"),
-                items: Array.isArray(group.items) ? group.items : [],
-                macroOptions: this._normalizeMacroOptions(group.macroOptions),
-                collapsed: group.collapsed === true,
-                sortMode: group.sortMode === "manual" ? "manual" : "auto"
-            }));
+            tabs[0].groups = config.groups.map(group => this._normalizeConfigGroup(group));
             const migrated = { tabs, activeTabId: tabs[0].id };
             await game.settings.set("gum", "gmScreenConfig", migrated);
             return migrated;
         }
 
-        const groups = this._extractGroupsFromConfig(config).map(group => ({
-            id: group.id || foundry.utils.randomID(),
-            name: group.name || this._t("GUM.GMScreen.Group"),
-            items: Array.isArray(group.items) ? group.items : [],
-            macroOptions: this._normalizeMacroOptions(group.macroOptions),
-            collapsed: group.collapsed === true,
-            sortMode: group.sortMode === "manual" ? "manual" : "auto"
-        }));
+        const groups = this._extractGroupsFromConfig(config).map(group => this._normalizeConfigGroup(group));
 
         const tabs = this._createDefaultTabs();
         tabs[0].groups = groups;
@@ -2345,17 +2420,17 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                                 if (result) this.render(true);
                                 return;
                             }
-                            const groups = this._extractGroupsFromConfig(json).map(group => ({
-                                id: group.id || foundry.utils.randomID(),
-                                name: group.name || this._t("GUM.GMScreen.Group"),
-                                items: Array.isArray(group.items) ? group.items : [],
-                                macroOptions: this._normalizeMacroOptions(group.macroOptions),
-                                collapsed: group.collapsed === true,
-                                sortMode: group.sortMode === "manual" ? "manual" : "auto"
-                            }));
-                            const tabs = this._createDefaultTabs();
-                            tabs[0].groups = groups;
-                            const incomingConfiguration = { tabs, activeTabId: tabs[0].id };
+                            let tabs;
+                            let activeTabId;
+                            if (Array.isArray(json.tabs)) {
+                                tabs = this._normalizeConfigTabs(json.tabs);
+                                activeTabId = tabs.some(tab => tab.id === json.activeTabId) ? json.activeTabId : tabs[0].id;
+                            } else {
+                                tabs = this._createDefaultTabs();
+                                tabs[0].groups = this._extractGroupsFromConfig(json).map(group => this._normalizeConfigGroup(group));
+                                activeTabId = tabs[0].id;
+                            }
+                            const incomingConfiguration = { tabs, activeTabId };
                             const currentConfiguration = game.settings.get("gum", "gmScreenConfig") || {};
                             const mode = await chooseConfigurationImportMode(
                                 "gm-screen",

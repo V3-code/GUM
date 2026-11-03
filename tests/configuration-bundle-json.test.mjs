@@ -94,6 +94,19 @@ test("exports referenced documents once and keeps missing external references", 
   assert.equal(bundle.documents["effect-glow"].folder, undefined);
 });
 
+test("GM Screen bundles preserve dynamic and empty tabs", async () => {
+  const configuration = { activeTabId: "custom", tabs: [
+    { id: "main", name: "Main", groups: [] },
+    { id: "custom", name: "Custom", groups: [] }
+  ] };
+  const bundle = await buildConfigurationBundle({
+    id: "dynamic-tabs", kind: "gm-screen", configuration, resolveUuid: async () => null
+  });
+  assert.deepEqual(bundle.configuration, configuration);
+  const prepared = prepareConfigurationBundle(bundle);
+  assert.deepEqual(prepared.configuration, configuration);
+});
+
 test("GM Screen exports preserve Macro UUIDs as external unsupported references", async () => {
   const macro = { id: "weather", name: "Weather", type: "script", documentName: "Macro" };
   const configuration = { groups: [{
@@ -181,18 +194,20 @@ test("GM Screen imports support add, merge, and replace without duplicating item
     tabs: [{ id: "tab-1", name: "Imported", groups: [
       { id: "shared", name: "New", collapsed: true, items: ["Item.a", "Item.b"] },
       { id: "added", name: "Added", items: ["Item.c"] }
-    ] }]
+    ] }, { id: "custom-tab", name: "Imported empty tab", groups: [] }]
   };
 
   const added = combineConfigurationImport("gm-screen", current, incoming, "add");
   assert.equal(added.tabs[0].name, "Current");
   assert.equal(added.tabs[0].groups.find(group => group.id === "shared").name, "Old");
   assert.deepEqual(added.tabs[0].groups.find(group => group.id === "shared").items, ["Item.a", "Item.b"]);
+  assert.equal(added.tabs.find(tab => tab.id === "custom-tab").name, "Imported empty tab");
 
   const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
   assert.equal(merged.tabs[0].name, "Imported");
   assert.equal(merged.tabs[0].groups.find(group => group.id === "shared").name, "New");
   assert.ok(merged.tabs[0].groups.some(group => group.id === "local"));
+  assert.ok(merged.tabs.some(tab => tab.id === "custom-tab"));
   assert.equal(merged.activeTabId, "tab-1");
 
   const replaced = combineConfigurationImport("gm-screen", current, incoming, "replace");
@@ -281,7 +296,7 @@ test("configuration preview counts matching, changed, new, and current-only entr
   }, {
     groups: [{ id: "same", items: ["Item.a"] }, { id: "create", items: [] }]
   });
-  assert.deepEqual(summary, { creates: 1, updates: 1, unchanged: 0, removes: 1 });
+  assert.deepEqual(summary, { creates: 1, updates: 1, unchanged: 1, removes: 1 });
 });
 
 test("exports a portability report for unresolved references and external assets", async () => {

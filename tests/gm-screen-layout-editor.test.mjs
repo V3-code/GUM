@@ -65,6 +65,17 @@ test("the GM Screen exposes an explicit, local layout editor", () => {
     assert.match(application, /data-clear-targets="tabs"/);
 });
 
+test("GM Screen tabs are dynamic while preserving a safe minimum", () => {
+    assert.match(template, /class="add-main-tab-btn"/);
+    assert.match(template, /class="delete-main-tab-btn"/);
+    assert.match(application, /async _addMainTab\(name\)/);
+    assert.match(application, /async _removeMainTab\(tabId\)/);
+    assert.match(application, /config\.tabs\.length <= 1/);
+    assert.match(application, /_normalizeConfigTabs\(rawTabs\)/);
+    assert.match(application, /Array\.isArray\(rawTabs\) && rawTabs\.length/);
+    assert.doesNotMatch(application, /const normalizedTabs = this\.gmTabs\.map/);
+});
+
 test("macro execution modes validate and partition GM targets", () => {
     const first = { id: "first" };
     const second = { id: "second" };

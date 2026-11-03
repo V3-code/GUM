@@ -76,14 +76,20 @@
             </button>{{/if}}
         </header>
         <nav class="main-tab-selector gm-workspace-tabs" aria-label="{{localize 'GUM.GMScreen.Workspaces'}}">
+            <div class="gm-workspace-tab-list">
             {{#each mainTabs}}
                 <span class="gm-workspace-tab">
                     <button type="button" class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{localize 'GUM.GMScreen.WorkspaceTitle' name=this.name}}" {{#if (eq this.id ../activeMainTab)}}aria-current="page"{{/if}}>
                         <span>{{this.name}}</span>{{#if this.selectedCount}}<small>{{this.selectedCount}}</small>{{/if}}
                     </button>
-                    {{#if ../layoutEditMode}}<button type="button" class="rename-main-tab-btn" data-tab-id="{{this.id}}" data-tab-name="{{this.name}}" title="{{localize 'GUM.GMScreen.RenameWorkspace'}}" aria-label="{{localize 'GUM.GMScreen.RenameWorkspace'}}"><i class="fas fa-pen"></i></button>{{/if}}
+                    {{#if ../layoutEditMode}}<span class="gm-workspace-tab-actions">
+                        <button type="button" class="rename-main-tab-btn" data-tab-id="{{this.id}}" data-tab-name="{{this.name}}" title="{{localize 'GUM.GMScreen.RenameWorkspace'}}" aria-label="{{localize 'GUM.GMScreen.RenameWorkspace'}}"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="delete-main-tab-btn" data-tab-id="{{this.id}}" title="{{localize 'GUM.GMScreen.DeleteWorkspace'}}" aria-label="{{localize 'GUM.GMScreen.DeleteWorkspace'}}" {{#unless ../canDeleteTabs}}disabled{{/unless}}><i class="fas fa-trash"></i></button>
+                    </span>{{/if}}
                 </span>
             {{/each}}
+            </div>
+            {{#if layoutEditMode}}<button type="button" class="add-main-tab-btn" title="{{localize 'GUM.GMScreen.CreateWorkspace'}}" aria-label="{{localize 'GUM.GMScreen.CreateWorkspace'}}"><i class="fas fa-plus"></i></button>{{/if}}
         </nav>
         {{#if layoutEditMode}}<div class="layout-editor-banner"><i class="fas fa-pen-ruler"></i> {{localize "GUM.GMScreen.LayoutEditingActive"}}</div>{{/if}}
         <section class="screen-body">

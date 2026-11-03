@@ -1608,6 +1608,19 @@
     background: var(--gm-panel);
     grid-column: auto;
     flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.gum.gm-screen .gm-workspace-tab-list {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--gum-accent-gold) 35%, transparent) transparent;
 }
 
 .gum.gm-screen .gm-workspace-tabs .main-tab-btn {
@@ -1621,14 +1634,16 @@
     color: var(--gm-muted);
 }
 .gum.gm-screen .gm-workspace-tab {
+    position: relative;
     display: inline-flex;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: 96px;
+    flex: 1 0 64px;
+    min-width: 64px;
+    max-width: 140px;
     align-items: center;
 }
 .gum.gm-screen .gm-workspace-tab .main-tab-btn {
-    min-width: 0;
+    width: 100%;
+    min-width: 64px;
     max-width: none;
 }
 .gum.gm-screen .gm-workspace-tab .main-tab-btn span {
@@ -1645,21 +1660,38 @@
     color: var(--gum-accent-gold);
     font-size: 0.62rem;
 }
-.gum.gm-screen .rename-main-tab-btn {
+.gum.gm-screen .gm-workspace-tab-actions {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding-left: 8px;
+    background: linear-gradient(90deg, transparent, var(--gm-surface) 24%);
+    opacity: 0;
+    z-index: 2;
+}
+.gum.gm-screen .rename-main-tab-btn,
+.gum.gm-screen .delete-main-tab-btn,
+.gum.gm-screen .add-main-tab-btn {
     flex: 0 0 22px;
     width: 22px;
     min-width: 22px;
     height: 24px;
-    margin: 0 0 0 -23px;
+    margin: 0;
     padding: 0;
     border: 0;
-    background: var(--gm-surface, #262626);
+    border-radius: 4px;
+    background: transparent;
     color: var(--gm-muted, #888);
-    opacity: 0;
-    z-index: 1;
 }
-.gum.gm-screen .gm-workspace-tab:hover .rename-main-tab-btn,
-.gum.gm-screen .rename-main-tab-btn:focus { opacity: 1; }
+.gum.gm-screen .gm-workspace-tab:hover .gm-workspace-tab-actions,
+.gum.gm-screen .gm-workspace-tab:focus-within .gm-workspace-tab-actions { opacity: 1; }
+.gum.gm-screen .rename-main-tab-btn:hover { color: var(--gum-accent-gold); background: rgba(197,160,91,0.1); }
+.gum.gm-screen .delete-main-tab-btn:hover:not(:disabled) { color: #ff7770; background: rgba(229,83,75,0.1); }
+.gum.gm-screen .add-main-tab-btn { flex: 0 0 28px; width: 28px; min-width: 28px; height: 28px; margin-left: 4px; color: var(--gum-accent-gold); }
+.gum.gm-screen .add-main-tab-btn:hover { background: rgba(197,160,91,0.12); }
 
 .gum.gm-screen .gm-workspace-tabs .main-tab-btn.active {
     color: var(--gum-text-claro);
