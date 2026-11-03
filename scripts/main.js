@@ -52,6 +52,7 @@ import { activateRollRequestChatListeners, executeRollRequest, registerRollReque
 import { evaluateBarrierConsequence, isMatchingDamageResistance, normalizeResistanceRoll, normalizeRollRequest } from "../module/utils/roll-request-data.mjs";import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
+import { shouldRefreshGMScreenForActor } from "../module/utils/gm-screen-refresh.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
@@ -5442,8 +5443,10 @@ Hooks.on("deleteCombat", refreshGMScreen); // ✅ Resolve o problema da lista n�
 // 3. MUDANÇAS NOS ATORES (HP, FP, Flags de Modificadores)
 Hooks.on("updateActor", (actor, changes, options = {}) => {
     if (options.gumSkipGMScreenRefresh) return;
-    // Renderiza se for PJ ou se houver um combate rolando (para monstros)
-    if (actor.hasPlayerOwner || game.combat) {
+    // Mudanças de propriedade precisam atualizar nos dois sentidos. Após remover
+    // o último jogador proprietário, hasPlayerOwner já é falso, mas o card ainda
+    // precisa desaparecer imediatamente do monitor do Escudo.
+    if (shouldRefreshGMScreenForActor(actor, changes, { combatActive: Boolean(game.combat) })) {
         refreshGMScreen();
     }
 });
