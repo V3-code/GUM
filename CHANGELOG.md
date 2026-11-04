@@ -404,7 +404,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 ## [1.0.0] - 2026-08-01
 
-Primeira versão pública do GURPS GUM para Foundry VTT.
+Primeira versão pública do GUM para Foundry VTT.
 
 ### Added
 

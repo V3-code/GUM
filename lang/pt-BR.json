@@ -450,7 +450,7 @@
   "GUM.ChatCommand.Help.ActorSkill": "Perícia da ficha",
   "GUM.ChatCommand.Help.Damage": "Dano",
   "GUM.ChatCommand.Help.Aliases": "Aliases",
-  "GUM.ChatCommand.Help.Speaker": "GURPS GUM",
+  "GUM.ChatCommand.Help.Speaker": "GUM",
   "GUM.Damage.PublishAndKeep": "Publicar e Manter",
   "GUM.DamageApplication.Title": "Aplicar dano em {name}",
   "GUM.DamageApplication.MultipleTargets": "Marque exatamente um token como alvo antes de aplicar o dano.",

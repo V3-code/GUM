@@ -1,4 +1,4 @@
-# API pública do GURPS GUM
+# API pública do GUM
 
 A API pública permite que macros, módulos e integrações usem o GUM sem depender de detalhes internos da interface. Ela está disponível durante o hook `gum.apiReady` e, depois dele, em `game.gum.api`.
 

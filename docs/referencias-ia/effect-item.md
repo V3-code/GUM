@@ -2,7 +2,7 @@
 
 [Versão em português](./item-efeito.md)
 
-> Technical reference for producing Effect Item data compatible with the GURPS GUM (Unofficial) system.
+> Technical reference for producing Effect Item data compatible with the GUM (Unofficial) system.
 >
 > Mapping reviewed against GUM `1.4.3-beta`, Foundry VTT minimum 12 and verified 14, on October 14, 2026.
 

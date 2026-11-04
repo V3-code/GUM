@@ -2,7 +2,7 @@
 
 [English version](./effect-item.md)
 
-> Documento técnico para produzir dados de um Item Efeito compatível com o sistema GURPS GUM (Não Oficial).
+> Documento técnico para produzir dados de um Item Efeito compatível com o sistema GUM (Não Oficial).
 >
 > Mapeamento conferido no GUM `1.4.3-beta`, Foundry VTT mínimo 12 e verificado 14, em 14/10/2026.
 

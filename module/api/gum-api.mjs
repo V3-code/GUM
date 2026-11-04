@@ -1,5 +1,5 @@
 /**
- * Public JavaScript API for GURPS GUM.
+ * Public JavaScript API for GUM.
  *
  * Only members exposed by createGumApi are part of the supported contract.
  * Runtime state stored elsewhere under game.gum is intentionally private.

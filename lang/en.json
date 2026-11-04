@@ -450,7 +450,7 @@
   "GUM.ChatCommand.Help.ActorSkill": "Character skill",
   "GUM.ChatCommand.Help.Damage": "Damage",
   "GUM.ChatCommand.Help.Aliases": "Aliases",
-  "GUM.ChatCommand.Help.Speaker": "GURPS GUM",
+  "GUM.ChatCommand.Help.Speaker": "GUM",
   "GUM.Damage.PublishAndKeep": "Publish and Keep Open",
   "GUM.DamageApplication.Title": "Apply damage to {name}",
   "GUM.DamageApplication.MultipleTargets": "Mark exactly one token as the target before applying damage.",

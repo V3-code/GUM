@@ -1,8 +1,8 @@
 # Licença – Creative Commons BY-NC-ND 4.0 International
 
 **Autor:** V3-code
-**Projeto:** GURPS GUM – Sistema não oficial de GURPS para Foundry VTT  
-**Versão:** v1.3.0-beta de Setembro de 2026
+**Projeto:** GUM – Sistema não oficial para jogar GURPS no Foundry VTT  
+**Versão:** v1.6.1-beta de novembro de 2026
 
 ---
 
@@ -29,7 +29,7 @@ Distribuição de versões modificadas requer autorização expressa do autor.
 
 ## ⚠️ Observações importantes
 
-- Este sistema é uma **ferramenta não oficial** para uso com o RPG **GURPS**, da **Steve Jackson Games**.
+- O GUM é uma **ferramenta não oficial** para uso com o RPG **GURPS**, da **Steve Jackson Games**.
 - Este projeto é distribuído gratuitamente, **sem fins lucrativos**, e não inclui conteúdo de publicações de GURPS.  
 - GURPS é marca registrada da Steve Jackson Games. Este projeto **não é afiliado, endossado ou licenciado** por essa empresa.
 

@@ -1,8 +1,8 @@
 <div align="center">
 
-# GURPS GUM
+# GUM
 
-### Sistema não oficial de GURPS para Foundry Virtual Tabletop
+### Sistema não oficial para jogar GURPS no Foundry Virtual Tabletop
 
 Uma ferramenta não oficial para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
@@ -18,10 +18,10 @@ Uma ferramenta não oficial para criar personagens, conduzir combates e administ
 No Foundry VTT, acesse **Game Systems → Install System**, cole a URL abaixo no campo **Manifest URL** e clique em **Install**:
 
 ```text
-https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
+https://raw.githubusercontent.com/V3-code/GUM/master/system.json
 ```
 
-As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote na página de [releases](https://github.com/V3-code/GURPS-GUM/releases/latest).
+As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote na página de [releases](https://github.com/V3-code/GUM/releases/latest).
 
 ## O que o GUM oferece
 
@@ -50,8 +50,8 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 - [Itens Condição, Itens Gatilho e gatilhos úteis — referência para IA](docs/referencias-ia/item-condicao-e-gatilho.md)
 - [API pública para macros e módulos (PT-BR)](docs/API.pt-BR.md)
 - [Public API for macros and modules (English)](docs/API.md)
-- [Versões publicadas](https://github.com/V3-code/GURPS-GUM/releases)
-- [Relatar um problema ou sugerir uma melhoria](https://github.com/V3-code/GURPS-GUM/issues)
+- [Versões publicadas](https://github.com/V3-code/GUM/releases)
+- [Relatar um problema ou sugerir uma melhoria](https://github.com/V3-code/GUM/issues)
 
 ## Conteúdo do pacote
 
@@ -75,4 +75,6 @@ Aliases de NH: `n`, `niv`, `nivel` e `nível`. Aliases de dano: `d`, `damage` e 
 
 Desenvolvido por [V3-Code](https://github.com/V3-code) e distribuído sob a licença [CC BY-NC-ND 4.0](LICENSE.md).
 
-> **Projeto não oficial e sem fins lucrativos.** GURPS é marca registrada da Steve Jackson Games. O GURPS GUM é uma ferramenta criada por fãs e não é afiliado, licenciado ou endossado pela Steve Jackson Games.
+> **Projeto independente, gratuito e não oficial.** GURPS é marca registrada da Steve Jackson Games. O GUM não é afiliado, licenciado ou endossado pela Steve Jackson Games.
+
+Solicitações relacionadas a direitos autorais ou marcas podem ser enviadas pela página de [issues](https://github.com/V3-code/GUM/issues).

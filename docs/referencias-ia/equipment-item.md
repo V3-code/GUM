@@ -2,7 +2,7 @@
 
 [Versão em português](./item-equipamento.md)
 
-> Technical reference for producing Equipment Item data compatible with the unofficial GURPS GUM system.
+> Technical reference for producing Equipment Item data compatible with the unofficial GUM system.
 >
 > Mapping verified against GUM `1.4.3-beta`, Foundry VTT minimum 12 and verified 14, on October 14, 2026.
 

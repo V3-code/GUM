@@ -2,7 +2,7 @@
 
 [Versão em português](./item-condicao-e-gatilho.md)
 
-> Technical reference for producing, reviewing, and explaining Condition and Trigger Items compatible with the unofficial GURPS GUM system.
+> Technical reference for producing, reviewing, and explaining Condition and Trigger Items compatible with the unofficial GUM system.
 >
 > Mapping checked against GUM `1.5.1-beta`, Foundry VTT minimum 13 and verified 14, on 2026-10-31.
 

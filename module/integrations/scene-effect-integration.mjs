@@ -220,7 +220,7 @@ export function registerMonksActiveTilesEffectAction({
     const gameRef = getGame();
     if (!app?.registerTileGroup || !app?.registerTileAction) return;
 
-    if (!app.triggerGroups?.gum) app.registerTileGroup("gum", "GURPS GUM");
+    if (!app.triggerGroups?.gum) app.registerTileGroup("gum", "GUM");
     app.registerTileAction("monks-active-tiles", GUM_MATT_EFFECT_ACTION, {
       name: "GUM.SceneEffects.MATT.ActionName",
       group: "gum",
