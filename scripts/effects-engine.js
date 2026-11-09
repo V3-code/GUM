@@ -491,7 +491,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         .map((action, actionIndex) => ({ action, actionIndex }))
         .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
     const actions = actionEntries.map(({ action }) => action);
-    if (!actions.length) return;
+    const hasDynamicRegionController = effectSystem.dynamicRegion?.enabled === true
+        && Boolean(String(effectSystem.dynamicRegion?.payloadEffectUuid || "").trim());
+    if (!actions.length && !hasDynamicRegionController) return;
     const persistentEffects = [];
     const persistentEffectKeys = new Set();
     const rememberPersistentEffect = effect => {
@@ -1183,6 +1185,72 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             ui.notifications.warn(`Efeito "${effectItem.name}": uma ação "${action.type}" falhou e foi ignorada.`);
         }
     }
+    // A Região Dinâmica é, por si só, um efeito persistente. Quando o Item não
+    // criou outro ActiveEffect persistente, este carrier inerte fornece o ciclo
+    // oficial de ativação, desativação, duração e integração visual.
+    if (hasDynamicRegionController && !context.skipPersistentEffects) {
+        const dynamicAction = { id: "dynamic-region", type: "dynamic_region" };
+        for (const target of targets) {
+            const targetActor = target?.actor;
+            if (!isActorContextAvailable(targetActor)) continue;
+            const alreadyHasCarrier = persistentEffects.some(effect =>
+                effect?.parent === targetActor
+                && foundry.utils.getProperty(effect, "flags.gum.lifecycleCarrier") !== false
+            );
+            if (alreadyHasCarrier) continue;
+
+            const matchingEffects = effectiveStackingMode === "stack"
+                ? []
+                : Array.from(targetActor.effects || []).filter(effect => matchesStackedEffect(effect, {
+                    effectUuid: effectItem.uuid,
+                    action: dynamicAction,
+                    actionIndex: -1,
+                    domain: stackingDomain
+                }));
+            const { activeEffectData, gumDuration } = buildCommonActiveEffectData(targetActor, -1);
+            activeEffectData.name = effectItem.name;
+            activeEffectData.flags.gum.actionIndex = -1;
+            activeEffectData.flags.gum.actionId = dynamicAction.id;
+            activeEffectData.flags.gum.actionType = dynamicAction.type;
+            activeEffectData.flags.gum.actionLabel = "";
+            activeEffectData.flags.gum.lifecycleCarrier = true;
+            for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                activeEffectData.flags[scope] = foundry.utils.deepClone(value);
+            }
+            if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+                const carrierStatusId = `${effectItem.name.slugify({ strict: true })}-carrier`;
+                activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
+                activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                activeEffectData.statuses = [carrierStatusId];
+                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", carrierStatusId);
+            }
+
+            try {
+                if (matchingEffects.length) {
+                    const [primaryEffect, ...duplicates] = matchingEffects;
+                    if (effectiveStackingMode === "refresh") {
+                        await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
+                    } else {
+                        const update = { "flags.gum.lifecycleCarrier": true };
+                        for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                            update[`flags.${scope}`] = foundry.utils.deepClone(value);
+                        }
+                        await primaryEffect.update(update);
+                    }
+                    rememberPersistentEffect(primaryEffect);
+                    const duplicateIds = duplicates.map(effect => effect.id).filter(Boolean);
+                    if (duplicateIds.length) await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
+                } else {
+                    const created = await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                    for (const activeEffect of created ?? []) rememberPersistentEffect(activeEffect);
+                }
+            } catch (error) {
+                if (isMissingSyntheticActorContextError(error, targetActor)) continue;
+                throw error;
+            }
+        }
+    }
+
     emitGumLifecycleHook(GUM_API_HOOKS.EFFECT_APPLIED, {
         actor: context.actor || null,
         sourceToken: resolveGumSourceToken(context.actor),

@@ -135,8 +135,11 @@ test("declares and exposes the Dynamic Region Item Effect interface", async () =
   const manifest = JSON.parse(await readFile(new URL("../system.json", import.meta.url), "utf8"));
   const template = await readFile(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
   const controller = await readFile(new URL("../scripts/apps/effect-sheet.js", import.meta.url), "utf8");
+  const engine = await readFile(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
   assert.deepEqual(manifest.documentTypes?.RegionBehavior?.dynamicEffectAura, {});
   assert.match(template, /data-tab="regiao-dinamica"/);
   assert.match(template, /system\.dynamicRegion\.range/);
   assert.match(controller, /getDragEventData/);
+  assert.match(engine, /hasDynamicRegionController/);
+  assert.match(engine, /actionType = dynamicAction\.type/);
 });
