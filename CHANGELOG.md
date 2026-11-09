@@ -8,7 +8,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
-- Itens Efeito ganharam a aba bilíngue `Região Dinâmica`, capaz de manter uma emanação oficial do Foundry 14 anexada ao token enquanto estiverem ativos e projetar ações selecionadas do próprio Item ao entrar ou sair da área, com alcance nas unidades da Cena e filtros de alvo.
+- Itens Efeito ganharam a aba bilíngue `Região Dinâmica`, capaz de manter uma emanação oficial do Foundry 14 anexada ao token enquanto estiverem ativos; cada ação escolhe entre o portador e a Região como destino, e a área pode exibir sua cor ou permanecer visualmente oculta para uso com animações.
 - A API pública `1.3.0` ganhou hooks informativos e versionados para rolagens concluídas, dano rolado ou aplicado, efeitos aplicados/removidos/alternados, transições de condição, grupos manuais de efeitos de estado e uso de item, com um envelope comum preparado para integrações externas.
 - `api.effects.getBridge()` oferece acesso público e estável à ponte ActiveEffect nativa de um Item Efeito.
 - Itens Efeito agora expõem um único portador de ciclo visual entre seus ActiveEffects persistentes, propagam para ele as flags externas configuradas na ponte nativa e informam documentos, origem e transições completas nos hooks públicos, preparando animações persistentes sem duplicar efeitos mecânicos irmãos.

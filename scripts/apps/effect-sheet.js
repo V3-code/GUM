@@ -145,6 +145,7 @@ const buildActionSummary = (action = {}) => {
 const DEFAULT_EFFECT_ACTION = {
     id: "",
     label: "",
+    delivery: "carrier",
     type: "attribute",
     path: "system.attributes.st.passive",
     operation: "ADD",
@@ -252,6 +253,7 @@ const normalizeAction = (action = {}) => {
     const configuredRollVisibility = action?.roll_visibility
         ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    next.delivery = next.delivery === "dynamic_region" ? "dynamic_region" : "carrier";
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     Object.assign(next, normalizeEffectDamageAction(next));
@@ -436,6 +438,7 @@ export class EffectSheet extends ItemSheet {
         context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Application.${option.key}`) }));
         context.rollModifierCompositionOptions = ROLL_MODIFIER_COMPOSITION_MODES.map(id => ({ id, label: localize(`GUM.EffectSheet.Composition.${id}`) }));
         const actions = getEffectActionsFromSystem(context.system);
+        const legacyDynamicRegionActionIds = new Set(context.dynamicRegion.actionIds);
         context.rollModifierCompositionGroups = [...new Set(actions.flatMap(action => action.roll_modifier_entries || [])
             .map(entry => String(entry?.composition_group || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
         const statusLabels = new Map(context.statusEffects.map(status => [status.id, status.label]));
@@ -481,6 +484,7 @@ export class EffectSheet extends ItemSheet {
             const firstContext = (primaryEntry.contexts || "all").split(',').map(part => part.trim()).filter(Boolean)[0] || "all";
             const decoratedAction = {
                 ...action,
+                delivery: action.delivery === "dynamic_region" || legacyDynamicRegionActionIds.has(action.id) ? "dynamic_region" : "carrier",
                 index,
                 displayIndex: index + 1,
                 titleText: action.label ? format("GUM.EffectSheet.Action.NumberedNamed", { number: index + 1, name: action.label }) : format("GUM.EffectSheet.Action.Numbered", { number: index + 1 }),
@@ -508,14 +512,6 @@ export class EffectSheet extends ItemSheet {
             decoratedAction.summaryText = buildActionSummary(decoratedAction);
             return decoratedAction;
         });
-        const dynamicRegionActionLabels = new Map(actions.map((action, index) => [
-            action.id,
-            action.label || format("GUM.EffectSheet.Action.Numbered", { number: index + 1 })
-        ]));
-        context.dynamicRegionActionIdsCsv = context.dynamicRegion.actionIds.join(",");
-        context.dynamicRegionActionSummary = context.dynamicRegion.actionIds
-            .map(id => dynamicRegionActionLabels.get(id) || format("GUM.EffectSheet.Action.Removed", { id }))
-            .join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
         const persistentActionTypes = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
         const instantActionTypes = new Set(["resource_change", "resource_create", "damage_roll", "macro", "chat"]);
         context.hasPersistentActions = actions.some(action => persistentActionTypes.has(action.type));
@@ -650,34 +646,6 @@ activateListeners(html) {
     html.find(".effect-premium-action").each((_index, element) => refreshSpecializedFields(element));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
 
-    html.on("click", ".select-dynamic-region-actions", ev => {
-        ev.preventDefault();
-        const input = this.form?.querySelector('[name="system.dynamicRegion.actionIds"]');
-        if (!input) return;
-        const selected = new Set(String(input.value || "").split(",").map(value => value.trim()).filter(Boolean));
-        const actions = getEffectActionsFromSystem(this.item.system);
-        const escape = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-        const options = actions.map((action, actionIndex) => {
-            const label = action.label || format("GUM.EffectSheet.Action.Numbered", { number: actionIndex + 1 });
-            return `<label class="gum-resistance-action-option" data-search="${escape(label)}"><input type="checkbox" value="${escape(action.id)}" ${selected.has(action.id) ? "checked" : ""}> <span>${escape(label)}</span></label>`;
-        }).join("");
-        new Dialog({
-            title: localize("GUM.DynamicRegion.ActionPickerTitle"),
-            content: `<div class="gum-resistance-action-picker"><input type="search" placeholder="${escape(localize("GUM.EffectSheet.ActionPicker.SearchPlaceholder"))}" class="dynamic-region-action-search"><div class="gum-resistance-action-options">${options || `<p>${escape(localize("GUM.EffectSheet.ActionPicker.Empty"))}</p>`}</div></div>`,
-            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Common.Confirm"), callback: dialogHtml => {
-                const ids = dialogHtml.find('input[type="checkbox"]:checked').map((_, element) => element.value).get();
-                input.value = [...new Set(ids)].join(",");
-                input.dispatchEvent(new Event("change", { bubbles: true }));
-                const summary = ev.currentTarget.closest(".dynamic-region-actions")?.querySelector(".resistance-action-summary");
-                if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, index) => action.label || format("GUM.EffectSheet.Action.Numbered", { number: index + 1 })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
-            } } },
-            render: dialogHtml => dialogHtml.find(".dynamic-region-action-search").on("input", event => {
-                const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
-            })
-        }).render(true);
-    });
-
     html.on("input change", ".effect-status-search", event => {
         const searchInput = event.currentTarget;
         const hiddenInput = this.form?.querySelector(`[name="${searchInput.dataset.statusInput}"]`);
@@ -769,12 +737,10 @@ activateListeners(html) {
         if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
         const [removed] = actions.splice(index, 1);
         const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches).map(branch => ({ ...branch, actionIds: branch.actionIds.filter(id => id !== removed.id) }));
-        const dynamicRegionActionIds = normalizeDynamicEffectRegion(this.item.system.dynamicRegion).actionIds.filter(id => id !== removed.id);
         this._reindexExpandedActionsAfterRemoval(index);
         await this.item.update({
             "system.actions": actions,
-            "system.resistanceRoll.branches": branches,
-            "system.dynamicRegion.actionIds": dynamicRegionActionIds
+            "system.resistanceRoll.branches": branches
         });
     });
 
@@ -1298,9 +1264,8 @@ activateListeners(html) {
         const rollEntries = new Map();
         const damageChanges = new Map();
         const branchEntries = new Map();
-        if (Object.hasOwn(formData, "system.dynamicRegion.actionIds")) {
-            formData["system.dynamicRegion.actionIds"] = [...new Set(String(formData["system.dynamicRegion.actionIds"] || "")
-                .split(",").map(id => id.trim()).filter(Boolean))];
+        if (normalizeDynamicEffectRegion(this.item.system.dynamicRegion).actionIds.length) {
+            formData["system.dynamicRegion.-=actionIds"] = null;
         }
         if (Object.hasOwn(formData, "system.resistanceRoll.requestedPurposeIds")) {
             formData["system.resistanceRoll.requestedPurposeIds"] = normalizePurposeIds(formData["system.resistanceRoll.requestedPurposeIds"]);

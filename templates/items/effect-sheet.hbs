@@ -223,6 +223,19 @@
                                                     </select>
                                                 </div>
                                             </div>
+
+                                            <div class="effect-premium-field">
+                                                <label class="effect-premium-field-label" title="{{localize 'GUM.DynamicRegion.ActionDeliveryHint'}}">
+                                                    <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
+                                                    {{localize "GUM.DynamicRegion.ActionDelivery"}}
+                                                </label>
+                                                <div class="effect-premium-field-control">
+                                                    <select name="system.actions.{{action.index}}.delivery">
+                                                        <option value="carrier" {{#if (eq action.delivery "carrier")}}selected{{/if}}>{{localize "GUM.DynamicRegion.DeliveryCarrier"}}</option>
+                                                        <option value="dynamic_region" {{#if (eq action.delivery "dynamic_region")}}selected{{/if}}>{{localize "GUM.DynamicRegion.DeliveryRegion"}}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div
@@ -1379,6 +1392,10 @@
                                 </label>
                                 <div class="effect-premium-field-control">
                                     <input type="color" name="system.dynamicRegion.color" value="{{dynamicRegion.color}}" />
+                                    <label class="effect-premium-checkbox" title="{{localize 'GUM.DynamicRegion.ShowColorHint'}}">
+                                        <input type="checkbox" name="system.dynamicRegion.showColor" {{checked dynamicRegion.showColor}} />
+                                        <span>{{localize "GUM.DynamicRegion.ShowColor"}}</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -1395,22 +1412,9 @@
                         </div>
                     </div>
 
-                    <div class="effect-premium-action dynamic-region-card">
-                        <div class="effect-premium-field">
-                            <label class="effect-premium-field-label">
-                                <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
-                                {{localize "GUM.DynamicRegion.Actions"}}
-                            </label>
-                            <input type="hidden" name="system.dynamicRegion.actionIds" value="{{dynamicRegionActionIdsCsv}}" />
-                            <div class="resistance-branch-actions dynamic-region-actions">
-                                <span class="resistance-action-summary">{{dynamicRegionActionSummary}}</span>
-                                <button type="button" class="select-dynamic-region-actions">
-                                    <i class="fas fa-search" aria-hidden="true"></i>
-                                    {{localize "GUM.EffectSheet.SelectActions"}}
-                                </button>
-                            </div>
-                            <p class="effect-premium-field-hint">{{localize "GUM.DynamicRegion.ActionsHint"}}</p>
-                        </div>
+                    <div class="dynamic-region-notice">
+                        <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
+                        {{localize "GUM.DynamicRegion.ActionDeliveryNotice"}}
                     </div>
                 </section>
             </div>

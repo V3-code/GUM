@@ -5,11 +5,9 @@ import test from "node:test";
 import {
   GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR,
   buildDynamicRegionData,
-  createGumDynamicEffectRegionBehaviorType,
   isDynamicRegionTarget,
   normalizeDynamicEffectRegion,
-  reconcileDynamicEffectRegions,
-  registerGumDynamicEffectRegionBehavior
+  reconcileDynamicEffectRegions
 } from "../module/services/dynamic-effect-region-service.mjs";
 
 test("normalizes Dynamic Region settings in Scene distance units", () => {
@@ -20,6 +18,7 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     targetMode: "enemies",
     includeSelf: true,
     gridBased: true,
+    showColor: true,
     color: "#abcdef"
   }), {
     enabled: true,
@@ -28,6 +27,7 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     targetMode: "enemies",
     includeSelf: true,
     gridBased: true,
+    showColor: true,
     color: "#abcdef"
   });
   assert.equal(normalizeDynamicEffectRegion({ range: 0 }, { defaultRange: 3 }).range, 3);
@@ -61,32 +61,6 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
   assert.equal(data.flags.gum.dynamicEffectRegion.sourceTokenUuid, "Scene.s.Token.t");
 });
 
-test("registers the Dynamic Region behavior with official RegionBehavior fields", () => {
-  class RegionBehaviorType {
-    static _createEventsField(options) { return { options }; }
-  }
-  class Field { constructor(options) { this.options = options; } }
-  class SetField extends Field { constructor(element, options) { super(options); this.element = element; } }
-  const foundryRef = {
-    data: {
-      regionBehaviors: { RegionBehaviorType },
-      fields: {
-        DocumentUUIDField: Field,
-        StringField: Field,
-        BooleanField: Field,
-        SetField
-      }
-    }
-  };
-  const config = { RegionBehavior: { dataModels: {}, typeIcons: {} } };
-  assert.equal(registerGumDynamicEffectRegionBehavior({ config, foundryRef }), true);
-  const Behavior = config.RegionBehavior.dataModels[GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR];
-  assert.ok(Behavior);
-  assert.equal(Behavior.defineSchema().effectUuid.options.type, "Item");
-  assert.match(config.RegionBehavior.typeIcons[GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR], /bullseye/);
-  assert.ok(createGumDynamicEffectRegionBehaviorType({ foundryRef, constRef: { REGION_EVENTS: {} } }));
-});
-
 test("reconciles an attached emanation through RegionDocument.createTokenEmanation", async () => {
   const previousFromUuid = globalThis.fromUuid;
   const effectItem = {
@@ -97,9 +71,10 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
       dynamicRegion: {
         enabled: true,
         range: 3,
-        actionIds: ["action-1"],
+        actionIds: [],
         targetMode: "all"
-      }
+      },
+      actions: [{ id: "action-1", delivery: "dynamic_region" }]
     }
   };
   globalThis.fromUuid = async uuid => uuid === effectItem.uuid ? effectItem : null;
@@ -139,11 +114,12 @@ test("declares and exposes the Dynamic Region Item Effect interface", async () =
   const template = await readFile(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
   const controller = await readFile(new URL("../scripts/apps/effect-sheet.js", import.meta.url), "utf8");
   const engine = await readFile(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
-  assert.deepEqual(manifest.documentTypes?.RegionBehavior?.dynamicEffectAura, {});
+  assert.equal(GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR, "applyEffect");
+  assert.deepEqual(manifest.documentTypes?.RegionBehavior?.applyEffect, {});
   assert.match(template, /data-tab="regiao-dinamica"/);
   assert.match(template, /system\.dynamicRegion\.range/);
-  assert.match(controller, /select-dynamic-region-actions/);
-  assert.doesNotMatch(template, /dynamic-region-effect-dropzone|payloadEffectUuid/);
+  assert.match(template, /system\.actions\.\{\{action\.index\}\}\.delivery/);
+  assert.doesNotMatch(template, /select-dynamic-region-actions|payloadEffectUuid/);
   assert.match(engine, /hasDynamicRegionController/);
   assert.match(engine, /reservesActionsForDynamicRegion/);
   assert.match(engine, /actionType = dynamicAction\.type/);

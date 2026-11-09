@@ -3496,7 +3496,6 @@
   "GUM.EffectSheet.CopyUuid": "Copy UUID",
   "GUM.EffectSheet.AutomationUuidCopied": "Automation UUID copied.",
   "GUM.EffectSheet.AutomationUuidCopyFailed": "The UUID could not be copied.",
-  "TYPES.RegionBehavior.dynamicEffectAura": "GUM Dynamic Effect Aura",
   "GUM.DynamicRegion.Tab": "DYNAMIC REGION",
   "GUM.DynamicRegion.Title": "Dynamic emanation region",
   "GUM.DynamicRegion.Hint": "Project selected actions from this Effect Item around its token.",
@@ -3513,8 +3512,12 @@
   "GUM.DynamicRegion.GridBased": "Conform the emanation to the grid",
   "GUM.DynamicRegion.GridBasedTooltip": "Makes the boundary follow whole grid spaces instead of a smooth radius.",
   "GUM.DynamicRegion.Color": "Region color",
-  "GUM.DynamicRegion.Actions": "Actions applied by the Region",
-  "GUM.DynamicRegion.ActionsHint": "Choose actions from this Effect Item to reserve for the Region. They apply on entry and, when persistent, are removed on exit.",
-  "GUM.DynamicRegion.ActionPickerTitle": "Dynamic Region actions",
+  "GUM.DynamicRegion.ShowColor": "Show color on the map",
+  "GUM.DynamicRegion.ShowColorHint": "Disable this when an animation or another visual represents the area.",
+  "GUM.DynamicRegion.ActionDelivery": "Action destination",
+  "GUM.DynamicRegion.ActionDeliveryHint": "Choose whether this action affects the Effect carrier or tokens determined by the Dynamic Region.",
+  "GUM.DynamicRegion.DeliveryCarrier": "Effect carrier",
+  "GUM.DynamicRegion.DeliveryRegion": "According to Dynamic Region",
+  "GUM.DynamicRegion.ActionDeliveryNotice": "Set each action's destination in the Effect Actions tab. Actions marked According to Dynamic Region are applied on entry and removed on exit when persistent.",
   "GUM.DynamicRegion.ApplyFailed": "The Dynamic Region effect could not be applied. Check the console for details."
 }

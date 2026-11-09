@@ -85,17 +85,26 @@ test("registers the GUM Region behavior and its schema", () => {
   class DocumentUUIDField {
     constructor(options) { this.options = options; }
   }
+  class Field {
+    constructor(options) { this.options = options; }
+  }
+  class SetField extends Field {
+    constructor(element, options) { super(options); this.element = element; }
+  }
   const config = { RegionBehavior: { dataModels: {}, typeIcons: {} } };
   const foundryRef = {
     data: {
       regionBehaviors: { RegionBehaviorType },
-      fields: { DocumentUUIDField }
+      fields: { DocumentUUIDField, StringField: Field, BooleanField: Field, SetField }
     }
   };
   assert.equal(registerGumRegionEffectBehavior({ config, foundryRef }), true);
   const Behavior = config.RegionBehavior.dataModels[GUM_REGION_EFFECT_BEHAVIOR];
   assert.ok(Behavior);
-  assert.equal(Behavior.defineSchema().effectUuid.options.type, "Item");
+  const schema = Behavior.defineSchema();
+  assert.equal(schema.effectUuid.options.type, "Item");
+  assert.ok(schema.actionIds instanceof SetField);
+  assert.ok(schema.removeOnExit instanceof Field);
   assert.match(config.RegionBehavior.typeIcons[GUM_REGION_EFFECT_BEHAVIOR], /wand/);
   assert.equal(registerGumRegionEffectBehavior({ config, foundryRef }), false);
 });
@@ -103,6 +112,7 @@ test("registers the GUM Region behavior and its schema", () => {
 test("declares the custom Region behavior in the system manifest", async () => {
   const manifest = JSON.parse(await readFile(new URL("../system.json", import.meta.url), "utf8"));
   assert.deepEqual(manifest.documentTypes?.RegionBehavior?.applyEffect, {});
+  assert.equal(manifest.documentTypes?.RegionBehavior?.dynamicEffectAura, undefined);
 });
 
 test("registers a native MATT action that routes selected effects to GUM", async () => {

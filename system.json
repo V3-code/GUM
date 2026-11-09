@@ -27,8 +27,7 @@
   },
   "documentTypes": {
     "RegionBehavior": {
-      "applyEffect": {},
-      "dynamicEffectAura": {}
+      "applyEffect": {}
     }
   },
   "grid": {

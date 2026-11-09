@@ -1114,10 +1114,10 @@
       "dynamicRegion": {
         "enabled": false,
         "range": 1,
-        "actionIds": [],
         "targetMode": "all",
         "includeSelf": false,
         "gridBased": false,
+        "showColor": true,
         "color": "#7b61ff"
       },
       "actions": [],
