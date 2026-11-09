@@ -16,7 +16,7 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
   assert.deepEqual(normalizeDynamicEffectRegion({
     enabled: true,
     range: "5",
-    payloadEffectUuid: " Item.payload ",
+    actionIds: ["action-1", "action-1", "action-2"],
     targetMode: "enemies",
     includeSelf: true,
     gridBased: true,
@@ -24,7 +24,7 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
   }), {
     enabled: true,
     range: 5,
-    payloadEffectUuid: "Item.payload",
+    actionIds: ["action-1", "action-2"],
     targetMode: "enemies",
     includeSelf: true,
     gridBased: true,
@@ -51,12 +51,13 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
     controllerEffect: { uuid: "Actor.a.ActiveEffect.controller", name: "Aura" },
     effectItem: { uuid: "Item.controller", name: "Escudo Arcano" },
     token: { uuid: "Scene.s.Token.t", name: "Mago" },
-    config: { enabled: true, range: 4, payloadEffectUuid: "Item.payload", targetMode: "allies" },
+    config: { enabled: true, range: 4, actionIds: ["shield", "light"], targetMode: "allies" },
     constRef: { REGION_EVENTS: { TOKEN_ENTER: "tokenEnter", TOKEN_EXIT: "tokenExit" } }
   });
   assert.equal(data.behaviors[0].type, GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR);
   assert.deepEqual(data.behaviors[0].system.events, ["tokenEnter", "tokenExit"]);
-  assert.equal(data.behaviors[0].system.effectUuid, "Item.payload");
+  assert.equal(data.behaviors[0].system.effectUuid, "Item.controller");
+  assert.deepEqual(data.behaviors[0].system.actionIds, ["shield", "light"]);
   assert.equal(data.flags.gum.dynamicEffectRegion.sourceTokenUuid, "Scene.s.Token.t");
 });
 
@@ -65,13 +66,15 @@ test("registers the Dynamic Region behavior with official RegionBehavior fields"
     static _createEventsField(options) { return { options }; }
   }
   class Field { constructor(options) { this.options = options; } }
+  class SetField extends Field { constructor(element, options) { super(options); this.element = element; } }
   const foundryRef = {
     data: {
       regionBehaviors: { RegionBehaviorType },
       fields: {
         DocumentUUIDField: Field,
         StringField: Field,
-        BooleanField: Field
+        BooleanField: Field,
+        SetField
       }
     }
   };
@@ -94,13 +97,12 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
       dynamicRegion: {
         enabled: true,
         range: 3,
-        payloadEffectUuid: "Item.payload",
+        actionIds: ["action-1"],
         targetMode: "all"
       }
     }
   };
-  const payload = { uuid: "Item.payload", type: "effect" };
-  globalThis.fromUuid = async uuid => uuid === effectItem.uuid ? effectItem : uuid === payload.uuid ? payload : null;
+  globalThis.fromUuid = async uuid => uuid === effectItem.uuid ? effectItem : null;
   try {
     const controller = {
       uuid: "Actor.a.ActiveEffect.controller",
@@ -123,7 +125,8 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
     assert.equal(results.length, 1);
     assert.equal(calls[0][0], token);
     assert.equal(calls[0][1], 3);
-    assert.equal(calls[0][2].behaviors[0].system.effectUuid, payload.uuid);
+    assert.equal(calls[0][2].behaviors[0].system.effectUuid, effectItem.uuid);
+    assert.deepEqual(calls[0][2].behaviors[0].system.actionIds, ["action-1"]);
     assert.equal(calls[0][3].gridBased, false);
   } finally {
     if (previousFromUuid === undefined) delete globalThis.fromUuid;
@@ -139,7 +142,8 @@ test("declares and exposes the Dynamic Region Item Effect interface", async () =
   assert.deepEqual(manifest.documentTypes?.RegionBehavior?.dynamicEffectAura, {});
   assert.match(template, /data-tab="regiao-dinamica"/);
   assert.match(template, /system\.dynamicRegion\.range/);
-  assert.match(controller, /getDragEventData/);
+  assert.match(controller, /select-dynamic-region-actions/);
+  assert.doesNotMatch(template, /dynamic-region-effect-dropzone|payloadEffectUuid/);
   assert.match(engine, /hasDynamicRegionController/);
   assert.match(engine, /actionType = dynamicAction\.type/);
 });

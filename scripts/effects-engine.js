@@ -491,8 +491,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         .map((action, actionIndex) => ({ action, actionIndex }))
         .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
     const actions = actionEntries.map(({ action }) => action);
-    const hasDynamicRegionController = effectSystem.dynamicRegion?.enabled === true
-        && Boolean(String(effectSystem.dynamicRegion?.payloadEffectUuid || "").trim());
+    const dynamicRegionActionIds = Array.isArray(effectSystem.dynamicRegion?.actionIds)
+        ? effectSystem.dynamicRegion.actionIds
+        : String(effectSystem.dynamicRegion?.actionIds || "").split(",");
+    const hasDynamicRegionController = context.skipDynamicRegionController !== true
+        && effectSystem.dynamicRegion?.enabled === true
+        && dynamicRegionActionIds.some(id => String(id).trim());
     if (!actions.length && !hasDynamicRegionController) return;
     const persistentEffects = [];
     const persistentEffectKeys = new Set();

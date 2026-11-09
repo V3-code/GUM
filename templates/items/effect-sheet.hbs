@@ -1348,14 +1348,13 @@
 
                         <div class="effect-premium-grid effect-premium-grid-resource">
                             <div class="effect-premium-field">
-                                <label class="effect-premium-field-label">
+                                <label class="effect-premium-field-label" title="{{localize 'GUM.DynamicRegion.RangeTooltip'}}">
                                     <i class="fas fa-ruler" aria-hidden="true"></i>
                                     {{localize "GUM.DynamicRegion.Range"}}
                                 </label>
                                 <div class="effect-premium-field-control dynamic-region-range-control">
-                                    <input type="number" min="0.01" step="any" name="system.dynamicRegion.range" value="{{dynamicRegion.range}}" />
+                                    <input type="number" min="0.01" step="any" name="system.dynamicRegion.range" value="{{dynamicRegion.range}}" title="{{localize 'GUM.DynamicRegion.RangeTooltip'}}" />
                                     <span>{{dynamicRegionUnit}}</span>
-                                    <p class="effect-premium-field-hint">{{localize "GUM.DynamicRegion.RangeHint"}}</p>
                                 </div>
                             </div>
 
@@ -1389,7 +1388,7 @@
                                 <input type="checkbox" name="system.dynamicRegion.includeSelf" {{checked dynamicRegion.includeSelf}} />
                                 <span>{{localize "GUM.DynamicRegion.IncludeSelf"}}</span>
                             </label>
-                            <label class="effect-premium-checkbox">
+                            <label class="effect-premium-checkbox" title="{{localize 'GUM.DynamicRegion.GridBasedTooltip'}}">
                                 <input type="checkbox" name="system.dynamicRegion.gridBased" {{checked dynamicRegion.gridBased}} />
                                 <span>{{localize "GUM.DynamicRegion.GridBased"}}</span>
                             </label>
@@ -1400,36 +1399,18 @@
                         <div class="effect-premium-field">
                             <label class="effect-premium-field-label">
                                 <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
-                                {{localize "GUM.DynamicRegion.PayloadEffect"}}
+                                {{localize "GUM.DynamicRegion.Actions"}}
                             </label>
-                            <div class="dynamic-region-effect-dropzone {{#if dynamicRegionPayloadInvalid}}is-invalid{{/if}}">
-                                <input type="hidden" name="system.dynamicRegion.payloadEffectUuid" value="{{dynamicRegion.payloadEffectUuid}}" />
-                                <i class="fas fa-hand-pointer" aria-hidden="true"></i>
-                                <div>
-                                    {{#if dynamicRegionPayloadName}}
-                                        <strong>{{dynamicRegionPayloadName}}</strong>
-                                        <small>{{dynamicRegion.payloadEffectUuid}}</small>
-                                    {{else if dynamicRegionPayloadInvalid}}
-                                        <strong>{{localize "GUM.DynamicRegion.PayloadMissing"}}</strong>
-                                        <small>{{dynamicRegion.payloadEffectUuid}}</small>
-                                    {{else}}
-                                        <strong>{{localize "GUM.DynamicRegion.DropPayload"}}</strong>
-                                        <small>{{localize "GUM.DynamicRegion.DropPayloadHint"}}</small>
-                                    {{/if}}
-                                </div>
-                                {{#if dynamicRegion.payloadEffectUuid}}
-                                    <button type="button" class="dynamic-region-clear-effect" title="{{localize 'GUM.DynamicRegion.ClearPayload'}}">
-                                        <i class="fas fa-xmark" aria-hidden="true"></i>
-                                    </button>
-                                {{/if}}
+                            <input type="hidden" name="system.dynamicRegion.actionIds" value="{{dynamicRegionActionIdsCsv}}" />
+                            <div class="resistance-branch-actions dynamic-region-actions">
+                                <span class="resistance-action-summary">{{dynamicRegionActionSummary}}</span>
+                                <button type="button" class="select-dynamic-region-actions">
+                                    <i class="fas fa-search" aria-hidden="true"></i>
+                                    {{localize "GUM.EffectSheet.SelectActions"}}
+                                </button>
                             </div>
-                            <p class="effect-premium-field-hint">{{localize "GUM.DynamicRegion.PayloadHint"}}</p>
+                            <p class="effect-premium-field-hint">{{localize "GUM.DynamicRegion.ActionsHint"}}</p>
                         </div>
-                    </div>
-
-                    <div class="dynamic-region-flow">
-                        <i class="fas fa-circle-play" aria-hidden="true"></i>
-                        <span>{{localize "GUM.DynamicRegion.Flow"}}</span>
                     </div>
                 </section>
             </div>

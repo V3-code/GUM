@@ -16,7 +16,8 @@ export function normalizeDynamicEffectRegion(config = {}, { defaultRange = 1 } =
   return {
     enabled: config?.enabled === true,
     range: Number.isFinite(range) && range > 0 ? range : Math.max(Number(defaultRange) || 1, 0.01),
-    payloadEffectUuid: String(config?.payloadEffectUuid ?? "").trim(),
+    actionIds: [...new Set((Array.isArray(config?.actionIds) ? config.actionIds : String(config?.actionIds ?? "").split(","))
+      .map(id => String(id).trim()).filter(Boolean))],
     targetMode,
     includeSelf: config?.includeSelf === true,
     gridBased: config?.gridBased === true,
@@ -51,7 +52,8 @@ export function buildDynamicRegionData({ controllerEffect, effectItem, token, co
       type: GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR,
       system: {
         events: [enter, exit],
-        effectUuid: normalized.payloadEffectUuid,
+        effectUuid: effectItem?.uuid ?? "",
+        actionIds: normalized.actionIds,
         sourceTokenUuid: token?.uuid ?? "",
         targetMode: normalized.targetMode,
         includeSelf: normalized.includeSelf
@@ -64,7 +66,6 @@ export function buildDynamicRegionData({ controllerEffect, effectItem, token, co
           controllerActiveEffectUuid: controllerEffect?.uuid ?? null,
           effectItemUuid: effectItem?.uuid ?? null,
           sourceTokenUuid: token?.uuid ?? null,
-          payloadEffectUuid: normalized.payloadEffectUuid,
           signature: JSON.stringify(normalized)
         }
       }
@@ -100,6 +101,7 @@ export function createGumDynamicEffectRegionBehaviorType({
       return {
         events: this._createEventsField({ events, initial: events }),
         effectUuid: new fields.DocumentUUIDField({ type: "Item", nullable: false }),
+        actionIds: new fields.SetField(new fields.StringField({ required: true, nullable: false, blank: false })),
         sourceTokenUuid: new fields.StringField({ required: true, nullable: false, blank: false }),
         targetMode: new fields.StringField({ required: true, initial: "all", choices: ["all", "allies", "enemies"] }),
         includeSelf: new fields.BooleanField({ initial: false })
@@ -136,6 +138,8 @@ export function createGumDynamicEffectRegionBehaviorType({
           context: {
             mode: "dynamic-region",
             source: "dynamic-region",
+            actionIds: [...this.actionIds],
+            skipDynamicRegionController: true,
             eventData: buildRegionEffectEventData(event, this),
             gumFlags: {
               sceneTrigger: {
@@ -195,9 +199,7 @@ async function collectDesiredRegions(scene) {
       const config = normalizeDynamicEffectRegion(effectItem.system?.dynamicRegion, {
         defaultRange: scene?.grid?.distance ?? 1
       });
-      if (!config.enabled || !config.payloadEffectUuid || config.payloadEffectUuid === effectItem.uuid) continue;
-      const payload = await globalThis.fromUuid?.(config.payloadEffectUuid).catch(() => null);
-      if (payload?.type !== "effect") continue;
+      if (!config.enabled || !config.actionIds.length) continue;
       const key = `${effect.uuid}::${token.uuid}`;
       desired.set(key, { key, controllerEffect: effect, effectItem, token, config });
     }
