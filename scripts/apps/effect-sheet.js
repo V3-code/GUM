@@ -14,6 +14,7 @@ import {
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 import { ensureEffectItemBridge, findEffectItemBridge } from "../../module/integrations/active-effect-bridge.mjs";
 import { normalizeRollModifierCompositionMode, ROLL_MODIFIER_COMPOSITION_MODES } from "../../module/utils/roll-modifier-composition.mjs";
+import { normalizeDynamicEffectRegion } from "../../module/services/dynamic-effect-region-service.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -408,6 +409,21 @@ export class EffectSheet extends ItemSheet {
         context.effectItemUuid = this.item.uuid;
         context.activeEffectBridgeUuid = activeEffectBridge?.uuid || "";
         context.hasActiveEffectBridge = Boolean(activeEffectBridge?.uuid);
+        const sceneDistance = Number(canvas?.scene?.grid?.distance) || 1;
+        context.dynamicRegion = normalizeDynamicEffectRegion(context.system.dynamicRegion, { defaultRange: sceneDistance });
+        context.dynamicRegionSupported = Number(game.release?.generation) >= 14
+            && typeof CONFIG.Region?.documentClass?.createTokenEmanation === "function";
+        context.dynamicRegionUnit = canvas?.scene?.grid?.units || localize("GUM.DynamicRegion.SceneUnits", "scene units");
+        context.dynamicRegionTargetModes = [
+            { id: "all", label: localize("GUM.DynamicRegion.TargetMode.all") },
+            { id: "allies", label: localize("GUM.DynamicRegion.TargetMode.allies") },
+            { id: "enemies", label: localize("GUM.DynamicRegion.TargetMode.enemies") }
+        ];
+        const dynamicRegionPayload = context.dynamicRegion.payloadEffectUuid
+            ? await fromUuid(context.dynamicRegion.payloadEffectUuid).catch(() => null)
+            : null;
+        context.dynamicRegionPayloadName = dynamicRegionPayload?.type === "effect" ? dynamicRegionPayload.name : "";
+        context.dynamicRegionPayloadInvalid = Boolean(context.dynamicRegion.payloadEffectUuid && !context.dynamicRegionPayloadName);
 
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
@@ -630,6 +646,31 @@ activateListeners(html) {
     html.on("change", '[name$=".ability_kind"], [name$=".skill_scope"], [name$=".combat_scope"], [name$=".modifier_application_side"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
     html.find(".effect-premium-action").each((_index, element) => refreshSpecializedFields(element));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
+
+    html.on("dragover", ".dynamic-region-effect-dropzone", event => {
+        event.preventDefault();
+        event.currentTarget.classList.add("is-dragover");
+    });
+    html.on("dragleave", ".dynamic-region-effect-dropzone", event => event.currentTarget.classList.remove("is-dragover"));
+    html.on("drop", ".dynamic-region-effect-dropzone", async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.classList.remove("is-dragover");
+        const data = TextEditorImpl.getDragEventData(event.originalEvent ?? event);
+        if (data?.type !== "Item") return;
+        const effect = await Item.fromDropData(data).catch(() => null);
+        if (effect?.type !== "effect" || !effect.uuid || effect.parent?.documentName === "Actor") {
+            return ui.notifications.warn(game.i18n.localize("GUM.DynamicRegion.InvalidPayload"));
+        }
+        if (effect.uuid === this.item.uuid) {
+            return ui.notifications.warn(game.i18n.localize("GUM.DynamicRegion.RecursivePayload"));
+        }
+        await this.item.update({ "system.dynamicRegion.payloadEffectUuid": effect.uuid });
+    });
+    html.on("click", ".dynamic-region-clear-effect", async event => {
+        event.preventDefault();
+        await this.item.update({ "system.dynamicRegion.payloadEffectUuid": "" });
+    });
 
     html.on("input change", ".effect-status-search", event => {
         const searchInput = event.currentTarget;

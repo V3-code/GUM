@@ -1111,6 +1111,15 @@
       ],
       "schemaVersion": 2,
       "conditionStackingMode": "stack",
+      "dynamicRegion": {
+        "enabled": false,
+        "range": 1,
+        "payloadEffectUuid": "",
+        "targetMode": "all",
+        "includeSelf": false,
+        "gridBased": false,
+        "color": "#7b61ff"
+      },
       "actions": [],
       "type": "attribute",
       "path": "system.attributes.st.passive",

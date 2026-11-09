@@ -74,6 +74,7 @@ import { WorldStatusConfig } from "../module/apps/world-status-config.js";
 import { installGumApi } from "../module/api/gum-api.mjs";
 import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
 import { registerGumRegionEffectBehavior, registerMonksActiveTilesEffectAction } from "../module/integrations/scene-effect-integration.mjs";
+import { registerDynamicEffectRegionHooks, registerGumDynamicEffectRegionBehavior } from "../module/services/dynamic-effect-region-service.mjs";
 import {
     activateEffectItemBridgeCarrier,
     cleanupEffectItemBridgeCarrier,
@@ -99,6 +100,7 @@ import { registerDistanceRulerIntegration } from "../module/canvas/distance-rule
 import { PHYSICAL_FEAT_ATTRIBUTE_KEYS, prepareBasicLiftAttribute, preparePhysicalFeatAttributes } from "../module/utils/physical-feats.mjs";
 
 registerMonksActiveTilesEffectAction();
+registerDynamicEffectRegionHooks();
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -3367,6 +3369,9 @@ Hooks.once('init', async function() {
 
     if (!registerGumRegionEffectBehavior()) {
         console.warn("GUM | A API de comportamentos de Região não está disponível nesta versão do Foundry.");
+    }
+    if (!registerGumDynamicEffectRegionBehavior()) {
+        console.warn("GUM | A API de Região Dinâmica não está disponível nesta versão do Foundry.");
     }
 
     CONFIG.Actor.documentClass = GurpsActor;
