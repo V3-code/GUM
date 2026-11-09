@@ -10,6 +10,7 @@ import { renderPendingResistanceRequest } from "../../module/utils/roll-request-
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
 import { equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
 import { buildDamageApplicationEvent, calculateShockPenalty, classifyDamageTargetPool } from "../../module/utils/damage-application-event.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../../module/api/gum-hooks.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -1447,6 +1448,32 @@ async _onNpcResistanceRoll(effectId) {
 
             for (const effect of pendingResistanceQueue) {
                 await this._promptResistanceRoll(effect);
+            }
+
+            if (eventData) {
+                const sourceItem = this.damageData.sourceItemId
+                    ? this.attackerActor?.items?.get?.(this.damageData.sourceItemId) || null
+                    : null;
+                const lifecycleTargetToken = this.targetToken || resolveGumSourceToken(this.targetActor);
+                emitGumLifecycleHook(GUM_API_HOOKS.DAMAGE_APPLIED, {
+                    eventId: eventData.eventId,
+                    actor: this.attackerActor,
+                    sourceToken: this.attackerToken || resolveGumSourceToken(this.attackerActor),
+                    item: sourceItem,
+                    action: {
+                        type: "damage",
+                        id: this.damageData.sourceAttackId || sourceItem?.id || null,
+                        attackType: this.damageData.sourceAttackType || null,
+                        label: this.damageData.sourceName || null,
+                        data: this.damageData
+                    },
+                    targets: lifecycleTargetToken ? [lifecycleTargetToken] : [],
+                    result: {
+                        event: eventData,
+                        targetActor: this.targetActor,
+                        injury: finalInjury
+                    }
+                });
             }
 
             if (shouldClose) this.close();

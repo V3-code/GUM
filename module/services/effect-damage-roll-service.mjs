@@ -4,6 +4,7 @@ import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js
 import { applyRollPrivacy } from "../utils/roll-privacy.mjs";
 import { getEffectTestChatPrivacy, normalizeEffectTestChatVisibility } from "../utils/effect-chat-visibility.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../api/gum-hooks.mjs";
 
 const COMPONENTS = Object.freeze([
   { key: "main", prefix: "damage", packageKey: "main", labelKey: "GUM.Damage.Roll.Standard" },
@@ -136,7 +137,7 @@ const applyPromptResult = (components, result) => components.map(component => {
   };
 });
 
-export async function rollEffectDamageAction({ action = {}, effectItem, target } = {}) {
+export async function rollEffectDamageAction({ action = {}, effectItem, target, context = {} } = {}) {
   const actor = target?.actor ?? null;
   const normalized = normalizeEffectDamageAction(action);
   const sourceName = String(action.label || effectItem?.name || "Rolagem de Dano").trim();
@@ -224,6 +225,20 @@ export async function rollEffectDamageAction({ action = {}, effectItem, target }
     if (privacy.whisper.length) chatData.whisper = privacy.whisper;
     if (privacy.blind) chatData.blind = true;
   }
-  await ChatMessage.create(chatData);
+  const message = await ChatMessage.create(chatData);
+  emitGumLifecycleHook(GUM_API_HOOKS.DAMAGE_ROLLED, {
+    actor: context.actor || null,
+    sourceToken: resolveGumSourceToken(context.actor),
+    item: effectItem,
+    action: {
+      type: "damage",
+      id: action.id || effectItem?.id,
+      attackType: "effect-damage",
+      label: sourceName,
+      data: action
+    },
+    targets: target ? [target] : [],
+    result: { damage: damagePackage, rolls: rolled.map(component => component.roll), message }
+  });
   return { damagePackage, rolls: rolled.map(component => component.roll) };
 }

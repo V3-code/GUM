@@ -4,6 +4,13 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Não publicado]
+
+### Added
+
+- A API pública `1.2.0` ganhou hooks informativos e versionados para rolagens concluídas, dano rolado ou aplicado, efeitos aplicados/removidos/alternados, transições de condição, grupos manuais de efeitos de estado e uso de item, com um envelope comum preparado para integrações externas.
+- Itens Efeito agora expõem um único portador de ciclo visual entre seus ActiveEffects persistentes, propagam para ele as flags externas configuradas na ponte nativa e informam documentos, origem e transições completas nos hooks públicos, preparando animações persistentes sem duplicar efeitos mecânicos irmãos.
+
 ## [1.6.1-beta] - 2026-11-03
 
 ### Added

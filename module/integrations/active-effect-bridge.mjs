@@ -35,6 +35,24 @@ export function findEffectItemBridge(item) {
   return collectionValues(item.effects).find(isEffectItemBridgeSource) ?? null;
 }
 
+/**
+ * Return flags owned by external integrations on the native ActiveEffect
+ * bridge. GUM and core flags describe the bridge itself and must not leak to
+ * the mechanical ActiveEffects created from the Effect Item.
+ */
+export function getEffectItemBridgeIntegrationFlags(item) {
+  const bridge = findEffectItemBridge(item);
+  const flags = bridge?.flags ?? {};
+  const integrations = {};
+  for (const [scope, value] of Object.entries(flags)) {
+    if (scope === "gum" || scope === "core") continue;
+    integrations[scope] = globalThis.foundry?.utils?.deepClone
+      ? globalThis.foundry.utils.deepClone(value)
+      : structuredClone(value);
+  }
+  return integrations;
+}
+
 export function buildEffectItemBridgeData(item, { namePrefix = "GUM" } = {}) {
   return {
     name: `${namePrefix}: ${item?.name || "Effect"}`,

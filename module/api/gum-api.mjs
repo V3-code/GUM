@@ -1,3 +1,7 @@
+import { GUM_API_HOOKS } from "./gum-hooks.mjs";
+
+export { GUM_API_HOOKS } from "./gum-hooks.mjs";
+
 /**
  * Public JavaScript API for GUM.
  *
@@ -5,12 +9,7 @@
  * Runtime state stored elsewhere under game.gum is intentionally private.
  */
 
-export const GUM_API_VERSION = "1.0.0";
-
-export const GUM_API_HOOKS = Object.freeze({
-  READY: "gum.apiReady",
-  STATUS_CONFIGURATION_CHANGED: "gumWorldStatusConfigurationChanged"
-});
+export const GUM_API_VERSION = "1.2.0";
 
 export class GumApiError extends Error {
   constructor(code, message, details = {}) {

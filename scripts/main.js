@@ -72,6 +72,7 @@ import { applyMagicConsumptionTrigger, prepareMagicConsumptionSession } from "..
 import { ContentSourceConfig } from "../module/apps/content-source-config.js";
 import { WorldStatusConfig } from "../module/apps/world-status-config.js";
 import { installGumApi } from "../module/api/gum-api.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
 import { registerGumRegionEffectBehavior, registerMonksActiveTilesEffectAction } from "../module/integrations/scene-effect-integration.mjs";
 import {
     activateEffectItemBridgeCarrier,
@@ -1816,9 +1817,13 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         }
     }
 
-    if (sourceItem?.system?.useEventEffects) {
+    if (sourceItem) {
         try {
-            await applyUseEventEffects(sourceItem, actor, "activate", extraOptions);
+            await applyUseEventEffects(sourceItem, actor, "activate", {
+                ...extraOptions,
+                outcome: rollOutcome,
+                rollData
+            });
         } catch (err) {
             console.error("GUM | Falha ao aplicar Evento de Uso (activate):", err);
         }
@@ -1832,6 +1837,30 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         resultLabel, statusClass, purposeIds: rollData.purposeIds ?? [], modifierBreakdown: [
             { source: "prompt", value: promptMod }, { source: "global", value: globalModValue }
         ] };
+    const lifecycleAttack = _getRollSourceAttack(sourceItem, rollData);
+    const lifecycleAttackType = sourceItem?.system?.melee_attacks?.[rollData.attackId]
+        ? "melee"
+        : sourceItem?.system?.ranged_attacks?.[rollData.attackId]
+            ? "ranged"
+            : rollData.attackType || null;
+    emitGumLifecycleHook(GUM_API_HOOKS.ROLL_COMPLETED, {
+        actor,
+        sourceToken: resolveGumSourceToken(actor),
+        item: sourceItem,
+        action: {
+            type: rollData.type || "roll",
+            id: rollData.attackId || sourceItem?.id || null,
+            attackType: lifecycleAttackType,
+            label,
+            data: lifecycleAttack || null
+        },
+        targets: _resolveCounterTargetsForRoll(rollData),
+        result: structuredResult,
+        metadata: {
+            rollData,
+            rollContext: _determineRollContext(actor, rollData)
+        }
+    });
     if (extraOptions.returnResult || extraOptions.createChatMessage === false) return structuredResult;
 }
 
@@ -2187,7 +2216,21 @@ async function _rollDamageFromChatAction(payload) {
         content,
         rolls
     }, { rollMode: promptResult.rollMode });
-    await ChatMessage.create(chatData);
+    const message = await ChatMessage.create(chatData);
+    emitGumLifecycleHook(GUM_API_HOOKS.DAMAGE_ROLLED, {
+        actor,
+        sourceToken: resolveGumSourceToken(actor),
+        item,
+        action: {
+            type: "damage",
+            id: normalizedAttack.sourceAttackId || item.id,
+            attackType: normalizedAttack.sourceAttackType,
+            label: normalizedAttack.name,
+            data: normalizedAttack
+        },
+        targets: _resolveCounterTargetsForRoll(payload),
+        result: { damage: damagePackage, rolls, message }
+    });
 }
 
 async function _rollBasicDamageFromHotbar(actor, damageData) {
@@ -2291,7 +2334,15 @@ async function _rollBasicDamageFromHotbar(actor, damageData) {
         content,
         rolls
     }, { rollMode: promptResult.rollMode });
-    return ChatMessage.create(chatData);
+    const message = await ChatMessage.create(chatData);
+    emitGumLifecycleHook(GUM_API_HOOKS.DAMAGE_ROLLED, {
+        actor,
+        sourceToken: resolveGumSourceToken(actor),
+        action: { type: "damage", id: basicDamageKey, label, data: damageData },
+        targets: _resolveCounterTargetsForRoll(damageData),
+        result: { damage: damagePackage, rolls, message }
+    });
+    return message;
 }
 
 export async function damageFromHotbar({ actorId, actorUuid, damageData } = {}) {
@@ -2384,7 +2435,14 @@ async function _rollGumManualDamage(actor, formula, damageType) {
         content,
         rolls: [roll]
     });
-    await ChatMessage.create(chatData);
+    const message = await ChatMessage.create(chatData);
+    emitGumLifecycleHook(GUM_API_HOOKS.DAMAGE_ROLLED, {
+        actor,
+        sourceToken: resolveGumSourceToken(actor),
+        action: { type: "damage", label: damagePackage.sourceName, data: { formula, damageType } },
+        targets: _resolveCounterTargetsForRoll({}),
+        result: { damage: damagePackage, rolls: [roll], message }
+    });
 }
 
 function _findGumSkill(actor, query) {
@@ -3045,16 +3103,17 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
  * trigger: "consume" | "activate"
  */
 async function applyUseEventEffects(item, actor, trigger, options = {}) {
-    if (!item || !actor) return;
+    if (!item || !actor) return null;
     const normalizedTrigger = `${trigger || ""}`.trim().toLowerCase();
-    if (!normalizedTrigger) return;
+    if (!normalizedTrigger) return null;
 
     const useEventEffects = item.system?.useEventEffects || {};
     const effectsList = Object.values(useEventEffects).filter((effectData) => {
         const entryTrigger = `${effectData?.useEventTrigger || "consume"}`.trim().toLowerCase();
         return entryTrigger === normalizedTrigger;
     });
-    if (!effectsList.length) return;
+    const appliedEffectUuids = [];
+    let pendingResistanceCount = 0;
 
     for (const effectData of effectsList) {
         const effectItem = await fromUuid(effectData.effectUuid).catch(() => null);
@@ -3081,11 +3140,39 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
                     ...options,
                     mode: options.mode || "use-event"
                 });
+                pendingResistanceCount += 1;
             }
         } else {
             await applySingleEffect(effectItem, finalTargets, { actor, origin: item });
+            appliedEffectUuids.push(effectItem.uuid);
         }
     }
+
+    const targets = Array.from(game.user.targets || []);
+    const report = {
+        trigger: normalizedTrigger,
+        effectCount: effectsList.length,
+        appliedEffectUuids,
+        pendingResistanceCount
+    };
+    emitGumLifecycleHook(GUM_API_HOOKS.ITEM_USE_COMPLETED, {
+        actor,
+        sourceToken: resolveGumSourceToken(actor),
+        item,
+        action: {
+            type: "item-use",
+            id: item.id,
+            label: item.name,
+            data: { trigger: normalizedTrigger }
+        },
+        targets: targets.length ? targets : buildActorEffectTargets(actor),
+        result: report,
+        metadata: {
+            outcome: options.outcome ?? null,
+            rollData: options.rollData ?? null
+        }
+    });
+    return report;
 }
 
 
@@ -4755,6 +4842,23 @@ const conditionTarget = buildActorEffectTarget(actor);
              if (stateChanged) {
                  // Salva o novo estado
                  await condition.setFlag("gum", "wasActive", isEffectivelyActiveNow);
+                 emitGumLifecycleHook(GUM_API_HOOKS.CONDITION_STATE_CHANGED, {
+                    actor,
+                    sourceToken: resolveGumSourceToken(actor),
+                    item: condition,
+                    action: {
+                        type: "condition",
+                        id: condition.id,
+                        label: condition.name,
+                        data: condition.system
+                    },
+                    targets: [conditionTarget],
+                    result: { active: isEffectivelyActiveNow },
+                    metadata: {
+                        previousActive: wasActive,
+                        reason: isManuallyDisabled ? "manual-override" : (eventData?.reason || "evaluation")
+                    }
+                 });
              }
 
              if (shouldExecuteActivation) { // Condição acabou de LIGAR OU gatilho pulsado
@@ -5527,6 +5631,22 @@ Hooks.on("updateWorldTime", async (worldTime, dt, options = {}, userId) => {
 // 5. MUDANÇAS DIRETAS EM EFEITOS ATIVOS (remoção)
 // Mantemos somente a remoção aqui para evitar renders intermediários durante
 // aplicações em lote (ex.: 2+ efeitos no mesmo clique no Escudo do Mestre).
+const buildEffectLifecycleMetadata = (effect, extra = {}) => {
+    const gumFlags = effect?.flags?.gum || {};
+    const sceneTrigger = gumFlags.sceneTrigger || {};
+    const bridge = gumFlags.effectItemBridge || {};
+    return {
+        effectItemUuid: gumFlags.effectUuid || bridge.effectItemUuid || null,
+        activeEffectUuid: effect?.uuid || null,
+        applicationId: gumFlags.applicationId || bridge.applicationId || null,
+        source: gumFlags.source || sceneTrigger.source || (bridge.effectItemUuid ? "activeEffectBridge" : null),
+        sourceUuid: sceneTrigger.sourceUuid || bridge.carrierUuid || null,
+        originUuid: effect?.origin || null,
+        lifecycleCarrier: gumFlags.lifecycleCarrier !== false,
+        ...extra
+    };
+};
+
 const rebalanceEffectCarrier = async (actor, effectUuid) => {
     if (!isActorContextAvailable(actor) || !effectUuid) return;
     try {
@@ -5601,6 +5721,39 @@ const refreshFromDeletedActiveEffect = async (effect, options = {}, userId) => {
             await cleanupEffectItemBridgeCarrier(effect, { actor });
         }
         const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+        const bridgeEffectUuid = foundry.utils.getProperty(effect, "flags.gum.effectItemBridge.effectItemUuid");
+        const lifecycleEffectUuid = effectUuid || bridgeEffectUuid;
+        const isLifecycleCarrier = foundry.utils.getProperty(effect, "flags.gum.lifecycleCarrier") !== false;
+        if (lifecycleEffectUuid && isLifecycleCarrier && !options.gumEffectBridgeCleanup && game.user.id === userId) {
+            const effectItem = await fromUuid(lifecycleEffectUuid).catch(() => null);
+            const originDocument = effect.origin
+                ? await fromUuid(effect.origin).catch(() => null)
+                : null;
+            const sourceActor = originDocument?.documentName === "Actor"
+                ? originDocument
+                : originDocument?.actor || originDocument?.parent?.actor || null;
+            emitGumLifecycleHook(GUM_API_HOOKS.EFFECT_REMOVED, {
+                actor: sourceActor,
+                sourceToken: resolveGumSourceToken(sourceActor),
+                item: effectItem,
+                action: {
+                    type: "effect",
+                    id: effectItem?.id || lifecycleEffectUuid,
+                    label: effectItem?.name || effect.name,
+                    data: effectItem?.system || null
+                },
+                targets: actor.getActiveTokens?.(true) || actor.getActiveTokens?.() || [],
+                result: {
+                    active: false,
+                    transition: "removed",
+                    activeEffect: effect,
+                    targetActor: actor
+                },
+                metadata: buildEffectLifecycleMetadata(effect, {
+                    reason: options.gumExpirationReason || null
+                })
+            });
+        }
         if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
         await processStatusBindings(actor);
         if (game.user.id === userId && !options.gumSkipConditionProcessing) {
@@ -5632,6 +5785,36 @@ Hooks.on("updateActiveEffect", async (effect, changes, options = {}, userId) => 
     if (!presentationChanged && !shouldProcessConditions) return;
 
     try {
+        const isLifecycleCarrier = foundry.utils.getProperty(effect, "flags.gum.lifecycleCarrier") !== false;
+        if (game.user.id === userId && disabledChanged && isLifecycleCarrier) {
+            const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+            const bridgeEffectUuid = foundry.utils.getProperty(effect, "flags.gum.effectItemBridge.effectItemUuid");
+            const lifecycleEffectUuid = effectUuid || bridgeEffectUuid;
+            const effectItem = lifecycleEffectUuid ? await fromUuid(lifecycleEffectUuid).catch(() => null) : null;
+            const active = effect.disabled !== true;
+            emitGumLifecycleHook(GUM_API_HOOKS.EFFECT_STATE_CHANGED, {
+                actor,
+                sourceToken: resolveGumSourceToken(actor),
+                item: effectItem,
+                action: {
+                    type: "effect",
+                    id: effectItem?.id || effect.id,
+                    label: effectItem?.name || effect.name,
+                    data: effect
+                },
+                targets: buildActorEffectTargets(actor),
+                result: {
+                    active,
+                    transition: active ? "enabled" : "disabled",
+                    activeEffect: effect,
+                    targetActor: actor
+                },
+                metadata: buildEffectLifecycleMetadata(effect, {
+                    previousActive: !active,
+                    manual: foundry.utils.getProperty(effect, "flags.gum.manualDisabled") !== undefined
+                })
+            });
+        }
         if (game.user.id === userId && disabledChanged && !options.gumEffectBridgeSync && isEffectItemBridgeCarrier(effect)) {
             if (effect.disabled) await deactivateEffectItemBridgeCarrier(effect);
             else await activateEffectItemBridgeCarrier(effect, {

@@ -4,6 +4,7 @@ import {
   isManualStateEffectMode,
   isStateEffectGroupDesired
 } from "../utils/state-effect-groups.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../api/gum-hooks.mjs";
 
 const PERSISTENT_ACTION_TYPES = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
 const syncQueues = new Map();
@@ -224,6 +225,25 @@ export async function setStateEffectGroupActive(item, groupId, active) {
   const report = await syncItemStateEffects(item, {
     refreshActive: true,
     forceActivationGroupIds: active ? [groupId] : []
+  });
+  const updatedGroup = getStateEffectGroups(item).find(entry => entry.id === groupId) || group;
+  emitGumLifecycleHook(GUM_API_HOOKS.STATE_EFFECT_GROUP_CHANGED, {
+    actor: item.parent,
+    sourceToken: resolveGumSourceToken(item.parent),
+    item,
+    action: {
+      type: "state-effect-group",
+      id: groupId,
+      label: updatedGroup.name,
+      data: updatedGroup
+    },
+    targets: actorTargets(item.parent),
+    result: {
+      active: active === true,
+      synchronized: report.errors.length === 0,
+      report
+    },
+    metadata: { mode: updatedGroup.mode || null }
   });
   return report.errors.length === 0;
 }

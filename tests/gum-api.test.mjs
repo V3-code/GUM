@@ -82,6 +82,9 @@ test("publishes a versioned immutable API with isolated namespaces", () => {
   assert.equal(api.version, GUM_API_VERSION);
   assert.equal(api.systemVersion, "9.9.9");
   assert.equal(api.hooks.READY, "gum.apiReady");
+  assert.equal(api.hooks.ROLL_COMPLETED, "gum.rollCompleted");
+  assert.equal(api.hooks.DAMAGE_APPLIED, "gum.damageApplied");
+  assert.equal(api.hooks.ITEM_USE_COMPLETED, "gum.itemUseCompleted");
   assert.ok(Object.isFrozen(api));
   assert.ok(Object.isFrozen(api.rolls));
   assert.ok(Object.isFrozen(api.effects));
@@ -190,6 +193,11 @@ test("documents, types, and the Foundry entry point expose the same public API",
     assert.match(portuguese, new RegExp(`api\\.${namespace}`));
     assert.match(english, new RegExp(`api\\.${namespace}`));
     assert.match(declarations, new RegExp(`readonly ${namespace}:`));
+  }
+  for (const hook of ["gum.rollCompleted", "gum.damageRolled", "gum.damageApplied", "gum.effectApplied", "gum.effectRemoved", "gum.effectStateChanged", "gum.conditionStateChanged", "gum.stateEffectGroupChanged", "gum.itemUseCompleted"]) {
+    assert.match(portuguese, new RegExp(hook.replace(".", "\\.")));
+    assert.match(english, new RegExp(hook.replace(".", "\\.")));
+    assert.match(declarations, new RegExp(hook.replace(".", "\\.")));
   }
   assert.match(main, /installGumApi\(\{/);
   assert.doesNotMatch(main, /game\.gum\s*=\s*\{\}/);

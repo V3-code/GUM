@@ -26,9 +26,13 @@ import {
     PERSISTENT_EFFECT_ACTION_TYPES,
     resolveEffectStackingDomain
 } from "../module/utils/effect-stacking.mjs";
-import { isEffectItemBridgeApplicationActive } from "../module/integrations/active-effect-bridge.mjs";
+import {
+    getEffectItemBridgeIntegrationFlags,
+    isEffectItemBridgeApplicationActive
+} from "../module/integrations/active-effect-bridge.mjs";
 import { normalizeRollModifierCompositionMode } from "../module/utils/roll-modifier-composition.mjs";
 import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -488,6 +492,18 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
     const actions = actionEntries.map(({ action }) => action);
     if (!actions.length) return;
+    const persistentEffects = [];
+    const persistentEffectKeys = new Set();
+    const rememberPersistentEffect = effect => {
+        if (!effect) return;
+        const key = effect.uuid || effect.id;
+        if (key && persistentEffectKeys.has(key)) return;
+        if (key) persistentEffectKeys.add(key);
+        persistentEffects.push(effect);
+    };
+    const bridgeIntegrationFlags = context.gumFlags?.activeEffectBridge
+        ? {}
+        : getEffectItemBridgeIntegrationFlags(effectItem);
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId, conditionIds: [context.conditionId] }
         : {};
@@ -605,7 +621,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         return { activeEffectData, targetActor, gumDuration, fallbackCoreStatusId };
     };
 
-    const baseIconCarrierIndex = selectCarrierActionIndex(actions);
+    const baseLifecycleCarrierIndex = selectCarrierActionIndex(actions);
 
     for (const [selectedActionIndex, { action, actionIndex }] of actionEntries.entries()) {
         if (!persistentTypes.has(action.type) && !instantTypes.has(action.type)) {
@@ -615,6 +631,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
         try {
             if (persistentTypes.has(action.type)) {
+                const isLifecycleCarrier = baseLifecycleCarrierIndex === selectedActionIndex;
                 if (context.skipPersistentEffects) continue;
                 if (action.type === "status" && !findConfiguredStatus(action.statusId, CONFIG.statusEffects)) {
                     throw new Error(`Status configurado não encontrado: "${action.statusId || "vazio"}".`);
@@ -632,6 +649,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         }));
                     if (effectiveStackingMode === "unique" && matchingEffects.length) {
                         const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                        const carrierUpdate = {
+                            "flags.gum.lifecycleCarrier": isLifecycleCarrier
+                        };
+                        if (isLifecycleCarrier) {
+                            for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                                carrierUpdate[`flags.${scope}`] = foundry.utils.deepClone(value);
+                            }
+                        }
+                        await primaryEffect.update(carrierUpdate);
+                        rememberPersistentEffect(primaryEffect);
                         if (stackingDomain === "condition") {
                             const previousOwners = collectConditionOwners(primaryEffect);
                             const conditionIds = [...new Set(matchingEffects
@@ -661,7 +688,13 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     activeEffectData.flags.gum.actionId = action.id;
                     activeEffectData.flags.gum.actionType = action.type;
                     activeEffectData.flags.gum.actionLabel = (action.label || "").trim();
-                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === selectedActionIndex;
+                    activeEffectData.flags.gum.lifecycleCarrier = isLifecycleCarrier;
+                    if (isLifecycleCarrier) {
+                        for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                            activeEffectData.flags[scope] = foundry.utils.deepClone(value);
+                        }
+                    }
+                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && isLifecycleCarrier;
                     if (isIconCarrier) {
                         activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
                         activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
@@ -889,12 +922,14 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         if (effectiveStackingMode === "refresh" && matchingEffects.length) {
                             const [primaryEffect, ...duplicateEffects] = matchingEffects;
                             await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
+                            rememberPersistentEffect(primaryEffect);
                             const duplicateIds = duplicateEffects.map(effect => effect.id).filter(Boolean);
                             if (duplicateIds.length) {
                                 await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
                             }
                         } else {
-                            await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                            const created = await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                            for (const activeEffect of created ?? []) rememberPersistentEffect(activeEffect);
                         }
                     } catch (error) {
                         if (isMissingSyntheticActorContextError(error, targetActor)) continue;
@@ -1148,4 +1183,35 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             ui.notifications.warn(`Efeito "${effectItem.name}": uma ação "${action.type}" falhou e foi ignorada.`);
         }
     }
+    emitGumLifecycleHook(GUM_API_HOOKS.EFFECT_APPLIED, {
+        actor: context.actor || null,
+        sourceToken: resolveGumSourceToken(context.actor),
+        item: effectItem,
+        action: {
+            type: "effect",
+            id: effectItem.id,
+            label: effectItem.name,
+            data: effectSystem
+        },
+        targets,
+        result: {
+            actionIds: actionEntries.map(({ action }) => action.id).filter(Boolean),
+            actionCount: actionEntries.length,
+            persistent: persistentEffects.length > 0,
+            activeEffects: persistentEffects,
+            activeEffectUuids: persistentEffects.map(effect => effect.uuid).filter(Boolean)
+        },
+        metadata: {
+            origin: context.origin || null,
+            originUuid: context.origin?.uuid || null,
+            applicationId,
+            source: context.source || context.eventData?.source || context.gumFlags?.sceneTrigger?.source || null,
+            sourceUuid: context.gumFlags?.sceneTrigger?.sourceUuid
+                || context.eventData?.regionUuid
+                || context.eventData?.tileUuid
+                || null,
+            mode: context.mode || null,
+            eventData: context.eventData || null
+        }
+    });
 }

@@ -6,6 +6,7 @@ import {
   cleanupEffectItemBridgeCarrier,
   ensureEffectItemBridge,
   findEffectsGeneratedByBridge,
+  getEffectItemBridgeIntegrationFlags,
   getEffectItemBridgeData,
   isEffectItemBridgeApplicationActive
 } from "../module/integrations/active-effect-bridge.mjs";
@@ -77,6 +78,21 @@ test("coalesces simultaneous bridge synchronization requests", async () => {
   assert.equal(item.effects.length, 1);
   assert.equal(first, second);
   assert.equal(second, third);
+});
+
+test("exposes only external integration flags from the native bridge", async () => {
+  const item = makeEffectItem();
+  const bridge = await ensureEffectItemBridge(item);
+  bridge.flags.autoanimations = { version: 5, activeEffectType: "aura" };
+  bridge.flags.otherModule = { enabled: true };
+  bridge.flags.core = { statusId: "hidden" };
+
+  const flags = getEffectItemBridgeIntegrationFlags(item);
+  assert.deepEqual(flags, {
+    autoanimations: { version: 5, activeEffectType: "aura" },
+    otherModule: { enabled: true }
+  });
+  assert.notEqual(flags.autoanimations, bridge.flags.autoanimations);
 });
 
 test("activates an Actor bridge once and routes it to the GUM Effect Item", async () => {
