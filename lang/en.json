@@ -3514,7 +3514,7 @@
   "GUM.DynamicRegion.GridBasedTooltip": "Makes the boundary follow whole grid spaces instead of a smooth radius.",
   "GUM.DynamicRegion.Color": "Region color",
   "GUM.DynamicRegion.Actions": "Actions applied by the Region",
-  "GUM.DynamicRegion.ActionsHint": "Choose among the actions configured in this Effect Item. They are applied on entry and removed on exit when persistent.",
+  "GUM.DynamicRegion.ActionsHint": "Choose actions from this Effect Item to reserve for the Region. They apply on entry and, when persistent, are removed on exit.",
   "GUM.DynamicRegion.ActionPickerTitle": "Dynamic Region actions",
   "GUM.DynamicRegion.ApplyFailed": "The Dynamic Region effect could not be applied. Check the console for details."
 }

@@ -3514,7 +3514,7 @@
   "GUM.DynamicRegion.GridBasedTooltip": "Faz o limite acompanhar espaços inteiros do grid em vez de formar um raio suave.",
   "GUM.DynamicRegion.Color": "Cor da Região",
   "GUM.DynamicRegion.Actions": "Ações aplicadas pela Região",
-  "GUM.DynamicRegion.ActionsHint": "Escolha entre as ações configuradas neste Item Efeito. Elas são aplicadas ao entrar e, quando persistentes, removidas ao sair.",
+  "GUM.DynamicRegion.ActionsHint": "Escolha ações deste Item Efeito para reservar à Região. Elas são aplicadas ao entrar e, quando persistentes, removidas ao sair.",
   "GUM.DynamicRegion.ActionPickerTitle": "Ações da Região Dinâmica",
   "GUM.DynamicRegion.ApplyFailed": "Não foi possível aplicar o efeito da Região Dinâmica. Consulte o console para mais detalhes."
 }

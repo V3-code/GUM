@@ -145,5 +145,6 @@ test("declares and exposes the Dynamic Region Item Effect interface", async () =
   assert.match(controller, /select-dynamic-region-actions/);
   assert.doesNotMatch(template, /dynamic-region-effect-dropzone|payloadEffectUuid/);
   assert.match(engine, /hasDynamicRegionController/);
+  assert.match(engine, /reservesActionsForDynamicRegion/);
   assert.match(engine, /actionType = dynamicAction\.type/);
 });

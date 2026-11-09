@@ -487,16 +487,21 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
     const allActions = getEffectActions(effectSystem);
     const selectedActionIds = Array.isArray(context.actionIds) ? new Set(context.actionIds.map(String)) : null;
-    const actionEntries = allActions
-        .map((action, actionIndex) => ({ action, actionIndex }))
-        .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
-    const actions = actionEntries.map(({ action }) => action);
     const dynamicRegionActionIds = Array.isArray(effectSystem.dynamicRegion?.actionIds)
         ? effectSystem.dynamicRegion.actionIds
         : String(effectSystem.dynamicRegion?.actionIds || "").split(",");
-    const hasDynamicRegionController = context.skipDynamicRegionController !== true
+    const projectedDynamicActionIds = new Set(dynamicRegionActionIds.map(id => String(id).trim()).filter(Boolean));
+    const reservesActionsForDynamicRegion = context.skipDynamicRegionController !== true
+        && Number(game.release?.generation) >= 14
+        && typeof CONFIG.Region?.documentClass?.createTokenEmanation === "function"
         && effectSystem.dynamicRegion?.enabled === true
-        && dynamicRegionActionIds.some(id => String(id).trim());
+        && projectedDynamicActionIds.size > 0;
+    const actionEntries = allActions
+        .map((action, actionIndex) => ({ action, actionIndex }))
+        .filter(({ action }) => (!selectedActionIds || selectedActionIds.has(action.id))
+            && (!reservesActionsForDynamicRegion || !projectedDynamicActionIds.has(String(action.id))));
+    const actions = actionEntries.map(({ action }) => action);
+    const hasDynamicRegionController = reservesActionsForDynamicRegion;
     if (!actions.length && !hasDynamicRegionController) return;
     const persistentEffects = [];
     const persistentEffectKeys = new Set();
