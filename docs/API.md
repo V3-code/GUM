@@ -59,6 +59,7 @@ await game.gum.api.effects.apply(effectUuid, [token], {
 await game.gum.api.effects.applyUseEvent(item, actor, "activate");
 await game.gum.api.effects.setGroupActive(item, "group-id", true);
 await game.gum.api.effects.syncItem(item);
+const activeEffectBridge = await game.gum.api.effects.getBridge(effectItem);
 const actions = game.gum.api.effects.actions(effectItem);
 ```
 

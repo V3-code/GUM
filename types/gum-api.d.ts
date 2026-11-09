@@ -78,6 +78,7 @@ export interface GumApi {
     applyUseEvent(item: GumDocumentReference, actor: GumDocumentReference, trigger: string, options?: Record<string, unknown>): Promise<any>;
     setGroupActive(item: GumDocumentReference, groupId: string, active: boolean, options?: { actor?: GumDocumentReference | null }): Promise<any>;
     syncItem(item: GumDocumentReference, options?: Record<string, unknown>): Promise<any>;
+    getBridge(effect: GumDocumentReference, options?: { actor?: GumDocumentReference | null }): Promise<any>;
   };
   readonly damage: {
     fromHotbar(options?: Record<string, unknown>): Promise<any> | any;

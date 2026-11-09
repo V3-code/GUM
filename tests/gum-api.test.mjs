@@ -27,7 +27,7 @@ const itemDocument = (id = "item-1", parent = null) => ({
 function fixture({ isGM = true } = {}) {
   const actor = actorDocument();
   const item = itemDocument("embedded", actor);
-  const effect = itemDocument("effect");
+  const effect = { ...itemDocument("effect"), type: "effect", effects: [] };
   actor.items.set(item.id, item);
   const uuidDocuments = new Map([[actor.uuid, actor], [item.uuid, item], [effect.uuid, effect]]);
   const calls = [];
@@ -50,6 +50,10 @@ function fixture({ isGM = true } = {}) {
     applyUseEventEffects: async (...args) => calls.push(["use", ...args]),
     setStateEffectGroupActive: async (...args) => calls.push(["group", ...args]),
     syncItemStateEffects: async (...args) => calls.push(["sync", ...args]),
+    ensureEffectItemBridge: async item => {
+      calls.push(["bridge", item]);
+      return item.effects?.[0] ?? null;
+    },
     resolveCombatDamageFormula: () => "2d+1",
     resolveCombatDamageProfile: () => ({ main: { formula: "2d+1" } }),
     resolveTargetCombatDefenseRecalculationModifiers: () => [{ value: -2 }],
@@ -132,6 +136,22 @@ test("routes rolls and effects through the supported system flows", async () => 
   assert.equal(setup.calls[1][0], "apply");
   assert.equal(setup.calls[2][0], "use");
   await assert.rejects(() => api.effects.apply(setup.effect, []), error => error.code === "INVALID_ARGUMENT");
+});
+
+test("exposes the native ActiveEffect bridge only for GUM Effect Items", async () => {
+  const setup = fixture();
+  const bridge = { id: "bridge", documentName: "ActiveEffect", parent: setup.effect };
+  setup.effect.effects.push(bridge);
+  const api = createGumApi(setup);
+
+  assert.equal(await api.effects.getBridge(setup.effect), bridge);
+  assert.equal(setup.calls.at(-1)[0], "bridge");
+
+  setup.item.type = "skill";
+  await assert.rejects(
+    () => api.effects.getBridge(setup.item, { actor: setup.actor }),
+    error => error.code === "INVALID_DOCUMENT"
+  );
 });
 
 test("exposes damage helpers and defensive copies of content metadata", async () => {

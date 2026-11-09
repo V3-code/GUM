@@ -3351,6 +3351,7 @@ Hooks.once('init', async function() {
             resolveTargetCombatDefenseRecalculationModifiers,
             setStateEffectGroupActive,
             syncItemStateEffects,
+            ensureEffectItemBridge,
             contentSourceService,
             contentSourcePurposes: CONTENT_SOURCE_PURPOSES,
             openTestRequestLauncher,
