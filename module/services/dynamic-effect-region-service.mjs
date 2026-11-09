@@ -1,4 +1,8 @@
-import { GUM_REGION_EFFECT_BEHAVIOR, isDynamicRegionTarget } from "../integrations/scene-effect-integration.mjs";
+import {
+  GUM_REGION_EFFECT_BEHAVIOR,
+  isDynamicRegionTarget,
+  removeRegionAppliedEffects
+} from "../integrations/scene-effect-integration.mjs";
 
 export const GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR = GUM_REGION_EFFECT_BEHAVIOR;
 export const GUM_DYNAMIC_EFFECT_REGION_FLAG = "dynamicEffectRegion";
@@ -15,6 +19,7 @@ export function normalizeDynamicEffectRegion(config = {}, { defaultRange = 1 } =
     : "all";
   return {
     enabled: config?.enabled === true,
+    shape: config?.shape === "emanation" ? "emanation" : "circle",
     range: Number.isFinite(range) && range > 0 ? range : Math.max(Number(defaultRange) || 1, 0.01),
     actionIds: [...new Set((Array.isArray(config?.actionIds) ? config.actionIds : String(config?.actionIds ?? "").split(","))
       .map(id => String(id).trim()).filter(Boolean))],
@@ -76,7 +81,8 @@ const isPrimaryActiveGM = gameRef => {
 };
 
 const controllerItemUuid = effect => {
-  if (getProperty(effect, "flags.gum.lifecycleCarrier") === false || effect?.disabled) return null;
+  if (effect?.disabled || getProperty(effect, "flags.gum.dynamicRegionController") !== true) return null;
+  if (getProperty(effect, "flags.gum.dynamicRegionGrant")) return null;
   return getProperty(effect, "flags.gum.effectUuid") || null;
 };
 
@@ -93,11 +99,12 @@ async function collectDesiredRegions(scene) {
       const config = normalizeDynamicEffectRegion(effectItem.system?.dynamicRegion, {
         defaultRange: scene?.grid?.distance ?? 1
       });
-      const configuredActionIds = (Array.isArray(effectItem.system?.actions) ? effectItem.system.actions : [])
-        .filter(action => action?.delivery === "dynamic_region")
-        .map(action => String(action.id || "").trim())
-        .filter(Boolean);
-      if (configuredActionIds.length) config.actionIds = [...new Set(configuredActionIds)];
+      if (!config.actionIds.length) {
+        config.actionIds = (Array.isArray(effectItem.system?.actions) ? effectItem.system.actions : [])
+          .filter(action => action?.delivery === "dynamic_region")
+          .map(action => String(action.id || "").trim())
+          .filter(Boolean);
+      }
       if (!config.enabled || !config.actionIds.length) continue;
       const key = `${effect.uuid}::${token.uuid}`;
       desired.set(key, { key, controllerEffect: effect, effectItem, token, config });
@@ -111,7 +118,7 @@ export async function reconcileDynamicEffectRegions({
   scene = null,
   regionClass = globalThis.CONFIG?.Region?.documentClass
 } = {}) {
-  if (!isPrimaryActiveGM(gameRef) || typeof regionClass?.createTokenEmanation !== "function") return [];
+  if (!isPrimaryActiveGM(gameRef) || typeof regionClass?.create !== "function") return [];
   const scenes = scene ? [scene] : collectionValues(gameRef?.scenes);
   const results = [];
   for (const currentScene of scenes) {
@@ -133,6 +140,13 @@ async function reconcileDynamicEffectRegionsForScene(scene, regionClass) {
     const entry = desired.get(key);
     const signature = entry ? JSON.stringify(entry.config) : null;
     if (!entry || flag.signature !== signature) {
+      const actors = [...new Set(collectionValues(scene.tokens).map(token => token.actor).filter(Boolean))];
+      for (const actor of actors) {
+        await removeRegionAppliedEffects(actor, {
+          regionUuid: region.uuid,
+          effectUuid: flag.effectItemUuid
+        });
+      }
       results.push(await region.delete({ gumDynamicRegionSync: true }));
     } else keptKeys.add(key);
   }
@@ -140,14 +154,50 @@ async function reconcileDynamicEffectRegionsForScene(scene, regionClass) {
   for (const entry of desired.values()) {
     if (keptKeys.has(entry.key)) continue;
     const data = buildDynamicRegionData(entry);
-    results.push(await regionClass.createTokenEmanation(
-      entry.token,
-      entry.config.range,
-      data,
-      { excludeToken: false, gridBased: entry.config.gridBased, createOptions: { gumDynamicRegionSync: true } }
-    ));
+    results.push(await createDynamicEffectRegion(regionClass, entry, data));
   }
   return results;
+}
+
+async function createDynamicEffectRegion(regionClass, entry, data) {
+  const { token, config } = entry;
+  if (config.shape === "emanation") {
+    return regionClass.createTokenEmanation(token, config.range, data, {
+      excludeToken: false,
+      gridBased: config.gridBased,
+      createOptions: { gumDynamicRegionSync: true }
+    });
+  }
+
+  const scene = token.parent;
+  const gridDistance = Number(scene?.grid?.distance) || Number(scene?.dimensions?.distance) || 1;
+  const gridSize = Number(scene?.grid?.size) || Number(scene?.dimensions?.size) || 100;
+  const distancePixels = Number(scene?.dimensions?.distancePixels) || (gridSize / gridDistance);
+  const source = token._source || token;
+  const center = token.getCenterPoint?.()
+    || token.object?.center
+    || {
+      x: Number(source.x || 0) + ((Number(source.width) || 1) * gridSize / 2),
+      y: Number(source.y || 0) + ((Number(source.height) || 1) * gridSize / 2)
+    };
+  const elevation = Number(source.elevation) || 0;
+  const depth = Number(source.depth) || Math.min(Number(source.width) || 1, Number(source.height) || 1);
+  return regionClass.create({
+    ...data,
+    shapes: [{
+      type: "circle",
+      x: center.x,
+      y: center.y,
+      radius: config.range * distancePixels,
+      gridBased: config.gridBased
+    }],
+    elevation: {
+      bottom: elevation - config.range,
+      top: elevation + (depth * gridDistance) + config.range
+    },
+    attachment: { token: token.id },
+    levels: source.level ? [source.level] : []
+  }, { parent: scene, gumDynamicRegionSync: true });
 }
 
 let reconcileTimer = null;

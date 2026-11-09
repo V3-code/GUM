@@ -224,18 +224,6 @@
                                                 </div>
                                             </div>
 
-                                            <div class="effect-premium-field">
-                                                <label class="effect-premium-field-label" title="{{localize 'GUM.DynamicRegion.ActionDeliveryHint'}}">
-                                                    <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
-                                                    {{localize "GUM.DynamicRegion.ActionDelivery"}}
-                                                </label>
-                                                <div class="effect-premium-field-control">
-                                                    <select name="system.actions.{{action.index}}.delivery">
-                                                        <option value="carrier" {{#if (eq action.delivery "carrier")}}selected{{/if}}>{{localize "GUM.DynamicRegion.DeliveryCarrier"}}</option>
-                                                        <option value="dynamic_region" {{#if (eq action.delivery "dynamic_region")}}selected{{/if}}>{{localize "GUM.DynamicRegion.DeliveryRegion"}}</option>
-                                                    </select>
-                                                </div>
-                                            </div>
                                         </div>
 
                                         <div
@@ -1361,6 +1349,20 @@
 
                         <div class="effect-premium-grid effect-premium-grid-resource">
                             <div class="effect-premium-field">
+                                <label class="effect-premium-field-label">
+                                    <i class="fas fa-shapes" aria-hidden="true"></i>
+                                    {{localize "GUM.DynamicRegion.Shape.Label"}}
+                                </label>
+                                <div class="effect-premium-field-control">
+                                    <select name="system.dynamicRegion.shape">
+                                        {{#each dynamicRegionShapes as |shape|}}
+                                            <option value="{{shape.id}}" {{#if (eq ../dynamicRegion.shape shape.id)}}selected{{/if}}>{{shape.label}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="effect-premium-field">
                                 <label class="effect-premium-field-label" title="{{localize 'GUM.DynamicRegion.RangeTooltip'}}">
                                     <i class="fas fa-ruler" aria-hidden="true"></i>
                                     {{localize "GUM.DynamicRegion.Range"}}
@@ -1400,6 +1402,15 @@
                             </div>
                         </div>
 
+                        <input type="hidden" name="system.dynamicRegion.actionIds" value="{{dynamicRegionActionIdsCsv}}" />
+                        <div class="resistance-branch-actions dynamic-region-actions">
+                            <span class="dynamic-region-action-summary">{{dynamicRegionActionSummary}}</span>
+                            <button type="button" class="select-dynamic-region-actions">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                {{localize "GUM.DynamicRegion.SelectActions"}}
+                            </button>
+                        </div>
+
                         <div class="effect-premium-options-row">
                             <label class="effect-premium-checkbox">
                                 <input type="checkbox" name="system.dynamicRegion.includeSelf" {{checked dynamicRegion.includeSelf}} />
@@ -1414,7 +1425,7 @@
 
                     <div class="dynamic-region-notice">
                         <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
-                        {{localize "GUM.DynamicRegion.ActionDeliveryNotice"}}
+                        {{localize "GUM.DynamicRegion.ActionSelectionNotice"}}
                     </div>
                 </section>
             </div>

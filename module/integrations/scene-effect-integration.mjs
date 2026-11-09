@@ -134,12 +134,28 @@ export function isDynamicRegionTarget({ token, sourceToken, targetMode = "all", 
   return false;
 }
 
-async function removeRegionAppliedEffects(actor, { regionUuid, effectUuid } = {}) {
+export async function removeRegionAppliedEffects(actor, { regionUuid, effectUuid } = {}) {
   if (!actor || !regionUuid) return [];
-  const ids = Array.from(actor.effects || []).filter(effect =>
-    globalThis.foundry?.utils?.getProperty?.(effect, "flags.gum.sceneTrigger.sourceUuid") === regionUuid
-    && (!effectUuid || globalThis.foundry?.utils?.getProperty?.(effect, "flags.gum.effectUuid") === effectUuid)
-  ).map(effect => effect.id).filter(Boolean);
+  const getProperty = globalThis.foundry?.utils?.getProperty;
+  const ids = [];
+  for (const effect of Array.from(actor.effects || [])) {
+    if (effectUuid && getProperty?.(effect, "flags.gum.effectUuid") !== effectUuid) continue;
+    const grant = getProperty?.(effect, "flags.gum.dynamicRegionGrant") || {};
+    const sources = [...new Set([
+      ...(Array.isArray(grant.sourceUuids) ? grant.sourceUuids : []),
+      grant.sourceUuid,
+      getProperty?.(effect, "flags.gum.sceneTrigger.sourceUuid")
+    ].filter(Boolean).map(String))];
+    if (!sources.includes(regionUuid)) continue;
+    const remaining = sources.filter(sourceUuid => sourceUuid !== regionUuid);
+    if (remaining.length) {
+      await effect.update({
+        "flags.gum.dynamicRegionGrant.sourceUuid": remaining[0],
+        "flags.gum.dynamicRegionGrant.sourceUuids": remaining,
+        "flags.gum.sceneTrigger.sourceUuid": remaining[0]
+      });
+    } else if (effect.id) ids.push(effect.id);
+  }
   if (ids.length) {
     await actor.deleteEmbeddedDocuments("ActiveEffect", ids, { gumExpirationReason: "region-exit" });
   }
@@ -217,6 +233,7 @@ export function createGumEffectRegionBehaviorType({
 
       const gameRef = globalThis.game;
       const isDynamicRegion = Boolean(this.sourceTokenUuid);
+      const dynamicRegionFlag = globalThis.foundry?.utils?.getProperty?.(this.region, "flags.gum.dynamicEffectRegion") || {};
       try {
         return await applySceneEffect({
           api: gameRef?.gum?.api,
@@ -227,8 +244,19 @@ export function createGumEffectRegionBehaviorType({
             source: isDynamicRegion ? "dynamic-region" : "region",
             actionIds: this.actionIds?.size ? [...this.actionIds] : null,
             skipDynamicRegionController: Boolean(this.sourceTokenUuid),
+            durationOverride: isDynamicRegion ? { isPermanent: true, inCombat: false } : null,
             eventData: buildRegionEffectEventData(event, this),
             gumFlags: {
+              dynamicRegionController: false,
+              ...(isDynamicRegion ? {
+                dynamicRegionGrant: {
+                  sourceUuid: this.region?.uuid ?? null,
+                  sourceUuids: [this.region?.uuid].filter(Boolean),
+                  controllerActiveEffectUuid: dynamicRegionFlag.controllerActiveEffectUuid ?? null,
+                  sourceTokenUuid: this.sourceTokenUuid,
+                  effectItemUuid: this.effectUuid
+                }
+              } : {}),
               sceneTrigger: {
                 source: isDynamicRegion ? "dynamic-region" : "region",
                 sourceUuid: this.region?.uuid ?? null,

@@ -7,9 +7,48 @@ import {
   applySceneEffect,
   buildRegionEffectEventData,
   buildSceneEffectTargets,
+  removeRegionAppliedEffects,
   registerGumRegionEffectBehavior,
   registerMonksActiveTilesEffectAction
 } from "../module/integrations/scene-effect-integration.mjs";
+
+test("removes only the departing Region owner from overlapping dynamic grants", async () => {
+  const previousFoundry = globalThis.foundry;
+  globalThis.foundry = {
+    utils: {
+      getProperty: (object, path) => path.split(".").reduce((value, key) => value?.[key], object)
+    }
+  };
+  const updates = [];
+  const effect = {
+    id: "grant",
+    flags: { gum: {
+      effectUuid: "Item.aura",
+      dynamicRegionGrant: { sourceUuid: "Region.one", sourceUuids: ["Region.one", "Region.two"] },
+      sceneTrigger: { sourceUuid: "Region.one" }
+    } },
+    update: async data => updates.push(data)
+  };
+  const deleted = [];
+  const grantActor = {
+    effects: [effect],
+    deleteEmbeddedDocuments: async (_type, ids) => deleted.push(...ids)
+  };
+  try {
+    await removeRegionAppliedEffects(grantActor, { regionUuid: "Region.one", effectUuid: "Item.aura" });
+    assert.equal(deleted.length, 0);
+    assert.deepEqual(updates[0]["flags.gum.dynamicRegionGrant.sourceUuids"], ["Region.two"]);
+    assert.equal(updates[0]["flags.gum.sceneTrigger.sourceUuid"], "Region.two");
+
+    effect.flags.gum.dynamicRegionGrant = { sourceUuid: "Region.two", sourceUuids: ["Region.two"] };
+    effect.flags.gum.sceneTrigger.sourceUuid = "Region.two";
+    await removeRegionAppliedEffects(grantActor, { regionUuid: "Region.two", effectUuid: "Item.aura" });
+    assert.deepEqual(deleted, ["grant"]);
+  } finally {
+    if (previousFoundry === undefined) delete globalThis.foundry;
+    else globalThis.foundry = previousFoundry;
+  }
+});
 
 const actor = { id: "actor-1", uuid: "Actor.actor-1", documentName: "Actor", name: "Alvo" };
 const tokenDocument = {

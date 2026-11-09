@@ -1113,7 +1113,9 @@
       "conditionStackingMode": "stack",
       "dynamicRegion": {
         "enabled": false,
+        "shape": "circle",
         "range": 1,
+        "actionIds": [],
         "targetMode": "all",
         "includeSelf": false,
         "gridBased": false,

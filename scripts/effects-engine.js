@@ -195,7 +195,6 @@ const escapeHtml = (value) => String(value ?? "")
 const DEFAULT_EFFECT_ACTION = {
     id: "",
     label: "",
-    delivery: "carrier",
     type: "attribute",
     path: "system.attributes.st.passive",
     operation: "ADD",
@@ -311,7 +310,7 @@ const normalizeEffectAction = (action = {}) => {
     const configuredRollVisibility = action?.roll_visibility
         ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
-    next.delivery = next.delivery === "dynamic_region" ? "dynamic_region" : "carrier";
+    delete next.delivery;
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     Object.assign(next, normalizeEffectDamageAction(next));
@@ -458,6 +457,16 @@ const selectCarrierActionIndex = (actions = []) => {
     return persistent[0].index;
 };
 
+const collectDynamicRegionGrantSources = (...effectsOrFlags) => [...new Set(effectsOrFlags.flatMap(value => {
+    const gumFlags = value?.flags?.gum || value?.gum || value || {};
+    const grant = gumFlags.dynamicRegionGrant || {};
+    return [
+        ...(Array.isArray(grant.sourceUuids) ? grant.sourceUuids : []),
+        grant.sourceUuid,
+        gumFlags.sceneTrigger?.sourceUuid
+    ];
+}).filter(Boolean).map(String))];
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
     if (!await isEffectItemBridgeApplicationActive(context)) return;
@@ -469,6 +478,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const stackingDomain = resolveEffectStackingDomain(context);
     const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
     const applicationId = context.applicationId || foundry.utils.randomID();
+    const dynamicRegionGrantSourceUuid = context.gumFlags?.dynamicRegionGrant?.sourceUuid || null;
+    const matchesApplicationScope = effect => Boolean(foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant"))
+        === Boolean(dynamicRegionGrantSourceUuid);
 
     if (effectiveStackingMode !== "stack" && context._stackingQueueAcquired !== true) {
         const previous = nonStackingApplicationQueue.catch(() => undefined);
@@ -489,12 +501,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
     const allActions = getEffectActions(effectSystem);
     const selectedActionIds = Array.isArray(context.actionIds) ? new Set(context.actionIds.map(String)) : null;
-    const legacyDynamicRegionActionIds = Array.isArray(effectSystem.dynamicRegion?.actionIds)
+    const legacyDeliveryActionIds = (Array.isArray(effectSystem.actions) ? effectSystem.actions : [])
+        .filter(action => action?.delivery === "dynamic_region")
+        .map(action => String(action.id));
+    const configuredDynamicRegionActionIds = Array.isArray(effectSystem.dynamicRegion?.actionIds)
         ? effectSystem.dynamicRegion.actionIds
         : String(effectSystem.dynamicRegion?.actionIds || "").split(",");
     const projectedDynamicActionIds = new Set([
-        ...allActions.filter(action => action.delivery === "dynamic_region").map(action => String(action.id)),
-        ...legacyDynamicRegionActionIds.map(id => String(id).trim()).filter(Boolean)
+        ...configuredDynamicRegionActionIds.map(id => String(id).trim()).filter(Boolean),
+        ...legacyDeliveryActionIds
     ]);
     const reservesActionsForDynamicRegion = context.skipDynamicRegionController !== true
         && projectedDynamicActionIds.size > 0;
@@ -517,7 +532,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         if (key) persistentEffectKeys.add(key);
         persistentEffects.push(effect);
     };
-    const bridgeIntegrationFlags = context.gumFlags?.activeEffectBridge
+    const bridgeIntegrationFlags = context.skipDynamicRegionController || context.gumFlags?.activeEffectBridge
         ? {}
         : getEffectItemBridgeIntegrationFlags(effectItem);
     const conditionFlags = context.conditionId
@@ -657,17 +672,25 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (!isActorContextAvailable(targetActor)) continue;
                     const matchingEffects = effectiveStackingMode === "stack"
                         ? []
-                        : Array.from(targetActor?.effects || []).filter(effect => matchesStackedEffect(effect, {
-                            effectUuid: effectItem.uuid,
-                            action,
-                            actionIndex,
-                            domain: stackingDomain
-                        }));
+                        : Array.from(targetActor?.effects || []).filter(effect => matchesApplicationScope(effect)
+                            && matchesStackedEffect(effect, {
+                                effectUuid: effectItem.uuid,
+                                action,
+                                actionIndex,
+                                domain: stackingDomain
+                            }));
                     if (effectiveStackingMode === "unique" && matchingEffects.length) {
                         const [primaryEffect, ...duplicateEffects] = matchingEffects;
                         const carrierUpdate = {
                             "flags.gum.lifecycleCarrier": isLifecycleCarrier
                         };
+                        if (dynamicRegionGrantSourceUuid) {
+                            const sourceUuids = collectDynamicRegionGrantSources(...matchingEffects, context.gumFlags);
+                            carrierUpdate["flags.gum.dynamicRegionController"] = false;
+                            carrierUpdate["flags.gum.dynamicRegionGrant.sourceUuid"] = sourceUuids[0];
+                            carrierUpdate["flags.gum.dynamicRegionGrant.sourceUuids"] = sourceUuids;
+                            carrierUpdate["flags.gum.sceneTrigger.sourceUuid"] = sourceUuids[0];
+                        }
                         if (isLifecycleCarrier) {
                             for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
                                 carrierUpdate[`flags.${scope}`] = foundry.utils.deepClone(value);
@@ -937,6 +960,13 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     try {
                         if (effectiveStackingMode === "refresh" && matchingEffects.length) {
                             const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                            if (dynamicRegionGrantSourceUuid) {
+                                const sourceUuids = collectDynamicRegionGrantSources(...matchingEffects, activeEffectData.flags.gum);
+                                activeEffectData.flags.gum.dynamicRegionController = false;
+                                activeEffectData.flags.gum.dynamicRegionGrant.sourceUuid = sourceUuids[0];
+                                activeEffectData.flags.gum.dynamicRegionGrant.sourceUuids = sourceUuids;
+                                activeEffectData.flags.gum.sceneTrigger.sourceUuid = sourceUuids[0];
+                            }
                             await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
                             rememberPersistentEffect(primaryEffect);
                             const duplicateIds = duplicateEffects.map(effect => effect.id).filter(Boolean);
@@ -1207,15 +1237,22 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         for (const target of targets) {
             const targetActor = target?.actor;
             if (!isActorContextAvailable(targetActor)) continue;
-            const alreadyHasCarrier = persistentEffects.some(effect =>
+            const existingController = persistentEffects.find(effect =>
                 effect?.parent === targetActor
                 && foundry.utils.getProperty(effect, "flags.gum.lifecycleCarrier") !== false
             );
-            if (alreadyHasCarrier) continue;
+            if (existingController) {
+                await existingController.update({
+                    "flags.gum.dynamicRegionController": true,
+                    "flags.gum.dynamicRegionGrant": null
+                });
+                continue;
+            }
 
             const matchingEffects = effectiveStackingMode === "stack"
                 ? []
-                : Array.from(targetActor.effects || []).filter(effect => matchesStackedEffect(effect, {
+                : Array.from(targetActor.effects || []).filter(effect => !foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant")
+                    && matchesStackedEffect(effect, {
                     effectUuid: effectItem.uuid,
                     action: dynamicAction,
                     actionIndex: -1,
@@ -1228,6 +1265,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             activeEffectData.flags.gum.actionType = dynamicAction.type;
             activeEffectData.flags.gum.actionLabel = "";
             activeEffectData.flags.gum.lifecycleCarrier = true;
+            activeEffectData.flags.gum.dynamicRegionController = true;
+            activeEffectData.flags.gum.dynamicRegionGrant = null;
             for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
                 activeEffectData.flags[scope] = foundry.utils.deepClone(value);
             }
@@ -1245,7 +1284,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (effectiveStackingMode === "refresh") {
                         await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
                     } else {
-                        const update = { "flags.gum.lifecycleCarrier": true };
+                        const update = {
+                            "flags.gum.lifecycleCarrier": true,
+                            "flags.gum.dynamicRegionController": true,
+                            "flags.gum.dynamicRegionGrant": null
+                        };
                         for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
                             update[`flags.${scope}`] = foundry.utils.deepClone(value);
                         }

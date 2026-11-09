@@ -13,6 +13,7 @@ import {
 test("normalizes Dynamic Region settings in Scene distance units", () => {
   assert.deepEqual(normalizeDynamicEffectRegion({
     enabled: true,
+    shape: "circle",
     range: "5",
     actionIds: ["action-1", "action-1", "action-2"],
     targetMode: "enemies",
@@ -22,6 +23,7 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     color: "#abcdef"
   }), {
     enabled: true,
+    shape: "circle",
     range: 5,
     actionIds: ["action-1", "action-2"],
     targetMode: "enemies",
@@ -61,7 +63,7 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
   assert.equal(data.flags.gum.dynamicEffectRegion.sourceTokenUuid, "Scene.s.Token.t");
 });
 
-test("reconciles an attached emanation through RegionDocument.createTokenEmanation", async () => {
+test("reconciles an attached circle with radius measured from the token center", async () => {
   const previousFromUuid = globalThis.fromUuid;
   const effectItem = {
     uuid: "Item.controller",
@@ -70,11 +72,12 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
     system: {
       dynamicRegion: {
         enabled: true,
+        shape: "circle",
         range: 3,
-        actionIds: [],
+        actionIds: ["action-1"],
         targetMode: "all"
       },
-      actions: [{ id: "action-1", delivery: "dynamic_region" }]
+      actions: [{ id: "action-1" }]
     }
   };
   globalThis.fromUuid = async uuid => uuid === effectItem.uuid ? effectItem : null;
@@ -82,14 +85,21 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
     const controller = {
       uuid: "Actor.a.ActiveEffect.controller",
       disabled: false,
-      flags: { gum: { effectUuid: effectItem.uuid, lifecycleCarrier: true } }
+      flags: { gum: { effectUuid: effectItem.uuid, lifecycleCarrier: true, dynamicRegionController: true } }
     };
     const actor = { name: "Mago", effects: [controller] };
-    const token = { uuid: "Scene.s.Token.t", name: "Mago", actor, persisted: true };
-    const scene = { grid: { distance: 1 }, tokens: [token], regions: [] };
+    const scene = { grid: { distance: 1, size: 100 }, dimensions: { distancePixels: 100 }, tokens: [], regions: [] };
+    const token = { id: "t", uuid: "Scene.s.Token.t", name: "Mago", actor, persisted: true, parent: scene, _source: { x: 100, y: 200, width: 1, height: 1, depth: 1, elevation: 0, level: "ground" }, getCenterPoint: () => ({ x: 150, y: 250 }) };
+    const grantedEffect = {
+      uuid: "Actor.b.ActiveEffect.grant",
+      disabled: false,
+      flags: { gum: { effectUuid: effectItem.uuid, lifecycleCarrier: true, dynamicRegionController: false, dynamicRegionGrant: { sourceUuid: "Scene.s.Region.r" } } }
+    };
+    const recipient = { id: "recipient", uuid: "Scene.s.Token.recipient", actor: { effects: [grantedEffect] }, parent: scene };
+    scene.tokens.push(token, recipient);
     const calls = [];
     const regionClass = {
-      createTokenEmanation: async (...args) => (calls.push(args), { id: "region" })
+      create: async (...args) => (calls.push(args), { id: "region" })
     };
     const gm = { id: "gm", active: true, isGM: true };
     const results = await reconcileDynamicEffectRegions({
@@ -98,11 +108,14 @@ test("reconciles an attached emanation through RegionDocument.createTokenEmanati
       regionClass
     });
     assert.equal(results.length, 1);
-    assert.equal(calls[0][0], token);
-    assert.equal(calls[0][1], 3);
-    assert.equal(calls[0][2].behaviors[0].system.effectUuid, effectItem.uuid);
-    assert.deepEqual(calls[0][2].behaviors[0].system.actionIds, ["action-1"]);
-    assert.equal(calls[0][3].gridBased, false);
+    assert.equal(calls.length, 1, "a granted Active Effect must never emit another Region");
+    assert.equal(calls[0][0].shapes[0].type, "circle");
+    assert.equal(calls[0][0].shapes[0].x, 150);
+    assert.equal(calls[0][0].shapes[0].y, 250);
+    assert.equal(calls[0][0].shapes[0].radius, 300);
+    assert.equal(calls[0][0].attachment.token, token.id);
+    assert.equal(calls[0][0].behaviors[0].system.effectUuid, effectItem.uuid);
+    assert.deepEqual(calls[0][0].behaviors[0].system.actionIds, ["action-1"]);
   } finally {
     if (previousFromUuid === undefined) delete globalThis.fromUuid;
     else globalThis.fromUuid = previousFromUuid;
@@ -118,9 +131,11 @@ test("declares and exposes the Dynamic Region Item Effect interface", async () =
   assert.deepEqual(manifest.documentTypes?.RegionBehavior?.applyEffect, {});
   assert.match(template, /data-tab="regiao-dinamica"/);
   assert.match(template, /system\.dynamicRegion\.range/);
-  assert.match(template, /system\.actions\.\{\{action\.index\}\}\.delivery/);
-  assert.doesNotMatch(template, /select-dynamic-region-actions|payloadEffectUuid/);
+  assert.match(template, /system\.dynamicRegion\.actionIds/);
+  assert.match(template, /select-dynamic-region-actions/);
+  assert.doesNotMatch(template, /system\.actions\.\{\{action\.index\}\}\.delivery/);
   assert.match(engine, /hasDynamicRegionController/);
   assert.match(engine, /reservesActionsForDynamicRegion/);
+  assert.match(engine, /dynamicRegionGrant/);
   assert.match(engine, /actionType = dynamicAction\.type/);
 });
