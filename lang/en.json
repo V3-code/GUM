@@ -1641,7 +1641,7 @@
   "GUM.Equipment.Ammunition.NoItemConsumption": "No item consumption",
   "GUM.Equipment.Ammunition.ShotsShort": "Shots",
   "GUM.Equipment.Ammunition.ChargesShort": "Charges",
-  "GUM.Equipment.Ammunition.UnitsShort": "Ammo",
+  "GUM.Equipment.Ammunition.UnitsShort": "Available",
   "GUM.Equipment.Header.Modifier": "Equipment modifier",
   "GUM.Equipment.Label.BaseValue": "Base value",
   "GUM.Equipment.Label.FinalValue": "Final value after modifiers",

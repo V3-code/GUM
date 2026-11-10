@@ -8158,19 +8158,23 @@ background-color: var(--gum-accent-gold);
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    max-width: calc(100% - 17px);
+    max-width: none;
     padding: 0 2px 0 0;
     text-align: left;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition > i {
-    color: var(--attack-card-accent);
-    font-size: 8px;
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition > img {
+    flex: 0 0 12px;
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 2px;
+    object-fit: cover;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-ammunition-inline-name {
-    max-width: 120px;
-    min-width: 0;
+    flex: 0 1 auto;
+    max-width: 180px;
     overflow: hidden;
     color: rgba(238, 231, 220, 0.9);
     font-size: 8.5px;

@@ -1166,6 +1166,7 @@ async getData(options) {
                     hasAmmunitionLinks: Array.isArray(attack.ammunition_ids) && attack.ammunition_ids.length > 0,
                     ammunitionLoadoutDisplay: {
                         name: selectedAmmunition?.name || game.i18n.localize("GUM.Equipment.Ammunition.StandardShort"),
+                        img: selectedAmmunition?.img || null,
                         shots: ammunitionLoadout.shots,
                         locked: ammunitionLoadout.locked,
                         valid: ammunitionValidation.valid,

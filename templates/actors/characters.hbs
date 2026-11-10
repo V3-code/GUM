@@ -1939,7 +1939,7 @@
                     {{#if attack.hasAmmunitionLinks}}
                     <div class="attack-ammunition-inline {{#if attack.ammunitionLoadoutDisplay.locked}}is-locked{{/if}} {{#unless attack.ammunitionLoadoutDisplay.valid}}is-invalid{{/unless}}" title="{{attack.ammunitionLoadoutDisplay.name}} · {{localize 'GUM.Equipment.Ammunition.PreparedShots'}}: {{attack.ammunitionLoadoutDisplay.shots}} · {{localize 'GUM.Equipment.Ammunition.AvailableReserve'}}: {{attack.ammunitionLoadoutDisplay.availableText}}">
                       <button type="button" class="configure-attack-ammunition" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}">
-                        <i class="fas fa-bullseye" aria-hidden="true"></i>
+                        {{#if attack.ammunitionLoadoutDisplay.img}}<img src="{{attack.ammunitionLoadoutDisplay.img}}" alt="">{{/if}}
                         <strong class="attack-ammunition-inline-name">{{attack.ammunitionLoadoutDisplay.name}}</strong>
                         <span><small>{{localize "GUM.Equipment.Ammunition.ShotsShort"}}</small> {{attack.ammunitionLoadoutDisplay.shots}}</span>
                         <span><small>{{attack.ammunitionLoadoutDisplay.availableShortLabel}}</small> {{attack.ammunitionLoadoutDisplay.availableValue}}</span>
