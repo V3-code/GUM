@@ -5681,6 +5681,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
             const siblingActionType = foundry.utils.getProperty(sibling, "flags.gum.actionType");
             const shouldDisplayCarrier = sibling.id === carrier.id
                 && siblingActionType !== "status"
+                && !foundry.utils.getProperty(sibling, "flags.gum.dynamicRegionGrant")
                 && effectItem?.img
                 && shouldShowTokenIconForSystem(effectItem.system || {}, carrierDuration);
 

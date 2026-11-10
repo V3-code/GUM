@@ -6,7 +6,8 @@ import {
 
 export const GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR = GUM_REGION_EFFECT_BEHAVIOR;
 export const GUM_DYNAMIC_EFFECT_REGION_FLAG = "dynamicEffectRegion";
-export const DYNAMIC_EFFECT_REGION_VERSION = 1;
+export const DYNAMIC_EFFECT_REGION_VERSION = 2;
+export const EMANATION_INSTANT_TRIGGERS = Object.freeze(["on_enter", "turn_start", "turn_end"]);
 
 const collectionValues = collection => Array.from(collection?.values?.() ?? collection ?? []);
 const getProperty = (object, path) => globalThis.foundry?.utils?.getProperty?.(object, path)
@@ -21,10 +22,11 @@ export function normalizeDynamicEffectRegion(config = {}, { defaultRange = 1 } =
     enabled: config?.enabled === true,
     shape: config?.shape === "emanation" ? "emanation" : "circle",
     range: Number.isFinite(range) && range > 0 ? range : Math.max(Number(defaultRange) || 1, 0.01),
-    actionIds: [...new Set((Array.isArray(config?.actionIds) ? config.actionIds : String(config?.actionIds ?? "").split(","))
-      .map(id => String(id).trim()).filter(Boolean))],
     targetMode,
-    includeSelf: config?.includeSelf === true,
+    excludeSelf: config?.excludeSelf === true,
+    instantTrigger: EMANATION_INSTANT_TRIGGERS.includes(config?.instantTrigger)
+      ? config.instantTrigger
+      : "on_enter",
     gridBased: config?.gridBased === true,
     showColor: config?.showColor !== false,
     color: /^#[0-9a-f]{6}$/i.test(String(config?.color ?? "")) ? String(config.color) : "#7b61ff"
@@ -37,6 +39,13 @@ export function buildDynamicRegionData({ controllerEffect, effectItem, token, co
   const normalized = normalizeDynamicEffectRegion(config);
   const enter = constRef?.REGION_EVENTS?.TOKEN_ENTER ?? "tokenEnter";
   const exit = constRef?.REGION_EVENTS?.TOKEN_EXIT ?? "tokenExit";
+  const turnStart = constRef?.REGION_EVENTS?.TOKEN_TURN_START ?? "tokenTurnStart";
+  const turnEnd = constRef?.REGION_EVENTS?.TOKEN_TURN_END ?? "tokenTurnEnd";
+  const instantEvent = normalized.instantTrigger === "turn_start"
+    ? turnStart
+    : normalized.instantTrigger === "turn_end"
+      ? turnEnd
+      : null;
   return {
     name: `${effectItem?.name || controllerEffect?.name || "GUM"} — ${token?.name || token?.actor?.name || "Aura"}`,
     color: normalized.color,
@@ -49,12 +58,15 @@ export function buildDynamicRegionData({ controllerEffect, effectItem, token, co
     behaviors: [{
       type: GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR,
       system: {
-        events: [enter, exit],
+        events: [...new Set([enter, exit, instantEvent].filter(Boolean))],
         effectUuid: effectItem?.uuid ?? "",
-        actionIds: normalized.actionIds,
+        actionIds: [],
         sourceTokenUuid: token?.uuid ?? "",
+        sourceActorUuid: token?.actor?.uuid ?? "",
+        sourceItemUuid: controllerEffect?.origin ?? effectItem?.uuid ?? "",
         targetMode: normalized.targetMode,
-        includeSelf: normalized.includeSelf,
+        excludeSelf: normalized.excludeSelf,
+        instantTrigger: normalized.instantTrigger,
         removeOnExit: true
       }
     }],
@@ -99,13 +111,7 @@ async function collectDesiredRegions(scene) {
       const config = normalizeDynamicEffectRegion(effectItem.system?.dynamicRegion, {
         defaultRange: scene?.grid?.distance ?? 1
       });
-      if (!config.actionIds.length) {
-        config.actionIds = (Array.isArray(effectItem.system?.actions) ? effectItem.system.actions : [])
-          .filter(action => action?.delivery === "dynamic_region")
-          .map(action => String(action.id || "").trim())
-          .filter(Boolean);
-      }
-      if (!config.enabled || !config.actionIds.length) continue;
+      if (!config.enabled) continue;
       const key = `${effect.uuid}::${token.uuid}`;
       desired.set(key, { key, controllerEffect: effect, effectItem, token, config });
     }

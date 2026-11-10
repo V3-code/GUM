@@ -121,10 +121,14 @@ export function buildRegionEffectEventData(event, behavior) {
   };
 }
 
-export function isDynamicRegionTarget({ token, sourceToken, targetMode = "all", includeSelf = false } = {}) {
+export function isDynamicRegionTarget(options = {}) {
+  const { token, sourceToken, targetMode = "all" } = options;
   if (!token?.actor) return false;
   const isSelf = Boolean(sourceToken && (token.uuid === sourceToken.uuid || token.actor === sourceToken.actor));
-  if (isSelf) return includeSelf;
+  const excludeSelf = Object.hasOwn(options, "excludeSelf")
+    ? options.excludeSelf === true
+    : options.includeSelf === false;
+  if (isSelf) return !excludeSelf;
   if (targetMode === "all") return true;
   if (!sourceToken) return false;
   const sourceDisposition = Number(sourceToken.disposition ?? sourceToken._source?.disposition ?? 0);
@@ -198,12 +202,22 @@ export function createGumEffectRegionBehaviorType({
           blank: false
         })),
         sourceTokenUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
+        sourceActorUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
+        sourceItemUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
         targetMode: new foundryRef.data.fields.StringField({
           required: true,
           initial: "all",
           choices: ["all", "allies", "enemies"]
         }),
-        includeSelf: new foundryRef.data.fields.BooleanField({ initial: false }),
+        excludeSelf: new foundryRef.data.fields.BooleanField({ initial: false }),
+        // Kept in the schema so pre-v2 ephemeral Regions can still be loaded
+        // and reconciled without failing DataModel validation.
+        includeSelf: new foundryRef.data.fields.BooleanField({ initial: true }),
+        instantTrigger: new foundryRef.data.fields.StringField({
+          required: true,
+          initial: "on_enter",
+          choices: ["on_enter", "turn_start", "turn_end"]
+        }),
         removeOnExit: new foundryRef.data.fields.BooleanField({ initial: false })
       };
     }
@@ -227,13 +241,29 @@ export function createGumEffectRegionBehaviorType({
           token,
           sourceToken,
           targetMode: this.targetMode,
-          includeSelf: this.includeSelf
+          excludeSelf: this.excludeSelf
         })) return;
       }
 
       const gameRef = globalThis.game;
       const isDynamicRegion = Boolean(this.sourceTokenUuid);
       const dynamicRegionFlag = globalThis.foundry?.utils?.getProperty?.(this.region, "flags.gum.dynamicEffectRegion") || {};
+      const enterEvent = constRef?.REGION_EVENTS?.TOKEN_ENTER;
+      const turnStartEvent = constRef?.REGION_EVENTS?.TOKEN_TURN_START;
+      const turnEndEvent = constRef?.REGION_EVENTS?.TOKEN_TURN_END;
+      const appliesPersistent = !isDynamicRegion || event?.name === enterEvent;
+      const appliesInstant = !isDynamicRegion
+        || (this.instantTrigger === "on_enter" && event?.name === enterEvent)
+        || (this.instantTrigger === "turn_start" && event?.name === turnStartEvent)
+        || (this.instantTrigger === "turn_end" && event?.name === turnEndEvent);
+      if (!appliesPersistent && !appliesInstant) return;
+
+      const sourceActor = this.sourceActorUuid
+        ? await globalThis.fromUuid?.(this.sourceActorUuid).catch(() => null)
+        : null;
+      const sourceItem = this.sourceItemUuid
+        ? await globalThis.fromUuid?.(this.sourceItemUuid).catch(() => null)
+        : null;
       try {
         return await applySceneEffect({
           api: gameRef?.gum?.api,
@@ -243,7 +273,11 @@ export function createGumEffectRegionBehaviorType({
             mode: isDynamicRegion ? "dynamic-region" : "region",
             source: isDynamicRegion ? "dynamic-region" : "region",
             actionIds: this.actionIds?.size ? [...this.actionIds] : null,
+            actor: sourceActor,
+            origin: documentName(sourceItem) === "Item" ? sourceItem : null,
             skipDynamicRegionController: Boolean(this.sourceTokenUuid),
+            skipPersistentEffects: isDynamicRegion && !appliesPersistent,
+            skipInstantEffects: isDynamicRegion && !appliesInstant,
             durationOverride: isDynamicRegion ? { isPermanent: true, inCombat: false } : null,
             eventData: buildRegionEffectEventData(event, this),
             gumFlags: {

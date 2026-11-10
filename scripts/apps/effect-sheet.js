@@ -412,12 +412,6 @@ export class EffectSheet extends ItemSheet {
         context.hasActiveEffectBridge = Boolean(activeEffectBridge?.uuid);
         const sceneDistance = Number(canvas?.scene?.grid?.distance) || 1;
         context.dynamicRegion = normalizeDynamicEffectRegion(context.system.dynamicRegion, { defaultRange: sceneDistance });
-        if (!context.dynamicRegion.actionIds.length) {
-            context.dynamicRegion.actionIds = (Array.isArray(context.system.actions) ? context.system.actions : [])
-                .filter(action => action?.delivery === "dynamic_region")
-                .map(action => String(action.id || "").trim())
-                .filter(Boolean);
-        }
         context.dynamicRegionSupported = Number(game.release?.generation) >= 14
             && typeof CONFIG.Region?.documentClass?.create === "function";
         context.dynamicRegionUnit = canvas?.scene?.grid?.units || localize("GUM.DynamicRegion.SceneUnits", "scene units");
@@ -429,6 +423,11 @@ export class EffectSheet extends ItemSheet {
         context.dynamicRegionShapes = [
             { id: "circle", label: localize("GUM.DynamicRegion.Shape.circle") },
             { id: "emanation", label: localize("GUM.DynamicRegion.Shape.emanation") }
+        ];
+        context.dynamicRegionInstantTriggers = [
+            { id: "on_enter", label: localize("GUM.DynamicRegion.InstantTrigger.on_enter") },
+            { id: "turn_start", label: localize("GUM.DynamicRegion.InstantTrigger.turn_start") },
+            { id: "turn_end", label: localize("GUM.DynamicRegion.InstantTrigger.turn_end") }
         ];
 
         if (context.system.duration) {
@@ -530,10 +529,6 @@ export class EffectSheet extends ItemSheet {
         const barrierMode = context.system.resistanceRoll?.mode === "conditional" ? "conditional" : "simple";
         context.isConditionalResistance = barrierMode === "conditional";
         const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || format("GUM.EffectSheet.Action.Numbered", { number: action.displayIndex })]));
-        context.dynamicRegionActionIdsCsv = context.dynamicRegion.actionIds.join(",");
-        context.dynamicRegionActionSummary = context.dynamicRegion.actionIds
-            .map(id => actionLabels.get(id) || format("GUM.EffectSheet.Action.Removed", { id }))
-            .join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
         context.resistanceBranches = normalizeBarrierBranches(context.system.resistanceRoll?.branches).map((branch, index) => ({
             ...branch, index, displayIndex: index + 1, isOtherwise: branch.condition.type === "otherwise",
             isSuccess: branch.condition.outcome === "success",
@@ -748,13 +743,10 @@ activateListeners(html) {
         if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
         const [removed] = actions.splice(index, 1);
         const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches).map(branch => ({ ...branch, actionIds: branch.actionIds.filter(id => id !== removed.id) }));
-        const dynamicRegion = normalizeDynamicEffectRegion(this.item.system.dynamicRegion);
-        dynamicRegion.actionIds = dynamicRegion.actionIds.filter(id => id !== removed.id);
         this._reindexExpandedActionsAfterRemoval(index);
         await this.item.update({
             "system.actions": actions,
-            "system.resistanceRoll.branches": branches,
-            "system.dynamicRegion.actionIds": dynamicRegion.actionIds
+            "system.resistanceRoll.branches": branches
         });
     });
 
@@ -813,34 +805,6 @@ activateListeners(html) {
                 if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, i) => action.label || format("GUM.EffectSheet.Action.Numbered", { number: i + 1 })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
             } } },
             render: dialogHtml => dialogHtml.find(".resistance-action-search").on("input", event => {
-                const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
-            })
-        }).render(true);
-    });
-
-    html.on("click", ".select-dynamic-region-actions", ev => {
-        ev.preventDefault();
-        const input = this.form?.querySelector('[name="system.dynamicRegion.actionIds"]');
-        if (!input) return;
-        const selected = new Set(String(input.value || "").split(",").map(value => value.trim()).filter(Boolean));
-        const actions = getEffectActionsFromSystem(this.item.system);
-        const escape = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-        const options = actions.map((action, actionIndex) => {
-            const label = action.label || format("GUM.EffectSheet.Action.Numbered", { number: actionIndex + 1 });
-            return `<label class="gum-resistance-action-option" data-search="${escape(label)}"><input type="checkbox" value="${escape(action.id)}" ${selected.has(action.id) ? "checked" : ""}> <span>${escape(label)}</span></label>`;
-        }).join("");
-        new Dialog({
-            title: localize("GUM.DynamicRegion.ActionPickerTitle"),
-            content: `<div class="gum-resistance-action-picker"><input type="search" placeholder="${escape(localize("GUM.EffectSheet.ActionPicker.SearchPlaceholder"))}" class="dynamic-region-action-search"><div class="gum-resistance-action-options">${options || `<p>${escape(localize("GUM.EffectSheet.ActionPicker.Empty"))}</p>`}</div></div>`,
-            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Common.Confirm"), callback: dialogHtml => {
-                const ids = dialogHtml.find('input[type="checkbox"]:checked').map((_, element) => element.value).get();
-                input.value = [...new Set(ids)].join(",");
-                input.dispatchEvent(new Event("change", { bubbles: true }));
-                const summary = ev.currentTarget.closest(".dynamic-region-card")?.querySelector(".dynamic-region-action-summary");
-                if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, index) => action.label || format("GUM.EffectSheet.Action.Numbered", { number: index + 1 })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
-            } } },
-            render: dialogHtml => dialogHtml.find(".dynamic-region-action-search").on("input", event => {
                 const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
                 dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
             })
@@ -1306,10 +1270,6 @@ activateListeners(html) {
         const rollEntries = new Map();
         const damageChanges = new Map();
         const branchEntries = new Map();
-        if (Object.hasOwn(formData, "system.dynamicRegion.actionIds")) {
-            formData["system.dynamicRegion.actionIds"] = [...new Set(String(formData["system.dynamicRegion.actionIds"] || "")
-                .split(",").map(id => id.trim()).filter(Boolean))];
-        }
         if (Object.hasOwn(formData, "system.resistanceRoll.requestedPurposeIds")) {
             formData["system.resistanceRoll.requestedPurposeIds"] = normalizePurposeIds(formData["system.resistanceRoll.requestedPurposeIds"]);
         }

@@ -1115,9 +1115,9 @@
         "enabled": false,
         "shape": "circle",
         "range": 1,
-        "actionIds": [],
         "targetMode": "all",
-        "includeSelf": false,
+        "excludeSelf": false,
+        "instantTrigger": "on_enter",
         "gridBased": false,
         "showColor": true,
         "color": "#7b61ff"

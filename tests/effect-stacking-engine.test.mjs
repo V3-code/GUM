@@ -137,6 +137,47 @@ test("unique deduplica persistentes diretos, mas repete ações pontuais", async
   assert.ok(actor.effects[0].flags.gum.applicationId);
 });
 
+test("Emanação cria um controlador inerte e transmite o efeito inteiro sem ícone genérico nos afetados", async () => {
+  const previousGeneration = game.release.generation;
+  const previousRegion = CONFIG.Region;
+  game.release.generation = 14;
+  CONFIG.Region = { documentClass: { createTokenEmanation() {} } };
+  try {
+    const emitter = makeActor();
+    const affected = makeActor();
+    const effect = makeEffect("unique", [
+      attributeAction(2),
+      { id: "hp-action", type: "resource_change", category: "hp", value: -1, chat_notice: false }
+    ]);
+    effect.system.dynamicRegion = { enabled: true };
+    effect.system.tokenIconPolicy = "always";
+
+    await applySingleEffect(effect, [{ actor: emitter }], { actor: emitter, origin: effect });
+    assert.equal(emitter.effects.length, 1);
+    assert.equal(emitter.effects[0].flags.gum.actionType, "dynamic_region");
+    assert.equal(emitter.effects[0].flags.gum.dynamicRegionController, true);
+    assert.equal(emitter.system.attributes.hp.value, 10, "instant actions must wait for the Emanation");
+
+    await applySingleEffect(effect, [{ actor: affected }], {
+      actor: emitter,
+      origin: effect,
+      skipDynamicRegionController: true,
+      gumFlags: { dynamicRegionGrant: { sourceUuid: "Scene.s.Region.aura" } },
+      durationOverride: { isPermanent: true, inCombat: false }
+    });
+    assert.equal(affected.effects.length, 1);
+    assert.equal(affected.effects[0].flags.gum.actionType, "attribute");
+    assert.equal(affected.effects[0].flags.gum.dynamicRegionGrant.sourceUuid, "Scene.s.Region.aura");
+    assert.equal(affected.effects[0].img, null);
+    assert.equal(affected.effects[0].showIcon, 0);
+    assert.equal(affected.system.attributes.hp.value, 9);
+  } finally {
+    game.release.generation = previousGeneration;
+    if (previousRegion === undefined) delete CONFIG.Region;
+    else CONFIG.Region = previousRegion;
+  }
+});
+
 test("alteração de registro de combate alcança a integridade vinculada do equipamento", async () => {
   const actor = makeActor();
   const equipmentSystem = {

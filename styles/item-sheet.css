@@ -9163,6 +9163,12 @@ color:#121114;
   padding: 14px;
 }
 
+.gum.sheet.item.effect-sheet .dynamic-region-action-behavior {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .gum.sheet.item.effect-sheet .dynamic-region-notice {
   display: flex;
   align-items: center;

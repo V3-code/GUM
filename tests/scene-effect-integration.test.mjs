@@ -7,6 +7,7 @@ import {
   applySceneEffect,
   buildRegionEffectEventData,
   buildSceneEffectTargets,
+  createGumEffectRegionBehaviorType,
   removeRegionAppliedEffects,
   registerGumRegionEffectBehavior,
   registerMonksActiveTilesEffectAction
@@ -143,9 +144,94 @@ test("registers the GUM Region behavior and its schema", () => {
   const schema = Behavior.defineSchema();
   assert.equal(schema.effectUuid.options.type, "Item");
   assert.ok(schema.actionIds instanceof SetField);
+  assert.ok(schema.excludeSelf instanceof Field);
+  assert.ok(schema.instantTrigger instanceof Field);
   assert.ok(schema.removeOnExit instanceof Field);
   assert.match(config.RegionBehavior.typeIcons[GUM_REGION_EFFECT_BEHAVIOR], /wand/);
   assert.equal(registerGumRegionEffectBehavior({ config, foundryRef }), false);
+});
+
+test("Emanation separates persistent entry from its shared instant trigger and preserves the source", async () => {
+  const previous = {
+    foundry: globalThis.foundry,
+    game: globalThis.game,
+    fromUuid: globalThis.fromUuid,
+    ui: globalThis.ui
+  };
+  class RegionBehaviorType {
+    static _createEventsField() { return {}; }
+  }
+  class Field { constructor(options) { this.options = options; } }
+  class SetField extends Field { constructor(element, options) { super(options); this.element = element; } }
+  const foundryRef = {
+    data: {
+      regionBehaviors: { RegionBehaviorType },
+      fields: { DocumentUUIDField: Field, StringField: Field, BooleanField: Field, SetField }
+    },
+    utils: { getProperty: (object, path) => path.split(".").reduce((value, key) => value?.[key], object) }
+  };
+  const constRef = { REGION_EVENTS: {
+    TOKEN_ENTER: "tokenEnter",
+    TOKEN_EXIT: "tokenExit",
+    TOKEN_TURN_START: "tokenTurnStart",
+    TOKEN_TURN_END: "tokenTurnEnd"
+  } };
+  const sourceActor = { uuid: "Actor.source", documentName: "Actor" };
+  const sourceItem = { uuid: "Actor.source.Item.spell", documentName: "Item", type: "spell" };
+  const sourceToken = { uuid: "Scene.s.Token.source", actor: sourceActor, disposition: 1 };
+  const targetActor = { uuid: "Actor.target", documentName: "Actor", effects: [] };
+  const targetToken = { uuid: "Scene.s.Token.target", actor: targetActor, disposition: -1 };
+  const effectItem = { uuid: "Item.aura", name: "Aura", type: "effect", documentName: "Item" };
+  const applications = [];
+  globalThis.foundry = foundryRef;
+  globalThis.ui = { notifications: { error() {} } };
+  globalThis.game = {
+    gum: { api: {
+      items: { resolve: async () => effectItem },
+      effects: { apply: async (...args) => applications.push(args) }
+    } }
+  };
+  globalThis.fromUuid = async uuid => ({
+    [sourceToken.uuid]: sourceToken,
+    [sourceActor.uuid]: sourceActor,
+    [sourceItem.uuid]: sourceItem
+  })[uuid] ?? null;
+  try {
+    const Behavior = createGumEffectRegionBehaviorType({ foundryRef, constRef });
+    const behavior = new Behavior();
+    Object.assign(behavior, {
+      effectUuid: effectItem.uuid,
+      actionIds: new Set(),
+      sourceTokenUuid: sourceToken.uuid,
+      sourceActorUuid: sourceActor.uuid,
+      sourceItemUuid: sourceItem.uuid,
+      targetMode: "all",
+      excludeSelf: false,
+      instantTrigger: "turn_start",
+      removeOnExit: true,
+      region: { uuid: "Scene.s.Region.aura", flags: { gum: { dynamicEffectRegion: {} } }, parent: { uuid: "Scene.s" } }
+    });
+
+    await behavior._handleRegionEvent({ name: "tokenEnter", data: { token: targetToken } });
+    assert.equal(applications.length, 1);
+    assert.equal(applications[0][2].actor, sourceActor);
+    assert.equal(applications[0][2].origin, sourceItem);
+    assert.equal(applications[0][2].skipPersistentEffects, false);
+    assert.equal(applications[0][2].skipInstantEffects, true);
+
+    await behavior._handleRegionEvent({ name: "tokenTurnStart", data: { token: targetToken } });
+    assert.equal(applications.length, 2);
+    assert.equal(applications[1][2].skipPersistentEffects, true);
+    assert.equal(applications[1][2].skipInstantEffects, false);
+
+    await behavior._handleRegionEvent({ name: "tokenTurnEnd", data: { token: targetToken } });
+    assert.equal(applications.length, 2, "a non-selected instant trigger must not execute");
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
 });
 
 test("declares the custom Region behavior in the system manifest", async () => {

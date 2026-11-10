@@ -35,7 +35,7 @@
         <a class="item active" data-tab="description">{{localize "GUM.EffectSheet.Description"}}</a>
         <a class="item" data-tab="configuracao">{{localize "GUM.EffectSheet.Configuration"}}</a>
         <a class="item" data-tab="efeitos-ativos">{{localize "GUM.EffectSheet.ActiveEffects"}}</a>
-        <a class="item" data-tab="regiao-dinamica">{{localize "GUM.DynamicRegion.Tab"}}</a>
+        <a class="item" data-tab="emanacao">{{localize "GUM.DynamicRegion.Tab"}}</a>
     </nav>
 
     <main class="sheet-body">
@@ -1322,7 +1322,7 @@
             {{! ===================================================== }}
             {{! ABA: REGIÃO DINÂMICA                                  }}
             {{! ===================================================== }}
-            <div class="tab" data-tab="regiao-dinamica" data-group="primary">
+            <div class="tab" data-tab="emanacao" data-group="primary">
                 <section class="effect-premium-workspace dynamic-region-workspace">
                     <div class="effect-premium-toolbar">
                         <div class="effect-premium-toolbar-title">
@@ -1402,30 +1402,50 @@
                             </div>
                         </div>
 
-                        <input type="hidden" name="system.dynamicRegion.actionIds" value="{{dynamicRegionActionIdsCsv}}" />
-                        <div class="resistance-branch-actions dynamic-region-actions">
-                            <span class="dynamic-region-action-summary">{{dynamicRegionActionSummary}}</span>
-                            <button type="button" class="select-dynamic-region-actions">
-                                <i class="fas fa-search" aria-hidden="true"></i>
-                                {{localize "GUM.DynamicRegion.SelectActions"}}
-                            </button>
-                        </div>
-
                         <div class="effect-premium-options-row">
                             <label class="effect-premium-checkbox">
-                                <input type="checkbox" name="system.dynamicRegion.includeSelf" {{checked dynamicRegion.includeSelf}} />
-                                <span>{{localize "GUM.DynamicRegion.IncludeSelf"}}</span>
+                                <input type="checkbox" name="system.dynamicRegion.excludeSelf" {{checked dynamicRegion.excludeSelf}} />
+                                <span>{{localize "GUM.DynamicRegion.ExcludeSelf"}}</span>
                             </label>
                             <label class="effect-premium-checkbox" title="{{localize 'GUM.DynamicRegion.GridBasedTooltip'}}">
                                 <input type="checkbox" name="system.dynamicRegion.gridBased" {{checked dynamicRegion.gridBased}} />
                                 <span>{{localize "GUM.DynamicRegion.GridBased"}}</span>
                             </label>
                         </div>
+
+                        <div class="dynamic-region-action-behavior">
+                            <div class="effect-section-header">
+                                <h4 class="effect-section-title">{{localize "GUM.DynamicRegion.ActionBehaviorTitle"}}</h4>
+                            </div>
+                            {{#if hasPersistentActions}}
+                                <div class="dynamic-region-notice">
+                                    <i class="fas fa-link" aria-hidden="true"></i>
+                                    {{localize "GUM.DynamicRegion.PersistentBehavior"}}
+                                </div>
+                            {{/if}}
+
+                            {{#if hasInstantActions}}
+                                <div class="effect-premium-field">
+                                    <label class="effect-premium-field-label">
+                                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                                        {{localize "GUM.DynamicRegion.InstantTrigger.Label"}}
+                                    </label>
+                                    <div class="effect-premium-field-control">
+                                        <select name="system.dynamicRegion.instantTrigger">
+                                            {{#each dynamicRegionInstantTriggers as |trigger|}}
+                                                <option value="{{trigger.id}}" {{#if (eq ../dynamicRegion.instantTrigger trigger.id)}}selected{{/if}}>{{trigger.label}}</option>
+                                            {{/each}}
+                                        </select>
+                                    </div>
+                                    <p class="notes">{{localize "GUM.DynamicRegion.InstantTrigger.Hint"}}</p>
+                                </div>
+                            {{/if}}
+                        </div>
                     </div>
 
                     <div class="dynamic-region-notice">
                         <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
-                        {{localize "GUM.DynamicRegion.ActionSelectionNotice"}}
+                        {{localize "GUM.DynamicRegion.WholeEffectNotice"}}
                     </div>
                 </section>
             </div>

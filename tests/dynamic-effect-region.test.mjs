@@ -15,9 +15,9 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     enabled: true,
     shape: "circle",
     range: "5",
-    actionIds: ["action-1", "action-1", "action-2"],
     targetMode: "enemies",
-    includeSelf: true,
+    excludeSelf: true,
+    instantTrigger: "turn_start",
     gridBased: true,
     showColor: true,
     color: "#abcdef"
@@ -25,9 +25,9 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     enabled: true,
     shape: "circle",
     range: 5,
-    actionIds: ["action-1", "action-2"],
     targetMode: "enemies",
-    includeSelf: true,
+    excludeSelf: true,
+    instantTrigger: "turn_start",
     gridBased: true,
     showColor: true,
     color: "#abcdef"
@@ -41,8 +41,8 @@ test("filters self, allies, and enemies by Token disposition", () => {
   const self = { uuid: sourceToken.uuid, actor, disposition: 1 };
   const ally = { uuid: "Scene.s.Token.ally", actor: { id: "ally" }, disposition: 1 };
   const enemy = { uuid: "Scene.s.Token.enemy", actor: { id: "enemy" }, disposition: -1 };
-  assert.equal(isDynamicRegionTarget({ token: self, sourceToken, includeSelf: false }), false);
-  assert.equal(isDynamicRegionTarget({ token: self, sourceToken, includeSelf: true }), true);
+  assert.equal(isDynamicRegionTarget({ token: self, sourceToken }), true);
+  assert.equal(isDynamicRegionTarget({ token: self, sourceToken, excludeSelf: true }), false);
   assert.equal(isDynamicRegionTarget({ token: ally, sourceToken, targetMode: "allies" }), true);
   assert.equal(isDynamicRegionTarget({ token: enemy, sourceToken, targetMode: "allies" }), false);
   assert.equal(isDynamicRegionTarget({ token: enemy, sourceToken, targetMode: "enemies" }), true);
@@ -53,13 +53,15 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
     controllerEffect: { uuid: "Actor.a.ActiveEffect.controller", name: "Aura" },
     effectItem: { uuid: "Item.controller", name: "Escudo Arcano" },
     token: { uuid: "Scene.s.Token.t", name: "Mago" },
-    config: { enabled: true, range: 4, actionIds: ["shield", "light"], targetMode: "allies" },
-    constRef: { REGION_EVENTS: { TOKEN_ENTER: "tokenEnter", TOKEN_EXIT: "tokenExit" } }
+    config: { enabled: true, range: 4, targetMode: "allies", instantTrigger: "turn_start" },
+    constRef: { REGION_EVENTS: { TOKEN_ENTER: "tokenEnter", TOKEN_EXIT: "tokenExit", TOKEN_TURN_START: "tokenTurnStart" } }
   });
   assert.equal(data.behaviors[0].type, GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR);
-  assert.deepEqual(data.behaviors[0].system.events, ["tokenEnter", "tokenExit"]);
+  assert.deepEqual(data.behaviors[0].system.events, ["tokenEnter", "tokenExit", "tokenTurnStart"]);
   assert.equal(data.behaviors[0].system.effectUuid, "Item.controller");
-  assert.deepEqual(data.behaviors[0].system.actionIds, ["shield", "light"]);
+  assert.deepEqual(data.behaviors[0].system.actionIds, []);
+  assert.equal(data.behaviors[0].system.excludeSelf, false);
+  assert.equal(data.behaviors[0].system.instantTrigger, "turn_start");
   assert.equal(data.flags.gum.dynamicEffectRegion.sourceTokenUuid, "Scene.s.Token.t");
 });
 
@@ -74,7 +76,6 @@ test("reconciles an attached circle with radius measured from the token center",
         enabled: true,
         shape: "circle",
         range: 3,
-        actionIds: ["action-1"],
         targetMode: "all"
       },
       actions: [{ id: "action-1" }]
@@ -115,27 +116,29 @@ test("reconciles an attached circle with radius measured from the token center",
     assert.equal(calls[0][0].shapes[0].radius, 300);
     assert.equal(calls[0][0].attachment.token, token.id);
     assert.equal(calls[0][0].behaviors[0].system.effectUuid, effectItem.uuid);
-    assert.deepEqual(calls[0][0].behaviors[0].system.actionIds, ["action-1"]);
+    assert.deepEqual(calls[0][0].behaviors[0].system.actionIds, []);
   } finally {
     if (previousFromUuid === undefined) delete globalThis.fromUuid;
     else globalThis.fromUuid = previousFromUuid;
   }
 });
 
-test("declares and exposes the Dynamic Region Item Effect interface", async () => {
+test("declares and exposes the Emanation Item Effect interface", async () => {
   const manifest = JSON.parse(await readFile(new URL("../system.json", import.meta.url), "utf8"));
   const template = await readFile(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
   const controller = await readFile(new URL("../scripts/apps/effect-sheet.js", import.meta.url), "utf8");
   const engine = await readFile(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
   assert.equal(GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR, "applyEffect");
   assert.deepEqual(manifest.documentTypes?.RegionBehavior?.applyEffect, {});
-  assert.match(template, /data-tab="regiao-dinamica"/);
+  assert.match(template, /data-tab="emanacao"/);
   assert.match(template, /system\.dynamicRegion\.range/);
-  assert.match(template, /system\.dynamicRegion\.actionIds/);
-  assert.match(template, /select-dynamic-region-actions/);
+  assert.match(template, /system\.dynamicRegion\.excludeSelf/);
+  assert.match(template, /system\.dynamicRegion\.instantTrigger/);
+  assert.doesNotMatch(template, /system\.dynamicRegion\.actionIds/);
+  assert.doesNotMatch(template, /select-dynamic-region-actions/);
   assert.doesNotMatch(template, /system\.actions\.\{\{action\.index\}\}\.delivery/);
   assert.match(engine, /hasDynamicRegionController/);
-  assert.match(engine, /reservesActionsForDynamicRegion/);
+  assert.doesNotMatch(engine, /reservesActionsForDynamicRegion/);
   assert.match(engine, /dynamicRegionGrant/);
-  assert.match(engine, /actionType = dynamicAction\.type/);
+  assert.match(engine, /dynamicAction = \{ id: "dynamic-region", type: "dynamic_region" \}/);
 });
