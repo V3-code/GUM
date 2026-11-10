@@ -9249,7 +9249,7 @@ color:#121114;
 
 .gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
   display: grid;
-  grid-template-columns: minmax(170px, 0.8fr) minmax(260px, 1.4fr);
+  grid-template-columns: 1fr;
   gap: 12px;
   align-items: start;
 }
@@ -9257,6 +9257,21 @@ color:#121114;
 .gum.sheet.item.effect-sheet .dynamic-region-action-body {
   display: grid;
   gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body .effect-field {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body .effect-label {
+  display: block;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body select {
+  width: min(100%, 320px);
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control {
@@ -9316,9 +9331,6 @@ color:#121114;
     grid-column: 1 / -1;
   }
 
-  .gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 560px) {
