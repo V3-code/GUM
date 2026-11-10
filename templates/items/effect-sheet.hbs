@@ -1377,10 +1377,6 @@
 
                                 <div class="effect-field dynamic-region-color-field" title="{{localize 'GUM.DynamicRegion.ColorTooltip'}}">
                                     <input type="color" name="system.dynamicRegion.color" value="{{dynamicRegion.color}}" aria-label="{{localize 'GUM.DynamicRegion.Color'}}" />
-                                    <label class="effect-inline-checkbox dynamic-region-color-visibility" title="{{localize 'GUM.DynamicRegion.ShowColorHint'}}">
-                                        <input type="checkbox" name="system.dynamicRegion.showColor" {{checked dynamicRegion.showColor}} />
-                                        <span>{{localize "GUM.DynamicRegion.ShowColor"}}</span>
-                                    </label>
                                 </div>
 
                                 <div class="effect-field dynamic-region-target-field">
@@ -1397,6 +1393,10 @@
                             </div>
 
                             <div class="dynamic-region-secondary-grid">
+                                <label class="effect-inline-checkbox dynamic-region-checkbox dynamic-region-color-visibility" title="{{localize 'GUM.DynamicRegion.ShowColorHint'}}">
+                                    <input type="checkbox" name="system.dynamicRegion.showColor" {{checked dynamicRegion.showColor}} />
+                                    <span>{{localize "GUM.DynamicRegion.ShowColor"}}</span>
+                                </label>
                                 <label class="effect-inline-checkbox dynamic-region-checkbox">
                                     <input type="checkbox" name="system.dynamicRegion.excludeSelf" {{checked dynamicRegion.excludeSelf}} />
                                     <span>{{localize "GUM.DynamicRegion.ExcludeSelf"}}</span>

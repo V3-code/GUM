@@ -152,6 +152,11 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
     template.indexOf("dynamic-region-target-field")
   );
   assert.doesNotMatch(colorField, /fa-eye/);
+  const secondaryOptions = template.slice(
+    template.indexOf("dynamic-region-secondary-grid"),
+    template.indexOf("dynamic-region-indicator-section")
+  );
+  assert.match(secondaryOptions, /dynamic-region-color-visibility/);
   assert.match(template, /dynamic-region-indicator-section/);
   assert.match(template, /system\.dynamicRegion\.range/);
   assert.match(template, /system\.dynamicRegion\.excludeSelf/);
