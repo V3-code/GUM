@@ -38,6 +38,38 @@ export function availableAmmunition(actor, attack) {
         !item.system?.stored && item.system?.location !== "stored" && ammunitionAvailableUses(item) > 0);
 }
 
+export function linkedAmmunition(actor, attack) {
+    const ids = Array.isArray(attack?.ammunition_ids) ? attack.ammunition_ids : [];
+    return ids.map(id => actor?.items?.get(id)).filter(item => item && item.system?.ammunition?.enabled &&
+        !item.system?.stored && item.system?.location !== "stored");
+}
+
+export function normalizeAmmunitionLoadout(value = {}) {
+    const shots = Math.floor(Number(value?.shots));
+    return {
+        ammunitionId: String(value?.ammunitionId || ""),
+        shots: Number.isSafeInteger(shots) && shots > 0 ? shots : 1,
+        ignoreCadence: value?.ignoreCadence === true,
+        locked: value?.locked === true
+    };
+}
+
+export function validateAmmunitionLoadout(actor, attack, value = {}) {
+    const loadout = normalizeAmmunitionLoadout(value);
+    const cadence = numericRateOfFire(attack?.rof);
+    if (cadence && !loadout.ignoreCadence && loadout.shots > cadence) {
+        return { valid: false, reason: "cadence", loadout, cadence, ammunition: null, available: null };
+    }
+    if (!loadout.ammunitionId) {
+        return { valid: true, reason: null, loadout, cadence, ammunition: null, available: null };
+    }
+    const ammunition = linkedAmmunition(actor, attack).find(item => item.id === loadout.ammunitionId) || null;
+    if (!ammunition) return { valid: false, reason: "unavailable", loadout, cadence, ammunition: null, available: 0 };
+    const available = ammunitionAvailableUses(ammunition);
+    if (loadout.shots > available) return { valid: false, reason: "insufficient", loadout, cadence, ammunition, available };
+    return { valid: true, reason: null, loadout, cadence, ammunition, available };
+}
+
 export function ammunitionAvailableUses(item) {
     if (!item) return 0;
     const system = item._source?.system || item.system || {};

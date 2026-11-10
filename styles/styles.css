@@ -8129,6 +8129,73 @@ background-color: var(--gum-accent-gold);
     grid-template-columns: 48px minmax(76px, auto);
 }
 
+.gum.sheet.actor .attack-card-two-line--ranged.has-ammunition .attack-primary-stats {
+    grid-template-columns: 48px minmax(76px, auto) minmax(118px, 0.85fr);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill {
+    min-width: 118px;
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill.is-locked {
+    border-color: color-mix(in srgb, var(--attack-card-accent) 38%, rgba(255, 255, 255, 0.08));
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill.is-invalid {
+    border-color: rgba(218, 96, 96, 0.52);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill button {
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+}
+
+.gum.sheet.actor .attack-card-two-line .configure-attack-ammunition {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    padding: 3px 7px;
+    overflow: hidden;
+}
+
+.gum.sheet.actor .attack-card-two-line .configure-attack-ammunition .attack-value {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gum.sheet.actor .attack-card-two-line .toggle-attack-ammunition-lock {
+    flex: 0 0 27px;
+    width: 27px;
+    padding: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(247, 233, 215, 0.48);
+    font-size: 9px;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill.is-locked .toggle-attack-ammunition-lock {
+    color: var(--attack-card-accent);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill button:hover,
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-pill button:focus-visible {
+    background: color-mix(in srgb, var(--attack-card-accent) 10%, transparent);
+    color: #fff2d8;
+}
+
 .gum.sheet.actor .attack-card-two-line .attack-pill-stat {
     min-width: 48px;
     display: flex;
@@ -8248,6 +8315,10 @@ background-color: var(--gum-accent-gold);
 
     .gum.sheet.actor .attack-card-two-line--ranged .attack-primary-stats {
         grid-template-columns: 48px minmax(76px, auto);
+    }
+
+    .gum.sheet.actor .attack-card-two-line--ranged.has-ammunition .attack-primary-stats {
+        grid-template-columns: 48px minmax(76px, auto) minmax(112px, auto);
     }
 
     .gum.sheet.actor .attack-card-two-line .attack-card-secondary {

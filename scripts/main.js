@@ -41,7 +41,8 @@ import { importCharacterFromJson, importFromGCS, invalidateHybridItemIndex } fro
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
-import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum } from "../module/utils/ammunition.mjs";
+import { prepareAmmunitionRollData } from "../module/apps/ammunition-preparation.mjs";
+import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
@@ -1369,16 +1370,18 @@ export async function rollFromHotbar({ actorId, actorUuid, rollData } = {}) {
     }
 
     const resolvedRollData = rollData || {};
+    const preparedRollData = await prepareAmmunitionRollData(actor, resolvedRollData);
+    if (!preparedRollData) return;
 
     if (resolvedRollData.quick && typeof performGURPSRoll !== "undefined") {
-        return performGURPSRoll(actor, resolvedRollData);
+        return performGURPSRoll(actor, preparedRollData);
     }
 
     if (typeof GurpsRollPrompt !== "undefined") {
-        return new GurpsRollPrompt(actor, resolvedRollData).render(true);
+        return new GurpsRollPrompt(actor, preparedRollData).render(true);
     }
 
-    return performGURPSRoll(actor, resolvedRollData);
+    return performGURPSRoll(actor, preparedRollData);
 }
 
 async function createGumRollMacro(data, slot) {
@@ -1474,55 +1477,18 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const numericCadence = numericRateOfFire(sourceAttack?.rof);
     const needsRangedConfirmation = hasAmmunitionLinks || (showRapidFireHitCount && numericCadence > 1);
     if (rollData.type === "attack" && sourceAttack && needsRangedConfirmation) {
+        if (rollData.ammunitionPrepared !== true) {
+            const preparedRollData = await prepareAmmunitionRollData(actor, rollData);
+            if (!preparedRollData) return;
+            rollData = preparedRollData;
+        }
         const options = availableAmmunition(actor, sourceAttack);
-        const selectedId = options.some(item => item.id === rollData.ammunitionId) ? rollData.ammunitionId : "";
-        const escape = value => foundry.utils.escapeHTML(String(value));
-        const choice = await new Promise(resolve => new Dialog({
-            title: game.i18n.localize(hasAmmunitionLinks ? "GUM.Equipment.Ammunition.Confirm" : "GUM.Equipment.Ammunition.Fire"),
-            content: `<form class="gum-ammo-confirm-form">
-                <div class="gum-ammo-confirm-metrics">
-                    <div><span>${game.i18n.localize("GUM.Equipment.Ammunition.Cadence")}</span><strong>${escape(sourceAttack.rof || "1")}</strong></div>
-                    <div><span>${game.i18n.localize("GUM.RapidFire.Recoil")}</span><strong>${escape(sourceAttack.rcl || "—")}</strong></div>
-                </div>
-                ${hasAmmunitionLinks ? `<div class="gum-ammo-confirm-card"><label for="gum-ammo-confirm-choice">${game.i18n.localize("GUM.Equipment.Ammunition.Label")}</label>
-                    <select id="gum-ammo-confirm-choice" name="ammunition"><option value="" ${selectedId ? "" : "selected"}>${game.i18n.localize("GUM.Equipment.Ammunition.Standard")}</option>${options.map(item => `<option value="${escape(item.id)}" ${selectedId === item.id ? "selected" : ""}>${escape(item.name)} — ${game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: ammunitionAvailableUses(item) })}</option>`).join("")}</select>
-                </div>` : ""}
-                <div class="gum-ammo-confirm-card gum-ammo-confirm-quantity"><label for="gum-ammo-confirm-amount">${game.i18n.localize("GUM.RapidFire.ShotsFired")}</label>
-                    <div class="gum-ammo-quantity-controls"><button type="button" class="gum-ammo-quantity-step" data-step="-1" aria-label="−">−</button><input id="gum-ammo-confirm-amount" type="number" name="amount" min="1" ${numericCadence ? `max="${numericCadence}"` : ""} step="1" value="1"><button type="button" class="gum-ammo-quantity-step" data-step="1" aria-label="+">+</button></div>
-                    <small class="gum-ammo-standard-note">${game.i18n.localize("GUM.RapidFire.ShotsFiredHint")}</small>
-                    ${numericCadence ? `<label class="gum-ammo-ignore-cadence"><input type="checkbox" name="ignoreCadence"><span><strong>${game.i18n.localize("GUM.RapidFire.IgnoreCadence")}</strong><small>${game.i18n.localize("GUM.RapidFire.IgnoreCadenceHint")}</small></span></label>` : ""}
-                </div>
-            </form>`,
-            render: html => {
-                const amountInput = html.find('[name="amount"]');
-                const updateQuantity = () => {
-                    const selected = options.find(item => item.id === html.find('[name="ammunition"]').val());
-                    const maximum = resolveRapidFireMaximum({
-                        cadence: numericCadence || 1,
-                        ammunitionAvailable: selected ? ammunitionAvailableUses(selected) : null,
-                        ignoreCadence: html.find('[name="ignoreCadence"]').prop('checked') === true
-                    });
-                    if (maximum === null) amountInput.removeAttr('max');
-                    else amountInput.attr('max', Math.max(1, maximum));
-                    html.find('.gum-ammo-quantity-step').prop('disabled', maximum !== null && maximum < 1);
-                    const current = Math.max(1, Number(amountInput.val()) || 1);
-                    amountInput.val(maximum === null ? current : Math.min(current, Math.max(1, maximum)));
-                };
-                html.find('[name="ammunition"], [name="ignoreCadence"]').on('change', updateQuantity);
-                html.find('.gum-ammo-quantity-step').on('click', event => {
-                    const maximum = amountInput.attr('max') ? Number(amountInput.attr('max')) : Infinity;
-                    const next = (Number(amountInput.val()) || 1) + Number(event.currentTarget.dataset.step);
-                    amountInput.val(Math.min(maximum, Math.max(1, next)));
-                });
-                updateQuantity();
-            },
-            buttons: {
-                fire: { label: game.i18n.localize("GUM.Equipment.Ammunition.Fire"), callback: html => resolve({ id: String(html.find('[name="ammunition"]').val() || ""), amount: Number(html.find('[name="amount"]').val()), ignoreCadence: html.find('[name="ignoreCadence"]').prop('checked') === true }) },
-                cancel: { label: game.i18n.localize("GUM.Equipment.Attacks.Cancel"), callback: () => resolve(null) }
-            },
-            default: "fire", close: () => resolve(null)
-        }, { classes: ["dialog", "gum", "gum-ammo-confirm-dialog"], width: 440, height: "auto" }).render(true));
-        if (!choice) return;
+        const prepared = rollData.ammunitionPreparation || {};
+        const choice = {
+            id: String(prepared.ammunitionId || rollData.ammunitionId || ""),
+            amount: Number(prepared.shots ?? rollData.shotsFired ?? 1),
+            ignoreCadence: prepared.ignoreCadence === true
+        };
         let selectedModifier = 0;
         const amount = choice.amount;
         if (!Number.isSafeInteger(amount) || amount < 1 || (numericCadence && !choice.ignoreCadence && amount > numericCadence)) {

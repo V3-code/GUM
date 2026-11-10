@@ -661,6 +661,12 @@
     "attack_ranged": {
       "mode": "Novo Ataque L.D.",
       "ammunition_ids": [],
+      "ammunition_loadout": {
+        "ammunitionId": "",
+        "shots": 1,
+        "ignoreCadence": false,
+        "locked": false
+      },
       "unbalanced": false,
       "fencing": false,
       "skill_name": "",

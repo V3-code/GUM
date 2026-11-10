@@ -32,7 +32,9 @@ export class GurpsRollPrompt extends FormApplication {
         this.rollData = rollData;
         const attack = actor?.items?.get(rollData.itemId)?.system?.ranged_attacks?.[rollData.attackId];
         this.ammunitionOptions = rollData.type === "attack" && attack?.ammunition_ids?.length ? availableAmmunition(actor, attack) : [];
-        this.selectedAmmunitionId = "";
+        this.selectedAmmunitionId = this.ammunitionOptions.some(item => item.id === rollData.ammunitionId)
+            ? rollData.ammunitionId
+            : "";
         this.selectedModifiers = [];
         this.onRoll = options.onRoll;
         this.rollMode = normalizeRollPrivacyMode(options.rollMode || getCurrentRollPrivacyMode());
@@ -1151,6 +1153,7 @@ return 'default';
         context.lockInitialModifier = this.rollData.lockInitialModifier === true;
         context.fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
         context.ammunitionOptions = this.ammunitionOptions.map(item => ({ id: item.id, name: item.name, quantity: item.system.quantity, selected: item.id === this.selectedAmmunitionId }));
+        context.showAmmunitionSelection = this.ammunitionOptions.length > 0 && this.rollData.ammunitionPrepared !== true;
         context.ammunitionId = this.selectedAmmunitionId;
         context.ammunitionModifier = ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId));
         context.ammunitionModifierSummary = game.i18n.format("GUM.Equipment.Ammunition.ModifierSummary", { modifier: context.ammunitionModifier });

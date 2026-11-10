@@ -62,7 +62,7 @@
             <p class="purpose-context-empty" style="display: none;">Nenhuma finalidade contextual disponível. Use a busca ou mostre todas as finalidades. <button type="button" class="purpose-context-show-all">Mostrar todas</button></p>
         </section>
         <h3 class="column-header modifiers-heading">Modificadores</h3>
-        {{#if ammunitionOptions.length}}
+        {{#if showAmmunitionSelection}}
         <div class="option-group" style="padding: 0.6rem">
             <label for="gum-ammunition-choice">{{localize "GUM.Equipment.Ammunition.Label"}}</label>
             <select id="gum-ammunition-choice" name="ammunitionId">
