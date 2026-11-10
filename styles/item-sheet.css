@@ -9208,9 +9208,9 @@ color:#121114;
 
 .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.65fr) minmax(105px, 0.72fr) 66px minmax(145px, 1fr);
-  gap: 10px;
-  align-items: end;
+  grid-template-columns: minmax(180px, 1.65fr) minmax(96px, 0.58fr) minmax(112px, 0.48fr) minmax(145px, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-primary-grid .effect-field > select,
@@ -9234,43 +9234,31 @@ color:#121114;
   margin: 0;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-control {
-  display: grid;
-  grid-template-columns: 36px 24px;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 32px;
+.gum.sheet.item.effect-sheet .dynamic-region-color-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding-top: 19px;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-control > input[type="color"] {
-  width: 36px;
-  height: 30px;
-  min-height: 30px;
+.gum.sheet.item.effect-sheet .dynamic-region-color-field > input[type="color"] {
+  width: 44px;
+  height: 32px;
+  min-height: 32px;
   padding: 2px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-control > label {
-  display: grid;
-  place-items: center;
-  position: relative;
-  width: 24px;
-  height: 30px;
+.gum.sheet.item.effect-sheet .dynamic-region-color-visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
   color: var(--item-text-muted);
-  cursor: pointer;
-}
-
-.gum.sheet.item.effect-sheet .dynamic-region-color-control > label input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.gum.sheet.item.effect-sheet .dynamic-region-color-control > label:has(input:checked) {
-  color: var(--item-accent);
+  font-size: 0.66rem;
+  line-height: 1.15;
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
@@ -9324,9 +9312,9 @@ color:#121114;
 
 .gum.sheet.item.effect-sheet .dynamic-region-range-control {
   display: grid;
-  grid-template-columns: minmax(80px, 1fr) auto;
+  grid-template-columns: minmax(58px, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-range-control > input {
@@ -9335,7 +9323,7 @@ color:#121114;
 
 @container (max-width: 580px) {
   .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
-    grid-template-columns: minmax(180px, 1.5fr) minmax(105px, 0.7fr) 66px;
+    grid-template-columns: minmax(180px, 1.5fr) minmax(96px, 0.65fr) minmax(112px, 0.55fr);
   }
 
   .gum.sheet.item.effect-sheet .dynamic-region-target-field {
@@ -9352,7 +9340,7 @@ color:#121114;
     grid-template-columns: 1fr 1fr;
   }
 
-  .gum.sheet.item.effect-sheet .dynamic-region-color-control {
+  .gum.sheet.item.effect-sheet .dynamic-region-color-field {
     grid-column: auto;
   }
 }

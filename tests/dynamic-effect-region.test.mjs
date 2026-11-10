@@ -145,7 +145,13 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.ok(template.indexOf("dynamic-region-toggle-card") < template.indexOf("dynamic-region-config-section"));
   assert.match(template, /effect-card effect-section dynamic-region-config-section/);
   assert.match(template, /dynamic-region-primary-grid/);
-  assert.match(template, /dynamic-region-color-control/);
+  assert.match(template, /dynamic-region-color-field/);
+  assert.match(template, /dynamic-region-color-visibility/);
+  const colorField = template.slice(
+    template.indexOf("dynamic-region-color-field"),
+    template.indexOf("dynamic-region-target-field")
+  );
+  assert.doesNotMatch(colorField, /fa-eye/);
   assert.match(template, /dynamic-region-indicator-section/);
   assert.match(template, /system\.dynamicRegion\.range/);
   assert.match(template, /system\.dynamicRegion\.excludeSelf/);
@@ -155,7 +161,7 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.match(template, /choose-dynamic-region-recipient-icon/);
   assert.match(controller, /FilePickerImpl/);
   assert.match(controller, /closest\("\.dynamic-region-workspace"\)/);
-  assert.match(styles, /grid-template-columns:\s*minmax\(180px, 1\.65fr\)\s*minmax\(105px, 0\.72fr\)\s*66px\s*minmax\(145px, 1fr\)/);
+  assert.match(styles, /grid-template-columns:\s*minmax\(180px, 1\.65fr\)\s*minmax\(96px, 0\.58fr\)\s*minmax\(112px, 0\.48fr\)\s*minmax\(145px, 1fr\)/);
   assert.match(styles, /@container \(max-width: 580px\)/);
   assert.doesNotMatch(template, /system\.dynamicRegion\.actionIds/);
   assert.doesNotMatch(template, /select-dynamic-region-actions/);
