@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { ammunitionAvailableUses, ammunitionLinkCandidates, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, normalizeAmmunitionLoadout, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum, validateAmmunitionLoadout } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, ammunitionLinkCandidates, ammunitionUseState, availableAmmunition, applyAmmunition, ammunitionRollModifier, buildAmmunitionConsumptionUpdate, calculateRapidFireHits, normalizeAmmunitionLoadout, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum, validateAmmunitionLoadout } from "../module/utils/ammunition.mjs";
 
 const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
 const preparation = fs.readFileSync(new URL("../module/apps/ammunition-preparation.mjs", import.meta.url), "utf8");
@@ -29,6 +29,23 @@ test("self-linked ammunition resolves the persisted charge mode instead of stale
     };
 
     assert.equal(ammunitionAvailableUses(hybrid), 5);
+});
+
+test("ammunition consumes Equipment charges when charge mode is active", () => {
+    const charged = {
+        _source: { system: { quantity: 4, uses_mode: "charges", max_uses: 8, current_uses: 3, ammunition: { enabled: true } } },
+        system: { quantity: 99, uses_mode: "quantity", ammunition: { enabled: true } }
+    };
+    assert.deepEqual(ammunitionUseState(charged), {
+        mode: "charges",
+        available: 5,
+        uses: {
+            mode: "charges", baseMax: 8, max: 8, spent: 3, remaining: 5,
+            consumeQuantityWhenEmpty: false, reserveType: "", reserveName: "", reserveScope: "any", modeFromModifier: false
+        }
+    });
+    assert.deepEqual(buildAmmunitionConsumptionUpdate(charged, 2).updates, { "system.current_uses": 5 });
+    assert.equal(Object.hasOwn(buildAmmunitionConsumptionUpdate(charged, 2).updates, "system.quantity"), false);
 });
 
 test("rapid-fire hits use full recoil multiples and never exceed shots fired", () => {
@@ -77,6 +94,10 @@ test("prepares ammunition before the roll prompt and exposes a compact locked lo
     assert.match(preparation, /gum-ammo-choice-card/);
     assert.match(actorSheet, /configure-attack-ammunition/);
     assert.match(actorSheet, /toggle-attack-ammunition-lock/);
+    assert.match(actorSheet, /attack-ammunition-bar/);
+    assert.match(actorSheet, /PreparedShots/);
+    assert.match(actorSheet, /AvailableReserve/);
+    assert.doesNotMatch(actorSheet, /attack-ammunition-pill/);
     assert.match(actorController, /await prepareAmmunitionRollData\(this\.actor, this\._getRollDataFromElement\(element\)\)/);
     assert.match(rollPrompt, /showAmmunitionSelection = this\.ammunitionOptions\.length > 0 && this\.rollData\.ammunitionPrepared !== true/);
     assert.doesNotMatch(main, /gum-ammo-confirm-choice/);

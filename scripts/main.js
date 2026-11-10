@@ -42,7 +42,7 @@ import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { prepareAmmunitionRollData } from "../module/apps/ammunition-preparation.mjs";
-import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, buildAmmunitionConsumptionUpdate, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
@@ -89,7 +89,7 @@ import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolve
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
-import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../module/utils/equipment-resolution.mjs";
+import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
 import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 import { collectActiveEquipmentOwnerModifiers, equipmentAttributeBonus, equipmentSkillBonus } from "../module/utils/equipment-owner-modifiers.mjs";
@@ -1508,11 +1508,9 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             }
             const baseProfile = resolveCombatDamageProfile(actor, sourceItem, sourceAttack, "ranged", { includeTargeted: true, rollData });
             const ammunitionProfile = applyAmmunition(baseProfile, ammunition);
-            const ammunitionSystem = ammunition._source?.system || ammunition.system;
-            // Re-resolve the selected document instead of trusting prepared data. This
+            // Use the Equipment Item's authoritative quantity/charge resolver. This
             // also covers a ranged weapon that points to itself as its ammunition.
-            const ammunitionResolution = resolveEquipment(ammunitionSystem);
-            const consumption = buildEquipmentConsumptionUpdate(ammunitionSystem, ammunitionResolution, amount);
+            const consumption = buildAmmunitionConsumptionUpdate(ammunition, amount);
             if (!consumption.consumed) {
                 ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.InvalidQuantity"));
                 return;

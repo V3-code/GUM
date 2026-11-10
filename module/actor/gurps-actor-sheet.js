@@ -26,7 +26,7 @@ import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs"
 import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
 import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
 import { buildActorEffectTargets } from "../utils/condition-actor-context.mjs";
-import { ammunitionAvailableUses, normalizeAmmunitionLoadout, validateAmmunitionLoadout } from "../utils/ammunition.mjs";
+import { ammunitionUseState, normalizeAmmunitionLoadout, validateAmmunitionLoadout } from "../utils/ammunition.mjs";
 import { configureAmmunitionLoadout, prepareAmmunitionRollData, toggleAmmunitionLoadoutLock } from "../apps/ammunition-preparation.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -1147,6 +1147,7 @@ async getData(options) {
                 const selectedAmmunition = ammunitionLoadout.ammunitionId
                     ? this.actor.items.get(ammunitionLoadout.ammunitionId)
                     : null;
+                const ammunitionUse = ammunitionUseState(selectedAmmunition);
                 const ammunitionValidation = validateAmmunitionLoadout(this.actor, attack, ammunitionLoadout);
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
@@ -1168,7 +1169,12 @@ async getData(options) {
                         shots: ammunitionLoadout.shots,
                         locked: ammunitionLoadout.locked,
                         valid: ammunitionValidation.valid,
-                        available: selectedAmmunition ? ammunitionAvailableUses(selectedAmmunition) : null
+                        available: ammunitionUse.available,
+                        availableText: selectedAmmunition
+                            ? game.i18n.format(ammunitionUse.mode === "charges"
+                                ? "GUM.Equipment.Ammunition.ChargesAvailable"
+                                : "GUM.Equipment.Ammunition.UnitsAvailable", { quantity: ammunitionUse.available })
+                            : game.i18n.localize("GUM.Equipment.Ammunition.NoItemConsumption")
                     }
                 };
             });

@@ -1,6 +1,7 @@
 import {
     ammunitionAvailableUses,
     ammunitionRollModifier,
+    ammunitionUseState,
     linkedAmmunition,
     normalizeAmmunitionLoadout,
     numericRateOfFire,
@@ -29,8 +30,11 @@ function ammunitionDetail(item) {
     const main = ammunition.main || {};
     const damage = [main.formula, main.type].filter(Boolean).join(" ");
     const modifier = ammunitionRollModifier(item);
+    const use = ammunitionUseState(item);
     return [
-        game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: ammunitionAvailableUses(item) }),
+        game.i18n.format(use.mode === "charges"
+            ? "GUM.Equipment.Ammunition.ChargesAvailable"
+            : "GUM.Equipment.Ammunition.UnitsAvailable", { quantity: use.available }),
         game.i18n.format("GUM.Equipment.Ammunition.ModifierSummary", { modifier }),
         damage
     ].filter(Boolean).join(" · ");

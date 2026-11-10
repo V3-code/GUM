@@ -1,4 +1,4 @@
-import { equipmentAvailableUses, resolveEquipment } from "./equipment-resolution.mjs";
+import { buildEquipmentConsumptionUpdate, equipmentAvailableUses, resolveEquipment } from "./equipment-resolution.mjs";
 
 export function ammunitionLinkCandidates(actor) {
     const collection = actor?.items;
@@ -78,6 +78,24 @@ export function ammunitionAvailableUses(item) {
     // which is especially visible when the weapon uses itself as ammunition.
     const resolution = resolveEquipment(system);
     return equipmentAvailableUses(system, resolution);
+}
+
+export function ammunitionUseState(item) {
+    if (!item) return { mode: "standard", available: null, uses: null };
+    const system = item._source?.system || item.system || {};
+    const resolution = resolveEquipment(system);
+    return {
+        mode: resolution.uses?.mode === "charges" ? "charges" : "quantity",
+        available: equipmentAvailableUses(system, resolution),
+        uses: resolution.uses
+    };
+}
+
+/** Consume ammunition through the same quantity/charge contract used by Equipment Items. */
+export function buildAmmunitionConsumptionUpdate(item, amount = 1) {
+    if (!item) return { consumed: false, reason: "missing_ammunition", updates: {} };
+    const system = item._source?.system || item.system || {};
+    return buildEquipmentConsumptionUpdate(system, resolveEquipment(system), amount);
 }
 
 export function applyAmmunition(profile, ammunition) {
