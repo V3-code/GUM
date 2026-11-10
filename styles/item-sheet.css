@@ -9169,6 +9169,36 @@ color:#121114;
   margin-top: 12px;
 }
 
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-policy {
+  margin-top: 12px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control img {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(201, 161, 94, 0.3);
+  border-radius: 5px;
+  object-fit: contain;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control img[src=""] {
+  visibility: hidden;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
 .gum.sheet.item.effect-sheet .dynamic-region-notice {
   display: flex;
   align-items: center;

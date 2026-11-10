@@ -5656,6 +5656,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
             .filter((candidate) =>
                 foundry.utils.getProperty(candidate, "flags.gum.effectUuid") === effectUuid
                 && !candidate.disabled
+                && foundry.utils.getProperty(candidate, "flags.gum.dynamicRegionIndicator") !== true
             )
             .sort((a, b) => {
                 const ai = Number(foundry.utils.getProperty(a, "flags.gum.actionIndex") ?? 9999);

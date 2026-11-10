@@ -3524,6 +3524,13 @@
   "GUM.DynamicRegion.InstantTrigger.on_enter": "When becoming affected by the Emanation",
   "GUM.DynamicRegion.InstantTrigger.turn_start": "At the start of the target's turn",
   "GUM.DynamicRegion.InstantTrigger.turn_end": "At the end of the target's turn",
+  "GUM.DynamicRegion.RecipientIcon.Label": "Indicator on affected tokens",
+  "GUM.DynamicRegion.RecipientIcon.Hint": "The indicator means that the token is inside and eligible for this Emanation. Status-specific icons remain independent.",
+  "GUM.DynamicRegion.RecipientIcon.none": "None",
+  "GUM.DynamicRegion.RecipientIcon.effect": "Effect Item icon",
+  "GUM.DynamicRegion.RecipientIcon.custom": "Custom icon",
+  "GUM.DynamicRegion.RecipientIcon.CustomLabel": "Custom image",
+  "GUM.DynamicRegion.RecipientIcon.Browse": "Choose image",
   "GUM.DynamicRegion.WholeEffectNotice": "The Emanation transmits every action in this Effect Item. Use separate Effect Items when different delivery behaviors are required.",
   "GUM.DynamicRegion.ApplyFailed": "The Emanation effect could not be applied. Check the console for details."
 }

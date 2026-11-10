@@ -429,6 +429,11 @@ export class EffectSheet extends ItemSheet {
             { id: "turn_start", label: localize("GUM.DynamicRegion.InstantTrigger.turn_start") },
             { id: "turn_end", label: localize("GUM.DynamicRegion.InstantTrigger.turn_end") }
         ];
+        context.dynamicRegionRecipientIconModes = [
+            { id: "none", label: localize("GUM.DynamicRegion.RecipientIcon.none") },
+            { id: "effect", label: localize("GUM.DynamicRegion.RecipientIcon.effect") },
+            { id: "custom", label: localize("GUM.DynamicRegion.RecipientIcon.custom") }
+        ];
 
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
@@ -808,6 +813,33 @@ activateListeners(html) {
                 const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
                 dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
             })
+        }).render(true);
+    });
+
+    const syncRecipientIconField = select => {
+        const field = select?.closest(".dynamic-region-card")?.querySelector(".dynamic-region-recipient-icon-custom");
+        if (field) field.hidden = select.value !== "custom";
+    };
+    html.on("change", '[name="system.dynamicRegion.recipientIconMode"]', ev => {
+        syncRecipientIconField(ev.currentTarget);
+    });
+    html.on("click", ".choose-dynamic-region-recipient-icon", ev => {
+        ev.preventDefault();
+        const input = ev.currentTarget.closest(".dynamic-region-recipient-icon-custom")
+            ?.querySelector('[name="system.dynamicRegion.recipientIcon"]');
+        if (!input) return;
+        const FilePickerImpl = foundry?.applications?.apps?.FilePicker?.implementation ?? globalThis.FilePicker;
+        if (!FilePickerImpl) return;
+        new FilePickerImpl({
+            type: "image",
+            current: input.value,
+            callback: path => {
+                if (!path) return;
+                input.value = path;
+                const preview = input.closest(".dynamic-region-recipient-icon-custom")?.querySelector("img");
+                if (preview) preview.src = path;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            }
         }).render(true);
     });
 

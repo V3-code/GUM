@@ -1118,6 +1118,8 @@
         "targetMode": "all",
         "excludeSelf": false,
         "instantTrigger": "on_enter",
+        "recipientIconMode": "none",
+        "recipientIcon": "",
         "gridBased": false,
         "showColor": true,
         "color": "#7b61ff"

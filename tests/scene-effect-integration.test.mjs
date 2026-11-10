@@ -8,6 +8,7 @@ import {
   buildRegionEffectEventData,
   buildSceneEffectTargets,
   createGumEffectRegionBehaviorType,
+  ensureDynamicRegionIndicator,
   removeRegionAppliedEffects,
   registerGumRegionEffectBehavior,
   registerMonksActiveTilesEffectAction
@@ -146,9 +147,56 @@ test("registers the GUM Region behavior and its schema", () => {
   assert.ok(schema.actionIds instanceof SetField);
   assert.ok(schema.excludeSelf instanceof Field);
   assert.ok(schema.instantTrigger instanceof Field);
+  assert.ok(schema.recipientIconMode instanceof Field);
+  assert.ok(schema.recipientIcon instanceof Field);
   assert.ok(schema.removeOnExit instanceof Field);
   assert.match(config.RegionBehavior.typeIcons[GUM_REGION_EFFECT_BEHAVIOR], /wand/);
   assert.equal(registerGumRegionEffectBehavior({ config, foundryRef }), false);
+});
+
+test("keeps one recipient indicator while merging overlapping Emanation owners", async () => {
+  const previousFoundry = globalThis.foundry;
+  const getProperty = (object, path) => path.split(".").reduce((value, key) => value?.[key], object);
+  globalThis.foundry = { utils: { getProperty } };
+  const updates = [];
+  const actor = {
+    effects: [],
+    async createEmbeddedDocuments(_type, documents) {
+      const created = documents.map((data, index) => ({
+        id: `indicator-${index}`,
+        ...data,
+        async update(changes) { updates.push(changes); }
+      }));
+      this.effects.push(...created);
+      return created;
+    }
+  };
+  const effectItem = { id: "aura", uuid: "Item.aura", name: "Aura", img: "icons/aura.webp" };
+  try {
+    const first = await ensureDynamicRegionIndicator(actor, {
+      effectItem,
+      regionUuid: "Region.one",
+      mode: "effect"
+    });
+    assert.equal(actor.effects.length, 1);
+    assert.equal(first.img, effectItem.img);
+    assert.equal(first.flags.gum.lifecycleCarrier, false);
+    assert.equal(first.flags.gum.dynamicRegionIndicator, true);
+
+    const second = await ensureDynamicRegionIndicator(actor, {
+      effectItem,
+      regionUuid: "Region.two",
+      mode: "custom",
+      customIcon: "icons/custom.webp"
+    });
+    assert.equal(second, first);
+    assert.equal(actor.effects.length, 1);
+    assert.equal(updates[0].img, "icons/custom.webp");
+    assert.deepEqual(updates[0]["flags.gum.dynamicRegionGrant"].sourceUuids, ["Region.one", "Region.two"]);
+  } finally {
+    if (previousFoundry === undefined) delete globalThis.foundry;
+    else globalThis.foundry = previousFoundry;
+  }
 });
 
 test("Emanation separates persistent entry from its shared instant trigger and preserves the source", async () => {
@@ -208,6 +256,8 @@ test("Emanation separates persistent entry from its shared instant trigger and p
       targetMode: "all",
       excludeSelf: false,
       instantTrigger: "turn_start",
+      recipientIconMode: "none",
+      recipientIcon: "",
       removeOnExit: true,
       region: { uuid: "Scene.s.Region.aura", flags: { gum: { dynamicEffectRegion: {} } }, parent: { uuid: "Scene.s" } }
     });

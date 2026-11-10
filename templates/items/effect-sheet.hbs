@@ -1413,6 +1413,32 @@
                             </label>
                         </div>
 
+                        <div class="effect-premium-field dynamic-region-recipient-icon-policy">
+                            <label class="effect-premium-field-label">
+                                <i class="fas fa-icons" aria-hidden="true"></i>
+                                {{localize "GUM.DynamicRegion.RecipientIcon.Label"}}
+                            </label>
+                            <div class="effect-premium-field-control">
+                                <select name="system.dynamicRegion.recipientIconMode">
+                                    {{#each dynamicRegionRecipientIconModes as |mode|}}
+                                        <option value="{{mode.id}}" {{#if (eq ../dynamicRegion.recipientIconMode mode.id)}}selected{{/if}}>{{mode.label}}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <p class="notes">{{localize "GUM.DynamicRegion.RecipientIcon.Hint"}}</p>
+                        </div>
+
+                        <div class="effect-premium-field dynamic-region-recipient-icon-custom" {{#unless (eq dynamicRegion.recipientIconMode "custom")}}hidden{{/unless}}>
+                            <label class="effect-premium-field-label">{{localize "GUM.DynamicRegion.RecipientIcon.CustomLabel"}}</label>
+                            <div class="effect-premium-field-control dynamic-region-recipient-icon-control">
+                                <img src="{{dynamicRegion.recipientIcon}}" alt="" />
+                                <input type="text" name="system.dynamicRegion.recipientIcon" value="{{dynamicRegion.recipientIcon}}" placeholder="icons/svg/aura.svg" />
+                                <button type="button" class="choose-dynamic-region-recipient-icon" title="{{localize 'GUM.DynamicRegion.RecipientIcon.Browse'}}">
+                                    <i class="fas fa-folder-open" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="dynamic-region-action-behavior">
                             <div class="effect-section-header">
                                 <h4 class="effect-section-title">{{localize "GUM.DynamicRegion.ActionBehaviorTitle"}}</h4>

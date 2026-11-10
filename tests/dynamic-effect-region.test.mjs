@@ -18,6 +18,8 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     targetMode: "enemies",
     excludeSelf: true,
     instantTrigger: "turn_start",
+    recipientIconMode: "custom",
+    recipientIcon: "icons/aura.webp",
     gridBased: true,
     showColor: true,
     color: "#abcdef"
@@ -28,6 +30,8 @@ test("normalizes Dynamic Region settings in Scene distance units", () => {
     targetMode: "enemies",
     excludeSelf: true,
     instantTrigger: "turn_start",
+    recipientIconMode: "custom",
+    recipientIcon: "icons/aura.webp",
     gridBased: true,
     showColor: true,
     color: "#abcdef"
@@ -53,7 +57,7 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
     controllerEffect: { uuid: "Actor.a.ActiveEffect.controller", name: "Aura" },
     effectItem: { uuid: "Item.controller", name: "Escudo Arcano" },
     token: { uuid: "Scene.s.Token.t", name: "Mago" },
-    config: { enabled: true, range: 4, targetMode: "allies", instantTrigger: "turn_start" },
+    config: { enabled: true, range: 4, targetMode: "allies", instantTrigger: "turn_start", recipientIconMode: "effect" },
     constRef: { REGION_EVENTS: { TOKEN_ENTER: "tokenEnter", TOKEN_EXIT: "tokenExit", TOKEN_TURN_START: "tokenTurnStart" } }
   });
   assert.equal(data.behaviors[0].type, GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR);
@@ -62,6 +66,7 @@ test("builds official attached-emantion Region data with a GUM behavior", () => 
   assert.deepEqual(data.behaviors[0].system.actionIds, []);
   assert.equal(data.behaviors[0].system.excludeSelf, false);
   assert.equal(data.behaviors[0].system.instantTrigger, "turn_start");
+  assert.equal(data.behaviors[0].system.recipientIconMode, "effect");
   assert.equal(data.flags.gum.dynamicEffectRegion.sourceTokenUuid, "Scene.s.Token.t");
 });
 
@@ -134,6 +139,10 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.match(template, /system\.dynamicRegion\.range/);
   assert.match(template, /system\.dynamicRegion\.excludeSelf/);
   assert.match(template, /system\.dynamicRegion\.instantTrigger/);
+  assert.match(template, /system\.dynamicRegion\.recipientIconMode/);
+  assert.match(template, /system\.dynamicRegion\.recipientIcon/);
+  assert.match(template, /choose-dynamic-region-recipient-icon/);
+  assert.match(controller, /FilePickerImpl/);
   assert.doesNotMatch(template, /system\.dynamicRegion\.actionIds/);
   assert.doesNotMatch(template, /select-dynamic-region-actions/);
   assert.doesNotMatch(template, /system\.actions\.\{\{action\.index\}\}\.delivery/);

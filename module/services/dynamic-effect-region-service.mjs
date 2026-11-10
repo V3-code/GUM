@@ -6,8 +6,9 @@ import {
 
 export const GUM_DYNAMIC_EFFECT_REGION_BEHAVIOR = GUM_REGION_EFFECT_BEHAVIOR;
 export const GUM_DYNAMIC_EFFECT_REGION_FLAG = "dynamicEffectRegion";
-export const DYNAMIC_EFFECT_REGION_VERSION = 2;
+export const DYNAMIC_EFFECT_REGION_VERSION = 3;
 export const EMANATION_INSTANT_TRIGGERS = Object.freeze(["on_enter", "turn_start", "turn_end"]);
+export const EMANATION_RECIPIENT_ICON_MODES = Object.freeze(["none", "effect", "custom"]);
 
 const collectionValues = collection => Array.from(collection?.values?.() ?? collection ?? []);
 const getProperty = (object, path) => globalThis.foundry?.utils?.getProperty?.(object, path)
@@ -27,6 +28,10 @@ export function normalizeDynamicEffectRegion(config = {}, { defaultRange = 1 } =
     instantTrigger: EMANATION_INSTANT_TRIGGERS.includes(config?.instantTrigger)
       ? config.instantTrigger
       : "on_enter",
+    recipientIconMode: EMANATION_RECIPIENT_ICON_MODES.includes(config?.recipientIconMode)
+      ? config.recipientIconMode
+      : "none",
+    recipientIcon: String(config?.recipientIcon ?? "").trim(),
     gridBased: config?.gridBased === true,
     showColor: config?.showColor !== false,
     color: /^#[0-9a-f]{6}$/i.test(String(config?.color ?? "")) ? String(config.color) : "#7b61ff"
@@ -67,6 +72,8 @@ export function buildDynamicRegionData({ controllerEffect, effectItem, token, co
         targetMode: normalized.targetMode,
         excludeSelf: normalized.excludeSelf,
         instantTrigger: normalized.instantTrigger,
+        recipientIconMode: normalized.recipientIconMode,
+        recipientIcon: normalized.recipientIcon,
         removeOnExit: true
       }
     }],
