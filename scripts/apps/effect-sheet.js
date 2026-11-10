@@ -817,7 +817,7 @@ activateListeners(html) {
     });
 
     const syncRecipientIconField = select => {
-        const field = select?.closest(".dynamic-region-card")?.querySelector(".dynamic-region-recipient-icon-custom");
+        const field = select?.closest(".dynamic-region-workspace")?.querySelector(".dynamic-region-recipient-icon-custom");
         if (field) field.hidden = select.value !== "custom";
     };
     html.on("change", '[name="system.dynamicRegion.recipientIconMode"]', ev => {

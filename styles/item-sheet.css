@@ -9156,21 +9156,133 @@ color:#121114;
 
 .gum.sheet.item.effect-sheet .dynamic-region-workspace {
   display: grid;
+  gap: 10px;
+  container-type: inline-size;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-workspace > .effect-section {
+  margin-bottom: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle-card {
+  padding: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 161, 94, 0.38);
+  border-left: 4px solid var(--item-accent);
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.96), rgba(36, 31, 38, 0.94));
+  cursor: pointer;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-card {
-  padding: 14px;
+.gum.sheet.item.effect-sheet .dynamic-region-toggle > input {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-action-behavior {
+.gum.sheet.item.effect-sheet .dynamic-region-toggle > span {
+  display: grid;
+  gap: 2px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle strong {
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle small {
+  color: var(--item-text-muted);
+  font-size: 0.68rem;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-config-body {
+  container-type: inline-size;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.65fr) minmax(105px, 0.72fr) 66px minmax(145px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid .effect-field > select,
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid .effect-field > input,
+.gum.sheet.item.effect-sheet .dynamic-region-indicator-grid .effect-field > select {
+  width: 100%;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-secondary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 10px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-control {
+  display: grid;
+  grid-template-columns: 36px 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 32px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-control > input[type="color"] {
+  width: 36px;
+  height: 30px;
+  min-height: 30px;
+  padding: 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-control > label {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 24px;
+  height: 30px;
+  color: var(--item-text-muted);
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-control > label input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-control > label:has(input:checked) {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.8fr) minmax(260px, 1.4fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body {
   display: grid;
   gap: 10px;
-  margin-top: 12px;
-}
-
-.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-policy {
-  margin-top: 12px;
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control {
@@ -9215,4 +9327,32 @@ color:#121114;
   grid-template-columns: minmax(80px, 1fr) auto;
   align-items: center;
   gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-range-control > input {
+  width: 100%;
+}
+
+@container (max-width: 580px) {
+  .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+    grid-template-columns: minmax(180px, 1.5fr) minmax(105px, 0.7fr) 66px;
+  }
+
+  .gum.sheet.item.effect-sheet .dynamic-region-target-field {
+    grid-column: 1 / -1;
+  }
+
+  .gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gum.sheet.item.effect-sheet .dynamic-region-color-control {
+    grid-column: auto;
+  }
 }
