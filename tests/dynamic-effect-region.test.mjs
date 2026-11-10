@@ -169,6 +169,8 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.match(styles, /grid-template-columns:\s*minmax\(180px, 1\.65fr\)\s*minmax\(96px, 0\.58fr\)\s*minmax\(112px, 0\.48fr\)\s*minmax\(145px, 1fr\)/);
   assert.match(styles, /dynamic-region-indicator-grid \{\s*display: grid;\s*grid-template-columns: 1fr/);
   assert.match(styles, /dynamic-region-action-body \.effect-field \{\s*display: grid/);
+  assert.match(styles, /dynamic-region-color-field > input\[type="color"\] \{\s*appearance: none/);
+  assert.match(styles, /::-webkit-color-swatch/);
   assert.match(styles, /@container \(max-width: 580px\)/);
   assert.doesNotMatch(template, /system\.dynamicRegion\.actionIds/);
   assert.doesNotMatch(template, /select-dynamic-region-actions/);
