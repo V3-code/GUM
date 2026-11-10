@@ -9208,7 +9208,7 @@ color:#121114;
 
 .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.65fr) minmax(96px, 0.58fr) minmax(112px, 0.48fr) minmax(145px, 1fr);
+  grid-template-columns: minmax(180px, 1.65fr) minmax(96px, 0.58fr) minmax(145px, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -9234,30 +9234,32 @@ color:#121114;
   margin: 0;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-field {
-  padding-top: 10px;
+.gum.sheet.item.effect-sheet .dynamic-region-color-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-field > input[type="color"] {
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"] {
   appearance: none;
-  width: 48px;
-  height: 34px;
-  min-height: 34px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
   box-sizing: border-box;
-  padding: 4px;
+  padding: 2px;
   border: 1px solid rgba(201, 161, 94, 0.42);
-  border-radius: 8px;
+  border-radius: 3px;
   background: #17181f;
   cursor: pointer;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-field > input[type="color"]::-webkit-color-swatch-wrapper {
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
 }
 
-.gum.sheet.item.effect-sheet .dynamic-region-color-field > input[type="color"]::-webkit-color-swatch {
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"]::-webkit-color-swatch {
   border: 0;
-  border-radius: 4px;
+  border-radius: 1px;
 }
 
 .gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
@@ -9337,7 +9339,7 @@ color:#121114;
 
 @container (max-width: 580px) {
   .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
-    grid-template-columns: minmax(180px, 1.5fr) minmax(96px, 0.65fr) minmax(112px, 0.55fr);
+    grid-template-columns: minmax(180px, 1.5fr) minmax(96px, 0.65fr);
   }
 
   .gum.sheet.item.effect-sheet .dynamic-region-target-field {
@@ -9351,7 +9353,4 @@ color:#121114;
     grid-template-columns: 1fr 1fr;
   }
 
-  .gum.sheet.item.effect-sheet .dynamic-region-color-field {
-    grid-column: auto;
-  }
 }

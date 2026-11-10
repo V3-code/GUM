@@ -145,13 +145,14 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.ok(template.indexOf("dynamic-region-toggle-card") < template.indexOf("dynamic-region-config-section"));
   assert.match(template, /effect-card effect-section dynamic-region-config-section/);
   assert.match(template, /dynamic-region-primary-grid/);
-  assert.match(template, /dynamic-region-color-field/);
+  assert.match(template, /dynamic-region-color-option/);
   assert.match(template, /dynamic-region-color-visibility/);
-  const colorField = template.slice(
-    template.indexOf("dynamic-region-color-field"),
-    template.indexOf("dynamic-region-target-field")
+  const colorOptionStart = template.indexOf("dynamic-region-color-option");
+  const colorOption = template.slice(
+    colorOptionStart,
+    template.indexOf('class="effect-inline-checkbox dynamic-region-checkbox"', colorOptionStart)
   );
-  assert.doesNotMatch(colorField, /fa-eye/);
+  assert.doesNotMatch(colorOption, /fa-eye/);
   const secondaryOptions = template.slice(
     template.indexOf("dynamic-region-secondary-grid"),
     template.indexOf("dynamic-region-indicator-section")
@@ -166,10 +167,10 @@ test("declares and exposes the Emanation Item Effect interface", async () => {
   assert.match(template, /choose-dynamic-region-recipient-icon/);
   assert.match(controller, /FilePickerImpl/);
   assert.match(controller, /closest\("\.dynamic-region-workspace"\)/);
-  assert.match(styles, /grid-template-columns:\s*minmax\(180px, 1\.65fr\)\s*minmax\(96px, 0\.58fr\)\s*minmax\(112px, 0\.48fr\)\s*minmax\(145px, 1fr\)/);
+  assert.match(styles, /grid-template-columns:\s*minmax\(180px, 1\.65fr\)\s*minmax\(96px, 0\.58fr\)\s*minmax\(145px, 1fr\)/);
   assert.match(styles, /dynamic-region-indicator-grid \{\s*display: grid;\s*grid-template-columns: 1fr/);
   assert.match(styles, /dynamic-region-action-body \.effect-field \{\s*display: grid/);
-  assert.match(styles, /dynamic-region-color-field > input\[type="color"\] \{\s*appearance: none/);
+  assert.match(styles, /dynamic-region-color-option > input\[type="color"\] \{\s*appearance: none/);
   assert.match(styles, /::-webkit-color-swatch/);
   assert.match(styles, /@container \(max-width: 580px\)/);
   assert.doesNotMatch(template, /system\.dynamicRegion\.actionIds/);
