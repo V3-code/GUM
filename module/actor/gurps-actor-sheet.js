@@ -1170,6 +1170,10 @@ async getData(options) {
                         locked: ammunitionLoadout.locked,
                         valid: ammunitionValidation.valid,
                         available: ammunitionUse.available,
+                        availableValue: selectedAmmunition ? ammunitionUse.available : "—",
+                        availableShortLabel: game.i18n.localize(ammunitionUse.mode === "charges"
+                            ? "GUM.Equipment.Ammunition.ChargesShort"
+                            : "GUM.Equipment.Ammunition.UnitsShort"),
                         availableText: selectedAmmunition
                             ? game.i18n.format(ammunitionUse.mode === "charges"
                                 ? "GUM.Equipment.Ammunition.ChargesAvailable"

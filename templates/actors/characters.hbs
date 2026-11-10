@@ -1936,6 +1936,19 @@
                   <div class="attack-name-stack">
                     <h4 class="attack-name">{{attack.name}}</h4>
                     <div class="attack-source-line">{{attack.skill_name}}</div>
+                    {{#if attack.hasAmmunitionLinks}}
+                    <div class="attack-ammunition-inline {{#if attack.ammunitionLoadoutDisplay.locked}}is-locked{{/if}} {{#unless attack.ammunitionLoadoutDisplay.valid}}is-invalid{{/unless}}" title="{{attack.ammunitionLoadoutDisplay.name}} · {{localize 'GUM.Equipment.Ammunition.PreparedShots'}}: {{attack.ammunitionLoadoutDisplay.shots}} · {{localize 'GUM.Equipment.Ammunition.AvailableReserve'}}: {{attack.ammunitionLoadoutDisplay.availableText}}">
+                      <button type="button" class="configure-attack-ammunition" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}">
+                        <i class="fas fa-bullseye" aria-hidden="true"></i>
+                        <strong class="attack-ammunition-inline-name">{{attack.ammunitionLoadoutDisplay.name}}</strong>
+                        <span><small>{{localize "GUM.Equipment.Ammunition.ShotsShort"}}</small> {{attack.ammunitionLoadoutDisplay.shots}}</span>
+                        <span><small>{{attack.ammunitionLoadoutDisplay.availableShortLabel}}</small> {{attack.ammunitionLoadoutDisplay.availableValue}}</span>
+                      </button>
+                      <button type="button" class="toggle-attack-ammunition-lock" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{#if attack.ammunitionLoadoutDisplay.locked}}{{localize 'GUM.Equipment.Ammunition.UnlockPreparation'}}{{else}}{{localize 'GUM.Equipment.Ammunition.LockPreparation'}}{{/if}}" aria-label="{{#if attack.ammunitionLoadoutDisplay.locked}}{{localize 'GUM.Equipment.Ammunition.UnlockPreparation'}}{{else}}{{localize 'GUM.Equipment.Ammunition.LockPreparation'}}{{/if}}">
+                        <i class="fas {{#if attack.ammunitionLoadoutDisplay.locked}}fa-lock{{else}}fa-lock-open{{/if}}" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                    {{/if}}
                   </div>
 
                   <div class="attack-primary-stats">
@@ -2020,19 +2033,6 @@
                   {{/with}}
                 </div>
 
-                {{#if attack.hasAmmunitionLinks}}
-                <div class="attack-ammunition-bar {{#if attack.ammunitionLoadoutDisplay.locked}}is-locked{{/if}} {{#unless attack.ammunitionLoadoutDisplay.valid}}is-invalid{{/unless}}">
-                  <button type="button" class="configure-attack-ammunition" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.ConfigurePreparation'}}">
-                    <i class="fas fa-bullseye attack-ammunition-bar-icon" aria-hidden="true"></i>
-                    <span class="attack-ammunition-bar-identity"><small>{{localize "GUM.Equipment.Ammunition.ShortLabel"}}</small><strong>{{attack.ammunitionLoadoutDisplay.name}}</strong></span>
-                    <span class="attack-ammunition-bar-metric"><small>{{localize "GUM.Equipment.Ammunition.PreparedShots"}}</small><strong>{{attack.ammunitionLoadoutDisplay.shots}}</strong></span>
-                    <span class="attack-ammunition-bar-metric attack-ammunition-bar-reserve"><small>{{localize "GUM.Equipment.Ammunition.AvailableReserve"}}</small><strong>{{attack.ammunitionLoadoutDisplay.availableText}}</strong></span>
-                  </button>
-                  <button type="button" class="toggle-attack-ammunition-lock" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{#if attack.ammunitionLoadoutDisplay.locked}}{{localize 'GUM.Equipment.Ammunition.UnlockPreparation'}}{{else}}{{localize 'GUM.Equipment.Ammunition.LockPreparation'}}{{/if}}" aria-label="{{#if attack.ammunitionLoadoutDisplay.locked}}{{localize 'GUM.Equipment.Ammunition.UnlockPreparation'}}{{else}}{{localize 'GUM.Equipment.Ammunition.LockPreparation'}}{{/if}}">
-                    <i class="fas {{#if attack.ammunitionLoadoutDisplay.locked}}fa-lock{{else}}fa-lock-open{{/if}}" aria-hidden="true"></i>
-                  </button>
-                </div>
-                {{/if}}
               </div>
             {{/each}}
         </div>

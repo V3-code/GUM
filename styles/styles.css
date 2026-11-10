@@ -8129,29 +8129,30 @@ background-color: var(--gum-accent-gold);
     grid-template-columns: 48px minmax(76px, auto);
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 28px;
-    min-height: 30px;
-    margin-left: 32px;
+    grid-template-columns: minmax(0, 1fr) 22px;
+    width: min(100%, 340px);
+    min-height: 21px;
+    margin-top: 4px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.055);
     border-radius: 4px;
-    background: rgba(5, 5, 7, 0.24);
+    background: rgba(5, 5, 7, 0.2);
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar.is-locked {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline.is-locked {
     border-color: color-mix(in srgb, var(--attack-card-accent) 38%, rgba(255, 255, 255, 0.08));
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar.is-invalid {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline.is-invalid {
     border-color: rgba(218, 96, 96, 0.52);
     box-shadow: inset 2px 0 0 rgba(218, 96, 96, 0.66);
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar button {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button {
     min-width: 0;
-    min-height: 28px;
+    min-height: 19px;
     margin: 0;
     border: 0;
     border-radius: 0;
@@ -8160,65 +8161,62 @@ background-color: var(--gum-accent-gold);
     box-shadow: none;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar .configure-attack-ammunition {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition {
     display: grid;
-    grid-template-columns: 16px minmax(100px, 1.4fr) minmax(64px, 0.5fr) minmax(110px, 1fr);
+    grid-template-columns: 12px minmax(60px, 1fr) auto auto;
     align-items: center;
-    gap: 8px;
-    padding: 3px 8px;
+    gap: 6px;
+    padding: 2px 6px;
     text-align: left;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar-icon {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition > i {
     color: var(--attack-card-accent);
-    font-size: 10px;
+    font-size: 8px;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar-identity,
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar-metric {
-    display: grid;
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline-name {
     min-width: 0;
-    gap: 1px;
-}
-
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar-metric {
-    padding-left: 8px;
-    border-left: 1px solid rgba(255, 255, 255, 0.055);
-}
-
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar small {
-    color: rgba(247, 233, 215, 0.42);
-    font-size: 7px;
-    font-weight: 700;
-    letter-spacing: 0.35px;
-    line-height: 1;
-    text-transform: uppercase;
-}
-
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar strong {
     overflow: hidden;
-    color: rgba(238, 231, 220, 0.88);
-    font-size: 9px;
+    color: rgba(238, 231, 220, 0.9);
+    font-size: 8.5px;
     font-weight: 700;
-    line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar .toggle-attack-ammunition-lock {
-    width: 28px;
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline span {
+    padding-left: 6px;
+    border-left: 1px solid rgba(255, 255, 255, 0.055);
+    color: rgba(238, 231, 220, 0.82);
+    font-size: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline small {
+    margin-right: 2px;
+    color: rgba(247, 233, 215, 0.42);
+    font-size: 6.5px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .toggle-attack-ammunition-lock {
+    width: 22px;
     padding: 0;
     border-left: 1px solid rgba(255, 255, 255, 0.06);
     color: rgba(247, 233, 215, 0.42);
-    font-size: 9px;
+    font-size: 8px;
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar.is-locked .toggle-attack-ammunition-lock {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline.is-locked .toggle-attack-ammunition-lock {
     color: var(--attack-card-accent);
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar button:hover,
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-bar button:focus-visible {
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button:hover,
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button:focus-visible {
     background: color-mix(in srgb, var(--attack-card-accent) 10%, transparent);
     color: #fff2d8;
 }
