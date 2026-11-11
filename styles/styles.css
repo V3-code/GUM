@@ -8196,13 +8196,15 @@ background-color: var(--gum-accent-gold);
     color: rgba(247, 233, 215, 0.25);
 }
 
-.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline small {
-    margin-right: 2px;
-    color: rgba(247, 233, 215, 0.42);
-    font-size: 6.5px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-    text-transform: uppercase;
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .attack-ammunition-damage {
+    color: rgba(238, 231, 220, 0.82);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .attack-ammunition-metric i {
+    width: 9px;
+    color: rgba(111, 190, 231, 0.72);
+    font-size: 7px;
+    text-align: center;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .toggle-attack-ammunition-lock {

@@ -97,6 +97,11 @@ test("prepares ammunition before the roll prompt and exposes a compact locked lo
     assert.match(actorSheet, /attack-ammunition-inline/);
     assert.match(actorSheet, /PreparedShots/);
     assert.match(actorSheet, /AvailableReserve/);
+    assert.match(actorSheet, /fa-crosshairs/);
+    assert.match(actorSheet, /fa-layer-group/);
+    assert.match(actorSheet, /fa-bolt/);
+    assert.match(actorController, /applyAmmunition/);
+    assert.match(actorController, /ammunitionDamageText/);
     assert.doesNotMatch(actorSheet, /attack-ammunition-(?:pill|bar)/);
     assert.match(actorController, /await prepareAmmunitionRollData\(this\.actor, this\._getRollDataFromElement\(element\)\)/);
     assert.match(rollPrompt, /showAmmunitionSelection = this\.ammunitionOptions\.length > 0 && this\.rollData\.ammunitionPrepared !== true/);
