@@ -14,6 +14,7 @@ import {
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 import { ensureEffectItemBridge, findEffectItemBridge } from "../../module/integrations/active-effect-bridge.mjs";
 import { normalizeRollModifierCompositionMode, ROLL_MODIFIER_COMPOSITION_MODES } from "../../module/utils/roll-modifier-composition.mjs";
+import { normalizeDynamicEffectRegion } from "../../module/services/dynamic-effect-region-service.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -251,6 +252,7 @@ const normalizeAction = (action = {}) => {
     const configuredRollVisibility = action?.roll_visibility
         ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    delete next.delivery;
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     Object.assign(next, normalizeEffectDamageAction(next));
@@ -408,6 +410,30 @@ export class EffectSheet extends ItemSheet {
         context.effectItemUuid = this.item.uuid;
         context.activeEffectBridgeUuid = activeEffectBridge?.uuid || "";
         context.hasActiveEffectBridge = Boolean(activeEffectBridge?.uuid);
+        const sceneDistance = Number(canvas?.scene?.grid?.distance) || 1;
+        context.dynamicRegion = normalizeDynamicEffectRegion(context.system.dynamicRegion, { defaultRange: sceneDistance });
+        context.dynamicRegionSupported = Number(game.release?.generation) >= 14
+            && typeof CONFIG.Region?.documentClass?.create === "function";
+        context.dynamicRegionUnit = canvas?.scene?.grid?.units || localize("GUM.DynamicRegion.SceneUnits", "scene units");
+        context.dynamicRegionTargetModes = [
+            { id: "all", label: localize("GUM.DynamicRegion.TargetMode.all") },
+            { id: "allies", label: localize("GUM.DynamicRegion.TargetMode.allies") },
+            { id: "enemies", label: localize("GUM.DynamicRegion.TargetMode.enemies") }
+        ];
+        context.dynamicRegionShapes = [
+            { id: "circle", label: localize("GUM.DynamicRegion.Shape.circle") },
+            { id: "emanation", label: localize("GUM.DynamicRegion.Shape.emanation") }
+        ];
+        context.dynamicRegionInstantTriggers = [
+            { id: "on_enter", label: localize("GUM.DynamicRegion.InstantTrigger.on_enter") },
+            { id: "turn_start", label: localize("GUM.DynamicRegion.InstantTrigger.turn_start") },
+            { id: "turn_end", label: localize("GUM.DynamicRegion.InstantTrigger.turn_end") }
+        ];
+        context.dynamicRegionRecipientIconModes = [
+            { id: "none", label: localize("GUM.DynamicRegion.RecipientIcon.none") },
+            { id: "effect", label: localize("GUM.DynamicRegion.RecipientIcon.effect") },
+            { id: "custom", label: localize("GUM.DynamicRegion.RecipientIcon.custom") }
+        ];
 
         if (context.system.duration) {
             context.system.duration.startMode = context.system.duration.startMode || "apply";
@@ -723,7 +749,10 @@ activateListeners(html) {
         const [removed] = actions.splice(index, 1);
         const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches).map(branch => ({ ...branch, actionIds: branch.actionIds.filter(id => id !== removed.id) }));
         this._reindexExpandedActionsAfterRemoval(index);
-        await this.item.update({ "system.actions": actions, "system.resistanceRoll.branches": branches });
+        await this.item.update({
+            "system.actions": actions,
+            "system.resistanceRoll.branches": branches
+        });
     });
 
     html.on("change", '[name="system.resistanceRoll.mode"]', async ev => {
@@ -784,6 +813,33 @@ activateListeners(html) {
                 const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
                 dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
             })
+        }).render(true);
+    });
+
+    const syncRecipientIconField = select => {
+        const field = select?.closest(".dynamic-region-workspace")?.querySelector(".dynamic-region-recipient-icon-custom");
+        if (field) field.hidden = select.value !== "custom";
+    };
+    html.on("change", '[name="system.dynamicRegion.recipientIconMode"]', ev => {
+        syncRecipientIconField(ev.currentTarget);
+    });
+    html.on("click", ".choose-dynamic-region-recipient-icon", ev => {
+        ev.preventDefault();
+        const input = ev.currentTarget.closest(".dynamic-region-recipient-icon-custom")
+            ?.querySelector('[name="system.dynamicRegion.recipientIcon"]');
+        if (!input) return;
+        const FilePickerImpl = foundry?.applications?.apps?.FilePicker?.implementation ?? globalThis.FilePicker;
+        if (!FilePickerImpl) return;
+        new FilePickerImpl({
+            type: "image",
+            current: input.value,
+            callback: path => {
+                if (!path) return;
+                input.value = path;
+                const preview = input.closest(".dynamic-region-recipient-icon-custom")?.querySelector("img");
+                if (preview) preview.src = path;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            }
         }).render(true);
     });
 

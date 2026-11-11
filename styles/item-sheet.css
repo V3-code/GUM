@@ -9153,3 +9153,204 @@ color:#121114;
     gap: 3px;
   }
 }
+
+.gum.sheet.item.effect-sheet .dynamic-region-workspace {
+  display: grid;
+  gap: 10px;
+  container-type: inline-size;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-workspace > .effect-section {
+  margin-bottom: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle-card {
+  padding: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 161, 94, 0.38);
+  border-left: 4px solid var(--item-accent);
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(26, 24, 32, 0.96), rgba(36, 31, 38, 0.94));
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle > input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle > span {
+  display: grid;
+  gap: 2px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle strong {
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-toggle small {
+  color: var(--item-text-muted);
+  font-size: 0.68rem;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-config-body {
+  container-type: inline-size;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.65fr) minmax(96px, 0.58fr) minmax(145px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid .effect-field > select,
+.gum.sheet.item.effect-sheet .dynamic-region-primary-grid .effect-field > input,
+.gum.sheet.item.effect-sheet .dynamic-region-indicator-grid .effect-field > select {
+  width: 100%;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-secondary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 10px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  box-sizing: border-box;
+  padding: 2px;
+  border: 1px solid rgba(201, 161, 94, 0.42);
+  border-radius: 3px;
+  background: #17181f;
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-color-option > input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 1px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-indicator-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body .effect-field {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body .effect-label {
+  display: block;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-action-body select {
+  width: min(100%, 320px);
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control img {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(201, 161, 94, 0.3);
+  border-radius: 5px;
+  object-fit: contain;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control img[src=""] {
+  visibility: hidden;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-recipient-icon-control button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 7px;
+  background: rgba(201, 161, 94, 0.07);
+  color: var(--item-text-muted);
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-range-control {
+  display: grid;
+  grid-template-columns: minmax(58px, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.gum.sheet.item.effect-sheet .dynamic-region-range-control > input {
+  width: 100%;
+}
+
+@container (max-width: 580px) {
+  .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+    grid-template-columns: minmax(180px, 1.5fr) minmax(96px, 0.65fr);
+  }
+
+  .gum.sheet.item.effect-sheet .dynamic-region-target-field {
+    grid-column: 1 / -1;
+  }
+
+}
+
+@media (max-width: 560px) {
+  .gum.sheet.item.effect-sheet .dynamic-region-primary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}

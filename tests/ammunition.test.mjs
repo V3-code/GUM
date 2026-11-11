@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { ammunitionAvailableUses, ammunitionLinkCandidates, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, ammunitionLinkCandidates, ammunitionUseState, availableAmmunition, applyAmmunition, ammunitionRollModifier, buildAmmunitionConsumptionUpdate, calculateRapidFireHits, normalizeAmmunitionLoadout, numericRateOfFire, reconcileAmmunitionModifier, resolveRapidFireMaximum, validateAmmunitionLoadout } from "../module/utils/ammunition.mjs";
 
 const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+const preparation = fs.readFileSync(new URL("../module/apps/ammunition-preparation.mjs", import.meta.url), "utf8");
+const actorSheet = fs.readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+const actorController = fs.readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+const rollPrompt = fs.readFileSync(new URL("../module/apps/roll-prompt.js", import.meta.url), "utf8");
+const styles = fs.readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
 test("an equipment item can link itself as ammunition for its own ranged attack", () => {
     const hybrid = { id: "thrown-weapon", system: { quantity: 3, ammunition: { enabled: true } } };
@@ -25,6 +30,23 @@ test("self-linked ammunition resolves the persisted charge mode instead of stale
     };
 
     assert.equal(ammunitionAvailableUses(hybrid), 5);
+});
+
+test("ammunition consumes Equipment charges when charge mode is active", () => {
+    const charged = {
+        _source: { system: { quantity: 4, uses_mode: "charges", max_uses: 8, current_uses: 3, ammunition: { enabled: true } } },
+        system: { quantity: 99, uses_mode: "quantity", ammunition: { enabled: true } }
+    };
+    assert.deepEqual(ammunitionUseState(charged), {
+        mode: "charges",
+        available: 5,
+        uses: {
+            mode: "charges", baseMax: 8, max: 8, spent: 3, remaining: 5,
+            consumeQuantityWhenEmpty: false, reserveType: "", reserveName: "", reserveScope: "any", modeFromModifier: false
+        }
+    });
+    assert.deepEqual(buildAmmunitionConsumptionUpdate(charged, 2).updates, { "system.current_uses": 5 });
+    assert.equal(Object.hasOwn(buildAmmunitionConsumptionUpdate(charged, 2).updates, "system.quantity"), false);
 });
 
 test("rapid-fire hits use full recoil multiples and never exceed shots fired", () => {
@@ -50,9 +72,42 @@ test("ignoring weapon rate of fire keeps the ammunition limit", () => {
 });
 
 test("ranged confirmation offers a per-attack rate-of-fire override", () => {
-    assert.match(main, /name="ignoreCadence"/);
+    assert.match(preparation, /name="ignoreCadence"/);
     assert.match(main, /!choice\.ignoreCadence && amount > numericCadence/);
-    assert.match(main, /ammunitionAvailable: selected \? ammunitionAvailableUses\(selected\) : null/);
+    assert.match(preparation, /ammunitionAvailable: available/);
+});
+
+test("normalizes and validates a saved ammunition loadout", () => {
+    const ammo = { id: "arrow", system: { quantity: 3, ammunition: { enabled: true } } };
+    const actor = { items: new Map([[ammo.id, ammo]]) };
+    const attack = { rof: "2", ammunition_ids: [ammo.id] };
+    assert.deepEqual(normalizeAmmunitionLoadout({ ammunitionId: ammo.id, shots: "2", locked: true }), {
+        ammunitionId: ammo.id, shots: 2, ignoreCadence: false, locked: true
+    });
+    assert.equal(validateAmmunitionLoadout(actor, attack, { ammunitionId: ammo.id, shots: 2 }).valid, true);
+    assert.equal(validateAmmunitionLoadout(actor, attack, { ammunitionId: ammo.id, shots: 3 }).reason, "cadence");
+    assert.equal(validateAmmunitionLoadout(actor, attack, { ammunitionId: ammo.id, shots: 4, ignoreCadence: true }).reason, "insufficient");
+});
+
+test("prepares ammunition before the roll prompt and exposes a compact locked loadout card", () => {
+    assert.match(preparation, /ammunitionPrepared: true/);
+    assert.match(preparation, /ammunition_loadout/);
+    assert.match(preparation, /gum-ammo-choice-card/);
+    assert.match(actorSheet, /configure-attack-ammunition/);
+    assert.match(actorSheet, /toggle-attack-ammunition-lock/);
+    assert.match(actorSheet, /attack-ammunition-inline/);
+    assert.match(actorSheet, /PreparedShots/);
+    assert.match(actorSheet, /AvailableReserve/);
+    assert.match(actorSheet, /fa-crosshairs/);
+    assert.match(actorSheet, /fa-layer-group/);
+    assert.match(actorSheet, /fa-bolt/);
+    assert.match(actorController, /applyAmmunition/);
+    assert.match(actorController, /ammunitionDamageText/);
+    assert.match(styles, /toggle-attack-ammunition-lock[\s\S]*?border-left:/);
+    assert.doesNotMatch(actorSheet, /attack-ammunition-(?:pill|bar)/);
+    assert.match(actorController, /await prepareAmmunitionRollData\(this\.actor, this\._getRollDataFromElement\(element\)\)/);
+    assert.match(rollPrompt, /showAmmunitionSelection = this\.ammunitionOptions\.length > 0 && this\.rollData\.ammunitionPrepared !== true/);
+    assert.doesNotMatch(main, /gum-ammo-confirm-choice/);
 });
 
 test("only linked, available ammunition can be selected", () => {

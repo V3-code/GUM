@@ -4,6 +4,29 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.2-beta] - 2026-11-10
+
+### Added
+
+- Itens Efeito ganharam a aba bilíngue `Emanação`, capaz de manter uma Região oficial do Foundry 14 anexada ao token enquanto o efeito estiver ativo, filtrar aliados ou inimigos e transmitir todas as ações do Item sem replicar a própria Emanação.
+- Emanações mantêm ações persistentes enquanto o token permanecer afetado e podem executar ações instantâneas na entrada, no início do turno ou no fim do turno.
+- Tokens afetados por uma Emanação podem receber nenhum indicador, o ícone do Item Efeito ou uma imagem personalizada, independentemente dos ícones próprios de status.
+- Ataques à distância ganharam preparo de munição antes da rolagem, seleção por cards, memorização por modo de ataque e trava opcional para reutilizar a munição e a quantidade escolhidas.
+- A API pública `1.3.0` ganhou hooks informativos e versionados para rolagens concluídas, dano rolado ou aplicado, efeitos aplicados/removidos/alternados, transições de condição, grupos manuais de efeitos de estado e uso de item, com um envelope comum preparado para integrações externas.
+- `api.effects.getBridge()` oferece acesso público e estável à ponte ActiveEffect nativa de um Item Efeito.
+- Itens Efeito agora expõem um único portador de ciclo visual entre seus ActiveEffects persistentes, propagam para ele as flags externas configuradas na ponte nativa e informam documentos, origem e transições completas nos hooks públicos, preparando animações persistentes sem duplicar efeitos mecânicos irmãos.
+
+### Changed
+
+- A aba de Emanação dos Itens Efeito foi reorganizada no padrão visual da ficha, com controles compactos para formato, alcance, cor, alvos, indicador e comportamento das ações.
+- O consumo de munição usa a mesma resolução do Item Equipamento, respeitando quantidade ou cargas, cadência, disponibilidade atual e esgotamento da reserva.
+- Cards de ataques à distância exibem uma linha compacta com munição preparada, dano próprio quando aplicável, disparos, reserva e estado da trava.
+
+### Fixed
+
+- Emanações aplicam somente as ações mecânicas aos tokens afetados, sem transferir o Item emissor nem criar cadeias recursivas de novas áreas.
+- Sobreposições de Emanações preservam suas origens independentemente e removem apenas as aplicações pertencentes à fonte que deixou de afetar o token.
+
 ## [1.6.1-beta] - 2026-11-03
 
 ### Added

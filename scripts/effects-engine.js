@@ -26,9 +26,13 @@ import {
     PERSISTENT_EFFECT_ACTION_TYPES,
     resolveEffectStackingDomain
 } from "../module/utils/effect-stacking.mjs";
-import { isEffectItemBridgeApplicationActive } from "../module/integrations/active-effect-bridge.mjs";
+import {
+    getEffectItemBridgeIntegrationFlags,
+    isEffectItemBridgeApplicationActive
+} from "../module/integrations/active-effect-bridge.mjs";
 import { normalizeRollModifierCompositionMode } from "../module/utils/roll-modifier-composition.mjs";
 import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
+import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -306,6 +310,7 @@ const normalizeEffectAction = (action = {}) => {
     const configuredRollVisibility = action?.roll_visibility
         ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    delete next.delivery;
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     Object.assign(next, normalizeEffectDamageAction(next));
@@ -452,6 +457,16 @@ const selectCarrierActionIndex = (actions = []) => {
     return persistent[0].index;
 };
 
+const collectDynamicRegionGrantSources = (...effectsOrFlags) => [...new Set(effectsOrFlags.flatMap(value => {
+    const gumFlags = value?.flags?.gum || value?.gum || value || {};
+    const grant = gumFlags.dynamicRegionGrant || {};
+    return [
+        ...(Array.isArray(grant.sourceUuids) ? grant.sourceUuids : []),
+        grant.sourceUuid,
+        gumFlags.sceneTrigger?.sourceUuid
+    ];
+}).filter(Boolean).map(String))];
+
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
     if (!await isEffectItemBridgeApplicationActive(context)) return;
@@ -463,6 +478,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const stackingDomain = resolveEffectStackingDomain(context);
     const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
     const applicationId = context.applicationId || foundry.utils.randomID();
+    const dynamicRegionGrantSourceUuid = context.gumFlags?.dynamicRegionGrant?.sourceUuid || null;
+    const matchesApplicationScope = effect => Boolean(foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant"))
+        === Boolean(dynamicRegionGrantSourceUuid);
 
     if (effectiveStackingMode !== "stack" && context._stackingQueueAcquired !== true) {
         const previous = nonStackingApplicationQueue.catch(() => undefined);
@@ -483,11 +501,30 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
     const allActions = getEffectActions(effectSystem);
     const selectedActionIds = Array.isArray(context.actionIds) ? new Set(context.actionIds.map(String)) : null;
+    const hasDynamicRegionController = context.skipDynamicRegionController !== true
+        && Number(game.release?.generation) >= 14
+        && typeof CONFIG.Region?.documentClass?.createTokenEmanation === "function"
+        && effectSystem.dynamicRegion?.enabled === true;
     const actionEntries = allActions
         .map((action, actionIndex) => ({ action, actionIndex }))
-        .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
+        .filter(({ action }) => (!selectedActionIds || selectedActionIds.has(action.id))
+            && !hasDynamicRegionController
+            && !(context.skipPersistentEffects && PERSISTENT_EFFECT_ACTION_TYPES.has(action.type))
+            && !(context.skipInstantEffects && INSTANT_EFFECT_ACTION_TYPES.has(action.type)));
     const actions = actionEntries.map(({ action }) => action);
-    if (!actions.length) return;
+    if (!actions.length && !hasDynamicRegionController) return;
+    const persistentEffects = [];
+    const persistentEffectKeys = new Set();
+    const rememberPersistentEffect = effect => {
+        if (!effect) return;
+        const key = effect.uuid || effect.id;
+        if (key && persistentEffectKeys.has(key)) return;
+        if (key) persistentEffectKeys.add(key);
+        persistentEffects.push(effect);
+    };
+    const bridgeIntegrationFlags = context.skipDynamicRegionController || context.gumFlags?.activeEffectBridge
+        ? {}
+        : getEffectItemBridgeIntegrationFlags(effectItem);
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId, conditionIds: [context.conditionId] }
         : {};
@@ -605,7 +642,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         return { activeEffectData, targetActor, gumDuration, fallbackCoreStatusId };
     };
 
-    const baseIconCarrierIndex = selectCarrierActionIndex(actions);
+    const baseLifecycleCarrierIndex = selectCarrierActionIndex(actions);
 
     for (const [selectedActionIndex, { action, actionIndex }] of actionEntries.entries()) {
         if (!persistentTypes.has(action.type) && !instantTypes.has(action.type)) {
@@ -615,6 +652,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
         try {
             if (persistentTypes.has(action.type)) {
+                const isLifecycleCarrier = baseLifecycleCarrierIndex === selectedActionIndex;
                 if (context.skipPersistentEffects) continue;
                 if (action.type === "status" && !findConfiguredStatus(action.statusId, CONFIG.statusEffects)) {
                     throw new Error(`Status configurado não encontrado: "${action.statusId || "vazio"}".`);
@@ -624,14 +662,32 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (!isActorContextAvailable(targetActor)) continue;
                     const matchingEffects = effectiveStackingMode === "stack"
                         ? []
-                        : Array.from(targetActor?.effects || []).filter(effect => matchesStackedEffect(effect, {
-                            effectUuid: effectItem.uuid,
-                            action,
-                            actionIndex,
-                            domain: stackingDomain
-                        }));
+                        : Array.from(targetActor?.effects || []).filter(effect => matchesApplicationScope(effect)
+                            && matchesStackedEffect(effect, {
+                                effectUuid: effectItem.uuid,
+                                action,
+                                actionIndex,
+                                domain: stackingDomain
+                            }));
                     if (effectiveStackingMode === "unique" && matchingEffects.length) {
                         const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                        const carrierUpdate = {
+                            "flags.gum.lifecycleCarrier": isLifecycleCarrier
+                        };
+                        if (dynamicRegionGrantSourceUuid) {
+                            const sourceUuids = collectDynamicRegionGrantSources(...matchingEffects, context.gumFlags);
+                            carrierUpdate["flags.gum.dynamicRegionController"] = false;
+                            carrierUpdate["flags.gum.dynamicRegionGrant.sourceUuid"] = sourceUuids[0];
+                            carrierUpdate["flags.gum.dynamicRegionGrant.sourceUuids"] = sourceUuids;
+                            carrierUpdate["flags.gum.sceneTrigger.sourceUuid"] = sourceUuids[0];
+                        }
+                        if (isLifecycleCarrier) {
+                            for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                                carrierUpdate[`flags.${scope}`] = foundry.utils.deepClone(value);
+                            }
+                        }
+                        await primaryEffect.update(carrierUpdate);
+                        rememberPersistentEffect(primaryEffect);
                         if (stackingDomain === "condition") {
                             const previousOwners = collectConditionOwners(primaryEffect);
                             const conditionIds = [...new Set(matchingEffects
@@ -661,7 +717,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     activeEffectData.flags.gum.actionId = action.id;
                     activeEffectData.flags.gum.actionType = action.type;
                     activeEffectData.flags.gum.actionLabel = (action.label || "").trim();
-                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === selectedActionIndex;
+                    activeEffectData.flags.gum.lifecycleCarrier = isLifecycleCarrier;
+                    if (isLifecycleCarrier) {
+                        for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                            activeEffectData.flags[scope] = foundry.utils.deepClone(value);
+                        }
+                    }
+                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration)
+                        && isLifecycleCarrier
+                        && !dynamicRegionGrantSourceUuid;
                     if (isIconCarrier) {
                         activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
                         activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
@@ -888,13 +952,22 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     try {
                         if (effectiveStackingMode === "refresh" && matchingEffects.length) {
                             const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                            if (dynamicRegionGrantSourceUuid) {
+                                const sourceUuids = collectDynamicRegionGrantSources(...matchingEffects, activeEffectData.flags.gum);
+                                activeEffectData.flags.gum.dynamicRegionController = false;
+                                activeEffectData.flags.gum.dynamicRegionGrant.sourceUuid = sourceUuids[0];
+                                activeEffectData.flags.gum.dynamicRegionGrant.sourceUuids = sourceUuids;
+                                activeEffectData.flags.gum.sceneTrigger.sourceUuid = sourceUuids[0];
+                            }
                             await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
+                            rememberPersistentEffect(primaryEffect);
                             const duplicateIds = duplicateEffects.map(effect => effect.id).filter(Boolean);
                             if (duplicateIds.length) {
                                 await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
                             }
                         } else {
-                            await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                            const created = await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                            for (const activeEffect of created ?? []) rememberPersistentEffect(activeEffect);
                         }
                     } catch (error) {
                         if (isMissingSyntheticActorContextError(error, targetActor)) continue;
@@ -1148,4 +1221,114 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             ui.notifications.warn(`Efeito "${effectItem.name}": uma ação "${action.type}" falhou e foi ignorada.`);
         }
     }
+    // A Região Dinâmica é, por si só, um efeito persistente. Quando o Item não
+    // criou outro ActiveEffect persistente, este carrier inerte fornece o ciclo
+    // oficial de ativação, desativação, duração e integração visual.
+    if (hasDynamicRegionController && !context.skipPersistentEffects) {
+        const dynamicAction = { id: "dynamic-region", type: "dynamic_region" };
+        for (const target of targets) {
+            const targetActor = target?.actor;
+            if (!isActorContextAvailable(targetActor)) continue;
+            const existingController = persistentEffects.find(effect =>
+                effect?.parent === targetActor
+                && foundry.utils.getProperty(effect, "flags.gum.lifecycleCarrier") !== false
+            );
+            if (existingController) {
+                await existingController.update({
+                    "flags.gum.dynamicRegionController": true,
+                    "flags.gum.dynamicRegionGrant": null
+                });
+                continue;
+            }
+
+            const matchingEffects = effectiveStackingMode === "stack"
+                ? []
+                : Array.from(targetActor.effects || []).filter(effect => !foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant")
+                    && matchesStackedEffect(effect, {
+                    effectUuid: effectItem.uuid,
+                    action: dynamicAction,
+                    actionIndex: -1,
+                    domain: stackingDomain
+                }));
+            const { activeEffectData, gumDuration } = buildCommonActiveEffectData(targetActor, -1);
+            activeEffectData.name = effectItem.name;
+            activeEffectData.flags.gum.actionIndex = -1;
+            activeEffectData.flags.gum.actionId = dynamicAction.id;
+            activeEffectData.flags.gum.actionType = dynamicAction.type;
+            activeEffectData.flags.gum.actionLabel = "";
+            activeEffectData.flags.gum.lifecycleCarrier = true;
+            activeEffectData.flags.gum.dynamicRegionController = true;
+            activeEffectData.flags.gum.dynamicRegionGrant = null;
+            for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                activeEffectData.flags[scope] = foundry.utils.deepClone(value);
+            }
+            if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+                const carrierStatusId = `${effectItem.name.slugify({ strict: true })}-carrier`;
+                activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
+                activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                activeEffectData.statuses = [carrierStatusId];
+                foundry.utils.setProperty(activeEffectData, "flags.core.statusId", carrierStatusId);
+            }
+
+            try {
+                if (matchingEffects.length) {
+                    const [primaryEffect, ...duplicates] = matchingEffects;
+                    if (effectiveStackingMode === "refresh") {
+                        await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
+                    } else {
+                        const update = {
+                            "flags.gum.lifecycleCarrier": true,
+                            "flags.gum.dynamicRegionController": true,
+                            "flags.gum.dynamicRegionGrant": null
+                        };
+                        for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
+                            update[`flags.${scope}`] = foundry.utils.deepClone(value);
+                        }
+                        await primaryEffect.update(update);
+                    }
+                    rememberPersistentEffect(primaryEffect);
+                    const duplicateIds = duplicates.map(effect => effect.id).filter(Boolean);
+                    if (duplicateIds.length) await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
+                } else {
+                    const created = await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                    for (const activeEffect of created ?? []) rememberPersistentEffect(activeEffect);
+                }
+            } catch (error) {
+                if (isMissingSyntheticActorContextError(error, targetActor)) continue;
+                throw error;
+            }
+        }
+    }
+
+    emitGumLifecycleHook(GUM_API_HOOKS.EFFECT_APPLIED, {
+        actor: context.actor || null,
+        sourceToken: resolveGumSourceToken(context.actor),
+        item: effectItem,
+        action: {
+            type: "effect",
+            id: effectItem.id,
+            label: effectItem.name,
+            data: effectSystem
+        },
+        targets,
+        result: {
+            actionIds: actionEntries.map(({ action }) => action.id).filter(Boolean),
+            actionCount: actionEntries.length,
+            persistent: persistentEffects.length > 0,
+            activeEffects: persistentEffects,
+            activeEffectUuids: persistentEffects.map(effect => effect.uuid).filter(Boolean)
+        },
+        metadata: {
+            origin: context.origin || null,
+            originUuid: context.origin?.uuid || null,
+            applicationId,
+            source: context.source || context.eventData?.source || context.gumFlags?.sceneTrigger?.source || null,
+            sourceUuid: context.gumFlags?.sceneTrigger?.sourceUuid
+                || context.eventData?.regionUuid
+                || context.eventData?.tileUuid
+                || null,
+            mode: context.mode || null,
+            eventData: context.eventData || null
+        }
+    });
 }

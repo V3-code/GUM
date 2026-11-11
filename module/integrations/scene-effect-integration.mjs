@@ -121,6 +121,131 @@ export function buildRegionEffectEventData(event, behavior) {
   };
 }
 
+export function isDynamicRegionTarget(options = {}) {
+  const { token, sourceToken, targetMode = "all" } = options;
+  if (!token?.actor) return false;
+  const isSelf = Boolean(sourceToken && (token.uuid === sourceToken.uuid || token.actor === sourceToken.actor));
+  const excludeSelf = Object.hasOwn(options, "excludeSelf")
+    ? options.excludeSelf === true
+    : options.includeSelf === false;
+  if (isSelf) return !excludeSelf;
+  if (targetMode === "all") return true;
+  if (!sourceToken) return false;
+  const sourceDisposition = Number(sourceToken.disposition ?? sourceToken._source?.disposition ?? 0);
+  const targetDisposition = Number(token.disposition ?? token._source?.disposition ?? 0);
+  if (targetMode === "allies") return sourceDisposition !== 0 && targetDisposition === sourceDisposition;
+  if (targetMode === "enemies") return sourceDisposition * targetDisposition < 0;
+  return false;
+}
+
+/** Maintain one presentation-only marker per Effect Item on an affected Actor. */
+export async function ensureDynamicRegionIndicator(actor, {
+  effectItem,
+  regionUuid,
+  sourceTokenUuid = null,
+  controllerActiveEffectUuid = null,
+  sourceActorUuid = null,
+  sourceItemUuid = null,
+  mode = "none",
+  customIcon = ""
+} = {}) {
+  if (!actor || !effectItem || !regionUuid || mode === "none") return null;
+  const image = mode === "custom" ? String(customIcon || "").trim() : effectItem.img;
+  if (!image) return null;
+  const getProperty = globalThis.foundry?.utils?.getProperty;
+  const existing = Array.from(actor.effects || []).find(effect =>
+    getProperty?.(effect, "flags.gum.dynamicRegionIndicator") === true
+    && getProperty?.(effect, "flags.gum.effectUuid") === effectItem.uuid
+  );
+  const existingSources = existing
+    ? [
+        ...(getProperty?.(existing, "flags.gum.dynamicRegionGrant.sourceUuids") || []),
+        getProperty?.(existing, "flags.gum.dynamicRegionGrant.sourceUuid")
+      ]
+    : [];
+  const sourceUuids = [...new Set([...existingSources, regionUuid].filter(Boolean).map(String))];
+  const statusId = `gum-emanation-${String(effectItem.uuid || effectItem.id || "effect").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  const grant = {
+    sourceUuid: sourceUuids[0],
+    sourceUuids,
+    controllerActiveEffectUuid,
+    sourceTokenUuid,
+    effectItemUuid: effectItem.uuid
+  };
+
+  if (existing) {
+    await existing.update({
+      name: effectItem.name,
+      img: image,
+      showIcon: 2,
+      statuses: [statusId],
+      disabled: false,
+      "flags.core.statusId": statusId,
+      "flags.gum.dynamicRegionGrant": grant,
+      "flags.gum.sceneTrigger.sourceUuid": sourceUuids[0]
+    });
+    return existing;
+  }
+  if (typeof actor.createEmbeddedDocuments !== "function") return null;
+  const [created] = await actor.createEmbeddedDocuments("ActiveEffect", [{
+    name: effectItem.name,
+    img: image,
+    showIcon: 2,
+    origin: sourceItemUuid || sourceActorUuid || effectItem.uuid,
+    changes: [],
+    statuses: [statusId],
+    duration: {},
+    disabled: false,
+    flags: {
+      core: { statusId },
+      gum: {
+        effectUuid: effectItem.uuid,
+        actionIndex: -2,
+        actionId: "dynamic-region-indicator",
+        actionType: "dynamic_region_indicator",
+        lifecycleCarrier: false,
+        dynamicRegionController: false,
+        dynamicRegionIndicator: true,
+        dynamicRegionGrant: grant,
+        sceneTrigger: {
+          source: "dynamic-region",
+          sourceUuid: regionUuid,
+          event: "membership"
+        }
+      }
+    }
+  }], { gumSkipConditionProcessing: true, gumDynamicRegionSync: true });
+  return created || null;
+}
+
+export async function removeRegionAppliedEffects(actor, { regionUuid, effectUuid } = {}) {
+  if (!actor || !regionUuid) return [];
+  const getProperty = globalThis.foundry?.utils?.getProperty;
+  const ids = [];
+  for (const effect of Array.from(actor.effects || [])) {
+    if (effectUuid && getProperty?.(effect, "flags.gum.effectUuid") !== effectUuid) continue;
+    const grant = getProperty?.(effect, "flags.gum.dynamicRegionGrant") || {};
+    const sources = [...new Set([
+      ...(Array.isArray(grant.sourceUuids) ? grant.sourceUuids : []),
+      grant.sourceUuid,
+      getProperty?.(effect, "flags.gum.sceneTrigger.sourceUuid")
+    ].filter(Boolean).map(String))];
+    if (!sources.includes(regionUuid)) continue;
+    const remaining = sources.filter(sourceUuid => sourceUuid !== regionUuid);
+    if (remaining.length) {
+      await effect.update({
+        "flags.gum.dynamicRegionGrant.sourceUuid": remaining[0],
+        "flags.gum.dynamicRegionGrant.sourceUuids": remaining,
+        "flags.gum.sceneTrigger.sourceUuid": remaining[0]
+      });
+    } else if (effect.id) ids.push(effect.id);
+  }
+  if (ids.length) {
+    await actor.deleteEmbeddedDocuments("ActiveEffect", ids, { gumExpirationReason: "region-exit" });
+  }
+  return ids;
+}
+
 const supportedRegionEffectEvents = constRef => {
   const events = constRef?.REGION_EVENTS ?? {};
   return [
@@ -150,7 +275,36 @@ export function createGumEffectRegionBehaviorType({
           type: "Item",
           label: "GUM.SceneEffects.Region.EffectLabel",
           hint: "GUM.SceneEffects.Region.EffectHint"
-        })
+        }),
+        actionIds: new foundryRef.data.fields.SetField(new foundryRef.data.fields.StringField({
+          required: true,
+          nullable: false,
+          blank: false
+        })),
+        sourceTokenUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
+        sourceActorUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
+        sourceItemUuid: new foundryRef.data.fields.StringField({ nullable: true, initial: null }),
+        targetMode: new foundryRef.data.fields.StringField({
+          required: true,
+          initial: "all",
+          choices: ["all", "allies", "enemies"]
+        }),
+        excludeSelf: new foundryRef.data.fields.BooleanField({ initial: false }),
+        // Kept in the schema so pre-v2 ephemeral Regions can still be loaded
+        // and reconciled without failing DataModel validation.
+        includeSelf: new foundryRef.data.fields.BooleanField({ initial: true }),
+        instantTrigger: new foundryRef.data.fields.StringField({
+          required: true,
+          initial: "on_enter",
+          choices: ["on_enter", "turn_start", "turn_end"]
+        }),
+        recipientIconMode: new foundryRef.data.fields.StringField({
+          required: true,
+          initial: "none",
+          choices: ["none", "effect", "custom"]
+        }),
+        recipientIcon: new foundryRef.data.fields.StringField({ initial: "" }),
+        removeOnExit: new foundryRef.data.fields.BooleanField({ initial: false })
       };
     }
 
@@ -159,19 +313,88 @@ export function createGumEffectRegionBehaviorType({
       const token = event?.data?.token;
       if (!this.effectUuid || !token?.actor) return;
 
+      const exitEvent = constRef?.REGION_EVENTS?.TOKEN_EXIT;
+      if (this.sourceTokenUuid && event?.name === exitEvent && this.removeOnExit) {
+        return removeRegionAppliedEffects(token.actor, {
+          regionUuid: this.region?.uuid,
+          effectUuid: this.effectUuid
+        });
+      }
+
+      let sourceToken = null;
+      if (this.sourceTokenUuid) {
+        sourceToken = await globalThis.fromUuid?.(this.sourceTokenUuid).catch(() => null);
+        if (!isDynamicRegionTarget({
+          token,
+          sourceToken,
+          targetMode: this.targetMode,
+          excludeSelf: this.excludeSelf
+        })) return;
+      }
+
       const gameRef = globalThis.game;
+      const isDynamicRegion = Boolean(this.sourceTokenUuid);
+      const dynamicRegionFlag = globalThis.foundry?.utils?.getProperty?.(this.region, "flags.gum.dynamicEffectRegion") || {};
+      const enterEvent = constRef?.REGION_EVENTS?.TOKEN_ENTER;
+      const turnStartEvent = constRef?.REGION_EVENTS?.TOKEN_TURN_START;
+      const turnEndEvent = constRef?.REGION_EVENTS?.TOKEN_TURN_END;
+      const appliesPersistent = !isDynamicRegion || event?.name === enterEvent;
+      const appliesInstant = !isDynamicRegion
+        || (this.instantTrigger === "on_enter" && event?.name === enterEvent)
+        || (this.instantTrigger === "turn_start" && event?.name === turnStartEvent)
+        || (this.instantTrigger === "turn_end" && event?.name === turnEndEvent);
+      if (!appliesPersistent && !appliesInstant) return;
+
+      const sourceActor = this.sourceActorUuid
+        ? await globalThis.fromUuid?.(this.sourceActorUuid).catch(() => null)
+        : null;
+      const sourceItem = this.sourceItemUuid
+        ? await globalThis.fromUuid?.(this.sourceItemUuid).catch(() => null)
+        : null;
       try {
+        const effectItem = await gameRef?.gum?.api?.items?.resolve?.(this.effectUuid);
+        const isEmitter = Boolean(sourceToken
+          && (token.uuid === sourceToken.uuid || token.actor === sourceToken.actor));
+        if (isDynamicRegion && appliesPersistent && !isEmitter) {
+          await ensureDynamicRegionIndicator(token.actor, {
+            effectItem,
+            regionUuid: this.region?.uuid,
+            sourceTokenUuid: this.sourceTokenUuid,
+            controllerActiveEffectUuid: dynamicRegionFlag.controllerActiveEffectUuid ?? null,
+            sourceActorUuid: this.sourceActorUuid,
+            sourceItemUuid: this.sourceItemUuid,
+            mode: this.recipientIconMode,
+            customIcon: this.recipientIcon
+          });
+        }
         return await applySceneEffect({
           api: gameRef?.gum?.api,
-          effectReference: this.effectUuid,
+          effectReference: effectItem || this.effectUuid,
           entities: [token],
           context: {
-            mode: "region",
-            source: "region",
+            mode: isDynamicRegion ? "dynamic-region" : "region",
+            source: isDynamicRegion ? "dynamic-region" : "region",
+            actionIds: this.actionIds?.size ? [...this.actionIds] : null,
+            actor: sourceActor,
+            origin: documentName(sourceItem) === "Item" ? sourceItem : null,
+            skipDynamicRegionController: Boolean(this.sourceTokenUuid),
+            skipPersistentEffects: isDynamicRegion && !appliesPersistent,
+            skipInstantEffects: isDynamicRegion && !appliesInstant,
+            durationOverride: isDynamicRegion ? { isPermanent: true, inCombat: false } : null,
             eventData: buildRegionEffectEventData(event, this),
             gumFlags: {
+              dynamicRegionController: false,
+              ...(isDynamicRegion ? {
+                dynamicRegionGrant: {
+                  sourceUuid: this.region?.uuid ?? null,
+                  sourceUuids: [this.region?.uuid].filter(Boolean),
+                  controllerActiveEffectUuid: dynamicRegionFlag.controllerActiveEffectUuid ?? null,
+                  sourceTokenUuid: this.sourceTokenUuid,
+                  effectItemUuid: this.effectUuid
+                }
+              } : {}),
               sceneTrigger: {
-                source: "region",
+                source: isDynamicRegion ? "dynamic-region" : "region",
                 sourceUuid: this.region?.uuid ?? null,
                 event: event?.name ?? null
               }

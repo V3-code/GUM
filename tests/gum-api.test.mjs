@@ -27,7 +27,7 @@ const itemDocument = (id = "item-1", parent = null) => ({
 function fixture({ isGM = true } = {}) {
   const actor = actorDocument();
   const item = itemDocument("embedded", actor);
-  const effect = itemDocument("effect");
+  const effect = { ...itemDocument("effect"), type: "effect", effects: [] };
   actor.items.set(item.id, item);
   const uuidDocuments = new Map([[actor.uuid, actor], [item.uuid, item], [effect.uuid, effect]]);
   const calls = [];
@@ -50,6 +50,10 @@ function fixture({ isGM = true } = {}) {
     applyUseEventEffects: async (...args) => calls.push(["use", ...args]),
     setStateEffectGroupActive: async (...args) => calls.push(["group", ...args]),
     syncItemStateEffects: async (...args) => calls.push(["sync", ...args]),
+    ensureEffectItemBridge: async item => {
+      calls.push(["bridge", item]);
+      return item.effects?.[0] ?? null;
+    },
     resolveCombatDamageFormula: () => "2d+1",
     resolveCombatDamageProfile: () => ({ main: { formula: "2d+1" } }),
     resolveTargetCombatDefenseRecalculationModifiers: () => [{ value: -2 }],
@@ -82,6 +86,9 @@ test("publishes a versioned immutable API with isolated namespaces", () => {
   assert.equal(api.version, GUM_API_VERSION);
   assert.equal(api.systemVersion, "9.9.9");
   assert.equal(api.hooks.READY, "gum.apiReady");
+  assert.equal(api.hooks.ROLL_COMPLETED, "gum.rollCompleted");
+  assert.equal(api.hooks.DAMAGE_APPLIED, "gum.damageApplied");
+  assert.equal(api.hooks.ITEM_USE_COMPLETED, "gum.itemUseCompleted");
   assert.ok(Object.isFrozen(api));
   assert.ok(Object.isFrozen(api.rolls));
   assert.ok(Object.isFrozen(api.effects));
@@ -129,6 +136,22 @@ test("routes rolls and effects through the supported system flows", async () => 
   assert.equal(setup.calls[1][0], "apply");
   assert.equal(setup.calls[2][0], "use");
   await assert.rejects(() => api.effects.apply(setup.effect, []), error => error.code === "INVALID_ARGUMENT");
+});
+
+test("exposes the native ActiveEffect bridge only for GUM Effect Items", async () => {
+  const setup = fixture();
+  const bridge = { id: "bridge", documentName: "ActiveEffect", parent: setup.effect };
+  setup.effect.effects.push(bridge);
+  const api = createGumApi(setup);
+
+  assert.equal(await api.effects.getBridge(setup.effect), bridge);
+  assert.equal(setup.calls.at(-1)[0], "bridge");
+
+  setup.item.type = "skill";
+  await assert.rejects(
+    () => api.effects.getBridge(setup.item, { actor: setup.actor }),
+    error => error.code === "INVALID_DOCUMENT"
+  );
 });
 
 test("exposes damage helpers and defensive copies of content metadata", async () => {
@@ -190,6 +213,11 @@ test("documents, types, and the Foundry entry point expose the same public API",
     assert.match(portuguese, new RegExp(`api\\.${namespace}`));
     assert.match(english, new RegExp(`api\\.${namespace}`));
     assert.match(declarations, new RegExp(`readonly ${namespace}:`));
+  }
+  for (const hook of ["gum.rollCompleted", "gum.damageRolled", "gum.damageApplied", "gum.effectApplied", "gum.effectRemoved", "gum.effectStateChanged", "gum.conditionStateChanged", "gum.stateEffectGroupChanged", "gum.itemUseCompleted"]) {
+    assert.match(portuguese, new RegExp(hook.replace(".", "\\.")));
+    assert.match(english, new RegExp(hook.replace(".", "\\.")));
+    assert.match(declarations, new RegExp(hook.replace(".", "\\.")));
   }
   assert.match(main, /installGumApi\(\{/);
   assert.doesNotMatch(main, /game\.gum\s*=\s*\{\}/);

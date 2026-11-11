@@ -655,6 +655,9 @@
 .gum-ammo-confirm-metrics > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 10px 12px; border: 1px solid rgba(197,160,91,.4); border-radius: 7px; background: rgba(197,160,91,.1); }
 .gum-ammo-confirm-metrics span { color: var(--gum-text-medio, #b5b1ad); font-size: 11px; }
 .gum-ammo-confirm-metrics strong { color: var(--gum-accent-gold, #c5a05b); font-size: 17px; }
+.gum-ammo-preparation-dialog .gum-ammo-confirm-metrics > div { min-height: 48px; background: linear-gradient(135deg, rgba(197,160,91,.15), rgba(197,160,91,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+.gum-ammo-preparation-dialog .gum-ammo-confirm-metrics span { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.gum-ammo-preparation-dialog .gum-ammo-confirm-metrics strong { font-size: 20px; }
 .gum-ammo-confirm-card { display: grid; gap: 7px; min-width: 0; padding: 11px 12px; border: 1px solid rgba(255,255,255,.11); border-radius: 7px; background: rgba(255,255,255,.045); }
 .gum-ammo-confirm-card label { color: var(--gum-text-claro, #ebe8e2); font-size: 11px; font-weight: 650; }
 .gum-ammo-confirm-card select,
@@ -675,6 +678,19 @@
 .gum-ammo-confirm-card select:focus,
 .gum-ammo-confirm-card input:focus { border-color: var(--gum-accent-gold, #c5a05b); outline: none; }
 .gum-ammo-confirm-card small { color: var(--gum-text-medio, #b5b1ad); font-size: 10px; line-height: 1.3; }
+.gum-ammo-section-label { color: var(--gum-text-claro, #ebe8e2); font-size: 11px; font-weight: 700; }
+.gum-ammo-choice-list { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
+.gum-ammo-choice-card { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) 16px; align-items: center; gap: 9px; min-width: 0; padding: 8px 9px; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; background: rgba(0,0,0,.14); cursor: pointer; transition: border-color 120ms ease, background 120ms ease; }
+.gum-ammo-choice-card:hover { border-color: rgba(197,160,91,.42); background: rgba(197,160,91,.07); }
+.gum-ammo-choice-card.is-selected { border-color: var(--gum-accent-gold, #c5a05b); background: rgba(197,160,91,.12); box-shadow: inset 3px 0 0 var(--gum-accent-gold, #c5a05b); }
+.gum-ammo-choice-card.is-disabled { cursor: default; opacity: .42; }
+.gum-ammo-choice-card > input[type="radio"] { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; opacity: 0; pointer-events: none; }
+.gum-ammo-choice-icon, .gum-ammo-choice-image { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(255,255,255,.1); border-radius: 5px; background: #20232a; color: var(--gum-accent-gold, #c5a05b); object-fit: cover; }
+.gum-ammo-choice-copy { display: grid; gap: 2px; min-width: 0; }
+.gum-ammo-choice-copy strong { overflow: hidden; color: var(--gum-text-claro, #ebe8e2); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.gum-ammo-choice-copy small { overflow: hidden; color: var(--gum-text-medio, #b5b1ad); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.gum-ammo-choice-check { color: var(--gum-accent-gold, #c5a05b); opacity: 0; }
+.gum-ammo-choice-card.is-selected .gum-ammo-choice-check { opacity: 1; }
 .gum-ammo-confirm-card .gum-ammo-ignore-cadence { display: flex; width: 100%; align-items: center; gap: 8px; margin-top: 3px; padding: 7px 8px; border-radius: 5px; background: rgba(255,255,255,.035); cursor: pointer; text-align: left; }
 .gum-ammo-confirm-card .gum-ammo-ignore-cadence input { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; accent-color: var(--gum-accent-gold, #c5a05b); }
 .gum-ammo-confirm-card .gum-ammo-ignore-cadence span { display: flex; min-width: 0; flex-direction: column; gap: 1px; }

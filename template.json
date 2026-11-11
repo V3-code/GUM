@@ -661,6 +661,12 @@
     "attack_ranged": {
       "mode": "Novo Ataque L.D.",
       "ammunition_ids": [],
+      "ammunition_loadout": {
+        "ammunitionId": "",
+        "shots": 1,
+        "ignoreCadence": false,
+        "locked": false
+      },
       "unbalanced": false,
       "fencing": false,
       "skill_name": "",
@@ -1111,6 +1117,19 @@
       ],
       "schemaVersion": 2,
       "conditionStackingMode": "stack",
+      "dynamicRegion": {
+        "enabled": false,
+        "shape": "circle",
+        "range": 1,
+        "targetMode": "all",
+        "excludeSelf": false,
+        "instantTrigger": "on_enter",
+        "recipientIconMode": "none",
+        "recipientIcon": "",
+        "gridBased": false,
+        "showColor": true,
+        "color": "#7b61ff"
+      },
       "actions": [],
       "type": "attribute",
       "path": "system.attributes.st.passive",

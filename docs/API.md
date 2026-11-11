@@ -59,6 +59,7 @@ await game.gum.api.effects.apply(effectUuid, [token], {
 await game.gum.api.effects.applyUseEvent(item, actor, "activate");
 await game.gum.api.effects.setGroupActive(item, "group-id", true);
 await game.gum.api.effects.syncItem(item);
+const activeEffectBridge = await game.gum.api.effects.getBridge(effectItem);
 const actions = game.gum.api.effects.actions(effectItem);
 ```
 
@@ -111,5 +112,41 @@ Hook names are also available at `game.gum.api.hooks`:
 
 - `gum.apiReady`: the installed API is ready to use.
 - `gumWorldStatusConfigurationChanged`: world status configuration changed; receives `{ configuration, rows }`.
+- `gum.rollCompleted`: a GUM roll completed with its final result.
+- `gum.damageRolled`: a damage package was rolled and is ready to be applied.
+- `gum.damageApplied`: damage was effectively applied to an actor or resource.
+- `gum.effectApplied`: an Effect Item finished processing its actions on its targets.
+- `gum.effectRemoved`: a GUM-managed Active Effect was removed.
+- `gum.effectStateChanged`: an Active Effect was enabled or disabled.
+- `gum.conditionStateChanged`: a continuous Condition transitioned between active and inactive.
+- `gum.stateEffectGroupChanged`: a manual State Effects group was enabled or disabled and synchronized.
+- `gum.itemUseCompleted`: an item use completed; emitted after item-originated rolls (`activate`) and resource consumption (`consume`), even without configured Use Event effects.
+
+Lifecycle hooks are informational and cannot cancel the operation. They all receive one version `1` context:
+
+```js
+Hooks.on(game.gum.api.hooks.ROLL_COMPLETED, context => {
+  if (context.action.type !== "attack") return;
+  console.log(context.actor, context.sourceToken, context.targets, context.result);
+});
+```
+
+The common envelope contains `{ version, eventId, userId, timestamp, actor, sourceToken, item, action, targets, result, metadata }`. The `action` property contains `{ type, id, attackType, label, data }`. Foundry documents are passed by reference without being cloned or sent over the network by the hook. `eventId` identifies one occurrence, while `userId` identifies its originating user.
+
+Specific results:
+
+- `rollCompleted`: `result` is the structured roll result, including `isSuccess`, `margin`, `outcome`, and the other calculated values.
+- `damageRolled`: `result` contains `{ damage, rolls, message }`.
+- `damageApplied`: `result` contains `{ event, targetActor, injury }`; `event` is the serializable damage-application pulse.
+- `effectApplied`: `result` contains the processed action IDs and count plus `{ persistent, activeEffects, activeEffectUuids }`. `metadata` identifies `source`, `sourceUuid`, `mode`, `originUuid`, `applicationId`, and `eventData`, allowing integrations to distinguish sheet, Region, GM Screen, and other sources.
+- `effectRemoved`: `result` contains `{ active: false, transition: "removed", activeEffect, targetActor }`.
+- `effectStateChanged`: `result` contains `{ active, transition, activeEffect, targetActor }`; `transition` is `enabled` or `disabled`, and `metadata.previousActive` contains the prior state.
+
+When one Effect Item creates multiple persistent ActiveEffects, only one receives `flags.gum.lifecycleCarrier: true`. External integration flags configured on the Effect Item's native ActiveEffect bridge are copied to that carrier. This provides one visual lifecycle for modules such as Automated Animations: creation/enabling starts the persistent effect, while disabling/removal ends it. The remaining mechanical ActiveEffects receive `lifecycleCarrier: false`, preventing duplicate animations.
+- `conditionStateChanged`: `result` contains `{ active }`; `metadata.previousActive` and `metadata.reason` describe the transition.
+- `stateEffectGroupChanged`: `result` contains `{ active, synchronized, report }`. This hook covers explicit manual-group changes through the API or sheet.
+- `itemUseCompleted`: `result` contains `{ trigger, effectCount, appliedEffectUuids, pendingResistanceCount }`; `metadata` includes the roll result when available.
+
+External listeners should treat these objects as read-only. Exceptions thrown by listeners are isolated so they cannot interrupt GUM rules.
 
 TypeScript declarations are provided in [`types/gum-api.d.ts`](../types/gum-api.d.ts). A Portuguese guide is available at [`API.pt-BR.md`](API.pt-BR.md).

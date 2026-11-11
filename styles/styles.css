@@ -8129,6 +8129,111 @@ background-color: var(--gum-accent-gold);
     grid-template-columns: 48px minmax(76px, auto);
 }
 
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 13px;
+    margin-top: 1px;
+    color: rgba(247, 233, 215, 0.48);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline.is-invalid {
+    color: rgba(235, 119, 119, 0.88);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button {
+    min-width: 0;
+    height: 13px;
+    min-height: 13px;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    line-height: 1;
+    box-shadow: none;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: none;
+    padding: 0 2px 0 0;
+    text-align: left;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition > img {
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    border: 0;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline-name {
+    flex: 0 1 auto;
+    max-width: 180px;
+    overflow: hidden;
+    color: rgba(238, 231, 220, 0.9);
+    font-size: 8.5px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline span {
+    color: rgba(238, 231, 220, 0.68);
+    font-size: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline span::before {
+    content: "·";
+    margin-right: 5px;
+    color: rgba(247, 233, 215, 0.25);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .attack-ammunition-damage {
+    color: rgba(238, 231, 220, 0.82);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .attack-ammunition-metric i {
+    width: 9px;
+    color: rgba(111, 190, 231, 0.72);
+    font-size: 7px;
+    text-align: center;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .toggle-attack-ammunition-lock {
+    flex: 0 0 19px;
+    width: 19px;
+    margin-left: 3px;
+    padding: 0 0 0 4px;
+    border-left: 1px solid rgba(247, 233, 215, 0.18);
+    color: rgba(247, 233, 215, 0.42);
+    font-size: 7px;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline.is-locked .toggle-attack-ammunition-lock {
+    color: var(--attack-card-accent);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button:hover,
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button:focus-visible {
+    background: transparent;
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition:hover .attack-ammunition-inline-name,
+.gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition:focus-visible .attack-ammunition-inline-name {
+    color: #fff2d8;
+}
+
 .gum.sheet.actor .attack-card-two-line .attack-pill-stat {
     min-width: 48px;
     display: flex;

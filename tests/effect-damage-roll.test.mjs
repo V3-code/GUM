@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const previousGlobals = new Map();
-for (const key of ["FormApplication", "Roll", "ChatMessage", "game", "foundry"]) {
+for (const key of ["FormApplication", "Roll", "ChatMessage", "Hooks", "game", "foundry"]) {
   previousGlobals.set(key, globalThis[key]);
 }
 
@@ -44,6 +44,7 @@ test("normalizes the main, follow-up, and fragmentation damage fields", () => {
 
 test("rolls every configured damage component and binds the chat card to its target", async () => {
   const createdMessages = [];
+  const emittedHooks = [];
   const totals = new Map([["2d6+1", 8], ["1d6", 4], ["2d6", 7]]);
   globalThis.Roll = class Roll {
     constructor(formula) {
@@ -54,6 +55,7 @@ test("rolls every configured damage component and binds the chat card to its tar
     async evaluate() { return this; }
   };
   globalThis.ChatMessage = { create: async data => { createdMessages.push(data); return data; } };
+  globalThis.Hooks = { callAll: (...args) => emittedHooks.push(args) };
   globalThis.foundry = { utils: { escapeHTML: value => String(value).replaceAll("&", "&amp;").replaceAll("'", "&#39;") } };
   globalThis.game = {
     user: { id: "gm" },
@@ -102,4 +104,8 @@ test("rolls every configured damage component and binds the chat card to its tar
   assert.match(createdMessages[0].content, /apply-damage-button/);
   assert.match(createdMessages[0].content, /Scene\.scene\.Token\.target/);
   assert.deepEqual(createdMessages[0].whisper, ["gm"]);
+  assert.equal(emittedHooks.length, 1);
+  assert.equal(emittedHooks[0][0], "gum.damageRolled");
+  assert.equal(emittedHooks[0][1].item.uuid, "Item.effect");
+  assert.equal(emittedHooks[0][1].targets[0], target);
 });

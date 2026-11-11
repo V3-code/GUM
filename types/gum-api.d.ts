@@ -6,12 +6,58 @@ export class GumApiError extends Error {
   readonly details: GumApiErrorDetails;
 }
 
+export interface GumLifecycleAction {
+  readonly type: string | null;
+  readonly id: string | null;
+  readonly attackType: string | null;
+  readonly label: string | null;
+  readonly data: any;
+}
+
+export interface GumLifecycleContext<TResult = any> {
+  readonly version: 1;
+  readonly eventId: string;
+  readonly userId: string | null;
+  readonly timestamp: number;
+  readonly actor: any | null;
+  readonly sourceToken: any | null;
+  readonly item: any | null;
+  readonly action: GumLifecycleAction;
+  readonly targets: readonly any[];
+  readonly result: TResult;
+  readonly metadata: Readonly<Record<string, unknown>>;
+}
+
+export interface GumEffectAppliedResult {
+  readonly actionIds: readonly string[];
+  readonly actionCount: number;
+  readonly persistent: boolean;
+  readonly activeEffects: readonly any[];
+  readonly activeEffectUuids: readonly string[];
+}
+
+export interface GumEffectStateResult {
+  readonly active: boolean;
+  readonly transition: "enabled" | "disabled" | "removed";
+  readonly activeEffect: any;
+  readonly targetActor: any;
+}
+
 export interface GumApi {
   readonly version: string;
   readonly systemVersion: string | null;
   readonly hooks: {
     readonly READY: "gum.apiReady";
     readonly STATUS_CONFIGURATION_CHANGED: "gumWorldStatusConfigurationChanged";
+    readonly ROLL_COMPLETED: "gum.rollCompleted";
+    readonly DAMAGE_ROLLED: "gum.damageRolled";
+    readonly DAMAGE_APPLIED: "gum.damageApplied";
+    readonly EFFECT_APPLIED: "gum.effectApplied";
+    readonly EFFECT_REMOVED: "gum.effectRemoved";
+    readonly EFFECT_STATE_CHANGED: "gum.effectStateChanged";
+    readonly CONDITION_STATE_CHANGED: "gum.conditionStateChanged";
+    readonly STATE_EFFECT_GROUP_CHANGED: "gum.stateEffectGroupChanged";
+    readonly ITEM_USE_COMPLETED: "gum.itemUseCompleted";
   };
   readonly errors: { readonly GumApiError: typeof GumApiError };
   readonly actors: {
@@ -32,6 +78,7 @@ export interface GumApi {
     applyUseEvent(item: GumDocumentReference, actor: GumDocumentReference, trigger: string, options?: Record<string, unknown>): Promise<any>;
     setGroupActive(item: GumDocumentReference, groupId: string, active: boolean, options?: { actor?: GumDocumentReference | null }): Promise<any>;
     syncItem(item: GumDocumentReference, options?: Record<string, unknown>): Promise<any>;
+    getBridge(effect: GumDocumentReference, options?: { actor?: GumDocumentReference | null }): Promise<any>;
   };
   readonly damage: {
     fromHotbar(options?: Record<string, unknown>): Promise<any> | any;

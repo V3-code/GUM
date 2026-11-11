@@ -4,6 +4,7 @@ import { GMRollTableBrowser } from "./gm-roll-table-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "../../scripts/main.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
+import { prepareAmmunitionRollData } from "./ammunition-preparation.mjs";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
@@ -1522,7 +1523,7 @@ activateListeners(html) {
 /**
      * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
      */
-     _performContextRoll(actor, label, targetValue, options = {}) {
+     async _performContextRoll(actor, label, targetValue, options = {}) {
         const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null, attackType = null, attributeKey = null, defenseBonusIncluded = false } = options;
         const defenseType = rollType === 'defense'
             ? resolveDefenseRollType(options.defenseType, label)
@@ -1543,13 +1544,12 @@ activateListeners(html) {
             }
         });
 
-              if (!quick) {
-            const promptRollData = {
+        const promptRollData = {
                 label,
                 value: targetValue,
                 originalValue: targetValue,
-                modifier: 0,
-                fixedModifier: selectedModsTotal,
+                modifier: quick ? selectedModsTotal : 0,
+                fixedModifier: quick ? 0 : selectedModsTotal,
                 fixedModifierLabel: this._t("GUM.GMScreen.Title"),
                 type: rollType,
                 itemId,
@@ -1558,29 +1558,18 @@ activateListeners(html) {
                 attackType,
                 attributeKey,
                 defenseType,
-                defenseBonusIncluded
-            };
+                defenseBonusIncluded,
+                img: actor.img || "icons/svg/d20.svg"
+        };
+        const preparedRollData = await prepareAmmunitionRollData(actor, promptRollData);
+        if (!preparedRollData) return;
 
-            new GurpsRollPrompt(actor, promptRollData).render(true);
+        if (!quick) {
+            new GurpsRollPrompt(actor, preparedRollData).render(true);
             return;
         }
 
- // 2. Rola direto (Ctrl+Click)
-        performGURPSRoll(actor, {
-            label: label + " (EM)",
-            value: targetValue,
-            originalValue: targetValue, // NH Base
-            modifier: selectedModsTotal,
-            type: rollType,
-            itemId,
-            itemUuid,
-            attackId,
-                        attackType,
-            attributeKey,
-            defenseType,
-            defenseBonusIncluded,
-            img: actor.img || "icons/svg/d20.svg"
-        }, {
+        performGURPSRoll(actor, { ...preparedRollData, label: label + " (EM)" }, {
             effectiveCap: lowestCap
         });
     }

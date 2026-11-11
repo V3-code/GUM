@@ -26,6 +26,8 @@ import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs"
 import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
 import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
 import { buildActorEffectTargets } from "../utils/condition-actor-context.mjs";
+import { ammunitionUseState, applyAmmunition, normalizeAmmunitionLoadout, validateAmmunitionLoadout } from "../utils/ammunition.mjs";
+import { configureAmmunitionLoadout, prepareAmmunitionRollData, toggleAmmunitionLoadoutLock } from "../apps/ammunition-preparation.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -1141,6 +1143,35 @@ async getData(options) {
             // 3. Processa os Ataques à Distância (Ranged)
             // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
             const rangedAttacks = Object.entries(item.system.ranged_attacks || {}).map(([id, attack]) => {
+                const ammunitionLoadout = normalizeAmmunitionLoadout(attack.ammunition_loadout);
+                const selectedAmmunition = ammunitionLoadout.ammunitionId
+                    ? this.actor.items.get(ammunitionLoadout.ammunitionId)
+                    : null;
+                const ammunitionUse = ammunitionUseState(selectedAmmunition);
+                const ammunitionValidation = validateAmmunitionLoadout(this.actor, attack, ammunitionLoadout);
+                const baseDamageProfile = {
+                    main: structuredClone(attack.effective_damage?.main || {
+                        formula: attack.effective_damage_formula || attack.damage_formula || "",
+                        type: attack.damage_type || "",
+                        nature: attack.damage_nature || "",
+                        armor_divisor: attack.armor_divisor || 1
+                    }),
+                    follow_up: structuredClone(attack.effective_damage?.follow_up || attack.follow_up_damage || {}),
+                    fragmentation: structuredClone(attack.effective_damage?.fragmentation || attack.fragmentation_damage || {})
+                };
+                const ammunitionDamageProfile = selectedAmmunition
+                    ? applyAmmunition(baseDamageProfile, selectedAmmunition)
+                    : baseDamageProfile;
+                const ammunitionChangesMainDamage = selectedAmmunition
+                    && JSON.stringify(ammunitionDamageProfile.main) !== JSON.stringify(baseDamageProfile.main);
+                const ammunitionDamageMain = ammunitionDamageProfile.main || {};
+                const ammunitionDamageText = ammunitionChangesMainDamage
+                    ? [
+                        `${resolveAttackDamageDisplay(ammunitionDamageMain.formula, this.actor.system.attributes)}${Number(ammunitionDamageMain.armor_divisor) > 1 ? `(${ammunitionDamageMain.armor_divisor})` : ""}`,
+                        ammunitionDamageMain.type,
+                        ammunitionDamageMain.nature ? `[${formatDamageNature(ammunitionDamageMain.nature)}]` : ""
+                    ].filter(Boolean).join(" ")
+                    : "";
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
                     ...prepareAttackDamageDisplay(attack),
@@ -1154,7 +1185,24 @@ async getData(options) {
                     itemId: item.id,
                     // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
                     final_nh: attack.final_nh ?? null,
-                    skill_name: attack.resolved_skill_name || attack.skill_name || "N/A"
+                    skill_name: attack.resolved_skill_name || attack.skill_name || "N/A",
+                    hasAmmunitionLinks: Array.isArray(attack.ammunition_ids) && attack.ammunition_ids.length > 0,
+                    ammunitionLoadoutDisplay: {
+                        name: selectedAmmunition?.name || game.i18n.localize("GUM.Equipment.Ammunition.StandardShort"),
+                        img: selectedAmmunition?.img || null,
+                        shots: ammunitionLoadout.shots,
+                        locked: ammunitionLoadout.locked,
+                        valid: ammunitionValidation.valid,
+                        available: ammunitionUse.available,
+                        usesCharges: ammunitionUse.mode === "charges",
+                        availableValue: selectedAmmunition ? ammunitionUse.available : "—",
+                        damageText: ammunitionDamageText,
+                        availableText: selectedAmmunition
+                            ? game.i18n.format(ammunitionUse.mode === "charges"
+                                ? "GUM.Equipment.Ammunition.ChargesAvailable"
+                                : "GUM.Equipment.Ammunition.UnitsAvailable", { quantity: ammunitionUse.available })
+                            : game.i18n.localize("GUM.Equipment.Ammunition.NoItemConsumption")
+                    }
                 };
             });
 
@@ -3824,13 +3872,32 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
    // ================================================================== //
     //   LISTENER: ROLAGENS GERAIS (ROLLABLE)
     // ================================================================== //
+    html.on("click", ".configure-attack-ammunition", async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const itemId = ev.currentTarget.dataset.itemId;
+        const attackId = ev.currentTarget.dataset.attackId;
+        const result = await configureAmmunitionLoadout(this.actor, { itemId, attackId });
+        if (result) this.render(false);
+    });
+
+    html.on("click", ".toggle-attack-ammunition-lock", async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const itemId = ev.currentTarget.dataset.itemId;
+        const attackId = ev.currentTarget.dataset.attackId;
+        const result = await toggleAmmunitionLoadoutLock(this.actor, { itemId, attackId });
+        if (result) this.render(false);
+    });
+
     // Correção: Unifiquei seus dois listeners de .rollable em um só mais robusto para evitar duplicidade
-    html.on('click', '.rollable', ev => {
+    html.on('click', '.rollable', async ev => {
         ev.preventDefault();
         ev.stopPropagation(); // Importante
 
         const element = ev.currentTarget;
-        const rollData = this._getRollDataFromElement(element);
+        const rollData = await prepareAmmunitionRollData(this.actor, this._getRollDataFromElement(element));
+        if (!rollData) return;
 
         if (ev.shiftKey) {
             // Shift = Rápido

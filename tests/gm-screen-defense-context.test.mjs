@@ -22,5 +22,6 @@ test("GM Screen forwards explicit defense and attack types to prompt and quick r
   assert.match(gmScreen, /attackType:\s*el\.data\('attackType'\)/);
   assert.match(gmScreen, /const defenseType = rollType === 'defense'[\s\S]*?resolveDefenseRollType/);
   assert.match(gmScreen, /promptRollData = \{[\s\S]*?defenseType,[\s\S]*?defenseBonusIncluded/);
-  assert.match(gmScreen, /performGURPSRoll\(actor, \{[\s\S]*?defenseType,[\s\S]*?defenseBonusIncluded/);
+  assert.match(gmScreen, /const preparedRollData = await prepareAmmunitionRollData\(actor, promptRollData\)/);
+  assert.match(gmScreen, /performGURPSRoll\(actor, \{ \.\.\.preparedRollData/);
 });

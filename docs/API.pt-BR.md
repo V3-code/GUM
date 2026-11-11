@@ -64,6 +64,7 @@ await game.gum.api.effects.apply(effectUuid, [token], {
 await game.gum.api.effects.applyUseEvent(item, actor, "activate");
 await game.gum.api.effects.setGroupActive(item, "grupo-id", true);
 await game.gum.api.effects.syncItem(item);
+const activeEffectBridge = await game.gum.api.effects.getBridge(effectItem);
 const actions = game.gum.api.effects.actions(effectItem);
 ```
 
@@ -116,5 +117,41 @@ Os nomes também estão disponíveis em `game.gum.api.hooks`:
 
 - `gum.apiReady`: a API foi instalada e já pode ser usada.
 - `gumWorldStatusConfigurationChanged`: a configuração de status do mundo mudou; recebe `{ configuration, rows }`.
+- `gum.rollCompleted`: uma rolagem do GUM foi concluída, incluindo seu resultado final.
+- `gum.damageRolled`: um pacote de dano foi rolado e está disponível para aplicação.
+- `gum.damageApplied`: dano foi efetivamente aplicado a um ator ou recurso.
+- `gum.effectApplied`: um Item Efeito terminou de processar suas ações nos alvos.
+- `gum.effectRemoved`: um Active Effect gerenciado pelo GUM foi removido.
+- `gum.effectStateChanged`: um Active Effect foi ativado ou desativado.
+- `gum.conditionStateChanged`: uma Condição contínua mudou entre ativa e inativa.
+- `gum.stateEffectGroupChanged`: um grupo manual de Efeitos de Estado foi ativado ou desativado e sincronizado.
+- `gum.itemUseCompleted`: o uso de um item foi concluído; é disparado após rolagens originadas em item (`activate`) e após consumo de recurso (`consume`), mesmo sem efeitos de Evento de Uso configurados.
+
+Os hooks de ciclo de vida são informativos e não cancelam a operação. Todos recebem um único contexto de versão `1`:
+
+```js
+Hooks.on(game.gum.api.hooks.ROLL_COMPLETED, context => {
+  if (context.action.type !== "attack") return;
+  console.log(context.actor, context.sourceToken, context.targets, context.result);
+});
+```
+
+O envelope comum contém `{ version, eventId, userId, timestamp, actor, sourceToken, item, action, targets, result, metadata }`. A propriedade `action` contém `{ type, id, attackType, label, data }`. Documentos do Foundry são passados por referência, sem clonagem ou transmissão de rede pelo hook. `eventId` identifica uma ocorrência, enquanto `userId` identifica o usuário que a originou.
+
+Resultados específicos:
+
+- `rollCompleted`: `result` é o resultado estruturado da rolagem, com `isSuccess`, `margin`, `outcome` e demais valores calculados.
+- `damageRolled`: `result` contém `{ damage, rolls, message }`.
+- `damageApplied`: `result` contém `{ event, targetActor, injury }`; `event` é o pulso serializável de aplicação de dano.
+- `effectApplied`: `result` contém os IDs e a quantidade de ações processadas, além de `{ persistent, activeEffects, activeEffectUuids }`. `metadata` identifica `source`, `sourceUuid`, `mode`, `originUuid`, `applicationId` e `eventData`, permitindo distinguir ficha, Região, Escudo do Mestre e outras integrações.
+- `effectRemoved`: `result` contém `{ active: false, transition: "removed", activeEffect, targetActor }`.
+- `effectStateChanged`: `result` contém `{ active, transition, activeEffect, targetActor }`; `transition` é `enabled` ou `disabled`, e `metadata.previousActive` informa o estado anterior.
+
+Quando um Item Efeito gera vários ActiveEffects persistentes, somente um recebe `flags.gum.lifecycleCarrier: true`. Flags de integrações externas configuradas na ponte ActiveEffect nativa do Item Efeito são copiadas para esse portador. Isso oferece um único ciclo visual para módulos como o Automated Animations: criação/ativação inicia o efeito persistente; desativação/remoção encerra-o. Os demais ActiveEffects mecânicos recebem `lifecycleCarrier: false`, evitando animações duplicadas.
+- `conditionStateChanged`: `result` contém `{ active }`; `metadata.previousActive` e `metadata.reason` descrevem a transição.
+- `stateEffectGroupChanged`: `result` contém `{ active, synchronized, report }`. Este hook cobre mudanças explícitas de grupos manuais via API ou ficha.
+- `itemUseCompleted`: `result` contém `{ trigger, effectCount, appliedEffectUuids, pendingResistanceCount }`; `metadata` inclui o resultado da rolagem quando houver um.
+
+Listeners externos devem tratar esses objetos como somente leitura. Exceções lançadas por listeners são isoladas para não interromper as regras do GUM.
 
 As declarações TypeScript estão em [`types/gum-api.d.ts`](../types/gum-api.d.ts).
