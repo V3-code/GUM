@@ -8208,9 +8208,11 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .toggle-attack-ammunition-lock {
-    flex: 0 0 15px;
-    width: 15px;
-    padding: 0;
+    flex: 0 0 19px;
+    width: 19px;
+    margin-left: 3px;
+    padding: 0 0 0 4px;
+    border-left: 1px solid rgba(247, 233, 215, 0.18);
     color: rgba(247, 233, 215, 0.42);
     font-size: 7px;
 }

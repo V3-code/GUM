@@ -8,6 +8,7 @@ const preparation = fs.readFileSync(new URL("../module/apps/ammunition-preparati
 const actorSheet = fs.readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
 const actorController = fs.readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 const rollPrompt = fs.readFileSync(new URL("../module/apps/roll-prompt.js", import.meta.url), "utf8");
+const styles = fs.readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
 test("an equipment item can link itself as ammunition for its own ranged attack", () => {
     const hybrid = { id: "thrown-weapon", system: { quantity: 3, ammunition: { enabled: true } } };
@@ -102,6 +103,7 @@ test("prepares ammunition before the roll prompt and exposes a compact locked lo
     assert.match(actorSheet, /fa-bolt/);
     assert.match(actorController, /applyAmmunition/);
     assert.match(actorController, /ammunitionDamageText/);
+    assert.match(styles, /toggle-attack-ammunition-lock[\s\S]*?border-left:/);
     assert.doesNotMatch(actorSheet, /attack-ammunition-(?:pill|bar)/);
     assert.match(actorController, /await prepareAmmunitionRollData\(this\.actor, this\._getRollDataFromElement\(element\)\)/);
     assert.match(rollPrompt, /showAmmunitionSelection = this\.ammunitionOptions\.length > 0 && this\.rollData\.ammunitionPrepared !== true/);
