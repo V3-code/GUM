@@ -32,6 +32,16 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 - **Modificadores de equipamento:** o cálculo centralizado de preço e peso, suas etapas e a evolução planejada estão documentados em [`docs/equipment-modifiers.md`](docs/equipment-modifiers.md).
 - **Ferramentas para o mestre:** Escudo do Mestre, solicitação de testes e navegadores de regras e conteúdos.
 
+## Integrações opcionais
+
+O módulo complementar [GUM Animations](https://github.com/V3-code/GUM-Animations) conecta os hooks públicos do sistema ao Automated Animations e permite configurar animações de uso e efeitos persistentes diretamente nos controles A-A dos Itens. Ele não altera as regras, rolagens ou efeitos mecânicos do GUM e não é necessário para utilizar o sistema.
+
+Para instalá-lo pelo Foundry VTT, use o seguinte manifesto na área de módulos:
+
+```text
+https://github.com/V3-code/GUM-Animations/releases/latest/download/module.json
+```
+
 ## Compatibilidade e desenvolvimento
 
 | Informação | Estado atual |
