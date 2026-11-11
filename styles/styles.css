@@ -8134,8 +8134,8 @@ background-color: var(--gum-accent-gold);
     align-items: center;
     width: fit-content;
     max-width: 100%;
-    min-height: 15px;
-    margin-top: 2px;
+    min-height: 13px;
+    margin-top: 1px;
     color: rgba(247, 233, 215, 0.48);
 }
 
@@ -8145,12 +8145,14 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .attack-card-two-line .attack-ammunition-inline button {
     min-width: 0;
-    min-height: 15px;
+    height: 13px;
+    min-height: 13px;
     margin: 0;
     border: 0;
     border-radius: 0;
     background: transparent;
     color: inherit;
+    line-height: 1;
     box-shadow: none;
 }
 
@@ -8164,9 +8166,9 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-ammunition-inline .configure-attack-ammunition > img {
-    flex: 0 0 12px;
-    width: 12px;
-    height: 12px;
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
     border: 0;
     border-radius: 2px;
     object-fit: cover;
