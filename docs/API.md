@@ -98,6 +98,7 @@ await game.gum.api.imports.gcs({ actor });
 await game.gum.api.imports.gumJson(); // opens the GUM character JSON importer
 const statuses = game.gum.api.status.list();
 
+await game.gum.api.ui.previewItem(item, { actor, sendToChat: true });
 game.gum.api.ui.openTestRequest();
 game.gum.api.ui.openGmScreen();
 game.gum.api.ui.openContentSources();       // GM only
@@ -105,6 +106,8 @@ game.gum.api.ui.openStatusConfiguration(); // GM only
 ```
 
 `status.list()` reflects the world's current configuration instead of a hardcoded list.
+
+`ui.previewItem()` opens GUM's standard quick-view dialog. The item and optional actor accept documents, IDs, or UUIDs. `sendToChat` defaults to `true`.
 
 ## Public hooks
 

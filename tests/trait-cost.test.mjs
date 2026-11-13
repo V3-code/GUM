@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateTraitCost, parseTraitAdjustment, importGCSTraitCost } from '../module/utils/trait-cost.mjs';
+import { calculateItemTraitCost, calculateTraitCost, parseTraitAdjustment, importGCSTraitCost } from '../module/utils/trait-cost.mjs';
 
 const calculate = (points, modifiers = [], extra = {}) => calculateTraitCost({ points, modifiers, ...extra });
 test('fixed points, percentages, multipliers and decimals remain distinct', () => {
@@ -91,4 +91,34 @@ test('cost explanation only shows rounding when it changes the value', () => {
 test('cost explanation groups repeated scopes without losing modifiers', () => {
   assert.equal(calculate(10, [{cost:'-50%'}, {cost:'-25%'}, {cost:'+25%'}]).description,
     'Composição: base 5\nAjustes: base (−50% · −25% · +25%)');
+});
+
+test('power acquisition is applied after the integral cost is calculated', () => {
+  const result = calculateItemTraitCost({ type: 'power', system: {
+    points: 10, can_level: true, level: 2, points_per_level: 5, modifiers: {},
+    cost_paid: 'alternative', alternative_cost_mode: 'automatic', alternative_cost_divisor: 5
+  }});
+  assert.equal(result.integralPoints, 20);
+  assert.equal(result.alternativePoints, 4);
+  assert.equal(result.finalPoints, 4);
+});
+
+test('manual alternative acquisition is a final cost and is not modified again', () => {
+  const result = calculateItemTraitCost({ type: 'power', system: {
+    points: 10, can_level: true, level: 2, points_per_level: 5,
+    modifiers: [{ cost: '+50%' }], cost_paid: 'alternative',
+    alternative_cost_mode: 'manual', alternative_points: 3
+  }});
+  assert.equal(result.integralPoints, 30);
+  assert.equal(result.finalPoints, 3);
+  assert.match(result.acquisitionDescription, /manualmente/);
+});
+
+test('full acquisition keeps the calculated integral result', () => {
+  const result = calculateItemTraitCost({ type: 'power', system: {
+    points: 10, modifiers: [{ cost: '+50%' }], cost_paid: 'full',
+    alternative_cost_mode: 'manual', alternative_points: 1
+  }});
+  assert.equal(result.integralPoints, 15);
+  assert.equal(result.finalPoints, 15);
 });

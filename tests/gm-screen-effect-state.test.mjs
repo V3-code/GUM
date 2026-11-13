@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getGMScreenEffectState } from "../module/utils/gm-screen-effect-state.mjs";
+import { getGMScreenEffectState, isGMScreenManagedEffect } from "../module/utils/gm-screen-effect-state.mjs";
 
 const gmEffect = ({ disabled = false, duration = {} } = {}) => ({
     disabled,
@@ -45,4 +45,10 @@ test("efeito apenas desabilitado não aparece como aplicado", () => {
 test("efeito criado fora do Escudo do Mestre não aparece no card", () => {
     const effect = { disabled: false, flags: { gum: { source: "Ficha" } } };
     assert.equal(getGMScreenEffectState(effect).visible, false);
+});
+
+test("manobra aplicada pelo GUM HUD aparece e pode ser gerenciada pelo Escudo", () => {
+    const effect = { disabled: false, flags: { gum: { source: "GUM HUD" } } };
+    assert.equal(getGMScreenEffectState(effect).visible, true);
+    assert.equal(isGMScreenManagedEffect(effect), true);
 });

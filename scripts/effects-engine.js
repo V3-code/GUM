@@ -33,6 +33,7 @@ import {
 import { normalizeRollModifierCompositionMode } from "../module/utils/roll-modifier-composition.mjs";
 import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
 import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
+import { EFFECT_EXCLUSION_SETTING, exclusionPeers, replacedDirectEffectIds } from "../module/utils/effect-exclusion.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -477,12 +478,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const stackingMode = normalizeEffectStackingMode(effectSystem);
     const stackingDomain = resolveEffectStackingDomain(context);
     const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
+    const exclusionGroupPeers = stackingDomain === "direct"
+        ? exclusionPeers(game.settings.get("gum", EFFECT_EXCLUSION_SETTING), effectItem.uuid)
+        : new Set();
     const applicationId = context.applicationId || foundry.utils.randomID();
     const dynamicRegionGrantSourceUuid = context.gumFlags?.dynamicRegionGrant?.sourceUuid || null;
     const matchesApplicationScope = effect => Boolean(foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant"))
         === Boolean(dynamicRegionGrantSourceUuid);
 
-    if (effectiveStackingMode !== "stack" && context._stackingQueueAcquired !== true) {
+    if ((effectiveStackingMode !== "stack" || exclusionGroupPeers.size) && context._stackingQueueAcquired !== true) {
         const previous = nonStackingApplicationQueue.catch(() => undefined);
         let releaseQueue;
         const gate = new Promise(resolve => { releaseQueue = resolve; });
@@ -1297,6 +1301,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 if (isMissingSyntheticActorContextError(error, targetActor)) continue;
                 throw error;
             }
+        }
+    }
+
+    // Só substitui aplicações diretas depois que a nova aplicação persistente
+    // realmente produziu um ActiveEffect no ator. Fontes gerenciadas conservam
+    // seu próprio ciclo de vida.
+    if (exclusionGroupPeers.size) {
+        for (const targetActor of new Set(persistentEffects.map(effect => effect.parent).filter(Boolean))) {
+            const previousIds = replacedDirectEffectIds(targetActor.effects, exclusionGroupPeers);
+            if (previousIds.length) await targetActor.deleteEmbeddedDocuments("ActiveEffect", previousIds);
         }
     }
 

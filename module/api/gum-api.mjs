@@ -9,7 +9,7 @@ export { GUM_API_HOOKS } from "./gum-hooks.mjs";
  * Runtime state stored elsewhere under game.gum is intentionally private.
  */
 
-export const GUM_API_VERSION = "1.3.0";
+export const GUM_API_VERSION = "1.4.0";
 
 export class GumApiError extends Error {
   constructor(code, message, details = {}) {
@@ -255,6 +255,16 @@ export function createGumApi({
   });
 
   const ui = freezeNamespace({
+    async previewItem(itemReference, options = {}) {
+      const actor = options.actor ? await resolveActor(options.actor) : null;
+      const item = await resolveItem(itemReference, { actor });
+      const owner = actor ?? asActor(item.parent);
+      return requireFunction(dependencies, "previewItem")(item, {
+        actor: owner,
+        sendToChat: options.sendToChat !== false,
+        speaker: options.speaker ?? null
+      });
+    },
     openTestRequest() {
       return requireFunction(dependencies, "openTestRequestLauncher")();
     },

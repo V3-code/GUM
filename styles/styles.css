@@ -12752,6 +12752,40 @@ background-color: var(--gum-accent-gold);
 .passive-condition-enabled { display: flex; align-items: center; justify-content: center; gap: 6px; color: #d9d3ca; font-size: .72rem; }
 .passive-condition-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .passive-condition-actions button { min-width: 0; padding: 0; }
+
+/* Configuração mundial de exclusão de Itens Efeito */
+#gum-effect-exclusion-config.app.window-app { border-color: rgba(197,160,91,.42); background: #171a1f; }
+#gum-effect-exclusion-config.app.window-app .window-header { border-bottom: 1px solid rgba(197,160,91,.28); background: #181b20; color: #e8d6a7; }
+#gum-effect-exclusion-config.app.window-app .window-title { color: #e8d6a7; font-family: var(--gum-font-condensed); font-weight: 800; }
+#gum-effect-exclusion-config.app.window-app .window-content { padding: 0; background: #1d2026 !important; color: #e7e1d8 !important; }
+#gum-effect-exclusion-config .effect-exclusion-form { display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; padding: 14px; color: #e7e1d8; }
+#gum-effect-exclusion-config .effect-exclusion-toolbar,
+#gum-effect-exclusion-config .effect-exclusion-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#gum-effect-exclusion-config .effect-exclusion-toolbar > div { display: flex; flex-direction: column; gap: 2px; }
+#gum-effect-exclusion-config .effect-exclusion-toolbar strong { color: #e8d6a7; font: 800 17px var(--gum-font-condensed); }
+#gum-effect-exclusion-config .effect-exclusion-toolbar small { color: #aaa6a0; font-size: 11px; }
+#gum-effect-exclusion-config .effect-exclusion-intro { margin: 0; color: #aaa6a0; font-size: 12px; line-height: 1.4; }
+#gum-effect-exclusion-config .effect-exclusion-list { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+#gum-effect-exclusion-config .effect-exclusion-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 9px; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-left: 4px solid #725f3d; border-radius: 6px; background: #242831; }
+#gum-effect-exclusion-config .effect-exclusion-row-header { display: flex; align-items: end; gap: 10px; }
+#gum-effect-exclusion-config .effect-exclusion-row label { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: #d8c392; font-size: 12px; font-weight: 700; }
+#gum-effect-exclusion-config .effect-exclusion-row-header label { flex: 1; }
+#gum-effect-exclusion-config .effect-exclusion-row label small { color: #aaa6a0; font-weight: 400; }
+#gum-effect-exclusion-config .effect-exclusion-row input,
+#gum-effect-exclusion-config .effect-exclusion-row textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 7px 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; background: #1b1e24; color: #f0ede7 !important; -webkit-text-fill-color: #f0ede7; box-shadow: none; }
+#gum-effect-exclusion-config .effect-exclusion-row textarea { min-height: 88px; resize: vertical; font-family: monospace; font-size: 12px; }
+#gum-effect-exclusion-config .effect-exclusion-row input::placeholder,
+#gum-effect-exclusion-config .effect-exclusion-row textarea::placeholder { color: #8f8b84 !important; -webkit-text-fill-color: #8f8b84; opacity: 1; }
+#gum-effect-exclusion-config .effect-exclusion-toolbar button,
+#gum-effect-exclusion-config .effect-exclusion-footer button,
+#gum-effect-exclusion-config .effect-exclusion-row button { width: auto; min-height: 32px; padding: 5px 12px; border: 1px solid rgba(197,160,91,.34); border-radius: 4px; background: #2c313a; color: #e7e1d8; box-shadow: none; white-space: nowrap; }
+#gum-effect-exclusion-config .effect-exclusion-toolbar button:hover,
+#gum-effect-exclusion-config .effect-exclusion-footer button:hover,
+#gum-effect-exclusion-config .effect-exclusion-row button:hover { border-color: rgba(197,160,91,.65); background: #363c46; }
+#gum-effect-exclusion-config .effect-exclusion-footer { justify-content: flex-end; border-top: 1px solid rgba(197,160,91,.2); padding-top: 10px; }
+#gum-effect-exclusion-config .effect-exclusion-footer button { background: #604e31; color: #fff0ca; }
+#gum-effect-exclusion-config .effect-exclusion-empty { padding: 24px; border: 1px dashed rgba(197,160,91,.28); border-radius: 6px; color: #aaa6a0; text-align: center; }
+
 .passive-condition-actions button.danger { color: #e78b8b; }
 .passive-condition-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 180px; color: #91877f; }
 .passive-condition-empty i { font-size: 2rem; }

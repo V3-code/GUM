@@ -60,6 +60,7 @@ function fixture({ isGM = true } = {}) {
     importFromGCS: async options => (calls.push(["gcs", options]), options.actor),
     importCharacterFromJson: async options => (calls.push(["gum-json", options]), options),
     openTestRequestLauncher: () => "test-window",
+    previewItem: async (...args) => (calls.push(["preview", ...args]), "preview-window"),
     openGmScreen: () => "gm-window",
     openContentSourceConfig: () => "content-window",
     openWorldStatusConfig: () => "status-window",
@@ -175,6 +176,15 @@ test("requires GM permission for world configuration mutations and windows", asy
   assert.throws(() => api.ui.openContentSources(), error => error.code === "PERMISSION_DENIED");
   assert.throws(() => api.ui.openStatusConfiguration(), error => error.code === "PERMISSION_DENIED");
   assert.equal(api.ui.openTestRequest(), "test-window");
+});
+
+test("opens the standard item preview through the public UI API", async () => {
+  const setup = fixture();
+  assert.equal(await createGumApi(setup).ui.previewItem(setup.item.id, { actor: setup.actor.id }), "preview-window");
+  assert.equal(setup.calls[0][0], "preview");
+  assert.equal(setup.calls[0][1], setup.item);
+  assert.equal(setup.calls[0][2].actor, setup.actor);
+  assert.equal(setup.calls[0][2].sendToChat, true);
 });
 
 test("resolves actor references before importing a GCS character", async () => {

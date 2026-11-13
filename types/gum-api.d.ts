@@ -101,6 +101,7 @@ export interface GumApi {
       gumJson(options?: Record<string, unknown>): Promise<any>;
     };
   readonly ui: {
+    previewItem(item: GumDocumentReference, options?: { actor?: GumDocumentReference | null; sendToChat?: boolean; speaker?: any }): Promise<any>;
     openTestRequest(): any;
     openGmScreen(): any;
     openContentSources(): any;

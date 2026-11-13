@@ -72,3 +72,19 @@ test("spell and power item sheets localize their dedicated interface in both lan
     "GUM.SpellPower.DamageScalingHint"
   ]) assert.match(itemTemplate, new RegExp(key.replaceAll(".", "\\.")));
 });
+
+test("spell and power can be classified as active defenses", () => {
+  assert.equal((itemTemplate.match(/name="system\.active_defense_enabled"/g) || []).length, 2);
+  assert.equal((itemTemplate.match(/name="system\.active_defense_rule"/g) || []).length, 2);
+  assert.equal((itemTemplate.match(/name="system\.active_defense_value"/g) || []).length, 2);
+  assert.equal(systemTemplate.Item.spell.active_defense_enabled, false);
+  assert.equal(systemTemplate.Item.power.active_defense_enabled, false);
+  assert.match(itemSheet, /updateActiveDefenseState/);
+  assert.match(itemSheet, /rule === 'fixed'/);
+});
+
+test("equipment exposes HUD favorite and consumable classifications", () => {
+  assert.match(itemTemplate, /name="system\.favorite_in_combat"/);
+  assert.match(itemTemplate, /name="system\.is_consumable"/);
+  assert.equal(systemTemplate.Item.templates.equipment_base.is_consumable, false);
+});

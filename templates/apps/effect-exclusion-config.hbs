@@ -1,0 +1,15 @@
+<form class="effect-exclusion-form">
+  <header class="effect-exclusion-toolbar"><div><strong>Grupos de exclusão</strong><small>Configuração do mundo</small></div><button type="button" data-add-group><i class="fas fa-plus"></i> Adicionar grupo</button></header>
+  <p class="effect-exclusion-intro">Ao aplicar um Item Efeito persistente diretamente, ele substitui os demais membros do mesmo grupo naquele ator. Cada Item Efeito pode pertencer a um único grupo.</p>
+  <div class="effect-exclusion-list" data-groups>
+    {{#each groups as |group|}}
+      <section class="effect-exclusion-row" data-exclusion-group data-group-id="{{group.id}}">
+        <div class="effect-exclusion-row-header"><label>Grupo<input type="text" data-group-name value="{{group.name}}" placeholder="Nome do grupo" /></label><button type="button" data-remove-group title="Remover grupo"><i class="fas fa-trash"></i> Remover</button></div>
+        <label>Itens Efeito <small>(um UUID por linha)</small><textarea data-group-uuids rows="4" placeholder="Compendium.world.effects.Item.…">{{group.uuidLines}}</textarea></label>
+      </section>
+    {{else}}
+      <p class="effect-exclusion-empty">Nenhum grupo configurado. Adicione um grupo para começar.</p>
+    {{/each}}
+  </div>
+  <footer class="effect-exclusion-footer"><button type="button" data-save-groups><i class="fas fa-save"></i> Salvar grupos</button></footer>
+</form>

@@ -10,7 +10,7 @@ import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { getGMScreenPlayerTargeters, isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
-import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
+import { getGMScreenEffectState, isGMScreenManagedEffect } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { clampFloatingPanelPosition } from "../utils/floating-panel-position.mjs";
@@ -620,9 +620,7 @@ activateListeners(html) {
             }
 
             const effect = actor.effects.get(effectId);
-            const source = foundry.utils.getProperty(effect, "flags.gum.source");
-
-            if (!effect || source !== "GM Screen") {
+            if (!effect || !isGMScreenManagedEffect(effect)) {
                 return ui.notifications.warn(this._t("GUM.GMScreen.OnlyGMScreenEffectsCanBeRemoved"));
             }
 
