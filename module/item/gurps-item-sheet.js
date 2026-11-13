@@ -729,6 +729,9 @@ _promptMultipleReferences(parsedList) {
         if (this.item.type === "gm_modifier") { 
             context.gmRollContextOptions = ROLL_CONTEXT_OPTIONS;
             context.gmModifierCategoryOptions = GM_MODIFIER_CATEGORY_OPTIONS; 
+            context.combatOptionManeuverUuids = Array.isArray(this.item.system?.combat_option?.maneuver_uuids)
+                ? this.item.system.combat_option.maneuver_uuids.join("\n")
+                : "";
             const rawEntries = Array.isArray(this.item.system.modifier_entries) ? this.item.system.modifier_entries : []; 
             context.gmModifierEntries = rawEntries.length 
                 ? rawEntries.map((entry, index) => ({ 
@@ -2695,6 +2698,14 @@ const rangedFields = `
     
 
         if (this.item?.type === "gm_modifier") {
+            const maneuverLinesPath = "system.combat_option.maneuver_uuid_lines";
+            if (formData[maneuverLinesPath] !== undefined) {
+                formData["system.combat_option.maneuver_uuids"] = [...new Set(String(formData[maneuverLinesPath] || "")
+                    .split(/\r?\n|,/)
+                    .map(value => value.trim())
+                    .filter(Boolean))];
+                delete formData[maneuverLinesPath];
+            }
             const entriesByIndex = new Map(); 
             for (const [key, value] of Object.entries(formData)) { 
                 const match = key.match(/^system\.modifier_entries\.(\d+)\.(label|value|nh_cap|contexts)$/); 

@@ -74,6 +74,7 @@ export class GurpsRollPrompt extends FormApplication {
         this._loadEffectModifiers();
         this._loadEquipmentOwnerModifiers();
         this._loadTargetCounterModifiers();
+        this._loadPreselectedModifierItems();
         this._composeSemanticModifiers();
         this._loadAutoDistanceModifier();
         this._loadAutoSizeModifier();
@@ -158,6 +159,45 @@ export class GurpsRollPrompt extends FormApplication {
                 isGM: true // Marca para estilizar diferente se quiser (ex: cadeado)
             });
 });
+    }
+
+    _loadPreselectedModifierItems() {
+        const itemIds = [...new Set(Array.isArray(this.rollData?.preselectedModifierItemIds)
+            ? this.rollData.preselectedModifierItemIds.map(value => String(value || "").trim()).filter(Boolean)
+            : [])];
+        for (const itemId of itemIds) {
+            const item = this.actor?.items?.get(itemId);
+            if (!item || item.type !== "gm_modifier" || item.system?.combat_option?.enabled !== true) continue;
+            const entries = Array.isArray(item.system?.modifier_entries) && item.system.modifier_entries.length
+                ? item.system.modifier_entries
+                : null;
+            if (entries) {
+                entries.forEach((entry, index) => {
+                    const contexts = this._normalizeContexts(entry?.contexts);
+                    if (contexts.length && !this._matchesEffectContext(contexts, this.context)) return;
+                    if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
+                    this.selectedModifiers.push({
+                        id: `${item.id}::${index}`,
+                        label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
+                        value: this._evaluateModifierValue(entry?.value),
+                        nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
+                        isCombatOption: true,
+                        sourceItemId: item.id
+                    });
+                });
+                continue;
+            }
+            if (!this._isValidForContext(item, this.context)) continue;
+            if (!matchesRollTags(item.system, this._getRollMetadata().rollTags)) continue;
+            this.selectedModifiers.push({
+                id: item.id,
+                label: item.name,
+                value: this._evaluateModifierValue(item.system?.modifier),
+                nh_cap: item.system?.nh_cap ?? "",
+                isCombatOption: true,
+                sourceItemId: item.id
+            });
+        }
     }
 
     _loadEffectModifiers() {

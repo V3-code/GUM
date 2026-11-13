@@ -51,6 +51,8 @@ await game.gum.api.rolls.fromHotbar({ actorUuid: actor.uuid, rollData });
 await game.gum.api.rolls.executeRequest(request, targetKey, { prompt: true });
 ```
 
+Ao abrir a janela padrão por `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` pode conter IDs de `gm_modifier` incorporados e classificados como opções de combate. O GUM resolve os itens no ator e aplica os filtros normais de contexto e tags antes de selecioná-los.
+
 `rolls.perform` executa o fluxo normal do GUM, incluindo modificadores, confirmação e consumos associados. `fromHotbar` preserva o comportamento dos atalhos. `executeRequest` atende solicitações estruturadas de teste e respeita as permissões do alvo.
 
 ## Efeitos e estados de itens

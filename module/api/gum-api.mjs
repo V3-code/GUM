@@ -9,7 +9,7 @@ export { GUM_API_HOOKS } from "./gum-hooks.mjs";
  * Runtime state stored elsewhere under game.gum is intentionally private.
  */
 
-export const GUM_API_VERSION = "1.4.0";
+export const GUM_API_VERSION = "1.5.0";
 
 export class GumApiError extends Error {
   constructor(code, message, details = {}) {
