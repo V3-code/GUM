@@ -1047,14 +1047,6 @@
       ],
       "modifier": "0",
       "modifier_entries": [],
-      "combat_option": {
-        "enabled": false,
-        "kind": "strike",
-        "maneuver_uuids": [],
-        "selection_group": "",
-        "selection_mode": "exclusive",
-        "reset": "after_roll"
-      },
       "nh_cap": "",
       "observation": "",
       "duration": "",

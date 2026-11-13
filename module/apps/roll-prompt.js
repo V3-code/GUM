@@ -167,7 +167,7 @@ export class GurpsRollPrompt extends FormApplication {
             : [])];
         for (const itemId of itemIds) {
             const item = this.actor?.items?.get(itemId);
-            if (!item || item.type !== "gm_modifier" || item.system?.combat_option?.enabled !== true) continue;
+            if (!item || item.type !== "gm_modifier") continue;
             const entries = Array.isArray(item.system?.modifier_entries) && item.system.modifier_entries.length
                 ? item.system.modifier_entries
                 : null;
@@ -181,7 +181,7 @@ export class GurpsRollPrompt extends FormApplication {
                         label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
                         value: this._evaluateModifierValue(entry?.value),
                         nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
-                        isCombatOption: true,
+                        isPreselectedItem: true,
                         sourceItemId: item.id
                     });
                 });
@@ -194,7 +194,7 @@ export class GurpsRollPrompt extends FormApplication {
                 label: item.name,
                 value: this._evaluateModifierValue(item.system?.modifier),
                 nh_cap: item.system?.nh_cap ?? "",
-                isCombatOption: true,
+                isPreselectedItem: true,
                 sourceItemId: item.id
             });
         }

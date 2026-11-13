@@ -812,46 +812,6 @@
                     </div>
                 </div>
             </div>
-            <section class="gm-combat-option-panel" data-combat-option-editor>
-                <label class="gm-combat-option-toggle">
-                    <span><i class="fas fa-crosshairs" aria-hidden="true"></i> {{localize "GUM.GMModifier.CombatOption.Enabled"}}</span>
-                    <input type="checkbox" name="system.combat_option.enabled" {{checked system.combat_option.enabled}}/>
-                </label>
-                <p>{{localize "GUM.GMModifier.CombatOption.Hint"}}</p>
-                <div class="gm-combat-option-grid">
-                    <div class="effect-premium-field">
-                        <label class="effect-premium-field-label"><i class="fas fa-link" aria-hidden="true"></i> {{localize "GUM.GMModifier.CombatOption.Maneuvers"}}</label>
-                        <div class="effect-premium-field-control">
-                            <textarea name="system.combat_option.maneuver_uuid_lines" rows="3" placeholder="{{localize 'GUM.GMModifier.CombatOption.ManeuversPlaceholder'}}">{{combatOptionManeuverUuids}}</textarea>
-                            <p class="effect-premium-field-hint">{{localize "GUM.GMModifier.CombatOption.ManeuversHint"}}</p>
-                        </div>
-                    </div>
-                    <div class="gm-combat-option-fields">
-                        <div class="effect-premium-field">
-                            <label class="effect-premium-field-label"><i class="fas fa-layer-group" aria-hidden="true"></i> {{localize "GUM.GMModifier.CombatOption.SelectionGroup"}}</label>
-                            <div class="effect-premium-field-control"><input type="text" name="system.combat_option.selection_group" value="{{system.combat_option.selection_group}}" placeholder="attack-style"/></div>
-                        </div>
-                        <div class="effect-premium-field">
-                            <label class="effect-premium-field-label"><i class="fas fa-list-check" aria-hidden="true"></i> {{localize "GUM.GMModifier.CombatOption.SelectionMode"}}</label>
-                            <div class="effect-premium-field-control">
-                                <select name="system.combat_option.selection_mode">
-                                    <option value="exclusive" {{#if (eq system.combat_option.selection_mode "exclusive")}}selected{{/if}}>{{localize "GUM.GMModifier.CombatOption.Exclusive"}}</option>
-                                    <option value="cumulative" {{#if (eq system.combat_option.selection_mode "cumulative")}}selected{{/if}}>{{localize "GUM.GMModifier.CombatOption.Cumulative"}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="effect-premium-field">
-                            <label class="effect-premium-field-label"><i class="fas fa-rotate" aria-hidden="true"></i> {{localize "GUM.GMModifier.CombatOption.Reset"}}</label>
-                            <div class="effect-premium-field-control">
-                                <select name="system.combat_option.reset">
-                                    <option value="after_roll" {{#if (eq system.combat_option.reset "after_roll")}}selected{{/if}}>{{localize "GUM.GMModifier.CombatOption.AfterRoll"}}</option>
-                                    <option value="sticky" {{#if (eq system.combat_option.reset "sticky")}}selected{{/if}}>{{localize "GUM.GMModifier.CombatOption.Sticky"}}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
          <div class="gm-modifier-config-grid">
                 <div class="effect-premium-field">
                     <label class="effect-premium-field-label">

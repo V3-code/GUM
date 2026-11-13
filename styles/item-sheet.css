@@ -7811,18 +7811,6 @@ color:#121114;
   container-type: inline-size;
 }
 
-.gum.sheet.item .gm-combat-option-panel { margin: 0 0 14px; padding: 12px; border: 1px solid rgba(197,160,91,.28); border-radius: 6px; background: rgba(15,17,21,.52); }
-.gum.sheet.item .gm-combat-option-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e8d6a7; font-weight: 800; }
-.gum.sheet.item .gm-combat-option-toggle span { display: flex; align-items: center; gap: 7px; }
-.gum.sheet.item .gm-combat-option-panel > p { margin: 4px 0 10px; color: #aaa6a0; font-size: 11px; }
-.gum.sheet.item .gm-combat-option-grid { display: grid; grid-template-columns: minmax(240px, 1.35fr) minmax(220px, 1fr); gap: 10px; }
-.gum.sheet.item .gm-combat-option-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.gum.sheet.item .gm-combat-option-fields .effect-premium-field:first-child { grid-column: 1 / -1; }
-.gum.sheet.item .gm-combat-option-panel textarea { box-sizing: border-box; width: 100%; min-height: 76px; resize: vertical; }
-@media (max-width: 720px) {
-  .gum.sheet.item .gm-combat-option-grid { grid-template-columns: 1fr; }
-}
-
 .gum.sheet.item .gm-modifier-config-workspace .effect-premium-toolbar {
   padding: 2px 2px 11px;
   border-bottom: 1px solid var(--fx-border);

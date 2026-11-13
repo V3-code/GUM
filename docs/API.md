@@ -47,7 +47,7 @@ await game.gum.api.rolls.fromHotbar({ actorUuid: actor.uuid, rollData });
 await game.gum.api.rolls.executeRequest(request, targetKey, { prompt: true });
 ```
 
-When opening the standard prompt through `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` may contain embedded `gm_modifier` IDs classified as combat options. GUM resolves them on the actor and applies the normal context and roll-tag filters before selecting them.
+When opening the standard prompt through `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` may contain embedded `gm_modifier` IDs. GUM resolves them on the actor and applies the normal context and roll-tag filters before selecting them. The caller owns any presentation, grouping, or lifecycle metadata.
 
 `rolls.perform` uses the normal GUM flow, including modifiers, confirmation, and configured consumption. `executeRequest` honors target permissions.
 
