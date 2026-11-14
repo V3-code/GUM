@@ -475,6 +475,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const tokenIconSystem = context.tokenIconPolicyOverride
+        ? { ...effectSystem, tokenIconPolicy: normalizeTokenIconPolicy(context.tokenIconPolicyOverride) }
+        : effectSystem;
     const stackingMode = normalizeEffectStackingMode(effectSystem);
     const stackingDomain = resolveEffectStackingDomain(context);
     const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
@@ -727,12 +730,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             activeEffectData.flags[scope] = foundry.utils.deepClone(value);
                         }
                     }
-                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration)
+                    const isIconCarrier = shouldShowTokenIcon(tokenIconSystem, gumDuration)
                         && isLifecycleCarrier
                         && !dynamicRegionGrantSourceUuid;
                     if (isIconCarrier) {
-                        activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
-                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                        activeEffectData.img = resolveTokenIconImage(effectItem, tokenIconSystem, gumDuration);
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                     }
 
                     if (action.type === "attribute") {
@@ -938,7 +941,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (action.type === "status" && action.statusId) {
                         const statusEffect = findConfiguredStatus(action.statusId, CONFIG.statusEffects);
                         activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
-                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                         activeEffectData.statuses.push(action.statusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
                     }
@@ -1266,10 +1269,10 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
                 activeEffectData.flags[scope] = foundry.utils.deepClone(value);
             }
-            if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+            if (shouldShowTokenIcon(tokenIconSystem, gumDuration)) {
                 const carrierStatusId = `${effectItem.name.slugify({ strict: true })}-carrier`;
-                activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
-                activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                activeEffectData.img = resolveTokenIconImage(effectItem, tokenIconSystem, gumDuration);
+                activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                 activeEffectData.statuses = [carrierStatusId];
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", carrierStatusId);
             }

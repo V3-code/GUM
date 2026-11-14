@@ -66,6 +66,7 @@ const actions = game.gum.api.effects.actions(effectItem);
 ```
 
 `effects.apply` preserves the effect's resistance barrier. `effects.applyDirect` deliberately bypasses it and is intended only for integrations that already resolved resistance.
+Integrations that need a visible token icon for a particular application may pass `tokenIconPolicyOverride: "always"` in the context; the icon is still created and managed by the standard Effect Item engine.
 
 ## Combat damage
 

@@ -71,6 +71,7 @@ const actions = game.gum.api.effects.actions(effectItem);
 ```
 
 `effects.apply` mantém a barreira de resistência configurada no efeito. `effects.applyDirect` ignora deliberadamente essa barreira e deve ser reservado a integrações que já tenham resolvido a resistência.
+Integrações que precisem exibir o ícone no token em uma aplicação específica podem informar `tokenIconPolicyOverride: "always"` no contexto; o ícone continua sendo criado e administrado pelo fluxo padrão do Item Efeito.
 
 ## Dano de combate
 
