@@ -20,11 +20,20 @@ test("GM modifiers remain independent from HUD execution-option metadata", () =>
 test("roll prompt resolves generic preselected modifier items through its normal context filters", () => {
   assert.match(rollPrompt, /_loadPreselectedModifierItems\(\)/);
   assert.match(rollPrompt, /preselectedModifierItemIds/);
+  assert.match(rollPrompt, /_loadPreselectedModifierData\(\)/);
+  assert.match(rollPrompt, /preselectedModifierData/);
   assert.match(rollPrompt, /item\.type !== "gm_modifier"/);
   assert.match(rollPrompt, /_matchesEffectContext/);
   assert.match(rollPrompt, /matchesRollTags/);
   assert.match(rollPrompt, /isPreselectedItem: true/);
   assert.doesNotMatch(rollPrompt, /combat_option/);
+});
+
+test("roll prompt accepts portable modifier snapshots from external callers", () => {
+  assert.match(rollPrompt, /system\.modifier_entries/);
+  assert.match(rollPrompt, /source\.name/);
+  assert.match(rollPrompt, /slice\(0, 100\)/);
+  assert.match(rollPrompt, /matchesRollTags\(system/);
 });
 
 test("GUM translations do not retain HUD-specific modifier fields", () => {

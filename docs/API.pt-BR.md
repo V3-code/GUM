@@ -51,7 +51,7 @@ await game.gum.api.rolls.fromHotbar({ actorUuid: actor.uuid, rollData });
 await game.gum.api.rolls.executeRequest(request, targetKey, { prompt: true });
 ```
 
-Ao abrir a janela padrão por `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` pode conter IDs de `gm_modifier` incorporados. O GUM resolve os itens no ator e aplica os filtros normais de contexto e tags antes de selecioná-los. Metadados de apresentação, agrupamento ou ciclo de vida pertencem ao chamador.
+Ao abrir a janela padrão por `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` pode conter IDs de `gm_modifier` incorporados. Integrações portáveis também podem fornecer cópias serializáveis dos modificadores em `rollData.preselectedModifierData`; cada entrada aceita `id`, `name` e os campos de sistema de `gm_modifier` diretamente ou dentro de `system`. O GUM aplica os filtros normais de contexto e tags nos dois casos. Metadados de apresentação, agrupamento ou ciclo de vida pertencem ao chamador.
 
 `rolls.perform` executa o fluxo normal do GUM, incluindo modificadores, confirmação e consumos associados. `fromHotbar` preserva o comportamento dos atalhos. `executeRequest` atende solicitações estruturadas de teste e respeita as permissões do alvo.
 
