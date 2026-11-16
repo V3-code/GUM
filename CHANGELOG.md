@@ -4,6 +4,27 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.3-beta] - 2026-11-16
+
+### Added
+
+- O sistema ganhou a base pública de integração exigida pelo módulo opcional GUM HUD, incluindo metadados portáveis para opções de execução, modificadores previamente selecionados e controle explícito da exibição de ícones de Efeitos nos tokens.
+- Magias e Poderes podem ser marcados como defesas ativas, enquanto Equipamentos passaram a oferecer os estados de favorito e consumível usados por integrações de interface.
+- Itens Efeito persistentes podem ser organizados em grupos mundiais mutuamente exclusivos, garantindo que a aplicação de um membro substitua os demais no mesmo ator.
+- A API pública passou a expor os contextos necessários para interfaces externas aplicarem efeitos, consumos, rolagens e opções de execução sem duplicar regras do sistema.
+
+### Changed
+
+- A configuração dos grupos de exclusão agora aceita Itens Efeito por UUID ou arrastar e soltar, apresenta cards resolvidos com nome e imagem, impede duplicidades e permite recolher cada grupo individualmente.
+- O custo de Poder foi consolidado em uma área conceitual única, separando a composição em pontos do modo de aquisição e reorganizando os controles alternativos em uma linha compacta.
+- O Escudo do Mestre reconhece e preserva efeitos aplicados pelas opções de execução do HUD no mesmo fluxo dos demais Itens Efeito.
+
+### Fixed
+
+- Metadados específicos do HUD deixaram de ser persistidos nos Itens Modificador do Mestre, mantendo a configuração opcional desacoplada dos documentos centrais do GUM.
+- Modificadores previamente escolhidos por integrações são aceitos pela janela de rolagem sem serem aplicados duas vezes.
+- Ícones solicitados por integrações acompanham corretamente o ciclo de aplicação e remoção do Item Efeito.
+
 ## [1.6.2-beta] - 2026-11-10
 
 ### Added
