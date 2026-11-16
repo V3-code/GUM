@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { exclusionPeers, normalizeEffectExclusionGroups, replacedDirectEffectIds } from "../module/utils/effect-exclusion.mjs";
+
+const config = readFileSync(new URL("../module/apps/effect-exclusion-config.js", import.meta.url), "utf8");
+const template = readFileSync(new URL("../templates/apps/effect-exclusion-config.hbs", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
 test("grupos são simétricos e recusam um efeito em dois grupos", () => {
   const groups = [{ id: "maneuvers", name: "Manobras", effectUuids: ["Item.A", "Item.B"] }];
@@ -16,4 +21,14 @@ test("a limpeza só seleciona aplicações diretas dos outros membros", () => {
     effect("condition", "Item.B", "condition"), effect("managed", "Item.B", "managed"),
     { id: "foreign", flags: {} }];
   assert.deepEqual(replacedDirectEffectIds(effects, peers), ["old"]);
+});
+
+test("a configuração aceita UUID e arrastar/soltar com itens visuais", () => {
+  assert.match(config, /TextEditor\.getDragEventData/);
+  assert.match(config, /data-effect-uuid/);
+  assert.match(config, /Este Item Efeito já pertence a outro grupo/);
+  assert.match(template, /data-effect-dropzone/);
+  assert.match(template, /effect-exclusion-item/);
+  assert.match(styles, /\.effect-exclusion-dropzone\.is-dragover/);
+  assert.match(styles, /\.effect-exclusion-items \{ display: grid/);
 });

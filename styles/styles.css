@@ -12758,33 +12758,58 @@ background-color: var(--gum-accent-gold);
 #gum-effect-exclusion-config.app.window-app .window-header { border-bottom: 1px solid rgba(197,160,91,.28); background: #181b20; color: #e8d6a7; }
 #gum-effect-exclusion-config.app.window-app .window-title { color: #e8d6a7; font-family: var(--gum-font-condensed); font-weight: 800; }
 #gum-effect-exclusion-config.app.window-app .window-content { padding: 0; background: #1d2026 !important; color: #e7e1d8 !important; }
-#gum-effect-exclusion-config .effect-exclusion-form { display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; padding: 14px; color: #e7e1d8; }
+#gum-effect-exclusion-config .effect-exclusion-form { display: flex; flex-direction: column; gap: 11px; height: 100%; min-height: 0; padding: 14px; color: #e7e1d8; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar,
 #gum-effect-exclusion-config .effect-exclusion-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar > div { display: flex; flex-direction: column; gap: 2px; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar strong { color: #e8d6a7; font: 800 17px var(--gum-font-condensed); }
 #gum-effect-exclusion-config .effect-exclusion-toolbar small { color: #aaa6a0; font-size: 11px; }
-#gum-effect-exclusion-config .effect-exclusion-intro { margin: 0; color: #aaa6a0; font-size: 12px; line-height: 1.4; }
-#gum-effect-exclusion-config .effect-exclusion-list { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
-#gum-effect-exclusion-config .effect-exclusion-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 9px; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-left: 4px solid #725f3d; border-radius: 6px; background: #242831; }
-#gum-effect-exclusion-config .effect-exclusion-row-header { display: flex; align-items: end; gap: 10px; }
-#gum-effect-exclusion-config .effect-exclusion-row label { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: #d8c392; font-size: 12px; font-weight: 700; }
+#gum-effect-exclusion-config .effect-exclusion-intro { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 10px; border: 1px solid rgba(197,160,91,.14); border-radius: 4px; background: rgba(197,160,91,.035); color: #aaa6a0; font-size: 11px; line-height: 1.4; }
+#gum-effect-exclusion-config .effect-exclusion-intro i { margin-top: 2px; color: #b9985e; }
+#gum-effect-exclusion-config .effect-exclusion-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 5px 0 0; }
+#gum-effect-exclusion-config .effect-exclusion-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 9px; padding: 11px; border: 1px solid rgba(255,255,255,.085); border-left: 3px solid #8c7043; border-radius: 4px; background: #22262e; }
+#gum-effect-exclusion-config .effect-exclusion-row-header { display: flex; align-items: end; gap: 8px; }
+#gum-effect-exclusion-config .effect-exclusion-row label,
+#gum-effect-exclusion-config .effect-exclusion-source label { display: flex; flex-direction: column; gap: 4px; min-width: 0; color: #d8c392; font-size: 11px; font-weight: 700; }
 #gum-effect-exclusion-config .effect-exclusion-row-header label { flex: 1; }
-#gum-effect-exclusion-config .effect-exclusion-row label small { color: #aaa6a0; font-weight: 400; }
-#gum-effect-exclusion-config .effect-exclusion-row input,
-#gum-effect-exclusion-config .effect-exclusion-row textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 7px 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; background: #1b1e24; color: #f0ede7 !important; -webkit-text-fill-color: #f0ede7; box-shadow: none; }
-#gum-effect-exclusion-config .effect-exclusion-row textarea { min-height: 88px; resize: vertical; font-family: monospace; font-size: 12px; }
-#gum-effect-exclusion-config .effect-exclusion-row input::placeholder,
-#gum-effect-exclusion-config .effect-exclusion-row textarea::placeholder { color: #8f8b84 !important; -webkit-text-fill-color: #8f8b84; opacity: 1; }
+#gum-effect-exclusion-config .effect-exclusion-row label small,
+#gum-effect-exclusion-config .effect-exclusion-source label small { color: #938f88; font-size: 10px; font-weight: 400; }
+#gum-effect-exclusion-config .effect-exclusion-count { flex: 0 0 auto; margin-bottom: 7px; padding: 2px 7px; border-radius: 9px; background: #171a1f; color: #aaa398; font-size: 9px; }
+#gum-effect-exclusion-config .effect-exclusion-row input { box-sizing: border-box; width: 100%; min-width: 0; height: 31px; padding: 6px 9px; border: 1px solid rgba(255,255,255,.14); border-radius: 3px; background: #191c22; color: #f0ede7 !important; -webkit-text-fill-color: #f0ede7; box-shadow: none; }
+#gum-effect-exclusion-config .effect-exclusion-row input:focus { border-color: rgba(197,160,91,.58); box-shadow: 0 0 0 1px rgba(197,160,91,.14); }
+#gum-effect-exclusion-config .effect-exclusion-row input::placeholder { color: #77746f !important; -webkit-text-fill-color: #77746f; opacity: 1; }
+#gum-effect-exclusion-config .effect-exclusion-source { display: grid; grid-template-columns: minmax(160px, .72fr) minmax(280px, 1.28fr); align-items: end; gap: 12px; }
+#gum-effect-exclusion-config .effect-exclusion-source > div { display: flex; min-width: 0; gap: 5px; }
+#gum-effect-exclusion-config .effect-exclusion-source > div input { flex: 1; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone { display: flex; align-items: center; justify-content: center; min-height: 48px; gap: 9px; padding: 7px 10px; border: 1px dashed rgba(197,160,91,.28); border-radius: 4px; background: rgba(12,14,18,.28); color: #a89f92; transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone > i { color: #a98850; font-size: 15px; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone > span { display: flex; flex-direction: column; gap: 1px; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone strong { color: #cfc3b1; font-size: 10px; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone small { color: #85817a; font-size: 9px; }
+#gum-effect-exclusion-config .effect-exclusion-dropzone.is-dragover { border-color: #d4ad6c; background: rgba(197,160,91,.12); color: #f1dfbd; }
+#gum-effect-exclusion-config .effect-exclusion-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+#gum-effect-exclusion-config .effect-exclusion-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) 25px; align-items: center; min-width: 0; min-height: 38px; border: 1px solid rgba(255,255,255,.075); border-radius: 3px; background: #191c22; overflow: hidden; }
+#gum-effect-exclusion-config .effect-exclusion-item.is-invalid { border-color: rgba(190,74,65,.48); background: rgba(92,31,29,.22); }
+#gum-effect-exclusion-config .effect-exclusion-item > img { width: 34px; height: 36px; border: 0; border-right: 1px solid rgba(255,255,255,.075); object-fit: cover; }
+#gum-effect-exclusion-config .effect-exclusion-item > span { display: flex; flex-direction: column; min-width: 0; gap: 1px; padding: 3px 7px; }
+#gum-effect-exclusion-config .effect-exclusion-item strong { overflow: hidden; color: #e8dfd1; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+#gum-effect-exclusion-config .effect-exclusion-item small { overflow: hidden; color: #77736d; font: 8px monospace; text-overflow: ellipsis; white-space: nowrap; }
+#gum-effect-exclusion-config .effect-exclusion-items-empty { display: flex; grid-column: 1 / -1; align-items: center; justify-content: center; min-height: 42px; gap: 7px; margin: 0; border: 1px solid rgba(255,255,255,.05); border-radius: 3px; color: #77736d; font-size: 10px; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar button,
 #gum-effect-exclusion-config .effect-exclusion-footer button,
-#gum-effect-exclusion-config .effect-exclusion-row button { width: auto; min-height: 32px; padding: 5px 12px; border: 1px solid rgba(197,160,91,.34); border-radius: 4px; background: #2c313a; color: #e7e1d8; box-shadow: none; white-space: nowrap; }
+#gum-effect-exclusion-config .effect-exclusion-row button { width: auto; min-height: 31px; padding: 5px 10px; border: 1px solid rgba(197,160,91,.3); border-radius: 3px; background: #292d35; color: #e7e1d8; box-shadow: none; white-space: nowrap; }
+#gum-effect-exclusion-config .effect-exclusion-item [data-remove-effect] { width: 25px; min-width: 25px; min-height: 36px; padding: 0; border: 0; border-left: 1px solid rgba(255,255,255,.06); border-radius: 0; background: transparent; color: #9a7f74; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar button:hover,
 #gum-effect-exclusion-config .effect-exclusion-footer button:hover,
 #gum-effect-exclusion-config .effect-exclusion-row button:hover { border-color: rgba(197,160,91,.65); background: #363c46; }
-#gum-effect-exclusion-config .effect-exclusion-footer { justify-content: flex-end; border-top: 1px solid rgba(197,160,91,.2); padding-top: 10px; }
+#gum-effect-exclusion-config .effect-exclusion-item [data-remove-effect]:hover { border-color: rgba(255,255,255,.06); background: rgba(155,63,55,.2); color: #e8a197; }
+#gum-effect-exclusion-config .effect-exclusion-footer { justify-content: space-between; border-top: 1px solid rgba(197,160,91,.18); padding-top: 10px; }
+#gum-effect-exclusion-config .effect-exclusion-footer small { color: #817c75; font-size: 9px; }
 #gum-effect-exclusion-config .effect-exclusion-footer button { background: #604e31; color: #fff0ca; }
-#gum-effect-exclusion-config .effect-exclusion-empty { padding: 24px; border: 1px dashed rgba(197,160,91,.28); border-radius: 6px; color: #aaa6a0; text-align: center; }
+#gum-effect-exclusion-config .effect-exclusion-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; gap: 5px; margin: 0; padding: 24px; border: 1px dashed rgba(197,160,91,.24); border-radius: 4px; color: #8f8980; text-align: center; }
+#gum-effect-exclusion-config .effect-exclusion-empty i { margin-bottom: 5px; color: #9c7f4d; font-size: 22px; }
+#gum-effect-exclusion-config .effect-exclusion-empty strong { color: #c6bba9; font-size: 12px; }
+#gum-effect-exclusion-config .effect-exclusion-empty span { font-size: 10px; }
 
 .passive-condition-actions button.danger { color: #e78b8b; }
 .passive-condition-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 180px; color: #91877f; }
