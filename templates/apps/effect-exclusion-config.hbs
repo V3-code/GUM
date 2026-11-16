@@ -6,10 +6,11 @@
   <p class="effect-exclusion-intro"><i class="fas fa-circle-info" aria-hidden="true"></i><span>Quando um Item Efeito persistente é aplicado diretamente, ele substitui os demais membros do mesmo grupo naquele ator. Cada item pode pertencer a somente um grupo.</span></p>
   <div class="effect-exclusion-list" data-groups>
     {{#each groups as |group|}}
-      <section class="effect-exclusion-row" data-exclusion-group data-group-id="{{group.id}}">
+      <section class="effect-exclusion-row {{#if group.collapsed}}is-collapsed{{/if}}" data-exclusion-group data-group-id="{{group.id}}">
         <div class="effect-exclusion-row-header">
           <label><span>Nome do grupo</span><input type="text" data-group-name value="{{group.name}}" placeholder="Ex.: Posturas defensivas"></label>
           <span class="effect-exclusion-count" data-effect-count>{{group.effects.length}} itens</span>
+          <button type="button" data-toggle-group aria-expanded="{{#unless group.collapsed}}true{{else}}false{{/unless}}" title="{{#if group.collapsed}}Expandir grupo{{else}}Recolher grupo{{/if}}"><i class="fas {{#if group.collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}" aria-hidden="true"></i></button>
           <button type="button" data-remove-group title="Remover grupo"><i class="fas fa-trash" aria-hidden="true"></i><span>Remover</span></button>
         </div>
         <div class="effect-exclusion-source">

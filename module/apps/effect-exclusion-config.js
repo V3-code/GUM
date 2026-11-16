@@ -19,9 +19,11 @@ export class EffectExclusionConfig extends FormApplication {
   }
 
   async getData() {
+    this._collapsedGroupIds ??= new Set();
     const groups = normalizeEffectExclusionGroups(game.settings.get("gum", EFFECT_EXCLUSION_SETTING));
     const resolvedGroups = await Promise.all(groups.map(async group => ({
       ...group,
+      collapsed: this._collapsedGroupIds.has(group.id),
       effects: await Promise.all(group.effectUuids.map(async uuid => {
         const item = await fromUuid(uuid).catch(() => null);
         return {
@@ -46,10 +48,12 @@ export class EffectExclusionConfig extends FormApplication {
   }
 
   _groupMarkup() {
-    return `<section class="effect-exclusion-row" data-exclusion-group>
+    const groupId = foundry.utils.randomID();
+    return `<section class="effect-exclusion-row" data-exclusion-group data-group-id="${escapeHtml(groupId)}">
       <div class="effect-exclusion-row-header">
         <label><span>Nome do grupo</span><input type="text" data-group-name placeholder="Ex.: Posturas defensivas"></label>
         <span class="effect-exclusion-count" data-effect-count>0 itens</span>
+        <button type="button" data-toggle-group aria-expanded="true" title="Recolher grupo"><i class="fas fa-chevron-up" aria-hidden="true"></i></button>
         <button type="button" data-remove-group title="Remover grupo"><i class="fas fa-trash" aria-hidden="true"></i><span>Remover</span></button>
       </div>
       <div class="effect-exclusion-source">
@@ -59,6 +63,19 @@ export class EffectExclusionConfig extends FormApplication {
       <div class="effect-exclusion-dropzone" data-effect-dropzone><i class="fas fa-arrow-down-to-bracket" aria-hidden="true"></i><span><strong>Solte o Item Efeito aqui</strong><small>Itens de atores, diretório ou compêndios</small></span></div>
       <div class="effect-exclusion-items" data-effect-items>${emptyItemsMarkup()}</div>
     </section>`;
+  }
+
+  _setGroupCollapsed(group, collapsed) {
+    this._collapsedGroupIds ??= new Set();
+    const groupId = group?.dataset.groupId;
+    if (groupId) this._collapsedGroupIds[collapsed ? "add" : "delete"](groupId);
+    group?.classList.toggle("is-collapsed", collapsed);
+    const toggle = group?.querySelector("[data-toggle-group]");
+    if (!toggle) return;
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.title = collapsed ? "Expandir grupo" : "Recolher grupo";
+    toggle.querySelector("i")?.classList.toggle("fa-chevron-down", collapsed);
+    toggle.querySelector("i")?.classList.toggle("fa-chevron-up", !collapsed);
   }
 
   _refreshGroupState(group) {
@@ -94,6 +111,10 @@ export class EffectExclusionConfig extends FormApplication {
       html.find(".effect-exclusion-empty").remove();
       html.find("[data-groups]").append(this._groupMarkup());
       html.find("[data-exclusion-group]").last().find("[data-group-name]").trigger("focus");
+    });
+    html.on("click", "[data-toggle-group]", event => {
+      const group = event.currentTarget.closest("[data-exclusion-group]");
+      this._setGroupCollapsed(group, !group.classList.contains("is-collapsed"));
     });
     html.on("click", "[data-remove-group]", event => event.currentTarget.closest("[data-exclusion-group]")?.remove());
     html.on("click", "[data-remove-effect]", event => {

@@ -32,3 +32,11 @@ test("a configuração aceita UUID e arrastar/soltar com itens visuais", () => {
   assert.match(styles, /\.effect-exclusion-dropzone\.is-dragover/);
   assert.match(styles, /\.effect-exclusion-items \{ display: grid/);
 });
+
+test("cada grupo pode ser recolhido sem remover seus itens", () => {
+  assert.match(config, /data-toggle-group/);
+  assert.match(config, /_setGroupCollapsed/);
+  assert.match(template, /group\.collapsed/);
+  assert.match(styles, /\.effect-exclusion-row\.is-collapsed/);
+  assert.match(styles, /\.is-collapsed \.effect-exclusion-items \{ display: none/);
+});

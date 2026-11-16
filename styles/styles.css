@@ -12768,6 +12768,10 @@ background-color: var(--gum-accent-gold);
 #gum-effect-exclusion-config .effect-exclusion-intro i { margin-top: 2px; color: #b9985e; }
 #gum-effect-exclusion-config .effect-exclusion-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 5px 0 0; }
 #gum-effect-exclusion-config .effect-exclusion-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 9px; padding: 11px; border: 1px solid rgba(255,255,255,.085); border-left: 3px solid #8c7043; border-radius: 4px; background: #22262e; }
+#gum-effect-exclusion-config .effect-exclusion-row.is-collapsed { gap: 0; }
+#gum-effect-exclusion-config .effect-exclusion-row.is-collapsed .effect-exclusion-source,
+#gum-effect-exclusion-config .effect-exclusion-row.is-collapsed .effect-exclusion-dropzone,
+#gum-effect-exclusion-config .effect-exclusion-row.is-collapsed .effect-exclusion-items { display: none; }
 #gum-effect-exclusion-config .effect-exclusion-row-header { display: flex; align-items: end; gap: 8px; }
 #gum-effect-exclusion-config .effect-exclusion-row label,
 #gum-effect-exclusion-config .effect-exclusion-source label { display: flex; flex-direction: column; gap: 4px; min-width: 0; color: #d8c392; font-size: 11px; font-weight: 700; }
@@ -12799,6 +12803,7 @@ background-color: var(--gum-accent-gold);
 #gum-effect-exclusion-config .effect-exclusion-footer button,
 #gum-effect-exclusion-config .effect-exclusion-row button { width: auto; min-height: 31px; padding: 5px 10px; border: 1px solid rgba(197,160,91,.3); border-radius: 3px; background: #292d35; color: #e7e1d8; box-shadow: none; white-space: nowrap; }
 #gum-effect-exclusion-config .effect-exclusion-item [data-remove-effect] { width: 25px; min-width: 25px; min-height: 36px; padding: 0; border: 0; border-left: 1px solid rgba(255,255,255,.06); border-radius: 0; background: transparent; color: #9a7f74; }
+#gum-effect-exclusion-config .effect-exclusion-row [data-toggle-group] { width: 31px; min-width: 31px; padding: 0; color: #cbb78c; }
 #gum-effect-exclusion-config .effect-exclusion-toolbar button:hover,
 #gum-effect-exclusion-config .effect-exclusion-footer button:hover,
 #gum-effect-exclusion-config .effect-exclusion-row button:hover { border-color: rgba(197,160,91,.65); background: #363c46; }
