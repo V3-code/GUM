@@ -33,6 +33,7 @@ import {
 import { normalizeRollModifierCompositionMode } from "../module/utils/roll-modifier-composition.mjs";
 import { normalizeEffectDamageAction, rollEffectDamageAction } from "../module/services/effect-damage-roll-service.mjs";
 import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../module/api/gum-hooks.mjs";
+import { EFFECT_EXCLUSION_SETTING, exclusionPeers, replacedDirectEffectIds } from "../module/utils/effect-exclusion.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -474,15 +475,21 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const tokenIconSystem = context.tokenIconPolicyOverride
+        ? { ...effectSystem, tokenIconPolicy: normalizeTokenIconPolicy(context.tokenIconPolicyOverride) }
+        : effectSystem;
     const stackingMode = normalizeEffectStackingMode(effectSystem);
     const stackingDomain = resolveEffectStackingDomain(context);
     const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
+    const exclusionGroupPeers = stackingDomain === "direct"
+        ? exclusionPeers(game.settings.get("gum", EFFECT_EXCLUSION_SETTING), effectItem.uuid)
+        : new Set();
     const applicationId = context.applicationId || foundry.utils.randomID();
     const dynamicRegionGrantSourceUuid = context.gumFlags?.dynamicRegionGrant?.sourceUuid || null;
     const matchesApplicationScope = effect => Boolean(foundry.utils.getProperty(effect, "flags.gum.dynamicRegionGrant"))
         === Boolean(dynamicRegionGrantSourceUuid);
 
-    if (effectiveStackingMode !== "stack" && context._stackingQueueAcquired !== true) {
+    if ((effectiveStackingMode !== "stack" || exclusionGroupPeers.size) && context._stackingQueueAcquired !== true) {
         const previous = nonStackingApplicationQueue.catch(() => undefined);
         let releaseQueue;
         const gate = new Promise(resolve => { releaseQueue = resolve; });
@@ -723,12 +730,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             activeEffectData.flags[scope] = foundry.utils.deepClone(value);
                         }
                     }
-                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration)
+                    const isIconCarrier = shouldShowTokenIcon(tokenIconSystem, gumDuration)
                         && isLifecycleCarrier
                         && !dynamicRegionGrantSourceUuid;
                     if (isIconCarrier) {
-                        activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
-                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                        activeEffectData.img = resolveTokenIconImage(effectItem, tokenIconSystem, gumDuration);
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                     }
 
                     if (action.type === "attribute") {
@@ -934,7 +941,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (action.type === "status" && action.statusId) {
                         const statusEffect = findConfiguredStatus(action.statusId, CONFIG.statusEffects);
                         activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
-                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                         activeEffectData.statuses.push(action.statusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
                     }
@@ -1262,10 +1269,10 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             for (const [scope, value] of Object.entries(bridgeIntegrationFlags)) {
                 activeEffectData.flags[scope] = foundry.utils.deepClone(value);
             }
-            if (shouldShowTokenIcon(effectSystem, gumDuration)) {
+            if (shouldShowTokenIcon(tokenIconSystem, gumDuration)) {
                 const carrierStatusId = `${effectItem.name.slugify({ strict: true })}-carrier`;
-                activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
-                activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
+                activeEffectData.img = resolveTokenIconImage(effectItem, tokenIconSystem, gumDuration);
+                activeEffectData.showIcon = getActiveEffectShowIconMode(tokenIconSystem, gumDuration);
                 activeEffectData.statuses = [carrierStatusId];
                 foundry.utils.setProperty(activeEffectData, "flags.core.statusId", carrierStatusId);
             }
@@ -1297,6 +1304,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 if (isMissingSyntheticActorContextError(error, targetActor)) continue;
                 throw error;
             }
+        }
+    }
+
+    // Só substitui aplicações diretas depois que a nova aplicação persistente
+    // realmente produziu um ActiveEffect no ator. Fontes gerenciadas conservam
+    // seu próprio ciclo de vida.
+    if (exclusionGroupPeers.size) {
+        for (const targetActor of new Set(persistentEffects.map(effect => effect.parent).filter(Boolean))) {
+            const previousIds = replacedDirectEffectIds(targetActor.effects, exclusionGroupPeers);
+            if (previousIds.length) await targetActor.deleteEmbeddedDocuments("ActiveEffect", previousIds);
         }
     }
 

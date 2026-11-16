@@ -986,6 +986,50 @@ _promptMultipleReferences(parsedList) {
 
         bindAttackFields('.power-uses-attack-toggle');
 
+        const updateActiveDefenseState = () => {
+            html.find('[data-active-defense-editor]').each((_index, element) => {
+                const editor = $(element);
+                const enabled = editor.find('.active-defense-enabled').is(':checked');
+                const rule = editor.find('.active-defense-rule').val() || 'half_plus_three';
+                const fixed = enabled && rule === 'fixed';
+                editor.find('.active-defense-rule').prop('disabled', !enabled);
+                editor.find('.active-defense-fields')
+                    .toggleClass('is-cost-disabled', !enabled)
+                    .attr('aria-disabled', String(!enabled));
+                editor.find('.active-defense-value').prop('disabled', !fixed);
+                editor.find('.active-defense-value-card')
+                    .toggleClass('is-cost-disabled', !fixed)
+                    .attr('aria-disabled', String(!fixed));
+            });
+        };
+        html.find('.active-defense-enabled, .active-defense-rule').on('change', updateActiveDefenseState);
+        updateActiveDefenseState();
+
+        const updatePowerCostState = () => {
+            html.find('[data-power-cost-editor]').each((_index, element) => {
+                const editor = $(element);
+                const canLevel = editor.find('.power-cost-can-level').is(':checked');
+                const alternative = editor.find('.power-acquisition-mode').val() === 'alternative';
+                const automatic = editor.find('.power-alternative-mode').val() === 'automatic';
+
+                editor.find('.power-cost-level-dependent').prop('disabled', !canLevel);
+                editor.find('.power-cost-level-card')
+                    .toggleClass('is-cost-disabled', !canLevel)
+                    .attr('aria-disabled', String(!canLevel));
+
+                editor.find('.power-alternative-mode').prop('disabled', !alternative);
+                editor.find('.power-alternative-fields')
+                    .toggleClass('is-cost-disabled', !alternative)
+                    .attr('aria-disabled', String(!alternative));
+                editor.find('.power-alternative-automatic input').prop('disabled', !alternative || !automatic);
+                editor.find('.power-alternative-automatic').toggleClass('is-cost-disabled', !alternative || !automatic);
+                editor.find('.power-alternative-manual input').prop('disabled', !alternative || automatic);
+                editor.find('.power-alternative-manual').toggleClass('is-cost-disabled', !alternative || automatic);
+            });
+        };
+        html.find('.power-cost-can-level, .power-acquisition-mode, .power-alternative-mode').on('change', updatePowerCostState);
+        updatePowerCostState();
+
         const updateTraitCostLevelState = () => {
             html.find('[data-trait-cost-editor]').each((_index, element) => {
                 const editor = $(element);

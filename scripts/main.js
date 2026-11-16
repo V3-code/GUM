@@ -3320,6 +3320,7 @@ Hooks.once('init', async function() {
             ensureEffectItemBridge,
             contentSourceService,
             contentSourcePurposes: CONTENT_SOURCE_PURPOSES,
+            previewItem: (item, options) => GumPreviewDialog.showItem(item, options),
             openTestRequestLauncher,
             openGmScreen: () => {
                 game.gum.gmScreen ??= new GumGMScreen();

@@ -97,8 +97,43 @@ export function calculateTraitCost(system = {}) {
 
 export function calculateItemTraitCost(item) {
   const system = item?.system || {};
-  return calculateTraitCost(item?.type === 'power' && system.cost_paid === 'alternative'
-    ? { ...system, points: system.alternative_points } : system);
+  const integral = calculateTraitCost(system);
+  if (item?.type !== 'power') return integral;
+
+  const acquisitionMode = system.cost_paid === 'alternative' ? 'alternative' : 'full';
+  if (acquisitionMode === 'full') return {
+    ...integral,
+    integralPoints: integral.finalPoints,
+    integralRaw: integral.raw,
+    alternativePoints: null,
+    alternativeMode: system.alternative_cost_mode === 'automatic' ? 'automatic' : 'manual',
+    acquisitionMode,
+    acquisitionDescription: `Aquisição integral: ${displayCost(integral.finalPoints)} pontos`
+  };
+
+  const alternativeMode = system.alternative_cost_mode === 'automatic' ? 'automatic' : 'manual';
+  const divisor = number(system.alternative_cost_divisor, 5);
+  if (alternativeMode === 'automatic' && divisor <= 0) throw new Error('Divisor do custo alternativo deve ser maior que zero');
+
+  const alternativePoints = alternativeMode === 'automatic'
+    ? (integral.finalPoints >= 0 ? Math.ceil(integral.finalPoints / divisor) : Math.floor(integral.finalPoints / divisor))
+    : number(system.alternative_points);
+  const finalPoints = alternativePoints;
+  const acquisitionDescription = alternativeMode === 'automatic'
+    ? `Aquisição alternativa: ${displayCost(integral.finalPoints)} ÷ ${displayCost(divisor)} = ${displayCost(alternativePoints)}`
+    : `Aquisição alternativa: ${displayCost(alternativePoints)} pontos definidos manualmente`;
+
+  return {
+    ...integral,
+    raw: finalPoints,
+    finalPoints,
+    integralPoints: integral.finalPoints,
+    integralRaw: integral.raw,
+    alternativePoints,
+    alternativeMode,
+    acquisitionMode,
+    acquisitionDescription
+  };
 }
 
 export function traitCostInput(system) {

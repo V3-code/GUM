@@ -1,0 +1,38 @@
+<form class="effect-exclusion-form">
+  <header class="effect-exclusion-toolbar">
+    <div><strong>Grupos de exclusão</strong><small>Configuração mundial de substituição de efeitos</small></div>
+    <button type="button" data-add-group><i class="fas fa-plus" aria-hidden="true"></i> Adicionar grupo</button>
+  </header>
+  <p class="effect-exclusion-intro"><i class="fas fa-circle-info" aria-hidden="true"></i><span>Quando um Item Efeito persistente é aplicado diretamente, ele substitui os demais membros do mesmo grupo naquele ator. Cada item pode pertencer a somente um grupo.</span></p>
+  <div class="effect-exclusion-list" data-groups>
+    {{#each groups as |group|}}
+      <section class="effect-exclusion-row {{#if group.collapsed}}is-collapsed{{/if}}" data-exclusion-group data-group-id="{{group.id}}">
+        <div class="effect-exclusion-row-header">
+          <label><span>Nome do grupo</span><input type="text" data-group-name value="{{group.name}}" placeholder="Ex.: Posturas defensivas"></label>
+          <span class="effect-exclusion-count" data-effect-count>{{group.effects.length}} itens</span>
+          <button type="button" data-toggle-group aria-expanded="{{#unless group.collapsed}}true{{else}}false{{/unless}}" title="{{#if group.collapsed}}Expandir grupo{{else}}Recolher grupo{{/if}}"><i class="fas {{#if group.collapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}" aria-hidden="true"></i></button>
+          <button type="button" data-remove-group title="Remover grupo"><i class="fas fa-trash" aria-hidden="true"></i><span>Remover</span></button>
+        </div>
+        <div class="effect-exclusion-source">
+          <label><span>Adicionar Item Efeito</span><small>Cole um UUID ou arraste um item para a área abaixo.</small></label>
+          <div><input type="text" data-effect-uuid-input placeholder="Item.… ou Compendium.…"><button type="button" data-add-effect><i class="fas fa-plus" aria-hidden="true"></i><span>Adicionar</span></button></div>
+        </div>
+        <div class="effect-exclusion-dropzone" data-effect-dropzone><i class="fas fa-arrow-down-to-bracket" aria-hidden="true"></i><span><strong>Solte o Item Efeito aqui</strong><small>Itens de atores, diretório ou compêndios</small></span></div>
+        <div class="effect-exclusion-items" data-effect-items>
+          {{#each group.effects as |effect|}}
+            <article class="effect-exclusion-item {{#unless effect.valid}}is-invalid{{/unless}}" data-effect-uuid="{{effect.uuid}}">
+              <img src="{{effect.img}}" alt="">
+              <span><strong>{{effect.name}}</strong><small>{{effect.uuid}}</small></span>
+              <button type="button" data-remove-effect title="Remover Item Efeito"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+            </article>
+          {{else}}
+            <p class="effect-exclusion-items-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Nenhum Item Efeito adicionado.</span></p>
+          {{/each}}
+        </div>
+      </section>
+    {{else}}
+      <p class="effect-exclusion-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><strong>Nenhum grupo configurado</strong><span>Adicione um grupo para organizar efeitos mutuamente exclusivos.</span></p>
+    {{/each}}
+  </div>
+  <footer class="effect-exclusion-footer"><small>As alterações só entram em vigor depois de salvar.</small><button type="button" data-save-groups><i class="fas fa-save" aria-hidden="true"></i> Salvar grupos</button></footer>
+</form>

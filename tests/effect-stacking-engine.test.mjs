@@ -137,6 +137,19 @@ test("unique deduplica persistentes diretos, mas repete ações pontuais", async
   assert.ok(actor.effects[0].flags.gum.applicationId);
 });
 
+test("an integration can request the standard token icon carrier without bypassing the effect engine", async () => {
+  const actor = makeActor();
+  const effect = makeEffect("unique", [attributeAction()]);
+
+  await applySingleEffect(effect, [{ actor }], { actor, origin: effect, tokenIconPolicyOverride: "always" });
+
+  assert.equal(actor.effects.length, 1);
+  assert.equal(actor.effects[0].img, effect.img);
+  assert.equal(actor.effects[0].showIcon, 2);
+  assert.deepEqual(actor.effects[0].statuses, ["effect-unique-a1"]);
+  assert.equal(actor.effects[0].flags.core.statusId, "effect-unique-a1");
+});
+
 test("Emanação cria um controlador inerte e transmite o efeito inteiro sem ícone genérico nos afetados", async () => {
   const previousGeneration = game.release.generation;
   const previousRegion = CONFIG.Region;

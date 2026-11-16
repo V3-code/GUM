@@ -51,6 +51,8 @@ await game.gum.api.rolls.fromHotbar({ actorUuid: actor.uuid, rollData });
 await game.gum.api.rolls.executeRequest(request, targetKey, { prompt: true });
 ```
 
+Ao abrir a janela padrão por `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` pode conter IDs de `gm_modifier` incorporados. Integrações portáveis também podem fornecer cópias serializáveis dos modificadores em `rollData.preselectedModifierData`; cada entrada aceita `id`, `name` e os campos de sistema de `gm_modifier` diretamente ou dentro de `system`. O GUM aplica os filtros normais de contexto e tags nos dois casos. Metadados de apresentação, agrupamento ou ciclo de vida pertencem ao chamador.
+
 `rolls.perform` executa o fluxo normal do GUM, incluindo modificadores, confirmação e consumos associados. `fromHotbar` preserva o comportamento dos atalhos. `executeRequest` atende solicitações estruturadas de teste e respeita as permissões do alvo.
 
 ## Efeitos e estados de itens
@@ -69,6 +71,7 @@ const actions = game.gum.api.effects.actions(effectItem);
 ```
 
 `effects.apply` mantém a barreira de resistência configurada no efeito. `effects.applyDirect` ignora deliberadamente essa barreira e deve ser reservado a integrações que já tenham resolvido a resistência.
+Integrações que precisem exibir o ícone no token em uma aplicação específica podem informar `tokenIconPolicyOverride: "always"` no contexto; o ícone continua sendo criado e administrado pelo fluxo padrão do Item Efeito.
 
 ## Dano de combate
 
@@ -103,6 +106,7 @@ await game.gum.api.imports.gcs({ actor });
 await game.gum.api.imports.gumJson(); // abre o importador de ficha JSON do GUM
 const statuses = game.gum.api.status.list();
 
+await game.gum.api.ui.previewItem(item, { actor, sendToChat: true });
 game.gum.api.ui.openTestRequest();
 game.gum.api.ui.openGmScreen();
 game.gum.api.ui.openContentSources();       // somente Mestre
@@ -110,6 +114,8 @@ game.gum.api.ui.openStatusConfiguration(); // somente Mestre
 ```
 
 `status.list()` reflete a configuração atual do mundo, não uma lista fixa do sistema.
+
+`ui.previewItem()` abre a janela padrão de visualização rápida do GUM. O item e o ator opcional aceitam documentos, IDs ou UUIDs. `sendToChat` usa `true` por padrão.
 
 ## Hooks públicos
 

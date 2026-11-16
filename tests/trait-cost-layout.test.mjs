@@ -26,9 +26,20 @@ test('advantage and disadvantage cost controls share one dashboard section', () 
   assert.doesNotMatch(template, /Nível e Pontos/);
 });
 
-test('the dedicated power cost dashboard remains limited to powers', () => {
-  assert.match(template, /\{\{#if \(eq item\.type "power"\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">[\s\S]*?GUM\.SpellPower\.CostCalculation/);
-  assert.doesNotMatch(template, /\{\{#if \(or \(eq item\.type "advantage"\) \(eq item\.type "disadvantage"\) \(eq item\.type "power"\)\)\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">/);
+test('power composition and acquisition share one cost workspace', () => {
+  const start = template.indexOf('data-power-cost-editor');
+  const end = template.indexOf('GUM.SpellPower.Execution', start);
+  assert.ok(start >= 0 && end > start);
+  const block = template.slice(start, end);
+  for (const field of [
+    'system.points', 'system.can_level', 'system.level', 'system.points_per_level',
+    'system.cost_multiplier', 'system.round_down', 'system.multiplicative_modifiers',
+    'system.cost_paid', 'system.alternative_cost_mode', 'system.alternative_cost_divisor',
+    'system.alternative_points'
+  ]) assert.match(block, new RegExp(field.replace('.', '\\.')));
+  assert.match(block, /calculatedCost\.integralPoints/);
+  assert.match(block, /calculatedCost\.finalPoints/);
+  assert.doesNotMatch(template, /GUM\.SpellPower\.CostCalculation/);
 });
 
 test('modifier pricing fields and options use the dedicated dashboard', () => {
@@ -62,6 +73,8 @@ test('cost workspaces provide responsive grids and a distinct result card', () =
   assert.match(styles, /\.is-cost-disabled/);
   assert.match(styles, /@media \(max-width: 520px\)/);
   assert.match(styles, /\.characteristic-cost-result small[\s\S]*?white-space: pre-line/);
+  assert.match(styles, /\.power-alternative-fields \{[\s\S]*?grid-template-columns: minmax\(180px, 1\.35fr\) minmax\(105px, 0\.55fr\) minmax\(135px, 0\.8fr\)/);
+  assert.match(styles, /\.power-alternative-fields > \.skill-dashboard-card \{[\s\S]*?min-height: 68px/);
 });
 
 test('the favorite and organization row stays compact and gives organization more room', () => {

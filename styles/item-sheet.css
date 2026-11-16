@@ -6020,6 +6020,21 @@ color:#121114;
     rgba(17, 15, 20, 0.68);
 }
 
+.gum.sheet.item .equipment-hud-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gum.sheet.item .equipment-hud-toggles .equipment-hud-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  gap: 12px;
+}
+
 .gum.sheet.item .equipment-toggle-pill {
   display: inline-flex;
   align-items: center;
@@ -7414,8 +7429,67 @@ color:#121114;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.gum.sheet.item .spell-power-dashboard .power-cost-fields {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.gum.sheet.item .spell-power-dashboard .power-cost-composition-fields {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .power-cost-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .power-cost-results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, 0.8fr) minmax(0, 1.1fr);
+  gap: 8px;
+}
+
+.gum.sheet.item .spell-power-dashboard .power-alternative-fields {
+  grid-template-columns: minmax(180px, 1.35fr) minmax(105px, 0.55fr) minmax(135px, 0.8fr);
+  align-items: stretch;
+}
+
+.gum.sheet.item .spell-power-dashboard .power-alternative-fields > .skill-dashboard-card {
+  min-height: 68px;
+  gap: 4px;
+  padding: 6px 8px;
+}
+
+.gum.sheet.item .spell-power-dashboard .power-alternative-fields .skill-dashboard-card-heading {
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+}
+
+.gum.sheet.item .spell-power-dashboard .power-alternative-automatic {
+  min-width: 0;
+}
+
+.gum.sheet.item .spell-power-dashboard .power-cost-result-card,
+.gum.sheet.item .spell-power-dashboard .power-paid-cost-card {
+  border-color: rgba(201, 161, 94, 0.3);
+}
+
+.gum.sheet.item .spell-power-dashboard .power-cost-result-card .calculated-cost.value small,
+.gum.sheet.item .spell-power-dashboard .power-paid-cost-card .calculated-cost.value small {
+  white-space: pre-line;
+}
+
+.gum.sheet.item .spell-power-dashboard .active-defense-editor {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(0, 1.3fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gum.sheet.item .spell-power-dashboard .active-defense-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .active-defense-hint {
+  grid-column: 1 / -1;
+  color: rgba(240, 235, 227, 0.5);
+  font-size: 0.64rem;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control input:disabled,
@@ -7431,6 +7505,13 @@ color:#121114;
   .gum.sheet.item .spell-power-dashboard .spell-power-two-grid {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
+  .gum.sheet.item .spell-power-dashboard .power-cost-composition-fields,
+  .gum.sheet.item .spell-power-dashboard .power-cost-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gum.sheet.item .spell-power-dashboard .power-alternative-fields {
+    grid-template-columns: minmax(170px, 1.25fr) minmax(95px, 0.55fr) minmax(125px, 0.8fr);
+  }
 }
 
 @media (max-width: 520px) {
@@ -7441,6 +7522,15 @@ color:#121114;
   .gum.sheet.item .spell-power-dashboard .spell-power-core-grid,
   .gum.sheet.item .spell-power-dashboard .spell-power-result-grid,
   .gum.sheet.item .spell-power-dashboard .spell-power-two-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gum.sheet.item .spell-power-dashboard .power-cost-composition-fields,
+  .gum.sheet.item .spell-power-dashboard .power-cost-options,
+  .gum.sheet.item .spell-power-dashboard .power-cost-results-grid,
+  .gum.sheet.item .spell-power-dashboard .power-alternative-fields,
+  .gum.sheet.item .spell-power-dashboard .active-defense-editor,
+  .gum.sheet.item .spell-power-dashboard .active-defense-fields,
+  .gum.sheet.item .equipment-hud-toggles {
     grid-template-columns: minmax(0, 1fr);
   }
 }

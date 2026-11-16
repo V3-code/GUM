@@ -6,7 +6,7 @@
 
 Uma ferramenta não oficial para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.6.2-beta-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.6.3-beta-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-13–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
@@ -34,6 +34,20 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 ## Integrações opcionais
 
+### GUM HUD
+
+O módulo complementar [GUM HUD](https://github.com/V3-code/GUM-HUD) oferece uma interface compacta de combate ligada ao personagem, com manobras, opções de execução, ataques, defesas ativas, consumíveis, equipamentos rápidos, acesso resumido ao conteúdo da ficha e integração opcional com a hotbar do Foundry. O HUD respeita a propriedade dos atores, pode acompanhar o token controlado ou permanecer fixado em um personagem e também funciona sem token para atores mundiais.
+
+Para instalá-lo pelo Foundry VTT, use o seguinte manifesto na área de módulos:
+
+```text
+https://raw.githubusercontent.com/V3-code/GUM-HUD/main/module.json
+```
+
+O GUM HUD é opcional e requer GUM 1.6.3-beta ou superior.
+
+### GUM Animations
+
 O módulo complementar [GUM Animations](https://github.com/V3-code/GUM-Animations) conecta os hooks públicos do sistema ao Automated Animations e permite configurar animações de uso e efeitos persistentes diretamente nos controles A-A dos Itens. Ele não altera as regras, rolagens ou efeitos mecânicos do GUM e não é necessário para utilizar o sistema.
 
 Para instalá-lo pelo Foundry VTT, use o seguinte manifesto na área de módulos:
@@ -46,7 +60,7 @@ https://github.com/V3-code/GUM-Animations/releases/latest/download/module.json
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.6.2-beta |
+| Versão do GUM | 1.6.3-beta |
 | Foundry VTT mínimo | 13 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil) e inglês |

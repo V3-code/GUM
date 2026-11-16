@@ -74,6 +74,8 @@ export class GurpsRollPrompt extends FormApplication {
         this._loadEffectModifiers();
         this._loadEquipmentOwnerModifiers();
         this._loadTargetCounterModifiers();
+        this._loadPreselectedModifierItems();
+        this._loadPreselectedModifierData();
         this._composeSemanticModifiers();
         this._loadAutoDistanceModifier();
         this._loadAutoSizeModifier();
@@ -158,6 +160,87 @@ export class GurpsRollPrompt extends FormApplication {
                 isGM: true // Marca para estilizar diferente se quiser (ex: cadeado)
             });
 });
+    }
+
+    _loadPreselectedModifierItems() {
+        const itemIds = [...new Set(Array.isArray(this.rollData?.preselectedModifierItemIds)
+            ? this.rollData.preselectedModifierItemIds.map(value => String(value || "").trim()).filter(Boolean)
+            : [])];
+        for (const itemId of itemIds) {
+            const item = this.actor?.items?.get(itemId);
+            if (!item || item.type !== "gm_modifier") continue;
+            const entries = Array.isArray(item.system?.modifier_entries) && item.system.modifier_entries.length
+                ? item.system.modifier_entries
+                : null;
+            if (entries) {
+                entries.forEach((entry, index) => {
+                    const contexts = this._normalizeContexts(entry?.contexts);
+                    if (contexts.length && !this._matchesEffectContext(contexts, this.context)) return;
+                    if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
+                    this.selectedModifiers.push({
+                        id: `${item.id}::${index}`,
+                        label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
+                        value: this._evaluateModifierValue(entry?.value),
+                        nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
+                        isPreselectedItem: true,
+                        sourceItemId: item.id
+                    });
+                });
+                continue;
+            }
+            if (!this._isValidForContext(item, this.context)) continue;
+            if (!matchesRollTags(item.system, this._getRollMetadata().rollTags)) continue;
+            this.selectedModifiers.push({
+                id: item.id,
+                label: item.name,
+                value: this._evaluateModifierValue(item.system?.modifier),
+                nh_cap: item.system?.nh_cap ?? "",
+                isPreselectedItem: true,
+                sourceItemId: item.id
+            });
+        }
+    }
+
+    _loadPreselectedModifierData() {
+        const sources = Array.isArray(this.rollData?.preselectedModifierData)
+            ? this.rollData.preselectedModifierData.slice(0, 100)
+            : [];
+        for (const [sourceIndex, source] of sources.entries()) {
+            if (!source || typeof source !== "object") continue;
+            const system = source.system && typeof source.system === "object" ? source.system : source;
+            const sourceId = String(source.id || `preselected-${sourceIndex}`);
+            const sourceName = String(source.name || "Modificador");
+            const entries = Array.isArray(system.modifier_entries) && system.modifier_entries.length
+                ? system.modifier_entries
+                : null;
+            if (entries) {
+                entries.forEach((entry, index) => {
+                    const contexts = this._normalizeContexts(entry?.contexts);
+                    if (contexts.length && !this._matchesEffectContext(contexts, this.context)) return;
+                    if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
+                    this.selectedModifiers.push({
+                        id: `${sourceId}::${index}`,
+                        label: entry?.label ? `${sourceName} — ${entry.label}` : sourceName,
+                        value: this._evaluateModifierValue(entry?.value),
+                        nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
+                        isPreselectedItem: true,
+                        sourceItemId: source.sourceItemId || sourceId
+                    });
+                });
+                continue;
+            }
+            const contexts = this._normalizeContexts(system.contexts ?? system.context);
+            if (contexts.length && !this._matchesEffectContext(contexts, this.context)) continue;
+            if (!matchesRollTags(system, this._getRollMetadata().rollTags)) continue;
+            this.selectedModifiers.push({
+                id: sourceId,
+                label: sourceName,
+                value: this._evaluateModifierValue(system.modifier),
+                nh_cap: system.nh_cap ?? "",
+                isPreselectedItem: true,
+                sourceItemId: source.sourceItemId || sourceId
+            });
+        }
     }
 
     _loadEffectModifiers() {

@@ -65,6 +65,8 @@ import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStat
 import { MOVEMENT_RULER_SETTING } from "./canvas/movement-ruler.mjs";
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING } from "./utils/distance-modifier.mjs";
 import { HYBRID_IMPORT_SCOPE_SETTING } from "./utils/hybrid-import-policy.mjs";
+import { EFFECT_EXCLUSION_SETTING } from "./utils/effect-exclusion.mjs";
+import { EffectExclusionConfig } from "./apps/effect-exclusion-config.js";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
 const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV2";
@@ -135,6 +137,23 @@ export async function retireLegacyStatusBindingSources() {
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
 export const registerSystemSettings = function() {
+
+    game.settings.register("gum", EFFECT_EXCLUSION_SETTING, {
+        name: "Grupos de exclusão de Itens Efeito",
+        hint: "Configuração de mundo para substituição de efeitos persistentes aplicados diretamente.",
+        scope: "world",
+        config: false,
+        type: Array,
+        default: []
+    });
+    game.settings.registerMenu("gum", "effectExclusionConfig", {
+        name: "Grupos de exclusão de efeitos",
+        label: "Configurar grupos",
+        hint: "Itens Efeito persistentes que se substituem no mesmo ator.",
+        icon: "fas fa-layer-group",
+        type: EffectExclusionConfig,
+        restricted: true
+    });
 
     game.settings.register("gum", CONTENT_SOURCE_SETTING, {
         name: "GUM.ContentSources.Title",

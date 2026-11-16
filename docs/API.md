@@ -47,6 +47,8 @@ await game.gum.api.rolls.fromHotbar({ actorUuid: actor.uuid, rollData });
 await game.gum.api.rolls.executeRequest(request, targetKey, { prompt: true });
 ```
 
+When opening the standard prompt through `rolls.fromHotbar`, `rollData.preselectedModifierItemIds` may contain embedded `gm_modifier` IDs. Portable integrations may instead provide serializable modifier snapshots in `rollData.preselectedModifierData`; each entry accepts `id`, `name`, and either the `gm_modifier` system fields directly or under `system`. GUM applies the normal context and roll-tag filters in both cases. The caller owns any presentation, grouping, or lifecycle metadata.
+
 `rolls.perform` uses the normal GUM flow, including modifiers, confirmation, and configured consumption. `executeRequest` honors target permissions.
 
 ## Effects and item state
@@ -64,6 +66,7 @@ const actions = game.gum.api.effects.actions(effectItem);
 ```
 
 `effects.apply` preserves the effect's resistance barrier. `effects.applyDirect` deliberately bypasses it and is intended only for integrations that already resolved resistance.
+Integrations that need a visible token icon for a particular application may pass `tokenIconPolicyOverride: "always"` in the context; the icon is still created and managed by the standard Effect Item engine.
 
 ## Combat damage
 
@@ -98,6 +101,7 @@ await game.gum.api.imports.gcs({ actor });
 await game.gum.api.imports.gumJson(); // opens the GUM character JSON importer
 const statuses = game.gum.api.status.list();
 
+await game.gum.api.ui.previewItem(item, { actor, sendToChat: true });
 game.gum.api.ui.openTestRequest();
 game.gum.api.ui.openGmScreen();
 game.gum.api.ui.openContentSources();       // GM only
@@ -105,6 +109,8 @@ game.gum.api.ui.openStatusConfiguration(); // GM only
 ```
 
 `status.list()` reflects the world's current configuration instead of a hardcoded list.
+
+`ui.previewItem()` opens GUM's standard quick-view dialog. The item and optional actor accept documents, IDs, or UUIDs. `sendToChat` defaults to `true`.
 
 ## Public hooks
 
