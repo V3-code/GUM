@@ -6,3 +6,6 @@ packs/**/CURRENT
 packs/**/LOG
 packs/**/LOG.old
 packs/**/MANIFEST-*
+
+# Artefato local de distribuição; publicado como asset da release no GitHub.
+gum.zip

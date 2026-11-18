@@ -2,7 +2,6 @@
 
 **Autor:** V3-code
 **Projeto:** GUM – Sistema não oficial para jogar GURPS no Foundry VTT  
-**Versão:** v1.6.1-beta de novembro de 2026
 
 ---
 
