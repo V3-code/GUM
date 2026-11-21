@@ -4,6 +4,25 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.31-beta] - 2026-11-21
+
+### Added
+
+- A aba Equipamentos ganhou navegação por `Todos`, `Em uso`, `Carregado` e `Armazenado`, com contadores, busca textual e preservação da visão selecionada durante atualizações da ficha.
+- A busca do inventário encontra equipamentos dentro de contêineres recolhidos e fontes monetárias, sem alterar permanentemente o estado visual das bolsas.
+
+### Changed
+
+- Fontes monetárias agora acompanham a região selecionada e o bloco é ocultado quando não há fontes naquela região; a visão `Todos` continua exibindo o conjunto completo.
+- A organização visual do inventário foi compactada, com navegação acima das fontes monetárias, destaque mais claro da seleção e ajustes na edição da proteção dos equipamentos.
+- As siglas visíveis dos tipos de dano na aplicação de dano agora seguem o idioma ativo, preservando as chaves mecânicas internas.
+
+### Fixed
+
+- A importação do GCS e a resolução de RD reconhecem nomes, abreviações e aliases em português e inglês para todos os tipos de dano, sem reescrever desnecessariamente o texto original do equipamento.
+- A RD exibida na aplicação de dano passa a responder corretamente ao tipo de dano selecionado, inclusive com armaduras importadas usando nomes como `crushing` e variações perfurantes como `pi++`.
+- A navegação do inventário não retorna visualmente para `Todos` durante a expansão ou contração de grupos.
+
 ## [1.6.3-beta] - 2026-11-16
 
 ### Added

@@ -45,3 +45,30 @@ test("equipment drag and drop stays silent after a successful move", () => {
   assert.match(organizer, /updateEmbeddedDocuments\('Item'/);
   assert.doesNotMatch(organizer, /ui\.notifications\.info/);
 });
+
+test("equipment browser filters regions, exposes counts and searches container contents", () => {
+  for (const region of ["equipped", "carried", "stored"]) {
+    assert.match(template, new RegExp(`data-equipment-filter="${region}"`));
+    assert.match(template, new RegExp(`data-equipment-region="${region}"`));
+  }
+  assert.match(template, /data-equipment-filter="all"/);
+  assert.match(template, /equipmentCounts\.all/);
+  assert.match(template, /equipment-search-input/);
+  assert.ok(template.indexOf('class="equipment-browser"') < template.indexOf('class="money-sources-panel'));
+  assert.match(template, /equipmentView\.filter "all"/);
+  assert.match(template, /unless equipmentView\.showEquipped/);
+  assert.match(actorSheet, /this\._equipmentViewState \?\?= \{ filter: "all", query: "" \}/);
+  assert.match(actorSheet, /context\.equipmentView = \{/);
+  assert.match(actorSheet, /inventoryLocation = system\.stored === true \|\| system\.location === "stored"/);
+  assert.match(actorSheet, /context\.showMoneySources =/);
+  assert.match(actorSheet, /moneyPanel\.hidden = filter === "all" && !hasQuery \? false : visibleMoneySources === 0/);
+  assert.match(template, /data-money-location="\{\{this\.system\.inventoryLocation\}\}"/);
+  assert.match(template, /unless showMoneySources/);
+  assert.match(actorSheet, /container-children-list/);
+  assert.match(actorSheet, /classList\.toggle\("is-searching"/);
+  assert.doesNotMatch(template, /unless this\.container\.system\.is_container_collapsed/);
+  assert.doesNotMatch(actorSheet, /if \(hasQuery\) region\.open = true/);
+  assert.match(styles, /data-search-active="true"\]:not\(\[open\]\) > \.list-content \{ display:block !important; \}/);
+  assert.match(styles, /\.container-children-list\.is-collapsed\.is-searching \{ display:flex; \}/);
+  assert.doesNotMatch(styles, /\.encumbrance-inline::after/);
+});

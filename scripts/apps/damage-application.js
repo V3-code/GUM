@@ -11,12 +11,14 @@ import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature
 import { equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
 import { buildDamageApplicationEvent, calculateShockPenalty, classifyDamageTargetPool } from "../../module/utils/damage-application-event.mjs";
 import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../../module/api/gum-hooks.mjs";
+import { getDamageResistanceValue, normalizeDamageTypeKey } from "../../module/utils/damage-types.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
     constructor(damageData, attackerActor, targetActor, options = {}) {
         super(options);
 this.damageData = damageData;
+        this.damageTypeAbrev = normalizeDamageTypeKey(damageData?.main?.type);
         this.attackerActor = attackerActor;
         this.targetActor = targetActor;
         this.attackerToken = options.attackerToken ?? null;
@@ -38,6 +40,7 @@ this.damageData = damageData;
 
     _t(key) { return game.i18n.localize(`GUM.DamageApplication.${key}`); }
     _f(key, data) { return game.i18n.format(`GUM.DamageApplication.${key}`, data); }
+    _woundingAbbreviation(abrev) { return this._t(`WoundingAbbreviation.${abrev}`); }
 
     _attackerImage() {
         return resolveCharacterImage(this.attackerActor, {
@@ -89,7 +92,7 @@ async _resolveOnDamageEffects() {
                 item: effectItem,
                 minInjury: parseInt(data.minInjury) || 0,
                 activationChance,
-                requiredDamageType: (data.requiredDamageType || "").toLowerCase().trim()
+                requiredDamageType: data.requiredDamageType ? normalizeDamageTypeKey(data.requiredDamageType) : ""
             });
         }
 
@@ -264,9 +267,9 @@ async _resolveOnDamageEffects() {
     }
 
     _evaluateKnockback({ basicDamage, targetST, useHP, damageType, penetratedDR, onlyKnockback, perfectBalance }) {
-        const normalizedType = this._normalizeLookupText(damageType);
-        const isCrushing = ["cont", "contusao", "cr", "crushing"].includes(normalizedType);
-        const isCutting = ["cort", "corte", "cut", "cutting"].includes(normalizedType);
+        const normalizedType = normalizeDamageTypeKey(damageType);
+        const isCrushing = normalizedType === "cont";
+        const isCutting = normalizedType === "cort";
         const eligible = isCrushing || (isCutting && !penetratedDR) || onlyKnockback;
         const resistanceValue = Math.max(0, this._toNumber(targetST, 0));
         const threshold = resistanceValue <= 3 ? 1 : Math.max(1, resistanceValue - 2);
@@ -310,7 +313,7 @@ async _resolveOnDamageEffects() {
     }
 
 
-    _getDynamicDR(locationKey, damageType) {
+    _getDynamicDR(locationKey, damageType, damageNature = null) {
         if (!locationKey) return 0;
         // Custom DR comes from user input
         if (locationKey === 'custom') {
@@ -320,11 +323,7 @@ async _resolveOnDamageEffects() {
 
         // Pull DR data from actor (supports per-type modifiers)
         const drData = foundry.utils.getProperty(this.targetActor, `system.combat.dr_locations.${locationKey}`) || {};
-        const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
-        if (!damageType || damageType === "base") return baseDR;
-
-        const typeMod = typeof drData === "object" ? (parseInt(drData[damageType]) || 0) : 0;
- return Math.max(0, baseDR + typeMod);
+        return getDamageResistanceValue(drData, damageType, damageNature);
     }
 
     _getDRSignature(drObject) {
@@ -342,8 +341,8 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         return JSON.stringify(sortedEntries);
     }
 
-    _getLargeAreaInjuryDR(form, damageTypeKey) {
-        const torsoDR = this._getDynamicDR("torso", damageTypeKey);
+    _getLargeAreaInjuryDR(form, damageTypeKey, damageNature = null) {
+        const torsoDR = this._getDynamicDR("torso", damageTypeKey, damageNature);
         const markedRow = form.querySelector(".location-row.large-area-selected")
             || form.querySelector(".location-row.active")
             || form.querySelector('.location-row[data-location-key="torso"]');
@@ -354,7 +353,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
             const customDR = parseInt(form.querySelector('input[name="custom_dr"]')?.value);
             markedDR = isNaN(customDR) ? 0 : Math.max(0, customDR);
         } else {
-            markedDR = Math.max(0, this._getDynamicDR(markedLocationKey, damageTypeKey));
+            markedDR = Math.max(0, this._getDynamicDR(markedLocationKey, damageTypeKey, damageNature));
         }
 
         return {
@@ -552,8 +551,8 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                 return firstRollA - firstRollB;
             });
         }
-        const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
-        const woundingModifiersList = ["qmd", "cor", "tox", "cont", "cort", "perf", "pi", "pi-", "pi+", "pi++"].map(abrev => ({ type: this._t(`Wounding.${abrev}`), abrev, mult: { cort: 1.5, perf: 2, "pi-": 0.5, "pi+": 1.5, "pi++": 2 }[abrev] ?? 1 }));
+        const mainDamageType = normalizeDamageTypeKey(this.damageData.main?.type);
+        const woundingModifiersList = ["qmd", "cor", "tox", "fat", "cont", "cort", "perf", "pi", "pi-", "pi+", "pi++"].map(abrev => ({ type: this._t(`Wounding.${abrev}`), abrev, displayAbrev: this._woundingAbbreviation(abrev), mult: { cort: 1.5, perf: 2, "pi-": 0.5, "pi+": 1.5, "pi++": 2 }[abrev] ?? 1 }));
         let defaultModFound = false;
         context.woundingModifiers = woundingModifiersList.map(mod => { mod.checked = (mod.abrev === mainDamageType); if (mod.checked) defaultModFound = true; return mod; });
         context.noModChecked = !defaultModFound;
@@ -582,8 +581,8 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             card.addEventListener('click', ev => {
                 form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
                 ev.currentTarget.classList.add('active');
-                const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
-                const damageType = String(newDamage?.type || '').trim().toLowerCase();
+                const newDamage = this.damageData[ev.currentTarget.dataset.damageKey] || this.damageData.main;
+                const damageType = normalizeDamageTypeKey(newDamage?.type);
                 this.damageTypeAbrev = damageType || this.damageTypeAbrev;
                 const applyAsHealCheckbox = form.querySelector('[name="special_apply_as_heal"]');
                 if (damageType) {
@@ -666,7 +665,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                     }
 
                     // 1. Constrói a parte dinâmica da lista
-                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}" data-abrev="${mod.abrev}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.abrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
+                    let htmlContent = newMods.map(mod => `<div class="wounding-row mod-group-${mod.group || 'x'}" data-abrev="${mod.abrev}"><label class="custom-radio"><input type="radio" name="wounding_mod_type" value="${mod.mult}" ${mod.abrev === selectedAbrev ? 'checked' : ''}/><span class="type">${mod.type} (${mod.displayAbrev})</span><span class="dots"></span><span class="mult">x${mod.mult}</span></label></div>`).join('');
 
                     // 2. Adiciona as opções estáticas ("Sem Modificador" e "Outros")
                     htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
@@ -800,14 +799,16 @@ async _updateDamageCalculation(form) {
     const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
     const selectedRowForMod = selectedModRadio?.closest('.wounding-row');
     const damageAbrev = selectedRowForMod?.dataset?.abrev?.toLowerCase() || selectedRowForMod?.querySelector('.type')?.textContent?.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || '';
-    const damageTypeKey = damageAbrev || this.damageTypeAbrev || 'base';
+    const damageTypeKey = normalizeDamageTypeKey(damageAbrev || activeDamage?.type || this.damageTypeAbrev || 'base');
     this.damageTypeAbrev = damageTypeKey;
+    const damageNatureRaw = form.querySelector('[name="damage_nature"]')?.value || activeDamage?.nature || "";
+    const damageNature = damageNatureRaw ? resolveDamageNature(damageNatureRaw) : null;
 
     // Atualiza visualização de RD por local de acordo com o tipo de dano
     form.querySelectorAll('.location-row').forEach(row => {
         const locKey = row.dataset.locationKey;
         if (locKey === 'custom') return;
-        const dynamicDR = this._getDynamicDR(locKey, damageTypeKey);
+        const dynamicDR = this._getDynamicDR(locKey, damageTypeKey, damageNature);
         row.dataset.dr = dynamicDR;
         const drEl = row.querySelector('.dr');
         if (drEl) drEl.textContent = dynamicDR;
@@ -817,11 +818,11 @@ async _updateDamageCalculation(form) {
     const activeRow = form.querySelector('.location-row.active');
     if (activeRow) {
         const locKey = activeRow.dataset.locationKey;
-        selectedLocationDR = this._getDynamicDR(locKey, damageTypeKey);
+        selectedLocationDR = this._getDynamicDR(locKey, damageTypeKey, damageNature);
     }
     let largeAreaDRData = null;
     if (largeAreaInjury) {
-        largeAreaDRData = this._getLargeAreaInjuryDR(form, damageTypeKey);
+        largeAreaDRData = this._getLargeAreaInjuryDR(form, damageTypeKey, damageNature);
         selectedLocationDR = largeAreaDRData.effectiveDR;
         effects.push(`🟠 ${this._f("LargeAreaEffect", { effective: selectedLocationDR, torso: largeAreaDRData.torsoDR, marked: largeAreaDRData.markedDR, location: largeAreaDRData.markedLabel })}`);
     }
@@ -870,7 +871,7 @@ async _updateDamageCalculation(form) {
             } else if (selectedRow?.dataset.woundingKind === 'none') {
                 modName = this._t("WoundingNoneShort");
             } else {
-                modName = selectedRow?.dataset.abrev || 'mod';
+                modName = selectedRow?.dataset.abrev ? this._woundingAbbreviation(selectedRow.dataset.abrev) : 'mod';
             }
         }
     const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
@@ -1603,10 +1604,10 @@ async _onNpcResistanceRoll(effectId) {
         // ... (Seu método _getAdjustedWoundingModifiers, sem alterações)
         const baseMods = [
             [1, "cort", 1.5], [1, "perf", 2], [1, "cont", 1],
-            [2, "qmd", 1], [2, "cor", 1], [2, "tox", 1],
+            [2, "qmd", 1], [2, "cor", 1], [2, "tox", 1], [2, "fat", 1],
             [3, "pi", 1], [3, "pi-", 0.5], [3, "pi+", 1.5], [3, "pi++", 2]
-        ].map(([group, abrev, mult]) => ({ group, type: this._t(`Wounding.${abrev}`), abrev, mult }));
-        if (["head", "eyes"].includes(locationKey)) { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "tox" ? 1 : 4 })); }
+        ].map(([group, abrev, mult]) => ({ group, type: this._t(`Wounding.${abrev}`), abrev, displayAbrev: this._woundingAbbreviation(abrev), mult }));
+        if (["head", "eyes"].includes(locationKey)) { return baseMods.map(mod => ({ ...mod, mult: ["tox", "fat"].includes(mod.abrev) ? 1 : 4 })); }
         if (locationKey === "face") { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "cor" ? 1.5 : mod.mult })); }
         if (["arm", "leg", "hand", "foot"].includes(locationKey)) { return baseMods.map(mod => { if (["perf", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 1 }; return mod; }); }
         if (locationKey === "neck") { return baseMods.map(mod => { if (mod.abrev === "cor" || mod.abrev === "cont") return { ...mod, mult: 1.5 }; if (mod.abrev === "cort") return { ...mod, mult: 2 }; return mod; }); }

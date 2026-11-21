@@ -63,9 +63,27 @@ test("damage application translations cover both languages, including wounding n
   const portuguese = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
   const referenced = new Set([...template.matchAll(/GUM\.DamageApplication\.[A-Za-z0-9.]+/g)].map(match => match[0]));
   for (const match of source.matchAll(/this\._[tf]\("([A-Za-z0-9.]+)"/g)) referenced.add(`GUM.DamageApplication.${match[1]}`);
-  for (const abrev of ["qmd", "cor", "tox", "cont", "cort", "perf", "pi", "pi-", "pi+", "pi++"]) referenced.add(`GUM.DamageApplication.Wounding.${abrev}`);
+  for (const abrev of ["qmd", "cor", "tox", "fat", "cont", "cort", "perf", "pi", "pi-", "pi+", "pi++"]) {
+    referenced.add(`GUM.DamageApplication.Wounding.${abrev}`);
+    referenced.add(`GUM.DamageApplication.WoundingAbbreviation.${abrev}`);
+  }
   for (const key of referenced) {
     assert.ok(english[key], `missing English key ${key}`);
     assert.ok(portuguese[key], `missing Portuguese key ${key}`);
   }
+});
+
+test("visible damage abbreviations follow the active language without changing mechanical keys", () => {
+  const english = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
+  const portuguese = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
+  assert.deepEqual(
+    ["cont", "cort", "perf", "qmd"].map(key => english[`GUM.DamageApplication.WoundingAbbreviation.${key}`]),
+    ["cr", "cut", "imp", "burn"]
+  );
+  assert.deepEqual(
+    ["cont", "cort", "perf", "qmd"].map(key => portuguese[`GUM.DamageApplication.WoundingAbbreviation.${key}`]),
+    ["cont", "cort", "perf", "qmd"]
+  );
+  assert.match(template, /data-abrev="{{this\.abrev}}"[\s\S]+\({{this\.displayAbrev}}\)/);
+  assert.match(source, /this\._woundingAbbreviation\(selectedRow\.dataset\.abrev\)/);
 });

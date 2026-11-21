@@ -23,6 +23,7 @@ import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equip
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
+import { formatDamageResistanceKey, parseDamageResistanceString } from "../utils/damage-types.mjs";
 import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
 import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
 import { buildActorEffectTargets } from "../utils/condition-actor-context.mjs";
@@ -135,6 +136,22 @@ async getData(options) {
         this._combatActionView ??= "actions";
         this._combatAttackFilters ??= new Set();
         this._combatControlFilters ??= new Set();
+        this._equipmentViewState ??= { filter: "all", query: "" };
+        const equipmentFilter = ["all", "equipped", "carried", "stored"].includes(this._equipmentViewState.filter)
+            ? this._equipmentViewState.filter
+            : "all";
+        const equipmentQuery = String(this._equipmentViewState.query || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLocaleLowerCase()
+            .trim();
+        context.equipmentView = {
+            filter: equipmentFilter,
+            query: String(this._equipmentViewState.query || ""),
+            showEquipped: equipmentFilter === "all" || equipmentFilter === "equipped",
+            showCarried: equipmentFilter === "all" || equipmentFilter === "carried",
+            showStored: equipmentFilter === "all" || equipmentFilter === "stored"
+        };
         context.combatActionView = this._combatActionView;
         context.combatAttackFilterAll = this._combatAttackFilters.size === 0;
         context.combatControlFilterAll = this._combatControlFilters.size === 0;
@@ -940,16 +957,30 @@ async getData(options) {
             const physical = system.mode !== "abstract";
             const quantity = Math.max(0, Number(system.quantity) || 0);
             const unitValue = Math.max(0, Number(system.unit_value) || 0);
+            const inventoryLocation = system.stored === true || system.location === "stored"
+                ? "stored"
+                : system.equipped === true || system.location === "equipped"
+                    ? "equipped"
+                    : "carried";
+            const normalizedName = String(item.name || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLocaleLowerCase();
             return {
                 ...data,
                 system: {
                     ...system,
+                    inventoryLocation,
+                    visibleInEquipmentView: (equipmentFilter === "all" || equipmentFilter === inventoryLocation)
+                        && (!equipmentQuery || normalizedName.includes(equipmentQuery)),
                     moneyAvailable: physical ? quantity * unitValue : Math.max(0, Number(system.balance) || 0),
                     moneyPhysical: physical,
                     moneyTotalWeight: physical ? quantity * Math.max(0, Number(system.weight) || 0) : 0
                 }
             };
         });
+        context.showMoneySources = (equipmentFilter === "all" && !equipmentQuery)
+            || context.moneySources.some(source => source.system.visibleInEquipmentView);
         const collapsedContainers = this.actor.getFlag("gum", "collapsed_containers") || {};
 
         const getItemOwnWeight = (item) => {
@@ -1013,6 +1044,12 @@ async getData(options) {
         context.equipmentInUse = allEquipment.filter(i => i.type !== "money_source" && i.system.equipped);
         context.equipmentStored = allEquipment.filter(i => i.type !== "money_source" && i.system.stored);
         context.equipmentCarried = allEquipment.filter(i => i.type !== "money_source" && !i.system.equipped && !i.system.stored);
+        context.equipmentCounts = {
+            all: context.equipmentInUse.length + context.equipmentCarried.length + context.equipmentStored.length + context.moneySources.length,
+            equipped: context.equipmentInUse.length + context.moneySources.filter(source => source.system.inventoryLocation === "equipped").length,
+            carried: context.equipmentCarried.length + context.moneySources.filter(source => source.system.inventoryLocation === "carried").length,
+            stored: context.equipmentStored.length + context.moneySources.filter(source => source.system.inventoryLocation === "stored").length
+        };
 
         // Ordenação das listas (Opcional, usando suas funções existentes)
         const sortingPrefs = this.actor.system.sorting?.equipment || {};
@@ -1478,7 +1515,7 @@ _getSubmitData(updateData) {
             
             // Só mostra se for diferente da base
             if (finalDR !== baseDR) {
-                parts.push(`${finalDR} ${type}`);
+                parts.push(`${finalDR} ${formatDamageResistanceKey(type)}`);
             }
         }
         
@@ -1497,7 +1534,7 @@ _getSubmitData(updateData) {
         if (drObject.base !== null && drObject.base !== undefined) parts.push(String(drObject.base));
         for (const [type, value] of Object.entries(drObject)) {
             if (type === "base" || value === null || value === undefined) continue;
-            parts.push(`${value} ${type}`);
+            parts.push(`${value} ${formatDamageResistanceKey(type)}`);
         }
         return parts.join(", ") || "—";
     }
@@ -1591,7 +1628,7 @@ _getSubmitData(updateData) {
             if (type === "base") continue;
             const finalValue = Math.max(0, base + (Number(mod) || 0));
             if (finalValue === base) continue;
-            extras.push(`${finalValue} ${type}`);
+            extras.push(`${finalValue} ${formatDamageResistanceKey(type)}`);
         }
 
         return extras.join(", ");
@@ -1618,51 +1655,7 @@ _getSubmitData(updateData) {
      * ✅ AGORA COM TRADUÇÃO DE IDIOMA.
      */
     _parseDRStringToObject(drString) {
-        if (typeof drString === 'object' && drString !== null) return drString;
-        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {}; 
-        
-        // O DICIONÁRIO DE TRADUÇÃO
-        const DAMAGE_TYPE_MAP = {
-            "cr": "cont", "cut": "cort", "imp": "perf", "pi": "pa",
-            "pi-": "pa-", "pi+": "pa+", "pi++": "pa++", "burn": "qmd",
-            "corr": "cor", "tox": "tox"
-        };
-
-        const drObject = {};
-        const parts = drString.split(',').map(s => s.trim().toLowerCase());
-        
-        let baseDR = 0; 
-
-        // 1. Primeira passada: Encontra o 'base'
-        for (const part of parts) {
-            const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
-            if (segments.length === 1 && !isNaN(Number(segments[0]))) {
-                baseDR = Number(segments[0]);
-                drObject['base'] = baseDR;
-                break; 
-            }
-        }
-
-        // 2. Segunda passada: Calcula os modificadores
-        for (const part of parts) {
-            const segments = part.split(' ').map(s => s.trim()).filter(Boolean);
-            if (segments.length === 2 && !isNaN(Number(segments[0]))) {
-                let type = segments[1];
-                const value = Number(segments[0]);
-                
-                // ✅ TRADUZ O TIPO
-                type = DAMAGE_TYPE_MAP[type] || type;
-
-                if (baseDR > 0) {
-                    drObject[type] = value - baseDR; 
-                } 
-                else {
-                    drObject[type] = value; 
-                }
-            }
-        }
-  
-        return drObject;
+        return parseDamageResistanceString(drString);
     }
 
     _normalizeResourceEntry(entry = {}, { defaultName = "Registro", includeDR = false } = {}) {
@@ -2793,6 +2786,110 @@ html.find(".toggle-default-mods").on("change", async (ev) => {
 });
 
 this._tabSearchState ??= { spells: "", powers: "", modifiers: "" };
+this._equipmentViewState ??= { filter: "all", query: "" };
+
+const equipmentTab = html.find('.tab[data-tab="equipment"]');
+const normalizeEquipmentSearch = value => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLocaleLowerCase();
+
+const applyEquipmentBrowser = () => {
+  if (!equipmentTab.length) return;
+  const filter = ["all", "equipped", "carried", "stored"].includes(this._equipmentViewState.filter)
+    ? this._equipmentViewState.filter
+    : "all";
+  const term = normalizeEquipmentSearch(this._equipmentViewState.query).trim();
+  const hasQuery = term.length > 0;
+  let visibleMatches = 0;
+
+  const moneyPanel = equipmentTab.find(".money-sources-panel")[0];
+  if (moneyPanel) {
+    let visibleMoneySources = 0;
+    const moneyCards = [...moneyPanel.querySelectorAll(".money-source-card[data-money-location]")];
+    for (const card of moneyCards) {
+      const locationMatches = filter === "all" || card.dataset.moneyLocation === filter;
+      const name = normalizeEquipmentSearch(card.querySelector(".money-source-card__name")?.textContent);
+      const queryMatches = !hasQuery || name.includes(term);
+      const visible = locationMatches && queryMatches;
+      card.hidden = !visible;
+      if (visible) visibleMoneySources += 1;
+    }
+    moneyPanel.hidden = filter === "all" && !hasQuery ? false : visibleMoneySources === 0;
+    if (hasQuery) visibleMatches += visibleMoneySources;
+  }
+
+  equipmentTab.find(".equipment-column[data-equipment-region]").each((_index, region) => {
+    const regionVisible = filter === "all" || region.dataset.equipmentRegion === filter;
+    region.hidden = !regionVisible;
+    region.dataset.searchActive = String(hasQuery);
+    if (!regionVisible) return;
+
+    const looseCards = [...region.querySelectorAll(".equipment-card")]
+      .filter(card => !card.closest(".container-section"));
+    for (const card of looseCards) {
+      const name = normalizeEquipmentSearch(card.querySelector(".item-name")?.textContent);
+      const matches = !hasQuery || name.includes(term);
+      card.hidden = !matches;
+      if (matches && hasQuery) visibleMatches += 1;
+    }
+
+    for (const section of region.querySelectorAll(".container-section")) {
+      const containerName = normalizeEquipmentSearch(section.querySelector(".container-title")?.textContent);
+      const containerMatches = !hasQuery || containerName.includes(term);
+      let matchingChildren = 0;
+      const children = [...section.querySelectorAll(".equipment-card")];
+      for (const card of children) {
+        const childName = normalizeEquipmentSearch(card.querySelector(".item-name")?.textContent);
+        const matches = !hasQuery || containerMatches || childName.includes(term);
+        card.hidden = !matches;
+        if (matches && hasQuery) matchingChildren += 1;
+      }
+
+      const sectionMatches = !hasQuery || containerMatches || matchingChildren > 0;
+      section.hidden = !sectionMatches;
+      section.querySelector(".container-children-list")?.classList.toggle("is-searching", hasQuery && matchingChildren > 0);
+      if (sectionMatches && hasQuery) visibleMatches += 1;
+    }
+
+  });
+
+  equipmentTab.find(".equipment-filter-button").each((_index, button) => {
+    const active = button.dataset.equipmentFilter === filter;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  equipmentTab.find(".equipment-columns").toggleClass("is-filtered", filter !== "all");
+  equipmentTab.find(".equipment-search-clear").prop("hidden", !hasQuery);
+  equipmentTab.find(".equipment-search-empty").prop("hidden", !hasQuery || visibleMatches > 0);
+};
+
+equipmentTab.on("click", ".equipment-filter-button", (ev) => {
+  ev.preventDefault();
+  this._equipmentViewState.filter = ev.currentTarget.dataset.equipmentFilter || "all";
+  if (this._equipmentViewState.filter !== "all") {
+    const selectedRegion = equipmentTab.find(`[data-equipment-region="${this._equipmentViewState.filter}"]`)[0];
+    if (selectedRegion && !selectedRegion.open) selectedRegion.open = true;
+  }
+  applyEquipmentBrowser();
+});
+
+equipmentTab.on("input", ".equipment-search-input", (ev) => {
+  this._equipmentViewState.query = ev.currentTarget.value || "";
+  applyEquipmentBrowser();
+});
+
+equipmentTab.on("click", ".equipment-search-clear", (ev) => {
+  ev.preventDefault();
+  this._equipmentViewState.query = "";
+  const input = equipmentTab.find(".equipment-search-input");
+  input.val("").trigger("focus");
+  applyEquipmentBrowser();
+});
+
+const equipmentSearchInput = equipmentTab.find(".equipment-search-input");
+equipmentSearchInput.val(this._equipmentViewState.query || "");
+applyEquipmentBrowser();
 
 const applyModifierSearch = (rawTerm = "") => {
   const term = String(rawTerm).toLowerCase().trim();
@@ -5845,7 +5942,20 @@ const dlg = new Dialog({
           newDrMods[loc] = this._parseDRStringToObject(drString);
         }
 
-        await actor.update({ "system.combat.dr_mods": newDrMods });
+        const drModsUpdate = { "system.combat.dr_mods": newDrMods };
+        const previousDrMods = actor.system.combat.dr_mods || {};
+        for (const [location, previousLocation] of Object.entries(previousDrMods)) {
+          if (!(location in newDrMods)) {
+            drModsUpdate[`system.combat.dr_mods.-=${location}`] = null;
+            continue;
+          }
+          const nextLocation = newDrMods[location];
+          if (!previousLocation || typeof previousLocation !== "object" || !nextLocation || typeof nextLocation !== "object") continue;
+          for (const damageType of Object.keys(previousLocation)) {
+            if (!(damageType in nextLocation)) drModsUpdate[`system.combat.dr_mods.${location}.-=${damageType}`] = null;
+          }
+        }
+        await actor.update(drModsUpdate);
       }
     },
     cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Combat.DR.Cancel") }

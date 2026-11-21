@@ -8,6 +8,7 @@ import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, previewComp
 import { GUM_ITEM_BUNDLE_VERSION, parseItemBundle, prepareItemBundle, previewItemBundleSynchronization, stableBundleDocumentId } from "../utils/item-bundle-json.mjs";
 import { itemNameIdentities, itemNameIdentity, normalizeItemAliases, normalizeItemName } from "../utils/item-name-aliases.mjs";
 import { HYBRID_IMPORT_SCOPE_SETTING, hybridImportScopeCapabilities, normalizeHybridImportScope } from "../utils/hybrid-import-policy.mjs";
+import { normalizeDamageResistanceObject } from "../utils/damage-types.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -1092,9 +1093,9 @@ function getGCSFeatureAmount(feature, owner = null) {
 }
 
 function getGCSDrKey(specialization) {
-    const spec = String(specialization || "").trim().toLowerCase();
+    const spec = cleanGCSDamageTypeLabel(specialization).toLowerCase();
     if (!spec || spec === GCS_ALL_DR_KEY) return "base";
-    return GCS_DAMAGE_TYPE_MAP[spec] || spec;
+    return spec;
 }
 
 function addGCSDrBonusToLocations(target, locations, amount, specialization = "", profileId = "humanoid") {
@@ -1202,8 +1203,8 @@ function subtractGCSDrObjects(totalDR, armorDR) {
     ]);
 
     for (const locationKey of locationKeys) {
-        const totalLocationDR = totalDR?.[locationKey] || {};
-        const armorLocationDR = armorDR?.[locationKey] || {};
+        const totalLocationDR = normalizeDamageResistanceObject(totalDR?.[locationKey] || {});
+        const armorLocationDR = normalizeDamageResistanceObject(armorDR?.[locationKey] || {});
         const drKeys = new Set([
             ...Object.keys(totalLocationDR),
             ...Object.keys(armorLocationDR)
@@ -1260,31 +1261,9 @@ function collectImportedGCSNativeDR(gcsData, profileId = "humanoid") {
 }
 
 
-const GCS_DAMAGE_TYPE_MAP = {
-    // PT-BR (GCS) -> PT-BR (Sistema)
-    "cont": "cont",
-    "corte": "cort",
-    "cort": "cort",
-    "perf": "perf",
-    "pa": "pa",
-    "pa-": "pa-",
-    "pa+": "pa+",
-    "pa++": "pa++",
-    "qmd": "qmd",
-    "cor": "cor",
-    "tox": "tox",
-    // EN (GCS) -> PT-BR (Sistema)
-    "cr": "cont",
-    "cut": "cort",
-    "imp": "perf",
-    "pi": "pa",
-    "pi-": "pa-",
-    "pi+": "pa+",
-    "pi++": "pa++",
-    "burn": "qmd",
-    "corr": "cor",
-    "tox": "tox"
-};
+// Retained as a compatibility boundary for tooling that extracts this importer block.
+// Mechanical normalization is handled by damage-types.mjs; source labels remain unchanged.
+const GCS_DAMAGE_TYPE_MAP = Object.freeze({});
 
 // =============================================================
 // FUNÇÕES "TRADUTORAS" DE BIBLIOTECA
@@ -2822,6 +2801,13 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
 
 
 
+function cleanGCSDamageTypeLabel(value) {
+    return String(value ?? "")
+        .trim()
+        .replace(/\b(pi|pa)\s*([+-])\s*([+]?)/gi, (_match, base, sign, second) => `${base}${sign}${second}`)
+        .replace(/\s+/g, " ");
+}
+
 function normalizeGCSDamageFormula(value) {
     return String(value || "")
         .trim()
@@ -2833,39 +2819,25 @@ function normalizeGCSDamageFormula(value) {
 function extractGCSDamageScaling(value) {
     const raw = String(value || "");
     if (!raw.trim()) return { cleaned: "", scaling: "" };
-
     const scalingPattern = /([+\-]\s*(?:(?:\d+)?d(?:\d+)?|\d+)(?:[+\-]\d+)?\s*(?:\/\s*[\p{L}_-]+|\b(?:per|por)\s+[\p{L}_-]+))/iu;
     const match = raw.match(scalingPattern);
     if (!match) return { cleaned: raw.trim(), scaling: "" };
-
     return {
         cleaned: raw.replace(match[0], "").replace(/\s{2,}/g, " ").trim(),
         scaling: normalizeGCSDamageFormula(match[1].replace(/\s*\/\s*/g, "/").replace(/\s+/g, " ").trim())
     };
 }
 
-
 function parseGCSDamageType(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-
-    const baseType = raw
-        .split("+")[0]
-        .split("/")[0]
-        .trim();
-
-    return GCS_DAMAGE_TYPE_MAP[baseType.toLowerCase()] || baseType;
+    return cleanGCSDamageTypeLabel(value);
 }
-
 
 function parseGCSDamageParts(damage = {}) {
     const baseScaling = extractGCSDamageScaling(damage.base);
     const typeScaling = extractGCSDamageScaling(damage.type);
-
     let formula = baseScaling.cleaned;
     let type = parseGCSDamageType(typeScaling.cleaned);
     const scaling = baseScaling.scaling || typeScaling.scaling;
-
     if (!type && formula) {
         const combinedMatch = formula.match(/^([+\-]?(?:\d+)?d(?:\d+)?(?:[+\-]\d+)?|[+\-]?\d+)\s+(.+)$/i);
         if (combinedMatch) {
@@ -2873,7 +2845,6 @@ function parseGCSDamageParts(damage = {}) {
             type = parseGCSDamageType(combinedMatch[2]);
         }
     }
-
     return { formula, type, scaling };
 }
 

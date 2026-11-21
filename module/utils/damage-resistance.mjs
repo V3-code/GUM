@@ -1,3 +1,5 @@
+import { expandDamageTypeKeys } from "./damage-types.mjs";
+
 const number = (value) => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
@@ -10,9 +12,16 @@ export const mergeDamageResistance = (target, source) => {
     return target;
   }
 
+  const collapsed = new Map();
   for (const [type, value] of Object.entries(source)) {
-    target[type] = number(target[type]) + number(value);
+    for (const normalizedType of expandDamageTypeKeys(type)) {
+      const isCanonical = type === normalizedType;
+      const previous = collapsed.get(normalizedType);
+      if (previous?.isCanonical && !isCanonical) continue;
+      collapsed.set(normalizedType, { value: number(value), isCanonical });
+    }
   }
+  for (const [type, entry] of collapsed) target[type] = number(target[type]) + entry.value;
   return target;
 };
 
@@ -31,7 +40,9 @@ export const calculateDamageResistance = ({ armor, mod, temp, passive, override 
       if (type === "base" || value === null || value === undefined) continue;
       // Type overrides are absolute effective DR values. dr_locations stores
       // type entries as deltas from base for backwards compatibility.
-      final[type] = Math.max(0, number(value)) - finalBase;
+      for (const normalizedType of expandDamageTypeKeys(type)) {
+        final[normalizedType] = Math.max(0, number(value)) - finalBase;
+      }
     }
   }
 

@@ -25,7 +25,8 @@ export const DAMAGE_RESISTANCE_TYPES = Object.freeze([
   { id: "cort", label: localize("GUM.DamageType.cut", "Corte") }, { id: "perf", label: localize("GUM.DamageType.imp", "Perfuração") },
   { id: "pi", label: localize("GUM.DamageType.pi", "Perfurante") }, { id: "pi-", label: localize("GUM.DamageType.piMinus", "Pouco perfurante") },
   { id: "pi+", label: localize("GUM.DamageType.piPlus", "Muito perfurante") }, { id: "pi++", label: localize("GUM.DamageType.piPlusPlus", "Extremamente perfurante") },
-  { id: "qmd", label: localize("GUM.DamageType.burn", "Queimadura") }, { id: "cor", label: localize("GUM.DamageType.cor", "Corrosão") }, { id: "tox", label: localize("GUM.DamageType.tox", "Toxina") }
+  { id: "qmd", label: localize("GUM.DamageType.burn", "Queimadura") }, { id: "cor", label: localize("GUM.DamageType.cor", "Corrosão") }, { id: "tox", label: localize("GUM.DamageType.tox", "Toxina") },
+  { id: "fat", label: localize("GUM.DamageType.fat", "Fadiga") }
 ]);
 
 export function buildAttributeEffectPathOptions() {

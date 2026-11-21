@@ -1258,20 +1258,43 @@
 
 </div>
 
-<details class="money-sources-panel gum-details gum-unified-section" data-section="money_sources" {{#unless actor.flags.gum.sheet_settings.money_sources_closed}}open{{/unless}}>
+<section class="equipment-browser" aria-label="{{localize 'GUM.Inventory.BrowserLabel'}}">
+  <div class="equipment-filter-list" role="group" aria-label="{{localize 'GUM.Inventory.FilterLabel'}}">
+    <button type="button" class="equipment-filter-button {{#if (eq equipmentView.filter "all")}}is-active{{/if}}" data-equipment-filter="all" aria-pressed="{{#if (eq equipmentView.filter "all")}}true{{else}}false{{/if}}">
+      <span>{{localize "GUM.Inventory.All"}}</span><strong>{{equipmentCounts.all}}</strong>
+    </button>
+    <button type="button" class="equipment-filter-button {{#if (eq equipmentView.filter "equipped")}}is-active{{/if}}" data-equipment-filter="equipped" aria-pressed="{{#if (eq equipmentView.filter "equipped")}}true{{else}}false{{/if}}">
+      <span>{{localize "GUM.Inventory.InUse"}}</span><strong>{{equipmentCounts.equipped}}</strong>
+    </button>
+    <button type="button" class="equipment-filter-button {{#if (eq equipmentView.filter "carried")}}is-active{{/if}}" data-equipment-filter="carried" aria-pressed="{{#if (eq equipmentView.filter "carried")}}true{{else}}false{{/if}}">
+      <span>{{localize "GUM.Inventory.Carried"}}</span><strong>{{equipmentCounts.carried}}</strong>
+    </button>
+    <button type="button" class="equipment-filter-button {{#if (eq equipmentView.filter "stored")}}is-active{{/if}}" data-equipment-filter="stored" aria-pressed="{{#if (eq equipmentView.filter "stored")}}true{{else}}false{{/if}}">
+      <span>{{localize "GUM.Inventory.Stored"}}</span><strong>{{equipmentCounts.stored}}</strong>
+    </button>
+  </div>
+  <div class="equipment-search-field">
+    <i class="fas fa-search" aria-hidden="true"></i>
+    <input type="search" class="equipment-search-input" value="{{equipmentView.query}}" placeholder="{{localize 'GUM.Inventory.SearchPlaceholder'}}" aria-label="{{localize 'GUM.Inventory.SearchPlaceholder'}}" autocomplete="off" spellcheck="false"/>
+    <button type="button" class="equipment-search-clear" title="{{localize 'GUM.Common.ClearSearch'}}" aria-label="{{localize 'GUM.Common.ClearSearch'}}" {{#unless equipmentView.query}}hidden{{/unless}}><i class="fas fa-times" aria-hidden="true"></i></button>
+  </div>
+</section>
+<div class="equipment-search-empty" hidden><i class="fas fa-search" aria-hidden="true"></i> {{localize "GUM.Inventory.NoSearchResults"}}</div>
+
+<details class="money-sources-panel gum-details gum-unified-section" data-section="money_sources" {{#unless showMoneySources}}hidden{{/unless}} {{#unless actor.flags.gum.sheet_settings.money_sources_closed}}open{{/unless}}>
   <summary class="money-sources-panel__header">
     <span class="money-sources-panel__label"><i class="fas fa-chevron-right money-sources-panel__toggle" aria-hidden="true"></i><i class="fas fa-coins" aria-hidden="true"></i> {{localize "GUM.MoneySource.Cards"}}</span>
     <a class="item-control money-source-create" title="{{localize 'GUM.MoneySource.Create'}}" aria-label="{{localize 'GUM.MoneySource.Create'}}"><i class="fas fa-plus"></i></a>
   </summary>
   <div class="money-sources-panel__cards">
     {{#each moneySources}}
-      <article class="item money-source-card" data-item-id="{{this._id}}" title="{{this.name}}">
+      <article class="item money-source-card" data-item-id="{{this._id}}" data-money-location="{{this.system.inventoryLocation}}" title="{{this.name}}" {{#unless this.system.visibleInEquipmentView}}hidden{{/unless}}>
         <img src="{{this.img}}" class="money-source-card__icon"/>
         <div class="money-source-card__body">
           <div class="money-source-card__title-row">
             <a class="item-quick-view money-source-card__name">{{this.name}}</a>
           </div>
-          <div class="money-source-card__meta"><span>{{#if this.system.moneyPhysical}}{{localize "GUM.MoneySource.Physical"}}{{else}}{{localize "GUM.MoneySource.Abstract"}}{{/if}}</span>{{#if this.system.category}} · {{this.system.category}}{{/if}}{{#if this.system.moneyPhysical}} · ×{{this.system.quantity}} · {{this.system.moneyTotalWeight}} kg{{/if}} · <span title="{{localize 'GUM.MoneySource.Location'}}">{{#if (eq this.system.location "equipped")}}<i class="fas fa-tshirt"></i>{{else if (eq this.system.location "stored")}}<i class="fas fa-box"></i>{{else}}<i class="fas fa-backpack"></i>{{/if}}</span></div>
+          <div class="money-source-card__meta"><span>{{#if this.system.moneyPhysical}}{{localize "GUM.MoneySource.Physical"}}{{else}}{{localize "GUM.MoneySource.Abstract"}}{{/if}}</span>{{#if this.system.category}} · {{this.system.category}}{{/if}}{{#if this.system.moneyPhysical}} · ×{{this.system.quantity}} · {{this.system.moneyTotalWeight}} kg{{/if}} · <span title="{{localize 'GUM.MoneySource.Location'}}">{{#if (eq this.system.inventoryLocation "equipped")}}<i class="fas fa-tshirt"></i>{{else if (eq this.system.inventoryLocation "stored")}}<i class="fas fa-box"></i>{{else}}<i class="fas fa-backpack"></i>{{/if}}</span></div>
         </div>
         <strong class="money-source-card__value">{{this.system.moneyAvailable}}</strong>
         <div class="item-controls money-source-card__controls">
@@ -1294,7 +1317,7 @@
     <div class="equipment-columns">
 
 {{!-- 1. EM USO (Equipped) --}}
-<details class="gum-details equipment-column gum-unified-section" data-section="equip_equipped" {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_equipped" data-equipment-region="equipped" {{#unless equipmentView.showEquipped}}hidden{{/unless}} {{#unless actor.flags.gum.sheet_settings.equip_equipped_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">{{localize "GUM.Inventory.InUse"}}</h4>
@@ -1369,7 +1392,6 @@
                 </div>
             </div>
             <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone {{#if this.container.system.is_container_collapsed}}is-collapsed{{/if}}" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
-                {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
                 <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
@@ -1398,7 +1420,6 @@
                 {{#unless this.children.length}}
                 <li class="container-empty-state"><i class="fas fa-arrow-down"></i> {{localize "GUM.Inventory.EmptyContainer"}}</li>
                 {{/unless}}
-                {{/unless}}
             </ol>
         </div>
         {{/each}}
@@ -1407,7 +1428,7 @@
 </details>
 
 {{!-- 2. CARREGADO (Mochila) --}}
-<details class="gum-details equipment-column gum-unified-section" data-section="equip_carried" {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_carried" data-equipment-region="carried" {{#unless equipmentView.showCarried}}hidden{{/unless}} {{#unless actor.flags.gum.sheet_settings.equip_carried_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">{{localize "GUM.Inventory.Carried"}}</h4>
@@ -1481,7 +1502,6 @@
                 </div>
             </div>
             <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone {{#if this.container.system.is_container_collapsed}}is-collapsed{{/if}}" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
-                {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
                 <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
@@ -1509,7 +1529,6 @@
                 {{#unless this.children.length}}
                 <li class="container-empty-state"><i class="fas fa-arrow-down"></i> {{localize "GUM.Inventory.EmptyContainer"}}</li>
                 {{/unless}}
-                {{/unless}}
             </ol>
         </div>
         {{/each}}
@@ -1518,7 +1537,7 @@
 </details>
 
 {{!-- 3. ARMAZENADO (Banco/Casa) --}}
-<details class="gum-details equipment-column gum-unified-section" data-section="equip_stored" {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
+<details class="gum-details equipment-column gum-unified-section" data-section="equip_stored" data-equipment-region="stored" {{#unless equipmentView.showStored}}hidden{{/unless}} {{#unless actor.flags.gum.sheet_settings.equip_stored_closed}}open{{/unless}}>
     <summary class="list-header gum-unified-header">
         <i class="fas fa-chevron-right toggle-icon"></i>
         <h4 class="header-title">{{localize "GUM.Inventory.Stored"}}</h4>
@@ -1590,7 +1609,6 @@
                 </div>
             </div>
             <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone {{#if this.container.system.is_container_collapsed}}is-collapsed{{/if}}" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
-                {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
                 <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
@@ -1617,7 +1635,6 @@
                 {{/each}}
                 {{#unless this.children.length}}
                 <li class="container-empty-state"><i class="fas fa-arrow-down"></i> {{localize "GUM.Inventory.EmptyContainer"}}</li>
-                {{/unless}}
                 {{/unless}}
             </ol>
         </div>

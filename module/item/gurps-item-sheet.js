@@ -13,6 +13,7 @@ import { ammunitionLinkCandidates } from "../utils/ammunition.mjs";
 import { collectMagicConsumptionSources, normalizeMagicConsumptionGroups } from "../utils/magic-consumption.mjs";
 import { canonicalSkillLinkTargetPath, collectSkillLinkCandidates, normalizeSkillLinkSearch } from "../utils/skill-link.mjs";
 import { HYBRID_ALIAS_ITEM_TYPES, normalizeItemAliases, normalizeItemName } from "../utils/item-name-aliases.mjs";
+import { formatDamageResistanceKey, parseDamageResistanceString } from "../utils/damage-types.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -2869,7 +2870,7 @@ const rangedFields = `
  
             const finalDR = Math.max(0, baseDR + (mod || 0)); 
             if (finalDR !== baseDR) { 
-                parts.push(`${finalDR} ${type}`); 
+                parts.push(`${finalDR} ${formatDamageResistanceKey(type)}`);
             } 
         } 
  
@@ -2883,46 +2884,7 @@ const rangedFields = `
     } 
  
     _parseDRStringToObject(drString) { 
-        if (typeof drString === 'object' && drString !== null) return drString; 
-        if (!drString || typeof drString !== 'string' || drString.trim() === "") return {}; 
- 
-        const DAMAGE_TYPE_MAP = { 
-            "cr": "cont", "cut": "cort", "imp": "perf", "pi": "pa", 
-            "pi-": "pa-", "pi+": "pa+", "pi++": "pa++", "burn": "qmd", 
-            "corr": "cor", "tox": "tox" 
-        }; 
- 
-        const drObject = {}; 
-        const parts = drString.split(',').map(s => s.trim().toLowerCase()); 
- 
-        let baseDR = 0; 
- 
-        for (const part of parts) { 
-            const segments = part.split(' ').map(s => s.trim()).filter(Boolean); 
-            if (segments.length === 1 && !isNaN(Number(segments[0]))) { 
-                baseDR = Number(segments[0]); 
-                drObject['base'] = baseDR; 
-                break; 
-            } 
-        } 
- 
-        for (const part of parts) { 
-            const segments = part.split(' ').map(s => s.trim()).filter(Boolean); 
-            if (segments.length === 2 && !isNaN(Number(segments[0]))) { 
-                let type = segments[1]; 
-                const value = Number(segments[0]); 
- 
-                type = DAMAGE_TYPE_MAP[type] || type; 
- 
-                if (baseDR > 0) { 
-                    drObject[type] = value - baseDR; 
-                } else { 
-                    drObject[type] = value; 
-                } 
-            } 
-        } 
- 
-        return drObject; 
+        return parseDamageResistanceString(drString);
     } 
  
     _hasVisibleDR(drObject) { 
@@ -2974,6 +2936,13 @@ const rangedFields = `
         for (const key of Object.keys(existing)) { 
             if (!(key in drLocations)) { 
                 update[`system.dr_locations.-=${key}`] = null; 
+                continue;
+            }
+            const previousLocation = existing[key];
+            const nextLocation = drLocations[key];
+            if (!previousLocation || typeof previousLocation !== "object" || !nextLocation || typeof nextLocation !== "object") continue;
+            for (const damageType of Object.keys(previousLocation)) {
+                if (!(damageType in nextLocation)) update[`system.dr_locations.${key}.-=${damageType}`] = null;
             } 
         } 
  
