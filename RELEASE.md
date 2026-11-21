@@ -60,6 +60,8 @@ unzip -p gum.zip system.json | python -m json.tool | grep '"version"'
 
 - Testar instalação limpa por Manifest URL;
 - Testar atualização de uma versão anterior;
+- Atualizar no `README.md` o badge, a tabela de compatibilidade e o link direto da versão publicada;
+- Confirmar que `CHANGELOG.md`, documentação bilíngue afetada e notas da release descrevem o comportamento atual;
 - Registrar bugs conhecidos nas issues.
 
 ## 5) Convenção de versão (SemVer)

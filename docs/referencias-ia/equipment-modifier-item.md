@@ -288,7 +288,7 @@ Adds descriptive metadata without replacing the main description.
 ```
 
 - `location`: `all` or a real ID from the active body-location profile.
-- `damage_type`: `base` or a campaign damage-type key.
+- `damage_type`: `base` or a campaign damage-type key. The resolver accepts the mechanical keys `cont`, `cort`, `perf`, `pi-`, `pi`, `pi+`, `pi++`, `qmd`, `cor`, `tox`, and `fat`, plus equivalent Portuguese and English aliases; imported content may preserve its source alias.
 - `operation`: `add`, `multiply`, or `set`.
 - `value`: number; `per_level` is supported.
 

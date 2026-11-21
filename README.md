@@ -6,7 +6,7 @@
 
 Uma ferramenta não oficial para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.6.3-beta-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.6.31-beta-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-13–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
@@ -21,14 +21,15 @@ No Foundry VTT, acesse **Game Systems → Install System**, cole a URL abaixo no
 https://raw.githubusercontent.com/V3-code/GUM/master/system.json
 ```
 
-As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote na página de [releases](https://github.com/V3-code/GUM/releases/latest).
+As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote da [versão v1.6.31-beta](https://github.com/V3-code/GUM/releases/tag/v1.6.31-beta).
 
 ## O que o GUM oferece
 
 - **Ficha completa:** atributos, perícias, vantagens, desvantagens, equipamentos, magias, poderes, recursos e cálculos derivados.
-- **Integração com o GCS:** importação de personagens, templates e bibliotecas, além de ferramentas de importação e exportação em JSON.
+- **Integração com o GCS:** importação de personagens, templates e bibliotecas, preservando nomes e siglas de tipos de dano em português ou inglês sem perder sua equivalência mecânica.
 - **Fontes de conteúdo configuráveis:** cada mesa cria seus próprios compêndios e escolhe quais serão usados pelo sistema; os status do token são configurados diretamente nas opções do mundo.
-- **Combate assistido:** aplicação de dano, ferimentos, condições, efeitos, modificadores e gerenciamento de estados.
+- **Combate assistido:** aplicação de dano com RD sensível ao tipo, ferimentos, condições, efeitos, modificadores e gerenciamento de estados.
+- **Inventário organizado:** filtros por região, busca de equipamentos e contêineres, fontes monetárias integradas e movimentação por arrastar e soltar.
 - **Modificadores de equipamento:** o cálculo centralizado de preço e peso, suas etapas e a evolução planejada estão documentados em [`docs/equipment-modifiers.md`](docs/equipment-modifiers.md).
 - **Ferramentas para o mestre:** Escudo do Mestre, solicitação de testes e navegadores de regras e conteúdos.
 
@@ -60,7 +61,7 @@ https://github.com/V3-code/GUM-Animations/releases/latest/download/module.json
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.6.3-beta |
+| Versão do GUM | 1.6.31-beta |
 | Foundry VTT mínimo | 13 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil) e inglês |

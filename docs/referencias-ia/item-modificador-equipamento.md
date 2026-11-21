@@ -288,7 +288,7 @@ Acrescenta metadado descritivo sem substituir a descrição principal.
 ```
 
 - `location`: `all` ou um ID real do perfil de localizações corporais.
-- `damage_type`: `base` ou uma chave de tipo de dano usada pela campanha.
+- `damage_type`: `base` ou uma chave de tipo de dano usada pela campanha. O resolvedor aceita as chaves mecânicas `cont`, `cort`, `perf`, `pi-`, `pi`, `pi+`, `pi++`, `qmd`, `cor`, `tox` e `fat`, além de aliases equivalentes em português e inglês; conteúdo importado pode preservar o alias original.
 - `operation`: `add`, `multiply` ou `set`.
 - `value`: número; `per_level` é suportado.
 

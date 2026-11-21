@@ -285,19 +285,22 @@ In `quantity` mode, each use reduces `quantity`. In `charges` mode, remaining ch
 
 Critical rule: `base` is absolute DR, but each damage-type key stores a **modifier relative to base**. In the example, the torso displays DR 7 against cutting and DR 4 against impaling.
 
-The sheet accepts text such as `5, 7 cut, 4 imp` and persists `{ "base": 5, "cort": 2, "perf": -1 }`.
+The sheet accepts text such as `5, 7 cort, 4 perf` and persists `{ "base": 5, "cort": 2, "perf": -1 }`. If the input uses `5, 7 cut, 4 imp`, the `cut` and `imp` keys are preserved; mechanical resolution still treats them as cutting and impaling.
 
-Aliases translated by the editor include:
+GCS imports also preserve source spelling. DR resolution, damage application, and comparisons recognize these equivalences:
 
-| Input | Persisted key |
+| Mechanical type | Common equivalent inputs |
 | --- | --- |
-| `cr` | `cont` |
-| `cut` | `cort` |
-| `imp` | `perf` |
-| `pi`, `pi-`, `pi+`, `pi++` | `pa`, `pa-`, `pa+`, `pa++` |
-| `burn` | `qmd` |
-| `corr` | `cor` |
-| `tox` | `tox` |
+| `cont` | `cont`, `contusão`, `cr`, `crush`, `crushing`, `crusing` |
+| `cort` | `cort`, `corte`, `cut`, `cutting` |
+| `perf` | `perf`, `perfuração`, `imp`, `impaling` |
+| `pi-`, `pi`, `pi+`, `pi++` | `pi` and `pa` variants; `small`, `large`, or `huge piercing` |
+| `qmd` | `qmd`, `queimadura`, `burn`, `burning`, `cold`, `freezing` |
+| `cor` | `cor`, `corr`, `corrosão`, `corrosion` |
+| `tox` | `tox`, `toxina`, `toxic` |
+| `fat` | `fat`, `fad`, `fadiga`, `fatigue` |
+
+New content may prefer the mechanical keys in the first column for consistency, but it should not rewrite valid aliases merely for presentation.
 
 Location IDs depend on the world's body profile. Do not assume `torso` exists; verify it or use `all` only when universal coverage is intended.
 

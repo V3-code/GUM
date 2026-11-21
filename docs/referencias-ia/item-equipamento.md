@@ -285,19 +285,22 @@ Em modo `quantity`, cada uso reduz `quantity`. Em modo `charges`, cargas restant
 
 Regra crucial: `base` é DR absoluta, mas cada chave de tipo de dano guarda um **modificador relativo à base**. No exemplo, o torso exibe DR 7 contra corte e DR 4 contra perfuração.
 
-A ficha aceita texto como `5, 7 cort, 4 perf` e persiste `{ "base": 5, "cort": 2, "perf": -1 }`.
+A ficha aceita texto como `5, 7 cort, 4 perf` e persiste `{ "base": 5, "cort": 2, "perf": -1 }`. Se a entrada usar `5, 7 cut, 4 imp`, as chaves `cut` e `imp` são preservadas; a resolução mecânica continua tratando-as como corte e perfuração.
 
-Aliases traduzidos pelo editor incluem:
+Importações do GCS também preservam a grafia original. Para resolver RD, aplicação de dano e comparações, o sistema reconhece as seguintes equivalências:
 
-| Entrada | Chave persistida |
+| Tipo mecânico | Entradas equivalentes comuns |
 | --- | --- |
-| `cr` | `cont` |
-| `cut` | `cort` |
-| `imp` | `perf` |
-| `pi`, `pi-`, `pi+`, `pi++` | `pa`, `pa-`, `pa+`, `pa++` |
-| `burn` | `qmd` |
-| `corr` | `cor` |
-| `tox` | `tox` |
+| `cont` | `cont`, `contusão`, `cr`, `crush`, `crushing`, `crusing` |
+| `cort` | `cort`, `corte`, `cut`, `cutting` |
+| `perf` | `perf`, `perfuração`, `imp`, `impaling` |
+| `pi-`, `pi`, `pi+`, `pi++` | variantes `pi` e `pa`; `small`, `large` ou `huge piercing` |
+| `qmd` | `qmd`, `queimadura`, `burn`, `burning`, `cold`, `freezing` |
+| `cor` | `cor`, `corr`, `corrosão`, `corrosion` |
+| `tox` | `tox`, `toxina`, `toxic` |
+| `fat` | `fat`, `fad`, `fadiga`, `fatigue` |
+
+Conteúdo novo pode preferir as chaves mecânicas da primeira coluna para uniformidade, mas não deve reescrever aliases válidos apenas por apresentação.
 
 IDs de localização dependem do perfil corporal do mundo. Não presuma que `torso` exista; confirme-o ou use `all` quando essa for realmente a intenção.
 
