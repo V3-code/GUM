@@ -6,7 +6,7 @@
 
 Uma ferramenta não oficial para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.6.31-beta-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.6.32-beta-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-13–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
@@ -21,7 +21,7 @@ No Foundry VTT, acesse **Game Systems → Install System**, cole a URL abaixo no
 https://raw.githubusercontent.com/V3-code/GUM/master/system.json
 ```
 
-As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote da [versão v1.6.31-beta](https://github.com/V3-code/GUM/releases/tag/v1.6.31-beta).
+As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote da [versão v1.6.32-beta](https://github.com/V3-code/GUM/releases/tag/v1.6.32-beta).
 
 ## O que o GUM oferece
 
@@ -61,7 +61,7 @@ https://github.com/V3-code/GUM-Animations/releases/latest/download/module.json
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.6.31-beta |
+| Versão do GUM | 1.6.32-beta |
 | Foundry VTT mínimo | 13 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil) e inglês |

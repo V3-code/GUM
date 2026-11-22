@@ -4,6 +4,14 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.6.32-beta] - 2026-11-22
+
+### Fixed
+
+- A aplicação de dano agora é restrita a Mestres e Auxiliares de Mestre, com validação tanto no card de chat quanto no momento da alteração do alvo.
+- Jogadores não veem mais o controle de aplicação de dano nos cards, mesmo quando possuem permissão de proprietário sobre um ator.
+- Lesões extremas são validadas antes da gravação e os PV são limitados ao piso terminal de `-5 × PV máximo`, evitando estados negativos arbitrários sem perder o valor integral da lesão em eventos, efeitos e ferimentos.
+
 ## [1.6.31-beta] - 2026-11-21
 
 ### Added

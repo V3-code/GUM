@@ -12,6 +12,7 @@ import { equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLin
 import { buildDamageApplicationEvent, calculateShockPenalty, classifyDamageTargetPool } from "../../module/utils/damage-application-event.mjs";
 import { GUM_API_HOOKS, emitGumLifecycleHook, resolveGumSourceToken } from "../../module/api/gum-hooks.mjs";
 import { getDamageResistanceValue, normalizeDamageTypeKey } from "../../module/utils/damage-types.mjs";
+import { canUserApplyDamage, resolveDamagePoolUpdate } from "../../module/utils/damage-application-guard.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -1234,13 +1235,19 @@ async _onNpcResistanceRoll(effectId) {
     }
 
     async _onApplyDamage(form, shouldClose, shouldPublish) {
+        if (!canUserApplyDamage(game.user)) {
+            return ui.notifications.warn(this._t("PermissionDenied"));
+        }
         const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (this.isApplying) return;
         const activeDamageKey = form.querySelector('.damage-card.active')?.dataset.damageKey || 'main';
         await this._updateDamageCalculation(form);
         this.isApplying = true;
         try {
-            const finalInjury = this.finalInjury || 0;
+            const finalInjury = Number(this.finalInjury);
+            if (!Number.isFinite(finalInjury) || finalInjury < 0) {
+                return ui.notifications.error(this._t("InvalidDamageValue"));
+            }
             const primaryPenetrated = this.currentPenetratingDamage > 0;
             const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
             const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
@@ -1270,6 +1277,24 @@ async _onNpcResistanceRoll(effectId) {
             const natureRaw = form.querySelector('[name="damage_nature"]')?.value || "";
             const damageNature = natureRaw ? resolveDamageNature(natureRaw) : null;
             if (natureRaw && !damageNature) { this.isApplying = false; return ui.notifications.error(this._t("InvalidNature")); }
+            const targetPoolMaximum = targetPoolKind === "hp"
+                ? this.targetActor.system.attributes.hp?.final
+                : targetPoolKind === "fp"
+                    ? this.targetActor.system.attributes.fp?.final
+                    : null;
+            const poolUpdate = resolveDamagePoolUpdate({
+                current: currentPoolValue,
+                amount: finalInjury,
+                heal: applyAsHeal,
+                kind: targetPoolKind,
+                maximum: targetPoolMaximum
+            });
+            if (!poolUpdate.valid) {
+                return ui.notifications.error(this._t("InvalidTargetPoolValue"));
+            }
+            if (poolUpdate.clamped) {
+                ui.notifications.warn(this._f("TerminalFloorApplied", { value: poolUpdate.after }));
+            }
             let summaryMessage = null;
             let eventData = null;
             
@@ -1284,17 +1309,12 @@ async _onNpcResistanceRoll(effectId) {
             }
 
             if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
-                const newPoolValue = currentPoolValue - finalInjury;
+                const newPoolValue = poolUpdate.after;
                 const calculation = this.state.calculation || {};
                 const attackerToken = this.attackerToken || this.attackerActor?.getActiveTokens?.()[0] || null;
                 const targetToken = this.targetToken || this.targetActor?.getActiveTokens?.()[0] || null;
                 const attackerTokenUuid = attackerToken?.document?.uuid || attackerToken?.uuid || null;
                 const targetTokenUuid = targetToken?.document?.uuid || targetToken?.uuid || null;
-                const targetPoolMaximum = targetPoolKind === "hp"
-                    ? this.targetActor.system.attributes.hp?.final
-                    : targetPoolKind === "fp"
-                        ? this.targetActor.system.attributes.fp?.final
-                        : null;
                 eventData = buildDamageApplicationEvent({
                     eventId: foundry.utils.randomID(),
                     applicationId: String(this.appId),
@@ -1349,9 +1369,7 @@ async _onNpcResistanceRoll(effectId) {
                 });
                 await updatePool(newPoolValue, { gumEventData: eventData });
             } else {
-                const sign = applyAsHeal ? 1 : -1;
-                const newPoolValue = currentPoolValue + (sign * finalInjury);
-                await updatePool(newPoolValue);
+                await updatePool(poolUpdate.after);
             }
 
             if (form.querySelector('[name="register_wound"]')?.checked && !applyAsHeal && !effectsOnlyChecked && finalInjury > 0) {

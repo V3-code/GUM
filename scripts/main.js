@@ -57,6 +57,7 @@ import { shouldRefreshGMScreenForActor } from "../module/utils/gm-screen-refresh
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
+import { canUserApplyDamage } from "../module/utils/damage-application-guard.mjs";
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { applyRollPrivacy, getCurrentRollPrivacyMode } from "../module/utils/roll-privacy.mjs";
@@ -377,6 +378,11 @@ const testRequestChatRenderHook = foundryGeneration >= 13
     ? "renderChatMessageHTML"
     : "renderChatMessage";
 Hooks.on(testRequestChatRenderHook, (_message, html) => { activateTestRequestChatListeners(html); activateRollRequestChatListeners(html); });
+Hooks.on(testRequestChatRenderHook, (_message, html) => {
+    if (canUserApplyDamage(game.user)) return;
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    root?.querySelectorAll?.(".apply-damage-button").forEach(button => button.remove());
+});
 
 const isCombatDuration = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
@@ -3916,6 +3922,9 @@ Hooks.once('ready', async function() {
 
     $('body').on('click', '.apply-damage-button', async (ev) => {
     ev.preventDefault();
+    if (!canUserApplyDamage(game.user)) {
+        return ui.notifications.warn(game.i18n.localize("GUM.DamageApplication.PermissionDenied"));
+    }
     console.log("GUM | DEBUG: Botão 'Aplicar Dano' clicado.");
 
     const button = ev.currentTarget;
