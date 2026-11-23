@@ -30,6 +30,10 @@ test("GUM character JSON restoration can opt into the same hybrid resolver", () 
   assert.match(importer, /"gum-dialog", "gum-sheet-edit-dialog", "gum-character-json-import-dialog"/);
 });
 
+test("GUM character JSON restoration reconciles embedded item automations after actor creation", () => {
+  assert.match(importer, /const created = await Actor\.create\(actorData\);[\s\S]{0,350}syncActorItemAutomations\(created, \{[\s\S]*mode: "reconcile"[\s\S]*refreshPassive: mode === "hybrid"/);
+});
+
 test("hybrid matching preserves descriptions authored in the GUM source", () => {
   assert.match(importer, /\["description", "chat_description"\]/);
   assert.match(importer, /mergedSystem\[field\] = foundry\.utils\.deepClone\(sourceText\)/);

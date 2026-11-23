@@ -572,8 +572,13 @@ export async function importFromGCS({ actor = null } = {}) {
                 const imported = await updateActorFromGCS(actor, actorData, file.name);
                 if (imported) ui.notifications.info(`Ficha "${actor.name}" atualizada com sucesso!`);
             } else {
-                await Actor.create(actorData);
-                ui.notifications.info(`Personagem "${actorData.name}" importado com sucesso!`);
+                const created = await Actor.create(actorData);
+                const automationReport = await game.gum.syncActorItemAutomations(created, { mode: "initial" });
+                if (automationReport.errors.length) {
+                    ui.notifications.warn(`Personagem "${actorData.name}" importado, mas algumas automações de itens não puderam ser aplicadas. Consulte o console (F12).`);
+                } else {
+                    ui.notifications.info(`Personagem "${actorData.name}" importado com sucesso!`);
+                }
             }
         } catch (err) {
             console.error("GUM | Erro ao processar arquivo GCS:", err);
@@ -4399,7 +4404,16 @@ export async function importCharacterFromJson() {
             if (!mode) return;
             const actorData = await prepareGumCharacterImportData(source, { hybrid: mode === "hybrid" });
             const created = await Actor.create(actorData);
-            ui.notifications.info(game.i18n.format("GUM.CharacterJsonImport.Success", { name: created.name }));
+            const automationReport = await game.gum.syncActorItemAutomations(created, {
+                mode: "reconcile",
+                refreshPassive: mode === "hybrid"
+            });
+            if (automationReport.errors.length) {
+                console.warn("GUM | A importação JSON terminou com automações de itens pendentes.", automationReport.errors);
+                ui.notifications.warn(game.i18n.format("GUM.CharacterJsonImport.PartialSuccess", { name: created.name }));
+            } else {
+                ui.notifications.info(game.i18n.format("GUM.CharacterJsonImport.Success", { name: created.name }));
+            }
             created.sheet?.render(true);
         } catch (error) {
             console.error("GUM | Falha ao importar ficha JSON do GUM:", error);

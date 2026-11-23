@@ -1407,6 +1407,7 @@
   "GUM.CharacterJsonImport.InvalidFile": "This file is not a valid GUM JSON character sheet.",
   "GUM.CharacterJsonImport.PermissionDenied": "You do not have permission to create characters in this world.",
   "GUM.CharacterJsonImport.Success": "Character “{name}” imported successfully.",
+  "GUM.CharacterJsonImport.PartialSuccess": "Character “{name}” was imported, but some item automations could not be applied. Check the console (F12).",
   "GUM.ContentSources.Purposes.Effects.Name": "Effects",
   "GUM.ContentSources.Purposes.Effects.Description": "Libraries used by effect browsers and selectors.",
   "GUM.ContentSources.Purposes.Triggers.Name": "Triggers",

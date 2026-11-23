@@ -34,6 +34,7 @@ import { captureItemResourceChanges } from '../module/utils/item-resource-change
 import { PASSIVE_CONDITION_CONFIG_SETTING, normalizePassiveConditionConfiguration, preparePassiveConditionCreateData, resolvePassiveConditionConfiguration } from '../module/utils/passive-condition-sync.mjs';
 import { ConditionEventDeduper, normalizeConditionEffectLinks, shouldExecuteConditionEffectLink } from '../module/utils/condition-effect-link.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
+import { syncPassiveItemEffects } from '../module/services/passive-item-effect-service.mjs';
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
 import { WORLD_STATUS_SETTING, buildWorldStatusBindingRules, buildWorldStatusPresentationPlan, collectWorldStatusActors, localizeBaseStatuses, normalizeWorldStatusConfiguration, resolveWorldStatusRows } from '../module/utils/world-status-config.mjs';
@@ -180,6 +181,125 @@ async function reconcileEquipmentModifierGrantedEffects() {
                 && [...expectedIds].every(id => existingIds.has(id))
                 && !existingIds.has("");
             if (!setsMatch) await syncEquipmentModifierGrantedEffects(item);
+        }
+    }
+}
+
+async function syncActorItemAutomations(actor, { mode = "reconcile", refreshPassive = false } = {}) {
+    if (!actor || actor.type !== "character") return { errors: [], passiveErrors: [] };
+    const errors = [];
+    const passiveErrors = [];
+    const itemIds = new Set(Array.from(actor.items || []).map(item => String(item.id)));
+
+    for (const item of actor.items || []) {
+        if (item.type === "effect") {
+            try {
+                await ensureEffectItemBridge(item);
+            } catch (error) {
+                errors.push({ item: item.name, kind: "effect-bridge", message: error?.message || String(error) });
+            }
+        }
+        try {
+            const passiveReport = await syncPassiveItemEffects(item, {
+                mode,
+                refreshPersistent: refreshPassive,
+                applyEffect: applySingleEffect,
+                getActions: getEffectActions,
+                buildTargets: buildActorEffectTargets
+            });
+            const itemPassiveErrors = passiveReport.errors.map(error => ({ item: item.name, kind: "passive", ...error }));
+            passiveErrors.push(...itemPassiveErrors);
+            errors.push(...itemPassiveErrors);
+        } catch (error) {
+            errors.push({ item: item.name, kind: "passive", message: error?.message || String(error) });
+        }
+        try {
+            await syncEquipmentModifierGrantedEffects(item);
+        } catch (error) {
+            errors.push({ item: item.name, kind: "equipment", message: error?.message || String(error) });
+        }
+        try {
+            const stateReport = await syncItemStateEffects(item, { assumeInactive: mode === "initial" });
+            errors.push(...stateReport.errors.map(message => ({ item: item.name, kind: "state", message })));
+        } catch (error) {
+            errors.push({ item: item.name, kind: "state", message: error?.message || String(error) });
+        }
+    }
+
+    const orphaned = Array.from(actor.effects || []).filter(effect => {
+        const flags = foundry.utils.getProperty(effect, "flags.gum") || {};
+        if (!flags.originItemId || itemIds.has(String(flags.originItemId))) return false;
+        return ["passiveItem", EQUIPMENT_GRANTED_EFFECT_SOURCE, "stateItem"].includes(flags.source);
+    });
+    if (orphaned.length) {
+        try {
+            await actor.deleteEmbeddedDocuments("ActiveEffect", orphaned.map(effect => effect.id));
+        } catch (error) {
+            errors.push({ item: null, kind: "orphan-cleanup", message: error?.message || String(error) });
+        }
+    }
+
+    try {
+        await processConditions(actor);
+        await processStatusBindings(actor);
+    } catch (error) {
+        errors.push({ item: null, kind: "actor", message: error?.message || String(error) });
+    }
+    actor.sheet?.render(false);
+    actor.getActiveTokens().forEach(token => token.drawEffects());
+    if (errors.length) {
+        console.warn(`GUM | A sincronização de automações de itens de "${actor.name}" terminou com pendências.`, errors);
+    }
+    return { errors, passiveErrors, orphaned: orphaned.length };
+}
+
+async function reconcileAllPassiveItemEffects() {
+    if (!isPrimaryActiveGM()) return;
+    for (const actor of game.actors || []) {
+        if (actor.type !== "character") continue;
+        let changed = false;
+        const errors = [];
+        const itemIds = new Set(Array.from(actor.items || []).map(item => String(item.id)));
+        const orphaned = Array.from(actor.effects || []).filter(effect =>
+            foundry.utils.getProperty(effect, "flags.gum.source") === "passiveItem"
+            && !itemIds.has(String(foundry.utils.getProperty(effect, "flags.gum.originItemId") || ""))
+        );
+        if (orphaned.length) {
+            try {
+                await actor.deleteEmbeddedDocuments("ActiveEffect", orphaned.map(effect => effect.id));
+                changed = true;
+            } catch (error) {
+                errors.push({ item: null, message: error?.message || String(error) });
+            }
+        }
+        for (const item of actor.items || []) {
+            const hasLinks = Object.keys(item.system?.passiveEffects || {}).length > 0;
+            const hasManagedEffects = Array.from(actor.effects || []).some(effect =>
+                foundry.utils.getProperty(effect, "flags.gum.source") === "passiveItem"
+                && foundry.utils.getProperty(effect, "flags.gum.originItemId") === item.id
+            );
+            if (!hasLinks && !hasManagedEffects) continue;
+            try {
+                const report = await syncPassiveItemEffects(item, {
+                    mode: "reconcile",
+                    applyEffect: applySingleEffect,
+                    getActions: getEffectActions,
+                    buildTargets: buildActorEffectTargets
+                });
+                changed ||= report.created > 0 || report.removed > 0;
+                errors.push(...report.errors.map(error => ({ item: item.name, ...error })));
+            } catch (error) {
+                errors.push({ item: item.name, message: error?.message || String(error) });
+            }
+        }
+        if (changed) {
+            await processConditions(actor);
+            await processStatusBindings(actor);
+            actor.sheet?.render(false);
+            actor.getActiveTokens().forEach(token => token.drawEffects());
+        }
+        if (errors.length) {
+            console.warn(`GUM | A reconciliação de efeitos passivos de "${actor.name}" terminou com pendências.`, errors);
         }
     }
 }
@@ -3323,6 +3443,7 @@ Hooks.once('init', async function() {
             resolveTargetCombatDefenseRecalculationModifiers,
             setStateEffectGroupActive,
             syncItemStateEffects,
+            syncActorItemAutomations,
             ensureEffectItemBridge,
             contentSourceService,
             contentSourcePurposes: CONTENT_SOURCE_PURPOSES,
@@ -3534,37 +3655,19 @@ Hooks.on("createItem", async (item, options, userId) => {
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
 
-        // Lógica para EFEITOS PASSIVOS (pode rodar para qualquer tipo de item)
-        if (item.system.passiveEffects && Object.keys(item.system.passiveEffects).length > 0) {
-            const passiveEffectLinks = Object.values(item.system.passiveEffects);
-            console.log(`[GUM] Item "${item.name}" adicionado a ${actor.name}. Aplicando ${passiveEffectLinks.length} efeito(s) passivo(s)...`);
-
-        const targets = buildActorEffectTargets(actor);
-            for (const linkData of passiveEffectLinks) {
-                const effectUuid = linkData.effectUuid || linkData.uuid;
-                if (!effectUuid) continue;
-
-                const effectItem = await fromUuid(effectUuid);
-                if (effectItem) {
-                    try {
-                        await applySingleEffect(effectItem, targets, {
-                            actor,
-                            origin: item,
-                            source: "passiveItem",
-                            stackingDomain: "managed",
-                            originItemId: item.id
-                        });
-                        console.log(` -> Efeito passivo "${effectItem.name}" aplicado.`);
-                    } catch (err) {
-                        console.error(`[GUM] Falha ao criar ActiveEffect passivo para ${effectItem.name}:`, err);
-                    }
-                }
-            }
-            
-            // Força a reavaliação e redesenho UMA VEZ no final, após todos os efeitos
+        const passiveReport = await syncPassiveItemEffects(item, {
+            mode: "initial",
+            applyEffect: applySingleEffect,
+            getActions: getEffectActions,
+            buildTargets: buildActorEffectTargets
+        });
+        if (passiveReport.errors.length) {
+            console.warn(`[GUM] O item "${item.name}" possui vínculos passivos que não puderam ser aplicados.`, passiveReport.errors);
+        }
+        if (Object.keys(item.system.passiveEffects || {}).length > 0) {
             await processConditions(actor);
             await processStatusBindings(actor);
-            actor.sheet.render(false);
+            actor.sheet?.render(false);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
         await syncEquipmentModifierGrantedEffects(item);
@@ -3607,49 +3710,17 @@ Hooks.on("createItem", async (item, options, userId) => {
             || Object.keys(changes || {}).some(key => key.startsWith("system.passiveEffects"));
         const originLevelChanged = foundry.utils.hasProperty(changes, "system.level")
             || Object.prototype.hasOwnProperty.call(changes.system || {}, "level");
-        if (item.system.passiveEffects && (passiveEffectsChanged || originLevelChanged)) {
-            
-            // 1. Encontra e Deleta TODOS os ActiveEffects existentes originados deste item
-            const updatedItemId = item.id;
-            const effectsToDelete = actor.effects.filter(effect => 
-            foundry.utils.getProperty(effect, "flags.gum.originItemId") === updatedItemId                    
-                && foundry.utils.getProperty(effect, "flags.gum.source") === "passiveItem"
-            );
-
-            if (effectsToDelete.length > 0) {
-                const idsToDelete = effectsToDelete.map(e => e.id);
-                console.log(`[GUM] Item "${item.name}" atualizado. Removendo ${idsToDelete.length} efeito(s) passivo(s) antigo(s)...`);
-                await actor.deleteEmbeddedDocuments("ActiveEffect", idsToDelete);
+        if (passiveEffectsChanged || originLevelChanged) {
+            const passiveReport = await syncPassiveItemEffects(item, {
+                refreshPersistent: true,
+                applyEffect: applySingleEffect,
+                getActions: getEffectActions,
+                buildTargets: buildActorEffectTargets
+            });
+            if (passiveReport.errors.length) {
+                console.warn(`[GUM] O item "${item.name}" possui vínculos passivos que não puderam ser atualizados.`, passiveReport.errors);
             }
-
-            // 2. Recria TODOS os ActiveEffects da lista atualizada do item
-            // (Esta lógica é uma cópia da que está no hook 'createItem')
-                     const passiveEffectLinks = Object.values(item.system.passiveEffects || {});
-            if (passiveEffectLinks.length > 0) {
-                console.log(`[GUM] ...Recriando ${passiveEffectLinks.length} efeito(s) passivo(s) atualizado(s).`);
-const targets = buildActorEffectTargets(actor);
-                for (const linkData of passiveEffectLinks) {
-                    const effectUuid = linkData.effectUuid || linkData.uuid;
-                    if (!effectUuid) continue;
-
-                    const effectItem = await fromUuid(effectUuid);
-                    if (effectItem) {
-                        try {
-                            await applySingleEffect(effectItem, targets, {
-                                actor,
-                                origin: item,
-                                source: "passiveItem",
-                                stackingDomain: "managed",
-                                originItemId: item.id,                                
-                                skipInstantEffects: true
-                            });
-                        } catch (err) {
-                            console.error(`[GUM] Falha ao criar ActiveEffect passivo (update):`, err);
-                        }
-                    }
-                }
-            }
-        } // Fim do if (item.system.passiveEffects)
+        }
         if (item.type === "equipment" && hasEquipmentGrantRelevantChange(changes)) {
             await syncEquipmentModifierGrantedEffects(item);
         }
@@ -5876,6 +5947,11 @@ Hooks.once("ready", async () => {
         await synchronizeWorldStatusRuntime(resolveWorldStatusRows(localizedBase, configuration));
     } catch (error) {
         console.error("GUM | Falha ao consolidar os status do mundo ao iniciar.", error);
+    }
+    try {
+        await reconcileAllPassiveItemEffects();
+    } catch (error) {
+        console.error("GUM | Falha ao reconciliar efeitos passivos de itens ao iniciar o mundo.", error);
     }
     try {
         await reconcileAllStateEffects();

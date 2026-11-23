@@ -1407,6 +1407,7 @@
   "GUM.CharacterJsonImport.InvalidFile": "Este arquivo não é uma ficha de personagem JSON válida do GUM.",
   "GUM.CharacterJsonImport.PermissionDenied": "Você não tem permissão para criar personagens neste mundo.",
   "GUM.CharacterJsonImport.Success": "Ficha “{name}” importada com sucesso.",
+  "GUM.CharacterJsonImport.PartialSuccess": "Ficha “{name}” importada, mas algumas automações de itens não puderam ser aplicadas. Consulte o console (F12).",
   "GUM.ContentSources.Purposes.Effects.Name": "Efeitos",
   "GUM.ContentSources.Purposes.Effects.Description": "Bibliotecas usadas pelo navegador e pelos seletores de efeitos.",
   "GUM.ContentSources.Purposes.Triggers.Name": "Gatilhos",

@@ -20,3 +20,7 @@ test("a atualização preserva a propriedade e reconcilia documentos incorporado
 test("a importação dirigida não cria outro ator", () => {
   assert.match(importerSource, /if \(actor\) \{[\s\S]*updateActorFromGCS\(actor, actorData, file\.name\)[\s\S]*\} else \{[\s\S]*Actor\.create\(actorData\)/);
 });
+
+test("a criação pelo diretório aguarda a inicialização das automações dos itens incorporados", () => {
+  assert.match(importerSource, /const created = await Actor\.create\(actorData\);[\s\S]{0,300}syncActorItemAutomations\(created, \{ mode: "initial" \}\)/);
+});

@@ -316,7 +316,8 @@ export function installGumApi({ gameRef = globalThis.game, hooks = globalThis.Ho
     resolveCombatDamageProfile: "resolveCombatDamageProfile",
     resolveTargetCombatDefenseRecalculationModifiers: "resolveTargetCombatDefenseRecalculationModifiers",
     setStateEffectGroupActive: "setStateEffectGroupActive",
-    syncItemStateEffects: "syncItemStateEffects"
+    syncItemStateEffects: "syncItemStateEffects",
+    syncActorItemAutomations: "syncActorItemAutomations"
   };
   for (const [alias, dependency] of Object.entries(legacyAliases)) {
     if (typeof dependencies[dependency] === "function") namespace[alias] = dependencies[dependency];

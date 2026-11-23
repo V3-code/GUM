@@ -4,6 +4,15 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Não publicado]
+
+### Fixed
+
+- Personagens criados diretamente por importações GCS ou JSON agora inicializam e reconciliam os efeitos passivos, concessões de equipamento, grupos de estado e pontes de Itens Efeito que já vieram incorporados ao ator.
+- Efeitos passivos passam a conservar a identidade do vínculo e da origem, evitando duplicações em reimportações, preservando vínculos repetidos intencionais e recalculando corretamente valores por nível.
+- Mundos existentes reconciliam efeitos passivos persistentes ao iniciar, sem repetir ações instantâneas como consumo de recursos, mensagens ou macros.
+- Importações concluídas parcialmente agora avisam quando alguma automação de item não pôde ser aplicada.
+
 ## [1.6.32-beta] - 2026-11-22
 
 ### Fixed

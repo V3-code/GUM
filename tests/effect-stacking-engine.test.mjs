@@ -58,7 +58,8 @@ if (!String.prototype.slugify) {
   });
 }
 
-const { applySingleEffect } = await import("../scripts/effects-engine.js");
+const { applySingleEffect, getEffectActions } = await import("../scripts/effects-engine.js");
+const { syncPassiveItemEffects } = await import("../module/services/passive-item-effect-service.mjs");
 
 function makeActor({ createDelay = 0 } = {}) {
   let nextEffectId = 0;
@@ -184,6 +185,25 @@ test("Emanação cria um controlador inerte e transmite o efeito inteiro sem íc
     assert.equal(affected.effects[0].img, null);
     assert.equal(affected.effects[0].showIcon, 0);
     assert.equal(affected.system.attributes.hp.value, 9);
+
+    const passiveActor = makeActor();
+    const passiveItem = {
+      id: "aura-item",
+      uuid: `${passiveActor.uuid}.Item.aura-item`,
+      parent: passiveActor,
+      system: { passiveEffects: { aura: { effectUuid: effect.uuid } } }
+    };
+    const passiveOptions = {
+      resolveUuid: async () => effect,
+      getActions: getEffectActions,
+      applyEffect: applySingleEffect,
+      buildTargets: targetActor => [{ actor: targetActor }]
+    };
+    await syncPassiveItemEffects(passiveItem, { ...passiveOptions, mode: "initial" });
+    await syncPassiveItemEffects(passiveItem, passiveOptions);
+    assert.equal(passiveActor.effects.length, 1);
+    assert.equal(passiveActor.effects[0].flags.gum.actionType, "dynamic_region");
+    assert.equal(passiveActor.effects[0].flags.gum.passiveEffectLinkId, "aura");
   } finally {
     game.release.generation = previousGeneration;
     if (previousRegion === undefined) delete CONFIG.Region;
@@ -240,10 +260,42 @@ test("stack cria uma cópia por aplicação e fontes administradas ignoram a ded
 
   const managedActor = makeActor();
   const managed = makeEffect("unique", [attributeAction()]);
-  await applySingleEffect(managed, [{ actor: managedActor }], { source: "passiveItem", stackingDomain: "managed" });
+  await applySingleEffect(managed, [{ actor: managedActor }], { source: "passiveItem", stackingDomain: "managed", passiveEffectLinkId: "first-link" });
   await applySingleEffect(managed, [{ actor: managedActor }], { source: "passiveItem", stackingDomain: "managed" });
   assert.equal(managedActor.effects.length, 2);
   assert.ok(managedActor.effects.every(effect => effect.flags.gum.stackingDomain === "managed"));
+  assert.equal(managedActor.effects[0].flags.gum.passiveEffectLinkId, "first-link");
+});
+
+test("a sincronização pós-importação aplica uma vez o passivo escalado pelo nível do item", async () => {
+  const actor = makeActor();
+  const effect = makeEffect("unique", [{
+    ...attributeAction(1),
+    value_mode: "per_origin_level"
+  }]);
+  const item = {
+    id: "magery",
+    uuid: `${actor.uuid}.Item.magery`,
+    name: "Magery",
+    parent: actor,
+    system: { level: 2, passiveEffects: { st: { effectUuid: effect.uuid } } }
+  };
+
+  const options = {
+    mode: "initial",
+    resolveUuid: async uuid => uuid === effect.uuid ? effect : null,
+    getActions: getEffectActions,
+    applyEffect: applySingleEffect,
+    buildTargets: targetActor => [{ actor: targetActor }]
+  };
+  await syncPassiveItemEffects(item, options);
+  await syncPassiveItemEffects(item, { ...options, mode: "reconcile" });
+
+  assert.equal(actor.effects.length, 1);
+  assert.equal(actor.effects[0].changes[0].value, 2);
+  assert.equal(actor.effects[0].origin, item.uuid);
+  assert.equal(actor.effects[0].flags.gum.originItemId, item.id);
+  assert.equal(actor.effects[0].flags.gum.passiveEffectLinkId, "st");
 });
 
 test("refresh recalcula a cópia existente e reinicia sua duração", async () => {

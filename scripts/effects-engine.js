@@ -610,6 +610,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     stackingMode,
                     source: context.source || null,
                     originItemId: context.originItemId ?? null,
+                    passiveEffectLinkId: context.passiveEffectLinkId ?? null,
                     stateEffectGroupId: context.stateEffectGroupId ?? null,
                     stateEffectLinkId: context.stateEffectLinkId ?? null,
                     stateEffectActivationId: context.stateEffectActivationId ?? null,
